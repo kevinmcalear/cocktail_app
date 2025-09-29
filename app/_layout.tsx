@@ -28,6 +28,10 @@ export default function RootLayout() {
           name="add-cocktail"
           options={{ presentation: "modal", title: "Add Cocktail" }}
         />
+        <Stack.Screen
+          name="import-cocktails"
+          options={{ presentation: "modal", title: "Import Cocktails" }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

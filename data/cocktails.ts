@@ -153,7 +153,7 @@ export const cocktails: Cocktail[] = [
     id: "8",
     name: "Cottage Negroni",
     description:
-      "The classic Italian cocktail with Caretaker's artisanal twist.",
+      "The classic Italian cocktail with Caretaker's artisxanal twist.",
     image: "negroni",
     ingredients: [
       "1 oz Gin",
@@ -166,6 +166,124 @@ export const cocktails: Cocktail[] = [
       "Stir all ingredients with ice in a mixing glass. Strain over fresh ice in a rocks glass. Express orange peel over the drink and use as garnish.",
     category: "Classic",
     difficulty: "Easy",
+    prepTime: "4 minutes",
+  },
+  // Club Bauhaus inspired cocktails
+  {
+    id: "9",
+    name: "Bauhaus Martini",
+    description:
+      "A minimalist martini with geometric precision - clean lines, perfect balance, and architectural elegance.",
+    image: "bauhaus-martini",
+    ingredients: [
+      "2.5 oz Premium Gin",
+      "0.5 oz Dry Vermouth",
+      "2 dashes Orange Bitters",
+      "Lemon twist",
+      "Ice",
+    ],
+    instructions:
+      "Stir gin and vermouth with ice in a mixing glass for 30 seconds. Strain into a chilled coupe glass. Express lemon twist over the drink and discard. Serve immediately.",
+    category: "Classic",
+    difficulty: "Medium",
+    prepTime: "4 minutes",
+  },
+  {
+    id: "10",
+    name: "Constructivist Cosmo",
+    description:
+      "A deconstructed cosmopolitan that celebrates form and function - bold, structured, and visually striking.",
+    image: "cosmo",
+    ingredients: [
+      "2 oz Vodka",
+      "1 oz Cranberry Juice",
+      "0.5 oz Cointreau",
+      "0.5 oz Fresh Lime Juice",
+      "Lime wheel",
+      "Ice",
+    ],
+    instructions:
+      "Shake all ingredients with ice in a shaker. Double strain into a chilled martini glass. Garnish with lime wheel. Serve immediately.",
+    category: "Classic",
+    difficulty: "Easy",
+    prepTime: "3 minutes",
+  },
+  {
+    id: "11",
+    name: "Minimalist Mule",
+    description:
+      "A stripped-down Moscow Mule that embodies the 'less is more' philosophy - pure, simple, and effective.",
+    image: "mule",
+    ingredients: [
+      "2 oz Vodka",
+      "0.5 oz Fresh Lime Juice",
+      "4 oz Ginger Beer",
+      "Fresh Mint",
+      "Lime wedge",
+      "Ice",
+    ],
+    instructions:
+      "Fill copper mug with ice. Add vodka and lime juice. Top with ginger beer. Stir gently. Garnish with mint and lime wedge.",
+    category: "Classic",
+    difficulty: "Easy",
+    prepTime: "2 minutes",
+  },
+  {
+    id: "12",
+    name: "Geometric Gimlet",
+    description:
+      "A perfectly balanced gimlet with sharp angles and clean edges - the essence of Bauhaus design in liquid form.",
+    image: "gimlet",
+    ingredients: [
+      "2 oz Gin",
+      "0.75 oz Fresh Lime Juice",
+      "0.75 oz Simple Syrup",
+      "Lime wheel",
+      "Ice",
+    ],
+    instructions:
+      "Shake gin, lime juice, and simple syrup with ice. Strain into a chilled coupe glass. Garnish with lime wheel.",
+    category: "Classic",
+    difficulty: "Easy",
+    prepTime: "3 minutes",
+  },
+  {
+    id: "13",
+    name: "Functional Fizz",
+    description:
+      "A highball that serves its purpose with maximum efficiency - refreshing, bubbly, and perfectly proportioned.",
+    image: "fizz",
+    ingredients: [
+      "2 oz Gin",
+      "1 oz Fresh Lemon Juice",
+      "0.5 oz Simple Syrup",
+      "Soda Water",
+      "Lemon twist",
+      "Ice",
+    ],
+    instructions:
+      "Fill highball glass with ice. Add gin, lemon juice, and simple syrup. Top with soda water. Stir gently. Garnish with lemon twist.",
+    category: "Classic",
+    difficulty: "Easy",
+    prepTime: "2 minutes",
+  },
+  {
+    id: "14",
+    name: "Modular Manhattan",
+    description:
+      "A structured Manhattan built on modular principles - each component serves a specific function in the whole.",
+    image: "manhattan",
+    ingredients: [
+      "2 oz Rye Whiskey",
+      "1 oz Sweet Vermouth",
+      "2 dashes Angostura Bitters",
+      "Maraschino Cherry",
+      "Ice",
+    ],
+    instructions:
+      "Stir whiskey, vermouth, and bitters with ice. Strain into a chilled coupe glass. Garnish with cherry.",
+    category: "Classic",
+    difficulty: "Medium",
     prepTime: "4 minutes",
   },
 ];

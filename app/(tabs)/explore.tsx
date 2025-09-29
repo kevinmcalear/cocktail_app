@@ -36,6 +36,14 @@ const getCocktailImage = (imageKey: string) => {
       "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=200&fit=crop&crop=center",
     negroni:
       "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=200&fit=crop&crop=center",
+    "bauhaus-martini":
+      "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=200&fit=crop&crop=center",
+    cosmo:
+      "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=200&fit=crop&crop=center",
+    mule: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=200&fit=crop&crop=center",
+    gimlet:
+      "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=200&fit=crop&crop=center",
+    fizz: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=200&fit=crop&crop=center",
   };
   return imageMap[imageKey] || imageMap["old-fashioned"];
 };
@@ -164,36 +172,65 @@ export default function CocktailsScreen() {
               Discover our signature cocktails crafted with care
             </ThemedText>
           </View>
-          <Link href="/add-cocktail" asChild>
-            <TouchableOpacity
-              style={[
-                styles.addButton,
-                {
-                  backgroundColor: Colors[colorScheme ?? "light"].tint,
-                  shadowColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              activeOpacity={0.8}
-            >
-              <View style={styles.iconContainer}>
-                <IconSymbol
-                  name="plus"
-                  size={18}
-                  color={colorScheme === "dark" ? "#000" : "#fff"}
-                />
-              </View>
-              <ThemedText
+          <View style={styles.buttonContainer}>
+            <Link href="/import-cocktails" asChild>
+              <TouchableOpacity
                 style={[
-                  styles.addButtonText,
+                  styles.importButton,
                   {
-                    color: colorScheme === "dark" ? "#000" : "#fff",
+                    borderColor: Colors[colorScheme ?? "light"].tint,
                   },
                 ]}
+                activeOpacity={0.8}
               >
-                Add New
-              </ThemedText>
-            </TouchableOpacity>
-          </Link>
+                <IconSymbol
+                  name="square.and.arrow.down"
+                  size={16}
+                  color={Colors[colorScheme ?? "light"].tint}
+                />
+                <ThemedText
+                  style={[
+                    styles.importButtonText,
+                    {
+                      color: Colors[colorScheme ?? "light"].tint,
+                    },
+                  ]}
+                >
+                  Import
+                </ThemedText>
+              </TouchableOpacity>
+            </Link>
+            <Link href="/add-cocktail" asChild>
+              <TouchableOpacity
+                style={[
+                  styles.addButton,
+                  {
+                    backgroundColor: Colors[colorScheme ?? "light"].tint,
+                    shadowColor: Colors[colorScheme ?? "light"].tint,
+                  },
+                ]}
+                activeOpacity={0.8}
+              >
+                <View style={styles.iconContainer}>
+                  <IconSymbol
+                    name="plus"
+                    size={18}
+                    color={colorScheme === "dark" ? "#000" : "#fff"}
+                  />
+                </View>
+                <ThemedText
+                  style={[
+                    styles.addButtonText,
+                    {
+                      color: colorScheme === "dark" ? "#000" : "#fff",
+                    },
+                  ]}
+                >
+                  Add New
+                </ThemedText>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </View>
       </ThemedView>
 
@@ -322,6 +359,25 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: "left",
     opacity: 0.8,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+  importButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    borderWidth: 2,
+    backgroundColor: "transparent",
+  },
+  importButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   addButton: {
     flexDirection: "row",
