@@ -1,4 +1,5 @@
 import { CocktailCard } from "@/components/CocktailCard";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
@@ -9,8 +10,10 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { FlatList, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
+
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [profileMenuVisible, setProfileMenuVisible] = useState(false);
 
   const filteredCocktails = cocktails.filter((cocktail) =>
     cocktail.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -28,10 +31,13 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <ThemedText type="title" style={styles.title}>Caretaker's{"\n"}Cottage</ThemedText>
-            <Image
-              source={{ uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" }}
-              style={styles.avatar}
-            />
+            <TouchableOpacity onPress={() => setProfileMenuVisible(true)}>
+              <Image
+                source={{ uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" }}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+            <ProfileMenu visible={profileMenuVisible} onClose={() => setProfileMenuVisible(false)} />
           </View>
 
           <GlassView style={styles.searchContainer} intensity={40}>
