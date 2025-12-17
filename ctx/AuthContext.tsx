@@ -9,6 +9,7 @@ type AuthContextType = {
     signIn: (email: string, password: string) => Promise<{ error: any }>;
     signUp: (email: string, password: string) => Promise<{ data: any; error: any }>;
     signOut: () => Promise<void>;
+    updateProfile: (data: { firstName?: string; lastName?: string; password?: string; avatarUrl?: string }) => Promise<{ error: any }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
     signIn: async () => ({ error: null }),
     signUp: async () => ({ data: null, error: null }),
     signOut: async () => { },
+    updateProfile: async () => ({ error: null }),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -65,6 +67,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut();
     };
 
+    const updateProfile = async ({ firstName, lastName, password, avatarUrl }: { firstName?: string; lastName?: string; password?: string; avatarUrl?: string }) => {
+        const updates: any = {
+            data: {},
+        };
+
+        if (firstName) updates.data.first_name = firstName;
+        if (lastName) updates.data.last_name = lastName;
+        if (avatarUrl) updates.data.avatar_url = avatarUrl;
+        if (password) updates.password = password;
+
+        if (Object.keys(updates.data).length === 0 && !updates.password) {
+            return { error: null };
+        }
+
+        const { error } = await supabase.auth.updateUser(updates);
+
+        if (!error && session) {
+            // refresh session
+            const { data: { session: newSession }, error: refreshError } = await supabase.auth.getSession();
+            if (newSession) {
+                setSession(newSession);
+                setUser(newSession.user);
+            }
+        }
+
+        return { error };
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -74,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 signIn,
                 signUp,
                 signOut,
+                updateProfile,
             }}
         >
             {children}

@@ -38,7 +38,7 @@ export function ProfileMenu({ visible, onClose }: ProfileMenuProps) {
                             <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
                                 <TouchableOpacity
                                     style={styles.menuItem}
-                                    onPress={() => handleNavigation('/profile/edit')}
+                                    onPress={() => handleNavigation('/settings')}
                                 >
                                     <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
                                     <Text style={styles.menuText}>Edit Profile</Text>

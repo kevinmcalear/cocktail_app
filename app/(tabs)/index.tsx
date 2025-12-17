@@ -5,6 +5,7 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/ctx/AuthContext";
 import { cocktails } from "@/data/cocktails";
 import { Image } from "expo-image";
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { FlatList, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View }
 
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [profileMenuVisible, setProfileMenuVisible] = useState(false);
 
@@ -33,7 +35,7 @@ export default function HomeScreen() {
             <ThemedText type="title" style={styles.title}>Caretaker's{"\n"}Cottage</ThemedText>
             <TouchableOpacity onPress={() => setProfileMenuVisible(true)}>
               <Image
-                source={{ uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" }}
+                source={{ uri: user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" }}
                 style={styles.avatar}
               />
             </TouchableOpacity>
