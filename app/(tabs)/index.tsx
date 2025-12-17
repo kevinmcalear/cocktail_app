@@ -6,9 +6,16 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { cocktails } from "@/data/cocktails";
 import { Image } from "expo-image";
-import { FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { FlatList, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function HomeScreen() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCocktails = cocktails.filter((cocktail) =>
+    cocktail.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <ThemedView style={styles.container}>
       {/* Background Image if we want one, or just the dark color */}
@@ -29,7 +36,18 @@ export default function HomeScreen() {
 
           <GlassView style={styles.searchContainer} intensity={40}>
             <IconSymbol name="magnifyingglass" size={20} color={Colors.dark.icon} />
-            <ThemedText style={styles.searchText}>Find your drink...</ThemedText>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Find your drink..."
+              placeholderTextColor={Colors.dark.icon}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <IconSymbol name="xmark.circle.fill" size={20} color={Colors.dark.icon} />
+              </TouchableOpacity>
+            )}
           </GlassView>
 
           <View style={styles.categories}>
@@ -46,7 +64,7 @@ export default function HomeScreen() {
         </View>
 
         <FlatList
-          data={cocktails}
+          data={filteredCocktails}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <CocktailCard cocktail={item} />}
           contentContainerStyle={styles.listContent}
@@ -94,9 +112,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 10
   },
-  searchText: {
-    color: Colors.dark.icon,
-    fontSize: 16
+  searchInput: {
+    flex: 1,
+    color: Colors.dark.text,
+    fontSize: 16,
+    padding: 0, // Reset default padding
   },
   categories: {
     flexDirection: "row",
