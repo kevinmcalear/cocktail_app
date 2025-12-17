@@ -1,107 +1,120 @@
-import { Image } from "expo-image";
-import { Platform, StyleSheet } from "react-native";
-
-import { HelloWave } from "@/components/hello-wave";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
+import { CocktailCard } from "@/components/CocktailCard";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Link } from "expo-router";
+import { GlassView } from "@/components/ui/GlassView";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { cocktails } from "@/data/cocktails";
+import { Image } from "expo-image";
+import { FlatList, SafeAreaView, StyleSheet, View } from "react-native";
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#E67E22", dark: "#1A1A1A" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Fuck it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction
-              title="Action"
-              icon="cube"
-              onPress={() => alert("Action pressed")}
-            />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert("Share pressed")}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert("Delete pressed")}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ThemedView style={styles.container}>
+      {/* Background Image if we want one, or just the dark color */}
+      {/* <Image
+        source={{ uri: "https://some-dark-texture.jpg" }}
+        style={StyleSheet.absoluteFill}
+      /> */}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">
-            npm run reset-project
-          </ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <ThemedText type="title" style={styles.title}>Caretaker's{"\n"}Cottage</ThemedText>
+            <Image
+              source={{ uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" }}
+              style={styles.avatar}
+            />
+          </View>
+
+          <GlassView style={styles.searchContainer} intensity={40}>
+            <IconSymbol name="magnifyingglass" size={20} color={Colors.dark.icon} />
+            <ThemedText style={styles.searchText}>Find your drink...</ThemedText>
+          </GlassView>
+
+          <View style={styles.categories}>
+            {["Cocktails", "Wines", "Beers"].map((cat, index) => (
+              <GlassView
+                key={cat}
+                style={[styles.categoryPill, index === 0 && styles.activeCategory]}
+                intensity={index === 0 ? 80 : 30}
+              >
+                <ThemedText style={[styles.categoryText, index === 0 && { color: Colors.dark.tint }]}>{cat}</ThemedText>
+              </GlassView>
+            ))}
+          </View>
+        </View>
+
+        <FlatList
+          data={cocktails}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <CocktailCard cocktail={item} />}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    lineHeight: 36,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginLeft: 10,
+  },
+  searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    padding: 12,
+    borderRadius: 25,
+    marginBottom: 20,
+    gap: 10
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchText: {
+    color: Colors.dark.icon,
+    fontSize: 16
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  categories: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  categoryPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+  },
+  activeCategory: {
+    backgroundColor: "rgba(255,255,255,0.1)"
+  },
+  categoryText: {
+    fontWeight: "600",
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 120, // Space for LiquidTabBar
   },
 });

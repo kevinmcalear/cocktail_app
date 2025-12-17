@@ -1,22 +1,31 @@
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Image, StyleSheet, View } from 'react-native';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { GlassView } from "@/components/ui/GlassView";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { FlatList, Image, StyleSheet, View } from "react-native";
+
+// Using a slightly different interface for Menu Items as they might be more text-heavy
+interface MenuItem {
+    name: string;
+    description: string;
+    ingredients: string;
+    price: string;
+    image: any; // Using any for require() or uri
+}
 
 export default function MenuScreen() {
     const colorScheme = useColorScheme();
 
-    const menuItems = [
+    const menuItems: MenuItem[] = [
         {
             name: "House Martini",
             description: "Four Pillars & Caretaker's Cottage House Gin, house dry vermouth. Needs to be freezing.",
             ingredients: "Gin, Dry Vermouth, Lemon Twist/Olive/Onion",
             price: "$26",
-            image: require('@/assets/images/cocktails/house_martini.png'),
+            image: require('@/assets/images/cocktails/house_martini.png'), // These might fail if files don't exist, handle gracefully if needed or assume user has them
         },
+        // ... (I'll keep the list short for the code block, but in reality I should preserve the data)
         {
             name: "Champagne Piña Colada",
             description: "A decadent blend of tropical flavors and sparkling wine.",
@@ -68,107 +77,106 @@ export default function MenuScreen() {
         }
     ];
 
-    return (
-        <ParallaxScrollView
-            headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-            headerImage={
-                <IconSymbol
-                    size={310}
-                    color="#808080"
-                    name="list.bullet"
-                    style={styles.headerImage}
-                />
-            }>
-            <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Caretaker's Cottage</ThemedText>
-            </ThemedView>
-            <ThemedText style={styles.subtitle}>Melbourne • Established 2022</ThemedText>
+    // Placeholder image if require fails or just for safety in this environment
+    const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1556679343-c7306c1976bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80";
 
-            <View style={styles.menuContainer}>
-                {menuItems.map((item, index) => (
-                    <ThemedView key={index} style={styles.menuItem}>
-                        <View style={styles.itemContent}>
-                            <View style={styles.textContainer}>
-                                <View style={styles.menuHeader}>
-                                    <ThemedText type="subtitle">{item.name}</ThemedText>
-                                    <ThemedText style={styles.price}>{item.price}</ThemedText>
-                                </View>
-                                <ThemedText style={styles.description}>{item.description}</ThemedText>
-                                <ThemedText style={styles.ingredients}>{item.ingredients}</ThemedText>
+    return (
+        <ThemedView style={styles.container}>
+            <GlassView style={styles.header} intensity={80}>
+                <ThemedText type="title" style={styles.title}>Menu</ThemedText>
+                <ThemedText style={styles.subtitle}>Current Selections</ThemedText>
+            </GlassView>
+
+            <FlatList
+                data={menuItems}
+                keyExtractor={(item) => item.name}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => (
+                    <GlassView style={styles.menuItem} intensity={40}>
+                        <Image
+                            source={item.image}
+                            // Fallback to uri if local asset missing (logic not here, but just fyi)
+                            // For now using what was there.
+                            style={styles.image}
+                        />
+                        <View style={styles.details}>
+                            <View style={styles.row}>
+                                <ThemedText type="subtitle" style={styles.name}>{item.name}</ThemedText>
+                                <ThemedText style={styles.price}>{item.price}</ThemedText>
                             </View>
-                            <Image source={item.image} style={styles.cocktailImage} />
+                            <ThemedText style={styles.description}>{item.description}</ThemedText>
+                            <ThemedText style={styles.ingredients}>{item.ingredients}</ThemedText>
                         </View>
-                        {index < menuItems.length - 1 && <View style={[styles.separator, { backgroundColor: Colors[colorScheme ?? 'light'].icon }]} />}
-                    </ThemedView>
-                ))}
-            </View>
-        </ParallaxScrollView>
+                    </GlassView>
+                )}
+            />
+        </ThemedView>
     );
 }
 
 const styles = StyleSheet.create({
-    headerImage: {
-        color: '#808080',
-        bottom: -90,
-        left: -35,
-        position: 'absolute',
+    container: {
+        flex: 1,
+        backgroundColor: Colors.dark.background,
     },
-    titleContainer: {
-        flexDirection: 'row',
-        gap: 8,
+    header: {
+        paddingTop: 60,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        marginBottom: 10
+    },
+    title: {
+        fontSize: 34,
+        color: Colors.dark.text
     },
     subtitle: {
-        fontSize: 16,
-        opacity: 0.7,
-        marginBottom: 16,
+        color: Colors.dark.icon,
+        fontSize: 16
     },
-    menuContainer: {
-        gap: 24,
+    listContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 120,
+        gap: 15
     },
     menuItem: {
-        gap: 16,
+        flexDirection: "row",
+        padding: 12,
+        borderRadius: 20,
+        gap: 12,
+        alignItems: "center"
     },
-    itemContent: {
-        flexDirection: 'row',
-        gap: 16,
-        alignItems: 'flex-start',
-    },
-    textContainer: {
-        flex: 1,
-        gap: 4,
-    },
-    cocktailImage: {
+    image: {
         width: 80,
         height: 80,
-        borderRadius: 8,
-        backgroundColor: '#ccc',
+        borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.1)"
     },
-    menuHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 4,
+    details: {
+        flex: 1,
+        gap: 4
+    },
+    row: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center"
+    },
+    name: {
+        fontSize: 18,
+        flex: 1
     },
     price: {
         fontSize: 16,
-        fontWeight: '600',
-        opacity: 0.8,
+        fontWeight: "bold",
+        color: Colors.dark.tint
     },
     description: {
         fontSize: 14,
-        lineHeight: 20,
-        marginBottom: 4,
+        color: Colors.dark.text,
+        opacity: 0.9
     },
     ingredients: {
         fontSize: 12,
-        opacity: 0.6,
-        fontStyle: 'italic',
-    },
-    separator: {
-        height: StyleSheet.hairlineWidth,
-        width: '100%',
-        marginTop: 8,
-        marginBottom: 0,
-        opacity: 0.3,
-    },
+        color: Colors.dark.icon,
+        fontStyle: "italic"
+    }
 });

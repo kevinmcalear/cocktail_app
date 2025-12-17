@@ -5,26 +5,36 @@
 
 import { Platform } from "react-native";
 
-// Orange and earth tone inspired colors
-const tintColorLight = "#E67E22"; // Vibrant orange
-const tintColorDark = "#F39C12"; // Golden orange
+// Caretaker's Cottage Inspired Palette
+const bluestone = "#1A2228"; // Deep, cool charcoal/blue background
+const paisleyGreen = "#1E362D"; // Deep forest/paisley green
+const tasmanianOak = "#C19A6B"; // Warm golden wood tone
+const warmLight = "#FDF6E3"; // Soft creamy light
+const glassBorder = "rgba(255, 255, 255, 0.1)";
 
 export const Colors = {
   light: {
-    text: "#2C3E50", // Dark blue-gray
-    background: "#FDF2E9", // Warm orange-tinted cream
-    tint: tintColorLight,
-    icon: "#D35400", // Dark orange
-    tabIconDefault: "#E67E22", // Vibrant orange
-    tabIconSelected: tintColorLight,
+    text: bluestone,
+    background: warmLight,
+    tint: tasmanianOak,
+    icon: "#687076",
+    tabIconDefault: "#687076",
+    tabIconSelected: tasmanianOak,
   },
   dark: {
-    text: "#FDF2E9", // Warm cream
-    background: "#1A1A1A", // Dark charcoal
-    tint: tintColorDark,
-    icon: "#F39C12", // Golden orange
-    tabIconDefault: "#F39C12", // Golden orange
-    tabIconSelected: tintColorDark,
+    text: "#ECEDEE",
+    background: bluestone, // Main background
+    surface: paisleyGreen, // Secondary background for cards etc (if opaque)
+    tint: tasmanianOak,
+    icon: "#9BA1A6",
+    tabIconDefault: "#9BA1A6",
+    tabIconSelected: tasmanianOak,
+    glass: {
+      background: "rgba(26, 34, 40, 0.7)", // Bluestone with transparency
+      border: glassBorder,
+      text: "#ECEDEE",
+      blurIntensity: 80,
+    }
   },
 };
 
