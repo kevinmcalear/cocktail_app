@@ -6,9 +6,12 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/ctx/AuthContext";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Dimensions, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -25,6 +28,20 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      {/* Background Image with Fade */}
+      <View style={styles.backgroundContainer}>
+        <Image
+          source={require("@/assets/images/caretakers-bar-bg.jpg")}
+          style={styles.backgroundImage}
+          contentFit="cover"
+        />
+        <LinearGradient
+          colors={['transparent', Colors.dark.background]}
+          style={styles.backgroundGradient}
+          locations={[0.4, 1.0]}
+        />
+      </View>
+
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           {/* Title as Button (though already home) */}
@@ -89,8 +106,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 500, // Adjust height as needed
+    zIndex: 0,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.6, // Adjust opacity to blend better
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   safeArea: {
     flex: 1,
+    zIndex: 1, // Ensure content is above background
   },
   header: {
     flexDirection: "row",
@@ -103,6 +141,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     lineHeight: 40,
+    // Add text shadow for better visibility over image
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   avatar: {
     width: 44,

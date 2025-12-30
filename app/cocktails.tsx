@@ -6,7 +6,7 @@ import { Colors } from "@/constants/theme";
 import { cocktails } from "@/data/cocktails";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CocktailsScreen() {
