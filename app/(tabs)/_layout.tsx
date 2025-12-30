@@ -20,6 +20,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
+          tabBarStyle: { display: "none" }, // Attempt to hide
           tabBarIcon: ({ color, focused }) => (
             <Text style={{
               color,

@@ -15,6 +15,15 @@ export function LiquidTabBar({
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? Colors.dark : Colors.light;
 
+    // Check if the current tab should be hidden
+    const currentRouteKey = state.routes[state.index].key;
+    const currentOptions = descriptors[currentRouteKey].options;
+    // Cast to any to access display properly if types are strict
+    const tabBarStyle = currentOptions.tabBarStyle as any;
+    if (tabBarStyle?.display === "none") {
+        return null;
+    }
+
     return (
         <View style={styles.container}>
             <GlassView style={styles.tabBar} intensity={80}>
