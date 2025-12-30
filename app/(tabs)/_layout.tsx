@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
+import { Text } from "react-native";
 
 import { LiquidTabBar } from "@/components/LiquidTabBar";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -21,7 +21,14 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? "house.fill" : "house"} color={color} />
+            <Text style={{
+              color,
+              fontSize: 14,
+              fontWeight: "bold",
+              letterSpacing: 1
+            }}>
+              CLASSICS
+            </Text>
           ),
         }}
       />
@@ -31,7 +38,33 @@ export default function TabLayout() {
         options={{
           title: "Menu",
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? "list.bullet" : "list.bullet"} color={color} />
+            <Text style={{
+              color,
+              fontSize: 14,
+              fontWeight: "bold",
+              letterSpacing: 1
+            }}>
+              CURRENT
+            </Text>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: "Explore",
+          tabBarIcon: ({ color, focused }) => (
+            <Text style={{
+              color,
+              fontSize: 14,
+              fontWeight: "bold",
+              letterSpacing: 1,
+              textAlign: "center", // Add textAlign center for multi-word
+              width: 150 // fixed width to prevent wrapping issues if needed, or let flex handle it
+            }}>
+              PREVIOUS{"\n"}MENUS
+            </Text>
           ),
         }}
       />
