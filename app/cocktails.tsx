@@ -13,14 +13,7 @@ export default function CocktailsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
-    // Standardizing the filter buttons similar to other screens
-    const [filter, setFilter] = useState<"Current" | "Future" | "Previous">("Current");
 
-    // Filtering logic: 
-    // 1. Search query
-    // 2. Status filter - Since our cocktail data doesn't have "status" yet, we'll assume all are "Current" for now
-    //    or just ignore it to mimic valid functionality for the demo, OR assume all are "Current". 
-    //    Let's filter by search query primarily.
 
     const filteredCocktails = cocktails.filter((cocktail) =>
         cocktail.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -122,20 +115,7 @@ export default function CocktailsScreen() {
                 ]}
                 pointerEvents="box-none"
             >
-                {/* Filter Tabs */}
-                <GlassView style={styles.filterTabs} intensity={70}>
-                    {(["Current", "Future", "Previous"] as const).map((tab) => (
-                        <TouchableOpacity
-                            key={tab}
-                            style={[styles.tabButton, filter === tab && styles.activeTabObject]}
-                            onPress={() => setFilter(tab)}
-                        >
-                            <ThemedText style={[styles.tabText, filter === tab && styles.activeTabText]}>
-                                {tab.toUpperCase()}
-                            </ThemedText>
-                        </TouchableOpacity>
-                    ))}
-                </GlassView>
+
 
                 {/* Search Bar */}
                 <BottomSearchBar
@@ -190,32 +170,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         gap: 15,
     },
-    filterTabs: {
-        flexDirection: "row",
-        justifyContent: "space-evenly",
-        borderRadius: 30, // Rounded pill shape
-        padding: 5,
-    },
+
     searchBar: {
         // search bar styles managed by component + container padding
     },
-    tabButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 25,
-        flex: 1, // Distribute evenly
-        alignItems: 'center',
-    },
-    activeTabObject: {
-        backgroundColor: "rgba(255,255,255,0.1)",
-    },
-    tabText: {
-        fontSize: 12, // Slightly smaller to fit
-        fontWeight: "bold",
-        letterSpacing: 1,
-        color: Colors.dark.icon,
-    },
-    activeTabText: {
-        color: Colors.dark.tint,
-    },
+
 });
