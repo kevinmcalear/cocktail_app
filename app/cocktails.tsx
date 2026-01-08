@@ -3,17 +3,75 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
-import { cocktails } from "@/data/cocktails";
+import { supabase } from "@/lib/supabase";
+import { DatabaseCocktail } from "@/types/types";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Animated, Easing, FlatList, Image, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CocktailsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
+    const [cocktails, setCocktails] = useState<DatabaseCocktail[]>([]);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        fetchCocktails();
+    }, []);
+
+    const fetchCocktails = async () => {
+        console.log("Fetching cocktails from Supabase...");
+        try {
+            const { data, error } = await supabase
+                .from('cocktails')
+                .select(`
+                    *,
+                    recipes (
+                        id,
+                        ingredient_ml,
+                        ingredient_dash,
+                        ingredient_amount,
+                        ingredients (
+                            name
+                        )
+                    ),
+                    methods ( name ),
+                    glassware ( name ),
+                    families ( name )
+                `);
+
+            if (error) {
+                console.error('Error fetching cocktails:', error);
+            }
+
+            if (data) {
+                console.log(`Fetched ${data.length} cocktails from Supabase.`);
+                // console.log("Cocktail data:", JSON.stringify(data, null, 2));
+                setCocktails(data);
+            } else {
+                console.log("No data returned from Supabase.");
+            }
+        } catch (error) {
+            console.error('Error fetching cocktails:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatIngredient = (recipe: any) => {
+        const parts = [];
+        if (recipe.ingredient_ml) parts.push(`${recipe.ingredient_ml}ml`);
+        if (recipe.ingredient_dash) parts.push(`${recipe.ingredient_dash} dash${recipe.ingredient_dash > 1 ? 'es' : ''}`);
+        if (recipe.ingredient_amount) parts.push(`${recipe.ingredient_amount}`);
+
+        if (recipe.ingredients && recipe.ingredients.name) {
+            parts.push(recipe.ingredients.name);
+        }
+
+        return parts.join(' ');
+    };
 
     const filteredCocktails = cocktails.filter((cocktail) =>
         cocktail.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,10 +110,8 @@ export default function CocktailsScreen() {
         };
     }, [insets.bottom, translateY]);
 
-    const handleCocktailPress = (cocktail: any) => {
-        // Implement navigation or other action when a cocktail is pressed
-        console.log("Cocktail pressed:", cocktail.name);
-        // Example: router.push(`/cocktail/${cocktail.id}`);
+    const handleCocktailPress = (cocktail: DatabaseCocktail) => {
+        router.push(`/cocktail/${cocktail.id}`);
     };
 
     return (
@@ -90,14 +146,17 @@ export default function CocktailsScreen() {
                     renderItem={({ item }) => (
                         <GlassView style={styles.itemCard} intensity={40}>
                             <TouchableOpacity
-                                style={styles.itemContent}
+                                style={styles.cardContainer}
                                 onPress={() => handleCocktailPress(item)}
                             >
-                                <View style={styles.row}>
-                                    <ThemedText type="subtitle" style={styles.itemName}>{item.name}</ThemedText>
-                                    <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
+                                <Image
+                                    source={require('@/assets/images/cocktails/house_martini.png')}
+                                    style={styles.cardImage}
+                                    resizeMode="cover"
+                                />
+                                <View style={styles.cardFooter}>
+                                    <ThemedText type="subtitle" style={styles.cardTitle}>{item.name}</ThemedText>
                                 </View>
-                                <ThemedText style={styles.itemDescription}>{item.description}</ThemedText>
                             </TouchableOpacity>
                         </GlassView>
                     )}
@@ -171,8 +230,27 @@ const styles = StyleSheet.create({
         gap: 15,
     },
 
+    itemCard: {
+        borderRadius: 20,
+        overflow: 'hidden',
+        marginBottom: 8,
+    },
+    cardContainer: {
+        // Container behavior
+    },
+    cardImage: {
+        width: '100%',
+        height: 250,
+    },
+    cardFooter: {
+        padding: 16,
+    },
+    cardTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
     searchBar: {
         // search bar styles managed by component + container padding
     },
-
 });

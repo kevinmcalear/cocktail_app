@@ -3,16 +3,82 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { cocktails } from "@/data/cocktails";
-import { Image } from "expo-image";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, View } from "react-native";
-
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80";
+import { supabase } from "@/lib/supabase";
+import { DatabaseCocktail } from "@/types/types";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
-    const cocktail = cocktails.find((c) => c.id === id);
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const [cocktail, setCocktail] = useState<DatabaseCocktail | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (id) {
+            fetchCocktailDetails();
+        }
+    }, [id]);
+
+    const fetchCocktailDetails = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('cocktails')
+                .select(`
+                    *,
+                    recipes (
+                        id,
+                        ingredient_ml,
+                        ingredient_dash,
+                        ingredient_amount,
+                        ingredients (
+                            name
+                        )
+                    ),
+                    methods ( name ),
+                    glassware ( name ),
+                    families ( name )
+                `)
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                console.error('Error fetching cocktail details:', error);
+            }
+
+            if (data) {
+                setCocktail(data);
+            }
+        } catch (error) {
+            console.error('Error fetching cocktail details:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatIngredient = (recipe: any) => {
+        const parts = [];
+        if (recipe.ingredient_ml) parts.push(`${recipe.ingredient_ml}ml`);
+        if (recipe.ingredient_dash) parts.push(`${recipe.ingredient_dash} dash${recipe.ingredient_dash > 1 ? 'es' : ''}`);
+        if (recipe.ingredient_amount) parts.push(`${recipe.ingredient_amount}`);
+
+        if (recipe.ingredients && recipe.ingredients.name) {
+            parts.push(recipe.ingredients.name);
+        }
+
+        return parts.join(' ');
+    };
+
+    if (loading) {
+        return (
+            <ThemedView style={styles.container}>
+                <ThemedText>Loading...</ThemedText>
+            </ThemedView>
+        );
+    }
 
     if (!cocktail) {
         return (
@@ -24,38 +90,41 @@ export default function CocktailDetailsScreen() {
 
     return (
         <ThemedView style={styles.container}>
-            <Stack.Screen options={{
-                headerShown: true,
-                headerTransparent: true,
-                headerTitle: "",
-                headerTintColor: Colors.dark.tint,
-                headerBackTitleVisible: false,
-                headerStyle: {
-                    backgroundColor: "transparent"
-                }
-            }} />
+            <Stack.Screen options={{ headerShown: false }} />
 
             <Image
-                source={DEFAULT_IMAGE}
+                source={require('@/assets/images/cocktails/house_martini.png')}
                 style={styles.heroImage}
-                contentFit="cover"
+                resizeMode="cover"
             />
+
+            {/* Custom Back Button */}
+            <TouchableOpacity
+                style={[styles.backButton, { top: insets.top + 10 }]}
+                onPress={() => router.back()}
+            >
+                <GlassView intensity={50} style={styles.backButtonGlass}>
+                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                </GlassView>
+            </TouchableOpacity>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.spacer} />
                 <GlassView style={styles.contentContainer} intensity={90}>
                     <View style={styles.header}>
                         <ThemedText type="title" style={styles.title}>{cocktail.name}</ThemedText>
+
+                        {/* Metadata Badges */}
                         <View style={styles.badges}>
-                            <GlassView style={styles.badge} intensity={30}>
-                                <ThemedText style={styles.badgeText}>{cocktail.category}</ThemedText>
-                            </GlassView>
-                            <GlassView style={styles.badge} intensity={30}>
-                                <ThemedText style={styles.badgeText}>{cocktail.difficulty}</ThemedText>
-                            </GlassView>
-                            <GlassView style={styles.badge} intensity={30}>
-                                <ThemedText style={styles.badgeText}>{cocktail.prepTime}</ThemedText>
-                            </GlassView>
+                            {[
+                                cocktail.methods?.name,
+                                cocktail.glassware?.name,
+                                cocktail.families?.name
+                            ].filter(Boolean).map((badge, index) => (
+                                <GlassView key={index} style={styles.badge} intensity={30}>
+                                    <ThemedText style={styles.badgeText}>{badge}</ThemedText>
+                                </GlassView>
+                            ))}
                         </View>
                     </View>
 
@@ -64,22 +133,55 @@ export default function CocktailDetailsScreen() {
                         <ThemedText style={styles.text}>{cocktail.description}</ThemedText>
                     </View>
 
+                    {cocktail.recipes && cocktail.recipes.length > 0 && (
+                        <View style={styles.section}>
+                            <ThemedText type="subtitle" style={styles.sectionTitle}>Ingredients</ThemedText>
+                            <View style={styles.ingredientsList}>
+                                {cocktail.recipes.map((recipe, index) => (
+                                    <View key={index} style={styles.ingredientRow}>
+                                        <IconSymbol name="circle.fill" size={6} color={Colors.dark.tint} />
+                                        <ThemedText style={styles.text}>{formatIngredient(recipe)}</ThemedText>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Additional Details */}
                     <View style={styles.section}>
-                        <ThemedText type="subtitle" style={styles.sectionTitle}>Ingredients</ThemedText>
-                        <View style={styles.ingredientsList}>
-                            {cocktail.ingredients.map((ingredient, index) => (
-                                <View key={index} style={styles.ingredientRow}>
-                                    <IconSymbol name="circle.fill" size={6} color={Colors.dark.tint} />
-                                    <ThemedText style={styles.text}>{ingredient}</ThemedText>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>Details</ThemedText>
+                        <View style={styles.detailsList}>
+                            {/* Garnish */}
+                            {cocktail.garnish && (
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Garnish:</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{cocktail.garnish}</ThemedText>
                                 </View>
-                            ))}
+                            )}
+                            {/* Origin */}
+                            {cocktail.origin && (
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Origin:</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{cocktail.origin}</ThemedText>
+                                </View>
+                            )}
+                            {/* Notes */}
+                            {cocktail.notes && (
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Notes:</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{cocktail.notes}</ThemedText>
+                                </View>
+                            )}
+                            {/* Spec */}
+                            {cocktail.spec && (
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Spec:</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{cocktail.spec}</ThemedText>
+                                </View>
+                            )}
                         </View>
                     </View>
 
-                    <View style={styles.section}>
-                        <ThemedText type="subtitle" style={styles.sectionTitle}>Instructions</ThemedText>
-                        <ThemedText style={styles.text}>{cocktail.instructions}</ThemedText>
-                    </View>
                 </GlassView>
             </ScrollView>
         </ThemedView>
@@ -157,5 +259,36 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 10
-    }
+    },
+    detailsList: {
+        gap: 8
+    },
+    detailRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    detailLabel: {
+        fontWeight: 'bold',
+        color: Colors.dark.text,
+        fontSize: 16,
+    },
+    detailValue: {
+        color: Colors.dark.text,
+        fontSize: 16,
+        flex: 1,
+        opacity: 0.9
+    },
+    backButton: {
+        position: 'absolute',
+        left: 20,
+        zIndex: 10,
+    },
+    backButtonGlass: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden'
+    },
 });
