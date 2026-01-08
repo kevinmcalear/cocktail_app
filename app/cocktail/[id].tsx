@@ -1,3 +1,4 @@
+import { ImageCarousel } from "@/components/ImageCarousel";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
@@ -7,22 +8,76 @@ import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import Animated, {
+    Extrapolation,
+    interpolate,
+    useAnimatedRef,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { height: windowHeight } = useWindowDimensions();
+
+    // -- HOOKS --
     const [cocktail, setCocktail] = useState<DatabaseCocktail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [hasScrolledToInitial, setHasScrolledToInitial] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    // Reanimated Hooks
+    const scrollY = useSharedValue(0);
+    const scrollRef = useAnimatedRef<Animated.ScrollView>();
+
+    const scrollHandler = useAnimatedScrollHandler((event) => {
+        scrollY.value = event.contentOffset.y;
+    });
+
+    // -- LAYOUT CONSTANTS --
+    // These must be calculated before useAnimatedStyle if used therein
+    const LOCKED_HEADER_HEIGHT = 100; // Minimal height for title bar when locked
+    const spacerHeight = windowHeight - LOCKED_HEADER_HEIGHT - insets.bottom;
+
+    // Initial Scroll: Show 40% Image, 60% Content.
+    const initialScrollOffset = Math.max(0, spacerHeight - (windowHeight * 0.4));
+
+    // -- ANIMATED STYLES --
+    const imageStyle = useAnimatedStyle(() => {
+        // Animate 'top' property:
+        // - At scroll 0 (Expanded/Locked Bottom): top = 0 (Behind Status Bar)
+        // - At scroll initialScrollOffset (Reading): top = insets.top (Below Status Bar)
+        const top = interpolate(
+            scrollY.value,
+            [0, initialScrollOffset],
+            [0, insets.top],
+            Extrapolation.CLAMP
+        );
+
+        return {
+            top: top,
+            // Height matches the visible space above the card content.
+            // visualTop = top
+            // visualBottom = spacerHeight - scrollY
+            // height = visualBottom - visualTop
+            height: Math.max(0, spacerHeight - scrollY.value - top),
+        };
+    });
+
+    // -- EFFECTS --
     useEffect(() => {
         if (id) {
             fetchCocktailDetails();
         }
     }, [id]);
 
+    // -- FUNCTIONS --
     const fetchCocktailDetails = async () => {
         try {
             const { data, error } = await supabase
@@ -44,10 +99,6 @@ export default function CocktailDetailsScreen() {
                 `)
                 .eq('id', id)
                 .single();
-
-            if (error) {
-                console.error('Error fetching cocktail details:', error);
-            }
 
             if (data) {
                 setCocktail(data);
@@ -72,6 +123,14 @@ export default function CocktailDetailsScreen() {
         return parts.join(' ');
     };
 
+    const handleLayout = () => {
+        if (!hasScrolledToInitial && scrollRef.current) {
+            scrollRef.current.scrollTo({ y: initialScrollOffset, animated: false });
+            setHasScrolledToInitial(true);
+        }
+    };
+
+    // -- RENDER CHECKS --
     if (loading) {
         return (
             <ThemedView style={styles.container}>
@@ -88,15 +147,30 @@ export default function CocktailDetailsScreen() {
         );
     }
 
-    return (
-        <ThemedView style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
+    // -- PREPARE ASSETS --
+    const mainImage = cocktail.image || require('@/assets/images/cocktails/house_martini.png');
+    const images = [
+        mainImage,
+        require('@/assets/images/cocktails/house_martini.png'),
+    ];
 
-            <Image
-                source={require('@/assets/images/cocktails/house_martini.png')}
-                style={styles.heroImage}
-                resizeMode="cover"
-            />
+    // -- RENDER --
+    return (
+        <View style={styles.container}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <StatusBar barStyle="light-content" />
+
+            {/* Animated Background Carousel */}
+            <Animated.View style={[styles.imageContainer, imageStyle]}>
+                <ImageCarousel
+                    images={images}
+                    initialIndex={currentImageIndex}
+                    onIndexChange={setCurrentImageIndex}
+                    onImagePress={() => setModalVisible(true)}
+                    style={{ flex: 1 }}
+                    scrollEnabled={false} // Disable horizontal swipe on background
+                />
+            </Animated.View>
 
             {/* Custom Back Button */}
             <TouchableOpacity
@@ -108,13 +182,30 @@ export default function CocktailDetailsScreen() {
                 </GlassView>
             </TouchableOpacity>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.spacer} />
-                <GlassView style={styles.contentContainer} intensity={90}>
+            {/* Foreground Content */}
+            <Animated.ScrollView
+                ref={scrollRef}
+                contentContainerStyle={styles.scrollContent}
+                pointerEvents="box-none"
+                showsVerticalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToOffsets={[0, initialScrollOffset]}
+                snapToEnd={false}
+                scrollEventThrottle={16}
+                onScroll={scrollHandler}
+                onLayout={handleLayout}
+            >
+                {/* Transparent Spacer */}
+                <View style={{ height: spacerHeight }} pointerEvents="none" />
+
+                <GlassView style={[styles.contentContainer, { minHeight: windowHeight * 0.8 }]} intensity={95}>
+                    <View style={styles.dragHandleContainer}>
+                        <View style={styles.dragHandle} />
+                    </View>
+
                     <View style={styles.header}>
                         <ThemedText type="title" style={styles.title}>{cocktail.name}</ThemedText>
 
-                        {/* Metadata Badges */}
                         <View style={styles.badges}>
                             {[
                                 cocktail.methods?.name,
@@ -147,32 +238,27 @@ export default function CocktailDetailsScreen() {
                         </View>
                     )}
 
-                    {/* Additional Details */}
                     <View style={styles.section}>
                         <ThemedText type="subtitle" style={styles.sectionTitle}>Details</ThemedText>
                         <View style={styles.detailsList}>
-                            {/* Garnish */}
                             {cocktail.garnish && (
                                 <View style={styles.detailRow}>
                                     <ThemedText style={styles.detailLabel}>Garnish:</ThemedText>
                                     <ThemedText style={styles.detailValue}>{cocktail.garnish}</ThemedText>
                                 </View>
                             )}
-                            {/* Origin */}
                             {cocktail.origin && (
                                 <View style={styles.detailRow}>
                                     <ThemedText style={styles.detailLabel}>Origin:</ThemedText>
                                     <ThemedText style={styles.detailValue}>{cocktail.origin}</ThemedText>
                                 </View>
                             )}
-                            {/* Notes */}
                             {cocktail.notes && (
                                 <View style={styles.detailRow}>
                                     <ThemedText style={styles.detailLabel}>Notes:</ThemedText>
                                     <ThemedText style={styles.detailValue}>{cocktail.notes}</ThemedText>
                                 </View>
                             )}
-                            {/* Spec */}
                             {cocktail.spec && (
                                 <View style={styles.detailRow}>
                                     <ThemedText style={styles.detailLabel}>Spec:</ThemedText>
@@ -182,9 +268,45 @@ export default function CocktailDetailsScreen() {
                         </View>
                     </View>
 
+                    <View style={{ height: insets.bottom + 50 }} />
+
                 </GlassView>
-            </ScrollView>
-        </ThemedView>
+            </Animated.ScrollView>
+
+            {/* Lightbox Modal */}
+            <Modal
+                visible={modalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <TouchableOpacity
+                        style={styles.modalCloseArea}
+                        activeOpacity={1}
+                        onPress={() => setModalVisible(false)}
+                    />
+
+                    <View style={styles.modalContent}>
+                        <ImageCarousel
+                            images={images}
+                            initialIndex={currentImageIndex}
+                            onIndexChange={setCurrentImageIndex}
+                            onImagePress={() => setModalVisible(false)}
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.closeButton, { top: insets.top + 10 }]}
+                        onPress={() => setModalVisible(false)}
+                    >
+                        <GlassView intensity={50} style={styles.backButtonGlass}>
+                            <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
+                        </GlassView>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+        </View>
     );
 }
 
@@ -193,26 +315,40 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.dark.background,
     },
-    heroImage: {
-        width: "100%",
-        height: "60%",
-        position: "absolute",
-        top: 0,
+    imageContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        zIndex: 0,
     },
     scrollContent: {
         flexGrow: 1,
-    },
-    spacer: {
-        height: 350, // Push content down to reveal image
     },
     contentContainer: {
         flex: 1,
         borderTopLeftRadius: 40,
         borderTopRightRadius: 40,
         padding: 24,
-        paddingBottom: 50,
-        minHeight: 500,
-        gap: 24
+        gap: 24,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -10,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
+        backgroundColor: Colors.dark.background,
+    },
+    dragHandleContainer: {
+        alignItems: 'center',
+        paddingBottom: 10,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        borderRadius: 2,
     },
     header: {
         gap: 12,
@@ -291,4 +427,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         overflow: 'hidden'
     },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+    },
+    modalCloseArea: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 0
+    },
+    modalContent: {
+        flex: 1,
+        justifyContent: 'center',
+        zIndex: 1,
+        pointerEvents: 'box-none'
+    },
+    closeButton: {
+        position: 'absolute',
+        right: 20,
+        zIndex: 10,
+    }
 });
