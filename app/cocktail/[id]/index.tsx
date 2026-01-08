@@ -182,6 +182,16 @@ export default function CocktailDetailsScreen() {
                 </GlassView>
             </TouchableOpacity>
 
+            {/* Edit Button */}
+            <TouchableOpacity
+                style={[styles.editButton, { top: insets.top + 10 }]}
+                onPress={() => router.push(`/cocktail/${id}/edit`)}
+            >
+                <GlassView intensity={50} style={styles.backButtonGlass}>
+                    <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
+                </GlassView>
+            </TouchableOpacity>
+
             {/* Foreground Content */}
             <Animated.ScrollView
                 ref={scrollRef}
@@ -442,6 +452,11 @@ const styles = StyleSheet.create({
         pointerEvents: 'box-none'
     },
     closeButton: {
+        position: 'absolute',
+        right: 20,
+        zIndex: 10,
+    },
+    editButton: {
         position: 'absolute',
         right: 20,
         zIndex: 10,
