@@ -9,6 +9,7 @@ import { DatabaseCocktail } from "@/types/types";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
     Extrapolation,
     interpolate,
@@ -61,7 +62,7 @@ export default function CocktailDetailsScreen() {
         );
 
         return {
-            top: top,
+            transform: [{ translateY: scrollY.value + top }],
             // Height matches the visible space above the card content.
             // visualTop = top
             // visualBottom = spacerHeight - scrollY
@@ -166,18 +167,6 @@ export default function CocktailDetailsScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="light-content" />
 
-            {/* Animated Background Carousel */}
-            <Animated.View style={[styles.imageContainer, imageStyle]}>
-                <ImageCarousel
-                    images={images}
-                    initialIndex={currentImageIndex}
-                    onIndexChange={setCurrentImageIndex}
-                    onImagePress={() => setModalVisible(true)}
-                    style={{ flex: 1 }}
-                    scrollEnabled={false} // Disable horizontal swipe on background
-                />
-            </Animated.View>
-
             {/* Custom Back Button */}
             <TouchableOpacity
                 style={[styles.backButton, { top: insets.top + 10 }]}
@@ -211,8 +200,18 @@ export default function CocktailDetailsScreen() {
                 onScroll={scrollHandler}
                 onLayout={handleLayout}
             >
-                {/* Transparent Spacer */}
-                <View style={{ height: spacerHeight }} pointerEvents="none" />
+                {/* Image Carousel (Parallax) */}
+                <View style={{ height: spacerHeight, overflow: 'visible' }}>
+                    <Animated.View style={[{ width: '100%', position: 'absolute' }, imageStyle]}>
+                        <ImageCarousel
+                            images={images}
+                            initialIndex={currentImageIndex}
+                            onIndexChange={setCurrentImageIndex}
+                            onImagePress={() => setModalVisible(true)}
+                            style={{ flex: 1 }}
+                        />
+                    </Animated.View>
+                </View>
 
                 <GlassView style={[styles.contentContainer, { minHeight: windowHeight * 0.8 }]} intensity={95}>
                     <View style={styles.dragHandleContainer}>
@@ -296,31 +295,35 @@ export default function CocktailDetailsScreen() {
                 animationType="fade"
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
-                    <TouchableOpacity
-                        style={styles.modalCloseArea}
-                        activeOpacity={1}
-                        onPress={() => setModalVisible(false)}
-                    />
-
-                    <View style={styles.modalContent}>
-                        <ImageCarousel
-                            images={images}
-                            initialIndex={currentImageIndex}
-                            onIndexChange={setCurrentImageIndex}
-                            onImagePress={() => setModalVisible(false)}
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                    <View style={styles.modalContainer}>
+                        <TouchableOpacity
+                            style={styles.modalCloseArea}
+                            activeOpacity={1}
+                            onPress={() => setModalVisible(false)}
                         />
-                    </View>
 
-                    <TouchableOpacity
-                        style={[styles.closeButton, { top: insets.top + 10 }]}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <GlassView intensity={50} style={styles.backButtonGlass}>
-                            <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
-                        </GlassView>
-                    </TouchableOpacity>
-                </View>
+                        <View style={styles.modalContent}>
+                            <ImageCarousel
+                                images={images}
+                                initialIndex={currentImageIndex}
+                                onIndexChange={setCurrentImageIndex}
+                                onImagePress={() => setModalVisible(false)}
+                                zoomEnabled={true}
+                                style={{ flex: 1 }}
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.closeButton, { top: insets.top + 10 }]}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <GlassView intensity={50} style={styles.backButtonGlass}>
+                                <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
+                            </GlassView>
+                        </TouchableOpacity>
+                    </View>
+                </GestureHandlerRootView>
             </Modal>
         </View>
     );
