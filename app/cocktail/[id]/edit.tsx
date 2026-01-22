@@ -1,6 +1,6 @@
+import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
-import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -70,6 +70,7 @@ export default function EditCocktailScreen() {
 
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
+
     useEffect(() => {
         if (id) {
             fetchData();
@@ -99,6 +100,7 @@ export default function EditCocktailScreen() {
                 .select(`
                     *,
                     cocktail_images (
+                        sort_order,
                         images (
                             id,
                             url
@@ -113,6 +115,7 @@ export default function EditCocktailScreen() {
                         ingredients ( name )
                     )
                 `)
+
                 .eq('id', id)
                 .single();
 
@@ -133,7 +136,8 @@ export default function EditCocktailScreen() {
 
                 // Populate existing images
                 if (c.cocktail_images) {
-                    const fetchedImages = c.cocktail_images.map((ci: any) => ({
+                    const sortedImages = c.cocktail_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+                    const fetchedImages = sortedImages.map((ci: any) => ({
                         id: ci.images.id,
                         url: ci.images.url,
                         isNew: false
@@ -186,18 +190,7 @@ export default function EditCocktailScreen() {
         }
     };
 
-    const processNewImages = async () => {
-        const newImgs = localImages.filter(i => i.isNew);
-        if (newImgs.length === 0) return true;
-
-        for (const img of newImgs) {
-            const success = await uploadAndLinkImage(img.url);
-            if (!success) return false;
-        }
-        return true;
-    };
-
-    const uploadAndLinkImage = async (uri: string): Promise<boolean> => {
+    const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
         try {
             const ext = uri.substring(uri.lastIndexOf('.') + 1);
             const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
@@ -211,7 +204,7 @@ export default function EditCocktailScreen() {
             const arrayBuffer = decode(base64);
 
             // 1. Upload to Storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, arrayBuffer, {
                     contentType: `image/${ext}`,
@@ -220,7 +213,7 @@ export default function EditCocktailScreen() {
 
             if (uploadError) {
                 console.error("Storage upload error:", uploadError);
-                return false;
+                return null;
             }
 
             const { data: publicUrlData } = supabase.storage
@@ -238,27 +231,15 @@ export default function EditCocktailScreen() {
 
             if (imgError || !imgData) {
                 console.error("Image record creation error:", imgError);
-                return false;
+                return null;
             }
 
-            // 3. Link in 'cocktail_images'
-            const { error: linkError } = await supabase
-                .from('cocktail_images')
-                .insert({
-                    cocktail_id: id,
-                    image_id: imgData.id
-                });
-
-            if (linkError) {
-                console.error("Link creation error:", linkError);
-                return false;
-            }
-
-            return true;
+            // Return the new image ID (linking happens in batch later)
+            return imgData.id;
 
         } catch (error) {
             console.error("Image upload flow exception:", error);
-            return false;
+            return null;
         }
     };
 
@@ -270,12 +251,47 @@ export default function EditCocktailScreen() {
 
         setSaving(true);
         try {
-            // Process images first
-            const imagesSuccess = await processNewImages();
-            if (!imagesSuccess) {
-                Alert.alert("Error", "Failed to upload some images. Please try again.");
-                setSaving(false);
-                return;
+            // 1. Handle Images (Upload new, then Sync links)
+            const finalImageIds: string[] = [];
+            
+            for (const img of localImages) {
+                if (img.isNew) {
+                    const newId = await uploadAndLinkImage(img.url);
+                    if (!newId) throw new Error("Failed to upload image");
+                    finalImageIds.push(newId);
+                } else if (img.id) {
+                    finalImageIds.push(img.id);
+                }
+            }
+
+            // Sync cocktail_images (Delete removed, Upsert current with order)
+            
+            // Fetch existing links to know what to delete
+            const { data: existingLinks } = await supabase
+                .from('cocktail_images')
+                .select('image_id')
+                .eq('cocktail_id', id);
+
+            const existingIds = existingLinks?.map(l => l.image_id) || [];
+            const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
+
+            if (idsToDelete.length > 0) {
+                 await supabase
+                    .from('cocktail_images')
+                    .delete()
+                    .eq('cocktail_id', id)
+                    .in('image_id', idsToDelete);
+            }
+
+            // Upsert with new order
+            for (let i = 0; i < finalImageIds.length; i++) {
+                await supabase
+                    .from('cocktail_images')
+                    .upsert({
+                        cocktail_id: id, 
+                        image_id: finalImageIds[i],
+                        sort_order: i
+                    }, { onConflict: 'cocktail_id,image_id' });
             }
 
             const updates: Partial<DatabaseCocktail> = {
@@ -355,29 +371,31 @@ export default function EditCocktailScreen() {
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 <ThemedText type="subtitle">Edit Cocktail</ThemedText>
-                <View style={styles.headerBtn} />
+                <TouchableOpacity 
+                    onPress={handleSave} 
+                    disabled={saving} 
+                    style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
+                >
+                    {saving ? (
+                        <ActivityIndicator size="small" color={Colors.dark.tint} />
+                    ) : (
+                        <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
+                    )}
+                </TouchableOpacity>
             </GlassView>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
                 {/* Image List */}
-                <View style={styles.imagesSection}>
-                    <ThemedText style={styles.label}>Photos</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageList}>
-                        {/* New Item Button */}
-                        <TouchableOpacity onPress={pickImage} style={styles.addImageBtn}>
-                            <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
-                            <ThemedText style={styles.addImageText}>Add</ThemedText>
-                        </TouchableOpacity>
-
-                        {localImages.map((img, index) => (
-                            <View key={index} style={styles.imageThumbContainer}>
-                                <ExpoImage source={{ uri: img.url }} style={styles.imageThumb} contentFit="cover" />
-                                {img.isNew && <View style={styles.newBadge} />}
-                            </View>
-                        ))}
-                    </ScrollView>
-                </View>
+                <SortableImageList 
+                    images={localImages}
+                    onReorder={setLocalImages}
+                    onRemove={(index) => {
+                        const newImages = localImages.filter((_, i) => i !== index);
+                        setLocalImages(newImages);
+                    }}
+                    onAdd={pickImage}
+                />
 
                 {/* Text Fields */}
                 <View style={styles.section}>
@@ -560,17 +578,6 @@ export default function EditCocktailScreen() {
                     />
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.saveButton, saving && { opacity: 0.7 }]}
-                    onPress={handleSave}
-                    disabled={saving}
-                >
-                    {saving ? (
-                        <ActivityIndicator color="#000" />
-                    ) : (
-                        <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
-                    )}
-                </TouchableOpacity>
 
             </ScrollView>
 
