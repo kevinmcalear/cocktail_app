@@ -1,3 +1,5 @@
+import { decode } from "base64-arraybuffer";
+import * as FileSystem from "expo-file-system/legacy";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -160,18 +162,22 @@ export default function EditCocktailScreen() {
         try {
             const ext = uri.substring(uri.lastIndexOf('.') + 1);
             const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const formData = new FormData();
 
-            formData.append('file', {
-                uri,
-                name: fileName,
-                type: `image/${ext}`
-            } as any);
+            // Read file as base64
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+                encoding: 'base64',
+            });
+
+            // Convert to ArrayBuffer
+            const arrayBuffer = decode(base64);
 
             // 1. Upload to Storage
-            const { error: uploadError } = await supabase.storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('drinks')
-                .upload(fileName, formData);
+                .upload(fileName, arrayBuffer, {
+                    contentType: `image/${ext}`,
+                    upsert: false
+                });
 
             if (uploadError) {
                 console.error("Storage upload error:", uploadError);
@@ -212,7 +218,7 @@ export default function EditCocktailScreen() {
             return true;
 
         } catch (error) {
-            console.error("Image upload flow failed:", error);
+            console.error("Image upload flow exception:", error);
             return false;
         }
     };
