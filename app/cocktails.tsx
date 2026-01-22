@@ -28,6 +28,12 @@ export default function CocktailsScreen() {
                 .from('cocktails')
                 .select(`
                     *,
+                    cocktail_images (
+                        images (
+                            id,
+                            url
+                        )
+                    ),
                     recipes (
                         id,
                         ingredient_ml,
@@ -48,7 +54,6 @@ export default function CocktailsScreen() {
 
             if (data) {
                 console.log(`Fetched ${data.length} cocktails from Supabase.`);
-                // console.log("Cocktail data:", JSON.stringify(data, null, 2));
                 setCocktails(data);
             } else {
                 console.log("No data returned from Supabase.");
@@ -150,7 +155,11 @@ export default function CocktailsScreen() {
                                 onPress={() => handleCocktailPress(item)}
                             >
                                 <Image
-                                    source={require('@/assets/images/cocktails/house_martini.png')}
+                                    source={
+                                        item.cocktail_images?.[0]?.images?.url
+                                            ? { uri: item.cocktail_images[0].images.url }
+                                            : require('@/assets/images/cocktails/house_martini.png')
+                                    }
                                     style={styles.cardImage}
                                     resizeMode="cover"
                                 />

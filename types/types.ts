@@ -31,7 +31,12 @@ export interface DatabaseCocktail {
     created_at: string;
     name: string;
     description: string;
-    image: string | null;
+    cocktail_images?: {
+        images: {
+            id: string;
+            url: string;
+        }
+    }[];
     method_id: string | null;
     glassware_id: string | null;
     family_id: string | null;

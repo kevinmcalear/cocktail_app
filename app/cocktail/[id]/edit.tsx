@@ -49,8 +49,7 @@ export default function EditCocktailScreen() {
     const [glassware, setGlassware] = useState<{ id: string, name: string }[]>([]);
     const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
 
-    const [imageUri, setImageUri] = useState<string | null>(null);
-    const [imageChanged, setImageChanged] = useState(false);
+    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
     useEffect(() => {
         if (id) {
@@ -76,14 +75,22 @@ export default function EditCocktailScreen() {
             // Fetch Cocktail Data
             const { data, error } = await supabase
                 .from('cocktails')
-                .select('*')
+                .select(`
+                    *,
+                    cocktail_images (
+                        images (
+                            id,
+                            url
+                        )
+                    )
+                `)
                 .eq('id', id)
                 .single();
 
             if (error) throw error;
 
             if (data) {
-                const c = data as DatabaseCocktail;
+                const c = data as any; // Cast to any to handle join comfortably or upgrade type
                 setName(c.name || "");
                 setDescription(c.description || "");
                 setOrigin(c.origin || "");
@@ -95,7 +102,15 @@ export default function EditCocktailScreen() {
                 setGlasswareId(c.glassware_id);
                 setFamilyId(c.family_id);
 
-                setImageUri(c.image);
+                // Populate existing images
+                if (c.cocktail_images) {
+                    const fetchedImages = c.cocktail_images.map((ci: any) => ({
+                        id: ci.images.id,
+                        url: ci.images.url,
+                        isNew: false
+                    }));
+                    setLocalImages(fetchedImages);
+                }
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -113,22 +128,38 @@ export default function EditCocktailScreen() {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaType.Images,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 5],
             quality: 0.8,
+            // allowsMultipleSelection: true, // EXPO 50+ feature if desired, keep simple for now
         });
 
         if (!result.canceled) {
-            setImageUri(result.assets[0].uri);
-            setImageChanged(true);
+            // Add to local state
+            const newImages = result.assets.map(asset => ({
+                url: asset.uri,
+                isNew: true
+            }));
+            setLocalImages(prev => [...prev, ...newImages]);
         }
     };
 
-    const uploadImage = async (uri: string): Promise<string | null> => {
+    const processNewImages = async () => {
+        const newImgs = localImages.filter(i => i.isNew);
+        if (newImgs.length === 0) return true;
+
+        for (const img of newImgs) {
+            const success = await uploadAndLinkImage(img.url);
+            if (!success) return false;
+        }
+        return true;
+    };
+
+    const uploadAndLinkImage = async (uri: string): Promise<boolean> => {
         try {
             const ext = uri.substring(uri.lastIndexOf('.') + 1);
-            const fileName = `cocktails/${id}/${Date.now()}.${ext}`;
+            const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
             const formData = new FormData();
 
             formData.append('file', {
@@ -137,24 +168,52 @@ export default function EditCocktailScreen() {
                 type: `image/${ext}`
             } as any);
 
-            const { data, error } = await supabase.storage
+            // 1. Upload to Storage
+            const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, formData);
 
-            if (error) {
-                console.error("Storage upload error:", error);
-                throw error;
+            if (uploadError) {
+                console.error("Storage upload error:", uploadError);
+                return false;
             }
 
             const { data: publicUrlData } = supabase.storage
                 .from('drinks')
                 .getPublicUrl(fileName);
 
-            return publicUrlData.publicUrl;
+            const publicUrl = publicUrlData.publicUrl;
+
+            // 2. Insert into 'images' table
+            const { data: imgData, error: imgError } = await supabase
+                .from('images')
+                .insert({ url: publicUrl })
+                .select()
+                .single();
+
+            if (imgError || !imgData) {
+                console.error("Image record creation error:", imgError);
+                return false;
+            }
+
+            // 3. Link in 'cocktail_images'
+            const { error: linkError } = await supabase
+                .from('cocktail_images')
+                .insert({
+                    cocktail_id: id,
+                    image_id: imgData.id
+                });
+
+            if (linkError) {
+                console.error("Link creation error:", linkError);
+                return false;
+            }
+
+            return true;
 
         } catch (error) {
-            console.error("Image upload failed:", error);
-            return null;
+            console.error("Image upload flow failed:", error);
+            return false;
         }
     };
 
@@ -166,18 +225,12 @@ export default function EditCocktailScreen() {
 
         setSaving(true);
         try {
-            let finalImageUrl = imageUri;
-
-            if (imageChanged && imageUri && !imageUri.startsWith('http')) {
-                // Upload new image
-                const uploadedUrl = await uploadImage(imageUri);
-                if (uploadedUrl) {
-                    finalImageUrl = uploadedUrl;
-                } else {
-                    Alert.alert("Error", "Failed to upload image.");
-                    setSaving(false);
-                    return;
-                }
+            // Process images first
+            const imagesSuccess = await processNewImages();
+            if (!imagesSuccess) {
+                Alert.alert("Error", "Failed to upload some images. Please try again.");
+                setSaving(false);
+                return;
             }
 
             const updates: Partial<DatabaseCocktail> = {
@@ -190,7 +243,6 @@ export default function EditCocktailScreen() {
                 method_id: methodId,
                 glassware_id: glasswareId,
                 family_id: familyId,
-                image: finalImageUrl
             };
 
             const { error } = await supabase
@@ -235,20 +287,24 @@ export default function EditCocktailScreen() {
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
-                {/* Image Picker */}
-                <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
-                    {imageUri ? (
-                        <ExpoImage source={{ uri: imageUri }} style={styles.previewImage} contentFit="cover" />
-                    ) : (
-                        <View style={styles.placeholderImage}>
-                            <IconSymbol name="camera" size={40} color={Colors.dark.icon} />
-                            <ThemedText>Add Photo</ThemedText>
-                        </View>
-                    )}
-                    <GlassView intensity={30} style={styles.editIconBadge}>
-                        <IconSymbol name="pencil" size={16} color="#fff" />
-                    </GlassView>
-                </TouchableOpacity>
+                {/* Image List */}
+                <View style={styles.imagesSection}>
+                    <ThemedText style={styles.label}>Photos</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageList}>
+                        {/* New Item Button */}
+                        <TouchableOpacity onPress={pickImage} style={styles.addImageBtn}>
+                            <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
+                            <ThemedText style={styles.addImageText}>Add</ThemedText>
+                        </TouchableOpacity>
+
+                        {localImages.map((img, index) => (
+                            <View key={index} style={styles.imageThumbContainer}>
+                                <ExpoImage source={{ uri: img.url }} style={styles.imageThumb} contentFit="cover" />
+                                {img.isNew && <View style={styles.newBadge} />}
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
 
                 {/* Text Fields */}
                 <View style={styles.section}>
@@ -437,6 +493,49 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    imagesSection: {
+        gap: 12,
+    },
+    imageList: {
+        gap: 12,
+        paddingRight: 20
+    },
+    addImageBtn: {
+        width: 100,
+        height: 125,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        gap: 8
+    },
+    addImageText: {
+        fontSize: 14,
+        color: '#888'
+    },
+    imageThumbContainer: {
+        width: 100,
+        height: 125,
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative'
+    },
+    imageThumb: {
+        width: '100%',
+        height: '100%'
+    },
+    newBadge: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: Colors.dark.tint
     },
     section: {
         gap: 8,

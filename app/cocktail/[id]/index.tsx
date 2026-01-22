@@ -84,6 +84,12 @@ export default function CocktailDetailsScreen() {
                 .from('cocktails')
                 .select(`
                     *,
+                    cocktail_images (
+                        images (
+                            url,
+                            id
+                        )
+                    ),
                     recipes (
                         id,
                         ingredient_ml,
@@ -148,11 +154,11 @@ export default function CocktailDetailsScreen() {
     }
 
     // -- PREPARE ASSETS --
-    const mainImage = cocktail.image || require('@/assets/images/cocktails/house_martini.png');
-    const images = [
-        mainImage,
-        require('@/assets/images/cocktails/house_martini.png'),
-    ];
+    // -- PREPARE ASSETS --
+    const images = cocktail.cocktail_images?.map(img => img.images.url).filter(Boolean) as string[] || [];
+    if (images.length === 0) {
+        images.push(require('@/assets/images/cocktails/house_martini.png'));
+    }
 
     // -- RENDER --
     return (
