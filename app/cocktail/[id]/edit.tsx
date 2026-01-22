@@ -7,11 +7,13 @@ import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    FlatList,
+    Modal,
     ScrollView,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View
+    TouchableWithoutFeedback, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -23,6 +25,15 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
+
+interface RecipeItem {
+    id?: string;
+    ingredient_id: string;
+    name: string;
+    ml: string;
+    dash: string;
+    amount: string;
+}
 
 export default function EditCocktailScreen() {
     const { id } = useLocalSearchParams();
@@ -51,6 +62,12 @@ export default function EditCocktailScreen() {
     const [glassware, setGlassware] = useState<{ id: string, name: string }[]>([]);
     const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
 
+    // Recipe State
+    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
+    const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
+    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
+    const [ingredientSearch, setIngredientSearch] = useState("");
+
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
     useEffect(() => {
@@ -63,16 +80,18 @@ export default function EditCocktailScreen() {
         try {
             setLoading(true);
 
-            // Fetch dropdown options
-            const [methodsRes, glasswareRes, familiesRes] = await Promise.all([
-                supabase.from('methods').select('*'),
-                supabase.from('glassware').select('*'),
-                supabase.from('families').select('*')
+            // Fetch dropdown options & ingredients
+            const [methodsRes, glasswareRes, familiesRes, ingredientsRes] = await Promise.all([
+                supabase.from('methods').select('*').order('name'),
+                supabase.from('glassware').select('*').order('name'),
+                supabase.from('families').select('*').order('name'),
+                supabase.from('ingredients').select('*').order('name')
             ]);
 
             if (methodsRes.data) setMethods(methodsRes.data);
             if (glasswareRes.data) setGlassware(glasswareRes.data);
             if (familiesRes.data) setFamilies(familiesRes.data);
+            if (ingredientsRes.data) setAllIngredients(ingredientsRes.data);
 
             // Fetch Cocktail Data
             const { data, error } = await supabase
@@ -84,6 +103,14 @@ export default function EditCocktailScreen() {
                             id,
                             url
                         )
+                    ),
+                    recipes (
+                        id,
+                        ingredient_id,
+                        ingredient_ml,
+                        ingredient_dash,
+                        ingredient_amount,
+                        ingredients ( name )
                     )
                 `)
                 .eq('id', id)
@@ -112,6 +139,18 @@ export default function EditCocktailScreen() {
                         isNew: false
                     }));
                     setLocalImages(fetchedImages);
+                }
+
+                if (c.recipes) {
+                    const mappedRecipes = c.recipes.map((r: any) => ({
+                        id: r.id,
+                        ingredient_id: r.ingredient_id,
+                        name: r.ingredients?.name || "Unknown",
+                        ml: r.ingredient_ml?.toString() || "",
+                        dash: r.ingredient_dash?.toString() || "",
+                        amount: r.ingredient_amount?.toString() || ""
+                    }));
+                    setRecipeItems(mappedRecipes);
                 }
             }
         } catch (error) {
@@ -258,6 +297,34 @@ export default function EditCocktailScreen() {
 
             if (error) throw error;
 
+            // Save Recipes
+            // 1. Delete removed
+            const keptIds = recipeItems.map(r => r.id).filter(Boolean);
+            if (keptIds.length > 0) {
+                await supabase.from('recipes').delete().eq('cocktail_id', id).not('id', 'in', `(${keptIds.join(',')})`);
+            } else {
+                await supabase.from('recipes').delete().eq('cocktail_id', id);
+            }
+
+            // 2. Upsert
+            for (const item of recipeItems) {
+                const payload = {
+                    cocktail_id: id,
+                    ingredient_id: item.ingredient_id,
+                    ingredient_ml: parseFloat(item.ml) || null,
+                    ingredient_dash: parseFloat(item.dash) || null,
+                    ingredient_amount: parseFloat(item.amount) || null,
+                };
+
+                if (item.id) {
+                    await supabase.from('recipes').update(payload).eq('id', item.id);
+                } else {
+                    await supabase.from('recipes').insert(payload);
+                }
+            }
+
+            if (error) throw error;
+
             Alert.alert("Success", "Cocktail updated!", [
                 { text: "OK", onPress: () => router.back() }
             ]);
@@ -381,6 +448,75 @@ export default function EditCocktailScreen() {
                     </ScrollView>
                 </View>
 
+                {/* Ingredients Section */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <ThemedText style={styles.label}>Ingredients</ThemedText>
+                        <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
+                            <ThemedText style={styles.addText}>+ Add</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    {recipeItems.map((item, index) => (
+                        <View key={index} style={styles.recipeRow}>
+                            <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
+                            <View style={styles.recipeInputs}>
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={styles.smallInput}
+                                        placeholder="ml"
+                                        placeholderTextColor="#666"
+                                        keyboardType="numeric"
+                                        value={item.ml}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].ml = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                    />
+                                    <ThemedText style={styles.unitText}>ml</ThemedText>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={styles.smallInput}
+                                        placeholder="dash"
+                                        placeholderTextColor="#666"
+                                        keyboardType="numeric"
+                                        value={item.dash}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].dash = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                    />
+                                    <ThemedText style={styles.unitText}>ds</ThemedText>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={styles.smallInput}
+                                        placeholder="amt"
+                                        placeholderTextColor="#666"
+                                        keyboardType="numeric"
+                                        value={item.amount}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].amount = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                    />
+                                    <ThemedText style={styles.unitText}>#</ThemedText>
+                                </View>
+                                <TouchableOpacity onPress={() => {
+                                    const newItems = recipeItems.filter((_, i) => i !== index);
+                                    setRecipeItems(newItems);
+                                }}>
+                                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+
                 {/* More Details */}
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Origin</ThemedText>
@@ -437,6 +573,61 @@ export default function EditCocktailScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
+
+            <Modal
+                visible={showIngredientPicker}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowIngredientPicker(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setShowIngredientPicker(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.modalContent}>
+                                <View style={styles.modalHeader}>
+                                    <ThemedText style={styles.modalTitle}>Select Ingredient</ThemedText>
+                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                        <IconSymbol name="xmark" size={24} color="#fff" />
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search ingredients..."
+                                    placeholderTextColor="#666"
+                                    value={ingredientSearch}
+                                    onChangeText={setIngredientSearch}
+                                />
+
+                                <FlatList
+                                    data={allIngredients.filter(i => 
+                                        i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+                                    )}
+                                    keyExtractor={item => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.ingredientOption}
+                                            onPress={() => {
+                                                setRecipeItems([...recipeItems, {
+                                                    ingredient_id: item.id,
+                                                    name: item.name,
+                                                    ml: "",
+                                                    dash: "",
+                                                    amount: ""
+                                                }]);
+                                                setShowIngredientPicker(false);
+                                                setIngredientSearch("");
+                                            }}
+                                        >
+                                            <ThemedText style={styles.ingredientText}>{item.name}</ThemedText>
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
         </ThemedView>
     );
 }
@@ -600,5 +791,87 @@ const styles = StyleSheet.create({
         color: '#000',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    addText: {
+        color: Colors.dark.tint,
+        fontWeight: 'bold',
+    },
+    recipeRow: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 8,
+    },
+    recipeName: {
+        fontSize: 16,
+        marginBottom: 8,
+        fontWeight: '600',
+    },
+    recipeInputs: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    inputGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        flex: 1,
+    },
+    smallInput: {
+        flex: 1,
+        color: '#fff',
+        paddingVertical: 8,
+        fontSize: 14,
+    },
+    unitText: {
+        color: '#666',
+        fontSize: 12,
+        marginLeft: 4,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: Colors.dark.background,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: '70%',
+        padding: 20,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    searchInput: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        padding: 12,
+        borderRadius: 10,
+        color: '#fff',
+        marginBottom: 20,
+    },
+    ingredientOption: {
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+    },
+    ingredientText: {
+        fontSize: 16,
     }
 });
