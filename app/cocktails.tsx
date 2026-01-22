@@ -4,7 +4,6 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
-import { DatabaseCocktail } from "@/types/types";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, FlatList, Image, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
@@ -14,7 +13,18 @@ export default function CocktailsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
-    const [cocktails, setCocktails] = useState<DatabaseCocktail[]>([]);
+    
+    type CocktailListItem = {
+        id: string;
+        name: string;
+        cocktail_images?: {
+            images: {
+                url: string;
+            }
+        }[];
+    };
+
+    const [cocktails, setCocktails] = useState<CocktailListItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,26 +37,15 @@ export default function CocktailsScreen() {
             const { data, error } = await supabase
                 .from('cocktails')
                 .select(`
-                    *,
+                    id,
+                    name,
                     cocktail_images (
                         images (
-                            id,
                             url
                         )
-                    ),
-                    recipes (
-                        id,
-                        ingredient_ml,
-                        ingredient_dash,
-                        ingredient_amount,
-                        ingredients (
-                            name
-                        )
-                    ),
-                    methods ( name ),
-                    glassware ( name ),
-                    families ( name )
-                `);
+                    )
+                `)
+                .order('name', { ascending: true });
 
             if (error) {
                 console.error('Error fetching cocktails:', error);
@@ -54,7 +53,7 @@ export default function CocktailsScreen() {
 
             if (data) {
                 console.log(`Fetched ${data.length} cocktails from Supabase.`);
-                setCocktails(data);
+                setCocktails(data as unknown as CocktailListItem[]);
             } else {
                 console.log("No data returned from Supabase.");
             }
@@ -63,19 +62,6 @@ export default function CocktailsScreen() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatIngredient = (recipe: any) => {
-        const parts = [];
-        if (recipe.ingredient_ml) parts.push(`${recipe.ingredient_ml}ml`);
-        if (recipe.ingredient_dash) parts.push(`${recipe.ingredient_dash} dash${recipe.ingredient_dash > 1 ? 'es' : ''}`);
-        if (recipe.ingredient_amount) parts.push(`${recipe.ingredient_amount}`);
-
-        if (recipe.ingredients && recipe.ingredients.name) {
-            parts.push(recipe.ingredients.name);
-        }
-
-        return parts.join(' ');
     };
 
     const filteredCocktails = cocktails.filter((cocktail) =>
@@ -115,7 +101,7 @@ export default function CocktailsScreen() {
         };
     }, [insets.bottom, translateY]);
 
-    const handleCocktailPress = (cocktail: DatabaseCocktail) => {
+    const handleCocktailPress = (cocktail: CocktailListItem) => {
         router.push(`/cocktail/${cocktail.id}`);
     };
 
