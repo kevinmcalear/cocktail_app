@@ -2,6 +2,7 @@ import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { Stack, useRouter } from "expo-router";
@@ -13,7 +14,7 @@ export default function CocktailsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
-    
+
     type CocktailListItem = {
         id: string;
         name: string;
@@ -116,14 +117,11 @@ export default function CocktailsScreen() {
                         {/* Header */}
                         <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
                             <TouchableOpacity onPress={() => router.push("/")} style={styles.headerTitleContainer}>
-                                <ThemedText type="title" style={styles.title}>Caretaker's{"\n"}Cottage</ThemedText>
+                                <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                             </TouchableOpacity>
-                            <View style={{ flex: 1 }} />
+                            <ThemedText type="title" style={styles.title}>Cocktails</ThemedText>
+                            <View style={{ width: 40 }} />
                         </GlassView>
-
-                        <View style={styles.subHeader}>
-                            <ThemedText type="subtitle" style={styles.subtitle}>Cocktails</ThemedText>
-                        </View>
                     </View>
                 </TouchableWithoutFeedback>
 
@@ -191,25 +189,22 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "space-between",
         paddingHorizontal: 20,
         paddingBottom: 20,
         zIndex: 10,
     },
     headerTitleContainer: {
-        // acts as a button to go home
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
     },
     title: {
-        fontSize: 24,
-        lineHeight: 28,
-    },
-    subHeader: {
-        paddingHorizontal: 20,
-        paddingBottom: 10,
-    },
-    subtitle: {
         fontSize: 32,
+        lineHeight: 36,
         fontWeight: "bold",
     },
+
     listContent: {
         paddingHorizontal: 20,
         gap: 15,

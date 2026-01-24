@@ -5,34 +5,36 @@
 
 import { Platform } from "react-native";
 
-// Caretaker's Cottage Inspired Palette
-const bluestone = "#1A2228"; // Deep, cool charcoal/blue background
-const paisleyGreen = "#1E362D"; // Deep forest/paisley green
-const tasmanianOak = "#C19A6B"; // Warm golden wood tone
-const warmLight = "#FDF6E3"; // Soft creamy light
+// Modern IOS Dark Palette
+const pureBlack = "#000000"; // Pure black background
+const systemGray6 = "#1C1C1E"; // Secondary background
+const systemBlue = "#0A84FF"; // iOS System Blue (Dark Mode)
+const white = "#FFFFFF";
 const glassBorder = "rgba(255, 255, 255, 0.1)";
 
 export const Colors = {
   light: {
-    text: bluestone,
-    background: warmLight,
-    tint: tasmanianOak,
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: tasmanianOak,
+    // Keeping light mode somewhat consistent but mapped to new logic if needed later
+    // prioritizing dark mode as requested.
+    text: pureBlack,
+    background: "#F2F2F7", // System Gray 6 Light
+    tint: "#007AFF", // System Blue Light
+    icon: "#8E8E93",
+    tabIconDefault: "#8E8E93",
+    tabIconSelected: "#007AFF",
   },
   dark: {
-    text: "#ECEDEE",
-    background: bluestone, // Main background
-    surface: paisleyGreen, // Secondary background for cards etc (if opaque)
-    tint: tasmanianOak,
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: tasmanianOak,
+    text: white,
+    background: pureBlack,
+    surface: systemGray6,
+    tint: systemBlue,
+    icon: "#98989D", // System Gray
+    tabIconDefault: "#98989D",
+    tabIconSelected: systemBlue,
     glass: {
-      background: "rgba(26, 34, 40, 0.7)", // Bluestone with transparency
+      background: "rgba(28, 28, 30, 0.6)", // Transparent system gray
       border: glassBorder,
-      text: "#ECEDEE",
+      text: white,
       blurIntensity: 80,
     }
   },

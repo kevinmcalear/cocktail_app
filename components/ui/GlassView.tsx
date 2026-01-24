@@ -30,6 +30,7 @@ export function GlassView({
             style={[
                 styles.container,
                 isDark && {
+                    // Use theme background (now translucent system gray)
                     backgroundColor: glassTheme.background,
                     borderColor: glassTheme.border,
                 },

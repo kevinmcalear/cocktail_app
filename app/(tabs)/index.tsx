@@ -46,7 +46,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           {/* Title as Button (though already home) */}
           <TouchableOpacity onPress={() => { }}>
-            <ThemedText type="title" style={styles.title}>Caretaker's{"\n"}Cottage</ThemedText>
+            <ThemedText type="title" style={styles.title}>Caretaker's Cottage</ThemedText>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setProfileMenuVisible(true)}>
@@ -66,7 +66,8 @@ export default function HomeScreen() {
                 style={styles.gridItemWrapper}
                 onPress={() => router.push(item.route as any)}
               >
-                <GlassView style={styles.gridItem} intensity={30}>
+                <GlassView style={styles.gridItem} intensity={15}>
+                  <View style={styles.shine} />
                   <ThemedText style={styles.gridLabel}>{item.label}</ThemedText>
                 </GlassView>
               </TouchableOpacity>
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
   backgroundImage: {
     width: '100%',
     height: '100%',
-    opacity: 0.6, // Adjust opacity to blend better
+    opacity: 0.8, // Increased opacity to show more of the image (was 0.15)
   },
   backgroundGradient: {
     position: 'absolute',
@@ -139,8 +140,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 36,
-    lineHeight: 40,
+    fontSize: 28, // Reduced from 36 to avoid overlapping profile button
+    lineHeight: 32,
     // Add text shadow for better visibility over image
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 2 },
@@ -176,25 +177,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 15,
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Restore 2x2 spacing
   },
   gridItemWrapper: {
-    width: "47%", // slightly less than 50% to account for gap
-    aspectRatio: 1.2, // Make them slight rectangles
-    marginBottom: 0, // Handled by gap
+    width: "47%", // Safe width for 2-column with gap
+    height: 90, // Taller buttons (Slightly larger than previous 80)
+    marginBottom: 0,
   },
   gridItem: {
     flex: 1,
-    padding: 16,
-    borderRadius: 20,
+    borderRadius: 22, // Slightly more round
     justifyContent: "center",
     alignItems: "center",
-    flexDirection: "column",
-    gap: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)", // Shiny edge
+    backgroundColor: "rgba(255,255,255,0.01)", // Even more subtle filler for transparency
+    overflow: 'hidden', // Contain shine
+  },
+  shine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%', // slightly taller shine
+    backgroundColor: 'rgba(255,255,255,0.06)', // Slightly stronger shine for contrast
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
   },
   gridLabel: {
-    fontSize: 20, // Reduced from 22
-    fontWeight: "bold",
+    fontSize: 18, // Increased from 16
+    fontWeight: "700", // Slightly bolder
     letterSpacing: 2,
     color: Colors.dark.text,
     textAlign: "center",
