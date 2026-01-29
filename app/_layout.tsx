@@ -1,7 +1,8 @@
+import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -61,6 +62,8 @@ function RootLayoutNav() {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
+  if (!fontsLoaded) { return null; }
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>

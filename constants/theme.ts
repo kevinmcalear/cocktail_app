@@ -27,10 +27,10 @@ export const Colors = {
     text: white,
     background: pureBlack,
     surface: systemGray6,
-    tint: systemBlue,
+    tint: white, // Changed from systemBlue to white as requested
     icon: "#98989D", // System Gray
     tabIconDefault: "#98989D",
-    tabIconSelected: systemBlue,
+    tabIconSelected: white, // Changed from systemBlue to white
     glass: {
       background: "rgba(28, 28, 30, 0.6)", // Transparent system gray
       border: glassBorder,
@@ -43,7 +43,7 @@ export const Colors = {
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: "system-ui",
+    sans: "Roboto",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
     /** iOS `UIFontDescriptorSystemDesignRounded` */

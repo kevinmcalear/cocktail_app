@@ -63,7 +63,7 @@ export default function PrepScreen() {
                     <View>
                         {/* Header */}
                         <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
-                            <TouchableOpacity onPress={() => router.push("/")} style={styles.headerTitleContainer}>
+                            <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
                                 <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                             </TouchableOpacity>
                             <ThemedText type="title" style={styles.title}>Prep</ThemedText>
@@ -80,13 +80,18 @@ export default function PrepScreen() {
                     keyboardDismissMode="on-drag"
                     keyboardShouldPersistTaps="handled"
                     renderItem={({ item }) => (
-                        <GlassView style={styles.itemCard} intensity={40}>
-                            <View style={styles.itemContent}>
-                                <View style={styles.row}>
-                                    <ThemedText type="subtitle" style={styles.itemName}>{item.name}</ThemedText>
-                                    <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
+                        <GlassView style={styles.itemCard} intensity={20}>
+                            <View style={styles.itemRow}>
+                                <View style={styles.textContainer}>
+                                    <View style={styles.headerRow}>
+                                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
+                                        <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
+                                    </View>
+                                    <ThemedText style={styles.itemDescription} numberOfLines={2}>{item.description}</ThemedText>
                                 </View>
-                                <ThemedText style={styles.itemDescription}>{item.description}</ThemedText>
+                                <View style={styles.iconContainer}>
+                                    <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
+                                </View>
                             </View>
                         </GlassView>
                     )}
@@ -120,12 +125,13 @@ export default function PrepScreen() {
                 </GlassView>
 
                 {/* Search Bar */}
-                <BottomSearchBar
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    style={styles.searchBar}
-                    placeholder="Find..."
-                />
+                <GlassView style={styles.searchBarContainer} intensity={80}>
+                    <BottomSearchBar
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder="Find..."
+                    />
+                </GlassView>
             </Animated.View>
         </ThemedView>
     );
@@ -156,35 +162,58 @@ const styles = StyleSheet.create({
     },
 
     listContent: {
-        padding: 20,
-        gap: 15,
+        paddingHorizontal: 15,
+        gap: 12,
         paddingTop: 10,
     },
     itemCard: {
-        padding: 16,
-        borderRadius: 20,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
     },
-    itemContent: {
-        gap: 8,
+    itemRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        height: 90, // Compact height
     },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
+    textContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingRight: 10,
+        gap: 4,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     itemName: {
-        fontSize: 20,
+        fontSize: 20, // Increased from 18
+        fontWeight: "700",
+        color: Colors.dark.text,
         flex: 1,
     },
     itemPrice: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: "600",
         color: Colors.dark.tint,
+        marginLeft: 8,
     },
     itemDescription: {
-        fontSize: 16,
-        color: Colors.dark.text,
-        opacity: 0.8,
+        fontSize: 15, // Increased from 13
+        color: Colors.dark.icon,
+        lineHeight: 20,
+    },
+    iconContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 10,
+        backgroundColor: "rgba(255,255,255,0.05)",
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     controlsLayer: {
         position: 'absolute',
@@ -201,7 +230,9 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         padding: 5,
     },
-    searchBar: {
+    searchBarContainer: {
+        borderRadius: 25,
+        overflow: 'hidden',
     },
     tabButton: {
         paddingVertical: 10,

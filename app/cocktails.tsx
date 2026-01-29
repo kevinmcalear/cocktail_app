@@ -5,9 +5,10 @@ import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
+import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, FlatList, Image, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CocktailsScreen() {
@@ -18,10 +19,16 @@ export default function CocktailsScreen() {
     type CocktailListItem = {
         id: string;
         name: string;
+        description?: string;
         cocktail_images?: {
             images: {
                 url: string;
             }
+        }[];
+        recipes?: {
+            ingredients: {
+                name: string;
+            } | null;
         }[];
     };
 
@@ -40,6 +47,12 @@ export default function CocktailsScreen() {
                 .select(`
                     id,
                     name,
+                    description,
+                    recipes (
+                        ingredients (
+                            name
+                        )
+                    ),
                     cocktail_images (
                         images (
                             url
@@ -53,7 +66,7 @@ export default function CocktailsScreen() {
             }
 
             if (data) {
-                console.log(`Fetched ${data.length} cocktails from Supabase.`);
+                console.log("Fetched " + data.length + " cocktails from Supabase.");
                 setCocktails(data as unknown as CocktailListItem[]);
             } else {
                 console.log("No data returned from Supabase.");
@@ -102,8 +115,11 @@ export default function CocktailsScreen() {
         };
     }, [insets.bottom, translateY]);
 
-    const handleCocktailPress = (cocktail: CocktailListItem) => {
-        router.push(`/cocktail/${cocktail.id}`);
+    const getImage = (item: CocktailListItem) => {
+        if (item.cocktail_images && item.cocktail_images.length > 0) {
+            return { uri: item.cocktail_images[0].images.url };
+        }
+        return require("@/assets/images/cocktails/house_martini.png");
     };
 
     return (
@@ -116,7 +132,7 @@ export default function CocktailsScreen() {
                     <View>
                         {/* Header */}
                         <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
-                            <TouchableOpacity onPress={() => router.push("/")} style={styles.headerTitleContainer}>
+                            <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
                                 <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                             </TouchableOpacity>
                             <ThemedText type="title" style={styles.title}>Cocktails</ThemedText>
@@ -128,55 +144,44 @@ export default function CocktailsScreen() {
                 <FlatList
                     data={filteredCocktails}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={[styles.listContent, { paddingBottom: 220 + insets.bottom }]}
+                    contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
                     showsVerticalScrollIndicator={false}
                     keyboardDismissMode="on-drag"
                     keyboardShouldPersistTaps="handled"
                     renderItem={({ item }) => (
-                        <GlassView style={styles.itemCard} intensity={40}>
-                            <TouchableOpacity
-                                style={styles.cardContainer}
-                                onPress={() => handleCocktailPress(item)}
-                            >
-                                <Image
-                                    source={
-                                        item.cocktail_images?.[0]?.images?.url
-                                            ? { uri: item.cocktail_images[0].images.url }
-                                            : require('@/assets/images/cocktails/house_martini.png')
-                                    }
-                                    style={styles.cardImage}
-                                    resizeMode="cover"
-                                />
-                                <View style={styles.cardFooter}>
-                                    <ThemedText type="subtitle" style={styles.cardTitle}>{item.name}</ThemedText>
+                        <TouchableOpacity
+                            onPress={() => router.push("/cocktail/" + item.id)}
+                            activeOpacity={0.7}
+                        >
+                            <GlassView style={styles.itemCard} intensity={20}>
+                                <View style={styles.itemRow}>
+                                    <View style={styles.textContainer}>
+                                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
+                                        <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                                            {item.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || item.description || "No ingredients listed"}
+                                        </ThemedText>
+                                    </View>
+                                    <Image
+                                        source={getImage(item)}
+                                        style={styles.itemImage}
+                                        contentFit="cover"
+                                        transition={500}
+                                    />
                                 </View>
-                            </TouchableOpacity>
-                        </GlassView>
+                            </GlassView>
+                        </TouchableOpacity>
                     )}
                 />
             </View>
 
-            {/* Controls Layer - Animated */}
-            <Animated.View
-                style={[
-                    styles.controlsLayer,
-                    {
-                        paddingBottom: insets.bottom + 10,
-                        transform: [{ translateY }]
-                    }
-                ]}
-                pointerEvents="box-none"
-            >
-
-
-                {/* Search Bar */}
+            {/* Search Bar Layer */}
+            <GlassView style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 10 }]} intensity={80}>
                 <BottomSearchBar
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    style={styles.searchBar}
-                    placeholder="Find your cocktail..."
+                    placeholder="Find a cocktail..."
                 />
-            </Animated.View>
+            </GlassView>
         </ThemedView>
     );
 }
@@ -204,43 +209,54 @@ const styles = StyleSheet.create({
         lineHeight: 36,
         fontWeight: "bold",
     },
-
     listContent: {
-        paddingHorizontal: 20,
-        gap: 15,
+        paddingHorizontal: 15,
+        gap: 12,
         paddingTop: 10,
     },
-    controlsLayer: {
-        position: 'absolute', // Use absolute to easier stick to bottom and animate
+    itemCard: {
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
+    },
+    itemRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        height: 100, // Fixed height for consistency
+    },
+    textContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingRight: 12,
+        gap: 4,
+    },
+    itemName: {
+        fontSize: 20, // Increased from 18
+        fontWeight: "700",
+        color: Colors.dark.text,
+    },
+    itemDescription: {
+        fontSize: 15, // Increased from 13
+        color: Colors.dark.icon,
+        lineHeight: 20, // Increased line height
+    },
+    itemImage: {
+        width: 76,
+        height: 76,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.05)",
+    },
+    searchBarContainer: {
+        position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        justifyContent: "flex-end",
         paddingHorizontal: 20,
-        gap: 15,
-    },
-
-    itemCard: {
-        borderRadius: 20,
-        overflow: 'hidden',
-        marginBottom: 8,
-    },
-    cardContainer: {
-        // Container behavior
-    },
-    cardImage: {
-        width: '100%',
-        height: 250,
-    },
-    cardFooter: {
-        padding: 16,
-    },
-    cardTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    searchBar: {
-        // search bar styles managed by component + container padding
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255,255,255,0.1)",
     },
 });
