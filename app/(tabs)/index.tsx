@@ -24,6 +24,7 @@ export default function HomeScreen() {
     { label: "WINES", route: "/wines" },
     { label: "BEERS", route: "/beers" },
     { label: "PREP", route: "/prep" },
+    { label: "MENUS", route: "/menus" },
   ];
 
   return (

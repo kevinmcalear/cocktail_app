@@ -53,6 +53,7 @@ function RootLayoutNav() {
           name="import-cocktails"
           options={{ presentation: "modal", title: "Import Cocktails" }}
         />
+        <Stack.Screen name="menus" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

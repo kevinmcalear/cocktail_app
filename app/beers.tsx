@@ -1,3 +1,4 @@
+import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -5,21 +6,18 @@ import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { beers } from "@/data/beers";
+import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function BeersScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const [filter, setFilter] = useState<"Current" | "Future" | "Previous">("Current");
     const [searchQuery, setSearchQuery] = useState("");
-
-    const filteredBeers = beers.filter((beer) =>
-        beer.status === filter &&
-        beer.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const flatListRef = useRef<FlatList>(null);
+    const currentViewableSection = useRef<string | null>(null);
 
     const translateY = useRef(new Animated.Value(0)).current;
 
@@ -53,85 +51,129 @@ export default function BeersScreen() {
         };
     }, [insets.bottom, translateY]);
 
+    const filteredBeers = useMemo(() => {
+        return beers.filter((beer) =>
+            beer.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ).sort((a, b) => a.name.localeCompare(b.name));
+    }, [searchQuery]);
+
+    // Section Headers Logic
+    const listData = useMemo(() => {
+        const data: (typeof beers[0] | { type: "header"; letter: string; id: string })[] = [];
+        let lastLetter = "";
+
+        filteredBeers.forEach((item) => {
+            let currentLetter = item.name.charAt(0).toUpperCase();
+
+            // Group numbers under "#"
+            if (/[0-9]/.test(currentLetter)) {
+                currentLetter = "#";
+            }
+
+            if (currentLetter !== lastLetter) {
+                lastLetter = currentLetter;
+                data.push({ type: "header", letter: currentLetter, id: `header-${currentLetter}` });
+            }
+            data.push(item);
+        });
+
+        return data;
+    }, [filteredBeers]);
+
+    const handleScrollToLetter = useCallback((letter: string) => {
+        const index = listData.findIndex((item) => {
+            if ("type" in item && item.type === "header") {
+                return item.letter === letter;
+            }
+            return false;
+        });
+
+        if (index !== -1 && flatListRef.current) {
+            flatListRef.current.scrollToIndex({ index, animated: false, viewOffset: 100 });
+        }
+    }, [listData]);
+
+    const onViewableItemsChanged = useRef(({ changed }: { viewableItems: ViewToken[]; changed: ViewToken[] }) => {
+        // Trigger haptics when a header becomes visible
+        const headerBecameVisible = changed.some((token) => {
+            return token.isViewable && 'type' in token.item && token.item.type === 'header';
+        });
+
+        if (headerBecameVisible) {
+            Haptics.selectionAsync();
+        }
+    }).current;
+
+    const renderItem = ({ item }: { item: typeof beers[0] | { type: "header"; letter: string; id: string } }) => {
+        if ("type" in item && item.type === "header") {
+            return (
+                <View style={styles.sectionHeader}>
+                    <View style={styles.sectionDivider} />
+                    <ThemedText style={styles.sectionHeaderText}>{item.letter}</ThemedText>
+                    <View style={styles.sectionDivider} />
+                </View>
+            );
+        }
+
+        return (
+            <GlassView style={styles.itemCard} intensity={20}>
+                <View style={styles.itemRow}>
+                    <View style={styles.textContainer}>
+                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
+                        <ThemedText style={styles.itemDescription} numberOfLines={2}>{item.description}</ThemedText>
+                    </View>
+                    <View style={styles.iconContainer}>
+                        <IconSymbol name="mug.fill" size={32} color={Colors.dark.tint} />
+                    </View>
+                </View>
+            </GlassView>
+        );
+    };
+
     return (
         <ThemedView style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Content Layer */}
-            <View style={StyleSheet.absoluteFill}>
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <View>
-                        {/* Header */}
-                        <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
-                            <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
-                            </TouchableOpacity>
-                            <ThemedText type="title" style={styles.title}>Beers</ThemedText>
-                            <View style={{ width: 40 }} />
-                        </GlassView>
-                    </View>
-                </TouchableWithoutFeedback>
-
+            <View style={styles.contentContainer}>
                 <FlatList
-                    data={filteredBeers}
+                    ref={flatListRef}
+                    data={listData}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={[styles.listContent, { paddingBottom: 220 + insets.bottom }]}
+                    contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
                     showsVerticalScrollIndicator={false}
                     keyboardDismissMode="on-drag"
                     keyboardShouldPersistTaps="handled"
-                    renderItem={({ item }) => (
-                        <GlassView style={styles.itemCard} intensity={20}>
-                            <View style={styles.itemRow}>
-                                <View style={styles.textContainer}>
-                                    <View style={styles.headerRow}>
-                                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
-                                    </View>
-                                    <ThemedText style={styles.itemDescription} numberOfLines={2}>{item.description}</ThemedText>
-                                </View>
-                                <View style={styles.iconContainer}>
-                                    <IconSymbol name="mug.fill" size={32} color={Colors.dark.tint} />
-                                </View>
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    viewabilityConfig={{ itemVisiblePercentThreshold: 10 }}
+                    onScrollToIndexFailed={(info) => {
+                        flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
+                    }}
+                    ListHeaderComponent={
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <View>
+                                <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+                                    <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
+                                        <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
+                                    </TouchableOpacity>
+                                    <ThemedText type="title" style={styles.title}>Beers</ThemedText>
+                                    <View style={{ width: 40 }} />
+                                </GlassView>
                             </View>
-                        </GlassView>
-                    )}
+                        </TouchableWithoutFeedback>
+                    }
+                    renderItem={renderItem}
                 />
             </View>
 
-            {/* Controls Layer */}
-            <Animated.View
-                style={[
-                    styles.controlsLayer,
-                    {
-                        paddingBottom: insets.bottom + 10,
-                        transform: [{ translateY }]
-                    }
-                ]}
-                pointerEvents="box-none"
-            >
-                {/* Filter Tabs */}
-                <GlassView style={styles.filterTabs} intensity={70}>
-                    {(["Current", "Future", "Previous"] as const).map((tab) => (
-                        <TouchableOpacity
-                            key={tab}
-                            style={[styles.tabButton, filter === tab && styles.activeTabObject]}
-                            onPress={() => setFilter(tab)}
-                        >
-                            <ThemedText style={[styles.tabText, filter === tab && styles.activeTabText]}>
-                                {tab.toUpperCase()}
-                            </ThemedText>
-                        </TouchableOpacity>
-                    ))}
-                </GlassView>
+            <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
 
-                {/* Search Bar */}
-                <GlassView style={styles.searchBarContainer} intensity={80}>
-                    <BottomSearchBar
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder="Find your beer..."
-                    />
-                </GlassView>
-            </Animated.View>
+            <GlassView style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 10 }]} intensity={80}>
+                <BottomSearchBar
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholder="Find your beer..."
+                />
+            </GlassView>
         </ThemedView>
     );
 }
@@ -140,6 +182,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.dark.background,
+    },
+    contentContainer: {
+        flex: 1,
+    },
+    listContent: {
+        paddingHorizontal: 16,
+        paddingTop: 0,
     },
     header: {
         flexDirection: "row",
@@ -159,14 +208,10 @@ const styles = StyleSheet.create({
         lineHeight: 36,
         fontWeight: "bold",
     },
-
-    listContent: {
-        paddingHorizontal: 15,
-        gap: 12,
-        paddingTop: 10,
-    },
+    // New Item Styles
     itemCard: {
         borderRadius: 16,
+        marginBottom: 12,
         overflow: 'hidden',
         backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1,
@@ -176,75 +221,59 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        height: 90, // Compact height
+        height: 100,
     },
     textContainer: {
         flex: 1,
         justifyContent: 'center',
-        paddingRight: 10,
+        paddingRight: 12,
         gap: 4,
     },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
     itemName: {
-        fontSize: 20, // Increased from 18
+        fontSize: 20,
         fontWeight: "700",
         color: Colors.dark.text,
-        flex: 1,
     },
-
     itemDescription: {
-        fontSize: 15, // Increased from 13
+        fontSize: 15,
         color: Colors.dark.icon,
         lineHeight: 20,
     },
     iconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 10,
+        width: 76,
+        height: 76,
+        borderRadius: 12,
         backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: 'center',
         justifyContent: 'center',
     },
-    controlsLayer: {
+    searchBarContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        justifyContent: "flex-end",
         paddingHorizontal: 20,
-        gap: 15,
+        paddingTop: 15,
     },
-    filterTabs: {
+    sectionHeader: {
         flexDirection: "row",
-        justifyContent: "space-evenly",
-        borderRadius: 30,
-        padding: 5,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 16,
+        marginTop: 12,
+        marginBottom: 8,
+        paddingHorizontal: 32,
     },
-    searchBarContainer: {
-        borderRadius: 25,
-        overflow: 'hidden',
+    sectionHeaderText: {
+        fontSize: 24,
+        fontWeight: "800",
+        color: "#FFFFFF",
+        marginHorizontal: 16,
+        textAlign: 'center',
     },
-    tabButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 25,
+    sectionDivider: {
         flex: 1,
-        alignItems: 'center',
-    },
-    activeTabObject: {
-        backgroundColor: "rgba(255,255,255,0.1)",
-    },
-    tabText: {
-        fontSize: 12,
-        fontWeight: "bold",
-        letterSpacing: 1,
-        color: Colors.dark.icon,
-    },
-    activeTabText: {
-        color: Colors.dark.tint,
-    },
+        height: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.4)",
+    }
 });
