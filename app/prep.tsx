@@ -114,15 +114,17 @@ export default function PrepScreen() {
             );
         }
 
+        const prepItem = item as typeof prep[0];
+
         return (
             <GlassView style={styles.itemCard} intensity={20}>
                 <View style={styles.itemRow}>
                     <View style={styles.textContainer}>
                         <View style={styles.headerRow}>
-                            <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
-                            <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
+                            <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{prepItem.name}</ThemedText>
+                            <ThemedText style={styles.itemPrice}>{prepItem.price}</ThemedText>
                         </View>
-                        <ThemedText style={styles.itemDescription} numberOfLines={2}>{item.description}</ThemedText>
+                        <ThemedText style={styles.itemDescription} numberOfLines={2}>{prepItem.description}</ThemedText>
                     </View>
                     <View style={styles.iconContainer}>
                         <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
@@ -153,13 +155,13 @@ export default function PrepScreen() {
                     ListHeaderComponent={
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View>
-                                <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+                                <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
                                     <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                        <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
+                                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                                     </TouchableOpacity>
                                     <ThemedText type="title" style={styles.title}>Prep</ThemedText>
                                     <View style={{ width: 40 }} />
-                                </GlassView>
+                                </View>
                             </View>
                         </TouchableWithoutFeedback>
                     }
@@ -169,13 +171,13 @@ export default function PrepScreen() {
 
             <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
 
-            <GlassView style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 10 }]} intensity={80}>
+            <View style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 4 }]}>
                 <BottomSearchBar
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Find..."
                 />
-            </GlassView>
+            </View>
         </ThemedView>
     );
 }
@@ -196,9 +198,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingHorizontal: 16,
+        paddingBottom: 8,
         zIndex: 10,
+        marginTop: 0,
+        marginHorizontal: 0,
     },
     headerTitleContainer: {
         width: 40,
@@ -206,9 +210,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 32,
-        lineHeight: 36,
+        fontSize: 34,
+        lineHeight: 38,
         fontWeight: "bold",
+        letterSpacing: 0.5,
     },
     itemCard: {
         borderRadius: 16,

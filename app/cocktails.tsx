@@ -215,13 +215,13 @@ export default function CocktailsScreen() {
                     ListHeaderComponent={
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View>
-                                <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+                                <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
                                     <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                        <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
+                                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                                     </TouchableOpacity>
                                     <ThemedText type="title" style={styles.title}>Cocktails</ThemedText>
                                     <View style={{ width: 40 }} />
-                                </GlassView>
+                                </View>
                             </View>
                         </TouchableWithoutFeedback>
                     }
@@ -231,13 +231,13 @@ export default function CocktailsScreen() {
 
             <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
 
-            <GlassView style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 10 }]} intensity={80}>
+            <View style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 4 }]}>
                 <BottomSearchBar
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Search cocktails..."
                 />
-            </GlassView>
+            </View>
         </ThemedView>
     );
 }
@@ -260,9 +260,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingHorizontal: 16,
+        paddingBottom: 8,
         zIndex: 10,
+        marginTop: 0,
+        marginHorizontal: 0,
     },
     headerTitleContainer: {
         width: 40,
@@ -270,9 +272,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 32,
-        lineHeight: 36,
+        fontSize: 34,
+        lineHeight: 38,
         fontWeight: "bold",
+        letterSpacing: 0.5,
     },
     // New Item Styles
     itemCard: {

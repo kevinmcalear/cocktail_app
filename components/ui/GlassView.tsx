@@ -7,7 +7,7 @@ interface GlassViewProps {
     style?: StyleProp<ViewStyle>;
     children: React.ReactNode;
     intensity?: number;
-    tint?: "light" | "dark" | "default";
+    tint?: "light" | "dark" | "default" | "systemUltraThinMaterialDark" | "systemThinMaterialDark" | "systemMaterialDark" | "systemThickMaterialDark" | "systemChromeMaterialDark";
 }
 
 export function GlassView({
