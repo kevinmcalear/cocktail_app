@@ -12,7 +12,7 @@ interface MenuItem {
     image: any;
 }
 
-const menuItems: MenuItem[] = [
+export const menuItems: MenuItem[] = [
     {
         name: "House Martini",
         description: "Four Pillars & Caretaker's Cottage House Gin, house dry vermouth. Needs to be freezing.",

@@ -5,11 +5,14 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useStudyPile } from "@/hooks/useStudyPile";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
+import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface CocktailListItem {
@@ -39,6 +42,8 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
     const flatListRef = useRef<FlatList>(null);
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     // Filter and Sort
     const filteredCocktails = useMemo(() => {
@@ -109,6 +114,38 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         return require("@/assets/images/cocktails/house_martini.png");
     };
 
+    const renderRightActions = (id: string, swipeable: Swipeable) => {
+        const isFav = isFavorite(id);
+        const inStudy = isInStudyPile(id);
+
+        return (
+            <View style={styles.rightActionsContainer}>
+                <RectButton
+                    style={[styles.actionButton, { backgroundColor: '#FF4B4B' }]}
+                    onPress={() => {
+                        toggleFavorite(id);
+                        swipeable.close();
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }}
+                >
+                    <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
+                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</ThemedText>
+                </RectButton>
+                <RectButton
+                    style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
+                    onPress={() => {
+                        toggleStudyPile(id);
+                        swipeable.close();
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }}
+                >
+                    <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
+                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</ThemedText>
+                </RectButton>
+            </View>
+        );
+    };
+
     const renderItem = ({ item }: { item: CocktailListItem | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
             return (
@@ -121,30 +158,38 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         }
 
         const cocktail = item as CocktailListItem;
+        let swipeableRef: Swipeable | null = null;
 
         return (
-            <Link href={`/cocktail/${cocktail.id}`} asChild>
-                <TouchableOpacity activeOpacity={0.7}>
-                    <GlassView style={styles.itemCard} intensity={20}>
-                        <View style={styles.itemRow}>
-                            <View style={styles.textContainer}>
-                                <View style={styles.nameRow}>
-                                    <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{cocktail.name}</ThemedText>
+            <Swipeable
+                ref={(ref) => { swipeableRef = ref; }}
+                renderRightActions={() => renderRightActions(cocktail.id, swipeableRef!)}
+                friction={2}
+                rightThreshold={40}
+            >
+                <Link href={`/cocktail/${cocktail.id}`} asChild>
+                    <TouchableOpacity activeOpacity={0.7}>
+                        <GlassView style={styles.itemCard} intensity={20}>
+                            <View style={styles.itemRow}>
+                                <View style={styles.textContainer}>
+                                    <View style={styles.nameRow}>
+                                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{cocktail.name}</ThemedText>
+                                    </View>
+                                    <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                                        {cocktail.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || cocktail.description || "No ingredients listed"}
+                                    </ThemedText>
                                 </View>
-                                <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                                    {cocktail.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || cocktail.description || "No ingredients listed"}
-                                </ThemedText>
+                                <Image
+                                    source={getImage(cocktail)}
+                                    style={styles.itemImage}
+                                    contentFit="cover"
+                                    transition={500}
+                                />
                             </View>
-                            <Image
-                                source={getImage(cocktail)}
-                                style={styles.itemImage}
-                                contentFit="cover"
-                                transition={500}
-                            />
-                        </View>
-                    </GlassView>
-                </TouchableOpacity>
-            </Link>
+                        </GlassView>
+                    </TouchableOpacity>
+                </Link>
+            </Swipeable>
         );
     };
 
@@ -269,6 +314,24 @@ const styles = StyleSheet.create({
         height: 76,
         borderRadius: 12,
         backgroundColor: "rgba(255,255,255,0.05)",
+    },
+    rightActionsContainer: {
+        flexDirection: 'row',
+        width: 160,
+        height: 100,
+        marginBottom: 12,
+    },
+    actionButton: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 16,
+        marginLeft: 8,
+    },
+    actionText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginTop: 4,
     },
     searchBarContainer: {
         position: 'absolute',

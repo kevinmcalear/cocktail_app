@@ -21,10 +21,11 @@ export default function HomeScreen() {
 
   const navItems = [
     { label: "COCKTAILS", route: "/cocktails" },
-    { label: "WINES", route: "/wines" },
-    { label: "BEERS", route: "/beers" },
-    { label: "PREP", route: "/prep" },
     { label: "MENUS", route: "/menus" },
+    { label: "BEERS", route: "/beers" },
+    { label: "WINES", route: "/wines" },
+    { label: "PREP", route: "/prep" },
+    { label: "TEST", route: "/test" },
   ];
 
   return (
