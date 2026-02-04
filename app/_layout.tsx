@@ -54,6 +54,7 @@ function RootLayoutNav() {
           options={{ presentation: "modal", title: "Import Cocktails" }}
         />
         <Stack.Screen name="menus" options={{ headerShown: false }} />
+        <Stack.Screen name="test" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
