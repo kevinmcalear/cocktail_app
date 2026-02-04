@@ -4,8 +4,10 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useFavorites } from "@/hooks/useFavorites";
 import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
+import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
@@ -25,6 +27,7 @@ export default function CocktailDetailsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { height: windowHeight } = useWindowDimensions();
+    const { isFavorite, toggleFavorite } = useFavorites();
 
     // -- HOOKS --
     const [cocktail, setCocktail] = useState<DatabaseCocktail | null>(null);
@@ -177,15 +180,33 @@ export default function CocktailDetailsScreen() {
                 </GlassView>
             </TouchableOpacity>
 
-            {/* Edit Button */}
-            <TouchableOpacity
-                style={[styles.editButton, { top: insets.top + 10 }]}
-                onPress={() => router.push(`/cocktail/${id}/edit`)}
-            >
-                <GlassView intensity={50} style={styles.backButtonGlass}>
-                    <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
-                </GlassView>
-            </TouchableOpacity>
+            {/* Edit and Favorite Buttons */}
+            <View style={[styles.headerActions, { top: insets.top + 10 }]}>
+                <TouchableOpacity
+                    onPress={() => {
+                        toggleFavorite(id as string);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                    style={styles.actionButton}
+                >
+                    <GlassView intensity={50} style={styles.backButtonGlass}>
+                        <IconSymbol
+                            name={isFavorite(id as string) ? "heart.fill" : "heart"}
+                            size={20}
+                            color={isFavorite(id as string) ? "#FF4B4B" : Colors.dark.text}
+                        />
+                    </GlassView>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => router.push(`/cocktail/${id}/edit`)}
+                    style={styles.actionButton}
+                >
+                    <GlassView intensity={50} style={styles.backButtonGlass}>
+                        <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
+                    </GlassView>
+                </TouchableOpacity>
+            </View>
 
             {/* Foreground Content */}
             <Animated.ScrollView
@@ -465,9 +486,14 @@ const styles = StyleSheet.create({
         right: 20,
         zIndex: 10,
     },
-    editButton: {
+    headerActions: {
         position: 'absolute',
         right: 20,
         zIndex: 10,
+        flexDirection: 'row',
+        gap: 8,
+    },
+    actionButton: {
+        // Individual buttons within the row
     }
 });

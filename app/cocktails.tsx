@@ -1,60 +1,14 @@
-import { AlphabetScroller } from "@/components/AlphabetScroller";
-import { BottomSearchBar } from "@/components/BottomSearchBar";
+import { CocktailList, CocktailListItem } from "@/components/CocktailList";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
-import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
-import { Link, Stack, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Easing, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function CocktailsScreen() {
     const router = useRouter();
-    const insets = useSafeAreaInsets();
-    const [searchQuery, setSearchQuery] = useState("");
-    const flatListRef = useRef<FlatList>(null);
-    const currentViewableSection = useRef<string | null>(null);
-
-    // Keyboard handling
-    const translateY = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        const showSubscription = Keyboard.addListener(
-            Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-            (e) => {
-                Animated.timing(translateY, {
-                    toValue: -(e.endCoordinates.height - insets.bottom),
-                    duration: (e.duration || 250) * 0.7,
-                    useNativeDriver: true,
-                    easing: Easing.out(Easing.ease),
-                }).start();
-            }
-        );
-        const hideSubscription = Keyboard.addListener(
-            Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-            (e) => {
-                Animated.timing(translateY, {
-                    toValue: 0,
-                    duration: (e.duration || 250) * 0.7,
-                    useNativeDriver: true,
-                    easing: Easing.out(Easing.ease),
-                }).start();
-            }
-        );
-
-        return () => {
-            showSubscription.remove();
-            hideSubscription.remove();
-        };
-    }, [insets.bottom, translateY]);
-
-    // Data Fetching
     const [cocktails, setCocktails] = useState<CocktailListItem[]>([]);
 
     useEffect(() => {
@@ -89,258 +43,77 @@ export default function CocktailsScreen() {
         }
     };
 
-    // Filter and Sort
-    const filteredCocktails = useMemo(() => {
-        let result = cocktails;
-
-        if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(
-                (c) =>
-                    c.name.toLowerCase().includes(lowerQuery) ||
-                    (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery)))
-            );
-        }
-
-        return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [cocktails, searchQuery]);
-
-    // Section Headers Logic
-    const listData = useMemo(() => {
-        const data: (CocktailListItem | { type: "header"; letter: string; id: string })[] = [];
-        let lastLetter = "";
-
-        filteredCocktails.forEach((item) => {
-            let currentLetter = item.name.charAt(0).toUpperCase();
-
-            // Group numbers under "#"
-            if (/[0-9]/.test(currentLetter)) {
-                currentLetter = "#";
-            }
-
-            if (currentLetter !== lastLetter) {
-                lastLetter = currentLetter;
-                data.push({ type: "header", letter: currentLetter, id: `header-${currentLetter}` });
-            }
-            data.push(item);
-        });
-
-        return data;
-    }, [filteredCocktails]);
-
-    const handleScrollToLetter = useCallback((letter: string) => {
-        const index = listData.findIndex((item) => {
-            if ("type" in item && item.type === "header") {
-                return item.letter === letter;
-            }
-            return false;
-        });
-
-        if (index !== -1 && flatListRef.current) {
-            flatListRef.current.scrollToIndex({ index, animated: false, viewOffset: 100 });
-        }
-    }, [listData]);
-
-    const onViewableItemsChanged = useRef(({ changed }: { viewableItems: ViewToken[]; changed: ViewToken[] }) => {
-        // Trigger haptics when a header becomes visible
-        const headerBecameVisible = changed.some((token) => {
-            return token.isViewable && 'type' in token.item && token.item.type === 'header';
-        });
-
-        if (headerBecameVisible) {
-            Haptics.selectionAsync();
-        }
-    }).current;
-
-    const getImage = (item: CocktailListItem) => {
-        if (item.cocktail_images && item.cocktail_images.length > 0) {
-            return { uri: item.cocktail_images[0].images.url };
-        }
-        return require("@/assets/images/cocktails/house_martini.png");
-    };
-
-    const renderItem = ({ item }: { item: CocktailListItem | { type: "header"; letter: string; id: string } }) => {
-        if ("type" in item && item.type === "header") {
-            return (
-                <View style={styles.sectionHeader}>
-                    <View style={styles.sectionDivider} />
-                    <ThemedText style={styles.sectionHeaderText}>{item.letter}</ThemedText>
-                    <View style={styles.sectionDivider} />
-                </View>
-            );
-        }
-
-        return (
-            <Link href={`/cocktail/${item.id}`} asChild>
-                <TouchableOpacity activeOpacity={0.7}>
-                    <GlassView style={styles.itemCard} intensity={20}>
-                        <View style={styles.itemRow}>
-                            <View style={styles.textContainer}>
-                                <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
-                                <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                                    {item.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || item.description || "No ingredients listed"}
-                                </ThemedText>
-                            </View>
-                            <Image
-                                source={getImage(item)}
-                                style={styles.itemImage}
-                                contentFit="cover"
-                                transition={500}
-                            />
-                        </View>
+    const headerButtons = (
+        <View style={styles.filterButtonsContainer}>
+            {[
+                { id: "top20", label: "TOP\n20", route: "/top20" },
+                { id: "top40", label: "TOP\n40", route: "/top40" },
+                { id: "favs", label: "MY\nFAVOURITES", route: "/favorites" }
+            ].map((item) => (
+                <TouchableOpacity
+                    key={item.id}
+                    style={styles.filterButtonWrapper}
+                    onPress={() => router.push(item.route as any)}
+                >
+                    <GlassView style={styles.filterButton} intensity={15}>
+                        <View style={styles.filterButtonShine} />
+                        <ThemedText style={styles.filterButtonLabel}>{item.label}</ThemedText>
                     </GlassView>
                 </TouchableOpacity>
-            </Link>
-        );
-    };
+            ))}
+        </View>
+    );
 
     return (
-        <ThemedView style={styles.container}>
+        <>
             <Stack.Screen options={{ headerShown: false }} />
-
-            <View style={styles.contentContainer}>
-                <FlatList
-                    ref={flatListRef}
-                    data={listData}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
-                    showsVerticalScrollIndicator={false}
-                    keyboardDismissMode="on-drag"
-                    keyboardShouldPersistTaps="handled"
-                    onViewableItemsChanged={onViewableItemsChanged}
-                    viewabilityConfig={{ itemVisiblePercentThreshold: 10 }}
-                    onScrollToIndexFailed={(info) => {
-                        flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
-                    }}
-                    ListHeaderComponent={
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View>
-                                <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
-                                    <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                                    </TouchableOpacity>
-                                    <ThemedText type="title" style={styles.title}>Cocktails</ThemedText>
-                                    <View style={{ width: 40 }} />
-                                </View>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    }
-                    renderItem={renderItem}
-                />
-            </View>
-
-            <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
-
-            <View style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 4 }]}>
-                <BottomSearchBar
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    placeholder="Search cocktails..."
-                />
-            </View>
-        </ThemedView>
+            <CocktailList
+                title="Cocktails"
+                cocktails={cocktails}
+                headerButtons={headerButtons}
+            />
+        </>
     );
 }
 
-// ... type definition ...
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-    contentContainer: {
-        flex: 1,
-    },
-    listContent: {
-        paddingHorizontal: 16,
-        paddingTop: 0,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingBottom: 8,
-        zIndex: 10,
-        marginTop: 0,
-        marginHorizontal: 0,
-    },
-    headerTitleContainer: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 34,
-        lineHeight: 38,
-        fontWeight: "bold",
-        letterSpacing: 0.5,
-    },
-    // New Item Styles
-    itemCard: {
-        borderRadius: 16,
-        marginBottom: 12,
-        overflow: 'hidden',
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-    },
-    itemRow: {
+    filterButtonsContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 100,
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+        marginTop: 20,
+        gap: 8,
     },
-    textContainer: {
+    filterButtonWrapper: {
         flex: 1,
-        justifyContent: 'center',
-        paddingRight: 12,
-        gap: 4,
+        height: 64,
     },
-    itemName: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: Colors.dark.text,
-    },
-    itemDescription: {
-        fontSize: 15,
-        color: Colors.dark.icon,
-        lineHeight: 20,
-    },
-    itemImage: {
-        width: 76,
-        height: 76,
+    filterButton: {
+        flex: 1,
         borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.05)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(255,255,255,0.01)",
+        overflow: 'hidden',
     },
-    searchBarContainer: {
+    filterButtonShine: {
         position: 'absolute',
-        bottom: 0,
+        top: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 20,
-        paddingTop: 15,
+        height: '45%',
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
     },
-    sectionHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 16,
-        marginTop: 12,
-        marginBottom: 8,
-        paddingHorizontal: 32,
-    },
-    sectionHeaderText: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#FFFFFF",
-        marginHorizontal: 16,
-        textAlign: 'center',
-    },
-    sectionDivider: {
-        flex: 1,
-        height: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.4)",
+    filterButtonLabel: {
+        fontSize: 12,
+        fontWeight: "700",
+        letterSpacing: 2,
+        color: Colors.dark.text,
+        textAlign: "center",
+        lineHeight: 16,
     }
 });
