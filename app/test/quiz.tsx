@@ -14,9 +14,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CocktailCategory, FlashcardItem, sharedStyles, Subject, width } from "./shared";
+import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./shared";
 
 export default function QuizScreen() {
     const router = useRouter();
@@ -30,8 +30,12 @@ export default function QuizScreen() {
     const { studyPile } = useStudyPile();
     const [items, setItems] = useState<FlashcardItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [scores, setScores] = useState<Record<string, 'poor' | 'acceptable' | 'perfect'>>({});
+    const [showResults, setShowResults] = useState(false);
+    const [isRevealed, setIsRevealed] = useState(false);
     const [loading, setLoading] = useState(true);
     const flipped = useSharedValue(0);
+    const pourAnimation = useSharedValue(0);
 
     const cardCount = parseInt(params.cardCount || "10");
     const includeMeasurements = params.includeMeasurements === "true";
@@ -142,9 +146,74 @@ export default function QuizScreen() {
         return parts.join(" ");
     };
 
-    const handleFlip = () => {
-        flipped.value = withSpring(flipped.value === 0 ? 180 : 0);
+    const handleRetry = () => {
+        setScores({});
+        setCurrentIndex(0);
+        setShowResults(false);
+        setIsRevealed(false);
+        flipped.value = 0;
+        pourAnimation.value = 0;
     };
+
+    const handleNewTest = () => {
+        router.back();
+    };
+
+    const handleFlip = () => {
+        const newValue = flipped.value === 0 ? 180 : 0;
+        flipped.value = withSpring(newValue);
+        // Delay setting isRevealed slightly to match the flip animation
+        setTimeout(() => {
+            setIsRevealed(newValue === 180);
+        }, 150);
+    };
+
+    const handleScore = (score: 'poor' | 'acceptable' | 'perfect') => {
+        const item = items[currentIndex];
+        setScores(prev => ({ ...prev, [item.id]: score }));
+
+        if (currentIndex < items.length - 1) {
+            flipped.value = withSpring(0);
+            setIsRevealed(false);
+            setTimeout(() => {
+                setCurrentIndex(currentIndex + 1);
+            }, 300);
+        } else {
+            setShowResults(true);
+            // Very slow, dramatic pour: 0-1 (fill glass), 1-2 (slow fill screen)
+            setTimeout(() => {
+                pourAnimation.value = withTiming(2, { duration: 10000 });
+            }, 500);
+        }
+    };
+
+    const calculateResult = () => {
+        const total = items.length;
+        const counts = { poor: 0, acceptable: 0, perfect: 0 };
+        Object.values(scores).forEach(s => counts[s]++);
+
+        const r = (counts.poor * 255 + counts.acceptable * 255 + counts.perfect * 76) / total;
+        const g = (counts.poor * 75 + counts.acceptable * 165 + counts.perfect * 175) / total;
+        const b = (counts.poor * 75 + counts.acceptable * 0 + counts.perfect * 80) / total;
+
+        return {
+            color: `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`,
+            percentage: (counts.perfect + counts.acceptable * 0.5) / total,
+            counts
+        };
+    };
+
+    const result = calculateResult();
+
+    const animatedBgStyle = useAnimatedStyle(() => ({
+        height: interpolate(pourAnimation.value, [1, 2], [0, height]),
+        backgroundColor: result.color,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 0, // Keep at the very back of the results layer
+    }));
 
     const frontAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ rotateY: `${interpolate(flipped.value, [0, 180], [0, 180])}deg` }],
@@ -156,6 +225,11 @@ export default function QuizScreen() {
         backfaceVisibility: "hidden",
         position: "absolute",
         top: 0, left: 0, right: 0, bottom: 0,
+    }));
+
+    const actionsOpacityStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(pourAnimation.value, [1.8, 2.0], [0, 1]),
+        transform: [{ translateY: interpolate(pourAnimation.value, [1.8, 2.0], [20, 0]) }]
     }));
 
     if (loading) {
@@ -184,6 +258,70 @@ export default function QuizScreen() {
                     <View style={styles.emptyContainer}>
                         <IconSymbol name="exclamationmark.triangle" size={64} color={Colors.dark.icon} />
                         <ThemedText style={styles.emptyText}>No items found for this selection.</ThemedText>
+                    </View>
+                </SafeAreaView>
+            </ThemedView>
+        );
+    }
+
+    if (showResults) {
+        const { color, percentage, counts } = result;
+
+        return (
+            <ThemedView style={sharedStyles.container}>
+                <Animated.View style={animatedBgStyle} />
+                <SafeAreaView style={[sharedStyles.safeArea, { zIndex: 10 }]}>
+                    <View style={styles.resultsWrapper}>
+                        <View style={styles.resultsMainContent}>
+                            <View style={styles.glassWrapperLarge}>
+                                <View style={{ transform: [{ scale: 2 }], zIndex: 10 }}>
+                                    <CocktailGlass progress={pourAnimation} color={color} />
+                                </View>
+                            </View>
+
+                            <Animated.View style={[styles.statsContainer, { zIndex: 30 }]}>
+                                <View style={styles.statRow}>
+                                    <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
+                                    <ThemedText style={styles.statLabel}>Perfect: {counts.perfect}</ThemedText>
+                                </View>
+                                <View style={styles.statRow}>
+                                    <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
+                                    <ThemedText style={styles.statLabel}>Acceptable: {counts.acceptable}</ThemedText>
+                                </View>
+                                <View style={styles.statRow}>
+                                    <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
+                                    <ThemedText style={styles.statLabel}>Poor: {counts.poor}</ThemedText>
+                                </View>
+                            </Animated.View>
+                        </View>
+
+                        <Animated.View style={[styles.bottomPinnedSection, { zIndex: 40 }, actionsOpacityStyle]}>
+                            <View style={styles.scoreBox}>
+                                <ThemedText style={styles.finalScore} adjustsFontSizeToFit={true} numberOfLines={1}>
+                                    SCORE: {Math.round(percentage * 100)}%
+                                </ThemedText>
+                            </View>
+
+                            <View style={styles.actionButtonsRow}>
+                                <TouchableOpacity style={styles.actionButtonSmall} onPress={handleRetry}>
+                                    <GlassView style={styles.actionButtonContent} intensity={80}>
+                                        <ThemedText style={styles.actionButtonText}>RETRY</ThemedText>
+                                    </GlassView>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.actionButtonSmall} onPress={handleNewTest}>
+                                    <GlassView style={styles.actionButtonContent} intensity={80}>
+                                        <ThemedText style={styles.actionButtonText}>SELECT NEW</ThemedText>
+                                    </GlassView>
+                                </TouchableOpacity>
+                            </View>
+
+                            <TouchableOpacity style={styles.closeButton} onPress={() => router.replace("/")}>
+                                <GlassView style={styles.finishButtonContent} intensity={90}>
+                                    <ThemedText style={styles.finishButtonText}>FINISH</ThemedText>
+                                </GlassView>
+                            </TouchableOpacity>
+                        </Animated.View>
                     </View>
                 </SafeAreaView>
             </ThemedView>
@@ -251,21 +389,33 @@ export default function QuizScreen() {
                         </View>
 
                         <View style={styles.controls}>
-                            <TouchableOpacity
-                                style={[styles.navButton, currentIndex === 0 && styles.disabledButton]}
-                                onPress={() => { if (currentIndex > 0) { flipped.value = 0; setCurrentIndex(currentIndex - 1); } }}
-                                disabled={currentIndex === 0}
-                            >
-                                <IconSymbol name="arrow.left" size={28} color={Colors.dark.text} />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.navButton, currentIndex === items.length - 1 && styles.disabledButton]}
-                                onPress={() => { if (currentIndex < items.length - 1) { flipped.value = 0; setCurrentIndex(currentIndex + 1); } }}
-                                disabled={currentIndex === items.length - 1}
-                            >
-                                <IconSymbol name="arrow.right" size={28} color={Colors.dark.text} />
-                            </TouchableOpacity>
+                            {isRevealed ? (
+                                <View style={styles.scoreButtons}>
+                                    <TouchableOpacity
+                                        style={[styles.scoreButton, { backgroundColor: '#FF4B4B' }]}
+                                        onPress={() => handleScore('poor')}
+                                    >
+                                        <ThemedText style={styles.scoreText}>POOR</ThemedText>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.scoreButton, { backgroundColor: '#FFA500' }]}
+                                        onPress={() => handleScore('acceptable')}
+                                    >
+                                        <ThemedText style={styles.scoreText}>ACCEPTABLE</ThemedText>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.scoreButton, { backgroundColor: '#4CAF50' }]}
+                                        onPress={() => handleScore('perfect')}
+                                    >
+                                        <ThemedText style={styles.scoreText}>PERFECT</ThemedText>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <TouchableOpacity onPress={handleFlip} style={styles.actionPrompt}>
+                                    <IconSymbol name="hand.tap" size={24} color={Colors.dark.icon} />
+                                    <ThemedText style={styles.promptText}>TAP TO REVEAL RECIPE</ThemedText>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                 </SafeAreaView>
@@ -296,7 +446,32 @@ const styles = StyleSheet.create({
     amount: { fontSize: 16, fontWeight: "bold", color: Colors.dark.tint, minWidth: 50 },
     ingredientName: { fontSize: 18, flex: 1 },
     description: { fontSize: 15, color: Colors.dark.icon, lineHeight: 22, marginTop: 15 },
-    controls: { flexDirection: "row", justifyContent: "center", gap: 40, paddingBottom: 40 },
+    controls: { paddingHorizontal: 20, paddingBottom: 40 },
+    scoreButtons: { flexDirection: "row", gap: 12, width: '100%', height: 70 },
+    scoreButton: { flex: 1, borderRadius: 15, justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 5 },
+    scoreText: { fontSize: 13, fontWeight: "900", color: "#FFF", letterSpacing: 1 },
+    actionPrompt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 70 },
+    promptText: { fontSize: 16, fontWeight: '700', color: Colors.dark.icon, letterSpacing: 1.5 },
+    resultsWrapper: { flex: 1, paddingHorizontal: 30, paddingTop: 30, paddingBottom: 10 },
+    resultsMainContent: { flex: 1, alignItems: "center", justifyContent: "center" },
+    resultsContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
+    titleBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 15, marginBottom: 20, zIndex: 30 },
+    resultsTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", textAlign: 'center', letterSpacing: 2 },
+    glassWrapperLarge: { height: 200, justifyContent: 'center', alignItems: 'center', marginBottom: 50 },
+    statsContainer: { width: '100%', gap: 12, backgroundColor: 'rgba(0,0,0,0.85)', padding: 25, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    statRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    statDot: { width: 14, height: 14, borderRadius: 7 },
+    statLabel: { fontSize: 18, fontWeight: '800', color: "#FFF" },
+    bottomPinnedSection: { width: '100%', paddingBottom: 0, gap: 10 },
+    scoreBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingVertical: 20, paddingHorizontal: 20, borderRadius: 20, marginBottom: 5 },
+    finalScore: { fontSize: 52, fontWeight: "900", color: "#FFF", textAlign: 'center' },
+    actionButtonsRow: { flexDirection: 'row', gap: 10, width: '100%' },
+    actionButtonSmall: { flex: 1, height: 54 },
+    actionButtonContent: { flex: 1, borderRadius: 14, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.9)", borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+    actionButtonText: { fontSize: 13, fontWeight: "900", letterSpacing: 1, color: "#FFF" },
+    closeButton: { width: '100%', height: 64 },
+    finishButtonContent: { flex: 1, borderRadius: 18, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.95)", borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+    finishButtonText: { fontSize: 20, fontWeight: "900", letterSpacing: 3, color: "#FFF" },
     navButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: "rgba(255,255,255,0.05)", justifyContent: "center", alignItems: "center" },
     disabledButton: { opacity: 0.2 },
 });

@@ -6,9 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { runOnJS, SharedValue, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { interpolate, runOnJS, SharedValue, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
 
-export const { width } = Dimensions.get("window");
+export const { width, height } = Dimensions.get("window");
 
 export type Subject = "COCKTAILS" | "MENU" | "BEERS" | "WINES";
 export type CocktailCategory = "TOP_20" | "TOP_40" | "STUDY_PILE" | "RANDOM";
@@ -79,6 +79,72 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
                 </GestureDetector>
                 <ThemedText style={sharedStyles.sliderLimit}>20</ThemedText>
             </View>
+        </View>
+    );
+}
+
+export function CocktailGlass({ progress, color }: { progress: SharedValue<number>, color: string }) {
+    const animatedLiquidStyle = useAnimatedStyle(() => ({
+        height: interpolate(progress.value, [0, 1, 1.5], [0, 68, 70]),
+        backgroundColor: color,
+        opacity: interpolate(progress.value, [0, 0.1], [0, 1])
+    }));
+
+    const animatedBubbleStyle = useAnimatedStyle(() => ({
+        opacity: progress.value > 0 && progress.value < 1.1 ? 0.6 : 0,
+        transform: [
+            { translateY: interpolate(progress.value, [0, 1], [0, -40]) },
+            { scale: interpolate(progress.value, [0, 1], [0.5, 1.5]) }
+        ]
+    }));
+
+    const animatedStreamStyle = useAnimatedStyle(() => ({
+        opacity: progress.value > 0 && progress.value < 1.1 ? 0.8 : 0,
+        height: interpolate(progress.value, [0, 1], [80, 0], 'clamp')
+    }));
+
+    // Splash Particles
+    const renderSplash = (index: number) => {
+        const animatedSplashStyle = useAnimatedStyle(() => {
+            const isSplashing = progress.value > 0.95 && progress.value < 1.3;
+            const splashProgress = interpolate(progress.value, [0.95, 1.2], [0, 1], 'clamp');
+
+            const xDir = index % 2 === 0 ? -1 : 1;
+            const xDist = (index + 1) * 15 * xDir;
+            const yDist = -40 - (index * 10);
+
+            return {
+                opacity: isSplashing ? interpolate(splashProgress, [0, 0.8, 1], [0, 0.8, 0]) : 0,
+                transform: [
+                    { translateX: splashProgress * xDist },
+                    { translateY: (splashProgress * yDist) + (splashProgress * splashProgress * 60) }, // Parabolic arc
+                    { scale: interpolate(splashProgress, [0, 0.5, 1], [0, 1, 0.5]) }
+                ],
+                backgroundColor: color
+            };
+        });
+
+        return <Animated.View key={index} style={[sharedStyles.splashParticle, animatedSplashStyle]} />;
+    };
+
+    return (
+        <View style={sharedStyles.glassContainer}>
+            <View style={sharedStyles.glassBowl}>
+                <View style={sharedStyles.glassBowlRim} />
+                <View style={sharedStyles.liquidContainer}>
+                    <Animated.View style={[sharedStyles.liquidBody, animatedLiquidStyle]} />
+                    <Animated.View style={[sharedStyles.pourBubble, animatedBubbleStyle]} />
+                    <Animated.View style={[
+                        sharedStyles.pourStream,
+                        animatedStreamStyle,
+                        { backgroundColor: color }
+                    ]} />
+                </View>
+                {/* Spritzes/Splashes when overflowing */}
+                {[...Array(6)].map((_, i) => renderSplash(i))}
+            </View>
+            <View style={sharedStyles.glassStem} />
+            <View style={sharedStyles.glassBase} />
         </View>
     );
 }
@@ -189,5 +255,16 @@ export const sharedStyles = StyleSheet.create({
     shakerTop: { width: 60, height: 25, borderTopLeftRadius: 25, borderTopRightRadius: 25, marginBottom: 2 },
     shakerMain: { width: 55, height: 70, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
     shakerGlow: { position: 'absolute', width: 110, height: 110, backgroundColor: Colors.dark.tint, borderRadius: 55, zIndex: -1 },
-    toggleHint: { fontSize: 14, fontWeight: 'bold', color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginTop: 5 }
+    toggleHint: { fontSize: 14, fontWeight: 'bold', color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginTop: 5 },
+    // Glass Component Styles
+    glassContainer: { alignItems: 'center', justifyContent: 'center', padding: 20 },
+    glassBowl: { width: 100, height: 70, borderBottomLeftRadius: 50, borderBottomRightRadius: 50, borderLeftWidth: 2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: 'rgba(255,255,255,0.3)', position: 'relative' },
+    glassBowlRim: { width: 100, height: 10, borderRadius: 50, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', position: 'absolute', top: -5, zIndex: 10 },
+    liquidContainer: { position: 'absolute', bottom: 0, width: '100%', height: '100%', borderBottomLeftRadius: 50, borderBottomRightRadius: 50, overflow: 'hidden' },
+    liquidBody: { width: '100%', position: 'absolute', bottom: 0 },
+    pourBubble: { position: 'absolute', top: 0, alignSelf: 'center', width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.4)' },
+    pourStream: { position: 'absolute', top: -100, alignSelf: 'center', width: 4, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, zIndex: 5 },
+    splashParticle: { position: 'absolute', top: 0, alignSelf: 'center', width: 6, height: 6, borderRadius: 3 },
+    glassStem: { width: 4, height: 60, backgroundColor: 'rgba(255,255,255,0.3)' },
+    glassBase: { width: 60, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
 });
