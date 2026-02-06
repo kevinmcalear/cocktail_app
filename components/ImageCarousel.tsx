@@ -1,4 +1,3 @@
-import { Colors } from '@/constants/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Image,
@@ -7,8 +6,7 @@ import {
     NativeSyntheticEvent,
     Pressable,
     ScrollView,
-    StyleSheet,
-    useWindowDimensions,
+    StyleSheet, useWindowDimensions,
     View,
     ViewStyle
 } from 'react-native';
@@ -31,9 +29,11 @@ export function ImageCarousel({
     initialIndex = 0,
     onIndexChange,
     scrollEnabled = true,
-    zoomEnabled = false
-}: ImageCarouselProps) {
+    zoomEnabled = false,
+    paginationBelow = false,
+}: ImageCarouselProps & { paginationBelow?: boolean }) {
     const { width } = useWindowDimensions();
+
     const [activeIndex, setActiveIndex] = useState(initialIndex);
     const [isZoomed, setIsZoomed] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
@@ -90,6 +90,7 @@ export function ImageCarousel({
                 scrollEventThrottle={16}
                 contentContainerStyle={{ height: '100%' }}
                 scrollEnabled={scrollEnabled && !isZoomed}
+                style={paginationBelow ? { aspectRatio: 1, flexGrow: 0 } : { flex: 1 }}
             >
                 {images.map((image, index) => {
                     // ZoomableImage expects string | { uri: string }
@@ -128,13 +129,15 @@ export function ImageCarousel({
             </ScrollView>
 
             {images.length > 1 && (
-                <View style={styles.pagination}>
+                <View style={[
+                    paginationBelow ? styles.paginationRelative : styles.paginationAbsolute
+                ]}>
                     {images.map((_, index) => (
                         <View
                             key={index}
                             style={[
-                                styles.dot,
-                                { opacity: index === activeIndex ? 1 : 0.5 }
+                                styles.segment,
+                                { backgroundColor: index === activeIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.3)' }
                             ]}
                         />
                     ))}
@@ -148,20 +151,25 @@ const styles = StyleSheet.create({
     container: {
         overflow: 'hidden',
     },
-    pagination: {
+    paginationAbsolute: {
         position: 'absolute',
-        bottom: 50,
+        bottom: 0,
         left: 0,
         right: 0,
         flexDirection: 'row',
-        justifyContent: 'center',
-        zIndex: 1,
+        paddingHorizontal: 4,
+        paddingBottom: 4,
+        gap: 4,
     },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: Colors.dark.text,
-        marginHorizontal: 4,
-    }
+    paginationRelative: {
+        flexDirection: 'row',
+        paddingHorizontal: 4,
+        paddingTop: 12, // Space between image and lines
+        gap: 4,
+    },
+    segment: {
+        flex: 1,
+        height: 2,
+        borderRadius: 1,
+    },
 });
