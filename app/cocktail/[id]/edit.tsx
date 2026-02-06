@@ -112,7 +112,7 @@ export default function EditCocktailScreen() {
                         ingredient_ml,
                         ingredient_dash,
                         ingredient_amount,
-                        ingredients ( name )
+                        ingredients!recipes_ingredient_id_fkey ( name )
                     )
                 `)
 

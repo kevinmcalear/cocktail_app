@@ -24,7 +24,7 @@ export default function CocktailsScreen() {
                     name,
                     description,
                     recipes (
-                        ingredients (
+                        ingredients!recipes_ingredient_id_fkey (
                             name
                         )
                     ),

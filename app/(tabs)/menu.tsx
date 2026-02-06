@@ -92,7 +92,7 @@ export default function MenuScreen() {
                             name,
                             description,
                             recipes (
-                                ingredients ( name )
+                                ingredients!recipes_ingredient_id_fkey ( name )
                             ),
                             cocktail_images (
                                 sort_order,

@@ -100,7 +100,7 @@ export default function CocktailDetailsScreen() {
                         ingredient_ml,
                         ingredient_dash,
                         ingredient_amount,
-                        ingredients (
+                        ingredients!recipes_ingredient_id_fkey (
                             name
                         )
                     ),
