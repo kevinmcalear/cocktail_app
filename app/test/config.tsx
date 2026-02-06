@@ -3,7 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -44,16 +44,16 @@ export default function ConfigScreen() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemedView style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
+                    <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
                             <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                         </TouchableOpacity>
-                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>CONFIGURE TEST</ThemedText>
+                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING MODE</ThemedText>
                         <View style={{ width: 44 }} />
                     </View>
 
                     <View style={styles.configContainer}>
-                        <ThemedText type="subtitle" style={styles.configTitle}>TESTING MODE</ThemedText>
                         <ShakerToggle
                             active={includeMeasurements}
                             onPress={() => setIncludeMeasurements(!includeMeasurements)}

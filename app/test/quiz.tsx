@@ -10,11 +10,11 @@ import { useStudyPile } from "@/hooks/useStudyPile";
 import { supabase } from "@/lib/supabase";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./shared";
 
@@ -206,7 +206,7 @@ export default function QuizScreen() {
     const result = calculateResult();
 
     const animatedBgStyle = useAnimatedStyle(() => ({
-        height: interpolate(pourAnimation.value, [1, 2], [0, height]),
+        height: interpolate(pourAnimation.value, [1, 2], [0, height + 100]), // Ensure it goes past the top
         backgroundColor: result.color,
         position: 'absolute',
         bottom: 0,
@@ -232,6 +232,11 @@ export default function QuizScreen() {
         transform: [{ translateY: interpolate(pourAnimation.value, [1.8, 2.0], [20, 0]) }]
     }));
 
+    const glassRevealStyle = useAnimatedStyle(() => ({
+        opacity: withTiming(showResults ? 1 : 0, { duration: 1000 }),
+        transform: [{ scale: withSpring(showResults ? 1.2 : 0.8) }]
+    }));
+
     if (loading) {
         return (
             <ThemedView style={sharedStyles.container}>
@@ -248,13 +253,7 @@ export default function QuizScreen() {
         return (
             <ThemedView style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
-                    <View style={sharedStyles.header}>
-                        <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
-                            <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
-                        </TouchableOpacity>
-                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING</ThemedText>
-                        <View style={{ width: 44 }} />
-                    </View>
+                    <Stack.Screen options={{ headerShown: false }} />
                     <View style={styles.emptyContainer}>
                         <IconSymbol name="exclamationmark.triangle" size={64} color={Colors.dark.icon} />
                         <ThemedText style={styles.emptyText}>No items found for this selection.</ThemedText>
@@ -264,10 +263,7 @@ export default function QuizScreen() {
         );
     }
 
-    const glassRevealStyle = useAnimatedStyle(() => ({
-        opacity: withTiming(showResults ? 1 : 0, { duration: 1000 }),
-        transform: [{ scale: withSpring(showResults ? 1.2 : 0.8) }]
-    }));
+
 
     if (showResults) {
         const { color, percentage, counts } = result;
@@ -280,37 +276,40 @@ export default function QuizScreen() {
                 <SafeAreaView style={[sharedStyles.safeArea, { zIndex: 10 }]}>
                     <View style={styles.resultsWrapper}>
                         <View style={styles.resultsMainContent}>
-                            <Animated.View style={styles.titleBox}>
-                                <ThemedText style={styles.resultsTitle}>QUIZ RESULTS</ThemedText>
+                            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.titleBox}>
+                                <ThemedText style={styles.resultsTitle}>RESULTS</ThemedText>
                             </Animated.View>
 
-                            <Animated.View style={[styles.glassWrapperLarge, glassRevealStyle]}>
+                            <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.glassWrapperLarge}>
                                 <CocktailGlass progress={pourAnimation} color={color} />
                             </Animated.View>
 
-                            <Animated.View style={styles.statsContainer}>
-                                <View style={styles.statRow}>
-                                    <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
-                                    <ThemedText style={styles.statLabel}>PERFECT: {counts.perfect}</ThemedText>
+                            <View style={[styles.statsContainer, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 }]}>
+                                <View style={{ gap: 10 }}>
+                                    <View style={styles.statRow}>
+                                        <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
+                                        <ThemedText style={styles.statLabel}>PERFECT: {counts.perfect}</ThemedText>
+                                    </View>
+                                    <View style={styles.statRow}>
+                                        <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
+                                        <ThemedText style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</ThemedText>
+                                    </View>
+                                    <View style={styles.statRow}>
+                                        <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
+                                        <ThemedText style={styles.statLabel}>POOR: {counts.poor}</ThemedText>
+                                    </View>
                                 </View>
-                                <View style={styles.statRow}>
-                                    <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
-                                    <ThemedText style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</ThemedText>
-                                </View>
-                                <View style={styles.statRow}>
-                                    <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
-                                    <ThemedText style={styles.statLabel}>POOR: {counts.poor}</ThemedText>
-                                </View>
-                            </Animated.View>
-                        </View>
+                                <PieGraph counts={counts} size={100} />
+                            </View>
 
-                        <Animated.View style={styles.bottomPinnedSection}>
-                            <View style={styles.scoreBox}>
+                            <Animated.View style={styles.scoreBox} entering={ZoomIn.delay(600).springify()}>
                                 <ThemedText style={styles.finalScore}>
                                     {Math.round(percentage * 100)}%
                                 </ThemedText>
-                            </View>
+                            </Animated.View>
+                        </View>
 
+                        <Animated.View style={styles.bottomPinnedSection} entering={FadeInUp.delay(800).springify()}>
                             <View style={styles.actionButtonsRow}>
                                 <TouchableOpacity style={styles.actionButtonSmall} onPress={handleRetry}>
                                     <GlassView style={styles.actionButtonContent} intensity={80}>
@@ -343,6 +342,7 @@ export default function QuizScreen() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemedView style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
+                    <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
                             <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
@@ -429,9 +429,73 @@ export default function QuizScreen() {
                     </View>
                 </SafeAreaView>
             </ThemedView>
-        </GestureHandlerRootView>
+        </GestureHandlerRootView >
     );
 }
+
+// ... (Top of file remains)
+
+// ...
+
+// Insert PieGraph and Slice components before styles
+// PieGraph: Renders a donut chart using radial segments
+function PieGraph({ counts, size = 120 }: { counts: any, size?: number }) {
+    const total = counts.perfect + counts.acceptable + counts.poor;
+    if (total === 0) return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#333' }} />;
+
+    const radius = size / 2;
+    const numSegments = 80; // Total segments
+    const segmentWidth = (Math.PI * size) / numSegments + 2; // +2 for overlap
+
+    // Calculate cumulative ratios
+    const perfectRatio = counts.perfect / total;
+    const acceptableRatio = perfectRatio + (counts.acceptable / total);
+    // poorRatio reaches 1.0
+
+    const segments = [];
+    for (let i = 0; i < numSegments; i++) {
+        const ratio = i / numSegments;
+        let color = '#FF4B4B'; // Poor (default/remainder)
+        if (ratio < perfectRatio) color = '#4CAF50';
+        else if (ratio < acceptableRatio) color = '#FFA500';
+
+        const angle = (ratio * 360);
+
+        segments.push(
+            <View
+                key={i}
+                style={{
+                    position: 'absolute',
+                    width: segmentWidth,
+                    height: radius, // Radius length
+                    backgroundColor: color,
+                    left: (size - segmentWidth) / 2,
+                    top: 0,
+                    transform: [
+                        { translateY: radius / 2 },
+                        { rotate: `${angle}deg` },
+                        { translateY: -radius / 2 }
+                    ]
+                }}
+            />
+        );
+    }
+
+    return (
+        <View style={{ width: size, height: size, position: 'relative', overflow: 'hidden' }}>
+            {segments}
+            {/* Inner Donut Hole */}
+            <View style={{
+                position: 'absolute',
+                width: size * 0.6, height: size * 0.6, borderRadius: size * 0.3,
+                backgroundColor: '#000',
+                top: size * 0.2, left: size * 0.2
+            }} />
+        </View>
+    );
+}
+
+// Removed PieSlice as it is no longer used
 
 const styles = StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -461,25 +525,25 @@ const styles = StyleSheet.create({
     scoreText: { fontSize: 13, fontWeight: "900", color: "#FFF", letterSpacing: 1 },
     actionPrompt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 70 },
     promptText: { fontSize: 16, fontWeight: '700', color: Colors.dark.icon, letterSpacing: 1.5 },
-    resultsWrapper: { flex: 1, paddingHorizontal: 30, paddingTop: 30, paddingBottom: 10 },
-    resultsMainContent: { flex: 1, alignItems: "center", justifyContent: "center" },
+    resultsWrapper: { flex: 1, paddingHorizontal: 30, paddingTop: 40, paddingBottom: 40, justifyContent: 'center', alignItems: 'center' },
+    resultsMainContent: { alignItems: "center", justifyContent: "center", width: '100%', gap: 20 },
     resultsContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-    titleBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 15, marginBottom: 20, zIndex: 30 },
+    titleBox: { backgroundColor: '#000', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 15, zIndex: 30, borderWidth: 1, borderColor: '#FFF', marginBottom: 60 },
     resultsTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", textAlign: 'center', letterSpacing: 2 },
-    glassWrapperLarge: { height: 180, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-    statsContainer: { width: '100%', gap: 12, backgroundColor: 'rgba(0,0,0,0.85)', padding: 25, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginBottom: 50 },
+    glassWrapperLarge: { height: 180, justifyContent: 'center', alignItems: 'center' },
+    statsContainer: { width: '100%', gap: 12, backgroundColor: '#000', padding: 25, borderRadius: 25, borderWidth: 1, borderColor: '#FFF' },
     statRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     statDot: { width: 14, height: 14, borderRadius: 7 },
-    statLabel: { fontSize: 18, fontWeight: '800', color: "#FFF" },
-    bottomPinnedSection: { width: '100%', paddingBottom: 0, gap: 10 },
-    scoreBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingVertical: 40, paddingHorizontal: 20, borderRadius: 25, marginBottom: 5 },
+    statLabel: { fontSize: 16, fontWeight: '800', color: "#FFF" },
+    bottomPinnedSection: { width: '100%', paddingBottom: 0, gap: 10, marginTop: 20 },
+    scoreBox: { backgroundColor: '#000', paddingVertical: 30, paddingHorizontal: 20, borderRadius: 25, borderWidth: 1, borderColor: '#FFF', width: '100%' },
     finalScore: { fontSize: 52, fontWeight: "900", color: "#FFF", textAlign: 'center', lineHeight: 60 },
     actionButtonsRow: { flexDirection: 'row', gap: 10, width: '100%' },
     actionButtonSmall: { flex: 1, height: 54 },
-    actionButtonContent: { flex: 1, borderRadius: 14, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.9)", borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+    actionButtonContent: { flex: 1, borderRadius: 14, justifyContent: "center", alignItems: "center", backgroundColor: "#000", borderWidth: 1, borderColor: '#FFF' },
     actionButtonText: { fontSize: 13, fontWeight: "900", letterSpacing: 1, color: "#FFF" },
     closeButton: { width: '100%', height: 64 },
-    finishButtonContent: { flex: 1, borderRadius: 18, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.95)", borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+    finishButtonContent: { flex: 1, borderRadius: 18, justifyContent: "center", alignItems: "center", backgroundColor: "#000", borderWidth: 1, borderColor: '#FFF' },
     finishButtonText: { fontSize: 20, fontWeight: "900", letterSpacing: 3, color: "#FFF" },
     navButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: "rgba(255,255,255,0.05)", justifyContent: "center", alignItems: "center" },
     disabledButton: { opacity: 0.2 },
