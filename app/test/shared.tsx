@@ -84,63 +84,71 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
 }
 
 export function CocktailGlass({ progress, color }: { progress: SharedValue<number>, color: string }) {
+    // Liquid fill height calculation
     const animatedLiquidStyle = useAnimatedStyle(() => ({
-        height: interpolate(progress.value, [0, 1, 1.5], [0, 68, 70]),
+        height: interpolate(progress.value, [0, 1, 1.2], [0, 75, 80]),
         backgroundColor: color,
         opacity: interpolate(progress.value, [0, 0.1], [0, 1])
     }));
 
+    // Pouring elements animations
     const animatedBubbleStyle = useAnimatedStyle(() => ({
-        opacity: progress.value > 0 && progress.value < 1.1 ? 0.6 : 0,
+        opacity: progress.value > 0 && progress.value < 1.05 ? 0.6 : 0,
         transform: [
-            { translateY: interpolate(progress.value, [0, 1], [0, -40]) },
-            { scale: interpolate(progress.value, [0, 1], [0.5, 1.5]) }
+            { translateY: interpolate(progress.value, [0, 1], [0, -35]) },
+            { scale: interpolate(progress.value, [0, 1], [0.5, 1.2]) }
         ]
     }));
 
     const animatedStreamStyle = useAnimatedStyle(() => ({
-        opacity: progress.value > 0 && progress.value < 1.1 ? 0.8 : 0,
-        height: interpolate(progress.value, [0, 1], [80, 0], 'clamp')
+        opacity: progress.value > 0 && progress.value < 1.05 ? 0.8 : 0,
+        height: interpolate(progress.value, [0, 1], [90, 0], 'clamp')
     }));
 
-    // Splash Particles
     const renderSplash = (index: number) => {
         const animatedSplashStyle = useAnimatedStyle(() => {
             const isSplashing = progress.value > 0.95 && progress.value < 1.3;
             const splashProgress = interpolate(progress.value, [0.95, 1.2], [0, 1], 'clamp');
-
             const xDir = index % 2 === 0 ? -1 : 1;
             const xDist = (index + 1) * 15 * xDir;
-            const yDist = -40 - (index * 10);
+            const yDist = -35 - (index * 8);
 
             return {
                 opacity: isSplashing ? interpolate(splashProgress, [0, 0.8, 1], [0, 0.8, 0]) : 0,
                 transform: [
                     { translateX: splashProgress * xDist },
-                    { translateY: (splashProgress * yDist) + (splashProgress * splashProgress * 60) }, // Parabolic arc
+                    { translateY: (splashProgress * yDist) + (splashProgress * splashProgress * 60) },
                     { scale: interpolate(splashProgress, [0, 0.5, 1], [0, 1, 0.5]) }
                 ],
                 backgroundColor: color
             };
         });
-
         return <Animated.View key={index} style={[sharedStyles.splashParticle, animatedSplashStyle]} />;
     };
 
     return (
-        <View style={sharedStyles.glassContainer}>
-            <View style={sharedStyles.glassBowl}>
-                <View style={sharedStyles.glassBowlRim} />
-                <View style={sharedStyles.liquidContainer}>
-                    <Animated.View style={[sharedStyles.liquidBody, animatedLiquidStyle]} />
-                    <Animated.View style={[sharedStyles.pourBubble, animatedBubbleStyle]} />
-                    <Animated.View style={[
-                        sharedStyles.pourStream,
-                        animatedStreamStyle,
-                        { backgroundColor: color }
-                    ]} />
+        <View style={sharedStyles.glassOuterContainer}>
+            <View style={sharedStyles.martiniBowl}>
+                {/* Visual Walls */}
+                <View style={[sharedStyles.martiniWall, sharedStyles.martiniWallLeft]} />
+                <View style={[sharedStyles.martiniWall, sharedStyles.martiniWallRight]} />
+
+                {/* Liquid Area with Clipping */}
+                <View style={sharedStyles.martiniLiquidArea}>
+                    <Animated.View style={[sharedStyles.liquidBodyStandard, animatedLiquidStyle]} />
+
+                    {/* Corner shrouds to mask the liquid into a V-shape */}
+                    <View style={[sharedStyles.martiniShroud, sharedStyles.martiniShroudLeft]} />
+                    <View style={[sharedStyles.martiniShroud, sharedStyles.martiniShroudRight]} />
                 </View>
-                {/* Spritzes/Splashes when overflowing */}
+
+                {/* Pouring elements (above the liquid, centered) */}
+                <View pointerEvents="none" style={sharedStyles.pourOverlay}>
+                    <Animated.View style={[sharedStyles.pourBubble, animatedBubbleStyle]} />
+                    <Animated.View style={[sharedStyles.pourStream, animatedStreamStyle, { backgroundColor: color }]} />
+                </View>
+
+                {/* Overflow Spritzes */}
                 {[...Array(6)].map((_, i) => renderSplash(i))}
             </View>
             <View style={sharedStyles.glassStem} />
@@ -256,15 +264,21 @@ export const sharedStyles = StyleSheet.create({
     shakerMain: { width: 55, height: 70, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
     shakerGlow: { position: 'absolute', width: 110, height: 110, backgroundColor: Colors.dark.tint, borderRadius: 55, zIndex: -1 },
     toggleHint: { fontSize: 14, fontWeight: 'bold', color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginTop: 5 },
-    // Glass Component Styles
-    glassContainer: { alignItems: 'center', justifyContent: 'center', padding: 20 },
-    glassBowl: { width: 100, height: 70, borderBottomLeftRadius: 50, borderBottomRightRadius: 50, borderLeftWidth: 2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: 'rgba(255,255,255,0.3)', position: 'relative' },
-    glassBowlRim: { width: 100, height: 10, borderRadius: 50, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', position: 'absolute', top: -5, zIndex: 10 },
-    liquidContainer: { position: 'absolute', bottom: 0, width: '100%', height: '100%', borderBottomLeftRadius: 50, borderBottomRightRadius: 50, overflow: 'hidden' },
-    liquidBody: { width: '100%', position: 'absolute', bottom: 0 },
-    pourBubble: { position: 'absolute', top: 0, alignSelf: 'center', width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.4)' },
-    pourStream: { position: 'absolute', top: -100, alignSelf: 'center', width: 4, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, zIndex: 5 },
-    splashParticle: { position: 'absolute', top: 0, alignSelf: 'center', width: 6, height: 6, borderRadius: 3 },
-    glassStem: { width: 4, height: 60, backgroundColor: 'rgba(255,255,255,0.3)' },
-    glassBase: { width: 60, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
+    // Fresh Martini Glass Styles
+    glassOuterContainer: { alignItems: 'center', justifyContent: 'center', padding: 10 },
+    martiniBowl: { width: 100, height: 75, position: 'relative', alignItems: 'center' },
+    martiniWall: { position: 'absolute', width: 2, height: 90, backgroundColor: 'rgba(255,255,255,0.4)', top: -10, zIndex: 30 },
+    martiniWallLeft: { transform: [{ rotate: '-35deg' }], left: 22 },
+    martiniWallRight: { transform: [{ rotate: '35deg' }], right: 22 },
+    martiniLiquidArea: { width: 100, height: 75, overflow: 'hidden', position: 'relative', alignItems: 'center' },
+    liquidBodyStandard: { width: '100%', position: 'absolute', bottom: 0, zIndex: 10 },
+    martiniShroud: { position: 'absolute', width: 100, height: 100, backgroundColor: Colors.dark.background, zIndex: 20 },
+    martiniShroudLeft: { transform: [{ rotate: '-35deg' }], left: -78, top: -5 },
+    martiniShroudRight: { transform: [{ rotate: '35deg' }], right: -78, top: -5 },
+    pourOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', zIndex: 40 },
+    pourBubble: { width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.4)', position: 'absolute', top: -15 },
+    pourStream: { width: 4, position: 'absolute', top: -120, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
+    splashParticle: { position: 'absolute', top: 0, width: 8, height: 8, borderRadius: 4, zIndex: 50 },
+    glassStem: { width: 4, height: 50, backgroundColor: 'rgba(255,255,255,0.3)' },
+    glassBase: { width: 50, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
 });

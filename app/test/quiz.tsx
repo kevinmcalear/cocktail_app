@@ -264,41 +264,50 @@ export default function QuizScreen() {
         );
     }
 
+    const glassRevealStyle = useAnimatedStyle(() => ({
+        opacity: withTiming(showResults ? 1 : 0, { duration: 1000 }),
+        transform: [{ scale: withSpring(showResults ? 1.2 : 0.8) }]
+    }));
+
     if (showResults) {
         const { color, percentage, counts } = result;
 
         return (
             <ThemedView style={sharedStyles.container}>
+                {/* Background Liquid Overlay */}
                 <Animated.View style={animatedBgStyle} />
+
                 <SafeAreaView style={[sharedStyles.safeArea, { zIndex: 10 }]}>
                     <View style={styles.resultsWrapper}>
                         <View style={styles.resultsMainContent}>
-                            <View style={styles.glassWrapperLarge}>
-                                <View style={{ transform: [{ scale: 2 }], zIndex: 10 }}>
-                                    <CocktailGlass progress={pourAnimation} color={color} />
-                                </View>
-                            </View>
+                            <Animated.View style={styles.titleBox}>
+                                <ThemedText style={styles.resultsTitle}>QUIZ RESULTS</ThemedText>
+                            </Animated.View>
 
-                            <Animated.View style={[styles.statsContainer, { zIndex: 30 }]}>
+                            <Animated.View style={[styles.glassWrapperLarge, glassRevealStyle]}>
+                                <CocktailGlass progress={pourAnimation} color={color} />
+                            </Animated.View>
+
+                            <Animated.View style={styles.statsContainer}>
                                 <View style={styles.statRow}>
                                     <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
-                                    <ThemedText style={styles.statLabel}>Perfect: {counts.perfect}</ThemedText>
+                                    <ThemedText style={styles.statLabel}>PERFECT: {counts.perfect}</ThemedText>
                                 </View>
                                 <View style={styles.statRow}>
                                     <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
-                                    <ThemedText style={styles.statLabel}>Acceptable: {counts.acceptable}</ThemedText>
+                                    <ThemedText style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</ThemedText>
                                 </View>
                                 <View style={styles.statRow}>
                                     <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
-                                    <ThemedText style={styles.statLabel}>Poor: {counts.poor}</ThemedText>
+                                    <ThemedText style={styles.statLabel}>POOR: {counts.poor}</ThemedText>
                                 </View>
                             </Animated.View>
                         </View>
 
-                        <Animated.View style={[styles.bottomPinnedSection, { zIndex: 40 }, actionsOpacityStyle]}>
+                        <Animated.View style={styles.bottomPinnedSection}>
                             <View style={styles.scoreBox}>
-                                <ThemedText style={styles.finalScore} adjustsFontSizeToFit={true} numberOfLines={1}>
-                                    SCORE: {Math.round(percentage * 100)}%
+                                <ThemedText style={styles.finalScore}>
+                                    {Math.round(percentage * 100)}%
                                 </ThemedText>
                             </View>
 
@@ -311,7 +320,7 @@ export default function QuizScreen() {
 
                                 <TouchableOpacity style={styles.actionButtonSmall} onPress={handleNewTest}>
                                     <GlassView style={styles.actionButtonContent} intensity={80}>
-                                        <ThemedText style={styles.actionButtonText}>SELECT NEW</ThemedText>
+                                        <ThemedText style={styles.actionButtonText}>NEW TEST</ThemedText>
                                     </GlassView>
                                 </TouchableOpacity>
                             </View>
@@ -457,14 +466,14 @@ const styles = StyleSheet.create({
     resultsContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
     titleBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 15, marginBottom: 20, zIndex: 30 },
     resultsTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", textAlign: 'center', letterSpacing: 2 },
-    glassWrapperLarge: { height: 200, justifyContent: 'center', alignItems: 'center', marginBottom: 50 },
-    statsContainer: { width: '100%', gap: 12, backgroundColor: 'rgba(0,0,0,0.85)', padding: 25, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    glassWrapperLarge: { height: 180, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+    statsContainer: { width: '100%', gap: 12, backgroundColor: 'rgba(0,0,0,0.85)', padding: 25, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginBottom: 50 },
     statRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     statDot: { width: 14, height: 14, borderRadius: 7 },
     statLabel: { fontSize: 18, fontWeight: '800', color: "#FFF" },
     bottomPinnedSection: { width: '100%', paddingBottom: 0, gap: 10 },
-    scoreBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingVertical: 20, paddingHorizontal: 20, borderRadius: 20, marginBottom: 5 },
-    finalScore: { fontSize: 52, fontWeight: "900", color: "#FFF", textAlign: 'center' },
+    scoreBox: { backgroundColor: 'rgba(0,0,0,0.85)', paddingVertical: 40, paddingHorizontal: 20, borderRadius: 25, marginBottom: 5 },
+    finalScore: { fontSize: 52, fontWeight: "900", color: "#FFF", textAlign: 'center', lineHeight: 60 },
     actionButtonsRow: { flexDirection: 'row', gap: 10, width: '100%' },
     actionButtonSmall: { flex: 1, height: 54 },
     actionButtonContent: { flex: 1, borderRadius: 14, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.9)", borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
