@@ -1,516 +1,771 @@
-import { Image as ExpoImage } from "expo-image";
+import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { decode } from "base64-arraybuffer";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/lib/supabase";
+
+interface RecipeItem {
+    id?: string;
+    ingredient_id: string;
+    name: string;
+    ml: string;
+    dash: string;
+    amount: string;
+}
+
+interface Menu {
+    id: string;
+    name: string;
+}
 
 export default function AddCocktailScreen() {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [category, setCategory] = useState("Classic");
-  const [difficulty, setDifficulty] = useState("Easy");
-  const [prepTime, setPrepTime] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const colorScheme = useColorScheme();
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
 
-  const categories = ["Classic", "Garden Fresh", "Tropical", "Seasonal"];
-  const difficulties = ["Easy", "Medium", "Hard"];
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Sorry, we need camera roll permissions to add photos!"
-      );
-      return;
-    }
+    // Form State
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [origin, setOrigin] = useState("");
+    const [garnish, setGarnish] = useState("");
+    const [notes, setNotes] = useState("");
+    const [spec, setSpec] = useState("");
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
+    // Checkbox/Selection State (IDs)
+    const [methodId, setMethodId] = useState<string | null>(null);
+    const [glasswareId, setGlasswareId] = useState<string | null>(null);
+    const [familyId, setFamilyId] = useState<string | null>(null);
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+    // Menu State
+    const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
+    const [menus, setMenus] = useState<Menu[]>([]);
+    const [showMenuPicker, setShowMenuPicker] = useState(false);
+    const [newMenuName, setNewMenuName] = useState("");
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Sorry, we need camera permissions to take photos!"
-      );
-      return;
-    }
+    // Dropdown Data
+    const [methods, setMethods] = useState<{ id: string, name: string }[]>([]);
+    const [glassware, setGlassware] = useState<{ id: string, name: string }[]>([]);
+    const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
+    // Recipe State
+    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
+    const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
+    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
+    const [ingredientSearch, setIngredientSearch] = useState("");
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+    // Image State (Local only for creation)
+    const [localImages, setLocalImages] = useState<{ id: string, url: string }[]>([]);
 
-  const showImageOptions = () => {
-    Alert.alert(
-      "Add Photo",
-      "Choose how you'd like to add a photo of your cocktail",
-      [
-        { text: "Take Photo", onPress: takePhoto },
-        { text: "Choose from Library", onPress: pickImage },
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
-  };
+    useEffect(() => {
+        fetchDropdowns();
+    }, []);
 
-  const handleSave = () => {
-    if (
-      !name.trim() ||
-      !description.trim() ||
-      !ingredients.trim() ||
-      !instructions.trim()
-    ) {
-      Alert.alert("Missing Information", "Please fill in all required fields.");
-      return;
-    }
+    const fetchDropdowns = async () => {
+        try {
+            setLoading(true);
+            const [methodsRes, glasswareRes, familiesRes, ingredientsRes, menusRes] = await Promise.all([
+                supabase.from('methods').select('*').order('name'),
+                supabase.from('glassware').select('*').order('name'),
+                supabase.from('families').select('*').order('name'),
+                supabase.from('ingredients').select('*').order('name'),
+                supabase.from('menus').select('id, name').eq('is_active', true).order('name') // Only show active menus initially or all? Let's show all active for now.
+            ]);
 
-    // Here you would typically save to your data store
-    // For now, we'll just show a success message
-    Alert.alert(
-      "Cocktail Added!",
-      "Your new cocktail has been added to the collection.",
-      [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]
-    );
-  };
+            if (methodsRes.data) setMethods(methodsRes.data);
+            if (glasswareRes.data) setGlassware(glasswareRes.data);
+            if (familiesRes.data) setFamilies(familiesRes.data);
+            if (ingredientsRes.data) setAllIngredients(ingredientsRes.data);
+            if (menusRes.data) setMenus(menusRes.data);
 
-  return (
-    <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <IconSymbol
-            name="chevron.left"
-            size={24}
-            color={Colors[colorScheme ?? "light"].text}
-          />
-        </TouchableOpacity>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Add New Cocktail
-        </ThemedText>
-        <View style={styles.placeholder} />
-      </ThemedView>
+        } catch (error) {
+            console.error('Error fetching dropdowns:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      <ThemedView style={styles.content}>
-        {/* Photo Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Photo
-          </ThemedText>
-          <TouchableOpacity
-            style={[
-              styles.imageButton,
-              { borderColor: Colors[colorScheme ?? "light"].tint },
-            ]}
-            onPress={showImageOptions}
-          >
-            {imageUri ? (
-              <ExpoImage
-                source={{ uri: imageUri }}
-                style={styles.previewImage}
-                contentFit="cover"
-              />
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+            Alert.alert("Permission needed", "We need access to your photos.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 5],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            const newImages = result.assets.map(asset => ({
+                id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                url: asset.uri,
+            }));
+            setLocalImages(prev => [...prev, ...newImages]);
+        }
+    };
+
+    const createMenu = async () => {
+        if (!newMenuName.trim()) return;
+        try {
+            const { data, error } = await supabase
+                .from('menus')
+                .insert({ name: newMenuName, is_active: true })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            if (data) {
+                setMenus(prev => [...prev, data].sort((a,b) => a.name.localeCompare(b.name)));
+                setSelectedMenuId(data.id);
+                setNewMenuName("");
+                setShowMenuPicker(false); // Close picker after creating and selecting
+                Alert.alert("Menu Created", `"${data.name}" has been created and selected.`);
+            }
+        } catch (e) {
+            Alert.alert("Error", "Failed to create menu");
+            console.error(e);
+        }
+    };
+
+    const uploadImage = async (uri: string, cocktailId: string): Promise<string | null> => {
+        try {
+            const ext = uri.substring(uri.lastIndexOf('.') + 1);
+            const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+            const arrayBuffer = decode(base64);
+
+            const { error: uploadError } = await supabase.storage
+                .from('drinks')
+                .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: false });
+
+            if (uploadError) return null;
+
+            const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
+            
+            const { data: imgData, error: imgError } = await supabase
+                .from('images')
+                .insert({ url: publicUrlData.publicUrl })
+                .select()
+                .single();
+
+            if (imgError || !imgData) return null;
+            return imgData.id;
+        } catch (error) {
+            console.error("Image upload exception:", error);
+            return null;
+        }
+    };
+
+    const handleSave = async () => {
+        if (!name.trim()) {
+            Alert.alert("Missing Info", "Name is required.");
+            return;
+        }
+        setSaving(true);
+        try {
+            // 1. Create Cocktail
+            const { data: cocktail, error: cocktailError } = await supabase
+                .from('cocktails')
+                .insert({
+                    name,
+                    description,
+                    origin: origin || null,
+                    garnish_1: garnish || null,
+                    notes: notes || null,
+                    spec: spec || null,
+                    method_id: methodId,
+                    glassware_id: glasswareId,
+                    family_id: familyId,
+                })
+                .select()
+                .single();
+
+            if (cocktailError || !cocktail) throw cocktailError;
+
+            const cocktailId = cocktail.id;
+
+            // 2. Upload & Link Images
+            for (let i = 0; i < localImages.length; i++) {
+                const imgId = await uploadImage(localImages[i].url, cocktailId);
+                if (imgId) {
+                    await supabase.from('cocktail_images').insert({
+                        cocktail_id: cocktailId,
+                        image_id: imgId,
+                        sort_order: i
+                    });
+                }
+            }
+
+            // 3. Save Recipes
+            for (const item of recipeItems) {
+                await supabase.from('recipes').insert({
+                    cocktail_id: cocktailId,
+                    ingredient_id: item.ingredient_id,
+                    ingredient_ml: parseFloat(item.ml) || null,
+                    ingredient_dash: parseFloat(item.dash) || null,
+                    ingredient_amount: parseFloat(item.amount) || null,
+                });
+            }
+
+            // 4. Associate with Menu (if selected)
+            if (selectedMenuId) {
+                // Get current max sort_order for this menu to append at end
+                const { data: maxSort } = await supabase
+                    .from('menu_drinks')
+                    .select('sort_order')
+                    .eq('menu_id', selectedMenuId)
+                    .order('sort_order', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                const nextSortOrder = (maxSort?.sort_order ?? -1) + 1;
+
+                await supabase.from('menu_drinks').insert({
+                    menu_id: selectedMenuId,
+                    cocktail_id: cocktailId,
+                    sort_order: nextSortOrder
+                });
+            }
+
+            Alert.alert("Success", "Cocktail created!", [
+                { text: "OK", onPress: () => router.back() }
+            ]);
+
+        } catch (error) {
+            console.error("Creation error:", error);
+            Alert.alert("Error", "Failed to create cocktail.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+
+    return (
+        <ThemedView style={styles.container}>
+            <Stack.Screen options={{ headerShown: false }} />
+            
+            {/* Header */}
+            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                </TouchableOpacity>
+                <ThemedText type="subtitle">New Cocktail</ThemedText>
+                <TouchableOpacity 
+                    onPress={handleSave} 
+                    disabled={saving} 
+                    style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
+                >
+                    {saving ? (
+                        <ActivityIndicator size="small" color={Colors.dark.tint} />
+                    ) : (
+                        <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
+                    )}
+                </TouchableOpacity>
+            </GlassView>
+
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.dark.tint} />
+                </View>
             ) : (
-              <View style={styles.imagePlaceholder}>
-                <IconSymbol
-                  name="camera"
-                  size={40}
-                  color={Colors[colorScheme ?? "light"].icon}
+            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+                
+                {/* Image List */}
+                <SortableImageList 
+                    images={localImages}
+                    onReorder={(newOrder) => {
+                        const typedOrder = newOrder.map(item => ({
+                            id: item.id || `recovered-${Date.now()}-${Math.random()}`,
+                            url: item.url
+                        }));
+                        setLocalImages(typedOrder);
+                    }}
+                    onRemove={(index) => setLocalImages(prev => prev.filter((_, i) => i !== index))}
+                    onAdd={pickImage}
                 />
-                <ThemedText style={styles.imagePlaceholderText}>
-                  Tap to add photo
-                </ThemedText>
-              </View>
+
+                {/* Main Info */}
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Name *</ThemedText>
+                    <TextInput
+                        style={styles.input}
+                        value={name}
+                        onChangeText={setName}
+                        placeholderTextColor="#666"
+                        placeholder="e.g. Negroni"
+                    />
+                </View>
+
+                {/* Menu Selection */}
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Add to Menu</ThemedText>
+                    <TouchableOpacity 
+                        style={styles.selectButton} 
+                        onPress={() => setShowMenuPicker(true)}
+                    >
+                        <ThemedText style={{ color: selectedMenuId ? '#fff' : '#666' }}>
+                            {selectedMenuId ? menus.find(m => m.id === selectedMenuId)?.name : "Select Menu (Optional)"}
+                        </ThemedText>
+                        <IconSymbol name="chevron.down" size={20} color="#666" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Description</ThemedText>
+                    <TextInput
+                        style={[styles.input, styles.textArea]}
+                        value={description}
+                        onChangeText={setDescription}
+                        multiline
+                        numberOfLines={4}
+                        placeholderTextColor="#666"
+                    />
+                </View>
+
+                {/* Drink Specs Dropdowns */}
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Method</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                        {methods.map(m => (
+                            <TouchableOpacity
+                                key={m.id}
+                                style={[styles.pill, methodId === m.id && styles.pillActive]}
+                                onPress={() => setMethodId(m.id)}
+                            >
+                                <ThemedText style={[styles.pillText, methodId === m.id && styles.pillTextActive]}>{m.name}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Glassware</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                        {glassware.map(g => (
+                            <TouchableOpacity
+                                key={g.id}
+                                style={[styles.pill, glasswareId === g.id && styles.pillActive]}
+                                onPress={() => setGlasswareId(g.id)}
+                            >
+                                <ThemedText style={[styles.pillText, glasswareId === g.id && styles.pillTextActive]}>{g.name}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Family</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                        {families.map(f => (
+                            <TouchableOpacity
+                                key={f.id}
+                                style={[styles.pill, familyId === f.id && styles.pillActive]}
+                                onPress={() => setFamilyId(f.id)}
+                            >
+                                <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                {/* Ingredients */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <ThemedText style={styles.label}>Ingredients</ThemedText>
+                        <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
+                            <ThemedText style={styles.addText}>+ Add</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    {recipeItems.map((item, index) => (
+                        <View key={index} style={styles.recipeRow}>
+                            <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
+                            <View style={styles.recipeInputs}>
+                                <TextInput
+                                    style={styles.smallInput}
+                                    placeholder="ml"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={item.ml}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].ml = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
+                                <TextInput
+                                    style={styles.smallInput}
+                                    placeholder="dash"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={item.dash}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].dash = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
+                                <TextInput
+                                    style={styles.smallInput}
+                                    placeholder="amt"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={item.amount}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].amount = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
+                                <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
+                                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+
+                {/* Extra Details */}
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Origin</ThemedText>
+                    <TextInput style={styles.input} value={origin} onChangeText={setOrigin} placeholderTextColor="#666" />
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Garnish</ThemedText>
+                    <TextInput style={styles.input} value={garnish} onChangeText={setGarnish} placeholderTextColor="#666" />
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Notes</ThemedText>
+                    <TextInput style={[styles.input, styles.textArea]} value={notes} onChangeText={setNotes} multiline placeholderTextColor="#666" />
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Spec</ThemedText>
+                    <TextInput style={[styles.input, styles.textArea]} value={spec} onChangeText={setSpec} multiline placeholderTextColor="#666" />
+                </View>
+
+            </ScrollView>
             )}
-          </TouchableOpacity>
+
+            {/* Ingredient Picker Modal */}
+            <Modal
+                visible={showIngredientPicker}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowIngredientPicker(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setShowIngredientPicker(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.modalContent}>
+                                <View style={styles.modalHeader}>
+                                    <ThemedText style={styles.modalTitle}>Select Ingredient</ThemedText>
+                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                        <IconSymbol name="xmark" size={24} color="#fff" />
+                                    </TouchableOpacity>
+                                </View>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search ingredients..."
+                                    placeholderTextColor="#666"
+                                    value={ingredientSearch}
+                                    onChangeText={setIngredientSearch}
+                                />
+                                <FlatList
+                                    data={allIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                                    keyExtractor={item => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.ingredientOption}
+                                            onPress={() => {
+                                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
+                                                setShowIngredientPicker(false);
+                                                setIngredientSearch("");
+                                            }}
+                                        >
+                                            <ThemedText style={styles.ingredientText}>{item.name}</ThemedText>
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+
+            {/* Menu Picker Modal */}
+            <Modal
+                visible={showMenuPicker}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={() => setShowMenuPicker(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setShowMenuPicker(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={[styles.modalContent, { maxHeight: '60%' }]}>
+                                <View style={styles.modalHeader}>
+                                    <ThemedText style={styles.modalTitle}>Select Menu</ThemedText>
+                                    <TouchableOpacity onPress={() => setShowMenuPicker(false)}>
+                                        <IconSymbol name="xmark" size={24} color="#fff" />
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                {/* Create New Menu Component */}
+                                <View style={styles.createMenuRow}>
+                                    <TextInput 
+                                        style={[styles.input, { flex: 1, padding: 12 }]}
+                                        placeholder="New Menu Name"
+                                        placeholderTextColor="#666"
+                                        value={newMenuName}
+                                        onChangeText={setNewMenuName}
+                                    />
+                                    <TouchableOpacity style={styles.createBtn} onPress={createMenu}>
+                                        <IconSymbol name="plus" size={20} color="#000" />
+                                    </TouchableOpacity>
+                                </View>
+
+                                <FlatList
+                                    data={menus}
+                                    keyExtractor={item => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={[styles.ingredientOption, item.id === selectedMenuId && { backgroundColor: 'rgba(230, 126, 34, 0.2)' }]}
+                                            onPress={() => {
+                                                setSelectedMenuId(item.id);
+                                                setShowMenuPicker(false);
+                                            }}
+                                        >
+                                            <ThemedText style={[styles.ingredientText, item.id === selectedMenuId && { color: Colors.dark.tint }]}>{item.name}</ThemedText>
+                                            {item.id === selectedMenuId && <IconSymbol name="checkmark" size={16} color={Colors.dark.tint} />}
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                                <TouchableOpacity style={styles.clearSelectionBtn} onPress={() => { setSelectedMenuId(null); setShowMenuPicker(false); }}>
+                                    <ThemedText style={{color: '#ff4444'}}>Clear Selection</ThemedText>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+
         </ThemedView>
-
-        {/* Basic Information */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Basic Information
-          </ThemedText>
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Name *</ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor:
-                    colorScheme === "dark" ? "#2A2A2A" : "#F5F5F5",
-                  color: Colors[colorScheme ?? "light"].text,
-                  borderColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter cocktail name"
-              placeholderTextColor={Colors[colorScheme ?? "light"].icon}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Description *</ThemedText>
-            <TextInput
-              style={[
-                styles.textArea,
-                {
-                  backgroundColor:
-                    colorScheme === "dark" ? "#2A2A2A" : "#F5F5F5",
-                  color: Colors[colorScheme ?? "light"].text,
-                  borderColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Describe your cocktail"
-              placeholderTextColor={Colors[colorScheme ?? "light"].icon}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <ThemedText style={styles.label}>Category</ThemedText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.categoryContainer}>
-                  {categories.map(cat => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.categoryButton,
-                        {
-                          backgroundColor:
-                            category === cat
-                              ? Colors[colorScheme ?? "light"].tint
-                              : "transparent",
-                          borderColor: Colors[colorScheme ?? "light"].tint,
-                        },
-                      ]}
-                      onPress={() => setCategory(cat)}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.categoryText,
-                          {
-                            color:
-                              category === cat
-                                ? colorScheme === "dark"
-                                  ? "#000"
-                                  : "#fff"
-                                : Colors[colorScheme ?? "light"].text,
-                          },
-                        ]}
-                      >
-                        {cat}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <ThemedText style={styles.label}>Difficulty</ThemedText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.difficultyContainer}>
-                  {difficulties.map(diff => (
-                    <TouchableOpacity
-                      key={diff}
-                      style={[
-                        styles.difficultyButton,
-                        {
-                          backgroundColor:
-                            difficulty === diff
-                              ? Colors[colorScheme ?? "light"].tint
-                              : "transparent",
-                          borderColor: Colors[colorScheme ?? "light"].tint,
-                        },
-                      ]}
-                      onPress={() => setDifficulty(diff)}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.difficultyText,
-                          {
-                            color:
-                              difficulty === diff
-                                ? colorScheme === "dark"
-                                  ? "#000"
-                                  : "#fff"
-                                : Colors[colorScheme ?? "light"].text,
-                          },
-                        ]}
-                      >
-                        {diff}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Prep Time</ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor:
-                    colorScheme === "dark" ? "#2A2A2A" : "#F5F5F5",
-                  color: Colors[colorScheme ?? "light"].text,
-                  borderColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              value={prepTime}
-              onChangeText={setPrepTime}
-              placeholder="e.g., 5 minutes"
-              placeholderTextColor={Colors[colorScheme ?? "light"].icon}
-            />
-          </View>
-        </ThemedView>
-
-        {/* Recipe Details */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Recipe Details
-          </ThemedText>
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Ingredients *</ThemedText>
-            <ThemedText style={styles.helperText}>
-              Enter each ingredient on a new line
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.textArea,
-                {
-                  backgroundColor:
-                    colorScheme === "dark" ? "#2A2A2A" : "#F5F5F5",
-                  color: Colors[colorScheme ?? "light"].text,
-                  borderColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              value={ingredients}
-              onChangeText={setIngredients}
-              placeholder="2 oz Bourbon&#10;1/2 oz Simple Syrup&#10;2 dashes Bitters"
-              placeholderTextColor={Colors[colorScheme ?? "light"].icon}
-              multiline
-              numberOfLines={6}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Instructions *</ThemedText>
-            <ThemedText style={styles.helperText}>
-              Step-by-step instructions for making the cocktail
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.textArea,
-                {
-                  backgroundColor:
-                    colorScheme === "dark" ? "#2A2A2A" : "#F5F5F5",
-                  color: Colors[colorScheme ?? "light"].text,
-                  borderColor: Colors[colorScheme ?? "light"].tint,
-                },
-              ]}
-              value={instructions}
-              onChangeText={setInstructions}
-              placeholder="1. Add ingredients to shaker&#10;2. Shake with ice&#10;3. Strain into glass&#10;4. Garnish and serve"
-              placeholderTextColor={Colors[colorScheme ?? "light"].icon}
-              multiline
-              numberOfLines={6}
-            />
-          </View>
-        </ThemedView>
-
-        {/* Save Button */}
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            { backgroundColor: Colors[colorScheme ?? "light"].tint },
-          ]}
-          onPress={handleSave}
-        >
-          <ThemedText
-            style={[
-              styles.saveButtonText,
-              {
-                color: colorScheme === "dark" ? "#000" : "#fff",
-              },
-            ]}
-          >
-            Save Cocktail
-          </ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
-    </ScrollView>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(230, 126, 34, 0.2)",
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    padding: 20,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    marginBottom: 16,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  helperText: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    textAlignVertical: "top",
-  },
-  row: {
-    flexDirection: "row",
-  },
-  categoryContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  difficultyContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  difficultyButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  difficultyText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  imageButton: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderRadius: 12,
-    height: 200,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  imagePlaceholder: {
-    alignItems: "center",
-    gap: 8,
-  },
-  imagePlaceholderText: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  previewImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
-  },
-  saveButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  saveButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: Colors.dark.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: Colors.dark.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        zIndex: 10,
+    },
+    headerBtn: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    content: {
+        padding: 20,
+        gap: 24,
+    },
+    section: {
+        gap: 8,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#888',
+        marginLeft: 4,
+    },
+    input: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        padding: 16,
+        color: '#fff',
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    textArea: {
+        minHeight: 100,
+        textAlignVertical: 'top',
+    },
+    selectButton: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    pillContainer: {
+        flexDirection: 'row',
+    },
+    pill: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    pillActive: {
+        backgroundColor: Colors.dark.tint,
+        borderColor: Colors.dark.tint,
+    },
+    pillText: {
+        color: '#ccc',
+        fontSize: 14,
+    },
+    pillTextActive: {
+        color: '#000',
+        fontWeight: 'bold',
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8
+    },
+    addText: {
+        color: Colors.dark.tint,
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    recipeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 8
+    },
+    recipeName: {
+        flex: 1,
+        color: '#fff',
+        fontSize: 16
+    },
+    recipeInputs: {
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'center'
+    },
+    smallInput: {
+        width: 50,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 8,
+        padding: 8,
+        color: '#fff',
+        textAlign: 'center',
+        fontSize: 14
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        padding: 20
+    },
+    modalContent: {
+        backgroundColor: '#1E1E1E',
+        borderRadius: 20,
+        padding: 20,
+        height: '80%'
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#fff'
+    },
+    searchInput: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        padding: 12,
+        borderRadius: 12,
+        color: '#fff',
+        marginBottom: 10
+    },
+    ingredientOption: {
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    ingredientText: {
+        color: '#ccc',
+        fontSize: 16
+    },
+    createMenuRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 20
+    },
+    createBtn: {
+        backgroundColor: Colors.dark.tint,
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    clearSelectionBtn: {
+        padding: 16,
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.1)',
+        marginTop: 10
+    }
 });

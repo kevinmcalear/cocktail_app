@@ -48,6 +48,16 @@ export function ProfileMenu({ visible, onClose }: ProfileMenuProps) {
 
                                 <TouchableOpacity
                                     style={styles.menuItem}
+                                    onPress={() => handleNavigation('/add-cocktail')}
+                                >
+                                    <IconSymbol name="plus.circle" size={20} color={Colors.dark.text} />
+                                    <Text style={styles.menuText}>Create Cocktail</Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.separator} />
+
+                                <TouchableOpacity
+                                    style={styles.menuItem}
                                     onPress={() => handleNavigation('/settings')}
                                 >
                                     <IconSymbol name="gear" size={20} color={Colors.dark.text} />
