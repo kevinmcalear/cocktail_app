@@ -1,15 +1,6 @@
-import { ImageCarousel } from "@/components/ImageCarousel";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useFavorites } from "@/hooks/useFavorites";
-import { supabase } from "@/lib/supabase";
-import { DatabaseCocktail } from "@/types/types";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
@@ -21,6 +12,16 @@ import Animated, {
     useSharedValue
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { ImageCarousel } from "@/components/ImageCarousel";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { GlassView } from "@/components/ui/GlassView";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useFavorites } from "@/hooks/useFavorites";
+import { supabase } from "@/lib/supabase";
+import { DatabaseCocktail } from "@/types/types";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -99,7 +100,7 @@ export default function CocktailDetailsScreen() {
                         ingredient_ml,
                         ingredient_dash,
                         ingredient_amount,
-                        ingredients (
+                        ingredients!recipes_ingredient_id_fkey (
                             name
                         )
                     ),
@@ -277,10 +278,10 @@ export default function CocktailDetailsScreen() {
                     <View style={styles.section}>
                         <ThemedText type="subtitle" style={styles.sectionTitle}>Details</ThemedText>
                         <View style={styles.detailsList}>
-                            {cocktail.garnish && (
+                            {cocktail.garnish_1 && (
                                 <View style={styles.detailRow}>
                                     <ThemedText style={styles.detailLabel}>Garnish:</ThemedText>
-                                    <ThemedText style={styles.detailValue}>{cocktail.garnish}</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{cocktail.garnish_1}</ThemedText>
                                 </View>
                             )}
                             {cocktail.origin && (

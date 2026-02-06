@@ -21,7 +21,7 @@ export default function FavoritesScreen() {
                     name,
                     description,
                     recipes (
-                        ingredients (
+                        ingredients!recipes_ingredient_id_fkey (
                             name
                         )
                     ),

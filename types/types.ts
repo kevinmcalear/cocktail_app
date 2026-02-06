@@ -42,7 +42,7 @@ export interface DatabaseCocktail {
     family_id: string | null;
     notes: string | null;
     origin: string | null;
-    garnish: string | null;
+    garnish_1: string | null;
     spec: string | null;
     recipes?: DatabaseRecipe[];
     methods?: DatabaseMethod | null;

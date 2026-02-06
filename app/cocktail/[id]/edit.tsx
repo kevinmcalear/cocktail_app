@@ -1,4 +1,3 @@
-import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
@@ -17,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
@@ -112,7 +112,7 @@ export default function EditCocktailScreen() {
                         ingredient_ml,
                         ingredient_dash,
                         ingredient_amount,
-                        ingredients ( name )
+                        ingredients!recipes_ingredient_id_fkey ( name )
                     )
                 `)
 
@@ -126,7 +126,7 @@ export default function EditCocktailScreen() {
                 setName(c.name || "");
                 setDescription(c.description || "");
                 setOrigin(c.origin || "");
-                setGarnish(c.garnish || "");
+                setGarnish(c.garnish_1 || "");
                 setNotes(c.notes || "");
                 setSpec(c.spec || "");
 
@@ -298,7 +298,7 @@ export default function EditCocktailScreen() {
                 name,
                 description,
                 origin: origin || null,
-                garnish: garnish || null,
+                garnish_1: garnish || null,
                 notes: notes || null,
                 spec: spec || null,
                 method_id: methodId,
