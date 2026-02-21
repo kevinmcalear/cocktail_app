@@ -158,6 +158,9 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         }
 
         const cocktail = item as CocktailListItem;
+        const ingredientNames = cocktail.recipes?.map(r => r.ingredients?.name).filter(Boolean) as string[] | undefined;
+        const recipeText = ingredientNames && ingredientNames.length > 0 ? ingredientNames.join(", ") : "No recipe listed";
+        const ingredientCount = ingredientNames?.length ?? 0;
         let swipeableRef: Swipeable | null = null;
 
         return (
@@ -174,10 +177,23 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
                                 <View style={styles.textContainer}>
                                     <View style={styles.nameRow}>
                                         <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{cocktail.name}</ThemedText>
+                                        <View style={styles.typePill}>
+                                            <ThemedText style={styles.typePillText}>COCKTAIL</ThemedText>
+                                        </View>
                                     </View>
                                     <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                                        {cocktail.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || cocktail.description || "No ingredients listed"}
+                                        {cocktail.description?.trim() ? cocktail.description : "No description provided."}
                                     </ThemedText>
+                                    <ThemedText style={styles.itemRecipe} numberOfLines={2}>
+                                        {recipeText}
+                                    </ThemedText>
+                                    <View style={styles.metaRow}>
+                                        <View style={styles.metaPill}>
+                                            <ThemedText style={styles.metaText}>
+                                                {ingredientCount > 0 ? `${ingredientCount} ingredients` : "No recipe"}
+                                            </ThemedText>
+                                        </View>
+                                    </View>
                                 </View>
                                 <Image
                                     source={getImage(cocktail)}
@@ -283,20 +299,20 @@ const styles = StyleSheet.create({
     },
     itemRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 100,
+        alignItems: 'flex-start',
+        padding: 14,
+        minHeight: 112,
     },
     textContainer: {
         flex: 1,
         justifyContent: 'center',
         paddingRight: 12,
-        gap: 4,
+        gap: 6,
     },
     nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 8,
     },
     itemName: {
         fontSize: 20,
@@ -305,20 +321,59 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     itemDescription: {
-        fontSize: 15,
+        fontSize: 14,
         color: Colors.dark.icon,
+        lineHeight: 19,
+    },
+    itemRecipe: {
+        fontSize: 14,
+        color: Colors.dark.text,
+        opacity: 0.9,
         lineHeight: 20,
     },
     itemImage: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
+        width: 84,
+        height: 84,
+        borderRadius: 14,
         backgroundColor: "rgba(255,255,255,0.05)",
+    },
+    typePill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 999,
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+    },
+    typePillText: {
+        fontSize: 10,
+        fontWeight: "700",
+        letterSpacing: 1,
+        color: Colors.dark.icon,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    metaPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.12)",
+    },
+    metaText: {
+        fontSize: 11,
+        fontWeight: "600",
+        color: Colors.dark.tint,
+        letterSpacing: 0.5,
     },
     rightActionsContainer: {
         flexDirection: 'row',
         width: 160,
-        height: 100,
+        height: 112,
         marginBottom: 12,
     },
     actionButton: {

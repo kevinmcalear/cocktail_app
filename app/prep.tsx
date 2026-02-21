@@ -18,12 +18,22 @@ import {
     ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image } from "expo-image";
 
 interface Ingredient {
     id: string;
     name: string;
     description: string | null;
     is_batch?: boolean; // We might use this if present, or infer it
+    image_url?: string | null;
+    recipes?: {
+        ingredient_ml: number | null;
+        ingredient_dash: number | null;
+        ingredient_amount: number | null;
+        ingredients: {
+            name: string;
+        } | null;
+    }[];
 }
 
 export default function PrepScreen() {
@@ -60,7 +70,15 @@ export default function PrepScreen() {
             
             const { data, error } = await supabase
                 .from('ingredients')
-                .select('*')
+                .select(`
+                    *,
+                    recipes:recipes!recipes_parent_ingredient_id_fkey (
+                        ingredient_ml,
+                        ingredient_dash,
+                        ingredient_amount,
+                        ingredients!recipes_ingredient_id_fkey ( name )
+                    )
+                `)
                 .order('name');
 
             if (error) throw error;
@@ -126,6 +144,23 @@ export default function PrepScreen() {
         }
     }).current;
 
+    const formatRecipeLine = (items?: Ingredient["recipes"]) => {
+        if (!items || items.length === 0) return "No recipe";
+        return items.map((item) => {
+            const parts = [];
+            if (item.ingredient_ml) parts.push(`${item.ingredient_ml}ml`);
+            if (item.ingredient_dash) parts.push(`${item.ingredient_dash} dash${item.ingredient_dash > 1 ? "es" : ""}`);
+            if (item.ingredient_amount) parts.push(`${item.ingredient_amount}x`);
+            if (item.ingredients?.name) parts.push(item.ingredients.name);
+            return parts.join(" ");
+        }).filter(Boolean).join(" • ");
+    };
+
+    const getIngredientImage = (ingredient: Ingredient) => {
+        if (ingredient.image_url) return { uri: ingredient.image_url };
+        return require("@/assets/images/cocktail-bg.png");
+    };
+
     const renderItem = ({ item }: { item: Ingredient | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
             return (
@@ -138,6 +173,7 @@ export default function PrepScreen() {
         }
 
         const ingredient = item as Ingredient;
+        const recipeText = formatRecipeLine(ingredient.recipes);
 
         return (
             <TouchableOpacity 
@@ -147,21 +183,32 @@ export default function PrepScreen() {
                 <GlassView style={styles.itemCard} intensity={20}>
                     <View style={styles.itemRow}>
                         <View style={styles.textContainer}>
-                            <View style={styles.headerRow}>
+                            <View style={styles.nameRow}>
                                 <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{ingredient.name}</ThemedText>
-                                {/* Maybe show a badge if it is a batch? */}
+                                <View style={styles.typePill}>
+                                    <ThemedText style={styles.typePillText}>INGREDIENT</ThemedText>
+                                </View>
                                 {ingredient.is_batch && (
-                                    <View style={styles.batchBadge}>
-                                        <ThemedText style={styles.batchBadgeText}>BATCH</ThemedText>
+                                    <View style={[styles.typePill, styles.batchPill]}>
+                                        <ThemedText style={[styles.typePillText, styles.batchPillText]}>BATCH</ThemedText>
                                     </View>
                                 )}
                             </View>
-                            {ingredient.description && (
-                                <ThemedText style={styles.itemDescription} numberOfLines={2}>{ingredient.description}</ThemedText>
-                            )}
+                            <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                                {ingredient.description?.trim() ? ingredient.description : "No description provided."}
+                            </ThemedText>
+                            <ThemedText style={styles.itemRecipe} numberOfLines={2}>{recipeText}</ThemedText>
                         </View>
-                        <View style={styles.iconContainer}>
-                            <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
+                        <View style={styles.imageContainer}>
+                            <Image
+                                source={getIngredientImage(ingredient)}
+                                style={styles.itemImage}
+                                contentFit="cover"
+                                transition={500}
+                            />
+                            <View style={styles.imageOverlay}>
+                                <IconSymbol name="list.bullet.clipboard" size={24} color="rgba(255,255,255,0.9)" />
+                            </View>
                         </View>
                     </View>
                 </GlassView>
@@ -266,17 +313,17 @@ const styles = StyleSheet.create({
     },
     itemRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 100,
+        alignItems: 'flex-start',
+        padding: 14,
+        minHeight: 112,
     },
     textContainer: {
         flex: 1,
         justifyContent: 'center',
         paddingRight: 12,
-        gap: 4,
+        gap: 6,
     },
-    headerRow: {
+    nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
@@ -287,31 +334,54 @@ const styles = StyleSheet.create({
         color: Colors.dark.text,
         flexShrink: 1,
     },
-    batchBadge: {
-        backgroundColor: 'rgba(230, 126, 34, 0.2)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: 'rgba(230, 126, 34, 0.5)',
-    },
-    batchBadgeText: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: Colors.dark.tint,
-    },
     itemDescription: {
-        fontSize: 15,
+        fontSize: 14,
         color: Colors.dark.icon,
+        lineHeight: 19,
+    },
+    itemRecipe: {
+        fontSize: 14,
+        color: Colors.dark.text,
+        opacity: 0.9,
         lineHeight: 20,
     },
-    iconContainer: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
+    imageContainer: {
+        width: 84,
+        height: 84,
+        borderRadius: 14,
+        overflow: 'hidden',
         backgroundColor: "rgba(255,255,255,0.05)",
+    },
+    itemImage: {
+        width: "100%",
+        height: "100%",
+    },
+    imageOverlay: {
+        ...StyleSheet.absoluteFillObject,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: "rgba(0,0,0,0.25)",
+    },
+    typePill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 999,
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+    },
+    typePillText: {
+        fontSize: 10,
+        fontWeight: "700",
+        letterSpacing: 1,
+        color: Colors.dark.icon,
+    },
+    batchPill: {
+        borderColor: "rgba(230, 126, 34, 0.5)",
+        backgroundColor: "rgba(230, 126, 34, 0.2)",
+    },
+    batchPillText: {
+        color: Colors.dark.tint,
     },
     searchBarContainer: {
         position: 'absolute',
