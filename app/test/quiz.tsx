@@ -16,7 +16,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, FadeInUp, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./shared";
+import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./_shared";
 
 export default function QuizScreen() {
     const router = useRouter();

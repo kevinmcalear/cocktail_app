@@ -8,7 +8,7 @@ import { TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CardCountSlider, CocktailCategory, sharedStyles, Subject, SubjectCard } from "./shared";
+import { CardCountSlider, CocktailCategory, sharedStyles, Subject, SubjectCard } from "./_shared";
 
 export default function CocktailCategorySelection() {
     const router = useRouter();

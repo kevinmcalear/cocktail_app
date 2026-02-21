@@ -44,22 +44,23 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: "row",
         alignItems: "center",
-        padding: 16,
-        borderRadius: 25,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         gap: 10,
         width: '100%',
-        backgroundColor: '#1C1C1E', // Solid System Gray 6
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: 12, // More subtle rounded rectangle instead of a pill
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.05)',
     },
     searchContainerFocused: {
-        backgroundColor: '#2C2C2E', // Slightly lighter gray when focused
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     searchInput: {
         flex: 1,
         color: Colors.dark.text,
-        fontSize: 18,
+        fontSize: 16,
         padding: 0,
         height: 24, // Explicit height for single line
     },

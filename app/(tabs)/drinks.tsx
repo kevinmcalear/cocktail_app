@@ -1,21 +1,24 @@
-import { CocktailList, CocktailListItem } from "@/components/CocktailList";
+import { DrinkList, DrinkListItem } from "@/components/DrinkList";
 import { ThemedText } from "@/components/themed-text";
 import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
+import { beers } from "@/data/beers";
+import { wines } from "@/data/wines";
 import { supabase } from "@/lib/supabase";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
-export default function CocktailsScreen() {
+export default function DrinksScreen() {
     const router = useRouter();
-    const [cocktails, setCocktails] = useState<CocktailListItem[]>([]);
+    const { q } = useLocalSearchParams<{ q?: string }>();
+    const [drinks, setDrinks] = useState<DrinkListItem[]>([]);
 
     useEffect(() => {
-        fetchCocktails();
+        fetchDrinks();
     }, []);
 
-    const fetchCocktails = async () => {
+    const fetchDrinks = async () => {
         try {
             const { data, error } = await supabase
                 .from('cocktails')
@@ -37,9 +40,35 @@ export default function CocktailsScreen() {
                 .order('name', { ascending: true });
 
             if (error) throw error;
-            if (data) setCocktails(data as unknown as CocktailListItem[]);
+            
+            const mappedCocktails: DrinkListItem[] = (data || []).map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                description: c.description,
+                category: "Cocktail",
+                recipes: c.recipes,
+                cocktail_images: c.cocktail_images
+            }));
+
+            const mappedBeers: DrinkListItem[] = beers.map(b => ({
+                id: `beer-${b.id}`,
+                name: b.name,
+                description: b.description,
+                category: "Beer",
+                price: b.price
+            }));
+
+            const mappedWines: DrinkListItem[] = wines.map(w => ({
+                id: `wine-${w.id}`,
+                name: w.name,
+                description: w.description,
+                category: "Wine",
+                price: w.price
+            }));
+
+            setDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);
         } catch (error) {
-            console.error('Error fetching cocktails:', error);
+            console.error('Error fetching drinks:', error);
         }
     };
 
@@ -67,10 +96,11 @@ export default function CocktailsScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <CocktailList
-                title="Cocktails"
-                cocktails={cocktails}
+            <DrinkList
+                title="Drinks"
+                drinks={drinks}
                 headerButtons={headerButtons}
+                initialSearchQuery={q}
             />
         </>
     );

@@ -1,11 +1,11 @@
-import { CocktailList, CocktailListItem } from "@/components/CocktailList";
+import { DrinkList, DrinkListItem } from "@/components/DrinkList";
 import { useFavorites } from "@/hooks/useFavorites";
 import { supabase } from "@/lib/supabase";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 
 export default function FavoritesScreen() {
-    const [cocktails, setCocktails] = useState<CocktailListItem[]>([]);
+    const [cocktails, setCocktails] = useState<DrinkListItem[]>([]);
     const { favorites } = useFavorites();
 
     useEffect(() => {
@@ -34,7 +34,17 @@ export default function FavoritesScreen() {
                 .order('name', { ascending: true });
 
             if (error) throw error;
-            if (data) setCocktails(data as unknown as CocktailListItem[]);
+            if (data) {
+                const mappedCocktails: DrinkListItem[] = data.map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    description: c.description,
+                    category: "Cocktail",
+                    recipes: c.recipes,
+                    cocktail_images: c.cocktail_images
+                }));
+                setCocktails(mappedCocktails);
+            }
         } catch (error) {
             console.error('Error fetching cocktails:', error);
         }
@@ -45,9 +55,9 @@ export default function FavoritesScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <CocktailList
+            <DrinkList
                 title="My Favourites"
-                cocktails={favoriteCocktails}
+                drinks={favoriteCocktails}
             />
         </>
     );

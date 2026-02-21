@@ -1,5 +1,7 @@
+import { useAuth } from "@/ctx/AuthContext";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from "expo-image";
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
 
 import { LiquidTabBar } from "@/components/LiquidTabBar";
 import { Colors } from "@/constants/theme";
@@ -7,6 +9,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { user } = useAuth();
+  
+  const avatarUrl = user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
   return (
     <Tabs
@@ -20,52 +25,67 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarStyle: { display: "none" }, // Attempt to hide
           tabBarIcon: ({ color, focused }) => (
-            <Text style={{
-              color,
-              fontSize: 14,
-              fontWeight: "bold",
-              letterSpacing: 1
-            }}>
-              CLASSICS
-            </Text>
+            <MaterialCommunityIcons name="home-variant" size={24} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="menu"
+        name="drinks"
         options={{
-          title: "Menu",
+          title: "Drinks",
           tabBarIcon: ({ color, focused }) => (
-            <Text style={{
-              color,
-              fontSize: 14,
-              fontWeight: "bold",
-              letterSpacing: 1
-            }}>
-              CURRENT
-            </Text>
+            <MaterialCommunityIcons name="glass-cocktail" size={24} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="explore"
+        name="menus"
         options={{
-          title: "Explore",
+          title: "Menus",
           tabBarIcon: ({ color, focused }) => (
-            <Text style={{
-              color,
-              fontSize: 14,
-              fontWeight: "bold",
-              letterSpacing: 1,
-              textAlign: "center", // Add textAlign center for multi-word
-              width: 150 // fixed width to prevent wrapping issues if needed, or let flex handle it
-            }}>
-              PREVIOUS{"\n"}MENUS
-            </Text>
+            <MaterialCommunityIcons name="book-open-outline" size={24} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="prep"
+        options={{
+          title: "Prep",
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons name="clipboard-list-outline" size={24} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="test"
+        options={{
+          title: "Test",
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons name="flask-outline" size={24} color={color} />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 13,
+                borderWidth: focused ? 1 : 0,
+                borderColor: "#FFFFFF"
+              }}
+            />
           ),
         }}
       />

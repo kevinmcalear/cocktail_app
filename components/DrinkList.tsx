@@ -15,10 +15,12 @@ import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedb
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export interface CocktailListItem {
+export interface DrinkListItem {
     id: string;
     name: string;
     description?: string;
+    category?: "Cocktail" | "Beer" | "Wine";
+    price?: string;
     recipes?: {
         ingredients: {
             name: string;
@@ -31,42 +33,50 @@ export interface CocktailListItem {
     }[];
 }
 
-interface CocktailListProps {
+interface DrinkListProps {
     title: string;
-    cocktails: CocktailListItem[];
+    drinks: DrinkListItem[];
     headerButtons?: ReactNode;
+    initialSearchQuery?: string;
 }
 
-export function CocktailList({ title, cocktails, headerButtons }: CocktailListProps) {
+export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "" }: DrinkListProps) {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+    const [selectedCategory, setSelectedCategory] = useState<"All" | "Cocktails" | "Beers" | "Wines">("All");
     const flatListRef = useRef<FlatList>(null);
     const { toggleFavorite, isFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     // Filter and Sort
-    const filteredCocktails = useMemo(() => {
-        let result = cocktails;
+    const filteredDrinks = useMemo(() => {
+        let result = drinks;
+
+        if (selectedCategory !== "All") {
+            const mappedCategory = selectedCategory === "Cocktails" ? "Cocktail" : selectedCategory === "Beers" ? "Beer" : "Wine";
+            result = result.filter(d => d.category === mappedCategory);
+        }
 
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(
                 (c) =>
                     c.name.toLowerCase().includes(lowerQuery) ||
-                    (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery)))
+                    (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery))) ||
+                    (c.description?.toLowerCase().includes(lowerQuery))
             );
         }
 
         return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [cocktails, searchQuery]);
+    }, [drinks, searchQuery, selectedCategory]);
 
     // Section Headers Logic
     const listData = useMemo(() => {
-        const data: (CocktailListItem | { type: "header"; letter: string; id: string })[] = [];
+        const data: (DrinkListItem | { type: "header"; letter: string; id: string })[] = [];
         let lastLetter = "";
 
-        filteredCocktails.forEach((item) => {
+        filteredDrinks.forEach((item) => {
             let currentLetter = item.name.charAt(0).toUpperCase();
 
             // Group numbers under "#"
@@ -82,7 +92,7 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         });
 
         return data;
-    }, [filteredCocktails]);
+    }, [filteredDrinks]);
 
     const handleScrollToLetter = useCallback((letter: string) => {
         const index = listData.findIndex((item) => {
@@ -107,10 +117,11 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         }
     }).current;
 
-    const getImage = (item: CocktailListItem) => {
+    const getImage = (item: DrinkListItem) => {
         if (item.cocktail_images && item.cocktail_images.length > 0) {
             return { uri: item.cocktail_images[0].images.url };
         }
+        // Fallback to a single reliable image since specific placeholders don't exist yet
         return require("@/assets/images/cocktails/house_martini.png");
     };
 
@@ -146,7 +157,7 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
         );
     };
 
-    const renderItem = ({ item }: { item: CocktailListItem | { type: "header"; letter: string; id: string } }) => {
+    const renderItem = ({ item }: { item: DrinkListItem | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
             return (
                 <View style={styles.sectionHeader}>
@@ -157,38 +168,57 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
             );
         }
 
-        const cocktail = item as CocktailListItem;
+        const drink = item as DrinkListItem;
         let swipeableRef: Swipeable | null = null;
+        
+        let subText = drink.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || drink.description || "No description";
+        if (drink.price) {
+            subText = `${drink.price} • ${subText}`;
+        }
+        if (drink.category && drink.category !== "Cocktail") {
+            subText = `${drink.category.toUpperCase()} • ${subText}`;
+        }
+
+        const cardContent = (
+            <TouchableOpacity activeOpacity={0.7} disabled={drink.category !== "Cocktail" && drink.category != null}>
+                <GlassView style={styles.itemCard} intensity={20}>
+                    <View style={styles.itemRow}>
+                        <View style={styles.textContainer}>
+                            <View style={styles.nameRow}>
+                                <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{drink.name}</ThemedText>
+                            </View>
+                            <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                                {subText}
+                            </ThemedText>
+                        </View>
+                        <Image
+                            source={getImage(drink)}
+                            style={styles.itemImage}
+                            contentFit="cover"
+                            transition={500}
+                            onError={(e) => {
+                                // Silent fallback if image fails to load
+                            }}
+                        />
+                    </View>
+                </GlassView>
+            </TouchableOpacity>
+        );
 
         return (
             <Swipeable
                 ref={(ref) => { swipeableRef = ref; }}
-                renderRightActions={() => renderRightActions(cocktail.id, swipeableRef!)}
+                renderRightActions={() => renderRightActions(drink.id, swipeableRef!)}
                 friction={2}
                 rightThreshold={40}
             >
-                <Link href={`/cocktail/${cocktail.id}`} asChild>
-                    <TouchableOpacity activeOpacity={0.7}>
-                        <GlassView style={styles.itemCard} intensity={20}>
-                            <View style={styles.itemRow}>
-                                <View style={styles.textContainer}>
-                                    <View style={styles.nameRow}>
-                                        <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{cocktail.name}</ThemedText>
-                                    </View>
-                                    <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                                        {cocktail.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || cocktail.description || "No ingredients listed"}
-                                    </ThemedText>
-                                </View>
-                                <Image
-                                    source={getImage(cocktail)}
-                                    style={styles.itemImage}
-                                    contentFit="cover"
-                                    transition={500}
-                                />
-                            </View>
-                        </GlassView>
-                    </TouchableOpacity>
-                </Link>
+                {drink.category === "Cocktail" || !drink.category ? (
+                    <Link href={`/cocktail/${drink.id}`} asChild>
+                        {cardContent}
+                    </Link>
+                ) : (
+                    cardContent
+                )}
             </Swipeable>
         );
     };
@@ -220,6 +250,37 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
                                     <View style={{ width: 40 }} />
                                 </View>
                                 {headerButtons}
+                                
+                                {/* Category Filters */}
+                                <View style={styles.categoryFiltersContainer}>
+                                    {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
+                                        const isSelected = selectedCategory === cat;
+                                        return (
+                                            <TouchableOpacity 
+                                                key={cat} 
+                                                onPress={() => setSelectedCategory(cat as any)}
+                                                style={styles.categoryPillWrapper}
+                                            >
+                                                <GlassView 
+                                                    style={[styles.categoryPill, isSelected && styles.categoryPillSelected]} 
+                                                    intensity={isSelected ? 60 : 15}
+                                                >
+                                                    <ThemedText style={[styles.categoryPillText, isSelected && styles.categoryPillTextSelected]}>
+                                                        {cat}
+                                                    </ThemedText>
+                                                </GlassView>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+
+                                <View style={styles.topSearchContainer}>
+                                    <BottomSearchBar
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        placeholder={`Search ${selectedCategory.toLowerCase()}...`}
+                                    />
+                                </View>
                             </View>
                         </TouchableWithoutFeedback>
                     }
@@ -228,14 +289,6 @@ export function CocktailList({ title, cocktails, headerButtons }: CocktailListPr
             </View>
 
             <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
-
-            <View style={[styles.searchBarContainer, { paddingBottom: insets.bottom + 4 }]}>
-                <BottomSearchBar
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    placeholder="Search cocktails..."
-                />
-            </View>
         </ThemedView>
     );
 }
@@ -333,13 +386,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginTop: 4,
     },
-    searchBarContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 20,
-        paddingTop: 15,
+    topSearchContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
     },
     sectionHeader: {
         flexDirection: "row",
@@ -361,5 +410,37 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 2,
         backgroundColor: "rgba(255, 255, 255, 0.4)",
+    },
+    categoryFiltersContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        gap: 8,
+    },
+    categoryPillWrapper: {
+        flex: 1,
+        height: 40,
+    },
+    categoryPill: {
+        flex: 1,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(255,255,255,0.01)",
+    },
+    categoryPillSelected: {
+        backgroundColor: "rgba(255,255,255,0.2)",
+        borderColor: "rgba(255,255,255,0.4)",
+    },
+    categoryPillText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: "rgba(255,255,255,0.6)",
+    },
+    categoryPillTextSelected: {
+        color: "#FFFFFF",
+        fontWeight: '800',
     }
 });

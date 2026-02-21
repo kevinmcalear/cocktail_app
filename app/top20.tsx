@@ -1,13 +1,13 @@
-import { CocktailList } from "@/components/CocktailList";
+import { DrinkList } from "@/components/DrinkList";
 import { Stack } from "expo-router";
 
 export default function Top20Screen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <CocktailList
+            <DrinkList
                 title="Top 20"
-                cocktails={[]}
+                drinks={[]}
             />
         </>
     );
