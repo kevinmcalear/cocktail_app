@@ -8,6 +8,7 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 const templates = [
+    { id: 'caretakers-cottage', name: "Caretaker's Cottage Monthly", description: 'Blank monthly template with house structure' },
     { id: '1', name: 'Standard Season', description: '12 cocktails, balanced categories' },
     { id: '2', name: 'Special Event', description: 'Short list, 6 signature drinks' },
     { id: '3', name: 'Testing Menu', description: 'Blank canvas for R&D' },
@@ -57,7 +58,10 @@ export default function CreateMenuScreen() {
                     style={[styles.createButton, !selectedTemplate && styles.disabledButton]}
                     disabled={!selectedTemplate}
                     onPress={() => {
-                        // Logic to create menu would go here
+                        if (selectedTemplate === "caretakers-cottage") {
+                            router.push("/menus/template-caretakers");
+                            return;
+                        }
                         router.back();
                     }}
                 >
