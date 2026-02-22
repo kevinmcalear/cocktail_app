@@ -177,7 +177,7 @@ export default function PrepScreen() {
                 <FlatList
                     ref={flatListRef}
                     data={listData}
-                    keyExtractor={(item) => ('id' in item ? item.id : item.id)}
+                    keyExtractor={(item: any) => item.id}
                     contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
                     showsVerticalScrollIndicator={false}
                     keyboardDismissMode="on-drag"
@@ -190,11 +190,7 @@ export default function PrepScreen() {
                     ListHeaderComponent={
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View>
-                                <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
-                                    <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                                    </TouchableOpacity>
-                                    <ThemedText type="title" style={styles.title}>Prep</ThemedText>
+                                <View style={[styles.header, { paddingTop: insets.top + 4, justifyContent: 'flex-end' }]}>
                                     <TouchableOpacity 
                                         style={styles.headerTitleContainer} 
                                         onPress={() => router.push('/add-ingredient')}

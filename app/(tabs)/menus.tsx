@@ -6,9 +6,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MenusScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     return (
 
@@ -16,14 +18,7 @@ export default function MenusScreen() {
             <CurrentMenuList
                 ListHeaderComponent={
                     <View>
-                        <GlassView style={styles.header} intensity={80}>
-                            <View style={styles.headerRow}>
-                                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                                </TouchableOpacity>
-                                <ThemedText type="title" style={styles.title}>Menus</ThemedText>
-                            </View>
-                        </GlassView>
+                        <View style={{ paddingTop: insets.top + 10 }} />
 
                         <View style={styles.actions}>
                             <TouchableOpacity

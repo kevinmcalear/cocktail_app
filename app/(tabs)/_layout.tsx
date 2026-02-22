@@ -25,8 +25,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="home-variant" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home-variant" size={size} color={color} />
           ),
         }}
       />
@@ -35,8 +35,8 @@ export default function TabLayout() {
         name="drinks"
         options={{
           title: "Drinks",
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="glass-cocktail" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="glass-cocktail" size={size} color={color} />
           ),
         }}
       />
@@ -45,8 +45,8 @@ export default function TabLayout() {
         name="menus"
         options={{
           title: "Menus",
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="book-open-outline" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="book-open-outline" size={size} color={color} />
           ),
         }}
       />
@@ -55,8 +55,8 @@ export default function TabLayout() {
         name="prep"
         options={{
           title: "Prep",
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="clipboard-list-outline" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="clipboard-list-outline" size={size} color={color} />
           ),
         }}
       />
@@ -65,8 +65,8 @@ export default function TabLayout() {
         name="test"
         options={{
           title: "Test",
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="flask-outline" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="flask-outline" size={size} color={color} />
           ),
         }}
       />
@@ -75,13 +75,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Image
               source={{ uri: avatarUrl }}
               style={{
-                width: 26,
-                height: 26,
-                borderRadius: 13,
+                width: size + 2,
+                height: size + 2,
+                borderRadius: (size + 2) / 2,
                 borderWidth: focused ? 1 : 0,
                 borderColor: "#FFFFFF"
               }}

@@ -230,7 +230,7 @@ export const sharedStyles = StyleSheet.create({
     subjectCardWrapper: { width: "47%", height: 120 },
     subjectCard: { flex: 1, borderRadius: 20, justifyContent: "center", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
     subjectLabel: { fontSize: 18, fontWeight: "600", letterSpacing: 1 },
-    sliderWrapper: { padding: 30, paddingBottom: 50 },
+    sliderWrapper: { padding: 30, paddingBottom: 110 },
     sliderLabel: { fontSize: 16, fontWeight: "600", color: Colors.dark.icon, marginBottom: 15, textAlign: "center" },
     sliderContainer: { flexDirection: "row", alignItems: "center", gap: 15 },
     sliderLimit: { fontSize: 14, color: Colors.dark.icon, width: 25 },

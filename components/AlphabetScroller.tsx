@@ -5,6 +5,7 @@ import { LayoutChangeEvent, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
     runOnJS,
+    SharedValue,
     useAnimatedStyle,
     useSharedValue,
     withSpring,
@@ -126,7 +127,7 @@ const LetterItem = ({
 }: {
     letter: string;
     index: number;
-    activeY: Animated.SharedValue<number>;
+    activeY: SharedValue<number>;
     letterHeight: number;
 }) => {
     // Hooks must be unconditional. Use a fallback height if 0 to maintain hook order/count

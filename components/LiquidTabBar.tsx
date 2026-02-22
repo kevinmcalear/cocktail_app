@@ -100,7 +100,7 @@ export function LiquidTabBar({
                                     {options.tabBarIcon && options.tabBarIcon({
                                         focused: isFocused,
                                         color: isFocused ? activeColor : inactiveColor,
-                                        size: 26,
+                                        size: 28,
                                     })}
                                 </PlatformPressable>
                             );

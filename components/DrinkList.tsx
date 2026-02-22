@@ -38,9 +38,10 @@ interface DrinkListProps {
     drinks: DrinkListItem[];
     headerButtons?: ReactNode;
     initialSearchQuery?: string;
+    hideHeader?: boolean;
 }
 
-export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "" }: DrinkListProps) {
+export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false }: DrinkListProps) {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
@@ -241,14 +242,16 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                     }}
                     ListHeaderComponent={
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View>
-                                <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
-                                    <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                                    </TouchableOpacity>
-                                    <ThemedText type="title" style={styles.title}>{title}</ThemedText>
-                                    <View style={{ width: 40 }} />
-                                </View>
+                            <View style={{ paddingTop: hideHeader ? insets.top + 4 : 0 }}>
+                                {!hideHeader && (
+                                    <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
+                                        <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
+                                            <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                                        </TouchableOpacity>
+                                        <ThemedText type="title" style={styles.title}>{title}</ThemedText>
+                                        <View style={{ width: 40 }} />
+                                    </View>
+                                )}
                                 {headerButtons}
                                 
                                 {/* Category Filters */}

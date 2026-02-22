@@ -27,10 +27,6 @@ export default function ProfileScreen() {
         <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
             <Stack.Screen options={{ headerShown: false }} />
             
-            <View style={styles.header}>
-                <ThemedText type="title" style={styles.title}>Profile</ThemedText>
-            </View>
-
             <View style={styles.content}>
                 <View style={styles.profileSection}>
                     <Image source={{ uri: avatarUrl }} style={styles.avatar} />

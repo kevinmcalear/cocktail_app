@@ -101,6 +101,7 @@ export default function DrinksScreen() {
                 drinks={drinks}
                 headerButtons={headerButtons}
                 initialSearchQuery={q}
+                hideHeader={true}
             />
         </>
     );
