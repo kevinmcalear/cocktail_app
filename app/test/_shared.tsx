@@ -286,3 +286,9 @@ export const sharedStyles = StyleSheet.create({
     pourStream: { width: 4, position: 'absolute', top: -120, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
     glassBase: { width: 60, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)', marginTop: 2 },
 });
+
+// Dummy export to suppress Expo Router warnings about missing default export on layout/shared files.
+export default function SharedComponentsDummy() {
+    return null;
+}
+
