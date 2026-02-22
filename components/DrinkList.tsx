@@ -41,6 +41,158 @@ interface DrinkListProps {
     hideHeader?: boolean;
 }
 
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Colors.dark.background,
+    },
+    contentContainer: {
+        flex: 1,
+    },
+    listContent: {
+        paddingHorizontal: 16,
+        paddingTop: 0,
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+        zIndex: 10,
+        marginTop: 0,
+        marginHorizontal: 0,
+    },
+    headerTitleContainer: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+    },
+    title: {
+        fontSize: 34,
+        lineHeight: 38,
+        fontWeight: "bold",
+        letterSpacing: 0.5,
+    },
+    itemCard: {
+        borderRadius: 16,
+        marginBottom: 12,
+        overflow: 'hidden',
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
+    },
+    itemRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        height: 100,
+    },
+    textContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingRight: 12,
+        gap: 4,
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    itemName: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: Colors.dark.text,
+        flex: 1,
+    },
+    itemDescription: {
+        fontSize: 15,
+        color: Colors.dark.icon,
+        lineHeight: 20,
+    },
+    itemImage: {
+        width: 76,
+        height: 76,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.05)",
+    },
+    rightActionsContainer: {
+        flexDirection: 'row',
+        width: 160,
+        height: 100,
+        marginBottom: 12,
+    },
+    actionButton: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 16,
+        marginLeft: 8,
+    },
+    actionText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginTop: 4,
+    },
+    topSearchContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 16,
+        marginTop: 12,
+        marginBottom: 8,
+        paddingHorizontal: 32,
+    },
+    sectionHeaderText: {
+        fontSize: 24,
+        fontWeight: "800",
+        color: "#FFFFFF",
+        marginHorizontal: 16,
+        textAlign: 'center',
+    },
+    sectionDivider: {
+        flex: 1,
+        height: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.4)",
+    },
+    categoryFiltersContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        gap: 8,
+    },
+    categoryPillWrapper: {
+        flex: 1,
+        height: 40,
+    },
+    categoryPill: {
+        flex: 1,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(255,255,255,0.01)",
+    },
+    categoryPillSelected: {
+        backgroundColor: "rgba(255,255,255,0.2)",
+        borderColor: "rgba(255,255,255,0.4)",
+    },
+    categoryPillText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: "rgba(255,255,255,0.6)",
+    },
+    categoryPillTextSelected: {
+        color: "#FFFFFF",
+        fontWeight: '800',
+    }
+});
+
 const getImage = (item: DrinkListItem) => {
     if (item.cocktail_images && item.cocktail_images.length > 0) {
         return { uri: item.cocktail_images[0].images.url };
@@ -71,7 +223,7 @@ const DrinkCard = memo(function DrinkCard({
     inStudy: boolean;
     onToggleFavorite: (id: string, swipeable: Swipeable) => void;
     onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
-}) => {
+}) {
     let swipeableRef: Swipeable | null = null;
 
     let subText = drink.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || drink.description || "No description";
@@ -323,154 +475,4 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-    contentContainer: {
-        flex: 1,
-    },
-    listContent: {
-        paddingHorizontal: 16,
-        paddingTop: 0,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingBottom: 8,
-        zIndex: 10,
-        marginTop: 0,
-        marginHorizontal: 0,
-    },
-    headerTitleContainer: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 34,
-        lineHeight: 38,
-        fontWeight: "bold",
-        letterSpacing: 0.5,
-    },
-    itemCard: {
-        borderRadius: 16,
-        marginBottom: 12,
-        overflow: 'hidden',
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-    },
-    itemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 100,
-    },
-    textContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingRight: 12,
-        gap: 4,
-    },
-    nameRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    itemName: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: Colors.dark.text,
-        flex: 1,
-    },
-    itemDescription: {
-        fontSize: 15,
-        color: Colors.dark.icon,
-        lineHeight: 20,
-    },
-    itemImage: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.05)",
-    },
-    rightActionsContainer: {
-        flexDirection: 'row',
-        width: 160,
-        height: 100,
-        marginBottom: 12,
-    },
-    actionButton: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 16,
-        marginLeft: 8,
-    },
-    actionText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginTop: 4,
-    },
-    topSearchContainer: {
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-    },
-    sectionHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 16,
-        marginTop: 12,
-        marginBottom: 8,
-        paddingHorizontal: 32,
-    },
-    sectionHeaderText: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#FFFFFF",
-        marginHorizontal: 16,
-        textAlign: 'center',
-    },
-    sectionDivider: {
-        flex: 1,
-        height: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.4)",
-    },
-    categoryFiltersContainer: {
-        flexDirection: 'row',
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-        gap: 8,
-    },
-    categoryPillWrapper: {
-        flex: 1,
-        height: 40,
-    },
-    categoryPill: {
-        flex: 1,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
-        backgroundColor: "rgba(255,255,255,0.01)",
-    },
-    categoryPillSelected: {
-        backgroundColor: "rgba(255,255,255,0.2)",
-        borderColor: "rgba(255,255,255,0.4)",
-    },
-    categoryPillText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: "rgba(255,255,255,0.6)",
-    },
-    categoryPillTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: '800',
-    }
-});
+
