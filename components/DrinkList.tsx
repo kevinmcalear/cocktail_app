@@ -10,7 +10,7 @@ import { useStudyPile } from "@/hooks/useStudyPile";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
-import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,6 +40,110 @@ interface DrinkListProps {
     initialSearchQuery?: string;
     hideHeader?: boolean;
 }
+
+const getImage = (item: DrinkListItem) => {
+    if (item.cocktail_images && item.cocktail_images.length > 0) {
+        return { uri: item.cocktail_images[0].images.url };
+    }
+    // Fallback to a single reliable image since specific placeholders don't exist yet
+    return require("@/assets/images/cocktails/house_martini.png");
+};
+
+const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }) {
+    return (
+        <View style={styles.sectionHeader}>
+            <View style={styles.sectionDivider} />
+            <ThemedText style={styles.sectionHeaderText}>{letter}</ThemedText>
+            <View style={styles.sectionDivider} />
+        </View>
+    );
+});
+
+const DrinkCard = memo(function DrinkCard({
+    drink,
+    isFav,
+    inStudy,
+    onToggleFavorite,
+    onToggleStudyPile
+}: {
+    drink: DrinkListItem;
+    isFav: boolean;
+    inStudy: boolean;
+    onToggleFavorite: (id: string, swipeable: Swipeable) => void;
+    onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
+}) => {
+    let swipeableRef: Swipeable | null = null;
+
+    let subText = drink.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || drink.description || "No description";
+    if (drink.price) {
+        subText = `${drink.price} • ${subText}`;
+    }
+    if (drink.category && drink.category !== "Cocktail") {
+        subText = `${drink.category.toUpperCase()} • ${subText}`;
+    }
+
+    const renderRightActions = () => (
+        <View style={styles.rightActionsContainer}>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: '#FF4B4B' }]}
+                onPress={() => onToggleFavorite(drink.id, swipeableRef!)}
+            >
+                <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
+                <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</ThemedText>
+            </RectButton>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
+                onPress={() => onToggleStudyPile(drink.id, swipeableRef!)}
+            >
+                <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
+                <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</ThemedText>
+            </RectButton>
+        </View>
+    );
+
+    const cardContent = (
+        <TouchableOpacity activeOpacity={0.7} disabled={drink.category !== "Cocktail" && drink.category != null}>
+            <GlassView style={styles.itemCard} intensity={20}>
+                <View style={styles.itemRow}>
+                    <View style={styles.textContainer}>
+                        <View style={styles.nameRow}>
+                            <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{drink.name}</ThemedText>
+                        </View>
+                        <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                            {subText}
+                        </ThemedText>
+                    </View>
+                    <Image
+                        source={getImage(drink)}
+                        style={styles.itemImage}
+                        contentFit="cover"
+                        transition={500}
+                        onError={(e) => {
+                            // Silent fallback if image fails to load
+                        }}
+                    />
+                </View>
+            </GlassView>
+        </TouchableOpacity>
+    );
+
+    return (
+        <Swipeable
+            ref={(ref) => { swipeableRef = ref; }}
+            renderRightActions={renderRightActions}
+            friction={2}
+            rightThreshold={40}
+        >
+            {drink.category === "Cocktail" || !drink.category ? (
+                <Link href={`/cocktail/${drink.id}`} asChild>
+                    {cardContent}
+                </Link>
+            ) : (
+                cardContent
+            )}
+        </Swipeable>
+    );
+});
 
 export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false }: DrinkListProps) {
     const router = useRouter();
@@ -118,111 +222,34 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
         }
     }).current;
 
-    const getImage = (item: DrinkListItem) => {
-        if (item.cocktail_images && item.cocktail_images.length > 0) {
-            return { uri: item.cocktail_images[0].images.url };
-        }
-        // Fallback to a single reliable image since specific placeholders don't exist yet
-        return require("@/assets/images/cocktails/house_martini.png");
-    };
+    const handleToggleFavorite = useCallback((id: string, swipeable: Swipeable) => {
+        toggleFavorite(id);
+        swipeable.close();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, [toggleFavorite]);
 
-    const renderRightActions = (id: string, swipeable: Swipeable) => {
-        const isFav = isFavorite(id);
-        const inStudy = isInStudyPile(id);
+    const handleToggleStudyPile = useCallback((id: string, swipeable: Swipeable) => {
+        toggleStudyPile(id);
+        swipeable.close();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, [toggleStudyPile]);
 
-        return (
-            <View style={styles.rightActionsContainer}>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: '#FF4B4B' }]}
-                    onPress={() => {
-                        toggleFavorite(id);
-                        swipeable.close();
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    }}
-                >
-                    <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
-                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</ThemedText>
-                </RectButton>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
-                    onPress={() => {
-                        toggleStudyPile(id);
-                        swipeable.close();
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    }}
-                >
-                    <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
-                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</ThemedText>
-                </RectButton>
-            </View>
-        );
-    };
-
-    const renderItem = ({ item }: { item: DrinkListItem | { type: "header"; letter: string; id: string } }) => {
+    const renderItem = useCallback(({ item }: { item: DrinkListItem | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
-            return (
-                <View style={styles.sectionHeader}>
-                    <View style={styles.sectionDivider} />
-                    <ThemedText style={styles.sectionHeaderText}>{item.letter}</ThemedText>
-                    <View style={styles.sectionDivider} />
-                </View>
-            );
+            return <SectionHeader letter={item.letter} />;
         }
 
         const drink = item as DrinkListItem;
-        let swipeableRef: Swipeable | null = null;
-        
-        let subText = drink.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || drink.description || "No description";
-        if (drink.price) {
-            subText = `${drink.price} • ${subText}`;
-        }
-        if (drink.category && drink.category !== "Cocktail") {
-            subText = `${drink.category.toUpperCase()} • ${subText}`;
-        }
-
-        const cardContent = (
-            <TouchableOpacity activeOpacity={0.7} disabled={drink.category !== "Cocktail" && drink.category != null}>
-                <GlassView style={styles.itemCard} intensity={20}>
-                    <View style={styles.itemRow}>
-                        <View style={styles.textContainer}>
-                            <View style={styles.nameRow}>
-                                <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{drink.name}</ThemedText>
-                            </View>
-                            <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                                {subText}
-                            </ThemedText>
-                        </View>
-                        <Image
-                            source={getImage(drink)}
-                            style={styles.itemImage}
-                            contentFit="cover"
-                            transition={500}
-                            onError={(e) => {
-                                // Silent fallback if image fails to load
-                            }}
-                        />
-                    </View>
-                </GlassView>
-            </TouchableOpacity>
-        );
-
         return (
-            <Swipeable
-                ref={(ref) => { swipeableRef = ref; }}
-                renderRightActions={() => renderRightActions(drink.id, swipeableRef!)}
-                friction={2}
-                rightThreshold={40}
-            >
-                {drink.category === "Cocktail" || !drink.category ? (
-                    <Link href={`/cocktail/${drink.id}`} asChild>
-                        {cardContent}
-                    </Link>
-                ) : (
-                    cardContent
-                )}
-            </Swipeable>
+            <DrinkCard
+                drink={drink}
+                isFav={isFavorite(drink.id)}
+                inStudy={isInStudyPile(drink.id)}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleStudyPile={handleToggleStudyPile}
+            />
         );
-    };
+    }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile]);
 
     return (
         <ThemedView style={styles.container}>
