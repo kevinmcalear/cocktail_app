@@ -24,9 +24,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Menus",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-variant" size={size} color={color} />
+            <MaterialCommunityIcons name="book-open-outline" size={size} color={color} />
           ),
         }}
       />
@@ -37,16 +37,6 @@ export default function TabLayout() {
           title: "Drinks",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="glass-cocktail" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="menus"
-        options={{
-          title: "Menus",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="book-open-outline" size={size} color={color} />
           ),
         }}
       />
