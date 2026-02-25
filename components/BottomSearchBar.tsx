@@ -8,9 +8,10 @@ interface BottomSearchBarProps {
     onChangeText: (text: string) => void;
     style?: ViewStyle;
     placeholder?: string;
+    onFilterPress?: () => void;
 }
 
-export function BottomSearchBar({ value, onChangeText, style, placeholder = "Find your drink..." }: BottomSearchBarProps) {
+export function BottomSearchBar({ value, onChangeText, style, placeholder = "Find your drink...", onFilterPress }: BottomSearchBarProps) {
     const [isFocused, setIsFocused] = useState(false);
 
     return (
@@ -32,8 +33,13 @@ export function BottomSearchBar({ value, onChangeText, style, placeholder = "Fin
                 onBlur={() => setIsFocused(false)}
             />
             {value.length > 0 && (
-                <TouchableOpacity onPress={() => onChangeText("")}>
+                <TouchableOpacity onPress={() => onChangeText("")} style={{ padding: 4 }}>
                     <IconSymbol name="xmark.circle.fill" size={20} color={Colors.dark.icon} />
+                </TouchableOpacity>
+            )}
+            {onFilterPress && (
+                <TouchableOpacity onPress={onFilterPress} style={{ padding: 4, marginLeft: value.length > 0 ? 0 : 8 }}>
+                    <IconSymbol name="line.3.horizontal.decrease.circle" size={22} color={Colors.dark.icon} />
                 </TouchableOpacity>
             )}
         </View>

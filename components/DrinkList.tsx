@@ -1,5 +1,6 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
+import { FilterModal } from "@/components/FilterModal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
@@ -302,6 +303,8 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
     const [selectedCategory, setSelectedCategory] = useState<"All" | "Cocktails" | "Beers" | "Wines">("All");
+    const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+    const [showFavesOnly, setShowFavesOnly] = useState(false);
     const flatListRef = useRef<FlatList>(null);
     const { toggleFavorite, isFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
@@ -313,6 +316,10 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
         if (selectedCategory !== "All") {
             const mappedCategory = selectedCategory === "Cocktails" ? "Cocktail" : selectedCategory === "Beers" ? "Beer" : "Wine";
             result = result.filter(d => d.category === mappedCategory);
+        }
+
+        if (showFavesOnly) {
+            result = result.filter(d => isFavorite(d.id));
         }
 
         if (searchQuery) {
@@ -406,6 +413,30 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
     return (
         <ThemedView style={styles.container}>
             <View style={styles.contentContainer}>
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={{ paddingTop: hideHeader ? insets.top + 4 : 0 }}>
+                        {!hideHeader && (
+                            <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
+                                <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
+                                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                                </TouchableOpacity>
+                                <ThemedText type="title" style={styles.title}>{title}</ThemedText>
+                                <View style={{ width: 40 }} />
+                            </View>
+                        )}
+                        {headerButtons}
+
+                        <View style={styles.topSearchContainer}>
+                            <BottomSearchBar
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                placeholder={`Search drinks...`}
+                                onFilterPress={() => setIsFilterModalVisible(true)}
+                            />
+                        </View>
+                    </View>
+                </TouchableWithoutFeedback>
+
                 <FlatList
                     ref={flatListRef}
                     data={listData}
@@ -419,58 +450,20 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                     onScrollToIndexFailed={(info) => {
                         flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
                     }}
-                    ListHeaderComponent={
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View style={{ paddingTop: hideHeader ? insets.top + 4 : 0 }}>
-                                {!hideHeader && (
-                                    <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
-                                        <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                            <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                                        </TouchableOpacity>
-                                        <ThemedText type="title" style={styles.title}>{title}</ThemedText>
-                                        <View style={{ width: 40 }} />
-                                    </View>
-                                )}
-                                {headerButtons}
-                                
-                                {/* Category Filters */}
-                                <View style={styles.categoryFiltersContainer}>
-                                    {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
-                                        const isSelected = selectedCategory === cat;
-                                        return (
-                                            <TouchableOpacity 
-                                                key={cat} 
-                                                onPress={() => setSelectedCategory(cat as any)}
-                                                style={styles.categoryPillWrapper}
-                                            >
-                                                <GlassView 
-                                                    style={[styles.categoryPill, isSelected && styles.categoryPillSelected]} 
-                                                    intensity={isSelected ? 60 : 15}
-                                                >
-                                                    <ThemedText style={[styles.categoryPillText, isSelected && styles.categoryPillTextSelected]}>
-                                                        {cat}
-                                                    </ThemedText>
-                                                </GlassView>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-
-                                <View style={styles.topSearchContainer}>
-                                    <BottomSearchBar
-                                        value={searchQuery}
-                                        onChangeText={setSearchQuery}
-                                        placeholder={`Search ${selectedCategory.toLowerCase()}...`}
-                                    />
-                                </View>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    }
                     renderItem={renderItem}
                 />
             </View>
 
             <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
+
+            <FilterModal 
+                visible={isFilterModalVisible}
+                onClose={() => setIsFilterModalVisible(false)}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+                showFavesOnly={showFavesOnly}
+                onToggleFavesOnly={() => setShowFavesOnly(prev => !prev)}
+            />
         </ThemedView>
     );
 }
