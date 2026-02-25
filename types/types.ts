@@ -5,9 +5,11 @@ export interface DatabaseIngredient {
 
 export interface DatabaseRecipe {
     id: string;
+    ingredient_bsp: number | null;
     ingredient_ml: number | null;
     ingredient_dash: number | null;
     ingredient_amount: number | null;
+    is_top: boolean | null;
     ingredients: DatabaseIngredient | null;
 }
 

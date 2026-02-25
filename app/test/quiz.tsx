@@ -95,8 +95,10 @@ export default function QuizScreen() {
                     description,
                     recipes (
                         ingredient_ml,
+                        ingredient_bsp,
                         ingredient_dash,
                         ingredient_amount,
+                        is_top,
                         ingredients!recipes_ingredient_id_fkey ( name )
                     ),
                     cocktail_images ( images ( url ) )
@@ -140,7 +142,9 @@ export default function QuizScreen() {
 
     const formatAmount = (r: any) => {
         const parts = [];
+        if (r.is_top) parts.push("Top");
         if (r.ingredient_ml) parts.push(`${r.ingredient_ml}ml`);
+        if (r.ingredient_bsp) parts.push(`${r.ingredient_bsp} bsp`);
         if (r.ingredient_dash) parts.push(`${r.ingredient_dash} dash${r.ingredient_dash > 1 ? 'es' : ''}`);
         if (r.ingredient_amount) parts.push(`${r.ingredient_amount}`);
         return parts.join(" ");

@@ -29,9 +29,11 @@ interface RecipeItem {
     id?: string;
     ingredient_id: string;
     name: string;
+    bsp: string;
     ml: string;
     dash: string;
     amount: string;
+    is_top: boolean;
 }
 
 interface Menu {
@@ -227,9 +229,11 @@ export default function AddCocktailScreen() {
                 await supabase.from('recipes').insert({
                     cocktail_id: cocktailId,
                     ingredient_id: item.ingredient_id,
+                    ingredient_bsp: parseFloat(item.bsp) || null,
                     ingredient_ml: parseFloat(item.ml) || null,
                     ingredient_dash: parseFloat(item.dash) || null,
                     ingredient_amount: parseFloat(item.amount) || null,
+                    is_top: item.is_top || false,
                 });
             }
 
@@ -406,7 +410,29 @@ export default function AddCocktailScreen() {
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
                             <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
-                            <View style={styles.recipeInputs}>
+                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2 }]}>
+                                <TouchableOpacity
+                                    style={[styles.smallInput, { backgroundColor: item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)' }]}
+                                    onPress={() => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].is_top = !newItems[index].is_top;
+                                        setRecipeItems(newItems);
+                                    }}
+                                >
+                                    <ThemedText style={{ color: item.is_top ? '#000' : '#fff', textAlign: 'center', fontSize: 12 }}>Top</ThemedText>
+                                </TouchableOpacity>
+                                <TextInput
+                                    style={styles.smallInput}
+                                    placeholder="bsp"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={item.bsp}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].bsp = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
                                 <TextInput
                                     style={styles.smallInput}
                                     placeholder="ml"
@@ -506,7 +532,7 @@ export default function AddCocktailScreen() {
                                         <TouchableOpacity
                                             style={styles.ingredientOption}
                                             onPress={() => {
-                                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
+                                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, bsp: "", ml: "", dash: "", amount: "", is_top: false }]);
                                                 setShowIngredientPicker(false);
                                                 setIngredientSearch("");
                                             }}
@@ -690,7 +716,8 @@ const styles = StyleSheet.create({
     recipeName: {
         flex: 1,
         color: '#fff',
-        fontSize: 16
+        fontSize: 16,
+        paddingRight: 8
     },
     recipeInputs: {
         flexDirection: 'row',
@@ -698,12 +725,13 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     smallInput: {
-        width: 50,
+        width: 44,
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderRadius: 8,
         padding: 8,
         color: '#fff',
         textAlign: 'center',
+        justifyContent: 'center',
         fontSize: 14
     },
     modalOverlay: {

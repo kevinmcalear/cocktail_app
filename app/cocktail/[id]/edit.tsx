@@ -30,9 +30,11 @@ interface RecipeItem {
     id?: string;
     ingredient_id: string;
     name: string;
+    bsp: string;
     ml: string;
     dash: string;
     amount: string;
+    is_top: boolean;
 }
 
 export default function EditCocktailScreen() {
@@ -150,9 +152,11 @@ export default function EditCocktailScreen() {
                         id: r.id,
                         ingredient_id: r.ingredient_id,
                         name: r.ingredients?.name || "Unknown",
+                        bsp: r.ingredient_bsp?.toString() || "",
                         ml: r.ingredient_ml?.toString() || "",
                         dash: r.ingredient_dash?.toString() || "",
-                        amount: r.ingredient_amount?.toString() || ""
+                        amount: r.ingredient_amount?.toString() || "",
+                        is_top: r.is_top || false
                     }));
                     setRecipeItems(mappedRecipes);
                 }
@@ -327,9 +331,11 @@ export default function EditCocktailScreen() {
                 const payload = {
                     cocktail_id: id,
                     ingredient_id: item.ingredient_id,
+                    ingredient_bsp: parseFloat(item.bsp) || null,
                     ingredient_ml: parseFloat(item.ml) || null,
                     ingredient_dash: parseFloat(item.dash) || null,
                     ingredient_amount: parseFloat(item.amount) || null,
+                    is_top: item.is_top || false,
                 };
 
                 if (item.id) {
@@ -478,7 +484,32 @@ export default function EditCocktailScreen() {
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
                             <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
-                            <View style={styles.recipeInputs}>
+                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2 }]}>
+                                <TouchableOpacity
+                                    style={[styles.smallInput, { backgroundColor: item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)' }]}
+                                    onPress={() => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].is_top = !newItems[index].is_top;
+                                        setRecipeItems(newItems);
+                                    }}
+                                >
+                                    <ThemedText style={{ color: item.is_top ? '#000' : '#fff', textAlign: 'center', fontSize: 12 }}>Top</ThemedText>
+                                </TouchableOpacity>
+                                <View style={styles.inputGroup}>
+                                    <TextInput
+                                        style={styles.smallInput}
+                                        placeholder="bsp"
+                                        placeholderTextColor="#666"
+                                        keyboardType="numeric"
+                                        value={item.bsp}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].bsp = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                    />
+                                    <ThemedText style={styles.unitText}>bs</ThemedText>
+                                </View>
                                 <View style={styles.inputGroup}>
                                     <TextInput
                                         style={styles.smallInput}
@@ -618,9 +649,11 @@ export default function EditCocktailScreen() {
                                                 setRecipeItems([...recipeItems, {
                                                     ingredient_id: item.id,
                                                     name: item.name,
+                                                    bsp: "",
                                                     ml: "",
                                                     dash: "",
-                                                    amount: ""
+                                                    amount: "",
+                                                    is_top: false
                                                 }]);
                                                 setShowIngredientPicker(false);
                                                 setIngredientSearch("");
@@ -816,69 +849,75 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     recipeName: {
+        flex: 1,
+        color: '#fff',
         fontSize: 16,
-        marginBottom: 8,
-        fontWeight: '600',
+        paddingRight: 8
     },
     recipeInputs: {
         flexDirection: 'row',
-        alignItems: 'center',
         gap: 8,
+        alignItems: 'center'
     },
     inputGroup: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        flex: 1,
-    },
-    smallInput: {
-        flex: 1,
-        color: '#fff',
-        paddingVertical: 8,
-        fontSize: 14,
+        gap: 4
     },
     unitText: {
         color: '#666',
-        fontSize: 12,
-        marginLeft: 4,
+        fontSize: 12
+    },
+    smallInput: {
+        width: 44,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 8,
+        padding: 8,
+        color: '#fff',
+        textAlign: 'center',
+        justifyContent: 'center',
+        fontSize: 14
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        padding: 20
     },
     modalContent: {
-        backgroundColor: Colors.dark.background,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        height: '70%',
+        backgroundColor: '#1E1E1E',
+        borderRadius: 20,
         padding: 20,
+        height: '80%'
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 20
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
+        color: '#fff'
     },
     searchInput: {
         backgroundColor: 'rgba(255,255,255,0.1)',
         padding: 12,
-        borderRadius: 10,
+        borderRadius: 12,
         color: '#fff',
-        marginBottom: 20,
+        marginBottom: 10
     },
     ingredientOption: {
-        paddingVertical: 16,
+        padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.1)',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
     ingredientText: {
-        fontSize: 16,
+        color: '#ccc',
+        fontSize: 16
     }
 });

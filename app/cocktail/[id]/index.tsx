@@ -76,9 +76,11 @@ export default function CocktailDetailsScreen() {
                     ),
                     recipes (
                         id,
+                        ingredient_bsp,
                         ingredient_ml,
                         ingredient_dash,
                         ingredient_amount,
+                        is_top,
                         ingredients!recipes_ingredient_id_fkey (
                             name
                         )
@@ -102,7 +104,9 @@ export default function CocktailDetailsScreen() {
 
     const formatIngredient = (recipe: any) => {
         const parts = [];
+        if (recipe.is_top) parts.push(`Top`);
         if (recipe.ingredient_ml) parts.push(`${recipe.ingredient_ml}ml`);
+        if (recipe.ingredient_bsp) parts.push(`${recipe.ingredient_bsp} bsp`);
         if (recipe.ingredient_dash) parts.push(`${recipe.ingredient_dash} dash${recipe.ingredient_dash > 1 ? 'es' : ''}`);
         if (recipe.ingredient_amount) parts.push(`${recipe.ingredient_amount}`);
 
