@@ -79,6 +79,79 @@ export default function EditCocktailScreen() {
 
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
+    const [addingCategory, setAddingCategory] = useState<{table: 'methods' | 'glassware' | 'families' | 'ice', label: string} | null>(null);
+    const [newItemName, setNewItemName] = useState("");
+
+    const handleAddPill = async () => {
+        if (!addingCategory || !newItemName.trim()) return;
+        
+        try {
+            const { error } = await supabase.from(addingCategory.table).insert({ name: newItemName.trim() });
+            if (error) throw error;
+            
+            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            setAddingCategory(null);
+            setNewItemName("");
+        } catch (error) {
+            console.error("Add item error:", error);
+            Alert.alert("Error", "Failed to add new item.");
+        }
+    };
+
+    const confirmDeletePill = async (type: string, table: string, id: string) => {
+        try {
+            await supabase.from('cocktails').update({ [type]: null }).eq(type, id);
+            
+            const { error } = await supabase.from(table).delete().eq('id', id);
+            if (error) throw error;
+            
+            if (type === 'method_id' && methodId === id) setMethodId(null);
+            if (type === 'glassware_id' && glasswareId === id) setGlasswareId(null);
+            if (type === 'family_id' && familyId === id) setFamilyId(null);
+            if (type === 'ice_id' && iceId === id) setIceId(null);
+
+            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+        } catch (error) {
+            console.error("Delete error:", error);
+            Alert.alert("Error", "Failed to delete item.");
+        }
+    };
+
+    const handleDeletePill = async (type: 'method_id' | 'glassware_id' | 'family_id' | 'ice_id', table: 'methods' | 'glassware' | 'families' | 'ice', item: any) => {
+        try {
+            const { data: affected, error } = await supabase
+                .from('cocktails')
+                .select('id, name')
+                .eq(type, item.id);
+
+            if (error) throw error;
+
+            if (affected && affected.length > 0) {
+                const names = affected.map(c => c.name).join(", ");
+                Alert.alert(
+                    "Warning",
+                    `Deleting this item will remove it from ${affected.length} cocktail(s):\n\n${names}\n\nAre you sure you want to delete it?`,
+                    [
+                        { text: "Cancel", style: "cancel" },
+                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(type, table, item.id) }
+                    ]
+                );
+            } else {
+                Alert.alert(
+                    "Confirm Delete",
+                    `Are you sure you want to delete "${item.name}"?`,
+                    [
+                        { text: "Cancel", style: "cancel" },
+                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(type, table, item.id) }
+                    ]
+                );
+            }
+        } catch (error) {
+            console.error("Delete check error:", error);
+            Alert.alert("Error", "Could not check affected cocktails.");
+        }
+    };
+
     useEffect(() => {
         if (cocktail) {
             const c = cocktail as any; // Cast to any to handle join comfortably or upgrade type
@@ -382,64 +455,80 @@ export default function EditCocktailScreen() {
                     />
                 </View>
 
-                {/* Dropdowns (Simulated with horizontal scroll for now) */}
+                {/* Dropdowns */}
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Method</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
                         {methods.map((m: any) => (
                             <TouchableOpacity
                                 key={m.id}
                                 style={[styles.pill, methodId === m.id && styles.pillActive]}
                                 onPress={() => setMethodId(m.id)}
+                                onLongPress={() => handleDeletePill('method_id', 'methods', m)}
                             >
                                 <ThemedText style={[styles.pillText, methodId === m.id && styles.pillTextActive]}>{m.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
+                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'methods', label: 'Method' })}>
+                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
+                        </TouchableOpacity>
                     </ScrollView>
                 </View>
 
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Glassware</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
                         {glassware.map((g: any) => (
                             <TouchableOpacity
                                 key={g.id}
                                 style={[styles.pill, glasswareId === g.id && styles.pillActive]}
                                 onPress={() => setGlasswareId(g.id)}
+                                onLongPress={() => handleDeletePill('glassware_id', 'glassware', g)}
                             >
                                 <ThemedText style={[styles.pillText, glasswareId === g.id && styles.pillTextActive]}>{g.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
+                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'glassware', label: 'Glassware' })}>
+                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
+                        </TouchableOpacity>
                     </ScrollView>
                 </View>
 
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Family</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
                         {families.map((f: any) => (
                             <TouchableOpacity
                                 key={f.id}
                                 style={[styles.pill, familyId === f.id && styles.pillActive]}
                                 onPress={() => setFamilyId(f.id)}
+                                onLongPress={() => handleDeletePill('family_id', 'families', f)}
                             >
                                 <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
+                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'families', label: 'Family' })}>
+                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
+                        </TouchableOpacity>
                     </ScrollView>
                 </View>
 
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Ice</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
                         {iceTypes.map((i: any) => (
                             <TouchableOpacity
                                 key={i.id}
                                 style={[styles.pill, iceId === i.id && styles.pillActive]}
                                 onPress={() => setIceId(iceId === i.id ? null : i.id)}
+                                onLongPress={() => handleDeletePill('ice_id', 'ice', i)}
                             >
                                 <ThemedText style={[styles.pillText, iceId === i.id && styles.pillTextActive]}>{i.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
+                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'ice', label: 'Ice' })}>
+                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
+                        </TouchableOpacity>
                     </ScrollView>
                 </View>
 
@@ -582,6 +671,39 @@ export default function EditCocktailScreen() {
 
 
             </ScrollView>
+
+            <Modal
+                visible={!!addingCategory}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={() => setAddingCategory(null)}
+            >
+                <TouchableWithoutFeedback onPress={() => setAddingCategory(null)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={[styles.modalContent, { height: 'auto', padding: 24 }]}>
+                                <ThemedText style={[styles.modalTitle, { marginBottom: 16 }]}>Add New {addingCategory?.label}</ThemedText>
+                                <TextInput
+                                    style={[styles.input, { marginBottom: 20 }]}
+                                    placeholder={`Enter ${addingCategory?.label} name`}
+                                    placeholderTextColor="#666"
+                                    value={newItemName}
+                                    onChangeText={setNewItemName}
+                                    autoFocus
+                                />
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                    <TouchableOpacity onPress={() => { setAddingCategory(null); setNewItemName(""); }} style={{ padding: 12 }}>
+                                        <ThemedText style={{ color: '#888' }}>Cancel</ThemedText>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: Colors.dark.tint, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
+                                        <ThemedText style={{ color: '#000', fontWeight: 'bold' }}>Add</ThemedText>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
 
             <Modal
                 visible={showIngredientPicker}
