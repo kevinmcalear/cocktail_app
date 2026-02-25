@@ -52,11 +52,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="prep"
+        name="ingredients"
         options={{
-          title: "Prep",
+          title: "Ingredients",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="clipboard-list-outline" size={size} color={color} />
+            <MaterialCommunityIcons name="food-apple" size={size} color={color} />
           ),
         }}
       />

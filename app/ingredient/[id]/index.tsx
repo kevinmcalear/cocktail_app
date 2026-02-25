@@ -4,6 +4,7 @@ import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
+import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -26,9 +27,11 @@ interface IngredientDetail {
 interface RecipeItem {
     id: string;
     ingredient: { name: string };
+    ingredient_bsp: number | null;
     ingredient_ml: number | null;
     ingredient_dash: number | null;
     ingredient_amount: number | null;
+    is_top: boolean | null;
 }
 
 export default function IngredientDetailScreen() {
@@ -38,6 +41,7 @@ export default function IngredientDetailScreen() {
 
     const [ingredient, setIngredient] = useState<IngredientDetail | null>(null);
     const [recipe, setRecipe] = useState<RecipeItem[]>([]);
+    const [usedIn, setUsedIn] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -64,9 +68,11 @@ export default function IngredientDetailScreen() {
                 .from('recipes')
                 .select(`
                     id,
+                    ingredient_bsp,
                     ingredient_ml,
                     ingredient_dash,
                     ingredient_amount,
+                    is_top,
                     ingredient:ingredients!recipes_ingredient_id_fkey(name)
                 `)
                 .eq('parent_ingredient_id', id);
@@ -78,6 +84,33 @@ export default function IngredientDetailScreen() {
             if (recipeData) {
                 // @ts-ignore
                 setRecipe(recipeData);
+            }
+
+            // 3. Fetch cocktails that use this ingredient
+            const { data: usedInData, error: usedInError } = await supabase
+                .from('recipes')
+                .select(`
+                    id,
+                    cocktail:cocktails(
+                        id, 
+                        name,
+                        cocktail_images (
+                            images ( url )
+                        )
+                    )
+                `)
+                .eq('ingredient_id', id)
+                .not('cocktail', 'is', null);
+
+            if (!usedInError && usedInData) {
+                // Remove duplicates if the ingredient is used multiple times in the same cocktail
+                const uniqueCocktails = new Map();
+                usedInData.forEach((item: any) => {
+                    if (item.cocktail && !uniqueCocktails.has(item.cocktail.id)) {
+                        uniqueCocktails.set(item.cocktail.id, item);
+                    }
+                });
+                setUsedIn(Array.from(uniqueCocktails.values()));
             }
 
         } catch (error) {
@@ -151,9 +184,10 @@ export default function IngredientDetailScreen() {
                         <View style={styles.recipeList}>
                             {recipe.map((item, index) => (
                                 <View key={item.id} style={[styles.recipeRow, index !== recipe.length - 1 && styles.recipeBorder]}>
-                                    <ThemedText style={styles.recipeName}>{item.ingredient?.name || "Unknown"}</ThemedText>
+                                    <ThemedText style={styles.recipeName}>{item.is_top ? `Top ` : ''}{item.ingredient?.name || "Unknown"}</ThemedText>
                                     <View style={styles.amounts}>
                                         {item.ingredient_ml && <ThemedText style={styles.amountText}>{item.ingredient_ml} ml</ThemedText>}
+                                        {item.ingredient_bsp && <ThemedText style={styles.amountText}>{item.ingredient_bsp} bsp</ThemedText>}
                                         {item.ingredient_dash && <ThemedText style={styles.amountText}>{item.ingredient_dash} dash</ThemedText>}
                                         {item.ingredient_amount && <ThemedText style={styles.amountText}>{item.ingredient_amount}x</ThemedText>}
                                     </View>
@@ -163,17 +197,40 @@ export default function IngredientDetailScreen() {
                     </GlassView>
                 )}
 
-                {/* Usage Section (Placeholder or Future Implementation)
-                <GlassView style={styles.card} intensity={10}>
-                    <View style={styles.cardHeader}>
-                        <IconSymbol name="wineglass" size={24} color={Colors.dark.tint} />
-                        <ThemedText type="subtitle" style={styles.cardTitle}>Used In</ThemedText>
-                    </View>
-                    <ThemedText style={styles.description}>
-                        Coming soon...
-                    </ThemedText>
-                </GlassView> 
-                */}
+                {/* Used In Section */}
+                {usedIn.length > 0 && (
+                    <GlassView style={styles.card} intensity={10}>
+                        <View style={styles.cardHeader}>
+                            <IconSymbol name="wineglass" size={24} color={Colors.dark.tint} />
+                            <ThemedText type="subtitle" style={styles.cardTitle}>Used In</ThemedText>
+                        </View>
+                        <View style={styles.recipeList}>
+                            {usedIn.map((item, index) => {
+                                const imageUrl = item.cocktail.cocktail_images?.[0]?.images?.url;
+                                
+                                return (
+                                    <TouchableOpacity 
+                                        key={item.id} 
+                                        style={[styles.recipeRow, index !== usedIn.length - 1 && styles.recipeBorder]}
+                                        onPress={() => router.push(`/cocktail/${item.cocktail.id}`)}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <Image 
+                                                source={imageUrl ? { uri: imageUrl } : require('@/assets/images/cocktails/house_martini.png')}
+                                                style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                                                contentFit="cover"
+                                            />
+                                            <ThemedText style={styles.recipeName}>{item.cocktail.name}</ThemedText>
+                                        </View>
+                                        <View style={styles.amounts}>
+                                            <IconSymbol name="chevron.right" size={16} color={Colors.dark.tint} />
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </GlassView> 
+                )}
 
             </ScrollView>
         </ThemedView>
