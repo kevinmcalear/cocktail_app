@@ -19,7 +19,7 @@ export default function CreateMenuScreen() {
 
     return (
         <ThemedView style={styles.container}>
-            <GlassView style={styles.header} intensity={80}>
+            <View style={styles.header}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
@@ -27,7 +27,7 @@ export default function CreateMenuScreen() {
                     <ThemedText type="title" style={styles.title}>Create Menu</ThemedText>
                 </View>
                 <ThemedText style={styles.subtitle}>Select a template to get started</ThemedText>
-            </GlassView>
+            </View>
 
             <ScrollView contentContainerStyle={styles.content}>
                 {templates.map((template) => {

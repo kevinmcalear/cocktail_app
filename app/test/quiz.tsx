@@ -6,8 +6,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { beers } from "@/data/beers";
 import { wines } from "@/data/wines";
+import { useCocktails } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { supabase } from "@/lib/supabase";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -40,16 +40,20 @@ export default function QuizScreen() {
     const cardCount = parseInt(params.cardCount || "10");
     const includeMeasurements = params.includeMeasurements === "true";
 
+    const { data: allCocktails, isLoading: loadingCocktails } = useCocktails();
+
     useEffect(() => {
-        startQuiz();
-    }, []);
+        if (!loadingCocktails) {
+            startQuiz();
+        }
+    }, [loadingCocktails, allCocktails]);
 
     const startQuiz = async () => {
         setLoading(true);
         let fetchedItems: FlashcardItem[] = [];
 
         if (params.subject === "COCKTAILS") {
-            fetchedItems = await fetchCocktails();
+            fetchedItems = getCocktails();
         } else if (params.subject === "MENU") {
             fetchedItems = menuItems.map(m => ({
                 id: m.name,
@@ -85,59 +89,34 @@ export default function QuizScreen() {
         setLoading(false);
     };
 
-    const fetchCocktails = async (): Promise<FlashcardItem[]> => {
-        try {
-            let query = supabase
-                .from('cocktails')
-                .select(`
-                    id,
-                    name,
-                    description,
-                    recipes (
-                        ingredient_ml,
-                        ingredient_bsp,
-                        ingredient_dash,
-                        ingredient_amount,
-                        is_top,
-                        ingredients!recipes_ingredient_id_fkey ( name )
-                    ),
-                    cocktail_images ( images ( url ) )
-                `);
+    const getCocktails = (): FlashcardItem[] => {
+        if (!allCocktails) return [];
+        let filtered = allCocktails;
 
-            if (params.cocktailCategory === "STUDY_PILE") {
-                query = query.in('id', studyPile);
-            } else if (params.cocktailCategory === "TOP_20") {
-                query = query.limit(20);
-            } else if (params.cocktailCategory === "TOP_40") {
-                query = query.limit(40);
-            } else if (params.cocktailCategory === "RANDOM") {
-                query = query.limit(100);
-            }
+        if (params.cocktailCategory === "STUDY_PILE") {
+            filtered = filtered.filter(c => studyPile.includes(c.id));
+        } else if (params.cocktailCategory === "TOP_20") {
+            filtered = filtered.slice(0, 20);
+        } else if (params.cocktailCategory === "TOP_40") {
+            filtered = filtered.slice(0, 40);
+        } // RANDOM does nothing, shuffles later
 
-            const { data, error } = await query;
-            if (error) throw error;
-            if (!data) return [];
+        let result = filtered.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            ingredients: c.recipes?.map((r: any) => ({
+                name: r.ingredients?.name || "Unknown",
+                amount: formatAmount(r)
+            })) || [],
+            imageUrl: c.cocktail_images?.[0]?.images?.url
+        }));
 
-            let result = data.map((c: any) => ({
-                id: c.id,
-                name: c.name,
-                description: c.description,
-                ingredients: c.recipes.map((r: any) => ({
-                    name: r.ingredients?.name || "Unknown",
-                    amount: formatAmount(r)
-                })),
-                imageUrl: c.cocktail_images?.[0]?.images.url
-            }));
-
-            if (params.cocktailCategory === "RANDOM") {
-                result = result.sort(() => Math.random() - 0.5);
-            }
-
-            return result;
-        } catch (error) {
-            console.error("Error fetching cocktails:", error);
-            return [];
+        if (params.cocktailCategory === "RANDOM") {
+            result = result.sort(() => Math.random() - 0.5);
         }
+
+        return result;
     };
 
     const formatAmount = (r: any) => {

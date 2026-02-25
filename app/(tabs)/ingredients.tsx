@@ -5,10 +5,10 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { supabase } from "@/lib/supabase";
+import { useIngredients } from "@/hooks/useIngredients";
 import * as Haptics from "expo-haptics";
-import { Stack, useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Animated, FlatList,
     Keyboard, StyleSheet,
@@ -37,40 +37,13 @@ export default function PrepScreen() {
     const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchIngredients();
-        }, [])
-    );
+    const { data: ingredientsData, isLoading, error } = useIngredients();
 
-    const fetchIngredients = async () => {
-        try {
-            // Fetch all ingredients
-            // Ideally we also want to know if they are complex.
-            // "8_recursive_ingredients.sql" added is_batch, let's try to select it.
-            // If it fails (column doesn't exist yet), we fallback.
-            // Actually, for the list, we just want to list them all for now?
-            // "Prep" typically implies things you make. 
-            // If we want to show ONLY complex ingredients, we need to filter.
-            // The user said: "i need a clean ui to create more complex ingredients".
-            // And presumably the Prep screen is WHERE those live.
-            // So we should try to show ingredients that ARE batches.
-            // But maybe also raw materials? 
-            // Let's fetch everything and if `is_batch` exists, maybe visually distinguish?
-            
-            const { data, error } = await supabase
-                .from('ingredients')
-                .select('*')
-                .order('name');
-
-            if (error) throw error;
-            if (data) setIngredients(data);
-        } catch (error) {
-            console.error("Error fetching prep items:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        if (!ingredientsData) return;
+        setIngredients(ingredientsData as any);
+        setLoading(false);
+    }, [ingredientsData]);
 
     // Keyboard handling
     // ... (same as before) ...

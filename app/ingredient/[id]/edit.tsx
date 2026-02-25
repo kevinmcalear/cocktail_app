@@ -16,10 +16,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useDropdowns } from "@/hooks/useDropdowns";
+import { useIngredient } from "@/hooks/useIngredients";
 import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -35,7 +37,6 @@ export default function EditIngredientScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
     // Form State
@@ -43,77 +44,34 @@ export default function EditIngredientScreen() {
     const [description, setDescription] = useState("");
 
     // Recipe State
-    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
 
+    const queryClient = useQueryClient();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data, isLoading: loadingIngredient } = useIngredient(id as string);
+    const allIngredients = dropdowns?.ingredients || [];
+    
+    const loading = loadingDropdowns || loadingIngredient;
+
     useEffect(() => {
-        if (id) {
-            loadData();
+        if (data?.ingredient) {
+            setName(data.ingredient.name || "");
+            setDescription(data.ingredient.description || "");
         }
-    }, [id]);
-
-    const loadData = async () => {
-        try {
-            setLoading(true);
-
-            // 1. Fetch Ingredient Details
-            const { data: ingData, error: ingError } = await supabase
-                .from('ingredients')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (ingError) throw ingError;
-            setName(ingData.name);
-            setDescription(ingData.description || "");
-
-            // 2. Fetch Existing Recipe
-            const { data: recipeData, error: recipeError } = await supabase
-                .from('recipes')
-                .select(`
-                    id,
-                    ingredient_id,
-                    ingredient_ml,
-                    ingredient_dash,
-                    ingredient_amount,
-                    ingredient:ingredients!recipes_ingredient_id_fkey(name)
-                `)
-                .eq('parent_ingredient_id', id);
-
-            if (recipeError) throw recipeError;
-
-            if (recipeData) {
-                const items: RecipeItem[] = recipeData.map(r => ({
-                    id: r.id,
-                    ingredient_id: r.ingredient_id,
-                    // @ts-ignore
-                    name: r.ingredient?.name || "Unknown",
-                    ml: r.ingredient_ml?.toString() || "",
-                    dash: r.ingredient_dash?.toString() || "",
-                    amount: r.ingredient_amount?.toString() || "",
-                }));
-                setRecipeItems(items);
-            }
-
-            // 3. Fetch All Ingredients for Picker
-            const { data: allIng, error: allError } = await supabase
-                .from('ingredients')
-                .select('id, name')
-                .order('name');
-            
-            if (allError) throw allError;
-            setAllIngredients(allIng || []);
-
-        } catch (error) {
-            console.error("Error loading ingredient:", error);
-            Alert.alert("Error", "Failed to load ingredient data.");
-            router.back();
-        } finally {
-            setLoading(false);
+        if (data?.recipe) {
+            const items: RecipeItem[] = data.recipe.map((r: any) => ({
+                id: r.id,
+                ingredient_id: r.ingredient_id || r.id,
+                name: r.ingredient?.name || "Unknown",
+                ml: r.ingredient_ml?.toString() || "",
+                dash: r.ingredient_dash?.toString() || "",
+                amount: r.ingredient_amount?.toString() || "",
+            }));
+            setRecipeItems(items);
         }
-    };
+    }, [data]);
 
     const handleSave = async () => {
         if (!name.trim()) {
@@ -163,6 +121,9 @@ export default function EditIngredientScreen() {
                 if (insertError) throw insertError;
             }
 
+            queryClient.invalidateQueries({ queryKey: ['ingredient', id] });
+            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+
             Alert.alert("Success", "Ingredient updated!", [
                 { text: "OK", onPress: () => router.back() }
             ]);
@@ -190,7 +151,7 @@ export default function EditIngredientScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
@@ -206,7 +167,7 @@ export default function EditIngredientScreen() {
                         <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
                     )}
                 </TouchableOpacity>
-            </GlassView>
+            </View>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
@@ -327,7 +288,7 @@ export default function EditIngredientScreen() {
                                     autoFocus
                                 />
                                 <FlatList
-                                    data={allIngredients.filter(i => {
+                                    data={allIngredients.filter((i: any) => {
                                         // Filter out itself to prevent cyclic recursion if possible
                                         if (i.id === id) return false;
                                         return i.name.toLowerCase().includes(ingredientSearch.toLowerCase())

@@ -23,6 +23,11 @@ export interface DatabaseGlassware {
     name: string;
 }
 
+export interface DatabaseIce {
+    id: string;
+    name: string;
+}
+
 export interface DatabaseFamily {
     id: string;
     name: string;
@@ -46,8 +51,10 @@ export interface DatabaseCocktail {
     origin: string | null;
     garnish_1: string | null;
     spec: string | null;
+    ice_id: string | null;
     recipes?: DatabaseRecipe[];
     methods?: DatabaseMethod | null;
     glassware?: DatabaseGlassware | null;
     families?: DatabaseFamily | null;
+    ice?: DatabaseIce | null;
 }

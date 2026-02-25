@@ -19,11 +19,25 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'chevron.left': 'chevron-left',
+  'chevron.up': 'expand-less',
+  'chevron.down': 'expand-more',
   'xmark.circle.fill': 'cancel',
   'plus': 'add',
   'trash': 'delete',
   'xmark': 'close',
-} as IconMapping;
+  'pencil': 'edit',
+  'heart': 'favorite-border',
+  'heart.fill': 'favorite',
+  'book': 'menu-book',
+  'book.fill': 'menu-book',
+  'hammer.fill': 'build',
+  'wineglass': 'wine-bar',
+  'snowflake': 'ac-unit',
+  'leaf.fill': 'eco',
+  'person.2.fill': 'group',
+  'globe': 'public',
+  'note.text': 'notes',
+} as Partial<IconMapping>;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

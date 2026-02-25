@@ -1,9 +1,10 @@
 import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
 } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -15,6 +16,15 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 export const unstable_settings = {
   anchor: "(tabs)",
 };
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -66,10 +76,12 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
   if (!fontsLoaded) { return null; }
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }

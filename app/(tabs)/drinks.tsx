@@ -4,7 +4,7 @@ import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
 import { beers } from "@/data/beers";
 import { wines } from "@/data/wines";
-import { supabase } from "@/lib/supabase";
+import { useCocktails } from "@/hooks/useCocktails";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -14,63 +14,42 @@ export default function DrinksScreen() {
     const { q } = useLocalSearchParams<{ q?: string }>();
     const [drinks, setDrinks] = useState<DrinkListItem[]>([]);
 
+    const { data: cocktailsData, isLoading, error } = useCocktails();
+
     useEffect(() => {
-        fetchDrinks();
-    }, []);
+        if (!cocktailsData) return;
 
-    const fetchDrinks = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('cocktails')
-                .select(`
-                    id,
-                    name,
-                    description,
-                    recipes (
-                        ingredients!recipes_ingredient_id_fkey (
-                            name
-                        )
-                    ),
-                    cocktail_images (
-                        images (
-                            url
-                        )
-                    )
-                `)
-                .order('name', { ascending: true });
+        const mappedCocktails: DrinkListItem[] = cocktailsData.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            category: "Cocktail",
+            recipes: c.recipes,
+            cocktail_images: c.cocktail_images
+        }));
 
-            if (error) throw error;
-            
-            const mappedCocktails: DrinkListItem[] = (data || []).map((c: any) => ({
-                id: c.id,
-                name: c.name,
-                description: c.description,
-                category: "Cocktail",
-                recipes: c.recipes,
-                cocktail_images: c.cocktail_images
-            }));
+        const mappedBeers: DrinkListItem[] = beers.map(b => ({
+            id: `beer-${b.id}`,
+            name: b.name,
+            description: b.description,
+            category: "Beer",
+            price: b.price
+        }));
 
-            const mappedBeers: DrinkListItem[] = beers.map(b => ({
-                id: `beer-${b.id}`,
-                name: b.name,
-                description: b.description,
-                category: "Beer",
-                price: b.price
-            }));
+        const mappedWines: DrinkListItem[] = wines.map(w => ({
+            id: `wine-${w.id}`,
+            name: w.name,
+            description: w.description,
+            category: "Wine",
+            price: w.price
+        }));
 
-            const mappedWines: DrinkListItem[] = wines.map(w => ({
-                id: `wine-${w.id}`,
-                name: w.name,
-                description: w.description,
-                category: "Wine",
-                price: w.price
-            }));
+        setDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);
+    }, [cocktailsData]);
 
-            setDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);
-        } catch (error) {
-            console.error('Error fetching drinks:', error);
-        }
-    };
+    if (error) {
+        console.error('Error fetching drinks:', error);
+    }
 
     const headerButtons = (
         <View style={styles.filterButtonsContainer}>

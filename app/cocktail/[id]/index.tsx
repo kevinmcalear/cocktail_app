@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
@@ -13,13 +13,12 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { supabase } from "@/lib/supabase";
 
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 
-import { DatabaseCocktail } from "@/types/types";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -29,8 +28,7 @@ export default function CocktailDetailsScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const [cocktail, setCocktail] = useState<DatabaseCocktail | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: cocktail, isLoading: loading, error } = useCocktail(id as string);
     const [modalVisible, setModalVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [notesExpanded, setNotesExpanded] = useState(false);
@@ -53,54 +51,6 @@ export default function CocktailDetailsScreen() {
             ),
         };
     });
-
-
-
-    useEffect(() => {
-        if (id) {
-            fetchCocktailDetails();
-        }
-    }, [id]);
-
-    const fetchCocktailDetails = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('cocktails')
-                .select(`
-                    *,
-                    cocktail_images (
-                        images (
-                            url,
-                            id
-                        )
-                    ),
-                    recipes (
-                        id,
-                        ingredient_bsp,
-                        ingredient_ml,
-                        ingredient_dash,
-                        ingredient_amount,
-                        is_top,
-                        ingredients!recipes_ingredient_id_fkey (
-                            name
-                        )
-                    ),
-                    methods ( name ),
-                    glassware ( name ),
-                    families ( name )
-                `)
-                .eq('id', id)
-                .single();
-
-            if (data) {
-                setCocktail(data);
-            }
-        } catch (error) {
-            console.error('Error fetching cocktail details:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const formatIngredient = (recipe: any) => {
         const parts = [];
@@ -200,10 +150,17 @@ export default function CocktailDetailsScreen() {
                     </GlassView>
                 </TouchableOpacity>
 
-
+                <TouchableOpacity
+                    style={[styles.editButton, { top: 10, right: 20 }]}
+                    onPress={() => router.push(`/cocktail/${id}/edit`)}
+                >
+                    <GlassView intensity={50} style={styles.buttonGlass}>
+                        <IconSymbol name="pencil" size={24} color={Colors.dark.text} />
+                    </GlassView>
+                </TouchableOpacity>
 
                 {/* Sticky Title */}
-                <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, right: 20 }, stickyTitleStyle]}>
+                <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
                     <ThemedText style={styles.stickyTitleText}>{cocktail?.name}</ThemedText>
                 </Animated.View>
             </View>
@@ -230,83 +187,88 @@ export default function CocktailDetailsScreen() {
 
                 {/* Ingredients List */}
                 {cocktail.recipes && cocktail.recipes.length > 0 && (
-                    <View style={[styles.section, styles.sectionRight, { marginBottom: 32 }]}>
+                    <View style={[styles.section, styles.sectionLeft, { marginBottom: 24 }]}>
                         <View style={styles.ingredientsList}>
                             {cocktail.recipes.map((recipe, index) => (
                                 <View key={index} style={styles.ingredientRow}>
-                                    <ThemedText style={[styles.text, styles.textRight]}>{formatIngredient(recipe)}</ThemedText>
+                                    <ThemedText style={[styles.text, styles.textLeft]}>{formatIngredient(recipe)}</ThemedText>
                                 </View>
                             ))}
                         </View>
                     </View>
                 )}
 
-                {/* Core Metadata */}
-                <View style={styles.section}>
-                    <View style={styles.detailsList}>
+                {/* Core Metadata Badges */}
+                <View style={[styles.section, styles.sectionLeft, { marginBottom: 24 }]}>
+                    <View style={styles.badgeContainer}>
                         {cocktail.methods?.name && (
-                            <View style={styles.detailRow}>
-                                <ThemedText style={styles.detailLabel}>Method</ThemedText>
-                                <ThemedText style={styles.detailValue}>{cocktail.methods.name}</ThemedText>
+                            <View style={styles.badge}>
+                                <IconSymbol name="hammer.fill" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.methods.name}</ThemedText>
                             </View>
                         )}
                         {cocktail.glassware?.name && (
-                            <View style={styles.detailRow}>
-                                <ThemedText style={styles.detailLabel}>Glassware</ThemedText>
-                                <ThemedText style={styles.detailValue}>{cocktail.glassware.name}</ThemedText>
+                            <View style={styles.badge}>
+                                <IconSymbol name="wineglass" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.glassware.name}</ThemedText>
+                            </View>
+                        )}
+                        {cocktail.ice?.name && (
+                            <View style={styles.badge}>
+                                <IconSymbol name="snowflake" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.ice.name}</ThemedText>
                             </View>
                         )}
                         {cocktail.garnish_1 && (
-                            <View style={styles.detailRow}>
-                                <ThemedText style={styles.detailLabel}>Garnish</ThemedText>
-                                <ThemedText style={styles.detailValue}>{cocktail.garnish_1}</ThemedText>
+                            <View style={styles.badge}>
+                                <IconSymbol name="leaf.fill" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.garnish_1}</ThemedText>
+                            </View>
+                        )}
+                        {cocktail.families?.name && (
+                            <View style={styles.badge}>
+                                <IconSymbol name="person.2.fill" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.families.name}</ThemedText>
+                            </View>
+                        )}
+                        {cocktail.origin && (
+                            <View style={styles.badge}>
+                                <IconSymbol name="globe" size={16} color={Colors.dark.text} />
+                                <ThemedText style={styles.badgeText}>{cocktail.origin}</ThemedText>
                             </View>
                         )}
                     </View>
                 </View>
 
-                {/* Description */}
-                <View style={styles.section}>
-                    <ThemedText style={[styles.text, styles.textRight]}>{cocktail.description}</ThemedText>
-                </View>
-
-                {/* Extended Details */}
-                <View style={styles.section}>
-                    <View style={styles.detailsList}>
-                        {cocktail.families?.name && (
-                            <View style={styles.detailRow}>
-                                <ThemedText style={styles.detailLabel}>Family</ThemedText>
-                                <ThemedText style={styles.detailValue}>{cocktail.families.name}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.origin && (
-                            <View style={styles.detailRow}>
-                                <ThemedText style={styles.detailLabel}>Origin</ThemedText>
-                                <ThemedText style={styles.detailValue}>{cocktail.origin}</ThemedText>
-                            </View>
+                {/* Description and Notes */}
+                {(cocktail.description || cocktail.notes) && (
+                    <View style={[styles.section, styles.sectionLeft]}>
+                        {cocktail.description && (
+                            <ThemedText style={[styles.text, styles.textLeft, { marginBottom: 16 }]}>{cocktail.description}</ThemedText>
                         )}
                         {cocktail.notes && (
                             <TouchableOpacity 
-                                style={styles.detailRow} 
+                                style={styles.notesToggle} 
                                 onPress={() => setNotesExpanded(!notesExpanded)}
                                 activeOpacity={0.7}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <IconSymbol name="note.text" size={16} color={Colors.dark.text} style={{ opacity: 0.8 }} />
+                                    <ThemedText style={styles.notesLabel}>Notes</ThemedText>
                                     <IconSymbol 
                                         name={notesExpanded ? "chevron.up" : "chevron.down"} 
-                                        size={12} 
+                                        size={14} 
                                         color={Colors.dark.text} 
-                                        style={{ opacity: 0.7 }}
+                                        style={{ opacity: 0.6, marginLeft: 'auto' }}
                                     />
-                                    <ThemedText style={styles.detailLabel}>Notes</ThemedText>
                                 </View>
                                 {notesExpanded && (
-                                    <ThemedText style={styles.detailValue}>{cocktail.notes}</ThemedText>
+                                    <ThemedText style={[styles.text, styles.textLeft, { marginTop: 12, opacity: 0.9 }]}>{cocktail.notes}</ThemedText>
                                 )}
                             </TouchableOpacity>
                         )}
                     </View>
-                </View>
+                )}
 
                 {/* Bottom Spacing */}
                 <View style={{ height: 40 }} />
@@ -377,28 +339,38 @@ const styles = StyleSheet.create({
     },
     // Removed columnsContainer, leftColumn, rightColumn, bottomSection, detailsListLeft, detailRowLeft, detailLabelLeft, detailValueLeft, titleOverlay, titleOverlayText
     // Re-added styles that were removed
-    detailsList: {
-        gap: 16,
-        alignItems: 'flex-end',
+    badgeContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        alignItems: 'center',
     },
-    detailRow: {
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        gap: 2,
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 16,
     },
-    detailLabel: {
+    badgeText: {
+        color: Colors.dark.text,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    notesToggle: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        padding: 16,
+        borderRadius: 12,
+        width: '100%',
+    },
+    notesLabel: {
         fontWeight: 'bold',
         color: Colors.dark.text,
-        fontSize: 12,
-        opacity: 0.7,
+        fontSize: 14,
         textTransform: 'uppercase',
         letterSpacing: 1,
-        textAlign: 'right',
-    },
-    detailValue: {
-        color: Colors.dark.text,
-        fontSize: 16,
-        textAlign: 'right',
     },
     stickyTitleContainer: {
         position: 'absolute',
@@ -407,32 +379,33 @@ const styles = StyleSheet.create({
     },
     stickyTitleText: {
         fontSize: 32,
-        lineHeight: 42, // increased to prevent clipping
+        lineHeight: 42,
         fontWeight: 'bold',
         color: Colors.dark.text,
-        textAlign: 'right',
-        paddingTop: 8, // added padding for ascenders
+        textAlign: 'left',
+        paddingTop: 8,
     },
     header: {
         marginBottom: 8,
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
         width: '100%',
-        paddingHorizontal: 24, // Added to align with other sections
+        paddingHorizontal: 24,
     },
     title: {
         fontSize: 32,
         lineHeight: 36,
         color: Colors.dark.text,
-        textAlign: 'right',
+        textAlign: 'left',
     },
     section: {
         gap: 12,
         marginBottom: 16,
         paddingHorizontal: 24,
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
+        width: '100%',
     },
-    sectionRight: {
-        alignItems: 'flex-end',
+    sectionLeft: {
+        alignItems: 'flex-start',
     },
     text: {
         fontSize: 16,
@@ -440,21 +413,25 @@ const styles = StyleSheet.create({
         color: Colors.dark.text,
         opacity: 0.9,
     },
-    textRight: {
-        textAlign: 'right',
+    textLeft: {
+        textAlign: 'left',
     },
     ingredientsList: {
-        gap: 4,
-        alignItems: 'flex-end',
+        gap: 6,
+        alignItems: 'flex-start',
     },
     ingredientRow: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start',
         gap: 10
     },
 
     backButton: {
+        position: 'absolute',
+        zIndex: 10,
+    },
+    editButton: {
         position: 'absolute',
         zIndex: 10,
     },

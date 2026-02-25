@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -16,10 +16,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RecipeItem {
     id?: string;
@@ -41,28 +42,13 @@ export default function AddIngredientScreen() {
     const [description, setDescription] = useState("");
 
     // Recipe State
-    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
 
-    useEffect(() => {
-        fetchIngredients();
-    }, []);
-
-    const fetchIngredients = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('ingredients')
-                .select('id, name')
-                .order('name');
-            
-            if (error) throw error;
-            if (data) setAllIngredients(data);
-        } catch (error) {
-            console.error('Error fetching ingredients:', error);
-        }
-    };
+    const queryClient = useQueryClient();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const allIngredients = dropdowns?.ingredients || [];
 
     const handleSave = async () => {
         if (!name.trim()) {
@@ -104,6 +90,12 @@ export default function AddIngredientScreen() {
                 if (recipeError) throw recipeError;
             }
 
+            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            // Since we use the 'dropdowns' query for lists, we might need to invalidate that too,
+            // or just rely on 'ingredients' if that's what other screens use. 
+            // `useDropdowns` uses `['dropdowns']` key. `useIngredients` uses `['ingredients']`. Let's invalidate both to be safe.
+            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => router.back() }
             ]);
@@ -121,7 +113,7 @@ export default function AddIngredientScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
@@ -137,7 +129,7 @@ export default function AddIngredientScreen() {
                         <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
                     )}
                 </TouchableOpacity>
-            </GlassView>
+            </View>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
@@ -259,7 +251,7 @@ export default function AddIngredientScreen() {
                                     autoFocus
                                 />
                                 <FlatList
-                                    data={allIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                                    data={allIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
                                     keyExtractor={item => item.id}
                                     renderItem={({ item }) => (
                                         <TouchableOpacity

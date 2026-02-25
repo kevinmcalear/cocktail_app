@@ -3,7 +3,7 @@ import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -20,10 +20,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RecipeItem {
     id?: string;
@@ -45,7 +46,17 @@ export default function AddCocktailScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+
+    const methods = dropdowns?.methods || [];
+    const glassware = dropdowns?.glassware || [];
+    const families = dropdowns?.families || [];
+    const iceTypes = dropdowns?.iceTypes || [];
+    const allIngredients = dropdowns?.ingredients || [];
+    const menus = dropdowns?.menus || [];
+
+    const loading = loadingDropdowns;
     const [saving, setSaving] = useState(false);
 
     // Form State
@@ -60,54 +71,20 @@ export default function AddCocktailScreen() {
     const [methodId, setMethodId] = useState<string | null>(null);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
+    const [iceId, setIceId] = useState<string | null>(null);
 
     // Menu State
     const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-    const [menus, setMenus] = useState<Menu[]>([]);
     const [showMenuPicker, setShowMenuPicker] = useState(false);
     const [newMenuName, setNewMenuName] = useState("");
 
-    // Dropdown Data
-    const [methods, setMethods] = useState<{ id: string, name: string }[]>([]);
-    const [glassware, setGlassware] = useState<{ id: string, name: string }[]>([]);
-    const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
-
     // Recipe State
-    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
 
     // Image State (Local only for creation)
     const [localImages, setLocalImages] = useState<{ id: string, url: string }[]>([]);
-
-    useEffect(() => {
-        fetchDropdowns();
-    }, []);
-
-    const fetchDropdowns = async () => {
-        try {
-            setLoading(true);
-            const [methodsRes, glasswareRes, familiesRes, ingredientsRes, menusRes] = await Promise.all([
-                supabase.from('methods').select('*').order('name'),
-                supabase.from('glassware').select('*').order('name'),
-                supabase.from('families').select('*').order('name'),
-                supabase.from('ingredients').select('*').order('name'),
-                supabase.from('menus').select('id, name').eq('is_active', true).order('name') // Only show active menus initially or all? Let's show all active for now.
-            ]);
-
-            if (methodsRes.data) setMethods(methodsRes.data);
-            if (glasswareRes.data) setGlassware(glasswareRes.data);
-            if (familiesRes.data) setFamilies(familiesRes.data);
-            if (ingredientsRes.data) setAllIngredients(ingredientsRes.data);
-            if (menusRes.data) setMenus(menusRes.data);
-
-        } catch (error) {
-            console.error('Error fetching dropdowns:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -143,7 +120,7 @@ export default function AddCocktailScreen() {
             
             if (error) throw error;
             if (data) {
-                setMenus(prev => [...prev, data].sort((a,b) => a.name.localeCompare(b.name)));
+                queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
                 setSelectedMenuId(data.id);
                 setNewMenuName("");
                 setShowMenuPicker(false); // Close picker after creating and selecting
@@ -204,6 +181,7 @@ export default function AddCocktailScreen() {
                     method_id: methodId,
                     glassware_id: glasswareId,
                     family_id: familyId,
+                    ice_id: iceId,
                 })
                 .select()
                 .single();
@@ -275,7 +253,7 @@ export default function AddCocktailScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
@@ -291,7 +269,7 @@ export default function AddCocktailScreen() {
                         <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
                     )}
                 </TouchableOpacity>
-            </GlassView>
+            </View>
 
             {loading ? (
                 <View style={styles.loadingContainer}>
@@ -393,6 +371,21 @@ export default function AddCocktailScreen() {
                                 onPress={() => setFamilyId(f.id)}
                             >
                                 <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Ice</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                        {iceTypes.map(i => (
+                            <TouchableOpacity
+                                key={i.id}
+                                style={[styles.pill, iceId === i.id && styles.pillActive]}
+                                onPress={() => setIceId(iceId === i.id ? null : i.id)}
+                            >
+                                <ThemedText style={[styles.pillText, iceId === i.id && styles.pillTextActive]}>{i.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>

@@ -19,12 +19,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useCocktail } from "@/hooks/useCocktails";
+import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RecipeItem {
     id?: string;
@@ -43,8 +45,18 @@ export default function EditCocktailScreen() {
     const insets = useSafeAreaInsets();
     const colorScheme = useColorScheme();
 
-    const [loading, setLoading] = useState(true);
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: cocktail, isLoading: loadingCocktail } = useCocktail(id as string);
+
+    const methods = dropdowns?.methods || [];
+    const glassware = dropdowns?.glassware || [];
+    const families = dropdowns?.families || [];
+    const iceTypes = dropdowns?.iceTypes || [];
+    const allIngredients = dropdowns?.ingredients || [];
+
+    const loading = loadingDropdowns || loadingCocktail;
     const [saving, setSaving] = useState(false);
+    const queryClient = useQueryClient();
 
     // Form State
     const [name, setName] = useState("");
@@ -58,116 +70,56 @@ export default function EditCocktailScreen() {
     const [methodId, setMethodId] = useState<string | null>(null);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
-
-    // Dropdown Data
-    const [methods, setMethods] = useState<{ id: string, name: string }[]>([]);
-    const [glassware, setGlassware] = useState<{ id: string, name: string }[]>([]);
-    const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
+    const [iceId, setIceId] = useState<string | null>(null);
 
     // Recipe State
-    const [allIngredients, setAllIngredients] = useState<{ id: string, name: string }[]>([]);
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
 
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
-
     useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
+        if (cocktail) {
+            const c = cocktail as any; // Cast to any to handle join comfortably or upgrade type
+            setName(c.name || "");
+            setDescription(c.description || "");
+            setOrigin(c.origin || "");
+            setGarnish(c.garnish_1 || "");
+            setNotes(c.notes || "");
+            setSpec(c.spec || "");
 
-    const fetchData = async () => {
-        try {
-            setLoading(true);
+            setMethodId(c.method_id);
+            setGlasswareId(c.glassware_id);
+            setFamilyId(c.family_id);
+            setIceId(c.ice_id);
 
-            // Fetch dropdown options & ingredients
-            const [methodsRes, glasswareRes, familiesRes, ingredientsRes] = await Promise.all([
-                supabase.from('methods').select('*').order('name'),
-                supabase.from('glassware').select('*').order('name'),
-                supabase.from('families').select('*').order('name'),
-                supabase.from('ingredients').select('*').order('name')
-            ]);
-
-            if (methodsRes.data) setMethods(methodsRes.data);
-            if (glasswareRes.data) setGlassware(glasswareRes.data);
-            if (familiesRes.data) setFamilies(familiesRes.data);
-            if (ingredientsRes.data) setAllIngredients(ingredientsRes.data);
-
-            // Fetch Cocktail Data
-            const { data, error } = await supabase
-                .from('cocktails')
-                .select(`
-                    *,
-                    cocktail_images (
-                        sort_order,
-                        images (
-                            id,
-                            url
-                        )
-                    ),
-                    recipes (
-                        id,
-                        ingredient_id,
-                        ingredient_ml,
-                        ingredient_dash,
-                        ingredient_amount,
-                        ingredients!recipes_ingredient_id_fkey ( name )
-                    )
-                `)
-
-                .eq('id', id)
-                .single();
-
-            if (error) throw error;
-
-            if (data) {
-                const c = data as any; // Cast to any to handle join comfortably or upgrade type
-                setName(c.name || "");
-                setDescription(c.description || "");
-                setOrigin(c.origin || "");
-                setGarnish(c.garnish_1 || "");
-                setNotes(c.notes || "");
-                setSpec(c.spec || "");
-
-                setMethodId(c.method_id);
-                setGlasswareId(c.glassware_id);
-                setFamilyId(c.family_id);
-
-                // Populate existing images
-                if (c.cocktail_images) {
-                    const sortedImages = c.cocktail_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
-                    const fetchedImages = sortedImages.map((ci: any) => ({
-                        id: ci.images.id,
-                        url: ci.images.url,
-                        isNew: false
-                    }));
-                    setLocalImages(fetchedImages);
-                }
-
-                if (c.recipes) {
-                    const mappedRecipes = c.recipes.map((r: any) => ({
-                        id: r.id,
-                        ingredient_id: r.ingredient_id,
-                        name: r.ingredients?.name || "Unknown",
-                        bsp: r.ingredient_bsp?.toString() || "",
-                        ml: r.ingredient_ml?.toString() || "",
-                        dash: r.ingredient_dash?.toString() || "",
-                        amount: r.ingredient_amount?.toString() || "",
-                        is_top: r.is_top || false
-                    }));
-                    setRecipeItems(mappedRecipes);
-                }
+            // Populate existing images
+            if (c.cocktail_images) {
+                const sortedImages = c.cocktail_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+                const fetchedImages = sortedImages.map((ci: any) => ({
+                    id: ci.images.id,
+                    url: ci.images.url,
+                    isNew: false
+                }));
+                setLocalImages(fetchedImages);
             }
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            Alert.alert("Error", "Failed to load cocktail details");
-        } finally {
-            setLoading(false);
+
+            if (c.recipes) {
+                const mappedRecipes = c.recipes.map((r: any) => ({
+                    id: r.id,
+                    ingredient_id: r.ingredient_id,
+                    name: r.ingredients?.name || "Unknown",
+                    bsp: r.ingredient_bsp?.toString() || "",
+                    ml: r.ingredient_ml?.toString() || "",
+                    dash: r.ingredient_dash?.toString() || "",
+                    amount: r.ingredient_amount?.toString() || "",
+                    is_top: r.is_top || false
+                }));
+                setRecipeItems(mappedRecipes);
+            }
         }
-    };
+    }, [cocktail]);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -308,6 +260,7 @@ export default function EditCocktailScreen() {
                 method_id: methodId,
                 glassware_id: glasswareId,
                 family_id: familyId,
+                ice_id: iceId,
             };
 
             const { error } = await supabase
@@ -347,6 +300,9 @@ export default function EditCocktailScreen() {
 
             if (error) throw error;
 
+            queryClient.invalidateQueries({ queryKey: ['cocktail', id] });
+            queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+
             Alert.alert("Success", "Cocktail updated!", [
                 { text: "OK", onPress: () => router.back() }
             ]);
@@ -372,7 +328,7 @@ export default function EditCocktailScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
-            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
@@ -388,7 +344,7 @@ export default function EditCocktailScreen() {
                         <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
                     )}
                 </TouchableOpacity>
-            </GlassView>
+            </View>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
@@ -430,7 +386,7 @@ export default function EditCocktailScreen() {
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Method</ThemedText>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {methods.map(m => (
+                        {methods.map((m: any) => (
                             <TouchableOpacity
                                 key={m.id}
                                 style={[styles.pill, methodId === m.id && styles.pillActive]}
@@ -445,7 +401,7 @@ export default function EditCocktailScreen() {
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Glassware</ThemedText>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {glassware.map(g => (
+                        {glassware.map((g: any) => (
                             <TouchableOpacity
                                 key={g.id}
                                 style={[styles.pill, glasswareId === g.id && styles.pillActive]}
@@ -460,13 +416,28 @@ export default function EditCocktailScreen() {
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Family</ThemedText>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {families.map(f => (
+                        {families.map((f: any) => (
                             <TouchableOpacity
                                 key={f.id}
                                 style={[styles.pill, familyId === f.id && styles.pillActive]}
                                 onPress={() => setFamilyId(f.id)}
                             >
                                 <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                <View style={styles.section}>
+                    <ThemedText style={styles.label}>Ice</ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
+                        {iceTypes.map((i: any) => (
+                            <TouchableOpacity
+                                key={i.id}
+                                style={[styles.pill, iceId === i.id && styles.pillActive]}
+                                onPress={() => setIceId(iceId === i.id ? null : i.id)}
+                            >
+                                <ThemedText style={[styles.pillText, iceId === i.id && styles.pillTextActive]}>{i.name}</ThemedText>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
@@ -638,7 +609,7 @@ export default function EditCocktailScreen() {
                                 />
 
                                 <FlatList
-                                    data={allIngredients.filter(i => 
+                                    data={allIngredients.filter((i: any) => 
                                         i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
                                     )}
                                     keyExtractor={item => item.id}

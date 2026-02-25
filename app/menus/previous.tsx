@@ -19,14 +19,14 @@ export default function PreviousMenusScreen() {
 
     return (
         <ThemedView style={styles.container}>
-            <GlassView style={styles.header} intensity={80}>
+            <View style={styles.header}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
                     <ThemedText type="title" style={styles.title}>Previous Menus</ThemedText>
                 </View>
-            </GlassView>
+            </View>
 
             <FlatList
                 data={previousMenus}

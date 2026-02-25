@@ -3,17 +3,15 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { supabase } from "@/lib/supabase";
+import { useIngredient } from "@/hooks/useIngredients";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
+    ActivityIndicator, ScrollView,
     StyleSheet,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,87 +37,10 @@ export default function IngredientDetailScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
-    const [ingredient, setIngredient] = useState<IngredientDetail | null>(null);
-    const [recipe, setRecipe] = useState<RecipeItem[]>([]);
-    const [usedIn, setUsedIn] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (id) fetchDetail();
-    }, [id]);
-
-    const fetchDetail = async () => {
-        try {
-            setLoading(true);
-            
-            // 1. Fetch Ingredient Info
-            const { data: ingData, error: ingError } = await supabase
-                .from('ingredients')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (ingError) throw ingError;
-            setIngredient(ingData);
-
-            // 2. Fetch Recipe (sub-ingredients) if any
-            // We join on the 'ingredient' relation to get names
-            const { data: recipeData, error: recipeError } = await supabase
-                .from('recipes')
-                .select(`
-                    id,
-                    ingredient_bsp,
-                    ingredient_ml,
-                    ingredient_dash,
-                    ingredient_amount,
-                    is_top,
-                    ingredient:ingredients!recipes_ingredient_id_fkey(name)
-                `)
-                .eq('parent_ingredient_id', id);
-
-            if (recipeError) throw recipeError;
-            // Map the result to match our interface (Supabase returns array or null for relations, but here foreign key implies single object usually, wait, 'ingredients' is the table name. )
-            // The type definition above `ingredient: { name: string }` expects an object.
-            // Supabase JS generic types usually handle this, but we'll cast/check.
-            if (recipeData) {
-                // @ts-ignore
-                setRecipe(recipeData);
-            }
-
-            // 3. Fetch cocktails that use this ingredient
-            const { data: usedInData, error: usedInError } = await supabase
-                .from('recipes')
-                .select(`
-                    id,
-                    cocktail:cocktails(
-                        id, 
-                        name,
-                        cocktail_images (
-                            images ( url )
-                        )
-                    )
-                `)
-                .eq('ingredient_id', id)
-                .not('cocktail', 'is', null);
-
-            if (!usedInError && usedInData) {
-                // Remove duplicates if the ingredient is used multiple times in the same cocktail
-                const uniqueCocktails = new Map();
-                usedInData.forEach((item: any) => {
-                    if (item.cocktail && !uniqueCocktails.has(item.cocktail.id)) {
-                        uniqueCocktails.set(item.cocktail.id, item);
-                    }
-                });
-                setUsedIn(Array.from(uniqueCocktails.values()));
-            }
-
-        } catch (error) {
-            console.error("Error fetching ingredient details:", error);
-            Alert.alert("Error", "Could not load ingredient details.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data, isLoading: loading, error } = useIngredient(id as string);
+    const ingredient = data?.ingredient as IngredientDetail | null;
+    const recipe = data?.recipe as unknown as RecipeItem[] || [];
+    const usedIn = data?.usedIn || [];
 
     if (loading) {
         return (
@@ -146,7 +67,7 @@ export default function IngredientDetailScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <GlassView style={[styles.header, { paddingTop: insets.top + 10 }]} intensity={80}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
@@ -157,7 +78,7 @@ export default function IngredientDetailScreen() {
                 >
                     <IconSymbol name="pencil" size={22} color={Colors.dark.tint} />
                 </TouchableOpacity>
-            </GlassView>
+            </View>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
@@ -205,7 +126,7 @@ export default function IngredientDetailScreen() {
                             <ThemedText type="subtitle" style={styles.cardTitle}>Used In</ThemedText>
                         </View>
                         <View style={styles.recipeList}>
-                            {usedIn.map((item, index) => {
+                            {usedIn.map((item: any, index: number) => {
                                 const imageUrl = item.cocktail.cocktail_images?.[0]?.images?.url;
                                 
                                 return (
