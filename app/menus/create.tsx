@@ -1,5 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -21,6 +19,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 
 interface Cocktail {
     id: string;
@@ -186,32 +185,32 @@ export default function CreateMenuScreen() {
 
     if (loadingDropdowns || loadingCocktails) {
         return (
-            <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <YStack style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <ActivityIndicator size="large" color={Colors.dark.tint} />
-            </ThemedView>
+            </YStack>
         );
     }
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => step === 2 ? setStep(1) : router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
-                    <ThemedText type="title" style={styles.title}>
+                    <Text style={[styles.title, { fontSize: 34, fontWeight: 'bold' }]}>
                         {step === 1 ? "Create Menu" : "Build Menu"}
-                    </ThemedText>
+                    </Text>
                 </View>
-                <ThemedText style={styles.subtitle}>
+                <Text style={styles.subtitle}>
                     {step === 1 ? "Select a template to get started" : menuName}
-                </ThemedText>
+                </Text>
             </View>
 
             {step === 1 ? (
                 <ScrollView contentContainerStyle={styles.content}>
                     <View style={styles.inputSection}>
-                        <ThemedText style={styles.label}>Menu Name</ThemedText>
+                        <Text style={styles.label}>Menu Name</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="e.g. Winter 2025"
@@ -221,7 +220,7 @@ export default function CreateMenuScreen() {
                         />
                     </View>
 
-                    <ThemedText style={[styles.label, { marginTop: 10 }]}>Select Template</ThemedText>
+                    <Text style={[styles.label, { marginTop: 10 }]}>Select Template</Text>
                     {templates.map((template) => {
                         const isSelected = selectedTemplateId === template.id;
                         return (
@@ -234,10 +233,10 @@ export default function CreateMenuScreen() {
                                     intensity={isSelected ? 60 : 30}
                                 >
                                     <View style={styles.cardHeader}>
-                                        <ThemedText type="subtitle" style={styles.cardTitle}>{template.name}</ThemedText>
+                                        <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>{template.name}</Text>
                                         {isSelected && <IconSymbol name="checkmark.circle.fill" size={24} color={Colors.dark.tint} />}
                                     </View>
-                                    <ThemedText style={styles.cardDesc}>{template.description}</ThemedText>
+                                    <Text style={styles.cardDesc}>{template.description}</Text>
                                 </GlassView>
                             </TouchableOpacity>
                         );
@@ -248,7 +247,7 @@ export default function CreateMenuScreen() {
                         onPress={() => router.push("/menus/create-template")}
                     >
                         <IconSymbol name="plus.circle" size={24} color={Colors.dark.icon} />
-                        <ThemedText style={styles.createNewTemplateText}>Create New Template</ThemedText>
+                        <Text style={styles.createNewTemplateText}>Create New Template</Text>
                     </TouchableOpacity>
 
                     <View style={styles.footerSpacer} />
@@ -263,18 +262,18 @@ export default function CreateMenuScreen() {
                         return (
                             <View key={sec.id} style={styles.sectionContainer}>
                                 <View style={styles.sectionHeaderRow}>
-                                    <ThemedText type="subtitle" style={styles.sectionTitle}>{sec.name}</ThemedText>
-                                    <ThemedText style={[styles.sectionCount, isFulfilled && { color: Colors.dark.tint }]}>
+                                    <Text style={[styles.sectionTitle, { fontSize: 20, fontWeight: 'bold' }]}>{sec.name}</Text>
+                                    <Text style={[styles.sectionCount, isFulfilled && { color: Colors.dark.tint }]}>
                                         {count} / {sec.max_items || '∞'} 
                                         {sec.min_items && sec.min_items > 0 ? ` (Min ${sec.min_items})` : ''}
-                                    </ThemedText>
+                                    </Text>
                                 </View>
 
                                 {selections[sec.id]?.map((cocktailId) => {
                                     const c = cocktails.find(x => x.id === cocktailId);
                                     return (
                                         <View key={cocktailId} style={styles.cocktailRow}>
-                                            <ThemedText style={styles.cocktailName}>{c?.name}</ThemedText>
+                                            <Text style={styles.cocktailName}>{c?.name}</Text>
                                             <TouchableOpacity onPress={() => handleRemoveCocktail(sec.id, cocktailId)}>
                                                 <IconSymbol name="minus.circle.fill" size={24} color="#ff4444" />
                                             </TouchableOpacity>
@@ -291,7 +290,7 @@ export default function CreateMenuScreen() {
                                         }}
                                     >
                                         <IconSymbol name="plus" size={20} color={Colors.dark.icon} />
-                                        <ThemedText style={styles.addDrinkText}>Add Drink</ThemedText>
+                                        <Text style={styles.addDrinkText}>Add Drink</Text>
                                     </TouchableOpacity>
                                 )}
                             </View>
@@ -308,7 +307,7 @@ export default function CreateMenuScreen() {
                         disabled={!selectedTemplateId || !menuName.trim()}
                         onPress={handleNextStep}
                     >
-                        <ThemedText style={styles.createButtonText}>Next: Add Drinks</ThemedText>
+                        <Text style={styles.createButtonText}>Next: Add Drinks</Text>
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
@@ -319,7 +318,7 @@ export default function CreateMenuScreen() {
                         {saving ? (
                             <ActivityIndicator size="small" color="#000" />
                         ) : (
-                            <ThemedText style={styles.createButtonText}>Save Menu</ThemedText>
+                            <Text style={styles.createButtonText}>Save Menu</Text>
                         )}
                     </TouchableOpacity>
                 )}
@@ -340,7 +339,7 @@ export default function CreateMenuScreen() {
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
                                 <View style={styles.modalHeader}>
-                                    <ThemedText style={styles.modalTitle}>Select Cocktail</ThemedText>
+                                    <Text style={styles.modalTitle}>Select Cocktail</Text>
                                     <TouchableOpacity onPress={() => setShowPicker(false)}>
                                         <IconSymbol name="xmark" size={24} color="#fff" />
                                     </TouchableOpacity>
@@ -360,7 +359,7 @@ export default function CreateMenuScreen() {
                                             style={styles.modalOption}
                                             onPress={() => handleAddCocktail(item.id)}
                                         >
-                                            <ThemedText style={styles.modalOptionText}>{item.name}</ThemedText>
+                                            <Text style={styles.modalOptionText}>{item.name}</Text>
                                         </TouchableOpacity>
                                     )}
                                 />
@@ -369,7 +368,7 @@ export default function CreateMenuScreen() {
                     </View>
                 </TouchableWithoutFeedback>
             </Modal>
-        </ThemedView>
+        </YStack>
     );
 }
 

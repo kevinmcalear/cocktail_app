@@ -11,20 +11,18 @@ import {
     Modal,
     ScrollView,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button, Input, Label, Text, TextArea, XStack, YStack } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -206,32 +204,36 @@ export default function AddCocktailScreen() {
 
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <XStack
+                paddingTop={insets.top + 10}
+                paddingHorizontal="$4"
+                paddingBottom="$4"
+                alignItems="center"
+                justifyContent="space-between"
+                zIndex={10}
+            >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
-                <ThemedText type="subtitle">New Cocktail</ThemedText>
-                <TouchableOpacity 
+                <Text fontSize="$5" fontWeight="bold">New Cocktail</Text>
+                <Button 
                     onPress={handleSave} 
-                    disabled={saving} 
-                    style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
+                    disabled={saving}
+                    size="$3"
+                    chromeless
                 >
-                    {saving ? (
-                        <ActivityIndicator size="small" color={Colors.dark.tint} />
-                    ) : (
-                        <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
-                    )}
-                </TouchableOpacity>
-            </View>
+                    {saving ? <ActivityIndicator size="small" color={Colors.dark.tint} /> : <Text color={Colors.dark.tint} fontWeight="bold">Save</Text>}
+                </Button>
+            </XStack>
 
             {loading ? (
-                <View style={styles.loadingContainer}>
+                <YStack flex={1} justifyContent="center" alignItems="center">
                     <ActivityIndicator size="large" color={Colors.dark.tint} />
-                </View>
+                </YStack>
             ) : (
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
@@ -250,120 +252,150 @@ export default function AddCocktailScreen() {
                 />
 
                 {/* Main Info */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Name *</ThemedText>
-                    <TextInput
-                        style={styles.input}
+                <YStack gap="$2">
+                    <Label color="$color11">Name *</Label>
+                    <Input
                         value={name}
                         onChangeText={setName}
-                        placeholderTextColor="#666"
+                        placeholderTextColor="$color11"
                         placeholder="e.g. Negroni"
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
-
-
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Description</ThemedText>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
+                <YStack gap="$2">
+                    <Label color="$color11">Description</Label>
+                    <TextArea
                         value={description}
                         onChangeText={setDescription}
-                        multiline
                         numberOfLines={4}
-                        placeholderTextColor="#666"
+                        placeholderTextColor="$color11"
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
                 {/* Drink Specs Dropdowns */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Method</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {methods.map(m => (
-                            <TouchableOpacity
-                                key={m.id}
-                                style={[styles.pill, methodId === m.id && styles.pillActive]}
-                                onPress={() => setMethodId(m.id)}
-                            >
-                                <ThemedText style={[styles.pillText, methodId === m.id && styles.pillTextActive]}>{m.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
+                <YStack gap="$2">
+                    <Label color="$color11">Method</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            {methods.map(m => (
+                                <Button
+                                    key={m.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setMethodId(m.id)}
+                                >
+                                    <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                </Button>
+                            ))}
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Glassware</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {glassware.map(g => (
-                            <TouchableOpacity
-                                key={g.id}
-                                style={[styles.pill, glasswareId === g.id && styles.pillActive]}
-                                onPress={() => setGlasswareId(g.id)}
-                            >
-                                <ThemedText style={[styles.pillText, glasswareId === g.id && styles.pillTextActive]}>{g.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
+                <YStack gap="$2">
+                    <Label color="$color11">Glassware</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            {glassware.map(g => (
+                                <Button
+                                    key={g.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setGlasswareId(g.id)}
+                                >
+                                    <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                </Button>
+                            ))}
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Family</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {families.map(f => (
-                            <TouchableOpacity
-                                key={f.id}
-                                style={[styles.pill, familyId === f.id && styles.pillActive]}
-                                onPress={() => setFamilyId(f.id)}
-                            >
-                                <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
+                <YStack gap="$2">
+                    <Label color="$color11">Family</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            {families.map(f => (
+                                <Button
+                                    key={f.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setFamilyId(f.id)}
+                                >
+                                    <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                </Button>
+                            ))}
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Ice</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer}>
-                        {iceTypes.map(i => (
-                            <TouchableOpacity
-                                key={i.id}
-                                style={[styles.pill, iceId === i.id && styles.pillActive]}
-                                onPress={() => setIceId(iceId === i.id ? null : i.id)}
-                            >
-                                <ThemedText style={[styles.pillText, iceId === i.id && styles.pillTextActive]}>{i.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
+                <YStack gap="$2">
+                    <Label color="$color11">Ice</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            {iceTypes.map(i => (
+                                <Button
+                                    key={i.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setIceId(iceId === i.id ? null : i.id)}
+                                >
+                                    <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                </Button>
+                            ))}
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
                 {/* Ingredients */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.label}>Ingredients</ThemedText>
+                        <Text style={styles.label}>Ingredients</Text>
                         <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                            <ThemedText style={styles.addText}>+ Add</ThemedText>
+                            <Text style={styles.addText}>+ Add</Text>
                         </TouchableOpacity>
                     </View>
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
-                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2 }]}>
-                                <TouchableOpacity
-                                    style={[styles.smallInput, { backgroundColor: item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)' }]}
+                            <Text style={styles.recipeName}>{item.name}</Text>
+                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
+                                <Button
+                                    size="$2"
+                                    backgroundColor={item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)'}
                                     onPress={() => {
                                         const newItems = [...recipeItems];
                                         newItems[index].is_top = !newItems[index].is_top;
                                         setRecipeItems(newItems);
                                     }}
                                 >
-                                    <ThemedText style={{ color: item.is_top ? '#000' : '#fff', textAlign: 'center', fontSize: 12 }}>Top</ThemedText>
-                                </TouchableOpacity>
-                                <TextInput
-                                    style={styles.smallInput}
+                                    <Text color={item.is_top ? '#000' : '#fff'} fontSize={12}>Top</Text>
+                                </Button>
+                                <Input
+                                    size="$2"
+                                    width={60}
                                     placeholder="bsp"
-                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={item.bsp}
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
@@ -371,11 +403,13 @@ export default function AddCocktailScreen() {
                                         setRecipeItems(newItems);
                                     }}
                                 />
-                                <TextInput
-                                    style={styles.smallInput}
+                                <Input
+                                    size="$2"
+                                    width={60}
                                     placeholder="ml"
-                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={item.ml}
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
@@ -383,11 +417,13 @@ export default function AddCocktailScreen() {
                                         setRecipeItems(newItems);
                                     }}
                                 />
-                                <TextInput
-                                    style={styles.smallInput}
+                                <Input
+                                    size="$2"
+                                    width={60}
                                     placeholder="dash"
-                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={item.dash}
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
@@ -395,11 +431,13 @@ export default function AddCocktailScreen() {
                                         setRecipeItems(newItems);
                                     }}
                                 />
-                                <TextInput
-                                    style={styles.smallInput}
+                                <Input
+                                    size="$2"
+                                    width={60}
                                     placeholder="amt"
-                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={item.amount}
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
@@ -416,25 +454,59 @@ export default function AddCocktailScreen() {
                 </View>
 
                 {/* Extra Details */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Origin</ThemedText>
-                    <TextInput style={styles.input} value={origin} onChangeText={setOrigin} placeholderTextColor="#666" />
-                </View>
+                <YStack gap="$2">
+                    <Label color="$color11">Origin</Label>
+                    <Input 
+                        value={origin} 
+                        onChangeText={setOrigin} 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
+                    />
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Garnish</ThemedText>
-                    <TextInput style={styles.input} value={garnish} onChangeText={setGarnish} placeholderTextColor="#666" />
-                </View>
+                <YStack gap="$2">
+                    <Label color="$color11">Garnish</Label>
+                    <Input 
+                        value={garnish} 
+                        onChangeText={setGarnish} 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
+                    />
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Notes</ThemedText>
-                    <TextInput style={[styles.input, styles.textArea]} value={notes} onChangeText={setNotes} multiline placeholderTextColor="#666" />
-                </View>
+                <YStack gap="$2">
+                    <Label color="$color11">Notes</Label>
+                    <TextArea 
+                        value={notes} 
+                        onChangeText={setNotes} 
+                        multiline 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
+                    />
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Spec</ThemedText>
-                    <TextInput style={[styles.input, styles.textArea]} value={spec} onChangeText={setSpec} multiline placeholderTextColor="#666" />
-                </View>
+                <YStack gap="$2">
+                    <Label color="$color11">Spec</Label>
+                    <TextArea 
+                        value={spec} 
+                        onChangeText={setSpec} 
+                        multiline 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
+                    />
+                </YStack>
 
             </ScrollView>
             )}
@@ -451,15 +523,17 @@ export default function AddCocktailScreen() {
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
                                 <View style={styles.modalHeader}>
-                                    <ThemedText style={styles.modalTitle}>Select Ingredient</ThemedText>
+                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
                                     <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
                                         <IconSymbol name="xmark" size={24} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
-                                <TextInput
-                                    style={styles.searchInput}
+                                <Input
+                                    size="$4"
+                                    marginBottom="$4"
                                     placeholder="Search ingredients..."
-                                    placeholderTextColor="#666"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={ingredientSearch}
                                     onChangeText={setIngredientSearch}
                                 />
@@ -475,7 +549,7 @@ export default function AddCocktailScreen() {
                                                 setIngredientSearch("");
                                             }}
                                         >
-                                            <ThemedText style={styles.ingredientText}>{item.name}</ThemedText>
+                                            <Text style={styles.ingredientText}>{item.name}</Text>
                                         </TouchableOpacity>
                                     )}
                                 />
@@ -487,7 +561,7 @@ export default function AddCocktailScreen() {
 
 
 
-        </ThemedView>
+        </YStack>
     );
 }
 

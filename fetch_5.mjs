@@ -24,7 +24,7 @@ async function fetchCocktails() {
                 ingredient:ingredients!recipes_ingredient_id_fkey(name)
             )
         `)
-        .range(55, 59);
+        .range(174, 178);
 
     if (error) {
         console.error("Error fetching cocktails:", error);

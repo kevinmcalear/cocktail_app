@@ -4,7 +4,8 @@ import { BlurView } from 'expo-blur';
 import { Link, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Alert, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { Button, Input, Text, XStack, YStack } from 'tamagui';
 
 export default function SignUp() {
     const [email, setEmail] = useState('');
@@ -42,48 +43,51 @@ export default function SignUp() {
                 >
                     <View style={styles.glassContainer}>
                         <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-                            <Text style={styles.title}>Create Account</Text>
-                            <Text style={styles.subtitle}>Join us and discover liquid art</Text>
+                            <Text fontSize="$8" fontWeight="bold" color="$color" marginBottom="$2">Create Account</Text>
+                            <Text fontSize="$4" color="$icon" marginBottom="$6" textAlign="center">Join us and discover liquid art</Text>
 
-                            <View style={styles.inputContainer}>
-                                <TextInput
-                                    style={styles.input}
+                            <YStack width="100%" gap="$4" marginBottom="$4">
+                                <Input
+                                    size="$4"
                                     placeholder="Email"
-                                    placeholderTextColor={Colors.dark.icon}
                                     value={email}
                                     onChangeText={setEmail}
                                     autoCapitalize="none"
                                     keyboardType="email-address"
+                                    backgroundColor="rgba(255, 255, 255, 0.05)"
+                                    borderColor="rgba(255, 255, 255, 0.1)"
                                 />
-                            </View>
 
-                            <View style={styles.inputContainer}>
-                                <TextInput
-                                    style={styles.input}
+                                <Input
+                                    size="$4"
                                     placeholder="Password"
-                                    placeholderTextColor={Colors.dark.icon}
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry
+                                    backgroundColor="rgba(255, 255, 255, 0.05)"
+                                    borderColor="rgba(255, 255, 255, 0.1)"
                                 />
-                            </View>
+                            </YStack>
 
-                            <TouchableOpacity
-                                style={[styles.button, loading && styles.buttonDisabled]}
+                            <Button
+                                size="$4"
+                                width="100%"
+                                backgroundColor={Colors.dark.tint}
                                 onPress={handleSignUp}
                                 disabled={loading}
+                                opacity={loading ? 0.7 : 1}
                             >
-                                <Text style={styles.buttonText}>{loading ? 'Creating account...' : 'Sign Up'}</Text>
-                            </TouchableOpacity>
+                                <Text color="white" fontSize="$5" fontWeight="bold">
+                                    {loading ? 'Creating account...' : 'Sign Up'}
+                                </Text>
+                            </Button>
 
-                            <View style={styles.footer}>
-                                <Text style={styles.footerText}>Already have an account? </Text>
+                            <XStack marginTop="$6" alignItems="center">
+                                <Text color="$icon" fontSize="$3">Already have an account? </Text>
                                 <Link href="/auth/login" asChild>
-                                    <TouchableOpacity>
-                                        <Text style={styles.linkText}>Sign In</Text>
-                                    </TouchableOpacity>
+                                    <Text color="$tint" fontWeight="bold" fontSize="$3" pressStyle={{ opacity: 0.7 }}>Sign In</Text>
                                 </Link>
-                            </View>
+                            </XStack>
                         </BlurView>
                     </View>
                 </KeyboardAvoidingView>

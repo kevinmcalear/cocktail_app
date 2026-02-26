@@ -1,4 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
 import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
 import { Cocktail } from "@/data/cocktails";
@@ -7,6 +6,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import React from "react";
 import { ImageSourcePropType, StyleSheet, View } from "react-native";
+import { Text } from "tamagui";
 
 // Map of image names to local assets (since we don't have real URLs yet)
 // In a real app these would be URLs. For now we might need placeholders or generic images.
@@ -35,15 +35,15 @@ export function CocktailCard({ cocktail }: CocktailCardProps) {
                 <GlassView style={styles.details} intensity={60}>
                     <View style={styles.infoRow}>
                         <View style={{ flex: 1 }}>
-                            <ThemedText type="subtitle" style={styles.name}>
+                            <Text style={[styles.name, { fontSize: 20 }]}>
                                 {cocktail.name}
-                            </ThemedText>
-                            <ThemedText style={styles.description} numberOfLines={2}>
+                            </Text>
+                            <Text style={styles.description} numberOfLines={2}>
                                 {cocktail.description}
-                            </ThemedText>
+                            </Text>
                         </View>
                         <View style={styles.meta}>
-                            <ThemedText style={styles.price}>$22</ThemedText>
+                            <Text style={styles.price}>$22</Text>
                         </View>
                     </View>
                 </GlassView>

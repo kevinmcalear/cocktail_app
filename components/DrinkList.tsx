@@ -1,9 +1,6 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { FilterModal } from "@/components/FilterModal";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -15,6 +12,7 @@ import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Card, H4, Paragraph, Text, YStack } from "tamagui";
 
 export interface DrinkListItem {
     id: string;
@@ -32,6 +30,7 @@ export interface DrinkListItem {
             url: string;
         };
     }[];
+    image?: any;
 }
 
 interface DrinkListProps {
@@ -75,48 +74,7 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         letterSpacing: 0.5,
     },
-    itemCard: {
-        borderRadius: 16,
-        marginBottom: 12,
-        overflow: 'hidden',
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-    },
-    itemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 100,
-    },
-    textContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingRight: 12,
-        gap: 4,
-    },
-    nameRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    itemName: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: Colors.dark.text,
-        flex: 1,
-    },
-    itemDescription: {
-        fontSize: 15,
-        color: Colors.dark.icon,
-        lineHeight: 20,
-    },
-    itemImage: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.05)",
-    },
+
     rightActionsContainer: {
         flexDirection: 'row',
         width: 160,
@@ -195,6 +153,9 @@ const styles = StyleSheet.create({
 });
 
 const getImage = (item: DrinkListItem) => {
+    if (item.image) {
+        return item.image;
+    }
     if (item.cocktail_images && item.cocktail_images.length > 0) {
         return { uri: item.cocktail_images[0].images.url };
     }
@@ -206,7 +167,7 @@ const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }
     return (
         <View style={styles.sectionHeader}>
             <View style={styles.sectionDivider} />
-            <ThemedText style={styles.sectionHeaderText}>{letter}</ThemedText>
+            <Text style={styles.sectionHeaderText}>{letter}</Text>
             <View style={styles.sectionDivider} />
         </View>
     );
@@ -242,42 +203,47 @@ const DrinkCard = memo(function DrinkCard({
                 onPress={() => onToggleFavorite(drink.id, swipeableRef!)}
             >
                 <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
-                <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</ThemedText>
+                <Text style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</Text>
             </RectButton>
             <RectButton
                 style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
                 onPress={() => onToggleStudyPile(drink.id, swipeableRef!)}
             >
                 <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
-                <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</ThemedText>
+                <Text style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</Text>
             </RectButton>
         </View>
     );
 
     const cardContent = (
-        <TouchableOpacity activeOpacity={0.7} disabled={drink.category !== "Cocktail" && drink.category != null}>
-            <GlassView style={styles.itemCard} intensity={20}>
-                <View style={styles.itemRow}>
-                    <View style={styles.textContainer}>
-                        <View style={styles.nameRow}>
-                            <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{drink.name}</ThemedText>
-                        </View>
-                        <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                            {subText}
-                        </ThemedText>
-                    </View>
-                    <Image
-                        source={getImage(drink)}
-                        style={styles.itemImage}
-                        contentFit="cover"
-                        transition={500}
-                        onError={(e) => {
-                            // Silent fallback if image fails to load
-                        }}
-                    />
-                </View>
-            </GlassView>
-        </TouchableOpacity>
+        <Card
+            borderWidth={1}
+            backgroundColor="rgba(255,255,255,0.03)"
+            borderColor="rgba(255,255,255,0.08)"
+            overflow="hidden"
+            marginBottom="$2"
+            disabled={drink.category !== "Cocktail" && drink.category != null}
+        >
+            <Card.Header flexDirection="row" padding="$3" minHeight={100} alignItems="center">
+                <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
+                    <H4 color="$color" fontSize={20} fontWeight="700" numberOfLines={1}>
+                        {drink.name}
+                    </H4>
+                    <Paragraph color="$color11" size="$3" numberOfLines={2}>
+                        {subText}
+                    </Paragraph>
+                </YStack>
+                <Image
+                    source={getImage(drink)}
+                    style={{ width: 76, height: 76, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)" }}
+                    contentFit="cover"
+                    transition={500}
+                    onError={(e) => {
+                        // Silent fallback
+                    }}
+                />
+            </Card.Header>
+        </Card>
     );
 
     return (
@@ -411,7 +377,7 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
     }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile]);
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container} backgroundColor="$background">
             <View style={styles.contentContainer}>
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                     <View style={{ paddingTop: hideHeader ? insets.top + 4 : 0 }}>
@@ -420,7 +386,7 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                                 <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
                                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                                 </TouchableOpacity>
-                                <ThemedText type="title" style={styles.title}>{title}</ThemedText>
+                                <Text style={[styles.title, { fontSize: 34 }]}>{title}</Text>
                                 <View style={{ width: 40 }} />
                             </View>
                         )}
@@ -464,7 +430,7 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                 showFavesOnly={showFavesOnly}
                 onToggleFavesOnly={() => setShowFavesOnly(prev => !prev)}
             />
-        </ThemedView>
+        </YStack>
     );
 }
 

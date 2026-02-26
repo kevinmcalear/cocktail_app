@@ -1,4 +1,3 @@
-import { GlassView } from '@/components/ui/GlassView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/ctx/AuthContext';
@@ -6,7 +5,8 @@ import { supabase } from '@/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, Input, Label, Separator, Text, YStack } from 'tamagui';
 
 export default function Settings() {
     const { user, updateProfile } = useAuth();
@@ -157,70 +157,74 @@ export default function Settings() {
                     <Text style={styles.emailText}>{user?.email}</Text>
                 </View>
 
-                <GlassView style={styles.formContainer} intensity={30}>
-                    <Text style={styles.sectionTitle}>Profile Information</Text>
+                <YStack backgroundColor="rgba(255, 255, 255, 0.05)" borderRadius={16} padding="$4" gap="$4">
+                    <Text fontSize="$5" fontWeight="600" color="$color">Profile Information</Text>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>First Name</Text>
-                        <TextInput
-                            style={styles.input}
+                    <YStack gap="$2">
+                        <Label color="$color11">First Name</Label>
+                        <Input
+                            size="$4"
                             value={firstName}
                             onChangeText={setFirstName}
                             placeholder="First Name"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            backgroundColor="rgba(0,0,0,0.3)"
+                            borderColor="rgba(255,255,255,0.1)"
                         />
-                    </View>
+                    </YStack>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Last Name</Text>
-                        <TextInput
-                            style={styles.input}
+                    <YStack gap="$2">
+                        <Label color="$color11">Last Name</Label>
+                        <Input
+                            size="$4"
                             value={lastName}
                             onChangeText={setLastName}
                             placeholder="Last Name"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            backgroundColor="rgba(0,0,0,0.3)"
+                            borderColor="rgba(255,255,255,0.1)"
                         />
-                    </View>
+                    </YStack>
 
-                    <View style={styles.divider} />
-                    <Text style={styles.sectionTitle}>Change Password</Text>
+                    <Separator borderColor="rgba(255,255,255,0.1)" marginVertical="$2" />
+                    
+                    <Text fontSize="$5" fontWeight="600" color="$color">Change Password</Text>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>New Password</Text>
-                        <TextInput
-                            style={styles.input}
+                    <YStack gap="$2">
+                        <Label color="$color11">New Password</Label>
+                        <Input
+                            size="$4"
                             value={password}
                             onChangeText={setPassword}
                             placeholder="New Password"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
                             secureTextEntry
+                            backgroundColor="rgba(0,0,0,0.3)"
+                            borderColor="rgba(255,255,255,0.1)"
                         />
-                    </View>
+                    </YStack>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Confirm Password</Text>
-                        <TextInput
-                            style={styles.input}
+                    <YStack gap="$2">
+                        <Label color="$color11">Confirm Password</Label>
+                        <Input
+                            size="$4"
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             placeholder="Confirm New Password"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
                             secureTextEntry
+                            backgroundColor="rgba(0,0,0,0.3)"
+                            borderColor="rgba(255,255,255,0.1)"
                         />
-                    </View>
+                    </YStack>
 
-                    <TouchableOpacity
-                        style={[styles.saveButton, loading && styles.disabledButton]}
+                    <Button
+                        size="$4"
+                        marginTop="$2"
+                        backgroundColor={Colors.dark.tint}
                         onPress={handleSave}
                         disabled={loading}
+                        opacity={loading ? 0.7 : 1}
                     >
-                        {loading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
-                        )}
-                    </TouchableOpacity>
-                </GlassView>
+                        {loading ? <ActivityIndicator color="white" /> : <Text color="white" fontWeight="600">Save Changes</Text>}
+                    </Button>
+                </YStack>
             </ScrollView>
         </View>
     );

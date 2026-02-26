@@ -1,20 +1,19 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  ScrollView,
-  Share,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    Share,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Text, YStack } from "tamagui";
 
 export default function ImportCocktailsScreen() {
   const [importUrl, setImportUrl] = useState("");
@@ -90,7 +89,7 @@ Prep Time: 4 minutes`;
 
   return (
     <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
+      <YStack style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
@@ -101,30 +100,30 @@ Prep Time: 4 minutes`;
             color={Colors[colorScheme ?? "light"].text}
           />
         </TouchableOpacity>
-        <ThemedText type="title" style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { fontSize: 34, fontWeight: 'bold' }]}>
           Import Cocktails
-        </ThemedText>
+        </Text>
         <View style={styles.placeholder} />
-      </ThemedView>
+      </YStack>
 
-      <ThemedView style={styles.content}>
-        <ThemedText style={styles.description}>
+      <YStack style={styles.content}>
+        <Text style={styles.description}>
           Import cocktails from external sources like Club Bauhaus or paste
           cocktail data directly.
-        </ThemedText>
+        </Text>
 
         {/* URL Import Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        <YStack style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 20, fontWeight: 'bold' }]}>
             Import from Website
-          </ThemedText>
-          <ThemedText style={styles.sectionDescription}>
+          </Text>
+          <Text style={styles.sectionDescription}>
             Enter a URL to automatically extract cocktail data from websites
             like Club Bauhaus.
-          </ThemedText>
+          </Text>
 
           <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Website URL</ThemedText>
+            <Text style={styles.label}>Website URL</Text>
             <TextInput
               style={[
                 styles.input,
@@ -156,7 +155,7 @@ Prep Time: 4 minutes`;
               size={20}
               color={colorScheme === "dark" ? "#000" : "#fff"}
             />
-            <ThemedText
+            <Text
               style={[
                 styles.importButtonText,
                 {
@@ -165,22 +164,22 @@ Prep Time: 4 minutes`;
               ]}
             >
               Import from URL
-            </ThemedText>
+            </Text>
           </TouchableOpacity>
-        </ThemedView>
+        </YStack>
 
         {/* Text Import Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        <YStack style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 20, fontWeight: 'bold' }]}>
             Import from Text
-          </ThemedText>
-          <ThemedText style={styles.sectionDescription}>
+          </Text>
+          <Text style={styles.sectionDescription}>
             Paste cocktail data in a structured format to import multiple
             cocktails at once.
-          </ThemedText>
+          </Text>
 
           <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Cocktail Data</ThemedText>
+            <Text style={styles.label}>Cocktail Data</Text>
             <TextInput
               style={[
                 styles.textArea,
@@ -213,7 +212,7 @@ Prep Time: 4 minutes`;
               size={20}
               color={colorScheme === "dark" ? "#000" : "#fff"}
             />
-            <ThemedText
+            <Text
               style={[
                 styles.importButtonText,
                 {
@@ -222,18 +221,18 @@ Prep Time: 4 minutes`;
               ]}
             >
               Import from Text
-            </ThemedText>
+            </Text>
           </TouchableOpacity>
-        </ThemedView>
+        </YStack>
 
         {/* Share Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        <YStack style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: 20, fontWeight: 'bold' }]}>
             Share Source
-          </ThemedText>
-          <ThemedText style={styles.sectionDescription}>
+          </Text>
+          <Text style={styles.sectionDescription}>
             Share the Club Bauhaus drinks menu with others.
-          </ThemedText>
+          </Text>
 
           <TouchableOpacity
             style={[
@@ -249,7 +248,7 @@ Prep Time: 4 minutes`;
               size={20}
               color={Colors[colorScheme ?? "light"].tint}
             />
-            <ThemedText
+            <Text
               style={[
                 styles.shareButtonText,
                 {
@@ -258,35 +257,35 @@ Prep Time: 4 minutes`;
               ]}
             >
               Share Club Bauhaus Menu
-            </ThemedText>
+            </Text>
           </TouchableOpacity>
-        </ThemedView>
+        </YStack>
 
         {/* Demo Section */}
-        <ThemedView style={styles.demoSection}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        <YStack style={styles.demoSection}>
+          <Text style={[styles.sectionTitle, { fontSize: 20, fontWeight: 'bold' }]}>
             🎉 Demo: Club Bauhaus Cocktails
-          </ThemedText>
-          <ThemedText style={styles.sectionDescription}>
+          </Text>
+          <Text style={styles.sectionDescription}>
             I've already added 6 Club Bauhaus inspired cocktails to your
             collection! They include:
-          </ThemedText>
+          </Text>
           <View style={styles.demoList}>
-            <ThemedText style={styles.demoItem}>• Bauhaus Martini</ThemedText>
-            <ThemedText style={styles.demoItem}>
+            <Text style={styles.demoItem}>• Bauhaus Martini</Text>
+            <Text style={styles.demoItem}>
               • Constructivist Cosmo
-            </ThemedText>
-            <ThemedText style={styles.demoItem}>• Minimalist Mule</ThemedText>
-            <ThemedText style={styles.demoItem}>• Geometric Gimlet</ThemedText>
-            <ThemedText style={styles.demoItem}>• Functional Fizz</ThemedText>
-            <ThemedText style={styles.demoItem}>• Modular Manhattan</ThemedText>
+            </Text>
+            <Text style={styles.demoItem}>• Minimalist Mule</Text>
+            <Text style={styles.demoItem}>• Geometric Gimlet</Text>
+            <Text style={styles.demoItem}>• Functional Fizz</Text>
+            <Text style={styles.demoItem}>• Modular Manhattan</Text>
           </View>
-          <ThemedText style={styles.demoNote}>
+          <Text style={styles.demoNote}>
             These cocktails embody the Bauhaus design principles: form follows
             function, minimalism, and geometric precision.
-          </ThemedText>
-        </ThemedView>
-      </ThemedView>
+          </Text>
+        </YStack>
+      </YStack>
     </ScrollView>
   );
 }

@@ -40,26 +40,14 @@ async function uploadImage(cocktailId, filePath, fileName) {
 
 async function main() {
     const { data: cocktails } = await supabaseClient.from('cocktails').select('id, name').in('name', [
-        'Affinity', 'Chet Baker', 'Moscow Mule', 'Young American', 'Amaretto Sour'
+        'Ti Punch'
     ]);
     
     const getId = (name) => cocktails.find(c => c.name === name)?.id;
-    console.log("Starting upload pipeline for batch 12...");
+    console.log("Starting upload pipeline for the final missing cocktail...");
 
-    const id1 = getId('Affinity');
-    if (id1) await uploadImage(id1, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/affinity_sketch_1772047828244.png', 'affinity-styled');
-
-    const id2 = getId('Chet Baker');
-    if (id2) await uploadImage(id2, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/chet_baker_sketch_1772047886422.png', 'chet-baker-styled');
-    
-    const id3 = getId('Moscow Mule');
-    if (id3) await uploadImage(id3, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/moscow_mule_sketch_1772047938425.png', 'moscow-mule-styled');
-    
-    const id4 = getId('Young American');
-    if (id4) await uploadImage(id4, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/young_american_sketch_1772048155670.png', 'young-american-styled');
-    
-    const id5 = getId('Amaretto Sour');
-    if (id5) await uploadImage(id5, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/amaretto_sour_sketch_1772048197301.png', 'amaretto-sour-styled');
+    const id1 = getId('Ti Punch');
+    if (id1) await uploadImage(id1, '/Users/kevinmcalear/.gemini/antigravity/brain/1e52d6fb-eabd-4856-b127-19e565250d1f/ti_punch_sketch_1772079492542.png', 'ti-punch-styled');
     
     console.log("Done.");
 }

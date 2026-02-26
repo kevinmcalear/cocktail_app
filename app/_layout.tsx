@@ -1,3 +1,4 @@
+import { Inter_400Regular, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import {
   DarkTheme,
@@ -9,6 +10,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import { TamaguiProvider } from 'tamagui';
+import tamaguiConfig from '../tamagui.config';
 
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -77,15 +80,22 @@ function RootLayoutNav() {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
+  const [fontsLoaded] = useFonts({ 
+    Roboto_400Regular, 
+    Roboto_700Bold,
+    Inter: Inter_400Regular,
+    InterBold: Inter_800ExtraBold,
+  });
   if (!fontsLoaded) { return null; }
   return (
-    <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
-      </GestureHandlerRootView>
-    </QueryClientProvider>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </GestureHandlerRootView>
+      </QueryClientProvider>
+    </TamaguiProvider>
   );
 }

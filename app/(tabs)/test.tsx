@@ -1,10 +1,10 @@
-import { ThemedView } from "@/components/themed-view";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { YStack } from "tamagui";
 import { CardCountSlider, sharedStyles, Subject, SubjectCard } from "../test/_shared";
 
 export default function SubjectSelection() {
@@ -28,7 +28,7 @@ export default function SubjectSelection() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container} backgroundColor="$background">
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={{ paddingTop: 20 }} />
@@ -48,7 +48,7 @@ export default function SubjectSelection() {
                         sliderPos={sliderPos}
                     />
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         </GestureHandlerRootView>
     );
 }

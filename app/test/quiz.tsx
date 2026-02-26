@@ -1,6 +1,3 @@
-import { menuItems } from "@/components/CurrentMenuList";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -11,11 +8,13 @@ import { useStudyPile } from "@/hooks/useStudyPile";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { AnimatePresence, MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, FadeInUp, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./_shared";
 
 export default function QuizScreen() {
@@ -55,13 +54,7 @@ export default function QuizScreen() {
         if (params.subject === "COCKTAILS") {
             fetchedItems = getCocktails();
         } else if (params.subject === "MENU") {
-            fetchedItems = menuItems.map(m => ({
-                id: m.name,
-                name: m.name,
-                description: m.description,
-                ingredients: m.ingredients.split(", ").map(i => ({ name: i })),
-                imageUrl: m.image
-            }));
+            fetchedItems = []; // Hardcoded menu removed in favor of dynamic DB
         } else if (params.subject === "BEERS") {
             fetchedItems = beers.map(b => ({
                 id: b.id,
@@ -156,11 +149,9 @@ export default function QuizScreen() {
         setScores(prev => ({ ...prev, [item.id]: score }));
 
         if (currentIndex < items.length - 1) {
-            flipped.value = withSpring(0);
+            flipped.value = 0;
             setIsRevealed(false);
-            setTimeout(() => {
-                setCurrentIndex(currentIndex + 1);
-            }, 300);
+            setCurrentIndex(currentIndex + 1);
         } else {
             setShowResults(true);
             // Very slow, dramatic pour: 0-1 (fill glass), 1-2 (slow fill screen)
@@ -222,27 +213,27 @@ export default function QuizScreen() {
 
     if (loading) {
         return (
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <View style={styles.loadingContainer}>
-                        <ThemedText>LOADING ITEMS...</ThemedText>
+                        <Text>LOADING ITEMS...</Text>
                     </View>
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         );
     }
 
     if (items.length === 0) {
         return (
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={styles.emptyContainer}>
                         <IconSymbol name="exclamationmark.triangle" size={64} color={Colors.dark.icon} />
-                        <ThemedText style={styles.emptyText}>No items found for this selection.</ThemedText>
+                        <Text style={styles.emptyText}>No items found for this selection.</Text>
                     </View>
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         );
     }
 
@@ -252,7 +243,7 @@ export default function QuizScreen() {
         const { color, percentage, counts } = result;
 
         return (
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container}>
                 {/* Background Liquid Overlay */}
                 <Animated.View style={animatedBgStyle} />
 
@@ -260,7 +251,7 @@ export default function QuizScreen() {
                     <View style={styles.resultsWrapper}>
                         <View style={styles.resultsMainContent}>
                             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.titleBox}>
-                                <ThemedText style={styles.resultsTitle}>RESULTS</ThemedText>
+                                <Text style={styles.resultsTitle}>RESULTS</Text>
                             </Animated.View>
 
                             <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.glassWrapperLarge}>
@@ -271,24 +262,24 @@ export default function QuizScreen() {
                                 <View style={{ gap: 10 }}>
                                     <View style={styles.statRow}>
                                         <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
-                                        <ThemedText style={styles.statLabel}>PERFECT: {counts.perfect}</ThemedText>
+                                        <Text style={styles.statLabel}>PERFECT: {counts.perfect}</Text>
                                     </View>
                                     <View style={styles.statRow}>
                                         <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
-                                        <ThemedText style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</ThemedText>
+                                        <Text style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</Text>
                                     </View>
                                     <View style={styles.statRow}>
                                         <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
-                                        <ThemedText style={styles.statLabel}>POOR: {counts.poor}</ThemedText>
+                                        <Text style={styles.statLabel}>POOR: {counts.poor}</Text>
                                     </View>
                                 </View>
                                 <PieGraph counts={counts} size={100} />
                             </View>
 
                             <Animated.View style={styles.scoreBox} entering={ZoomIn.delay(600).springify()}>
-                                <ThemedText style={styles.finalScore}>
+                                <Text style={styles.finalScore}>
                                     {Math.round(percentage * 100)}%
-                                </ThemedText>
+                                </Text>
                             </Animated.View>
                         </View>
 
@@ -296,26 +287,26 @@ export default function QuizScreen() {
                             <View style={styles.actionButtonsRow}>
                                 <TouchableOpacity style={styles.actionButtonSmall} onPress={handleRetry}>
                                     <GlassView style={styles.actionButtonContent} intensity={80}>
-                                        <ThemedText style={styles.actionButtonText}>RETRY</ThemedText>
+                                        <Text style={styles.actionButtonText}>RETRY</Text>
                                     </GlassView>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.actionButtonSmall} onPress={handleNewTest}>
                                     <GlassView style={styles.actionButtonContent} intensity={80}>
-                                        <ThemedText style={styles.actionButtonText}>NEW TEST</ThemedText>
+                                        <Text style={styles.actionButtonText}>NEW TEST</Text>
                                     </GlassView>
                                 </TouchableOpacity>
                             </View>
 
                             <TouchableOpacity style={styles.closeButton} onPress={() => router.replace("/")}>
                                 <GlassView style={styles.finishButtonContent} intensity={90}>
-                                    <ThemedText style={styles.finishButtonText}>FINISH</ThemedText>
+                                    <Text style={styles.finishButtonText}>FINISH</Text>
                                 </GlassView>
                             </TouchableOpacity>
                         </Animated.View>
                     </View>
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         );
     }
 
@@ -323,62 +314,71 @@ export default function QuizScreen() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container}>
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
                             <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                         </TouchableOpacity>
-                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING</ThemedText>
-                        <ThemedText style={styles.counter}>{currentIndex + 1} / {items.length}</ThemedText>
+                        <Text style={[sharedStyles.title, { fontSize: 32, fontWeight: 'bold' }]} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING</Text>
+                        <Text style={styles.counter}>{currentIndex + 1} / {items.length}</Text>
                     </View>
 
                     <View style={styles.quizContent}>
-                        <View style={styles.cardWrapper}>
-                            <TouchableOpacity activeOpacity={1} onPress={handleFlip} style={styles.flipContainer}>
-                                <Animated.View style={[styles.card, frontAnimatedStyle]}>
-                                    <GlassView style={styles.glassCard} intensity={25}>
-                                        {currentItem.imageUrl ? (
-                                            <View style={styles.imageWrapper}>
-                                                <Image
-                                                    source={{ uri: currentItem.imageUrl }}
-                                                    style={styles.cardImage}
-                                                    contentFit="cover"
-                                                />
-                                                <BlurView intensity={90} style={StyleSheet.absoluteFill} tint="dark" />
-                                            </View>
-                                        ) : (
-                                            <IconSymbol name="wineglass" size={80} color={Colors.dark.icon} />
-                                        )}
-                                        <ThemedText type="subtitle" style={styles.cardName}>{currentItem.name}</ThemedText>
-                                        <ThemedText style={styles.tapToFlip}>TAP TO FLIP</ThemedText>
-                                    </GlassView>
-                                </Animated.View>
-
-                                <Animated.View style={[styles.card, backAnimatedStyle]}>
-                                    <GlassView style={styles.glassCard} intensity={25}>
-                                        <ScrollView style={styles.ingredientsList} showsVerticalScrollIndicator={false} contentContainerStyle={styles.backContent}>
-                                            <ThemedText type="subtitle" style={styles.recipeTitle}>Recipe</ThemedText>
-                                            {currentItem.imageUrl && (
-                                                <Image source={{ uri: currentItem.imageUrl }} style={styles.backCardImage} contentFit="cover" />
-                                            )}
-                                            {currentItem.ingredients.map((ing, i) => (
-                                                <View key={i} style={styles.ingredientRow}>
-                                                    <IconSymbol name="circle.fill" size={6} color={Colors.dark.tint} />
-                                                    {includeMeasurements && ing.amount && (
-                                                        <ThemedText style={styles.amount}>{ing.amount}</ThemedText>
-                                                    )}
-                                                    <ThemedText style={styles.ingredientName}>{ing.name}</ThemedText>
+                        <AnimatePresence exitBeforeEnter>
+                            <MotiView
+                                key={currentIndex}
+                                from={{ opacity: 0, scale: 0.9, translateX: 100 }}
+                                animate={{ opacity: 1, scale: 1, translateX: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, translateX: -100 }}
+                                transition={{ type: 'timing', duration: 150 }}
+                                style={styles.cardWrapper}
+                            >
+                                <TouchableOpacity activeOpacity={1} onPress={handleFlip} style={styles.flipContainer}>
+                                    <Animated.View style={[styles.card, frontAnimatedStyle]}>
+                                        <GlassView style={styles.glassCard} intensity={25}>
+                                            {currentItem.imageUrl ? (
+                                                <View style={styles.imageWrapper}>
+                                                    <Image
+                                                        source={{ uri: currentItem.imageUrl }}
+                                                        style={styles.cardImage}
+                                                        contentFit="cover"
+                                                    />
+                                                    <BlurView intensity={90} style={StyleSheet.absoluteFill} tint="dark" />
                                                 </View>
-                                            ))}
-                                            <ThemedText style={styles.description}>{currentItem.description}</ThemedText>
-                                        </ScrollView>
-                                        <ThemedText style={styles.tapToFlip}>TAP TO FLIP BACK</ThemedText>
-                                    </GlassView>
-                                </Animated.View>
-                            </TouchableOpacity>
-                        </View>
+                                            ) : (
+                                                <IconSymbol name="wineglass" size={80} color={Colors.dark.icon} />
+                                            )}
+                                            <Text style={[styles.cardName, { fontSize: 20, fontWeight: 'bold' }]}>{currentItem.name}</Text>
+                                            <Text style={styles.tapToFlip}>TAP TO FLIP</Text>
+                                        </GlassView>
+                                    </Animated.View>
+
+                                    <Animated.View style={[styles.card, backAnimatedStyle]}>
+                                        <GlassView style={styles.glassCard} intensity={25}>
+                                            <ScrollView style={styles.ingredientsList} showsVerticalScrollIndicator={false} contentContainerStyle={styles.backContent}>
+                                                <Text style={[styles.recipeTitle, { fontSize: 20, fontWeight: 'bold' }]}>Recipe</Text>
+                                                {currentItem.imageUrl && (
+                                                    <Image source={{ uri: currentItem.imageUrl }} style={styles.backCardImage} contentFit="cover" />
+                                                )}
+                                                {currentItem.ingredients.map((ing, i) => (
+                                                    <View key={i} style={styles.ingredientRow}>
+                                                        <IconSymbol name="circle.fill" size={6} color={Colors.dark.tint} />
+                                                        {includeMeasurements && ing.amount && (
+                                                            <Text style={styles.amount}>{ing.amount}</Text>
+                                                        )}
+                                                        <Text style={styles.ingredientName}>{ing.name}</Text>
+                                                    </View>
+                                                ))}
+                                                <Text style={styles.description}>{currentItem.description}</Text>
+                                            </ScrollView>
+                                            <Text style={styles.tapToFlip}>TAP TO FLIP BACK</Text>
+                                        </GlassView>
+                                    </Animated.View>
+                                </TouchableOpacity>
+                            </MotiView>
+                        </AnimatePresence>
 
                         <View style={styles.controls}>
                             {isRevealed ? (
@@ -387,31 +387,31 @@ export default function QuizScreen() {
                                         style={[styles.scoreButton, { backgroundColor: '#FF4B4B' }]}
                                         onPress={() => handleScore('poor')}
                                     >
-                                        <ThemedText style={styles.scoreText}>POOR</ThemedText>
+                                        <Text style={styles.scoreText}>POOR</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.scoreButton, { backgroundColor: '#FFA500' }]}
                                         onPress={() => handleScore('acceptable')}
                                     >
-                                        <ThemedText style={styles.scoreText}>ACCEPTABLE</ThemedText>
+                                        <Text style={styles.scoreText}>ACCEPTABLE</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.scoreButton, { backgroundColor: '#4CAF50' }]}
                                         onPress={() => handleScore('perfect')}
                                     >
-                                        <ThemedText style={styles.scoreText}>PERFECT</ThemedText>
+                                        <Text style={styles.scoreText}>PERFECT</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
                                 <TouchableOpacity onPress={handleFlip} style={styles.actionPrompt}>
                                     <IconSymbol name="hand.tap" size={24} color={Colors.dark.icon} />
-                                    <ThemedText style={styles.promptText}>TAP TO REVEAL RECIPE</ThemedText>
+                                    <Text style={styles.promptText}>TAP TO REVEAL RECIPE</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
                     </View>
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         </GestureHandlerRootView >
     );
 }

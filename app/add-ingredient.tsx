@@ -14,13 +14,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { Text, YStack } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -109,7 +108,7 @@ export default function AddIngredientScreen() {
     };
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
@@ -117,7 +116,7 @@ export default function AddIngredientScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
-                <ThemedText type="subtitle">New Ingredient</ThemedText>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: Colors.dark.text }}>New Ingredient</Text>
                 <TouchableOpacity 
                     onPress={handleSave} 
                     disabled={saving} 
@@ -126,7 +125,7 @@ export default function AddIngredientScreen() {
                     {saving ? (
                         <ActivityIndicator size="small" color={Colors.dark.tint} />
                     ) : (
-                        <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
+                        <Text style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -135,7 +134,7 @@ export default function AddIngredientScreen() {
                 
                 {/* Main Info */}
                 <View style={styles.section}>
-                    <ThemedText style={styles.label}>Name *</ThemedText>
+                    <Text style={styles.label}>Name *</Text>
                     <TextInput
                         style={styles.input}
                         value={name}
@@ -147,7 +146,7 @@ export default function AddIngredientScreen() {
                 </View>
 
                 <View style={styles.section}>
-                    <ThemedText style={styles.label}>Description</ThemedText>
+                    <Text style={styles.label}>Description</Text>
                     <TextInput
                         style={[styles.input, styles.textArea]}
                         value={description}
@@ -162,22 +161,22 @@ export default function AddIngredientScreen() {
                 {/* Ingredients / Recipe */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.label}>Recipe (for Complex Ingredients)</ThemedText>
+                        <Text style={styles.label}>Recipe (for Complex Ingredients)</Text>
                         <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                            <ThemedText style={styles.addText}>+ Add</ThemedText>
+                            <Text style={styles.addText}>+ Add</Text>
                         </TouchableOpacity>
                     </View>
 
                     {recipeItems.length === 0 && (
-                        <ThemedText style={styles.helperText}>
+                        <Text style={styles.helperText}>
                             Add ingredients here if this is a pre-batched item (e.g. syrups, infusions). 
                             Leave empty for raw ingredients.
-                        </ThemedText>
+                        </Text>
                     )}
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
+                            <Text style={styles.recipeName}>{item.name}</Text>
                             <View style={styles.recipeInputs}>
                                 <TextInput
                                     style={styles.smallInput}
@@ -237,7 +236,7 @@ export default function AddIngredientScreen() {
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
                                 <View style={styles.modalHeader}>
-                                    <ThemedText style={styles.modalTitle}>Select Ingredient</ThemedText>
+                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
                                     <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
                                         <IconSymbol name="xmark" size={24} color="#fff" />
                                     </TouchableOpacity>
@@ -263,7 +262,7 @@ export default function AddIngredientScreen() {
                                                 setIngredientSearch("");
                                             }}
                                         >
-                                            <ThemedText style={styles.ingredientText}>{item.name}</ThemedText>
+                                            <Text style={styles.ingredientText}>{item.name}</Text>
                                         </TouchableOpacity>
                                     )}
                                 />
@@ -273,7 +272,7 @@ export default function AddIngredientScreen() {
                 </TouchableWithoutFeedback>
             </Modal>
 
-        </ThemedView>
+        </YStack>
     );
 }
 

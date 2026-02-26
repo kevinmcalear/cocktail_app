@@ -1,5 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -8,6 +6,7 @@ import { TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 import { CardCountSlider, CocktailCategory, sharedStyles, Subject, SubjectCard } from "./_shared";
 
 export default function CocktailCategorySelection() {
@@ -36,14 +35,14 @@ export default function CocktailCategorySelection() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container} backgroundColor="$background">
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
                             <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                         </TouchableOpacity>
-                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>COCKTAIL CATEGORY</ThemedText>
+                        <Text style={[sharedStyles.title, { fontSize: 24 }]} adjustsFontSizeToFit={true} numberOfLines={1}>COCKTAIL CATEGORY</Text>
                         <View style={{ width: 44 }} />
                     </View>
 
@@ -62,7 +61,7 @@ export default function CocktailCategorySelection() {
                         sliderPos={sliderPos}
                     />
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         </GestureHandlerRootView>
     );
 }

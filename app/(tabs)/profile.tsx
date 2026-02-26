@@ -1,12 +1,10 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/ctx/AuthContext";
 import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Separator, Text, XStack, YStack } from "tamagui";
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -24,131 +22,87 @@ export default function ProfileScreen() {
     };
 
     return (
-        <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+        <YStack flex={1} paddingTop={insets.top} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
             
-            <View style={styles.content}>
-                <View style={styles.profileSection}>
-                    <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-                    <ThemedText style={styles.userName}>{user?.user_metadata?.full_name || user?.email || "User"}</ThemedText>
-                </View>
+            <YStack flex={1} paddingHorizontal="$4">
+                <YStack alignItems="center" marginBottom="$6" marginTop="$4">
+                    <Image 
+                        source={{ uri: avatarUrl }} 
+                        style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 16, borderWidth: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} 
+                    />
+                    <Text fontSize={24} fontWeight="bold" color="$color">
+                        {user?.user_metadata?.full_name || user?.email || "User"}
+                    </Text>
+                </YStack>
 
-                <View style={styles.menuContainer}>
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                <YStack backgroundColor="rgba(255, 255, 255, 0.05)" borderRadius={16} overflow="hidden">
+                    <XStack
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingVertical="$4"
+                        paddingHorizontal="$4"
+                        pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/settings')}
                     >
-                        <View style={styles.menuItemLeft}>
+                        <XStack alignItems="center" gap="$3">
                             <IconSymbol name="pencil" size={24} color={Colors.dark.text} />
-                            <ThemedText style={styles.menuText}>Edit Profile</ThemedText>
-                        </View>
+                            <Text fontSize="$5" color="$color" fontWeight="500">Edit Profile</Text>
+                        </XStack>
                         <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-                    </TouchableOpacity>
+                    </XStack>
 
-                    <View style={styles.separator} />
+                    <Separator borderColor="rgba(255, 255, 255, 0.1)" marginLeft={60} />
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                    <XStack
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingVertical="$4"
+                        paddingHorizontal="$4"
+                        pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/add-cocktail')}
                     >
-                        <View style={styles.menuItemLeft}>
+                        <XStack alignItems="center" gap="$3">
                             <IconSymbol name="plus.circle" size={24} color={Colors.dark.text} />
-                            <ThemedText style={styles.menuText}>Create Cocktail</ThemedText>
-                        </View>
+                            <Text fontSize="$5" color="$color" fontWeight="500">Create Cocktail</Text>
+                        </XStack>
                         <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-                    </TouchableOpacity>
+                    </XStack>
 
-                    <View style={styles.separator} />
+                    <Separator borderColor="rgba(255, 255, 255, 0.1)" marginLeft={60} />
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                    <XStack
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingVertical="$4"
+                        paddingHorizontal="$4"
+                        pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/settings')}
                     >
-                        <View style={styles.menuItemLeft}>
+                        <XStack alignItems="center" gap="$3">
                             <IconSymbol name="gear" size={24} color={Colors.dark.text} />
-                            <ThemedText style={styles.menuText}>Settings</ThemedText>
-                        </View>
+                            <Text fontSize="$5" color="$color" fontWeight="500">Settings</Text>
+                        </XStack>
                         <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-                    </TouchableOpacity>
+                    </XStack>
 
-                    <View style={styles.separator} />
+                    <Separator borderColor="rgba(255, 255, 255, 0.1)" marginLeft={60} />
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
+                    <XStack
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingVertical="$4"
+                        paddingHorizontal="$4"
+                        pressStyle={{ opacity: 0.7 }}
                         onPress={handleSignOut}
                     >
-                        <View style={styles.menuItemLeft}>
+                        <XStack alignItems="center" gap="$3">
                             <IconSymbol name="rectangle.portrait.and.arrow.right" size={24} color="#FF6B6B" />
-                            <ThemedText style={[styles.menuText, { color: '#FF6B6B' }]}>Log Out</ThemedText>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </ThemedView>
+                            <Text fontSize="$5" color="#FF6B6B" fontWeight="500">Log Out</Text>
+                        </XStack>
+                    </XStack>
+                </YStack>
+            </YStack>
+        </YStack>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        paddingBottom: 20,
-    },
-    title: {
-        fontSize: 34,
-        fontWeight: "bold",
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-    },
-    profileSection: {
-        alignItems: 'center',
-        marginBottom: 40,
-        marginTop: 20,
-    },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 16,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    userName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: Colors.dark.text,
-    },
-    menuContainer: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 16,
-        overflow: 'hidden',
-    },
-    menuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-    },
-    menuItemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    menuText: {
-        fontSize: 18,
-        color: Colors.dark.text,
-        fontWeight: '500',
-    },
-    separator: {
-        height: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        marginLeft: 60, // Align with text
-    },
-});

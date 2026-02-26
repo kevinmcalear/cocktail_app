@@ -1,10 +1,9 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text, YStack } from "tamagui";
 
 // Dummy data for previous menus
 const previousMenus = [
@@ -18,13 +17,13 @@ export default function PreviousMenusScreen() {
     const router = useRouter();
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
-                    <ThemedText type="title" style={styles.title}>Previous Menus</ThemedText>
+                    <Text style={[styles.title, { fontSize: 34, fontWeight: 'bold' }]}>Previous Menus</Text>
                 </View>
             </View>
 
@@ -36,17 +35,17 @@ export default function PreviousMenusScreen() {
                     <TouchableOpacity>
                         <GlassView style={styles.menuItem} intensity={40}>
                             <View>
-                                <ThemedText type="subtitle" style={styles.name}>{item.name}</ThemedText>
-                                <ThemedText style={styles.date}>{item.date}</ThemedText>
+                                <Text style={[styles.name, { fontSize: 20, fontWeight: 'bold' }]}>{item.name}</Text>
+                                <Text style={styles.date}>{item.date}</Text>
                             </View>
                             <GlassView style={styles.badge} intensity={20}>
-                                <ThemedText style={styles.badgeText}>{item.items} items</ThemedText>
+                                <Text style={styles.badgeText}>{item.items} items</Text>
                             </GlassView>
                         </GlassView>
                     </TouchableOpacity>
                 )}
             />
-        </ThemedView>
+        </YStack>
     );
 }
 

@@ -15,6 +15,7 @@ export const beers: Beer[] = [
         description: "Clean, crisp, and refreshing. The perfect knock-off beer.",
         price: "$10",
         status: "Current",
+        image: require("@/assets/images/beers/cottage_lager.png"),
     },
     {
         id: "2",
@@ -22,6 +23,7 @@ export const beers: Beer[] = [
         description: "Juicy tropical fruit notes with low bitterness.",
         price: "$12",
         status: "Current",
+        image: require("@/assets/images/beers/hazy_ipa.png"),
     },
     {
         id: "3",
@@ -29,6 +31,7 @@ export const beers: Beer[] = [
         description: "Rich and creamy with notes of coffee and chocolate.",
         price: "$11",
         status: "Current",
+        image: require("@/assets/images/beers/oatmeal_stout.png"),
     },
 
     // Future Beers
@@ -38,6 +41,7 @@ export const beers: Beer[] = [
         description: "Tart and fruity, brewed with seasonal berries.",
         price: "$12",
         status: "Future",
+        image: require("@/assets/images/beers/sour_ale.png"),
     },
     {
         id: "5",
@@ -45,6 +49,7 @@ export const beers: Beer[] = [
         description: "Big, bold, and hoppy. Not for the faint of heart.",
         price: "$14",
         status: "Future",
+        image: require("@/assets/images/beers/double_ipa.png"),
     },
 
     // Previous Beers
@@ -54,6 +59,7 @@ export const beers: Beer[] = [
         description: "Easy drinking with passionfruit aromas.",
         price: "$11",
         status: "Previous",
+        image: require("@/assets/images/beers/pacific_ale.png"),
     },
     {
         id: "7",
@@ -61,5 +67,6 @@ export const beers: Beer[] = [
         description: "Malty and balanced with a caramel finish.",
         price: "$10",
         status: "Previous",
+        image: require("@/assets/images/beers/amber_ale.png"),
     },
 ];

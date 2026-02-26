@@ -1,5 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 
 interface SectionInput {
     id: string; // temporary for UI key mapping
@@ -125,25 +124,25 @@ export default function CreateTemplateScreen() {
     };
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
-                    <ThemedText type="title" style={styles.title}>
+                    <Text style={[styles.title, { fontSize: 34, fontWeight: 'bold' }]}>
                         Create Template
-                    </ThemedText>
+                    </Text>
                 </View>
-                <ThemedText style={styles.subtitle}>
+                <Text style={styles.subtitle}>
                     Design the structure for your menus.
-                </ThemedText>
+                </Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
                 
                 <View style={styles.inputSection}>
-                    <ThemedText style={styles.label}>Template Name</ThemedText>
+                    <Text style={styles.label}>Template Name</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. Caretakers Format"
@@ -154,7 +153,7 @@ export default function CreateTemplateScreen() {
                 </View>
 
                 <View style={styles.inputSection}>
-                    <ThemedText style={styles.label}>Description (Optional)</ThemedText>
+                    <Text style={styles.label}>Description (Optional)</Text>
                     <TextInput
                         style={[styles.input, { minHeight: 80, paddingTop: 16 }]}
                         placeholder="A brief description of this template's use case..."
@@ -166,17 +165,17 @@ export default function CreateTemplateScreen() {
                 </View>
 
                 <View style={styles.sectionsHeader}>
-                    <ThemedText style={[styles.label, { marginBottom: 0 }]}>Menu Sections</ThemedText>
+                    <Text style={[styles.label, { marginBottom: 0 }]}>Menu Sections</Text>
                     <TouchableOpacity onPress={handleAddSection} style={styles.addSectionBtnSmall}>
                         <IconSymbol name="plus" size={16} color={Colors.dark.tint} />
-                        <ThemedText style={{color: Colors.dark.tint, fontWeight: 'bold'}}>Add</ThemedText>
+                        <Text style={{color: Colors.dark.tint, fontWeight: 'bold'}}>Add</Text>
                     </TouchableOpacity>
                 </View>
 
                 {sections.map((sec, index) => (
                     <View key={sec.id} style={styles.sectionBlock}>
                         <View style={styles.sectionBlockHeader}>
-                            <ThemedText style={styles.sectionBlockTitle}>Section {index + 1}</ThemedText>
+                            <Text style={styles.sectionBlockTitle}>Section {index + 1}</Text>
                             <TouchableOpacity onPress={() => handleRemoveSection(sec.id)}>
                                 <IconSymbol name="trash" size={20} color="#ff4444" />
                             </TouchableOpacity>
@@ -192,7 +191,7 @@ export default function CreateTemplateScreen() {
                         
                         <View style={styles.requirementsRow}>
                             <View style={{flex: 1}}>
-                                <ThemedText style={styles.subLabel}>Min Items required</ThemedText>
+                                <Text style={styles.subLabel}>Min Items required</Text>
                                 <TextInput
                                     style={styles.inputSmall}
                                     placeholder="1"
@@ -203,7 +202,7 @@ export default function CreateTemplateScreen() {
                                 />
                             </View>
                             <View style={{flex: 1}}>
-                                <ThemedText style={styles.subLabel}>Max Items allowed</ThemedText>
+                                <Text style={styles.subLabel}>Max Items allowed</Text>
                                 <TextInput
                                     style={styles.inputSmall}
                                     placeholder="No limit"
@@ -219,7 +218,7 @@ export default function CreateTemplateScreen() {
 
                 <TouchableOpacity style={styles.addSectionBtnLarge} onPress={handleAddSection}>
                     <IconSymbol name="plus" size={20} color={Colors.dark.icon} />
-                    <ThemedText style={styles.addSectionText}>Add Another Section</ThemedText>
+                    <Text style={styles.addSectionText}>Add Another Section</Text>
                 </TouchableOpacity>
 
                 <View style={styles.footerSpacer} />
@@ -234,12 +233,12 @@ export default function CreateTemplateScreen() {
                     {saving ? (
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
-                        <ThemedText style={styles.createButtonText}>Save Template</ThemedText>
+                        <Text style={styles.createButtonText}>Save Template</Text>
                     )}
                 </TouchableOpacity>
             </View>
 
-        </ThemedView>
+        </YStack>
     );
 }
 

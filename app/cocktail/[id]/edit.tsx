@@ -9,16 +9,12 @@ import {
     FlatList,
     Modal,
     ScrollView,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
+    StyleSheet, TouchableOpacity,
     TouchableWithoutFeedback, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -27,6 +23,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button, Input, Label, Text, TextArea, XStack, YStack } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -390,34 +387,38 @@ export default function EditCocktailScreen() {
 
     if (loading) {
         return (
-            <ThemedView style={styles.loadingContainer}>
+            <YStack style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.dark.tint} />
-            </ThemedView>
+            </YStack>
         );
     }
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <XStack
+                paddingTop={insets.top + 10}
+                paddingHorizontal="$4"
+                paddingBottom="$4"
+                alignItems="center"
+                justifyContent="space-between"
+                zIndex={10}
+            >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
-                <ThemedText type="subtitle">Edit Cocktail</ThemedText>
-                <TouchableOpacity 
+                <Text fontSize="$5" fontWeight="bold">Edit Cocktail</Text>
+                <Button 
                     onPress={handleSave} 
-                    disabled={saving} 
-                    style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
+                    disabled={saving}
+                    size="$3"
+                    chromeless
                 >
-                    {saving ? (
-                        <ActivityIndicator size="small" color={Colors.dark.tint} />
-                    ) : (
-                        <ThemedText style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</ThemedText>
-                    )}
-                </TouchableOpacity>
-            </View>
+                    {saving ? <ActivityIndicator size="small" color={Colors.dark.tint} /> : <Text color={Colors.dark.tint} fontWeight="bold">Save</Text>}
+                </Button>
+            </XStack>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
@@ -433,134 +434,167 @@ export default function EditCocktailScreen() {
                 />
 
                 {/* Text Fields */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Name *</ThemedText>
-                    <TextInput
-                        style={styles.input}
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Name *</Label>
+                    <Input
                         value={name}
                         onChangeText={setName}
-                        placeholderTextColor="#666"
+                        placeholderTextColor="$color11"
+                        placeholder="e.g. Negroni"
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Description</ThemedText>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Description</Label>
+                    <TextArea
                         value={description}
                         onChangeText={setDescription}
-                        multiline
                         numberOfLines={4}
-                        placeholderTextColor="#666"
+                        placeholderTextColor="$color11"
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
                 {/* Dropdowns */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Method</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
-                        {methods.map((m: any) => (
-                            <TouchableOpacity
-                                key={m.id}
-                                style={[styles.pill, methodId === m.id && styles.pillActive]}
-                                onPress={() => setMethodId(m.id)}
-                                onLongPress={() => handleDeletePill('method_id', 'methods', m)}
-                            >
-                                <ThemedText style={[styles.pillText, methodId === m.id && styles.pillTextActive]}>{m.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'methods', label: 'Method' })}>
-                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
-                        </TouchableOpacity>
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Method</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
+                        <XStack gap="$2">
+                            {methods.map((m: any) => (
+                                <Button
+                                    key={m.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setMethodId(m.id)}
+                                    onLongPress={() => handleDeletePill('method_id', 'methods', m)}
+                                >
+                                    <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                </Button>
+                            ))}
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'methods', label: 'Method' })}>
+                                <Text color={Colors.dark.tint}>+ Add</Text>
+                            </Button>
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Glassware</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
-                        {glassware.map((g: any) => (
-                            <TouchableOpacity
-                                key={g.id}
-                                style={[styles.pill, glasswareId === g.id && styles.pillActive]}
-                                onPress={() => setGlasswareId(g.id)}
-                                onLongPress={() => handleDeletePill('glassware_id', 'glassware', g)}
-                            >
-                                <ThemedText style={[styles.pillText, glasswareId === g.id && styles.pillTextActive]}>{g.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'glassware', label: 'Glassware' })}>
-                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
-                        </TouchableOpacity>
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Glassware</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
+                        <XStack gap="$2">
+                            {glassware.map((g: any) => (
+                                <Button
+                                    key={g.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setGlasswareId(g.id)}
+                                    onLongPress={() => handleDeletePill('glassware_id', 'glassware', g)}
+                                >
+                                    <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                </Button>
+                            ))}
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'glassware', label: 'Glassware' })}>
+                                <Text color={Colors.dark.tint}>+ Add</Text>
+                            </Button>
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Family</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
-                        {families.map((f: any) => (
-                            <TouchableOpacity
-                                key={f.id}
-                                style={[styles.pill, familyId === f.id && styles.pillActive]}
-                                onPress={() => setFamilyId(f.id)}
-                                onLongPress={() => handleDeletePill('family_id', 'families', f)}
-                            >
-                                <ThemedText style={[styles.pillText, familyId === f.id && styles.pillTextActive]}>{f.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'families', label: 'Family' })}>
-                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
-                        </TouchableOpacity>
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Family</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
+                        <XStack gap="$2">
+                            {families.map((f: any) => (
+                                <Button
+                                    key={f.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setFamilyId(f.id)}
+                                    onLongPress={() => handleDeletePill('family_id', 'families', f)}
+                                >
+                                    <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                </Button>
+                            ))}
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'families', label: 'Family' })}>
+                                <Text color={Colors.dark.tint}>+ Add</Text>
+                            </Button>
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Ice</ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillContainer} contentContainerStyle={{ alignItems: 'center' }}>
-                        {iceTypes.map((i: any) => (
-                            <TouchableOpacity
-                                key={i.id}
-                                style={[styles.pill, iceId === i.id && styles.pillActive]}
-                                onPress={() => setIceId(iceId === i.id ? null : i.id)}
-                                onLongPress={() => handleDeletePill('ice_id', 'ice', i)}
-                            >
-                                <ThemedText style={[styles.pillText, iceId === i.id && styles.pillTextActive]}>{i.name}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity style={[styles.pill, { borderStyle: 'dashed' }]} onPress={() => setAddingCategory({ table: 'ice', label: 'Ice' })}>
-                            <ThemedText style={[styles.pillText, { color: Colors.dark.tint }]}>+ Add</ThemedText>
-                        </TouchableOpacity>
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Ice</Label>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
+                        <XStack gap="$2">
+                            {iceTypes.map((i: any) => (
+                                <Button
+                                    key={i.id}
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                    borderColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    borderWidth={1}
+                                    onPress={() => setIceId(iceId === i.id ? null : i.id)}
+                                    onLongPress={() => handleDeletePill('ice_id', 'ice', i)}
+                                >
+                                    <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                </Button>
+                            ))}
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'ice', label: 'Ice' })}>
+                                <Text color={Colors.dark.tint}>+ Add</Text>
+                            </Button>
+                        </XStack>
                     </ScrollView>
-                </View>
+                </YStack>
 
                 {/* Ingredients Section */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.label}>Ingredients</ThemedText>
+                <YStack gap="$2" marginBottom="$4">
+                    <XStack justifyContent="space-between" alignItems="center" paddingHorizontal="$2">
+                        <Label color="$color11">Ingredients</Label>
                         <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                            <ThemedText style={styles.addText}>+ Add</ThemedText>
+                            <Text color={Colors.dark.tint} fontWeight="bold">+ Add</Text>
                         </TouchableOpacity>
-                    </View>
+                    </XStack>
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <ThemedText style={styles.recipeName}>{item.name}</ThemedText>
-                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2 }]}>
-                                <TouchableOpacity
-                                    style={[styles.smallInput, { backgroundColor: item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)' }]}
+                            <Text style={styles.recipeName}>{item.name}</Text>
+                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
+                                <Button
+                                    size="$2"
+                                    backgroundColor={item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)'}
                                     onPress={() => {
                                         const newItems = [...recipeItems];
                                         newItems[index].is_top = !newItems[index].is_top;
                                         setRecipeItems(newItems);
                                     }}
                                 >
-                                    <ThemedText style={{ color: item.is_top ? '#000' : '#fff', textAlign: 'center', fontSize: 12 }}>Top</ThemedText>
-                                </TouchableOpacity>
+                                    <Text color={item.is_top ? '#000' : '#fff'} fontSize={12}>Top</Text>
+                                </Button>
                                 <View style={styles.inputGroup}>
-                                    <TextInput
-                                        style={styles.smallInput}
+                                    <Input
+                                        size="$2"
+                                        width={50}
                                         placeholder="bsp"
-                                        placeholderTextColor="#666"
                                         keyboardType="numeric"
+                                        backgroundColor="rgba(255,255,255,0.05)"
+                                        borderColor="rgba(255,255,255,0.1)"
                                         value={item.bsp}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -568,14 +602,16 @@ export default function EditCocktailScreen() {
                                             setRecipeItems(newItems);
                                         }}
                                     />
-                                    <ThemedText style={styles.unitText}>bs</ThemedText>
+                                    <Text style={styles.unitText}>bs</Text>
                                 </View>
                                 <View style={styles.inputGroup}>
-                                    <TextInput
-                                        style={styles.smallInput}
+                                    <Input
+                                        size="$2"
+                                        width={50}
                                         placeholder="ml"
-                                        placeholderTextColor="#666"
                                         keyboardType="numeric"
+                                        backgroundColor="rgba(255,255,255,0.05)"
+                                        borderColor="rgba(255,255,255,0.1)"
                                         value={item.ml}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -583,14 +619,16 @@ export default function EditCocktailScreen() {
                                             setRecipeItems(newItems);
                                         }}
                                     />
-                                    <ThemedText style={styles.unitText}>ml</ThemedText>
+                                    <Text style={styles.unitText}>ml</Text>
                                 </View>
                                 <View style={styles.inputGroup}>
-                                    <TextInput
-                                        style={styles.smallInput}
+                                    <Input
+                                        size="$2"
+                                        width={50}
                                         placeholder="dash"
-                                        placeholderTextColor="#666"
                                         keyboardType="numeric"
+                                        backgroundColor="rgba(255,255,255,0.05)"
+                                        borderColor="rgba(255,255,255,0.1)"
                                         value={item.dash}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -598,14 +636,16 @@ export default function EditCocktailScreen() {
                                             setRecipeItems(newItems);
                                         }}
                                     />
-                                    <ThemedText style={styles.unitText}>ds</ThemedText>
+                                    <Text style={styles.unitText}>ds</Text>
                                 </View>
                                 <View style={styles.inputGroup}>
-                                    <TextInput
-                                        style={styles.smallInput}
+                                    <Input
+                                        size="$2"
+                                        width={50}
                                         placeholder="amt"
-                                        placeholderTextColor="#666"
                                         keyboardType="numeric"
+                                        backgroundColor="rgba(255,255,255,0.05)"
+                                        borderColor="rgba(255,255,255,0.1)"
                                         value={item.amount}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -613,7 +653,7 @@ export default function EditCocktailScreen() {
                                             setRecipeItems(newItems);
                                         }}
                                     />
-                                    <ThemedText style={styles.unitText}>#</ThemedText>
+                                    <Text style={styles.unitText}>#</Text>
                                 </View>
                                 <TouchableOpacity onPress={() => {
                                     const newItems = recipeItems.filter((_, i) => i !== index);
@@ -624,50 +664,62 @@ export default function EditCocktailScreen() {
                             </View>
                         </View>
                     ))}
-                </View>
+                </YStack>
 
                 {/* More Details */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Origin</ThemedText>
-                    <TextInput
-                        style={styles.input}
-                        value={origin}
-                        onChangeText={setOrigin}
-                        placeholderTextColor="#666"
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Origin</Label>
+                    <Input 
+                        value={origin} 
+                        onChangeText={setOrigin} 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Garnish</ThemedText>
-                    <TextInput
-                        style={styles.input}
-                        value={garnish}
-                        onChangeText={setGarnish}
-                        placeholderTextColor="#666"
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Garnish</Label>
+                    <Input 
+                        value={garnish} 
+                        onChangeText={setGarnish} 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Notes</ThemedText>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        value={notes}
-                        onChangeText={setNotes}
-                        multiline
-                        placeholderTextColor="#666"
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Notes</Label>
+                    <TextArea 
+                        value={notes} 
+                        onChangeText={setNotes} 
+                        multiline 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Spec</ThemedText>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        value={spec}
-                        onChangeText={setSpec}
-                        multiline
-                        placeholderTextColor="#666"
+                <YStack gap="$2" marginBottom="$4">
+                    <Label color="$color11">Spec</Label>
+                    <TextArea 
+                        value={spec} 
+                        onChangeText={setSpec} 
+                        multiline 
+                        placeholderTextColor="$color11" 
+                        size="$4"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        focusStyle={{ borderColor: Colors.dark.tint }}
                     />
-                </View>
+                </YStack>
 
 
             </ScrollView>
@@ -682,21 +734,23 @@ export default function EditCocktailScreen() {
                     <View style={styles.modalOverlay}>
                         <TouchableWithoutFeedback>
                             <View style={[styles.modalContent, { height: 'auto', padding: 24 }]}>
-                                <ThemedText style={[styles.modalTitle, { marginBottom: 16 }]}>Add New {addingCategory?.label}</ThemedText>
-                                <TextInput
-                                    style={[styles.input, { marginBottom: 20 }]}
+                                <Text style={[styles.modalTitle, { marginBottom: 16 }]}>Add New {addingCategory?.label}</Text>
+                                <Input
+                                    size="$4"
+                                    marginBottom="$4"
                                     placeholder={`Enter ${addingCategory?.label} name`}
-                                    placeholderTextColor="#666"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={newItemName}
                                     onChangeText={setNewItemName}
                                     autoFocus
                                 />
                                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
                                     <TouchableOpacity onPress={() => { setAddingCategory(null); setNewItemName(""); }} style={{ padding: 12 }}>
-                                        <ThemedText style={{ color: '#888' }}>Cancel</ThemedText>
+                                        <Text style={{ color: '#888' }}>Cancel</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: Colors.dark.tint, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
-                                        <ThemedText style={{ color: '#000', fontWeight: 'bold' }}>Add</ThemedText>
+                                        <Text style={{ color: '#000', fontWeight: 'bold' }}>Add</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -716,16 +770,18 @@ export default function EditCocktailScreen() {
                         <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
                                 <View style={styles.modalHeader}>
-                                    <ThemedText style={styles.modalTitle}>Select Ingredient</ThemedText>
+                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
                                     <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
                                         <IconSymbol name="xmark" size={24} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
                                 
-                                <TextInput
-                                    style={styles.searchInput}
+                                <Input
+                                    size="$4"
+                                    marginBottom="$4"
                                     placeholder="Search ingredients..."
-                                    placeholderTextColor="#666"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
                                     value={ingredientSearch}
                                     onChangeText={setIngredientSearch}
                                 />
@@ -752,7 +808,7 @@ export default function EditCocktailScreen() {
                                                 setIngredientSearch("");
                                             }}
                                         >
-                                            <ThemedText style={styles.ingredientText}>{item.name}</ThemedText>
+                                            <Text style={styles.ingredientText}>{item.name}</Text>
                                         </TouchableOpacity>
                                     )}
                                 />
@@ -761,7 +817,7 @@ export default function EditCocktailScreen() {
                     </View>
                 </TouchableWithoutFeedback>
             </Modal>
-        </ThemedView>
+        </YStack>
     );
 }
 

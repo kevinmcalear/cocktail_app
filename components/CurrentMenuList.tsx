@@ -1,9 +1,9 @@
-import { ThemedText } from "@/components/themed-text";
-import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { SectionList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { MotiView } from "moti";
+import { SectionList, StyleSheet, View } from "react-native";
+import { Card, H4, Paragraph, Text, XStack, YStack } from "tamagui";
 
 export interface MenuItem {
     id: string;
@@ -39,29 +39,44 @@ export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComp
             ListHeaderComponent={ListHeaderComponent}
             renderSectionHeader={({ section: { title } }) => (
                 <View style={styles.sectionHeaderContainer}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>{title}</ThemedText>
+                    <Text style={[styles.sectionTitle, { fontSize: 22 }]}>{title}</Text>
                 </View>
             )}
-            renderItem={({ item }) => (
-                <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(`/cocktail/${item.id}`)}>
-                    <GlassView style={styles.itemCard} intensity={20}>
-                        <View style={styles.itemRow}>
-                            <View style={styles.textContainer}>
-                                <View style={styles.titleRow}>
-                                    <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
-                                    {item.price && <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>}
-                                </View>
+            renderItem={({ item, index }) => (
+                <MotiView
+                    from={{ opacity: 0, translateY: 20 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    transition={{ type: 'spring', delay: index * 100 }}
+                    style={{ marginBottom: 12 }}
+                >
+                    <Card
+                        size="$4"
+                        borderWidth={1}
+                        backgroundColor="rgba(255,255,255,0.03)"
+                        borderColor="rgba(255,255,255,0.08)"
+                        overflow="hidden"
+                        onPress={() => router.push(`/cocktail/${item.id}`)}
+                    >
+                        <Card.Header flexDirection="row" padding="$3" minHeight={110} alignItems="center">
+                            <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
+                                <XStack justifyContent="space-between" alignItems="center">
+                                    <H4 color="$color" fontSize={20} fontWeight="700" numberOfLines={1} flex={1} paddingRight="$2">
+                                        {item.name}
+                                    </H4>
+                                    {item.price && <Text color={Colors.dark.tint} fontSize={16} fontWeight="bold">{item.price}</Text>}
+                                </XStack>
                                 {!!item.description && (
-                                    <ThemedText style={styles.itemDescription} numberOfLines={2}>
+                                    <Paragraph color="$color11" size="$3" numberOfLines={2}>
                                         {item.description}
-                                    </ThemedText>
+                                    </Paragraph>
                                 )}
                                 {!!item.ingredients && (
-                                    <ThemedText style={styles.itemIngredients} numberOfLines={1}>
+                                    <Text color="$color10" fontSize={13} fontStyle="italic" opacity={0.8} numberOfLines={1}>
                                         {item.ingredients}
-                                    </ThemedText>
+                                    </Text>
                                 )}
-                            </View>
+                            </YStack>
+
                             {item.image && (
                                 <Image
                                     source={typeof item.image === 'string' ? { uri: item.image } : item.image}
@@ -70,9 +85,9 @@ export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComp
                                     transition={500}
                                 />
                             )}
-                        </View>
-                    </GlassView>
-                </TouchableOpacity>
+                        </Card.Header>
+                    </Card>
+                </MotiView>
             )}
         />
     );
@@ -94,54 +109,7 @@ const styles = StyleSheet.create({
         color: Colors.dark.text,
         fontWeight: "bold",
     },
-    itemCard: {
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        marginBottom: 12,
-    },
-    itemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        height: 110,
-    },
-    textContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingRight: 12,
-        gap: 4,
-    },
-    titleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    itemName: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: Colors.dark.text,
-        flex: 1, 
-        marginRight: 8
-    },
-    itemPrice: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: Colors.dark.tint,
-    },
-    itemDescription: {
-        fontSize: 15,
-        color: Colors.dark.icon,
-        lineHeight: 20,
-    },
-    itemIngredients: {
-        fontSize: 13,
-        color: Colors.dark.icon,
-        fontStyle: 'italic',
-        opacity: 0.8
-    },
+
     itemImage: {
         width: 76,
         height: 76,

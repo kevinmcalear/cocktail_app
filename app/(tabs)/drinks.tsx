@@ -29,7 +29,8 @@ export default function DrinksScreen() {
             name: b.name,
             description: b.description,
             category: "Beer",
-            price: b.price
+            price: b.price,
+            image: b.image
         }));
 
         const mappedWines: DrinkListItem[] = wines.map(w => ({

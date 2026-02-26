@@ -1,5 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -9,6 +7,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 import { CardCountSlider, CocktailCategory, ShakerToggle, sharedStyles, Subject } from "./_shared";
 
 export default function ConfigScreen() {
@@ -42,14 +41,14 @@ export default function ConfigScreen() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <ThemedView style={sharedStyles.container}>
+            <YStack style={sharedStyles.container} backgroundColor="$background">
                 <SafeAreaView style={sharedStyles.safeArea}>
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
                             <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
                         </TouchableOpacity>
-                        <ThemedText type="title" style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING MODE</ThemedText>
+                        <Text style={sharedStyles.title} adjustsFontSizeToFit={true} numberOfLines={1}>TESTING MODE</Text>
                         <View style={{ width: 44 }} />
                     </View>
 
@@ -61,7 +60,7 @@ export default function ConfigScreen() {
 
                         <TouchableOpacity style={styles.startButton} onPress={startQuiz}>
                             <GlassView style={styles.startButtonContent} intensity={40}>
-                                <ThemedText style={styles.startButtonText}>START TEST</ThemedText>
+                                <Text style={styles.startButtonText}>START TEST</Text>
                             </GlassView>
                         </TouchableOpacity>
                     </View>
@@ -72,7 +71,7 @@ export default function ConfigScreen() {
                         sliderPos={sliderPos}
                     />
                 </SafeAreaView>
-            </ThemedView>
+            </YStack>
         </GestureHandlerRootView>
     );
 }

@@ -1,5 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -14,6 +12,7 @@ import {
     View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, YStack } from "tamagui";
 
 interface IngredientDetail {
     id: string;
@@ -44,26 +43,26 @@ export default function IngredientDetailScreen() {
 
     if (loading) {
         return (
-            <ThemedView style={styles.container}>
+            <YStack backgroundColor="$background" style={styles.container}>
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={Colors.dark.tint} />
                 </View>
-            </ThemedView>
+            </YStack>
         );
     }
 
     if (!ingredient) {
         return (
-            <ThemedView style={styles.container}>
+            <YStack backgroundColor="$background" style={styles.container}>
                 <View style={styles.center}>
-                    <ThemedText>Ingredient not found.</ThemedText>
+                    <Text>Ingredient not found.</Text>
                 </View>
-            </ThemedView>
+            </YStack>
         );
     }
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack backgroundColor="$background" style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
@@ -71,7 +70,7 @@ export default function IngredientDetailScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
-                <ThemedText type="subtitle" style={styles.headerTitle}>{ingredient.name}</ThemedText>
+                <Text style={[styles.headerTitle, { fontSize: 20, fontWeight: 'bold' }]}>{ingredient.name}</Text>
                 <TouchableOpacity 
                     onPress={() => router.push(`/ingredient/${id}/edit`)} 
                     style={styles.headerBtn}
@@ -86,11 +85,11 @@ export default function IngredientDetailScreen() {
                 <GlassView style={styles.card} intensity={10}>
                     <View style={styles.cardHeader}>
                         <IconSymbol name="info.circle" size={24} color={Colors.dark.tint} />
-                        <ThemedText type="subtitle" style={styles.cardTitle}>About</ThemedText>
+                        <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>About</Text>
                     </View>
-                    <ThemedText style={styles.description}>
+                    <Text style={styles.description}>
                         {ingredient.description || "No description provided."}
-                    </ThemedText>
+                    </Text>
                     {/* Could show tags like "Batch" here */}
                 </GlassView>
 
@@ -99,18 +98,18 @@ export default function IngredientDetailScreen() {
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="flask" size={24} color={Colors.dark.tint} />
-                            <ThemedText type="subtitle" style={styles.cardTitle}>Build Spec</ThemedText>
+                            <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Build Spec</Text>
                         </View>
                         
                         <View style={styles.recipeList}>
                             {recipe.map((item, index) => (
                                 <View key={item.id} style={[styles.recipeRow, index !== recipe.length - 1 && styles.recipeBorder]}>
-                                    <ThemedText style={styles.recipeName}>{item.is_top ? `Top ` : ''}{item.ingredient?.name || "Unknown"}</ThemedText>
+                                    <Text style={styles.recipeName}>{item.is_top ? `Top ` : ''}{item.ingredient?.name || "Unknown"}</Text>
                                     <View style={styles.amounts}>
-                                        {item.ingredient_ml && <ThemedText style={styles.amountText}>{item.ingredient_ml} ml</ThemedText>}
-                                        {item.ingredient_bsp && <ThemedText style={styles.amountText}>{item.ingredient_bsp} bsp</ThemedText>}
-                                        {item.ingredient_dash && <ThemedText style={styles.amountText}>{item.ingredient_dash} dash</ThemedText>}
-                                        {item.ingredient_amount && <ThemedText style={styles.amountText}>{item.ingredient_amount}x</ThemedText>}
+                                        {item.ingredient_ml && <Text style={styles.amountText}>{item.ingredient_ml} ml</Text>}
+                                        {item.ingredient_bsp && <Text style={styles.amountText}>{item.ingredient_bsp} bsp</Text>}
+                                        {item.ingredient_dash && <Text style={styles.amountText}>{item.ingredient_dash} dash</Text>}
+                                        {item.ingredient_amount && <Text style={styles.amountText}>{item.ingredient_amount}x</Text>}
                                     </View>
                                 </View>
                             ))}
@@ -123,7 +122,7 @@ export default function IngredientDetailScreen() {
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="wineglass" size={24} color={Colors.dark.tint} />
-                            <ThemedText type="subtitle" style={styles.cardTitle}>Used In</ThemedText>
+                            <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Used In</Text>
                         </View>
                         <View style={styles.recipeList}>
                             {usedIn.map((item: any, index: number) => {
@@ -141,7 +140,7 @@ export default function IngredientDetailScreen() {
                                                 style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.1)' }}
                                                 contentFit="cover"
                                             />
-                                            <ThemedText style={styles.recipeName}>{item.cocktail.name}</ThemedText>
+                                            <Text style={styles.recipeName}>{item.cocktail.name}</Text>
                                         </View>
                                         <View style={styles.amounts}>
                                             <IconSymbol name="chevron.right" size={16} color={Colors.dark.tint} />
@@ -154,7 +153,7 @@ export default function IngredientDetailScreen() {
                 )}
 
             </ScrollView>
-        </ThemedView>
+        </YStack>
     );
 }
 

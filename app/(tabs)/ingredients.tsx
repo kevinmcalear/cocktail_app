@@ -1,8 +1,5 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useIngredients } from "@/hooks/useIngredients";
@@ -18,6 +15,7 @@ import {
     ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Card, Text, XStack, YStack } from "tamagui";
 
 interface Ingredient {
     id: string;
@@ -101,49 +99,61 @@ export default function PrepScreen() {
 
     const renderItem = ({ item }: { item: Ingredient | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
-            return (
-                <View style={styles.sectionHeader}>
-                    <View style={styles.sectionDivider} />
-                    <ThemedText style={styles.sectionHeaderText}>{item.letter}</ThemedText>
-                    <View style={styles.sectionDivider} />
-                </View>
-            );
+            <XStack alignItems="center" justifyContent="center" paddingVertical="$4" marginTop="$3" marginBottom="$2" paddingHorizontal="$6">
+                <YStack flex={1} height={2} backgroundColor="rgba(255, 255, 255, 0.4)" />
+                <Text fontSize="$7" fontWeight="800" color="#fff" marginHorizontal="$4" textAlign="center">{item.letter}</Text>
+                <YStack flex={1} height={2} backgroundColor="rgba(255, 255, 255, 0.4)" />
+            </XStack>
         }
 
         const ingredient = item as Ingredient;
 
         return (
-            <TouchableOpacity 
-                activeOpacity={0.7}
+            <Card
+                pressStyle={{ scale: 0.98, opacity: 0.8 }}
+                backgroundColor="rgba(255,255,255,0.03)"
+                borderColor="rgba(255,255,255,0.08)"
+                borderWidth={1}
+                borderRadius="$4"
+                marginBottom="$3"
+                overflow="hidden"
                 onPress={() => router.push(`/ingredient/${ingredient.id}`)}
             >
-                <GlassView style={styles.itemCard} intensity={20}>
-                    <View style={styles.itemRow}>
-                        <View style={styles.textContainer}>
-                            <View style={styles.headerRow}>
-                                <ThemedText type="subtitle" style={styles.itemName} numberOfLines={1}>{ingredient.name}</ThemedText>
-                                {/* Maybe show a badge if it is a batch? */}
-                                {ingredient.is_batch && (
-                                    <View style={styles.batchBadge}>
-                                        <ThemedText style={styles.batchBadgeText}>BATCH</ThemedText>
-                                    </View>
-                                )}
-                            </View>
-                            {ingredient.description && (
-                                <ThemedText style={styles.itemDescription} numberOfLines={2}>{ingredient.description}</ThemedText>
+                <XStack padding="$3" alignItems="center" minHeight={100}>
+                    <YStack flex={1} paddingRight="$3" gap="$1.5" justifyContent="center">
+                        <XStack alignItems="center" gap="$2">
+                            <Text fontSize="$6" fontWeight="700" color="$color" numberOfLines={1} flexShrink={1}>
+                                {ingredient.name}
+                            </Text>
+                            {ingredient.is_batch && (
+                                <View style={styles.batchBadge}>
+                                    <Text style={styles.batchBadgeText}>BATCH</Text>
+                                </View>
                             )}
-                        </View>
-                        <View style={styles.iconContainer}>
-                            <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
-                        </View>
-                    </View>
-                </GlassView>
-            </TouchableOpacity>
+                        </XStack>
+                        {ingredient.description && (
+                            <Text fontSize="$3" color="$color11" numberOfLines={2} lineHeight="$4">
+                                {ingredient.description}
+                            </Text>
+                        )}
+                    </YStack>
+                    <YStack
+                        width={76}
+                        height={76}
+                        borderRadius="$3"
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
+                    </YStack>
+                </XStack>
+            </Card>
         );
     };
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack style={styles.container} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
 
             <View style={styles.contentContainer}>
@@ -187,7 +197,7 @@ export default function PrepScreen() {
                     placeholder="Find..."
                 />
             </View>
-        </ThemedView>
+        </YStack>
     );
 }
 

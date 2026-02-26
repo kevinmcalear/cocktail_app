@@ -1,4 +1,3 @@
-import { ThemedText } from "@/components/themed-text";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -8,6 +7,7 @@ import { useEffect } from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { interpolate, runOnJS, SharedValue, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { Text } from "tamagui";
 
 export const { width, height } = Dimensions.get("window");
 
@@ -30,7 +30,7 @@ export function SubjectCard({ icon, label, onPress }: { icon: string, label: str
         <TouchableOpacity style={sharedStyles.subjectCardWrapper} onPress={onPress}>
             <GlassView style={sharedStyles.subjectCard} intensity={20}>
                 <IconSymbol name={icon as any} size={32} color={Colors.dark.tint} />
-                <ThemedText style={sharedStyles.subjectLabel}>{label}</ThemedText>
+                <Text style={sharedStyles.subjectLabel}>{label}</Text>
             </GlassView>
         </TouchableOpacity>
     );
@@ -74,11 +74,11 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
 
     return (
         <View style={sharedStyles.sliderWrapper}>
-            <ThemedText style={sharedStyles.sliderLabel}>
+            <Text style={sharedStyles.sliderLabel}>
                 {cardCount === 20 ? "YOU'RE AN ANIMAL" : `NUMBER OF CARDS: ${cardCount}`}
-            </ThemedText>
+            </Text>
             <View style={sharedStyles.sliderContainer}>
-                <ThemedText style={sharedStyles.sliderLimit}>5</ThemedText>
+                <Text style={sharedStyles.sliderLimit}>5</Text>
                 <GestureDetector gesture={gesture}>
                     <View style={sharedStyles.sliderTrack}>
                         <GlassView style={sharedStyles.sliderTrackGlass} intensity={10}>
@@ -87,7 +87,7 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
                         </GlassView>
                     </View>
                 </GestureDetector>
-                <ThemedText style={sharedStyles.sliderLimit}>20</ThemedText>
+                <Text style={sharedStyles.sliderLimit}>20</Text>
             </View>
         </View>
     );
@@ -180,8 +180,8 @@ export function ShakerToggle({ active, onPress }: { active: boolean, onPress: ()
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={sharedStyles.shakerToggleContainer}>
             <View style={sharedStyles.shakerToggleLabels}>
-                <ThemedText style={[sharedStyles.shakerToggleLabel, !active && sharedStyles.activeLabel]}>TRAINING MODE</ThemedText>
-                <ThemedText style={[sharedStyles.shakerToggleLabel, active && sharedStyles.activeLabel]}>SPEC MODE</ThemedText>
+                <Text style={[sharedStyles.shakerToggleLabel, !active && sharedStyles.activeLabel]}>TRAINING MODE</Text>
+                <Text style={[sharedStyles.shakerToggleLabel, active && sharedStyles.activeLabel]}>SPEC MODE</Text>
             </View>
 
             <View style={sharedStyles.shakerWrapper}>

@@ -1,14 +1,13 @@
 import { CurrentMenuList } from "@/components/CurrentMenuList";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, ScrollView as TamaguiScrollView, Text, YStack } from "tamagui";
 
 export default function MenusScreen() {
     const router = useRouter();
@@ -43,45 +42,68 @@ export default function MenusScreen() {
     const selectedMenuName = menus.find(m => m.id === selectedMenuId)?.name || "Menu";
 
     return (
-        <ThemedView style={styles.container}>
+        <YStack flex={1} backgroundColor="$background">
             <CurrentMenuList
                 sections={menuDetails?.sections || []}
                 ListHeaderComponent={
                     <View>
-                        <View style={{ paddingTop: insets.top + 10 }} />
-
+                        <View style={{ paddingTop: insets.top + 10, alignItems: 'center', marginBottom: 10 }}>
+                            <Button
+                                size="$3"
+                                borderRadius="$10"
+                                backgroundColor={Colors.dark.tint}
+                                borderColor="transparent"
+                                borderWidth={1}
+                                onPress={() => router.push("/tamagui-demo")}
+                            >
+                                <Text color="#000" fontWeight="600">
+                                    ✨ View Tamagui Demo ✨
+                                </Text>
+                            </Button>
+                        </View>
                         {loadingMenus ? (
                             <ActivityIndicator color={Colors.dark.tint} style={{ marginVertical: 20 }} />
                         ) : (
-                            <ScrollView 
-                                ref={scrollViewRef}
+                        <TamaguiScrollView 
+                                ref={scrollViewRef as any}
                                 horizontal 
                                 showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.pillsContainer}
+                                contentContainerStyle={{ paddingHorizontal: 15, gap: 10, marginTop: 20, alignItems: "center" }}
                             >
                                 {menus.map((menu) => {
                                     const isSelected = selectedMenuId === menu.id;
                                     return (
-                                        <TouchableOpacity
+                                        <Button
                                             key={menu.id}
-                                            style={[styles.pill, isSelected && styles.pillSelected]}
+                                            size="$3"
+                                            borderRadius="$10"
+                                            backgroundColor={isSelected ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
+                                            borderColor={isSelected ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                            borderWidth={1}
                                             onPress={() => setSelectedMenuId(menu.id)}
                                         >
-                                            <ThemedText style={[styles.pillTitle, isSelected && styles.pillTextSelected]}>
+                                            <Text color={isSelected ? "#000" : Colors.dark.text} fontWeight="600">
                                                 {menu.name}
-                                            </ThemedText>
-                                        </TouchableOpacity>
+                                            </Text>
+                                        </Button>
                                     );
                                 })}
                                 
-                                <TouchableOpacity
-                                    style={[styles.pill, styles.pillCreate]}
+                                <Button
+                                    size="$3"
+                                    borderRadius="$10"
+                                    backgroundColor="rgba(255,255,255,0.1)"
+                                    borderStyle="dashed"
+                                    borderWidth={1}
+                                    borderColor="transparent"
+                                    icon={<IconSymbol name="plus" size={20} color={Colors.dark.text} />}
                                     onPress={() => router.push("/menus/create")}
                                 >
-                                    <IconSymbol name="plus" size={20} color={Colors.dark.text} />
-                                    <ThemedText style={styles.pillCreateText}>Create Menu</ThemedText>
-                                </TouchableOpacity>
-                            </ScrollView>
+                                    <Text color={Colors.dark.text} fontWeight="600">
+                                        Create Menu
+                                    </Text>
+                                </Button>
+                            </TamaguiScrollView>
                         )}
 
                         <View style={styles.sectionHeader}>
@@ -90,7 +112,7 @@ export default function MenusScreen() {
                     </View>
                 }
             />
-        </ThemedView>
+        </YStack>
     );
 }
 
@@ -99,46 +121,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.dark.background,
     },
-    pillsContainer: {
-        paddingHorizontal: 15,
-        gap: 10,
-        marginTop: 20,
-        alignItems: "center"
-    },
-    pill: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 25,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-        justifyContent: "center",
-        alignItems: "center"
-    },
-    pillSelected: {
-        backgroundColor: Colors.dark.tint,
-        borderColor: Colors.dark.tint,
-    },
-    pillTitle: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: Colors.dark.text,
-    },
-    pillTextSelected: {
-        color: "#000", // Dark text on tinted background
-    },
-    pillCreate: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        backgroundColor: "rgba(255,255,255,0.1)",
-        borderStyle: "dashed",
-    },
-    pillCreateText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: Colors.dark.text,
-    },
+
     sectionHeader: {
         paddingHorizontal: 20,
         paddingTop: 30,

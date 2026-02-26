@@ -1,10 +1,10 @@
-import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { Image as ExpoImage } from 'expo-image';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
+import { Text } from "tamagui";
 
 export interface ImageItem {
     id?: string;
@@ -59,8 +59,8 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd }: Sortab
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <ThemedText style={styles.label}>Photos</ThemedText>
-                <ThemedText style={styles.hint}>Long press to reorder</ThemedText>
+                <Text style={styles.label}>Photos</Text>
+                <Text style={styles.hint}>Long press to reorder</Text>
             </View>
             
             <View style={styles.listContainer}>
@@ -74,7 +74,7 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd }: Sortab
                 */}
                  <TouchableOpacity onPress={onAdd} style={styles.addImageBtn}>
                     <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
-                    <ThemedText style={styles.addImageText}>Add</ThemedText>
+                    <Text style={styles.addImageText}>Add</Text>
                 </TouchableOpacity>
 
                 <DraggableFlatList

@@ -8,14 +8,13 @@ import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnim
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ImageCarousel } from "@/components/ImageCarousel";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { H4, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 
@@ -69,17 +68,17 @@ export default function CocktailDetailsScreen() {
 
     if (loading) {
         return (
-            <ThemedView style={styles.container}>
-                <ThemedText>Loading...</ThemedText>
-            </ThemedView>
+            <YStack style={styles.container}>
+                <Text>Loading...</Text>
+            </YStack>
         );
     }
 
     if (!cocktail) {
         return (
-            <ThemedView style={styles.container}>
-                <ThemedText>Cocktail not found.</ThemedText>
-            </ThemedView>
+            <YStack style={styles.container}>
+                <Text>Cocktail not found.</Text>
+            </YStack>
         );
     }
 
@@ -103,7 +102,7 @@ export default function CocktailDetailsScreen() {
                     }}
                 >
                     <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
-                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</ThemedText>
+                    <Text style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</Text>
                 </RectButton>
                 <RectButton
                     style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
@@ -114,7 +113,7 @@ export default function CocktailDetailsScreen() {
                     }}
                 >
                     <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
-                    <ThemedText style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</ThemedText>
+                    <Text style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</Text>
                 </RectButton>
             </View>
         );
@@ -161,7 +160,7 @@ export default function CocktailDetailsScreen() {
 
                 {/* Sticky Title */}
                 <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
-                    <ThemedText style={styles.stickyTitleText}>{cocktail?.name}</ThemedText>
+                    <Text style={styles.stickyTitleText}>{cocktail?.name}</Text>
                 </Animated.View>
             </View>
 
@@ -181,70 +180,74 @@ export default function CocktailDetailsScreen() {
                         rightThreshold={40}
                         overshootRight={false}
                     >
-                        <ThemedText type="title" style={styles.title}>{cocktail.name}</ThemedText>
+                        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold' }]}>{cocktail.name}</Text>
                     </Swipeable>
                 </View>
 
                 {/* Ingredients List */}
                 {cocktail.recipes && cocktail.recipes.length > 0 && (
-                    <View style={[styles.section, styles.sectionLeft, { marginBottom: 24 }]}>
-                        <View style={styles.ingredientsList}>
+                    <YStack gap="$2" marginBottom="$4" paddingHorizontal="$4">
+                        <H4 paddingBottom="$2" color="$color" fontSize={24} fontWeight="700">Ingredients</H4>
+                        <YStack backgroundColor="rgba(255,255,255,0.03)" borderRadius="$4" padding="$3" borderWidth={1} borderColor="rgba(255,255,255,0.08)">
                             {cocktail.recipes.map((recipe, index) => (
-                                <View key={index} style={styles.ingredientRow}>
-                                    <ThemedText style={[styles.text, styles.textLeft]}>{formatIngredient(recipe)}</ThemedText>
-                                </View>
+                                <React.Fragment key={index}>
+                                    <XStack alignItems="center" justifyContent="space-between" paddingVertical="$2">
+                                        <Text color="$color" fontSize={16}>{formatIngredient(recipe)}</Text>
+                                    </XStack>
+                                    {index < cocktail.recipes!.length - 1 && <Separator borderColor="rgba(255,255,255,0.05)" />}
+                                </React.Fragment>
                             ))}
-                        </View>
-                    </View>
+                        </YStack>
+                    </YStack>
                 )}
 
                 {/* Core Metadata Badges */}
-                <View style={[styles.section, styles.sectionLeft, { marginBottom: 24 }]}>
-                    <View style={styles.badgeContainer}>
-                        {cocktail.methods?.name && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="hammer.fill" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.methods.name}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.glassware?.name && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="wineglass" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.glassware.name}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.ice?.name && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="snowflake" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.ice.name}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.garnish_1 && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="leaf.fill" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.garnish_1}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.families?.name && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="person.2.fill" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.families.name}</ThemedText>
-                            </View>
-                        )}
-                        {cocktail.origin && (
-                            <View style={styles.badge}>
-                                <IconSymbol name="globe" size={16} color={Colors.dark.text} />
-                                <ThemedText style={styles.badgeText}>{cocktail.origin}</ThemedText>
-                            </View>
-                        )}
-                    </View>
-                </View>
+                <XStack flexWrap="wrap" gap="$2" paddingHorizontal="$4" marginBottom="$4">
+                    {cocktail.methods?.name && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="hammer.fill" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.methods.name}</Text>
+                        </XStack>
+                    )}
+                    {cocktail.glassware?.name && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="wineglass" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.glassware.name}</Text>
+                        </XStack>
+                    )}
+                    {cocktail.ice?.name && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="snowflake" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.ice.name}</Text>
+                        </XStack>
+                    )}
+                    {cocktail.garnish_1 && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="leaf.fill" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.garnish_1}</Text>
+                        </XStack>
+                    )}
+                    {cocktail.families?.name && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="person.2.fill" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.families.name}</Text>
+                        </XStack>
+                    )}
+                    {cocktail.origin && (
+                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="globe" size={16} color={Colors.dark.text} />
+                            <Text color="$color" fontSize={14} fontWeight="500">{cocktail.origin}</Text>
+                        </XStack>
+                    )}
+                </XStack>
 
                 {/* Description and Notes */}
                 {(cocktail.description || cocktail.notes) && (
-                    <View style={[styles.section, styles.sectionLeft]}>
+                    <YStack gap="$3" paddingHorizontal="$4" marginBottom="$4">
                         {cocktail.description && (
-                            <ThemedText style={[styles.text, styles.textLeft, { marginBottom: 16 }]}>{cocktail.description}</ThemedText>
+                            <Paragraph color="$color" fontSize={16} lineHeight={24}>
+                                {cocktail.description}
+                            </Paragraph>
                         )}
                         {cocktail.notes && (
                             <TouchableOpacity 
@@ -252,22 +255,25 @@ export default function CocktailDetailsScreen() {
                                 onPress={() => setNotesExpanded(!notesExpanded)}
                                 activeOpacity={0.7}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <XStack alignItems="center" gap="$2">
                                     <IconSymbol name="note.text" size={16} color={Colors.dark.text} style={{ opacity: 0.8 }} />
-                                    <ThemedText style={styles.notesLabel}>Notes</ThemedText>
+                                    <Text color="$color" fontSize={14} fontWeight="bold" textTransform="uppercase" letterSpacing={1}>Notes</Text>
+                                    <View style={{ flex: 1 }} />
                                     <IconSymbol 
                                         name={notesExpanded ? "chevron.up" : "chevron.down"} 
                                         size={14} 
                                         color={Colors.dark.text} 
-                                        style={{ opacity: 0.6, marginLeft: 'auto' }}
+                                        style={{ opacity: 0.6 }}
                                     />
-                                </View>
+                                </XStack>
                                 {notesExpanded && (
-                                    <ThemedText style={[styles.text, styles.textLeft, { marginTop: 12, opacity: 0.9 }]}>{cocktail.notes}</ThemedText>
+                                    <Paragraph color="$color" fontSize={16} lineHeight={24} marginTop="$3" opacity={0.9}>
+                                        {cocktail.notes}
+                                    </Paragraph>
                                 )}
                             </TouchableOpacity>
                         )}
-                    </View>
+                    </YStack>
                 )}
 
                 {/* Bottom Spacing */}
@@ -339,26 +345,7 @@ const styles = StyleSheet.create({
     },
     // Removed columnsContainer, leftColumn, rightColumn, bottomSection, detailsListLeft, detailRowLeft, detailLabelLeft, detailValueLeft, titleOverlay, titleOverlayText
     // Re-added styles that were removed
-    badgeContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        alignItems: 'center',
-    },
-    badge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 16,
-    },
-    badgeText: {
-        color: Colors.dark.text,
-        fontSize: 14,
-        fontWeight: '500',
-    },
+
     notesToggle: {
         backgroundColor: 'rgba(255,255,255,0.05)',
         padding: 16,
@@ -397,36 +384,6 @@ const styles = StyleSheet.create({
         color: Colors.dark.text,
         textAlign: 'left',
     },
-    section: {
-        gap: 12,
-        marginBottom: 16,
-        paddingHorizontal: 24,
-        alignItems: 'flex-start',
-        width: '100%',
-    },
-    sectionLeft: {
-        alignItems: 'flex-start',
-    },
-    text: {
-        fontSize: 16,
-        lineHeight: 24,
-        color: Colors.dark.text,
-        opacity: 0.9,
-    },
-    textLeft: {
-        textAlign: 'left',
-    },
-    ingredientsList: {
-        gap: 6,
-        alignItems: 'flex-start',
-    },
-    ingredientRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: 'flex-start',
-        gap: 10
-    },
-
     backButton: {
         position: 'absolute',
         zIndex: 10,

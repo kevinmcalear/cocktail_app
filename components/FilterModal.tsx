@@ -1,10 +1,10 @@
-import { ThemedText } from "@/components/themed-text";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import * as Haptics from "expo-haptics";
 import { Modal, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text } from "tamagui";
 
 interface FilterModalProps {
     visible: boolean;
@@ -49,14 +49,14 @@ export function FilterModal({
                             <View style={styles.dragIndicator} />
                             
                             <View style={styles.header}>
-                                <ThemedText type="subtitle" style={styles.title}>Filters</ThemedText>
+                                <Text style={[styles.title, { fontSize: 20, fontWeight: 'bold' }]}>Filters</Text>
                                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                                     <IconSymbol name="xmark.circle.fill" size={24} color={Colors.dark.icon} />
                                 </TouchableOpacity>
                             </View>
 
                             <View style={styles.section}>
-                                <ThemedText style={styles.sectionTitle}>Category</ThemedText>
+                                <Text style={styles.sectionTitle}>Category</Text>
                                 <View style={styles.categoryFiltersContainer}>
                                     {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
                                         const isSelected = selectedCategory === cat;
@@ -70,9 +70,9 @@ export function FilterModal({
                                                     style={[styles.categoryPill, isSelected && styles.categoryPillSelected]} 
                                                     intensity={isSelected ? 60 : 15}
                                                 >
-                                                    <ThemedText style={[styles.categoryPillText, isSelected && styles.categoryPillTextSelected]}>
+                                                    <Text style={[styles.categoryPillText, isSelected && styles.categoryPillTextSelected]}>
                                                         {cat}
-                                                    </ThemedText>
+                                                    </Text>
                                                 </GlassView>
                                             </TouchableOpacity>
                                         );
@@ -88,7 +88,7 @@ export function FilterModal({
                                 >
                                     <View style={styles.toggleTextContainer}>
                                         <IconSymbol name="heart.fill" size={20} color={showFavesOnly ? "#FF4B4B" : Colors.dark.icon} />
-                                        <ThemedText style={styles.toggleLabel}>Only show favourites</ThemedText>
+                                        <Text style={styles.toggleLabel}>Only show favourites</Text>
                                     </View>
                                     <View style={[styles.toggleSwitch, showFavesOnly && styles.toggleSwitchActive]}>
                                         <View style={[styles.toggleKnob, showFavesOnly && styles.toggleKnobActive]} />
@@ -97,7 +97,7 @@ export function FilterModal({
                             </View>
 
                             <TouchableOpacity style={styles.applyButton} onPress={onClose}>
-                                <ThemedText style={styles.applyButtonText}>Show Results</ThemedText>
+                                <Text style={styles.applyButtonText}>Show Results</Text>
                             </TouchableOpacity>
                         </GlassView>
                     </TouchableWithoutFeedback>
