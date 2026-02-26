@@ -8,7 +8,12 @@ export function useIngredients() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('ingredients')
-                .select('*')
+                .select(`
+                    *,
+                    ingredient_images (
+                        images ( url )
+                    )
+                `)
                 .order('name');
                 
             if (error) throw error;
@@ -28,7 +33,12 @@ export function useIngredient(id?: string | string[]) {
             // 1. Fetch Ingredient Info
             const { data: ingredient, error: ingError } = await supabase
                 .from('ingredients')
-                .select('*')
+                .select(`
+                    *,
+                    ingredient_images (
+                        images ( url )
+                    )
+                `)
                 .eq('id', ingredientId)
                 .single();
 

@@ -32,7 +32,7 @@ export default function DrinksScreen() {
             description: b.description,
             category: "Beer",
             price: b.price,
-            image: b.image_url ? { uri: b.image_url } : undefined
+            image: b.beer_images?.[0]?.images?.url ? { uri: b.beer_images[0].images.url } : undefined
         }));
 
         const mappedWines: DrinkListItem[] = (winesData || []).map((w: any) => ({
@@ -41,7 +41,7 @@ export default function DrinksScreen() {
             description: w.description,
             category: "Wine",
             price: w.price,
-            image: w.image_url ? { uri: w.image_url } : undefined
+            image: w.wine_images?.[0]?.images?.url ? { uri: w.wine_images[0].images.url } : undefined
         }));
 
         setDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);

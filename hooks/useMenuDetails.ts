@@ -40,6 +40,14 @@ export function useMenuDetails(menuId: string | null) {
                             ingredient_amount, ingredient_ml, ingredient_bsp,
                             ingredients!recipes_ingredient_id_fkey ( name )
                         )
+                    ),
+                    beers (
+                        id, name, description, style, brewery,
+                        beer_images ( images ( url ) )
+                    ),
+                    wines (
+                        id, name, description, price, location,
+                        wine_images ( images ( url ) )
                     )
                 `)
                 .eq('menu_id', menuId);
@@ -54,31 +62,65 @@ export function useMenuDetails(menuId: string | null) {
                     .filter(d => d.template_section_id === sec.id)
                     .sort((a, b) => a.sort_order - b.sort_order)
                     .map(d => {
-                        // Suppress TS errors since we don't have perfect types here
-                        const c = d.cocktails as any;
-                        if (!c) return null;
+                        let item: import('@/components/CurrentMenuList').MenuItem | null = null;
 
-                        const rList = Array.isArray(c.recipes) ? c.recipes : [c.recipes];
-                        const ingList = rList.filter(Boolean).map((r: any) => {
-                            const amt = r.ingredient_amount ? `${r.ingredient_amount} ` : (r.ingredient_ml ? `${r.ingredient_ml}ml ` : (r.ingredient_bsp ? `${r.ingredient_bsp}bsp ` : ''));
-                            return `${amt}${r.ingredients?.name || ''}`.trim();
-                        }).filter(Boolean).join(', ');
-                        
-                        let imageUrl = defaultImage;
-                        if (c.cocktail_images && c.cocktail_images.length > 0) {
-                            const imgArr = Array.isArray(c.cocktail_images) ? c.cocktail_images : [c.cocktail_images];
-                            if (imgArr[0]?.images?.url) {
-                                imageUrl = imgArr[0].images.url;
+                        if (d.cocktails) {
+                            const c = d.cocktails as any;
+                            const rList = Array.isArray(c.recipes) ? c.recipes : [c.recipes];
+                            const ingList = rList.filter(Boolean).map((r: any) => {
+                                const amt = r.ingredient_amount ? `${r.ingredient_amount} ` : (r.ingredient_ml ? `${r.ingredient_ml}ml ` : (r.ingredient_bsp ? `${r.ingredient_bsp}bsp ` : ''));
+                                return `${amt}${r.ingredients?.name || ''}`.trim();
+                            }).filter(Boolean).join(', ');
+                            
+                            let imageUrl = defaultImage;
+                            if (c.cocktail_images && c.cocktail_images.length > 0) {
+                                const imgArr = Array.isArray(c.cocktail_images) ? c.cocktail_images : [c.cocktail_images];
+                                if (imgArr[0]?.images?.url) {
+                                    imageUrl = imgArr[0].images.url;
+                                }
                             }
-                        }
 
-                        const item: import('@/components/CurrentMenuList').MenuItem = {
-                            id: c.id,
-                            name: c.name,
-                            description: c.description || "",
-                            ingredients: ingList,
-                            image: imageUrl,
-                        };
+                            item = {
+                                id: c.id,
+                                name: c.name,
+                                description: c.description || "",
+                                ingredients: ingList,
+                                image: imageUrl,
+                            };
+                        } else if (d.beers) {
+                            const b = d.beers as any;
+                            let imageUrl = defaultImage;
+                            if (b.beer_images && b.beer_images.length > 0) {
+                                const imgArr = Array.isArray(b.beer_images) ? b.beer_images : [b.beer_images];
+                                if (imgArr[0]?.images?.url) {
+                                    imageUrl = imgArr[0].images.url;
+                                }
+                            }
+                            item = {
+                                id: `beer-${b.id}`,
+                                name: b.name,
+                                description: b.description || "Craft Beer",
+                                ingredients: b.style || b.brewery || "Beer",
+                                image: imageUrl,
+                            };
+                        } else if (d.wines) {
+                            const w = d.wines as any;
+                            let imageUrl = defaultImage;
+                            if (w.wine_images && w.wine_images.length > 0) {
+                                const imgArr = Array.isArray(w.wine_images) ? w.wine_images : [w.wine_images];
+                                if (imgArr[0]?.images?.url) {
+                                    imageUrl = imgArr[0].images.url;
+                                }
+                            }
+                            item = {
+                                id: `wine-${w.id}`,
+                                name: w.name,
+                                description: w.description || "Wine",
+                                ingredients: w.location || "Wine",
+                                image: imageUrl,
+                            };
+                        }
+                        
                         return item;
                     }).filter((item): item is import('@/components/CurrentMenuList').MenuItem => item !== null);
                 

@@ -60,6 +60,10 @@ function RootLayoutNav() {
           options={{ presentation: "modal", title: "Modal" }}
         />
         <Stack.Screen
+          name="menus/create/index"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
           name="add-cocktail"
           options={{ presentation: "fullScreenModal", headerShown: false }}
         />
@@ -69,6 +73,26 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="cocktail/[id]/index"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="cocktail/[id]/edit"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="beer/[id]/index"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="beer/[id]/edit"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="wine/[id]/index"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="wine/[id]/edit"
           options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen name="test" options={{ headerShown: false }} />

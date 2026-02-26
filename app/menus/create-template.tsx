@@ -2,8 +2,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -27,15 +27,51 @@ export default function CreateTemplateScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
+    const { id } = useLocalSearchParams<{ id?: string }>();
+    const isEditing = !!id;
 
     const [templateName, setTemplateName] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
     
     // Start with one blank section by default
     const [sections, setSections] = useState<SectionInput[]>([
-        { id: 'sec-1', name: '', minItems: '1', maxItems: '' }
+        { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '' }
     ]);
     const [saving, setSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(isEditing);
+
+    useEffect(() => {
+        if (!isEditing || !id) return;
+        
+        async function loadTemplate() {
+            try {
+                const { data: template } = await supabase.from('menu_templates').select('*').eq('id', id).single();
+                if (template) {
+                    setTemplateName(template.name);
+                    setTemplateDescription(template.description || "");
+                }
+
+                const { data: sectionsData } = await supabase.from('template_sections').select('*').eq('template_id', id).order('sort_order', { ascending: true });
+                if (sectionsData && sectionsData.length > 0) {
+                    setSections(sectionsData.map((s: any) => ({
+                        id: s.id, // real UUID
+                        name: s.name,
+                        minItems: s.min_items ? s.min_items.toString() : '1',
+                        maxItems: s.max_items ? s.max_items.toString() : ''
+                    })));
+                } else {
+                    setSections([{ id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '' }]);
+                }
+            } catch (err) {
+                console.error("Error loading template", err);
+                Alert.alert("Error", "Could not load the template.");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        
+        loadTemplate();
+    }, [id, isEditing]);
 
     const handleAddSection = () => {
         setSections(prev => [
@@ -72,56 +108,100 @@ export default function CreateTemplateScreen() {
 
         setSaving(true);
         try {
-            // 1. Create Template Parent Record
-            const { data: newTemplate, error: templateError } = await supabase
-                .from('menu_templates')
-                .insert({
-                    name: templateName.trim(),
-                    description: templateDescription.trim(),
-                })
-                .select()
-                .single();
+            let templateId = id;
 
-            if (templateError || !newTemplate) throw templateError;
+            // 1. Create or Update Template Parent Record
+            if (isEditing && id) {
+                const { error: templateError } = await supabase
+                    .from('menu_templates')
+                    .update({
+                        name: templateName.trim(),
+                        description: templateDescription.trim(),
+                    })
+                    .eq('id', id);
+
+                if (templateError) throw templateError;
+            } else {
+                const { data: newTemplate, error: templateError } = await supabase
+                    .from('menu_templates')
+                    .insert({
+                        name: templateName.trim(),
+                        description: templateDescription.trim(),
+                    })
+                    .select()
+                    .single();
+
+                if (templateError || !newTemplate) throw templateError;
+                templateId = newTemplate.id;
+            }
 
             // 2. Prepare Template Sections mapping formatting numeric strings correctly
-            const sectionsToInsert = sections.map((sec, index) => {
+            const sectionsToUpsert = sections.map((sec, index) => {
                 const min = parseInt(sec.minItems, 10);
                 const max = parseInt(sec.maxItems, 10);
                 
-                return {
-                    template_id: newTemplate.id,
+                const payload: any = {
+                    template_id: templateId,
                     name: sec.name.trim(),
                     min_items: isNaN(min) ? 1 : min,
                     max_items: isNaN(max) ? null : max,
-                    sort_order: index // the array order dictates the sort order
+                    sort_order: index
                 };
+                
+                if (!sec.id.startsWith('sec-')) {
+                    payload.id = sec.id;
+                }
+                
+                return payload;
             });
 
-            // 3. Bulk Insert Sections
-            const { error: sectionsError } = await supabase
-                .from('template_sections')
-                .insert(sectionsToInsert);
+            // 3. Handle Deletions if Editing
+            if (isEditing && id) {
+                const { data: existingSections } = await supabase.from('template_sections').select('id').eq('template_id', id);
+                if (existingSections) {
+                    const currentIds = sectionsToUpsert.filter(s => s.id).map(s => s.id);
+                    const idsToDelete = existingSections.map(s => s.id).filter(sId => !currentIds.includes(sId));
+                    if (idsToDelete.length > 0) {
+                        await supabase.from('template_sections').delete().in('id', idsToDelete);
+                    }
+                }
+            }
 
-            if (sectionsError) {
-                // Should technically rollback the parent template here, but skipping for simplicity
-                throw sectionsError;
+            // 4. Bulk Upsert Sections
+            const sectionsToUpdate = sectionsToUpsert.filter(s => s.id);
+            const sectionsToInsert = sectionsToUpsert.filter(s => !s.id);
+            
+            if (sectionsToUpdate.length > 0) {
+                const { error: updateError } = await supabase.from('template_sections').upsert(sectionsToUpdate);
+                if (updateError) throw updateError;
+            }
+            if (sectionsToInsert.length > 0) {
+                const { error: insertError } = await supabase.from('template_sections').insert(sectionsToInsert);
+                if (insertError) throw insertError;
             }
 
             // Success
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
             
-            Alert.alert("Success", "Template created successfully!", [
+            Alert.alert("Success", `Template ${isEditing ? 'updated' : 'created'} successfully!`, [
                 { text: "OK", onPress: () => router.back() }
             ]);
             
         } catch (error) {
             console.error("Save template error", error);
-            Alert.alert("Error", "Failed to save the template.");
+            Alert.alert("Error", `Failed to ${isEditing ? 'update' : 'create'} the template.`);
         } finally {
             setSaving(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <YStack style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.dark.tint} />
+            </YStack>
+        );
+    }
 
     return (
         <YStack style={styles.container}>
@@ -131,11 +211,11 @@ export default function CreateTemplateScreen() {
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
                     <Text style={[styles.title, { fontSize: 34, fontWeight: 'bold' }]}>
-                        Create Template
+                        {isEditing ? 'Edit Template' : 'Create Template'}
                     </Text>
                 </View>
                 <Text style={styles.subtitle}>
-                    Design the structure for your menus.
+                    {isEditing ? 'Modify your template structure.' : 'Design the structure for your menus.'}
                 </Text>
             </View>
 

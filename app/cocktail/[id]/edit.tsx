@@ -1,23 +1,24 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
     ScrollView,
     StyleSheet, TouchableOpacity, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
+import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
@@ -40,7 +41,7 @@ export default function EditCocktailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const colorScheme = useColorScheme();
+    const theme = useTheme();
 
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
     const { data: cocktail, isLoading: loadingCocktail } = useCocktail(id as string);
@@ -58,30 +59,12 @@ export default function EditCocktailScreen() {
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-
-    const theme = useTheme();
-    const addCategorySheetRef = useRef<BottomSheetModal>(null);
-    const ingredientPickerSheetRef = useRef<BottomSheetModal>(null);
-    
-    // Auto-resizing for short add form, and 80% for long list
-    const snapPointsCategory = useMemo(() => ['50%'], []);
-    const snapPointsIngredients = useMemo(() => ['80%'], []);
-
-    const renderBackdrop = useCallback(
-        (props: any) => (
-            <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-                opacity={0.5}
-            />
-        ),
-        []
-    );
     const [origin, setOrigin] = useState("");
     const [garnish, setGarnish] = useState("");
     const [notes, setNotes] = useState("");
     const [spec, setSpec] = useState("");
+
+    const isLoaded = useRef(false);
 
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
@@ -91,29 +74,14 @@ export default function EditCocktailScreen() {
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
+    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
+    
+    // Modal States (replacing BottomSheets to prevent crashes and standardize styling)
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
-    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
+    
     const [addingCategory, setAddingCategory] = useState<{table: 'methods'|'glassware'|'families'|'ice', label: string} | null>(null);
     const [newItemName, setNewItemName] = useState("");
-
-    useEffect(() => {
-        if (addingCategory) {
-            addCategorySheetRef.current?.present();
-        } else {
-            addCategorySheetRef.current?.dismiss();
-            setNewItemName("");
-        }
-    }, [addingCategory]);
-
-    useEffect(() => {
-        if (showIngredientPicker) {
-            ingredientPickerSheetRef.current?.present();
-        } else {
-            ingredientPickerSheetRef.current?.dismiss();
-            setIngredientSearch("");
-        }
-    }, [showIngredientPicker]);
 
     const handleAddPill = async () => {
         if (!addingCategory || !newItemName.trim()) return;
@@ -186,7 +154,8 @@ export default function EditCocktailScreen() {
     };
 
     useEffect(() => {
-        if (cocktail) {
+        if (cocktail && !isLoaded.current) {
+            isLoaded.current = true;
             const c = cocktail as any; // Cast to any to handle join comfortably or upgrade type
             setName(c.name || "");
             setDescription(c.description || "");
@@ -202,7 +171,7 @@ export default function EditCocktailScreen() {
 
             // Populate existing images
             if (c.cocktail_images) {
-                const sortedImages = c.cocktail_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+                const sortedImages = [...c.cocktail_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
                 const fetchedImages = sortedImages.map((ci: any) => ({
                     id: ci.images.id,
                     url: ci.images.url,
@@ -225,7 +194,7 @@ export default function EditCocktailScreen() {
                 setRecipeItems(mappedRecipes);
             }
         }
-    }, [cocktail]);
+    }, [cocktail?.id]);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -239,11 +208,9 @@ export default function EditCocktailScreen() {
             allowsEditing: true,
             aspect: [4, 5],
             quality: 0.8,
-            // allowsMultipleSelection: true, // EXPO 50+ feature if desired, keep simple for now
         });
 
         if (!result.canceled) {
-            // Add to local state
             const newImages = result.assets.map(asset => ({
                 url: asset.uri,
                 isNew: true
@@ -257,15 +224,11 @@ export default function EditCocktailScreen() {
             const ext = uri.substring(uri.lastIndexOf('.') + 1);
             const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-            // Read file as base64
             const base64 = await FileSystem.readAsStringAsync(uri, {
                 encoding: 'base64',
             });
-
-            // Convert to ArrayBuffer
             const arrayBuffer = decode(base64);
 
-            // 1. Upload to Storage
             const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, arrayBuffer, {
@@ -273,30 +236,20 @@ export default function EditCocktailScreen() {
                     upsert: false
                 });
 
-            if (uploadError) {
-                console.error("Storage upload error:", uploadError);
-                return null;
-            }
+            if (uploadError) return null;
 
             const { data: publicUrlData } = supabase.storage
                 .from('drinks')
                 .getPublicUrl(fileName);
 
-            const publicUrl = publicUrlData.publicUrl;
-
-            // 2. Insert into 'images' table
             const { data: imgData, error: imgError } = await supabase
                 .from('images')
-                .insert({ url: publicUrl })
+                .insert({ url: publicUrlData.publicUrl })
                 .select()
                 .single();
 
-            if (imgError || !imgData) {
-                console.error("Image record creation error:", imgError);
-                return null;
-            }
+            if (imgError || !imgData) return null;
 
-            // Return the new image ID (linking happens in batch later)
             return imgData.id;
 
         } catch (error) {
@@ -313,7 +266,6 @@ export default function EditCocktailScreen() {
 
         setSaving(true);
         try {
-            // 1. Handle Images (Upload new, then Sync links)
             const finalImageIds: string[] = [];
             
             for (const img of localImages) {
@@ -326,9 +278,6 @@ export default function EditCocktailScreen() {
                 }
             }
 
-            // Sync cocktail_images (Delete removed, Upsert current with order)
-            
-            // Fetch existing links to know what to delete
             const { data: existingLinks } = await supabase
                 .from('cocktail_images')
                 .select('image_id')
@@ -345,7 +294,6 @@ export default function EditCocktailScreen() {
                     .in('image_id', idsToDelete);
             }
 
-            // Upsert with new order
             for (let i = 0; i < finalImageIds.length; i++) {
                 await supabase
                     .from('cocktail_images')
@@ -376,8 +324,6 @@ export default function EditCocktailScreen() {
 
             if (error) throw error;
 
-            // Save Recipes
-            // 1. Delete removed
             const keptIds = recipeItems.map(r => r.id).filter(Boolean);
             if (keptIds.length > 0) {
                 await supabase.from('recipes').delete().eq('cocktail_id', id).not('id', 'in', `(${keptIds.join(',')})`);
@@ -385,7 +331,6 @@ export default function EditCocktailScreen() {
                 await supabase.from('recipes').delete().eq('cocktail_id', id);
             }
 
-            // 2. Upsert
             for (const item of recipeItems) {
                 const payload = {
                     cocktail_id: id,
@@ -403,8 +348,6 @@ export default function EditCocktailScreen() {
                     await supabase.from('recipes').insert(payload);
                 }
             }
-
-            if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['cocktail', id] });
             queryClient.invalidateQueries({ queryKey: ['cocktails'] });
@@ -433,9 +376,9 @@ export default function EditCocktailScreen() {
         <YStack style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
+            {/* Header fixed to top 20px matching Beer and Wine edits exactly */}
             <XStack
-                paddingTop={insets.top + 10}
+                paddingTop={20}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
@@ -443,7 +386,7 @@ export default function EditCocktailScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                    <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Cocktail</Text>
                 <Button 
@@ -458,7 +401,6 @@ export default function EditCocktailScreen() {
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
-                {/* Image List */}
                 <SortableImageList 
                     images={localImages}
                     onReorder={setLocalImages}
@@ -469,7 +411,6 @@ export default function EditCocktailScreen() {
                     onAdd={pickImage}
                 />
 
-                {/* Text Fields */}
                 <YStack gap="$2" marginBottom="$4">
                     <Label color="$color11">Name *</Label>
                     <Input
@@ -498,7 +439,6 @@ export default function EditCocktailScreen() {
                     />
                 </YStack>
 
-                {/* Dropdowns */}
                 <YStack gap="$2" marginBottom="$4">
                     <Label color="$color11">Method</Label>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
@@ -599,7 +539,6 @@ export default function EditCocktailScreen() {
                     </ScrollView>
                 </YStack>
 
-                {/* Ingredients Section */}
                 <YStack gap="$2" marginBottom="$4">
                     <XStack justifyContent="space-between" alignItems="center" paddingHorizontal="$2">
                         <Label color="$color11">Ingredients</Label>
@@ -702,7 +641,6 @@ export default function EditCocktailScreen() {
                     ))}
                 </YStack>
 
-                {/* More Details */}
                 <YStack gap="$2" marginBottom="$4">
                     <Label color="$color11">Origin</Label>
                     <Input 
@@ -757,94 +695,100 @@ export default function EditCocktailScreen() {
                     />
                 </YStack>
 
-
             </ScrollView>
 
-            <BottomSheetModal
-                ref={addCategorySheetRef}
-                index={0}
-                snapPoints={snapPointsCategory}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
-                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
-                onDismiss={() => setAddingCategory(null)}
+            {/* Native Modal for adding categories avoiding gorhom issues */}
+            <Modal
+                visible={!!addingCategory}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setAddingCategory(null)}
             >
-                <BottomSheetView style={styles.modalContent}>
-                    <Text style={[styles.modalTitle, { marginBottom: 16, color: theme.color?.get() as string }]}>Add New {addingCategory?.label}</Text>
-                    <Input
-                        size="$4"
-                        marginBottom="$4"
-                        placeholder={`Enter ${addingCategory?.label} name`}
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        value={newItemName}
-                        onChangeText={setNewItemName}
-                        color="$color"
-                        autoFocus
-                    />
-                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                        <TouchableOpacity onPress={() => addCategorySheetRef.current?.dismiss()} style={{ padding: 12 }}>
-                            <Text style={{ color: theme.color11?.get() as string }}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: theme.color8?.get() as string, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
-                            <Text style={{ color: theme.backgroundStrong?.get() as string, fontWeight: 'bold' }}>Add</Text>
-                        </TouchableOpacity>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setAddingCategory(null)} />
+                        <View style={[styles.bottomSheetModalContent, { backgroundColor: theme.background?.get() as string }]}>
+                            <Text style={[styles.modalTitle, { marginBottom: 16, color: theme.color?.get() as string }]}>Add New {addingCategory?.label}</Text>
+                            <Input
+                                size="$4"
+                                marginBottom="$4"
+                                placeholder={`Enter ${addingCategory?.label} name`}
+                                backgroundColor="rgba(255,255,255,0.05)"
+                                borderColor="rgba(255,255,255,0.1)"
+                                value={newItemName}
+                                onChangeText={setNewItemName}
+                                color="$color"
+                                autoFocus
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                <TouchableOpacity onPress={() => setAddingCategory(null)} style={{ padding: 12 }}>
+                                    <Text style={{ color: theme.color11?.get() as string }}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: theme.color8?.get() as string, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
+                                    <Text style={{ color: theme.backgroundStrong?.get() as string, fontWeight: 'bold' }}>Add</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
-                </BottomSheetView>
-            </BottomSheetModal>
+                </KeyboardAvoidingView>
+            </Modal>
 
-            <BottomSheetModal
-                ref={ingredientPickerSheetRef}
-                index={0}
-                snapPoints={snapPointsIngredients}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
-                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
-                onDismiss={() => setShowIngredientPicker(false)}
+            {/* Native Modal for adding ingredients avoiding gorhom issues */}
+            <Modal
+                visible={showIngredientPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowIngredientPicker(false)}
             >
-                <BottomSheetView style={styles.modalContentList}>
-                    <View style={styles.modalHeader}>
-                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
-                        <TouchableOpacity onPress={() => ingredientPickerSheetRef.current?.dismiss()}>
-                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                        </TouchableOpacity>
-                    </View>
-                    
-                    <BottomSearchBar
-                        placeholder="Search ingredients..."
-                        value={ingredientSearch}
-                        onChangeText={setIngredientSearch}
-                        style={{ marginBottom: 16 }}
-                    />
-
-                    <FlatList
-                        showsVerticalScrollIndicator={false}
-                        data={allIngredients.filter((i: any) => 
-                            i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
-                        )}
-                        keyExtractor={item => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={styles.ingredientOption}
-                                onPress={() => {
-                                    setRecipeItems([...recipeItems, {
-                                        ingredient_id: item.id,
-                                        name: item.name,
-                                        bsp: "",
-                                        ml: "",
-                                        dash: "",
-                                        amount: "",
-                                        is_top: false
-                                    }]);
-                                    ingredientPickerSheetRef.current?.dismiss();
-                                }}
-                            >
-                                <Text style={styles.ingredientText}>{item.name}</Text>
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
+                    <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
+                            <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
                             </TouchableOpacity>
-                        )}
-                    />
-                </BottomSheetView>
-            </BottomSheetModal>
+                        </View>
+                        
+                        <BottomSearchBar
+                            placeholder="Search ingredients..."
+                            value={ingredientSearch}
+                            onChangeText={setIngredientSearch}
+                            style={{ marginBottom: 16 }}
+                        />
+
+                        <FlatList
+                            showsVerticalScrollIndicator={false}
+                            data={allIngredients.filter((i: any) => 
+                                i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+                            )}
+                            keyExtractor={item => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.ingredientOption}
+                                    onPress={() => {
+                                        setRecipeItems([...recipeItems, {
+                                            ingredient_id: item.id,
+                                            name: item.name,
+                                            bsp: "",
+                                            ml: "",
+                                            dash: "",
+                                            amount: "",
+                                            is_top: false
+                                        }]);
+                                        setShowIngredientPicker(false);
+                                    }}
+                                >
+                                    <Text style={styles.ingredientText}>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                        />
+                    </View>
+                </View>
+            </Modal>
         </YStack>
     );
 }
@@ -860,14 +804,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.dark.background,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        zIndex: 10,
-    },
     headerBtn: {
         width: 40,
         height: 40,
@@ -875,149 +811,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        padding: 20,
-        gap: 24,
-    },
-    imagePicker: {
-        width: '100%',
-        height: 300,
-        borderRadius: 20,
-        overflow: 'hidden',
-        backgroundColor: '#1A1A1A',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#333',
-        marginBottom: 10,
-    },
-    previewImage: {
-        width: '100%',
-        height: '100%',
-    },
-    placeholderImage: {
-        alignItems: 'center',
-        gap: 10
-    },
-    editIconBadge: {
-        position: 'absolute',
-        bottom: 10,
-        right: 10,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imagesSection: {
-        gap: 12,
-    },
-    imageList: {
-        gap: 12,
-        paddingRight: 20
-    },
-    addImageBtn: {
-        width: 100,
-        height: 125,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#333',
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        gap: 8
-    },
-    addImageText: {
-        fontSize: 14,
-        color: '#888'
-    },
-    imageThumbContainer: {
-        width: 100,
-        height: 125,
-        borderRadius: 12,
-        overflow: 'hidden',
-        position: 'relative'
-    },
-    imageThumb: {
-        width: '100%',
-        height: '100%'
-    },
-    newBadge: {
-        position: 'absolute',
-        top: 6,
-        right: 6,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: Colors.dark.tint
-    },
-    section: {
-        gap: 8,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#888',
-        marginLeft: 4,
-    },
-    input: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 12,
-        padding: 16,
-        color: '#fff',
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    textArea: {
-        minHeight: 100,
-        textAlignVertical: 'top',
-    },
-    pillContainer: {
-        flexDirection: 'row',
-    },
-    pill: {
         paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        marginRight: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    pillActive: {
-        backgroundColor: Colors.dark.tint,
-        borderColor: Colors.dark.tint,
-    },
-    pillText: {
-        color: '#ccc',
-        fontSize: 14,
-    },
-    pillTextActive: {
-        color: '#000',
-        fontWeight: 'bold',
-    },
-    saveButton: {
-        backgroundColor: Colors.dark.tint,
-        padding: 18,
-        borderRadius: 16,
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    saveButtonText: {
-        color: '#000',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    addText: {
-        color: Colors.dark.tint,
-        fontWeight: 'bold',
+        paddingTop: 16,
     },
     recipeRow: {
         backgroundColor: 'rgba(255,255,255,0.05)',
@@ -1045,22 +840,22 @@ const styles = StyleSheet.create({
         color: '#666',
         fontSize: 12
     },
-    smallInput: {
-        width: 44,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 8,
-        padding: 8,
-        color: '#fff',
-        textAlign: 'center',
-        justifyContent: 'center',
-        fontSize: 14
-    },
-    modalContent: {
-        padding: 24,
-    },
-    modalContentList: {
+    modalOverlay: {
         flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end'
+    },
+    bottomSheetModalContent: {
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
         padding: 24,
+        paddingBottom: 40,
+    },
+    fullSheetModalContent: {
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        height: '80%'
     },
     modalHeader: {
         flexDirection: 'row',
@@ -1072,13 +867,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#fff'
-    },
-    searchInput: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        padding: 12,
-        borderRadius: 12,
-        color: '#fff',
-        marginBottom: 10
     },
     ingredientOption: {
         padding: 16,

@@ -233,7 +233,7 @@ export default function AddCocktailScreen() {
             
             {/* Header */}
             <XStack
-                paddingTop={insets.top + 10}
+                paddingTop={20}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"

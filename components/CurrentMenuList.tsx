@@ -55,7 +55,15 @@ export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComp
                         backgroundColor="$backgroundStrong"
                         borderColor="$borderColor"
                         overflow="hidden"
-                        onPress={() => router.push(`/cocktail/${item.id}`)}
+                        onPress={() => {
+                            if (item.id.startsWith('beer-')) {
+                                router.push(`/beer/${item.id.replace('beer-', '')}`);
+                            } else if (item.id.startsWith('wine-')) {
+                                router.push(`/wine/${item.id.replace('wine-', '')}`);
+                            } else {
+                                router.push(`/cocktail/${item.id}`);
+                            }
+                        }}
                         pressStyle={{ scale: 0.98 }}
                         elevation="$1"
                     >

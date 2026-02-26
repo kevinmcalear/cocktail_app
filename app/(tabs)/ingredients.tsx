@@ -3,6 +3,7 @@ import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useIngredients } from "@/hooks/useIngredients";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -21,6 +22,7 @@ interface Ingredient {
     name: string;
     description: string | null;
     is_batch?: boolean; // We might use this if present, or infer it
+    ingredient_images?: { images: { url: string } }[];
 }
 
 export default function PrepScreen() {
@@ -147,8 +149,17 @@ export default function PrepScreen() {
                         backgroundColor={theme.color5?.get() as string}
                         alignItems="center"
                         justifyContent="center"
+                        overflow="hidden"
                     >
-                        <IconSymbol name="list.bullet.clipboard" size={30} color={theme.color8?.get() as string} />
+                        {ingredient.ingredient_images?.[0]?.images?.url ? (
+                            <Image
+                                source={{ uri: ingredient.ingredient_images[0].images.url }}
+                                style={{ width: 76, height: 76 }}
+                                contentFit="cover"
+                            />
+                        ) : (
+                            <IconSymbol name="list.bullet.clipboard" size={30} color={theme.color8?.get() as string} />
+                        )}
                     </YStack>
                 </XStack>
             </Card>

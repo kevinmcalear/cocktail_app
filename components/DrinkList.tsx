@@ -38,6 +38,9 @@ interface DrinkListProps {
     headerButtons?: ReactNode;
     initialSearchQuery?: string;
     hideHeader?: boolean;
+    onDrinkPress?: (drink: DrinkListItem) => void;
+    onBackPress?: () => void;
+    isModal?: boolean;
 }
 
 const styles = StyleSheet.create({
@@ -116,13 +119,15 @@ const DrinkCard = memo(function DrinkCard({
     isFav,
     inStudy,
     onToggleFavorite,
-    onToggleStudyPile
+    onToggleStudyPile,
+    onPress
 }: {
     drink: DrinkListItem;
     isFav: boolean;
     inStudy: boolean;
     onToggleFavorite: (id: string, swipeable: Swipeable) => void;
     onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
+    onPress?: (drink: DrinkListItem) => void;
 }) {
     let swipeableRef: Swipeable | null = null;
 
@@ -163,8 +168,9 @@ const DrinkCard = memo(function DrinkCard({
             overflow="hidden"
             marginBottom="$2"
             elevation="$1"
-            disabled={drink.category !== "Cocktail" && drink.category != null}
+            disabled={!onPress && drink.category !== "Cocktail" && drink.category != null}
             pressStyle={{ scale: 0.98 }}
+            onPress={onPress ? () => onPress(drink) : undefined}
         >
             <Card.Header flexDirection="row" padding="$3" minHeight={100} alignItems="center">
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
@@ -195,18 +201,26 @@ const DrinkCard = memo(function DrinkCard({
             friction={2}
             rightThreshold={40}
         >
-            {drink.category === "Cocktail" || !drink.category ? (
-                <Link href={`/cocktail/${drink.id}`} asChild>
+            {onPress ? (
+                cardContent
+            ) : drink.category === "Beer" ? (
+                <Link href={`/beer/${drink.id}`} asChild>
+                    {cardContent}
+                </Link>
+            ) : drink.category === "Wine" ? (
+                <Link href={`/wine/${drink.id}`} asChild>
                     {cardContent}
                 </Link>
             ) : (
-                cardContent
+                <Link href={`/cocktail/${drink.id}`} asChild>
+                    {cardContent}
+                </Link>
             )}
         </Swipeable>
     );
 });
 
-export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false }: DrinkListProps) {
+export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress }: DrinkListProps) {
     const router = useRouter();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
@@ -315,19 +329,20 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                 inStudy={isInStudyPile(drink.id)}
                 onToggleFavorite={handleToggleFavorite}
                 onToggleStudyPile={handleToggleStudyPile}
+                onPress={onDrinkPress}
             />
         );
-    }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile]);
+    }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile, onDrinkPress]);
 
     return (
         <YStack style={styles.container} backgroundColor="$background">
             <View style={styles.contentContainer}>
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <View style={{ paddingTop: hideHeader ? insets.top + 4 : 0 }}>
+                    <View style={{ paddingTop: hideHeader ? (isModal ? 20 : insets.top + 4) : 0 }}>
                         {!hideHeader && (
-                            <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
-                                <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                            <View style={[styles.header, { paddingTop: isModal ? 20 : insets.top + 4 }]}>
+                                <TouchableOpacity onPress={() => onBackPress ? onBackPress() : router.back()} style={styles.headerTitleContainer}>
+                                    <IconSymbol name="chevron.down" size={24} color={theme.color?.get() as string} />
                                 </TouchableOpacity>
                                 <H1 fontSize={34} lineHeight={38} letterSpacing={0.5} fontWeight="bold" color="$color">{title}</H1>
                                 <View style={{ width: 40 }} />

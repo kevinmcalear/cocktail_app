@@ -10,7 +10,7 @@ export function useDropdowns() {
                 supabase.from('glassware').select('*').order('name'),
                 supabase.from('families').select('*').order('name'),
                 supabase.from('ice').select('*').order('name'),
-                supabase.from('menus').select('id, name, template_id').eq('is_active', true).order('name'),
+                supabase.from('menus').select('id, name, template_id, created_at').eq('is_active', true).order('created_at'),
                 supabase.from('ingredients').select('*').order('name'),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order')

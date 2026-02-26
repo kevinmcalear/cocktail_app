@@ -19,6 +19,7 @@ interface IngredientDetail {
     name: string;
     description: string | null;
     is_batch: boolean;
+    ingredient_images?: { images: { url: string } }[];
 }
 
 interface RecipeItem {
@@ -81,6 +82,16 @@ export default function IngredientDetailScreen() {
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
+                {ingredient.ingredient_images?.[0]?.images?.url && (
+                    <View style={{ alignItems: 'center', marginBottom: 10 }}>
+                        <Image 
+                            source={{ uri: ingredient.ingredient_images[0].images.url }}
+                            style={{ width: 140, height: 140, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                            contentFit="cover"
+                        />
+                    </View>
+                )}
+
                 {/* Info Card */}
                 <GlassView style={styles.card} intensity={10}>
                     <View style={styles.cardHeader}>
