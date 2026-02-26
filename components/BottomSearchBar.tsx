@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
+import { Button, Input, XStack, useTheme } from "tamagui";
 
 interface BottomSearchBarProps {
     value: string;
@@ -12,62 +12,48 @@ interface BottomSearchBarProps {
 }
 
 export function BottomSearchBar({ value, onChangeText, style, placeholder = "Find your drink...", onFilterPress }: BottomSearchBarProps) {
+    const theme = useTheme();
     const [isFocused, setIsFocused] = useState(false);
 
     return (
-        <View
-            style={[
-                styles.searchContainer,
-                style,
-                isFocused && styles.searchContainerFocused
-            ]}
+        <XStack
+            alignItems="center"
+            backgroundColor="$backgroundStrong"
+            borderWidth={1}
+            borderColor={isFocused ? "$color8" : "$borderColor"}
+            borderRadius="$10"
+            paddingHorizontal="$4"
+            height={56}
+            gap="$3"
+            elevation="$2"
+            style={style as object}
         >
-            <IconSymbol name="magnifyingglass" size={20} color={isFocused ? "#FFFFFF" : Colors.dark.icon} />
-            <TextInput
-                style={styles.searchInput}
+            <IconSymbol name="magnifyingglass" size={22} color={isFocused ? theme.color8?.get() as string : theme.color11?.get() as string} />
+            <Input
+                flex={1}
+                unstyled
+                size="$4"
+                paddingVertical={0}
                 placeholder={placeholder}
-                placeholderTextColor={Colors.dark.icon}
+                placeholderTextColor="$color11"
+                color="$color"
+                fontSize={16}
                 value={value}
                 onChangeText={onChangeText}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
+                fontFamily="$body"
             />
             {value.length > 0 && (
-                <TouchableOpacity onPress={() => onChangeText("")} style={{ padding: 4 }}>
-                    <IconSymbol name="xmark.circle.fill" size={20} color={Colors.dark.icon} />
-                </TouchableOpacity>
+                <Button unstyled onPress={() => onChangeText("")} padding="$1" pressStyle={{ opacity: 0.5 }}>
+                    <IconSymbol name="xmark.circle.fill" size={20} color={theme.color11?.get() as string} />
+                </Button>
             )}
             {onFilterPress && (
-                <TouchableOpacity onPress={onFilterPress} style={{ padding: 4, marginLeft: value.length > 0 ? 0 : 8 }}>
-                    <IconSymbol name="line.3.horizontal.decrease.circle" size={22} color={Colors.dark.icon} />
-                </TouchableOpacity>
+                <Button unstyled onPress={onFilterPress} padding="$2" pressStyle={{ opacity: 0.5 }}>
+                    <IconSymbol name="line.3.horizontal.decrease.circle" size={24} color={theme.color11?.get() as string} />
+                </Button>
             )}
-        </View>
+        </XStack>
     );
 }
-
-const styles = StyleSheet.create({
-    searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        gap: 10,
-        width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 12, // More subtle rounded rectangle instead of a pill
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
-    },
-    searchContainerFocused: {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    searchInput: {
-        flex: 1,
-        color: Colors.dark.text,
-        fontSize: 16,
-        padding: 0,
-        height: 24, // Explicit height for single line
-    },
-});

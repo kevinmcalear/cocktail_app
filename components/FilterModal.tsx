@@ -1,10 +1,9 @@
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
-import { Modal, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "tamagui";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { StyleSheet } from "react-native";
+import { Button, Switch, Text, useTheme, XStack, YStack } from "tamagui";
 
 interface FilterModalProps {
     visible: boolean;
@@ -23,7 +22,36 @@ export function FilterModal({
     showFavesOnly,
     onToggleFavesOnly,
 }: FilterModalProps) {
-    const insets = useSafeAreaInsets();
+    const theme = useTheme();
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+    const snapPoints = useMemo(() => ['65%'], []);
+
+    useEffect(() => {
+        if (visible) {
+            bottomSheetModalRef.current?.present();
+        } else {
+            bottomSheetModalRef.current?.dismiss();
+        }
+    }, [visible]);
+
+    const handleSheetChanges = useCallback((index: number) => {
+        if (index === -1) {
+            onClose();
+        }
+    }, [onClose]);
+
+    const renderBackdrop = useCallback(
+        (props: any) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.5}
+            />
+        ),
+        []
+    );
 
     const handleCategorySelect = (cat: "All" | "Cocktails" | "Beers" | "Wines") => {
         Haptics.selectionAsync();
@@ -35,212 +63,98 @@ export function FilterModal({
         onToggleFavesOnly();
     };
 
+    const backgroundColor = theme.background?.get() as string;
+    const indicatorColor = theme.borderColor?.get() as string;
+
     return (
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={visible}
-            onRequestClose={onClose}
+        <BottomSheetModal
+            ref={bottomSheetModalRef}
+            index={0}
+            snapPoints={snapPoints}
+            onChange={handleSheetChanges}
+            backdropComponent={renderBackdrop}
+            backgroundStyle={{ backgroundColor: backgroundColor }}
+            handleIndicatorStyle={{ backgroundColor: indicatorColor }}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}>
-                    <TouchableWithoutFeedback>
-                        <GlassView style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]} intensity={80} tint="dark">
-                            <View style={styles.dragIndicator} />
-                            
-                            <View style={styles.header}>
-                                <Text style={[styles.title, { fontSize: 20, fontWeight: 'bold' }]}>Filters</Text>
-                                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                    <IconSymbol name="xmark.circle.fill" size={24} color={Colors.dark.icon} />
-                                </TouchableOpacity>
-                            </View>
+            <BottomSheetView style={styles.contentContainer}>
+                
+                <XStack justifyContent="space-between" alignItems="center" marginBottom="$5">
+                    <Text fontSize={20} fontWeight="bold" color="$color">Filters</Text>
+                    <Button unstyled onPress={onClose} padding="$2" pressStyle={{ opacity: 0.5 }}>
+                        <IconSymbol name="xmark.circle.fill" size={24} color={theme.color11?.get() as string} />
+                    </Button>
+                </XStack>
 
-                            <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Category</Text>
-                                <View style={styles.categoryFiltersContainer}>
-                                    {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
-                                        const isSelected = selectedCategory === cat;
-                                        return (
-                                            <TouchableOpacity 
-                                                key={cat} 
-                                                onPress={() => handleCategorySelect(cat as any)}
-                                                style={styles.categoryPillWrapper}
-                                            >
-                                                <GlassView 
-                                                    style={[styles.categoryPill, isSelected && styles.categoryPillSelected]} 
-                                                    intensity={isSelected ? 60 : 15}
-                                                >
-                                                    <Text style={[styles.categoryPillText, isSelected && styles.categoryPillTextSelected]}>
-                                                        {cat}
-                                                    </Text>
-                                                </GlassView>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-
-                            <View style={styles.section}>
-                                <TouchableOpacity 
-                                    style={styles.toggleRow} 
-                                    onPress={handleFavesToggle}
-                                    activeOpacity={0.7}
+                <YStack gap="$2" marginBottom="$5">
+                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
+                        Category
+                    </Text>
+                    <XStack flexWrap="wrap" gap="$2">
+                        {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
+                            const isSelected = selectedCategory === cat;
+                            return (
+                                <Button
+                                    key={cat}
+                                    onPress={() => handleCategorySelect(cat as any)}
+                                    size="$3"
+                                    borderRadius="$6"
+                                    backgroundColor={isSelected ? "$color8" : "transparent"}
+                                    borderWidth={1}
+                                    borderColor={isSelected ? "$color8" : "$borderColor"}
                                 >
-                                    <View style={styles.toggleTextContainer}>
-                                        <IconSymbol name="heart.fill" size={20} color={showFavesOnly ? "#FF4B4B" : Colors.dark.icon} />
-                                        <Text style={styles.toggleLabel}>Only show favourites</Text>
-                                    </View>
-                                    <View style={[styles.toggleSwitch, showFavesOnly && styles.toggleSwitchActive]}>
-                                        <View style={[styles.toggleKnob, showFavesOnly && styles.toggleKnobActive]} />
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
+                                    <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">{cat}</Text>
+                                </Button>
+                            );
+                        })}
+                    </XStack>
+                </YStack>
 
-                            <TouchableOpacity style={styles.applyButton} onPress={onClose}>
-                                <Text style={styles.applyButtonText}>Show Results</Text>
-                            </TouchableOpacity>
-                        </GlassView>
-                    </TouchableWithoutFeedback>
-                </View>
-            </TouchableWithoutFeedback>
-        </Modal>
+                <YStack gap="$2" marginBottom="$5">
+                    <XStack 
+                        justifyContent="space-between" 
+                        alignItems="center" 
+                        padding="$3" 
+                        backgroundColor="$backgroundStrong" 
+                        borderRadius="$5"
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        onPress={handleFavesToggle}
+                        pressStyle={{ opacity: 0.7 }}
+                    >
+                        <XStack alignItems="center" gap="$2">
+                            <IconSymbol name="heart.fill" size={20} color={showFavesOnly ? "#FF4B4B" : theme.color11?.get() as string} />
+                            <Text fontSize={16} fontWeight="500" color="$color">
+                                Only show favourites
+                            </Text>
+                        </XStack>
+                        <Switch 
+                            size="$3" 
+                            checked={showFavesOnly} 
+                            onCheckedChange={handleFavesToggle}
+                            backgroundColor={showFavesOnly ? "$color8" : "$borderColor"}
+                        >
+                            <Switch.Thumb />
+                        </Switch>
+                    </XStack>
+                </YStack>
+
+                <Button 
+                    size="$5" 
+                    backgroundColor="$color8" 
+                    borderRadius="$6" 
+                    onPress={onClose}
+                >
+                    <Text color="$backgroundStrong" fontWeight="bold">Show Results</Text>
+                </Button>
+                
+            </BottomSheetView>
+        </BottomSheetModal>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
+    contentContainer: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 20,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-    },
-    dragIndicator: {
-        width: 40,
-        height: 4,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        borderRadius: 2,
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    closeButton: {
-        padding: 4,
-    },
-    section: {
-        marginBottom: 32,
-    },
-    sectionTitle: {
-        fontSize: 14,
-        color: Colors.dark.icon,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 12,
-        fontWeight: '600',
-    },
-    categoryFiltersContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    categoryPillWrapper: {
-        height: 40,
-        minWidth: 80,
-    },
-    categoryPill: {
-        flex: 1,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
-        backgroundColor: "rgba(255,255,255,0.01)",
-        paddingHorizontal: 16,
-    },
-    categoryPillSelected: {
-        backgroundColor: "rgba(255,255,255,0.2)",
-        borderColor: "rgba(255,255,255,0.4)",
-    },
-    categoryPillText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: "rgba(255,255,255,0.6)",
-    },
-    categoryPillTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: '800',
-    },
-    toggleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-    },
-    toggleTextContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    toggleLabel: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    toggleSwitch: {
-        width: 50,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        justifyContent: 'center',
-        padding: 2,
-    },
-    toggleSwitchActive: {
-        backgroundColor: '#4A90E2',
-    },
-    toggleKnob: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        backgroundColor: '#FFF',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    toggleKnobActive: {
-        transform: [{ translateX: 20 }],
-    },
-    applyButton: {
-        backgroundColor: '#4A90E2',
-        borderRadius: 16,
-        padding: 16,
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    applyButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
+        padding: 24,
     },
 });

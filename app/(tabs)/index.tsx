@@ -7,11 +7,12 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, ScrollView as TamaguiScrollView, Text, YStack } from "tamagui";
+import { Button, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
 export default function MenusScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const theme = useTheme();
     
     const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
     const menus = dropdowns?.menus || [];
@@ -51,18 +52,18 @@ export default function MenusScreen() {
                             <Button
                                 size="$3"
                                 borderRadius="$10"
-                                backgroundColor={Colors.dark.tint}
+                                backgroundColor="$color8"
                                 borderColor="transparent"
                                 borderWidth={1}
                                 onPress={() => router.push("/tamagui-demo")}
                             >
-                                <Text color="#000" fontWeight="600">
+                                <Text color="$backgroundStrong" fontWeight="600">
                                     ✨ View Tamagui Demo ✨
                                 </Text>
                             </Button>
                         </View>
                         {loadingMenus ? (
-                            <ActivityIndicator color={Colors.dark.tint} style={{ marginVertical: 20 }} />
+                            <ActivityIndicator color="$color8" style={{ marginVertical: 20 }} />
                         ) : (
                         <TamaguiScrollView 
                                 ref={scrollViewRef as any}
@@ -77,12 +78,12 @@ export default function MenusScreen() {
                                             key={menu.id}
                                             size="$3"
                                             borderRadius="$10"
-                                            backgroundColor={isSelected ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
-                                            borderColor={isSelected ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                            backgroundColor={isSelected ? "$color8" : "$backgroundStrong"}
+                                            borderColor={isSelected ? "$color8" : "$borderColor"}
                                             borderWidth={1}
                                             onPress={() => setSelectedMenuId(menu.id)}
                                         >
-                                            <Text color={isSelected ? "#000" : Colors.dark.text} fontWeight="600">
+                                            <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">
                                                 {menu.name}
                                             </Text>
                                         </Button>
@@ -92,14 +93,14 @@ export default function MenusScreen() {
                                 <Button
                                     size="$3"
                                     borderRadius="$10"
-                                    backgroundColor="rgba(255,255,255,0.1)"
+                                    backgroundColor="$backgroundStrong"
                                     borderStyle="dashed"
                                     borderWidth={1}
-                                    borderColor="transparent"
-                                    icon={<IconSymbol name="plus" size={20} color={Colors.dark.text} />}
+                                    borderColor="$borderColor"
+                                    icon={<IconSymbol name="plus" size={20} color={theme.color?.get() as string} />}
                                     onPress={() => router.push("/menus/create")}
                                 >
-                                    <Text color={Colors.dark.text} fontWeight="600">
+                                    <Text color="$color" fontWeight="600">
                                         Create Menu
                                     </Text>
                                 </Button>
@@ -107,7 +108,7 @@ export default function MenusScreen() {
                         )}
 
                         <View style={styles.sectionHeader}>
-                            {loadingDetails && <ActivityIndicator color={Colors.dark.tint} size="small" />}
+                            {loadingDetails && <ActivityIndicator color="$color8" size="small" />}
                         </View>
                     </View>
                 }

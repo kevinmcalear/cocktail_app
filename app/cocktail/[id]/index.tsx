@@ -10,11 +10,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { H4, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
+import { H4, Paragraph, Separator, Text, XStack, YStack, useTheme } from "tamagui";
 
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 
@@ -26,6 +25,7 @@ export default function CocktailDetailsScreen() {
     const { height: windowHeight } = useWindowDimensions();
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
+    const theme = useTheme();
 
     const { data: cocktail, isLoading: loading, error } = useCocktail(id as string);
     const [modalVisible, setModalVisible] = useState(false);
@@ -122,7 +122,7 @@ export default function CocktailDetailsScreen() {
     let swipeableRef: Swipeable | null = null;
 
     return (
-        <GestureHandlerRootView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <GestureHandlerRootView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: theme.background?.get() as string }]}>
 
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="light-content" />
@@ -145,7 +145,7 @@ export default function CocktailDetailsScreen() {
                     onPress={() => router.back()}
                 >
                     <GlassView intensity={50} style={styles.buttonGlass}>
-                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                        <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                     </GlassView>
                 </TouchableOpacity>
 
@@ -154,13 +154,13 @@ export default function CocktailDetailsScreen() {
                     onPress={() => router.push(`/cocktail/${id}/edit`)}
                 >
                     <GlassView intensity={50} style={styles.buttonGlass}>
-                        <IconSymbol name="pencil" size={24} color={Colors.dark.text} />
+                        <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
                     </GlassView>
                 </TouchableOpacity>
 
                 {/* Sticky Title */}
                 <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
-                    <Text style={styles.stickyTitleText}>{cocktail?.name}</Text>
+                    <Text style={[styles.stickyTitleText, { color: theme.color?.get() as string }]}>{cocktail?.name}</Text>
                 </Animated.View>
             </View>
 
@@ -180,7 +180,7 @@ export default function CocktailDetailsScreen() {
                         rightThreshold={40}
                         overshootRight={false}
                     >
-                        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold' }]}>{cocktail.name}</Text>
+                        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: theme.color?.get() as string }]}>{cocktail.name}</Text>
                     </Swipeable>
                 </View>
 
@@ -188,13 +188,13 @@ export default function CocktailDetailsScreen() {
                 {cocktail.recipes && cocktail.recipes.length > 0 && (
                     <YStack gap="$2" marginBottom="$4" paddingHorizontal="$4">
                         <H4 paddingBottom="$2" color="$color" fontSize={24} fontWeight="700">Ingredients</H4>
-                        <YStack backgroundColor="rgba(255,255,255,0.03)" borderRadius="$4" padding="$3" borderWidth={1} borderColor="rgba(255,255,255,0.08)">
+                        <YStack backgroundColor="$backgroundStrong" borderRadius="$4" padding="$3" borderWidth={1} borderColor="$borderColor">
                             {cocktail.recipes.map((recipe, index) => (
                                 <React.Fragment key={index}>
                                     <XStack alignItems="center" justifyContent="space-between" paddingVertical="$2">
                                         <Text color="$color" fontSize={16}>{formatIngredient(recipe)}</Text>
                                     </XStack>
-                                    {index < cocktail.recipes!.length - 1 && <Separator borderColor="rgba(255,255,255,0.05)" />}
+                                    {index < cocktail.recipes!.length - 1 && <Separator borderColor="$borderColor" />}
                                 </React.Fragment>
                             ))}
                         </YStack>
@@ -204,38 +204,38 @@ export default function CocktailDetailsScreen() {
                 {/* Core Metadata Badges */}
                 <XStack flexWrap="wrap" gap="$2" paddingHorizontal="$4" marginBottom="$4">
                     {cocktail.methods?.name && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="hammer.fill" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="hammer.fill" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.methods.name}</Text>
                         </XStack>
                     )}
                     {cocktail.glassware?.name && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="wineglass" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="wineglass" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.glassware.name}</Text>
                         </XStack>
                     )}
                     {cocktail.ice?.name && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="snowflake" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="snowflake" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.ice.name}</Text>
                         </XStack>
                     )}
                     {cocktail.garnish_1 && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="leaf.fill" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="leaf.fill" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.garnish_1}</Text>
                         </XStack>
                     )}
                     {cocktail.families?.name && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="person.2.fill" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="person.2.fill" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.families.name}</Text>
                         </XStack>
                     )}
                     {cocktail.origin && (
-                        <XStack alignItems="center" gap="$2" backgroundColor="rgba(255,255,255,0.08)" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
-                            <IconSymbol name="globe" size={16} color={Colors.dark.text} />
+                        <XStack alignItems="center" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" paddingHorizontal="$3" paddingVertical="$2" borderRadius="$10">
+                            <IconSymbol name="globe" size={16} color={theme.color?.get() as string} />
                             <Text color="$color" fontSize={14} fontWeight="500">{cocktail.origin}</Text>
                         </XStack>
                     )}
@@ -251,18 +251,18 @@ export default function CocktailDetailsScreen() {
                         )}
                         {cocktail.notes && (
                             <TouchableOpacity 
-                                style={styles.notesToggle} 
+                                style={[styles.notesToggle, { backgroundColor: theme.backgroundStrong?.get() as string, borderColor: theme.borderColor?.get() as string, borderWidth: 1 }]} 
                                 onPress={() => setNotesExpanded(!notesExpanded)}
                                 activeOpacity={0.7}
                             >
                                 <XStack alignItems="center" gap="$2">
-                                    <IconSymbol name="note.text" size={16} color={Colors.dark.text} style={{ opacity: 0.8 }} />
+                                    <IconSymbol name="note.text" size={16} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
                                     <Text color="$color" fontSize={14} fontWeight="bold" textTransform="uppercase" letterSpacing={1}>Notes</Text>
                                     <View style={{ flex: 1 }} />
                                     <IconSymbol 
                                         name={notesExpanded ? "chevron.up" : "chevron.down"} 
                                         size={14} 
-                                        color={Colors.dark.text} 
+                                        color={theme.color?.get() as string} 
                                         style={{ opacity: 0.6 }}
                                     />
                                 </XStack>
@@ -311,7 +311,7 @@ export default function CocktailDetailsScreen() {
                             onPress={() => setModalVisible(false)}
                         >
                             <GlassView intensity={50} style={styles.buttonGlass}>
-                                <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
+                                <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
                             </GlassView>
                         </TouchableOpacity>
                     </View>
@@ -324,7 +324,6 @@ export default function CocktailDetailsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
     },
     fixedHeader: {
         width: '100%',
@@ -347,17 +346,9 @@ const styles = StyleSheet.create({
     // Re-added styles that were removed
 
     notesToggle: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
         padding: 16,
         borderRadius: 12,
         width: '100%',
-    },
-    notesLabel: {
-        fontWeight: 'bold',
-        color: Colors.dark.text,
-        fontSize: 14,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     stickyTitleContainer: {
         position: 'absolute',
@@ -368,7 +359,6 @@ const styles = StyleSheet.create({
         fontSize: 32,
         lineHeight: 42,
         fontWeight: 'bold',
-        color: Colors.dark.text,
         textAlign: 'left',
         paddingTop: 8,
     },
@@ -381,7 +371,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         lineHeight: 36,
-        color: Colors.dark.text,
         textAlign: 'left',
     },
     backButton: {

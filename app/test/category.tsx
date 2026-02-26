@@ -1,16 +1,16 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, YStack } from "tamagui";
+import { Text, useTheme, YStack } from "tamagui";
 import { CardCountSlider, CocktailCategory, sharedStyles, Subject, SubjectCard } from "./_shared";
 
 export default function CocktailCategorySelection() {
     const router = useRouter();
+    const theme = useTheme();
     const params = useLocalSearchParams<{ subject: Subject, cardCount: string }>();
 
     const initialCardCount = parseInt(params.cardCount || "10");
@@ -40,9 +40,9 @@ export default function CocktailCategorySelection() {
                     <Stack.Screen options={{ headerShown: false }} />
                     <View style={sharedStyles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={sharedStyles.backButton}>
-                            <IconSymbol name="chevron.left" size={28} color={Colors.dark.text} />
+                            <IconSymbol name="chevron.left" size={28} color={theme.color?.get() as string} />
                         </TouchableOpacity>
-                        <Text style={[sharedStyles.title, { fontSize: 24 }]} adjustsFontSizeToFit={true} numberOfLines={1}>COCKTAIL CATEGORY</Text>
+                        <Text style={[sharedStyles.title, { fontSize: 24, color: theme.color?.get() as string }]} adjustsFontSizeToFit={true} numberOfLines={1}>COCKTAIL CATEGORY</Text>
                         <View style={{ width: 44 }} />
                     </View>
 

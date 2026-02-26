@@ -1,7 +1,7 @@
 import { DrinkList, DrinkListItem } from "@/components/DrinkList";
-import { beers } from "@/data/beers";
-import { wines } from "@/data/wines";
+import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
+import { useWines } from "@/hooks/useWines";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -10,12 +10,14 @@ export default function DrinksScreen() {
     const { q } = useLocalSearchParams<{ q?: string }>();
     const [drinks, setDrinks] = useState<DrinkListItem[]>([]);
 
-    const { data: cocktailsData, isLoading, error } = useCocktails();
+    const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails();
+    const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers();
+    const { data: winesData, isLoading: winesLoading, error: winesError } = useWines();
 
     useEffect(() => {
-        if (!cocktailsData) return;
+        if (!cocktailsData && !beersData && !winesData) return;
 
-        const mappedCocktails: DrinkListItem[] = cocktailsData.map((c: any) => ({
+        const mappedCocktails: DrinkListItem[] = (cocktailsData || []).map((c: any) => ({
             id: c.id,
             name: c.name,
             description: c.description,
@@ -24,28 +26,29 @@ export default function DrinksScreen() {
             cocktail_images: c.cocktail_images
         }));
 
-        const mappedBeers: DrinkListItem[] = beers.map(b => ({
+        const mappedBeers: DrinkListItem[] = (beersData || []).map((b: any) => ({
             id: `beer-${b.id}`,
             name: b.name,
             description: b.description,
             category: "Beer",
             price: b.price,
-            image: b.image
+            image: b.image_url ? { uri: b.image_url } : undefined
         }));
 
-        const mappedWines: DrinkListItem[] = wines.map(w => ({
+        const mappedWines: DrinkListItem[] = (winesData || []).map((w: any) => ({
             id: `wine-${w.id}`,
             name: w.name,
             description: w.description,
             category: "Wine",
-            price: w.price
+            price: w.price,
+            image: w.image_url ? { uri: w.image_url } : undefined
         }));
 
         setDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);
-    }, [cocktailsData]);
+    }, [cocktailsData, beersData, winesData]);
 
-    if (error) {
-        console.error('Error fetching drinks:', error);
+    if (cocktailsError || beersError || winesError) {
+        console.error('Error fetching drinks:', cocktailsError || beersError || winesError);
     }
 
     return (

@@ -1,25 +1,24 @@
+import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     FlatList,
-    Modal,
     ScrollView,
     StyleSheet,
     TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+    TouchableOpacity, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, YStack } from "tamagui";
+import { Text, YStack, useTheme } from "tamagui";
 
 interface Cocktail {
     id: string;
@@ -53,6 +52,31 @@ export default function CreateMenuScreen() {
     const [pickingForSection, setPickingForSection] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [saving, setSaving] = useState(false);
+
+    const theme = useTheme();
+    const pickerSheetRef = useRef<BottomSheetModal>(null);
+    const snapPoints = useMemo(() => ['80%'], []);
+
+    const renderBackdrop = useCallback(
+        (props: any) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.5}
+            />
+        ),
+        []
+    );
+
+    useEffect(() => {
+        if (showPicker) {
+            pickerSheetRef.current?.present();
+        } else {
+            pickerSheetRef.current?.dismiss();
+            setSearchQuery("");
+        }
+    }, [showPicker]);
 
     useEffect(() => {
         const fetchCocktails = async () => {
@@ -324,50 +348,44 @@ export default function CreateMenuScreen() {
                 )}
             </View>
 
-            {/* Cocktail Selection Modal */}
-            <Modal
-                visible={showPicker}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => {
-                    setShowPicker(false);
-                    setSearchQuery("");
-                }}
+            {/* Cocktail Selection Bottom Sheet */}
+            <BottomSheetModal
+                ref={pickerSheetRef}
+                index={0}
+                snapPoints={snapPoints}
+                backdropComponent={renderBackdrop}
+                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
+                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
+                onDismiss={() => setShowPicker(false)}
             >
-                <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={styles.modalContent}>
-                                <View style={styles.modalHeader}>
-                                    <Text style={styles.modalTitle}>Select Cocktail</Text>
-                                    <TouchableOpacity onPress={() => setShowPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                                <TextInput
-                                    style={styles.searchInput}
-                                    placeholder="Search cocktails..."
-                                    placeholderTextColor="#666"
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                />
-                                <FlatList
-                                    data={cocktails.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={styles.modalOption}
-                                            onPress={() => handleAddCocktail(item.id)}
-                                        >
-                                            <Text style={styles.modalOptionText}>{item.name}</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                            </View>
-                        </TouchableWithoutFeedback>
+                <BottomSheetView style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Cocktail</Text>
+                        <TouchableOpacity onPress={() => setShowPicker(false)}>
+                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                        </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+                    <BottomSearchBar
+                        placeholder="Search cocktails..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={{ marginBottom: 15 }}
+                    />
+                    <FlatList
+                        data={cocktails.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+                        keyExtractor={item => item.id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.modalOption}
+                                onPress={() => handleAddCocktail(item.id)}
+                            >
+                                <Text style={styles.modalOptionText}>{item.name}</Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+                </BottomSheetView>
+            </BottomSheetModal>
         </YStack>
     );
 }
@@ -540,17 +558,9 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         fontSize: 18
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        justifyContent: 'flex-end',
-    },
     modalContent: {
-        backgroundColor: '#1E1E1E',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        padding: 20,
-        height: '80%'
+        flex: 1,
+        padding: 24,
     },
     modalHeader: {
         flexDirection: 'row',

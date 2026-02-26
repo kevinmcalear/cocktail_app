@@ -6,18 +6,18 @@
 import { Platform } from "react-native";
 
 // Modern IOS Dark Palette
-const pureBlack = "#000000"; // Pure black background
-const systemGray6 = "#1C1C1E"; // Secondary background
+const pureBlack = "#161618"; // Deep warm charcoal background
+const systemGray6 = "#232326"; // Elevated dark gray surface
 const systemBlue = "#0A84FF"; // iOS System Blue (Dark Mode)
-const white = "#FFFFFF";
+const white = "#F2F2F7"; // Soft off-white
 const glassBorder = "rgba(255, 255, 255, 0.1)";
 
 export const Colors = {
   light: {
     // Keeping light mode somewhat consistent but mapped to new logic if needed later
     // prioritizing dark mode as requested.
-    text: pureBlack,
-    background: "#F2F2F7", // System Gray 6 Light
+    text: "#2C2C2E", // Dark charcoal instead of pure black
+    background: "#F9F9FB", // Warm, airy off-white
     tint: "#007AFF", // System Blue Light
     icon: "#8E8E93",
     tabIconDefault: "#8E8E93",
@@ -28,11 +28,11 @@ export const Colors = {
     background: pureBlack,
     surface: systemGray6,
     tint: white, // Changed from systemBlue to white as requested
-    icon: "#98989D", // System Gray
-    tabIconDefault: "#98989D",
+    icon: "#A1A1AA", // zinc-400 for better readability
+    tabIconDefault: "#A1A1AA",
     tabIconSelected: white, // Changed from systemBlue to white
     glass: {
-      background: "rgba(28, 28, 30, 0.6)", // Transparent system gray
+      background: "rgba(35, 35, 38, 0.65)", // Softer glassmorphism
       border: glassBorder,
       text: white,
       blurIntensity: 80,

@@ -1,7 +1,6 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useIngredients } from "@/hooks/useIngredients";
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
@@ -15,7 +14,7 @@ import {
     ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Card, Text, XStack, YStack } from "tamagui";
+import { Card, Text, XStack, YStack, useTheme } from "tamagui";
 
 interface Ingredient {
     id: string;
@@ -27,6 +26,7 @@ interface Ingredient {
 export default function PrepScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const theme = useTheme();
     const [searchQuery, setSearchQuery] = useState("");
     const flatListRef = useRef<FlatList>(null);
     const translateY = useRef(new Animated.Value(0)).current;
@@ -99,11 +99,13 @@ export default function PrepScreen() {
 
     const renderItem = ({ item }: { item: Ingredient | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
-            <XStack alignItems="center" justifyContent="center" paddingVertical="$4" marginTop="$3" marginBottom="$2" paddingHorizontal="$6">
-                <YStack flex={1} height={2} backgroundColor="rgba(255, 255, 255, 0.4)" />
-                <Text fontSize="$7" fontWeight="800" color="#fff" marginHorizontal="$4" textAlign="center">{item.letter}</Text>
-                <YStack flex={1} height={2} backgroundColor="rgba(255, 255, 255, 0.4)" />
-            </XStack>
+            return (
+                <XStack alignItems="center" justifyContent="center" paddingVertical="$4" marginTop="$3" marginBottom="$2" paddingHorizontal="$6">
+                    <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
+                    <Text fontSize="$7" fontWeight="800" color="$color" marginHorizontal="$4" textAlign="center">{item.letter}</Text>
+                    <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
+                </XStack>
+            );
         }
 
         const ingredient = item as Ingredient;
@@ -111,13 +113,14 @@ export default function PrepScreen() {
         return (
             <Card
                 pressStyle={{ scale: 0.98, opacity: 0.8 }}
-                backgroundColor="rgba(255,255,255,0.03)"
-                borderColor="rgba(255,255,255,0.08)"
+                backgroundColor="$backgroundStrong"
+                borderColor="$borderColor"
                 borderWidth={1}
                 borderRadius="$4"
                 marginBottom="$3"
                 overflow="hidden"
                 onPress={() => router.push(`/ingredient/${ingredient.id}`)}
+                elevation="$1"
             >
                 <XStack padding="$3" alignItems="center" minHeight={100}>
                     <YStack flex={1} paddingRight="$3" gap="$1.5" justifyContent="center">
@@ -126,8 +129,8 @@ export default function PrepScreen() {
                                 {ingredient.name}
                             </Text>
                             {ingredient.is_batch && (
-                                <View style={styles.batchBadge}>
-                                    <Text style={styles.batchBadgeText}>BATCH</Text>
+                                <View style={[styles.batchBadge, { borderColor: theme.color8?.get() as string }]}>
+                                    <Text style={[styles.batchBadgeText, { color: theme.color8?.get() as string }]}>BATCH</Text>
                                 </View>
                             )}
                         </XStack>
@@ -141,11 +144,11 @@ export default function PrepScreen() {
                         width={76}
                         height={76}
                         borderRadius="$3"
-                        backgroundColor="rgba(255,255,255,0.05)"
+                        backgroundColor={theme.color5?.get() as string}
                         alignItems="center"
                         justifyContent="center"
                     >
-                        <IconSymbol name="list.bullet.clipboard" size={30} color={Colors.dark.tint} />
+                        <IconSymbol name="list.bullet.clipboard" size={30} color={theme.color8?.get() as string} />
                     </YStack>
                 </XStack>
             </Card>
@@ -178,7 +181,7 @@ export default function PrepScreen() {
                                         style={styles.headerTitleContainer} 
                                         onPress={() => router.push('/add-ingredient')}
                                     >
-                                        <IconSymbol name="plus" size={24} color={Colors.dark.tint} />
+                                        <IconSymbol name="plus" size={24} color={theme.color8?.get() as string} />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -204,7 +207,6 @@ export default function PrepScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
     },
     contentContainer: {
         flex: 1,
@@ -263,7 +265,6 @@ const styles = StyleSheet.create({
     itemName: {
         fontSize: 20,
         fontWeight: "700",
-        color: Colors.dark.text,
         flexShrink: 1,
     },
     batchBadge: {
@@ -272,17 +273,10 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
         borderRadius: 4,
         borderWidth: 1,
-        borderColor: 'rgba(230, 126, 34, 0.5)',
     },
     batchBadgeText: {
         fontSize: 10,
         fontWeight: 'bold',
-        color: Colors.dark.tint,
-    },
-    itemDescription: {
-        fontSize: 15,
-        color: Colors.dark.icon,
-        lineHeight: 20,
     },
     iconContainer: {
         width: 76,

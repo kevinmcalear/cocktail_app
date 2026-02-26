@@ -1,20 +1,20 @@
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     FlatList,
-    Modal,
     ScrollView,
-    StyleSheet, TouchableOpacity,
-    TouchableWithoutFeedback, View
+    StyleSheet, TouchableOpacity, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -23,7 +23,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { DatabaseCocktail } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, Text, TextArea, XStack, YStack } from "tamagui";
+import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -58,6 +58,26 @@ export default function EditCocktailScreen() {
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+
+    const theme = useTheme();
+    const addCategorySheetRef = useRef<BottomSheetModal>(null);
+    const ingredientPickerSheetRef = useRef<BottomSheetModal>(null);
+    
+    // Auto-resizing for short add form, and 80% for long list
+    const snapPointsCategory = useMemo(() => ['50%'], []);
+    const snapPointsIngredients = useMemo(() => ['80%'], []);
+
+    const renderBackdrop = useCallback(
+        (props: any) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.5}
+            />
+        ),
+        []
+    );
     const [origin, setOrigin] = useState("");
     const [garnish, setGarnish] = useState("");
     const [notes, setNotes] = useState("");
@@ -73,11 +93,27 @@ export default function EditCocktailScreen() {
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
-
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
-
-    const [addingCategory, setAddingCategory] = useState<{table: 'methods' | 'glassware' | 'families' | 'ice', label: string} | null>(null);
+    const [addingCategory, setAddingCategory] = useState<{table: 'methods'|'glassware'|'families'|'ice', label: string} | null>(null);
     const [newItemName, setNewItemName] = useState("");
+
+    useEffect(() => {
+        if (addingCategory) {
+            addCategorySheetRef.current?.present();
+        } else {
+            addCategorySheetRef.current?.dismiss();
+            setNewItemName("");
+        }
+    }, [addingCategory]);
+
+    useEffect(() => {
+        if (showIngredientPicker) {
+            ingredientPickerSheetRef.current?.present();
+        } else {
+            ingredientPickerSheetRef.current?.dismiss();
+            setIngredientSearch("");
+        }
+    }, [showIngredientPicker]);
 
     const handleAddPill = async () => {
         if (!addingCategory || !newItemName.trim()) return;
@@ -724,99 +760,91 @@ export default function EditCocktailScreen() {
 
             </ScrollView>
 
-            <Modal
-                visible={!!addingCategory}
-                animationType="fade"
-                transparent={true}
-                onRequestClose={() => setAddingCategory(null)}
+            <BottomSheetModal
+                ref={addCategorySheetRef}
+                index={0}
+                snapPoints={snapPointsCategory}
+                backdropComponent={renderBackdrop}
+                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
+                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
+                onDismiss={() => setAddingCategory(null)}
             >
-                <TouchableWithoutFeedback onPress={() => setAddingCategory(null)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={[styles.modalContent, { height: 'auto', padding: 24 }]}>
-                                <Text style={[styles.modalTitle, { marginBottom: 16 }]}>Add New {addingCategory?.label}</Text>
-                                <Input
-                                    size="$4"
-                                    marginBottom="$4"
-                                    placeholder={`Enter ${addingCategory?.label} name`}
-                                    backgroundColor="rgba(255,255,255,0.05)"
-                                    borderColor="rgba(255,255,255,0.1)"
-                                    value={newItemName}
-                                    onChangeText={setNewItemName}
-                                    autoFocus
-                                />
-                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                                    <TouchableOpacity onPress={() => { setAddingCategory(null); setNewItemName(""); }} style={{ padding: 12 }}>
-                                        <Text style={{ color: '#888' }}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: Colors.dark.tint, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
-                                        <Text style={{ color: '#000', fontWeight: 'bold' }}>Add</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </TouchableWithoutFeedback>
+                <BottomSheetView style={styles.modalContent}>
+                    <Text style={[styles.modalTitle, { marginBottom: 16, color: theme.color?.get() as string }]}>Add New {addingCategory?.label}</Text>
+                    <Input
+                        size="$4"
+                        marginBottom="$4"
+                        placeholder={`Enter ${addingCategory?.label} name`}
+                        backgroundColor="rgba(255,255,255,0.05)"
+                        borderColor="rgba(255,255,255,0.1)"
+                        value={newItemName}
+                        onChangeText={setNewItemName}
+                        color="$color"
+                        autoFocus
+                    />
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                        <TouchableOpacity onPress={() => addCategorySheetRef.current?.dismiss()} style={{ padding: 12 }}>
+                            <Text style={{ color: theme.color11?.get() as string }}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleAddPill} style={{ backgroundColor: theme.color8?.get() as string, padding: 12, borderRadius: 8, paddingHorizontal: 20 }}>
+                            <Text style={{ color: theme.backgroundStrong?.get() as string, fontWeight: 'bold' }}>Add</Text>
+                        </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+                </BottomSheetView>
+            </BottomSheetModal>
 
-            <Modal
-                visible={showIngredientPicker}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setShowIngredientPicker(false)}
+            <BottomSheetModal
+                ref={ingredientPickerSheetRef}
+                index={0}
+                snapPoints={snapPointsIngredients}
+                backdropComponent={renderBackdrop}
+                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
+                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
+                onDismiss={() => setShowIngredientPicker(false)}
             >
-                <TouchableWithoutFeedback onPress={() => setShowIngredientPicker(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={styles.modalContent}>
-                                <View style={styles.modalHeader}>
-                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
-                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                                
-                                <Input
-                                    size="$4"
-                                    marginBottom="$4"
-                                    placeholder="Search ingredients..."
-                                    backgroundColor="rgba(255,255,255,0.05)"
-                                    borderColor="rgba(255,255,255,0.1)"
-                                    value={ingredientSearch}
-                                    onChangeText={setIngredientSearch}
-                                />
-
-                                <FlatList
-                                    data={allIngredients.filter((i: any) => 
-                                        i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
-                                    )}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={styles.ingredientOption}
-                                            onPress={() => {
-                                                setRecipeItems([...recipeItems, {
-                                                    ingredient_id: item.id,
-                                                    name: item.name,
-                                                    bsp: "",
-                                                    ml: "",
-                                                    dash: "",
-                                                    amount: "",
-                                                    is_top: false
-                                                }]);
-                                                setShowIngredientPicker(false);
-                                                setIngredientSearch("");
-                                            }}
-                                        >
-                                            <Text style={styles.ingredientText}>{item.name}</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                            </View>
-                        </TouchableWithoutFeedback>
+                <BottomSheetView style={styles.modalContentList}>
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
+                        <TouchableOpacity onPress={() => ingredientPickerSheetRef.current?.dismiss()}>
+                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                        </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+                    
+                    <BottomSearchBar
+                        placeholder="Search ingredients..."
+                        value={ingredientSearch}
+                        onChangeText={setIngredientSearch}
+                        style={{ marginBottom: 16 }}
+                    />
+
+                    <FlatList
+                        showsVerticalScrollIndicator={false}
+                        data={allIngredients.filter((i: any) => 
+                            i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+                        )}
+                        keyExtractor={item => item.id}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.ingredientOption}
+                                onPress={() => {
+                                    setRecipeItems([...recipeItems, {
+                                        ingredient_id: item.id,
+                                        name: item.name,
+                                        bsp: "",
+                                        ml: "",
+                                        dash: "",
+                                        amount: "",
+                                        is_top: false
+                                    }]);
+                                    ingredientPickerSheetRef.current?.dismiss();
+                                }}
+                            >
+                                <Text style={styles.ingredientText}>{item.name}</Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+                </BottomSheetView>
+            </BottomSheetModal>
         </YStack>
     );
 }
@@ -1027,17 +1055,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         fontSize: 14
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        justifyContent: 'center',
-        padding: 20
-    },
     modalContent: {
-        backgroundColor: '#1E1E1E',
-        borderRadius: 20,
-        padding: 20,
-        height: '80%'
+        padding: 24,
+    },
+    modalContentList: {
+        flex: 1,
+        padding: 24,
     },
     modalHeader: {
         flexDirection: 'row',

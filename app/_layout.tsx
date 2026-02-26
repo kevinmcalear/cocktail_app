@@ -1,9 +1,10 @@
 import { Inter_400Regular, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
 } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -80,6 +81,7 @@ function RootLayoutNav() {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({ 
     Roboto_400Regular, 
     Roboto_700Bold,
@@ -88,12 +90,14 @@ export default function RootLayout() {
   });
   if (!fontsLoaded) { return null; }
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+    <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === "dark" ? "dark" : "light"}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <AuthProvider>
-            <RootLayoutNav />
-          </AuthProvider>
+          <BottomSheetModalProvider>
+            <AuthProvider>
+              <RootLayoutNav />
+            </AuthProvider>
+          </BottomSheetModalProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </TamaguiProvider>

@@ -1,26 +1,25 @@
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     FlatList,
-    Modal,
     ScrollView,
     StyleSheet,
     TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+    TouchableOpacity, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { Text, YStack } from "tamagui";
+import { Text, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -46,6 +45,31 @@ export default function EditIngredientScreen() {
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+
+    const theme = useTheme();
+    const pickerSheetRef = useRef<BottomSheetModal>(null);
+    const snapPoints = useMemo(() => ['80%'], []);
+
+    const renderBackdrop = useCallback(
+        (props: any) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.5}
+            />
+        ),
+        []
+    );
+
+    useEffect(() => {
+        if (showIngredientPicker) {
+            pickerSheetRef.current?.present();
+        } else {
+            pickerSheetRef.current?.dismiss();
+            setIngredientSearch("");
+        }
+    }, [showIngredientPicker]);
 
     const queryClient = useQueryClient();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
@@ -261,56 +285,50 @@ export default function EditIngredientScreen() {
 
             </ScrollView>
 
-            {/* Ingredient Picker Modal */}
-            <Modal
-                visible={showIngredientPicker}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setShowIngredientPicker(false)}
+            {/* Ingredient Picker Bottom Sheet */}
+            <BottomSheetModal
+                ref={pickerSheetRef}
+                index={0}
+                snapPoints={snapPoints}
+                backdropComponent={renderBackdrop}
+                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
+                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
+                onDismiss={() => setShowIngredientPicker(false)}
             >
-                <TouchableWithoutFeedback onPress={() => setShowIngredientPicker(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={styles.modalContent}>
-                                <View style={styles.modalHeader}>
-                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
-                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                                <TextInput
-                                    style={styles.searchInput}
-                                    placeholder="Search ingredients..."
-                                    placeholderTextColor="#666"
-                                    value={ingredientSearch}
-                                    onChangeText={setIngredientSearch}
-                                    autoFocus
-                                />
-                                <FlatList
-                                    data={allIngredients.filter((i: any) => {
-                                        // Filter out itself to prevent cyclic recursion if possible
-                                        if (i.id === id) return false;
-                                        return i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
-                                    })}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={styles.ingredientOption}
-                                            onPress={() => {
-                                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
-                                                setShowIngredientPicker(false);
-                                                setIngredientSearch("");
-                                            }}
-                                        >
-                                            <Text style={styles.ingredientText}>{item.name}</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                            </View>
-                        </TouchableWithoutFeedback>
+                <BottomSheetView style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
+                        <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                        </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+                    <BottomSearchBar
+                        placeholder="Search ingredients..."
+                        value={ingredientSearch}
+                        onChangeText={setIngredientSearch}
+                        style={{ marginBottom: 16 }}
+                    />
+                    <FlatList
+                        data={allIngredients.filter((i: any) => {
+                            if (i.id === id) return false;
+                            return i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+                        })}
+                        keyExtractor={item => item.id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.ingredientOption}
+                                onPress={() => {
+                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
+                                    setShowIngredientPicker(false);
+                                }}
+                            >
+                                <Text style={styles.ingredientText}>{item.name}</Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+                </BottomSheetView>
+            </BottomSheetModal>
 
         </YStack>
     );
@@ -411,17 +429,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        justifyContent: 'center',
-        padding: 20
-    },
     modalContent: {
-        backgroundColor: '#1E1E1E',
-        borderRadius: 20,
-        padding: 20,
-        height: '80%'
+        flex: 1,
+        padding: 24,
     },
     modalHeader: {
         flexDirection: 'row',

@@ -1,25 +1,23 @@
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     FlatList,
-    Modal,
     ScrollView,
     StyleSheet,
     TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+    TouchableOpacity, View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { Text, YStack } from "tamagui";
+import { Text, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -44,6 +42,30 @@ export default function AddIngredientScreen() {
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+
+    const theme = useTheme();
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const snapPoints = useMemo(() => ['80%'], []);
+
+    const handlePresentModalPress = useCallback(() => {
+        bottomSheetModalRef.current?.present();
+    }, []);
+
+    const handleDismissModalPress = useCallback(() => {
+        bottomSheetModalRef.current?.dismiss();
+    }, []);
+
+    const renderBackdrop = useCallback(
+        (props: any) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.5}
+            />
+        ),
+        []
+    );
 
     const queryClient = useQueryClient();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
@@ -114,18 +136,18 @@ export default function AddIngredientScreen() {
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: Colors.dark.text }}>New Ingredient</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.color?.get() as string }}>New Ingredient</Text>
                 <TouchableOpacity 
                     onPress={handleSave} 
                     disabled={saving} 
                     style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
                 >
                     {saving ? (
-                        <ActivityIndicator size="small" color={Colors.dark.tint} />
+                        <ActivityIndicator size="small" color={theme.color8?.get() as string} />
                     ) : (
-                        <Text style={{ color: Colors.dark.tint, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
+                        <Text style={{ color: theme.color8?.get() as string, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -162,8 +184,8 @@ export default function AddIngredientScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.label}>Recipe (for Complex Ingredients)</Text>
-                        <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                            <Text style={styles.addText}>+ Add</Text>
+                        <TouchableOpacity onPress={handlePresentModalPress}>
+                            <Text style={[styles.addText, { color: theme.color8?.get() as string }]}>+ Add</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -224,53 +246,47 @@ export default function AddIngredientScreen() {
 
             </ScrollView>
 
-            {/* Ingredient Picker Modal */}
-            <Modal
-                visible={showIngredientPicker}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setShowIngredientPicker(false)}
+            {/* Ingredient Picker Bottom Sheet */}
+            <BottomSheetModal
+                ref={bottomSheetModalRef}
+                index={0}
+                snapPoints={snapPoints}
+                backdropComponent={renderBackdrop}
+                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
+                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
             >
-                <TouchableWithoutFeedback onPress={() => setShowIngredientPicker(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={styles.modalContent}>
-                                <View style={styles.modalHeader}>
-                                    <Text style={styles.modalTitle}>Select Ingredient</Text>
-                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                                <TextInput
-                                    style={styles.searchInput}
-                                    placeholder="Search ingredients..."
-                                    placeholderTextColor="#666"
-                                    value={ingredientSearch}
-                                    onChangeText={setIngredientSearch}
-                                    autoFocus
-                                />
-                                <FlatList
-                                    data={allIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={styles.ingredientOption}
-                                            onPress={() => {
-                                                // Prevent adding itself? (Not possible since we are creating new, so no ID yet)
-                                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
-                                                setShowIngredientPicker(false);
-                                                setIngredientSearch("");
-                                            }}
-                                        >
-                                            <Text style={styles.ingredientText}>{item.name}</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                            </View>
-                        </TouchableWithoutFeedback>
+                <BottomSheetView style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
+                        <TouchableOpacity onPress={handleDismissModalPress}>
+                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                        </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+                    <BottomSearchBar
+                        placeholder="Search ingredients..."
+                        value={ingredientSearch}
+                        onChangeText={setIngredientSearch}
+                        style={{ marginBottom: 16 }}
+                    />
+                    <FlatList
+                        data={allIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                        keyExtractor={item => item.id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.ingredientOption}
+                                onPress={() => {
+                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
+                                    handleDismissModalPress();
+                                    setIngredientSearch("");
+                                }}
+                            >
+                                <Text style={styles.ingredientText}>{item.name}</Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+                </BottomSheetView>
+            </BottomSheetModal>
 
         </YStack>
     );
@@ -279,7 +295,6 @@ export default function AddIngredientScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
     },
     header: {
         flexDirection: 'row',
@@ -328,7 +343,6 @@ const styles = StyleSheet.create({
         marginBottom: 8
     },
     addText: {
-        color: Colors.dark.tint,
         fontWeight: 'bold',
         fontSize: 14,
     },
@@ -366,17 +380,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        justifyContent: 'center',
-        padding: 20
-    },
     modalContent: {
-        backgroundColor: '#1E1E1E',
-        borderRadius: 20,
-        padding: 20,
-        height: '80%'
+        flex: 1,
+        padding: 24,
     },
     modalHeader: {
         flexDirection: 'row',

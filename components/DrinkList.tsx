@@ -2,7 +2,6 @@ import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { FilterModal } from "@/components/FilterModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import * as Haptics from "expo-haptics";
@@ -12,7 +11,7 @@ import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Card, H4, Paragraph, Text, YStack } from "tamagui";
+import { Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
 
 export interface DrinkListItem {
     id: string;
@@ -44,7 +43,6 @@ interface DrinkListProps {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
     },
     contentContainer: {
         flex: 1,
@@ -68,13 +66,6 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: 'center',
     },
-    title: {
-        fontSize: 34,
-        lineHeight: 38,
-        fontWeight: "bold",
-        letterSpacing: 0.5,
-    },
-
     rightActionsContainer: {
         flexDirection: 'row',
         width: 160,
@@ -96,59 +87,6 @@ const styles = StyleSheet.create({
     topSearchContainer: {
         paddingHorizontal: 16,
         paddingBottom: 16,
-    },
-    sectionHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 16,
-        marginTop: 12,
-        marginBottom: 8,
-        paddingHorizontal: 32,
-    },
-    sectionHeaderText: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#FFFFFF",
-        marginHorizontal: 16,
-        textAlign: 'center',
-    },
-    sectionDivider: {
-        flex: 1,
-        height: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.4)",
-    },
-    categoryFiltersContainer: {
-        flexDirection: 'row',
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-        gap: 8,
-    },
-    categoryPillWrapper: {
-        flex: 1,
-        height: 40,
-    },
-    categoryPill: {
-        flex: 1,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
-        backgroundColor: "rgba(255,255,255,0.01)",
-    },
-    categoryPillSelected: {
-        backgroundColor: "rgba(255,255,255,0.2)",
-        borderColor: "rgba(255,255,255,0.4)",
-    },
-    categoryPillText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: "rgba(255,255,255,0.6)",
-    },
-    categoryPillTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: '800',
     }
 });
 
@@ -165,11 +103,11 @@ const getImage = (item: DrinkListItem) => {
 
 const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }) {
     return (
-        <View style={styles.sectionHeader}>
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionHeaderText}>{letter}</Text>
-            <View style={styles.sectionDivider} />
-        </View>
+        <XStack alignItems="center" justifyContent="center" paddingVertical="$4" marginTop="$3" marginBottom="$2" paddingHorizontal="$6">
+            <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
+            <Text fontSize={24} fontWeight="800" color="$color" marginHorizontal="$4" textAlign="center">{letter}</Text>
+            <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
+        </XStack>
     );
 });
 
@@ -215,14 +153,18 @@ const DrinkCard = memo(function DrinkCard({
         </View>
     );
 
+    const theme = useTheme();
+
     const cardContent = (
         <Card
             borderWidth={1}
-            backgroundColor="rgba(255,255,255,0.03)"
-            borderColor="rgba(255,255,255,0.08)"
+            backgroundColor="$backgroundStrong"
+            borderColor="$borderColor"
             overflow="hidden"
             marginBottom="$2"
+            elevation="$1"
             disabled={drink.category !== "Cocktail" && drink.category != null}
+            pressStyle={{ scale: 0.98 }}
         >
             <Card.Header flexDirection="row" padding="$3" minHeight={100} alignItems="center">
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
@@ -235,7 +177,7 @@ const DrinkCard = memo(function DrinkCard({
                 </YStack>
                 <Image
                     source={getImage(drink)}
-                    style={{ width: 76, height: 76, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)" }}
+                    style={{ width: 76, height: 76, borderRadius: 12, backgroundColor: theme.color5?.get() as string }}
                     contentFit="cover"
                     transition={500}
                     onError={(e) => {
@@ -266,6 +208,7 @@ const DrinkCard = memo(function DrinkCard({
 
 export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false }: DrinkListProps) {
     const router = useRouter();
+    const theme = useTheme();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
     const [selectedCategory, setSelectedCategory] = useState<"All" | "Cocktails" | "Beers" | "Wines">("All");
@@ -384,9 +327,9 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
                         {!hideHeader && (
                             <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
                                 <TouchableOpacity onPress={() => router.back()} style={styles.headerTitleContainer}>
-                                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                                 </TouchableOpacity>
-                                <Text style={[styles.title, { fontSize: 34 }]}>{title}</Text>
+                                <H1 fontSize={34} lineHeight={38} letterSpacing={0.5} fontWeight="bold" color="$color">{title}</H1>
                                 <View style={{ width: 40 }} />
                             </View>
                         )}

@@ -1,13 +1,11 @@
-import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { interpolate, runOnJS, SharedValue, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { Text } from "tamagui";
+import { Text, useTheme } from "tamagui";
 
 export const { width, height } = Dimensions.get("window");
 
@@ -26,12 +24,13 @@ export interface FlashcardItem {
 }
 
 export function SubjectCard({ icon, label, onPress }: { icon: string, label: string, onPress: () => void }) {
+    const theme = useTheme();
     return (
         <TouchableOpacity style={sharedStyles.subjectCardWrapper} onPress={onPress}>
-            <GlassView style={sharedStyles.subjectCard} intensity={20}>
-                <IconSymbol name={icon as any} size={32} color={Colors.dark.tint} />
-                <Text style={sharedStyles.subjectLabel}>{label}</Text>
-            </GlassView>
+            <View style={[sharedStyles.subjectCard, { borderColor: theme.borderColor?.val, backgroundColor: theme.backgroundStrong?.val }]}>
+                <IconSymbol name={icon as any} size={32} color={theme.color8?.val} />
+                <Text style={[sharedStyles.subjectLabel, { color: theme.color?.val }]}>{label}</Text>
+            </View>
         </TouchableOpacity>
     );
 }
@@ -41,6 +40,7 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
     onCountChange: (count: number) => void,
     sliderPos: SharedValue<number>
 }) {
+    const theme = useTheme();
     const sliderWidth = width - 110;
 
     const handleCountChange = (newCount: number) => {
@@ -74,20 +74,20 @@ export function CardCountSlider({ cardCount, onCountChange, sliderPos }: {
 
     return (
         <View style={sharedStyles.sliderWrapper}>
-            <Text style={sharedStyles.sliderLabel}>
+            <Text style={[sharedStyles.sliderLabel, { color: theme.color11?.val }]}>
                 {cardCount === 20 ? "YOU'RE AN ANIMAL" : `NUMBER OF CARDS: ${cardCount}`}
             </Text>
             <View style={sharedStyles.sliderContainer}>
-                <Text style={sharedStyles.sliderLimit}>5</Text>
+                <Text style={[sharedStyles.sliderLimit, { color: theme.color11?.val }]}>5</Text>
                 <GestureDetector gesture={gesture}>
                     <View style={sharedStyles.sliderTrack}>
-                        <GlassView style={sharedStyles.sliderTrackGlass} intensity={10}>
-                            <Animated.View style={[sharedStyles.sliderFill, animatedSliderFillStyle]} />
+                        <View style={[sharedStyles.sliderTrackGlass, { backgroundColor: theme.borderColor?.val }]}>
+                            <Animated.View style={[sharedStyles.sliderFill, animatedSliderFillStyle, { backgroundColor: theme.color8?.val }]} />
                             <Animated.View style={[sharedStyles.sliderHandle, animatedSliderHandleStyle]} />
-                        </GlassView>
+                        </View>
                     </View>
                 </GestureDetector>
-                <Text style={sharedStyles.sliderLimit}>20</Text>
+                <Text style={[sharedStyles.sliderLimit, { color: theme.color11?.val }]}>20</Text>
             </View>
         </View>
     );
@@ -148,6 +148,7 @@ export function CocktailGlass({ progress, color }: { progress: SharedValue<numbe
 }
 
 export function ShakerToggle({ active, onPress }: { active: boolean, onPress: () => void }) {
+    const theme = useTheme();
     const shakeOffset = useSharedValue(0);
 
     useEffect(() => {
@@ -180,8 +181,8 @@ export function ShakerToggle({ active, onPress }: { active: boolean, onPress: ()
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={sharedStyles.shakerToggleContainer}>
             <View style={sharedStyles.shakerToggleLabels}>
-                <Text style={[sharedStyles.shakerToggleLabel, !active && sharedStyles.activeLabel]}>TRAINING MODE</Text>
-                <Text style={[sharedStyles.shakerToggleLabel, active && sharedStyles.activeLabel]}>SPEC MODE</Text>
+                <Text style={[sharedStyles.shakerToggleLabel, !active && { color: theme.color8?.val }]}>TRAINING MODE</Text>
+                <Text style={[sharedStyles.shakerToggleLabel, active && { color: theme.color8?.val }]}>SPEC MODE</Text>
             </View>
 
             <View style={sharedStyles.shakerWrapper}>
@@ -205,7 +206,7 @@ export function ShakerToggle({ active, onPress }: { active: boolean, onPress: ()
 
                 <Animated.View style={[
                     sharedStyles.shakerGlow,
-                    { opacity: useDerivedValue(() => withSpring(active ? 0.4 : 0)).value }
+                    { opacity: useDerivedValue(() => withSpring(active ? 0.4 : 0)).value, backgroundColor: theme.color8?.val }
                 ]} />
             </View>
 
@@ -214,7 +215,7 @@ export function ShakerToggle({ active, onPress }: { active: boolean, onPress: ()
 }
 
 export const sharedStyles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.dark.background },
+    container: { flex: 1 },
     safeArea: { flex: 1 },
     header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 10 },
     backButton: { width: 44, height: 44, justifyContent: "center", alignItems: "center" },
@@ -228,28 +229,27 @@ export const sharedStyles = StyleSheet.create({
     },
     selectionGrid: { flexDirection: "row", flexWrap: "wrap", padding: 15, gap: 15, justifyContent: "space-between" },
     subjectCardWrapper: { width: "47%", height: 120 },
-    subjectCard: { flex: 1, borderRadius: 20, justifyContent: "center", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+    subjectCard: { flex: 1, borderRadius: 20, justifyContent: "center", alignItems: "center", gap: 10, borderWidth: 1 },
     subjectLabel: { fontSize: 18, fontWeight: "600", letterSpacing: 1 },
     sliderWrapper: { padding: 30, paddingBottom: 110 },
-    sliderLabel: { fontSize: 16, fontWeight: "600", color: Colors.dark.icon, marginBottom: 15, textAlign: "center" },
+    sliderLabel: { fontSize: 16, fontWeight: "600", marginBottom: 15, textAlign: "center" },
     sliderContainer: { flexDirection: "row", alignItems: "center", gap: 15 },
-    sliderLimit: { fontSize: 14, color: Colors.dark.icon, width: 25 },
+    sliderLimit: { fontSize: 14, width: 25 },
     sliderTrack: { flex: 1, height: 40, justifyContent: "center" },
-    sliderTrackGlass: { height: 10, borderRadius: 5, backgroundColor: "rgba(255,255,255,0.05)", overflow: "visible" },
-    sliderFill: { height: "100%", backgroundColor: Colors.dark.tint, borderRadius: 5 },
+    sliderTrackGlass: { height: 10, borderRadius: 5, overflow: "visible" },
+    sliderFill: { height: "100%", borderRadius: 5 },
     sliderHandle: { position: "absolute", width: 24, height: 24, borderRadius: 12, backgroundColor: "#FFF", top: -7, marginLeft: -12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 5 },
     // Shaker Toggle Styles
     shakerToggleContainer: { paddingVertical: 20, alignItems: 'center', gap: 15 },
     shakerToggleLabels: { flexDirection: 'row', justifyContent: 'space-between', width: width - 80, marginBottom: 5 },
-    shakerToggleLabel: { fontSize: 12, fontWeight: '800', color: 'rgba(255,255,255,0.3)', letterSpacing: 1 },
-    activeLabel: { color: Colors.dark.tint },
+    shakerToggleLabel: { fontSize: 12, fontWeight: '800', color: 'rgba(150,150,150,0.5)', letterSpacing: 1 },
     shakerWrapper: { width: 120, height: 120, justifyContent: 'center', alignItems: 'center' },
     shakerBody: { alignItems: 'center' },
     shakerCap: { width: 30, height: 15, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 2 },
     shakerTop: { width: 60, height: 25, borderTopLeftRadius: 25, borderTopRightRadius: 25, marginBottom: 2 },
     shakerMain: { width: 55, height: 70, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
-    shakerGlow: { position: 'absolute', width: 110, height: 110, backgroundColor: Colors.dark.tint, borderRadius: 55, zIndex: -1 },
-    toggleHint: { fontSize: 14, fontWeight: 'bold', color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginTop: 5 },
+    shakerGlow: { position: 'absolute', width: 110, height: 110, borderRadius: 55, zIndex: -1 },
+    toggleHint: { fontSize: 14, fontWeight: 'bold', color: 'rgba(150,150,150,0.5)', letterSpacing: 1, marginTop: 5 },
     // Collins Glass Styles
     glassOuterContainer: { alignItems: 'center', justifyContent: 'center', padding: 10, position: 'relative' },
     collinsContainer: {
