@@ -4,8 +4,8 @@ import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
@@ -18,7 +18,6 @@ export default function MenusScreen() {
     const menus = dropdowns?.menus || [];
 
     const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-    const scrollViewRef = useRef<ScrollView>(null);
 
     // Initial selection
     useFocusEffect(
@@ -32,9 +31,6 @@ export default function MenusScreen() {
             // Select the last menu created
             const firstMenu = menus[menus.length - 1];
             setSelectedMenuId(firstMenu.id);
-            setTimeout(() => {
-                scrollViewRef.current?.scrollToEnd({ animated: false });
-            }, 500);
         }
     }, [menus, selectedMenuId]);
 
@@ -47,30 +43,25 @@ export default function MenusScreen() {
             <CurrentMenuList
                 sections={menuDetails?.sections || []}
                 ListHeaderComponent={
-                    <View>
-                        <View style={{ paddingTop: insets.top + 10, alignItems: 'center', marginBottom: 10 }}>
-                            <Button
-                                size="$3"
-                                borderRadius="$10"
-                                backgroundColor="$color8"
-                                borderColor="transparent"
-                                borderWidth={1}
-                                onPress={() => router.push("/tamagui-demo")}
-                            >
-                                <Text color="$backgroundStrong" fontWeight="600">
-                                    ✨ View Tamagui Demo ✨
-                                </Text>
-                            </Button>
-                        </View>
+                    <View style={{ paddingTop: insets.top }}>
                         {loadingMenus ? (
                             <ActivityIndicator color="$color8" style={{ marginVertical: 20 }} />
                         ) : (
                         <TamaguiScrollView 
-                                ref={scrollViewRef as any}
                                 horizontal 
                                 showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 15, gap: 10, marginTop: 20, alignItems: "center" }}
+                                contentContainerStyle={{ 
+                                    paddingHorizontal: 15, 
+                                    gap: 10, 
+                                    marginTop: 20, 
+                                    alignItems: "center",
+                                    justifyContent: menus.length === 1 ? "center" : "flex-start",
+                                    minWidth: '100%'
+                                }}
                             >
+                                {menus.length === 1 && (
+                                    <View style={{ width: 44 }} /> // Balance out the "+" button so the single pill stays perfectly centered
+                                )}
                                 {menus.map((menu) => {
                                     const isSelected = selectedMenuId === menu.id;
                                     return (
@@ -92,18 +83,14 @@ export default function MenusScreen() {
                                 
                                 <Button
                                     size="$3"
-                                    borderRadius="$10"
+                                    circular
                                     backgroundColor="$backgroundStrong"
                                     borderStyle="dashed"
                                     borderWidth={1}
                                     borderColor="$borderColor"
-                                    icon={<IconSymbol name="plus" size={20} color={theme.color?.get() as string} />}
+                                    icon={<IconSymbol name="plus" size={16} color={theme.color?.get() as string} />}
                                     onPress={() => router.push("/menus/create")}
-                                >
-                                    <Text color="$color" fontWeight="600">
-                                        Create Menu
-                                    </Text>
-                                </Button>
+                                />
                             </TamaguiScrollView>
                         )}
 
