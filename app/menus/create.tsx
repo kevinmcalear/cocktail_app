@@ -3,67 +3,372 @@ import { ThemedView } from "@/components/themed-view";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useDropdowns } from "@/hooks/useDropdowns";
+import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const templates = [
-    { id: '1', name: 'Standard Season', description: '12 cocktails, balanced categories' },
-    { id: '2', name: 'Special Event', description: 'Short list, 6 signature drinks' },
-    { id: '3', name: 'Testing Menu', description: 'Blank canvas for R&D' },
-];
+interface Cocktail {
+    id: string;
+    name: string;
+}
 
 export default function CreateMenuScreen() {
     const router = useRouter();
-    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+    const insets = useSafeAreaInsets();
+    const queryClient = useQueryClient();
+
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const templates = dropdowns?.menuTemplates || [];
+    const allSections = dropdowns?.templateSections || [];
+
+    const [cocktails, setCocktails] = useState<Cocktail[]>([]);
+    const [loadingCocktails, setLoadingCocktails] = useState(true);
+
+    const [step, setStep] = useState<1 | 2>(1);
+    const [menuName, setMenuName] = useState("");
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+
+    // activeSections for the selected template
+    const activeSections = allSections.filter(s => s.template_id === selectedTemplateId).sort((a, b) => a.sort_order - b.sort_order);
+
+    // selections: { [sectionId]: cocktailId[] }
+    const [selections, setSelections] = useState<Record<string, string[]>>({});
+    
+    // Modal State
+    const [showPicker, setShowPicker] = useState(false);
+    const [pickingForSection, setPickingForSection] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchCocktails = async () => {
+            const { data, error } = await supabase
+                .from('cocktails')
+                .select('id, name')
+                .order('name');
+            if (data) setCocktails(data);
+            setLoadingCocktails(false);
+        };
+        fetchCocktails();
+    }, []);
+
+    const handleNextStep = () => {
+        if (!menuName.trim()) {
+            Alert.alert("Missing Name", "Please enter a name for the menu.");
+            return;
+        }
+        if (!selectedTemplateId) {
+            Alert.alert("Missing Template", "Please select a template.");
+            return;
+        }
+        // Initialize selections based on sections if going to step 2 for the first time
+        const newSelections = { ...selections };
+        activeSections.forEach(sec => {
+            if (!newSelections[sec.id]) newSelections[sec.id] = [];
+        });
+        setSelections(newSelections);
+        setStep(2);
+    };
+
+    const handleAddCocktail = (cocktailId: string) => {
+        if (!pickingForSection) return;
+        
+        const currentSelected = selections[pickingForSection] || [];
+        const sectionDef = activeSections.find(s => s.id === pickingForSection);
+        
+        if (sectionDef && sectionDef.max_items && currentSelected.length >= sectionDef.max_items) {
+            Alert.alert("Section Full", `You cannot add more than ${sectionDef.max_items} drinks to this section.`);
+            return;
+        }
+
+        if (currentSelected.includes(cocktailId)) {
+            Alert.alert("Already Added", "This cocktail is already in this section.");
+            return;
+        }
+
+        setSelections(prev => ({
+            ...prev,
+            [pickingForSection]: [...currentSelected, cocktailId]
+        }));
+        
+        setShowPicker(false);
+        setSearchQuery("");
+        setPickingForSection(null);
+    };
+
+    const handleRemoveCocktail = (sectionId: string, cocktailId: string) => {
+        setSelections(prev => ({
+            ...prev,
+            [sectionId]: (prev[sectionId] || []).filter(id => id !== cocktailId)
+        }));
+    };
+
+    const isMenuValid = () => {
+        return activeSections.every(sec => {
+            const count = (selections[sec.id] || []).length;
+            return count >= (sec.min_items || 1);
+        });
+    };
+
+    const handleSaveMenu = async () => {
+        if (!isMenuValid()) {
+            Alert.alert("Incomplete", "Please fulfill all section requirements before saving.");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // 1. Create Menu
+            const { data: newMenu, error: menuError } = await supabase
+                .from('menus')
+                .insert({
+                    name: menuName,
+                    template_id: selectedTemplateId,
+                    is_active: true
+                })
+                .select()
+                .single();
+
+            if (menuError || !newMenu) throw menuError;
+
+            // 2. Add Drinks
+            let globalSortOrder = 0;
+            const drinksToInsert = [];
+            
+            // Loop through sections in order
+            for (const sec of activeSections) {
+                const drinksInSection = selections[sec.id] || [];
+                for (const cocktailId of drinksInSection) {
+                    drinksToInsert.push({
+                        menu_id: newMenu.id,
+                        cocktail_id: cocktailId,
+                        template_section_id: sec.id,
+                        sort_order: globalSortOrder++
+                    });
+                }
+            }
+
+            if (drinksToInsert.length > 0) {
+                const { error: drinksError } = await supabase
+                    .from('menu_drinks')
+                    .insert(drinksToInsert);
+                if (drinksError) throw drinksError;
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            
+            Alert.alert("Success", "Menu created successfully!", [
+                { text: "OK", onPress: () => router.back() }
+            ]);
+
+        } catch (error) {
+            console.error("Save menu error", error);
+            Alert.alert("Error", "Failed to save the menu.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loadingDropdowns || loadingCocktails) {
+        return (
+            <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.dark.tint} />
+            </ThemedView>
+        );
+    }
 
     return (
         <ThemedView style={styles.container}>
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.headerRow}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <TouchableOpacity onPress={() => step === 2 ? setStep(1) : router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                     </TouchableOpacity>
-                    <ThemedText type="title" style={styles.title}>Create Menu</ThemedText>
+                    <ThemedText type="title" style={styles.title}>
+                        {step === 1 ? "Create Menu" : "Build Menu"}
+                    </ThemedText>
                 </View>
-                <ThemedText style={styles.subtitle}>Select a template to get started</ThemedText>
+                <ThemedText style={styles.subtitle}>
+                    {step === 1 ? "Select a template to get started" : menuName}
+                </ThemedText>
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                {templates.map((template) => {
-                    const isSelected = selectedTemplate === template.id;
-                    return (
-                        <TouchableOpacity
-                            key={template.id}
-                            onPress={() => setSelectedTemplate(template.id)}
-                        >
-                            <GlassView
-                                style={[styles.card, isSelected && styles.selectedCard]}
-                                intensity={isSelected ? 60 : 30}
+            {step === 1 ? (
+                <ScrollView contentContainerStyle={styles.content}>
+                    <View style={styles.inputSection}>
+                        <ThemedText style={styles.label}>Menu Name</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g. Winter 2025"
+                            placeholderTextColor="#666"
+                            value={menuName}
+                            onChangeText={setMenuName}
+                        />
+                    </View>
+
+                    <ThemedText style={[styles.label, { marginTop: 10 }]}>Select Template</ThemedText>
+                    {templates.map((template) => {
+                        const isSelected = selectedTemplateId === template.id;
+                        return (
+                            <TouchableOpacity
+                                key={template.id}
+                                onPress={() => setSelectedTemplateId(template.id)}
                             >
-                                <View style={styles.cardHeader}>
-                                    <ThemedText type="subtitle" style={styles.cardTitle}>{template.name}</ThemedText>
-                                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={24} color={Colors.dark.tint} />}
-                                </View>
-                                <ThemedText style={styles.cardDesc}>{template.description}</ThemedText>
-                            </GlassView>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
+                                <GlassView
+                                    style={[styles.card, isSelected && styles.selectedCard]}
+                                    intensity={isSelected ? 60 : 30}
+                                >
+                                    <View style={styles.cardHeader}>
+                                        <ThemedText type="subtitle" style={styles.cardTitle}>{template.name}</ThemedText>
+                                        {isSelected && <IconSymbol name="checkmark.circle.fill" size={24} color={Colors.dark.tint} />}
+                                    </View>
+                                    <ThemedText style={styles.cardDesc}>{template.description}</ThemedText>
+                                </GlassView>
+                            </TouchableOpacity>
+                        );
+                    })}
 
-            <View style={styles.footer}>
-                <TouchableOpacity
-                    style={[styles.createButton, !selectedTemplate && styles.disabledButton]}
-                    disabled={!selectedTemplate}
-                    onPress={() => {
-                        // Logic to create menu would go here
-                        router.back();
-                    }}
-                >
-                    <ThemedText style={styles.createButtonText}>Create Menu</ThemedText>
-                </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.createNewTemplateBtn}
+                        onPress={() => router.push("/menus/create-template")}
+                    >
+                        <IconSymbol name="plus.circle" size={24} color={Colors.dark.icon} />
+                        <ThemedText style={styles.createNewTemplateText}>Create New Template</ThemedText>
+                    </TouchableOpacity>
+
+                    <View style={styles.footerSpacer} />
+                </ScrollView>
+            ) : (
+                <ScrollView contentContainerStyle={styles.content}>
+                    {activeSections.map((sec) => {
+                        const count = (selections[sec.id] || []).length;
+                        const isFulfilled = count >= (sec.min_items || 1);
+                        const isFull = sec.max_items ? count >= sec.max_items : false;
+
+                        return (
+                            <View key={sec.id} style={styles.sectionContainer}>
+                                <View style={styles.sectionHeaderRow}>
+                                    <ThemedText type="subtitle" style={styles.sectionTitle}>{sec.name}</ThemedText>
+                                    <ThemedText style={[styles.sectionCount, isFulfilled && { color: Colors.dark.tint }]}>
+                                        {count} / {sec.max_items || '∞'} 
+                                        {sec.min_items && sec.min_items > 0 ? ` (Min ${sec.min_items})` : ''}
+                                    </ThemedText>
+                                </View>
+
+                                {selections[sec.id]?.map((cocktailId) => {
+                                    const c = cocktails.find(x => x.id === cocktailId);
+                                    return (
+                                        <View key={cocktailId} style={styles.cocktailRow}>
+                                            <ThemedText style={styles.cocktailName}>{c?.name}</ThemedText>
+                                            <TouchableOpacity onPress={() => handleRemoveCocktail(sec.id, cocktailId)}>
+                                                <IconSymbol name="minus.circle.fill" size={24} color="#ff4444" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })}
+
+                                {!isFull && (
+                                    <TouchableOpacity 
+                                        style={styles.addDrinkBtn}
+                                        onPress={() => {
+                                            setPickingForSection(sec.id);
+                                            setShowPicker(true);
+                                        }}
+                                    >
+                                        <IconSymbol name="plus" size={20} color={Colors.dark.icon} />
+                                        <ThemedText style={styles.addDrinkText}>Add Drink</ThemedText>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        );
+                    })}
+                    <View style={styles.footerSpacer} />
+                </ScrollView>
+            )}
+
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                {step === 1 ? (
+                    <TouchableOpacity
+                        style={[styles.createButton, (!selectedTemplateId || !menuName.trim()) && styles.disabledButton]}
+                        disabled={!selectedTemplateId || !menuName.trim()}
+                        onPress={handleNextStep}
+                    >
+                        <ThemedText style={styles.createButtonText}>Next: Add Drinks</ThemedText>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        style={[styles.createButton, (!isMenuValid() || saving) && styles.disabledButton]}
+                        disabled={!isMenuValid() || saving}
+                        onPress={handleSaveMenu}
+                    >
+                        {saving ? (
+                            <ActivityIndicator size="small" color="#000" />
+                        ) : (
+                            <ThemedText style={styles.createButtonText}>Save Menu</ThemedText>
+                        )}
+                    </TouchableOpacity>
+                )}
             </View>
+
+            {/* Cocktail Selection Modal */}
+            <Modal
+                visible={showPicker}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => {
+                    setShowPicker(false);
+                    setSearchQuery("");
+                }}
+            >
+                <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.modalContent}>
+                                <View style={styles.modalHeader}>
+                                    <ThemedText style={styles.modalTitle}>Select Cocktail</ThemedText>
+                                    <TouchableOpacity onPress={() => setShowPicker(false)}>
+                                        <IconSymbol name="xmark" size={24} color="#fff" />
+                                    </TouchableOpacity>
+                                </View>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search cocktails..."
+                                    placeholderTextColor="#666"
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                />
+                                <FlatList
+                                    data={cocktails.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+                                    keyExtractor={item => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.modalOption}
+                                            onPress={() => handleAddCocktail(item.id)}
+                                        >
+                                            <ThemedText style={styles.modalOptionText}>{item.name}</ThemedText>
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
         </ThemedView>
     );
 }
@@ -74,7 +379,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.background,
     },
     header: {
-        paddingTop: 60,
         paddingHorizontal: 20,
         paddingBottom: 20,
         borderBottomLeftRadius: 30,
@@ -103,6 +407,25 @@ const styles = StyleSheet.create({
         padding: 20,
         gap: 15
     },
+    inputSection: {
+        marginBottom: 10,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: Colors.dark.text,
+        marginBottom: 8,
+        marginLeft: 4,
+    },
+    input: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 15,
+        padding: 18,
+        color: '#fff',
+        fontSize: 18,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
     card: {
         padding: 20,
         borderRadius: 20,
@@ -120,15 +443,89 @@ const styles = StyleSheet.create({
         marginBottom: 8
     },
     cardTitle: {
-        fontSize: 20
+        fontSize: 20,
+        color: Colors.dark.text,
     },
     cardDesc: {
         color: Colors.dark.icon,
         fontSize: 16
     },
+    createNewTemplateBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        marginTop: 15,
+        padding: 16,
+        borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.05)",
+        borderWidth: 1,
+        borderStyle: "dashed",
+        borderColor: "rgba(255,255,255,0.2)"
+    },
+    createNewTemplateText: {
+        color: Colors.dark.text,
+        fontSize: 16,
+        fontWeight: "600"
+    },
+    sectionContainer: {
+        marginBottom: 20,
+    },
+    sectionHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+    sectionTitle: {
+        fontSize: 22,
+        color: Colors.dark.text,
+    },
+    sectionCount: {
+        fontSize: 14,
+        color: Colors.dark.icon,
+        marginBottom: 4,
+    },
+    cocktailRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.05)",
+        padding: 16,
+        borderRadius: 15,
+        marginBottom: 8,
+    },
+    cocktailName: {
+        fontSize: 18,
+        color: Colors.dark.text,
+    },
+    addDrinkBtn: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 16,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderStyle: "dashed",
+        borderColor: "rgba(255,255,255,0.2)",
+        gap: 8,
+        marginTop: 4,
+    },
+    addDrinkText: {
+        color: Colors.dark.icon,
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    footerSpacer: {
+        height: 60,
+    },
     footer: {
-        padding: 20,
-        paddingBottom: 40
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        backgroundColor: Colors.dark.background,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255,255,255,0.05)",
     },
     createButton: {
         backgroundColor: Colors.dark.tint,
@@ -142,6 +539,47 @@ const styles = StyleSheet.create({
     createButtonText: {
         color: "#000",
         fontWeight: "bold",
+        fontSize: 18
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#1E1E1E',
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 20,
+        height: '80%'
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingHorizontal: 10,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#fff'
+    },
+    searchInput: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        padding: 16,
+        borderRadius: 15,
+        color: '#fff',
+        fontSize: 16,
+        marginBottom: 15
+    },
+    modalOption: {
+        padding: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+    },
+    modalOptionText: {
+        color: '#fff',
         fontSize: 18
     }
 });

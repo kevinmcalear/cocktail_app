@@ -1,8 +1,8 @@
 import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -62,6 +62,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="import-cocktails"
           options={{ presentation: "modal", title: "Import Cocktails" }}
+        />
+        <Stack.Screen
+          name="cocktail/[id]/index"
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen name="test" options={{ headerShown: false }} />
       </Stack>

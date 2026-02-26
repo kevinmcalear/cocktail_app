@@ -73,10 +73,6 @@ export default function AddCocktailScreen() {
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
 
-    // Menu State
-    const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-    const [showMenuPicker, setShowMenuPicker] = useState(false);
-    const [newMenuName, setNewMenuName] = useState("");
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
@@ -109,28 +105,7 @@ export default function AddCocktailScreen() {
         }
     };
 
-    const createMenu = async () => {
-        if (!newMenuName.trim()) return;
-        try {
-            const { data, error } = await supabase
-                .from('menus')
-                .insert({ name: newMenuName, is_active: true })
-                .select()
-                .single();
-            
-            if (error) throw error;
-            if (data) {
-                queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
-                setSelectedMenuId(data.id);
-                setNewMenuName("");
-                setShowMenuPicker(false); // Close picker after creating and selecting
-                Alert.alert("Menu Created", `"${data.name}" has been created and selected.`);
-            }
-        } catch (e) {
-            Alert.alert("Error", "Failed to create menu");
-            console.error(e);
-        }
-    };
+
 
     const uploadImage = async (uri: string, cocktailId: string): Promise<string | null> => {
         try {
@@ -215,25 +190,7 @@ export default function AddCocktailScreen() {
                 });
             }
 
-            // 4. Associate with Menu (if selected)
-            if (selectedMenuId) {
-                // Get current max sort_order for this menu to append at end
-                const { data: maxSort } = await supabase
-                    .from('menu_drinks')
-                    .select('sort_order')
-                    .eq('menu_id', selectedMenuId)
-                    .order('sort_order', { ascending: false })
-                    .limit(1)
-                    .single();
-                
-                const nextSortOrder = (maxSort?.sort_order ?? -1) + 1;
 
-                await supabase.from('menu_drinks').insert({
-                    menu_id: selectedMenuId,
-                    cocktail_id: cocktailId,
-                    sort_order: nextSortOrder
-                });
-            }
 
             Alert.alert("Success", "Cocktail created!", [
                 { text: "OK", onPress: () => router.back() }
@@ -304,19 +261,7 @@ export default function AddCocktailScreen() {
                     />
                 </View>
 
-                {/* Menu Selection */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.label}>Add to Menu</ThemedText>
-                    <TouchableOpacity 
-                        style={styles.selectButton} 
-                        onPress={() => setShowMenuPicker(true)}
-                    >
-                        <ThemedText style={{ color: selectedMenuId ? '#fff' : '#666' }}>
-                            {selectedMenuId ? menus.find(m => m.id === selectedMenuId)?.name : "Select Menu (Optional)"}
-                        </ThemedText>
-                        <IconSymbol name="chevron.down" size={20} color="#666" />
-                    </TouchableOpacity>
-                </View>
+
 
                 <View style={styles.section}>
                     <ThemedText style={styles.label}>Description</ThemedText>
@@ -540,62 +485,7 @@ export default function AddCocktailScreen() {
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* Menu Picker Modal */}
-            <Modal
-                visible={showMenuPicker}
-                animationType="fade"
-                transparent={true}
-                onRequestClose={() => setShowMenuPicker(false)}
-            >
-                <TouchableWithoutFeedback onPress={() => setShowMenuPicker(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                            <View style={[styles.modalContent, { maxHeight: '60%' }]}>
-                                <View style={styles.modalHeader}>
-                                    <ThemedText style={styles.modalTitle}>Select Menu</ThemedText>
-                                    <TouchableOpacity onPress={() => setShowMenuPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                                
-                                {/* Create New Menu Component */}
-                                <View style={styles.createMenuRow}>
-                                    <TextInput 
-                                        style={[styles.input, { flex: 1, padding: 12 }]}
-                                        placeholder="New Menu Name"
-                                        placeholderTextColor="#666"
-                                        value={newMenuName}
-                                        onChangeText={setNewMenuName}
-                                    />
-                                    <TouchableOpacity style={styles.createBtn} onPress={createMenu}>
-                                        <IconSymbol name="plus" size={20} color="#000" />
-                                    </TouchableOpacity>
-                                </View>
 
-                                <FlatList
-                                    data={menus}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={[styles.ingredientOption, item.id === selectedMenuId && { backgroundColor: 'rgba(230, 126, 34, 0.2)' }]}
-                                            onPress={() => {
-                                                setSelectedMenuId(item.id);
-                                                setShowMenuPicker(false);
-                                            }}
-                                        >
-                                            <ThemedText style={[styles.ingredientText, item.id === selectedMenuId && { color: Colors.dark.tint }]}>{item.name}</ThemedText>
-                                            {item.id === selectedMenuId && <IconSymbol name="checkmark" size={16} color={Colors.dark.tint} />}
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                                <TouchableOpacity style={styles.clearSelectionBtn} onPress={() => { setSelectedMenuId(null); setShowMenuPicker(false); }}>
-                                    <ThemedText style={{color: '#ff4444'}}>Clear Selection</ThemedText>
-                                </TouchableOpacity>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </View>
-                </TouchableWithoutFeedback>
-            </Modal>
 
         </ThemedView>
     );
@@ -769,24 +659,5 @@ const styles = StyleSheet.create({
         color: '#ccc',
         fontSize: 16
     },
-    createMenuRow: {
-        flexDirection: 'row',
-        gap: 10,
-        marginBottom: 20
-    },
-    createBtn: {
-        backgroundColor: Colors.dark.tint,
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    clearSelectionBtn: {
-        padding: 16,
-        alignItems: 'center',
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.1)',
-        marginTop: 10
-    }
+
 });
