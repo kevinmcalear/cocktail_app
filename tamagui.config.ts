@@ -1,5 +1,28 @@
 import { config } from '@tamagui/config/v3'
-import { createTamagui } from 'tamagui'
+import { createFont, createTamagui } from 'tamagui'
+
+const bodyFont = createFont({
+  ...config.fonts.body,
+  family: 'IBMPlexSans',
+  face: {
+    normal: { normal: 'IBMPlexSans' },
+    400: { normal: 'IBMPlexSans' },
+    700: { normal: 'IBMPlexSansBold' },
+  }
+})
+
+const headingFont = createFont({
+  ...config.fonts.heading,
+  family: 'IBMPlexSans',
+  face: {
+    ...config.fonts.heading.face,
+    normal: { normal: 'IBMPlexSans' },
+    400: { normal: 'IBMPlexSans' },
+    700: { normal: 'IBMPlexSansBold' },
+    800: { normal: 'IBMPlexSansBold' },
+    900: { normal: 'IBMPlexSansBold' },
+  }
+})
 
 // Custom Cocktail App Themes based on existing constants/theme.ts
 const customThemes = {
@@ -31,6 +54,11 @@ const customThemes = {
 
 const tamaguiConfig = createTamagui({
   ...config,
+  fonts: {
+    ...config.fonts,
+    heading: headingFont,
+    body: bodyFont,
+  },
   themes: customThemes,
   settings: {
     ...config.settings,

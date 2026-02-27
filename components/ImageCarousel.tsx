@@ -89,7 +89,7 @@ export function ImageCarousel({
                 onScroll={onScroll}
                 scrollEventThrottle={16}
                 contentContainerStyle={{ height: '100%' }}
-                scrollEnabled={scrollEnabled && !isZoomed}
+                scrollEnabled={scrollEnabled && !isZoomed && images.length > 1}
                 style={paginationBelow ? { aspectRatio: 1, flexGrow: 0 } : { flex: 1 }}
             >
                 {images.map((image, index) => {
@@ -129,15 +129,13 @@ export function ImageCarousel({
             </ScrollView>
 
             {images.length > 1 && (
-                <View style={[
-                    paginationBelow ? styles.paginationRelative : styles.paginationAbsolute
-                ]}>
+                <View style={styles.paginationContainer}>
                     {images.map((_, index) => (
                         <View
                             key={index}
                             style={[
-                                styles.segment,
-                                { backgroundColor: index === activeIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.3)' }
+                                styles.dot,
+                                { backgroundColor: index === activeIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)' }
                             ]}
                         />
                     ))}
@@ -151,25 +149,24 @@ const styles = StyleSheet.create({
     container: {
         overflow: 'hidden',
     },
-    paginationAbsolute: {
+    paginationContainer: {
         position: 'absolute',
-        bottom: 0,
+        bottom: 16,
         left: 0,
         right: 0,
         flexDirection: 'row',
-        paddingHorizontal: 4,
-        paddingBottom: 4,
-        gap: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
     },
-    paginationRelative: {
-        flexDirection: 'row',
-        paddingHorizontal: 4,
-        paddingTop: 12, // Space between image and lines
-        gap: 4,
-    },
-    segment: {
-        flex: 1,
-        height: 2,
-        borderRadius: 1,
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+        elevation: 2,
     },
 });

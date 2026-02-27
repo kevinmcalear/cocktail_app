@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useWine } from "@/hooks/useWines";
@@ -248,6 +249,7 @@ export default function EditWineScreen() {
                         setLocalImages(newImages);
                     }}
                     onAdd={pickImage}
+                    generateComponent={<GenerateImageButton type="wine" id={safeId} variant="tile" />}
                 />
 
                 <YStack gap="$2" marginBottom="$4">

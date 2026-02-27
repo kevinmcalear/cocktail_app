@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
@@ -319,7 +320,10 @@ export default function AddCocktailScreen() {
                                     borderWidth={1}
                                     onPress={() => setMethodId(m.id)}
                                 >
-                                    <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={m.name} size={16} color={methodId === m.id ? "#000" : Colors.dark.text} />
+                                        <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                         </XStack>
@@ -340,7 +344,10 @@ export default function AddCocktailScreen() {
                                     borderWidth={1}
                                     onPress={() => setGlasswareId(g.id)}
                                 >
-                                    <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={g.name} size={16} color={glasswareId === g.id ? "#000" : Colors.dark.text} />
+                                        <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                         </XStack>
@@ -361,7 +368,10 @@ export default function AddCocktailScreen() {
                                     borderWidth={1}
                                     onPress={() => setFamilyId(f.id)}
                                 >
-                                    <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={f.name} size={16} color={familyId === f.id ? "#000" : Colors.dark.text} />
+                                        <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                         </XStack>
@@ -382,7 +392,10 @@ export default function AddCocktailScreen() {
                                     borderWidth={1}
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
                                 >
-                                    <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={i.name} size={16} color={iceId === i.id ? "#000" : Colors.dark.text} />
+                                        <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                         </XStack>

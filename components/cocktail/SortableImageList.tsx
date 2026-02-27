@@ -17,9 +17,10 @@ interface SortableImageListProps {
     onReorder: (images: ImageItem[]) => void;
     onRemove: (index: number) => void;
     onAdd: () => void;
+    generateComponent?: React.ReactNode;
 }
 
-export function SortableImageList({ images, onReorder, onRemove, onAdd }: SortableImageListProps) {
+export function SortableImageList({ images, onReorder, onRemove, onAdd, generateComponent }: SortableImageListProps) {
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<ImageItem>) => {
         const index = getIndex();
         return (
@@ -72,10 +73,13 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd }: Sortab
                     The existing design was horizontal scroll.
                     Let's try to mimic the existing layout: Add Button | [Draggable List]
                 */}
-                 <TouchableOpacity onPress={onAdd} style={styles.addImageBtn}>
-                    <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
-                    <Text style={styles.addImageText}>Add</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity onPress={onAdd} style={styles.addImageBtn}>
+                        <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
+                        <Text style={styles.addImageText}>Add</Text>
+                    </TouchableOpacity>
+                    {generateComponent}
+                </View>
 
                 <DraggableFlatList
                     data={images}

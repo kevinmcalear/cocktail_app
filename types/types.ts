@@ -1,6 +1,7 @@
 export interface DatabaseIngredient {
     id: string;
     name: string;
+    ingredient_images?: { images: { url: string } }[];
 }
 
 export interface DatabaseRecipe {

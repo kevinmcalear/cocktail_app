@@ -98,23 +98,70 @@ export function useIngredient(id?: string | string[]) {
     });
 }
 
+export const updateIngredientFn = async ({ id, updates }: { id: string, updates: any }) => {
+    const { data, error } = await supabase
+        .from('ingredients')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+        
+    if (error) throw error;
+    return data;
+};
+
+export const addIngredientFn = async (newIngredient: any) => {
+    const { data, error } = await supabase
+        .from('ingredients')
+        .insert(newIngredient)
+        .select()
+        .single();
+        
+    if (error) throw error;
+    return data;
+};
+
 // Mutations
 export function useUpdateIngredient() {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
-            const { data, error } = await supabase
-                .from('ingredients')
-                .update(updates)
-                .eq('id', id)
-                .select()
-                .single();
-                
-            if (error) throw error;
-            return data;
+        mutationKey: ['updateIngredient'],
+        mutationFn: updateIngredientFn,
+        onMutate: async (newVariables) => {
+            await queryClient.cancelQueries({ queryKey: ['ingredients'] });
+            await queryClient.cancelQueries({ queryKey: ['ingredient', newVariables.id] });
+
+            const previousIngredients = queryClient.getQueryData(['ingredients']);
+            const previousIngredient = queryClient.getQueryData(['ingredient', newVariables.id]);
+
+            queryClient.setQueryData(['ingredients'], (old: any) => 
+                old ? old.map((i: any) => i.id === newVariables.id ? { ...i, ...newVariables.updates } : i) : old
+            );
+            
+            // To optimistically update the individual ingredient query, we must match its shape
+            queryClient.setQueryData(['ingredient', newVariables.id], (old: any) => {
+                if (!old) return old;
+                return {
+                   ...old,
+                   ingredient: { ...old.ingredient, ...newVariables.updates }
+                };
+            });
+
+            return { previousIngredients, previousIngredient, id: newVariables.id };
         },
-        onSuccess: (data, variables) => {
+        onError: (err, newVariables, context) => {
+            if (context?.previousIngredients) {
+                queryClient.setQueryData(['ingredients'], context.previousIngredients);
+            }
+            if (context?.previousIngredient) {
+                queryClient.setQueryData(['ingredient', context.id], context.previousIngredient);
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+                queryClient.invalidateQueries({ queryKey: ['ingredient', newVariables.id] });
+            }
+        },
+        onSettled: (data, error, variables) => {
             queryClient.invalidateQueries({ queryKey: ['ingredient', variables.id] });
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
         }
@@ -125,17 +172,26 @@ export function useAddIngredient() {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async (newIngredient: any) => {
-            const { data, error } = await supabase
-                .from('ingredients')
-                .insert(newIngredient)
-                .select()
-                .single();
-                
-            if (error) throw error;
-            return data;
+        mutationKey: ['addIngredient'],
+        mutationFn: addIngredientFn,
+        onMutate: async (newIngredient) => {
+            await queryClient.cancelQueries({ queryKey: ['ingredients'] });
+            const previousIngredients = queryClient.getQueryData(['ingredients']);
+            
+            queryClient.setQueryData(['ingredients'], (old: any) => 
+                old ? [...old, { ...newIngredient, id: 'temp-id-' + Date.now() }] : old
+            );
+            
+            return { previousIngredients };
         },
-        onSuccess: () => {
+        onError: (err, newVariables, context) => {
+            if (context?.previousIngredients) {
+                queryClient.setQueryData(['ingredients'], context.previousIngredients);
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            }
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
         }
     });

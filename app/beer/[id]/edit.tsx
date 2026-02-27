@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useBeer } from "@/hooks/useBeers";
@@ -248,6 +249,7 @@ export default function EditBeerScreen() {
                         setLocalImages(newImages);
                     }}
                     onAdd={pickImage}
+                    generateComponent={<GenerateImageButton type="beer" id={safeId} variant="tile" />}
                 />
 
                 <YStack gap="$2" marginBottom="$4">

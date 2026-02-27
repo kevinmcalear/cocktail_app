@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Modal, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Modal, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView, RectButton, Swipeable } from "react-native-gesture-handler";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +21,7 @@ export default function WineDetailsScreen() {
     
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { height: windowHeight } = useWindowDimensions();
+    const { height: windowHeight, width: windowWidth } = useWindowDimensions();
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const theme = useTheme();
@@ -29,6 +29,7 @@ export default function WineDetailsScreen() {
     const { data: wine, isLoading: loading, error } = useWine(safeId);
     const [modalVisible, setModalVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [modalHeight, setModalHeight] = useState(windowHeight);
 
     const scrollY = useSharedValue(0);
 
@@ -36,6 +37,16 @@ export default function WineDetailsScreen() {
         onScroll: (event) => {
             scrollY.value = event.contentOffset.y;
         },
+    });
+
+    const parallaxStyle = useAnimatedStyle(() => {
+        return {
+            transform: [
+                {
+                    translateY: scrollY.value > 0 ? scrollY.value : 0,
+                },
+            ],
+        };
     });
 
     const stickyTitleStyle = useAnimatedStyle(() => {
@@ -109,9 +120,20 @@ export default function WineDetailsScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="light-content" />
 
-            {/* Top Section: Fixed Image & Header Actions */}
-            <View style={styles.fixedHeader}>
-                <View style={styles.imageWrapper}>
+            {/* Scrollable Content overlay */}
+            <Animated.ScrollView
+                style={[styles.scrollContainer, { zIndex: 1 }]}
+                showsVerticalScrollIndicator={false}
+                onScroll={scrollHandler}
+                scrollEventThrottle={16}
+                bounces={false}
+                onLayout={(e) => setModalHeight(e.nativeEvent.layout.height)}
+            >
+                {/* Parallax Image & Grabber */}
+                <Animated.View style={[
+                    { position: 'absolute', top: 0, left: 0, right: 0, height: windowWidth, zIndex: 0 },
+                    parallaxStyle
+                ]}>
                     <ImageCarousel
                         images={images}
                         initialIndex={currentImageIndex}
@@ -119,51 +141,60 @@ export default function WineDetailsScreen() {
                         onImagePress={() => setModalVisible(true)}
                         paginationBelow={true} 
                     />
-                </View>
-
-                {/* Navigation & Action Buttons */}
-                <TouchableOpacity
-                    style={[styles.backButton, { top: 10, left: 20 }]}
-                    onPress={() => router.back()}
-                >
-                    <GlassView intensity={50} style={styles.buttonGlass}>
-                        <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
-                    </GlassView>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.editButton, { top: 10, right: 20 }]}
-                    onPress={() => router.push(`/wine/${id}/edit`)}
-                >
-                    <GlassView intensity={50} style={styles.buttonGlass}>
-                        <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
-                    </GlassView>
-                </TouchableOpacity>
-
-                {/* Sticky Title */}
-                <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
-                    <Text style={[styles.stickyTitleText, { color: theme.color?.get() as string }]}>{wine.name}</Text>
+                    
+                    {/* Grabber built into image area */}
+                    <View style={{
+                        position: 'absolute',
+                        top: 12,
+                        left: 0,
+                        right: 0,
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                    }}>
+                        <View style={{
+                            width: 40,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.5,
+                            shadowRadius: 2,
+                            elevation: 4,
+                        }} />
+                    </View>
+                    
+                    {/* Sticky Title (Optional, adjust as needed) */}
+                    <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
+                        <Text style={[styles.stickyTitleText, { color: '#FFF', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }]}>{wine?.name}</Text>
+                    </Animated.View>
                 </Animated.View>
-            </View>
 
-            {/* Bottom Section: Scrollable Content */}
-            <Animated.ScrollView
-                style={styles.scrollContainer}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                onScroll={scrollHandler}
-                scrollEventThrottle={16}
-            >
-                <View style={styles.header}>
-                    <Swipeable
-                        ref={(ref) => { swipeableRef = ref; }}
-                        renderRightActions={() => renderRightActions(wine.id, swipeableRef!)}
-                        friction={2}
-                        rightThreshold={40}
-                        overshootRight={false}
-                    >
-                        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: theme.color?.get() as string }]}>{wine.name}</Text>
-                    </Swipeable>
+                {/* Transparent Spacer so touches pass through to the Parallax Header */}
+                <View style={{ height: windowWidth, backgroundColor: 'transparent' }} pointerEvents="none" />
+
+                {/* Inner ScrollView mapped dynamically to stop exactly below the grabber */}
+                <ScrollView 
+                    style={[styles.contentSurface, { backgroundColor: theme.background?.get() as string, height: modalHeight - 29 }]}
+                    contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                    <View style={{ flex: 1 }}>
+                        <Swipeable
+                            ref={(ref) => { swipeableRef = ref; }}
+                            renderRightActions={() => renderRightActions(wine.id, swipeableRef!)}
+                            friction={2}
+                            rightThreshold={40}
+                            overshootRight={false}
+                        >
+                            <Text style={[styles.title, { fontSize: 32, color: theme.color?.get() as string }]}>{wine.name}</Text>
+                        </Swipeable>
+                    </View>
+                    <TouchableOpacity onPress={() => router.push(`/wine/${id}/edit`)} style={{ padding: 8 }}>
+                        <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Core Metadata Badges */}
@@ -211,6 +242,7 @@ export default function WineDetailsScreen() {
 
                 {/* Bottom Spacing */}
                 <View style={{ height: 40 }} />
+                </ScrollView>
             </Animated.ScrollView>
 
             {/* Lightbox Modal */}
@@ -274,7 +306,9 @@ const styles = StyleSheet.create({
     stickyTitleText: {
         fontSize: 32,
         lineHeight: 42,
-        fontWeight: 'bold',
+        fontFamily: 'IBMPlexSansItalic',
+        fontWeight: 'normal',
+        fontStyle: 'italic',
         textAlign: 'left',
         paddingTop: 8,
     },
@@ -287,6 +321,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         lineHeight: 36,
+        fontFamily: 'IBMPlexSansItalic',
+        fontWeight: 'normal',
+        fontStyle: 'italic',
         textAlign: 'left',
     },
     backButton: {
@@ -307,10 +344,20 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         flex: 1,
-        marginTop: 16,
     },
     scrollContent: {
         paddingBottom: 40,
+    },
+    contentSurface: {
+        paddingTop: 24,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 8,
     },
     rightActionsContainer: {
         flexDirection: 'row',

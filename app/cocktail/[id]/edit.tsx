@@ -17,6 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { GenerateImageButton } from "@/components/GenerateImageButton";
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useCocktail } from "@/hooks/useCocktails";
@@ -409,6 +411,7 @@ export default function EditCocktailScreen() {
                         setLocalImages(newImages);
                     }}
                     onAdd={pickImage}
+                    generateComponent={<GenerateImageButton type="cocktail" id={id as string} variant="tile" />}
                 />
 
                 <YStack gap="$2" marginBottom="$4">
@@ -454,7 +457,10 @@ export default function EditCocktailScreen() {
                                     onPress={() => setMethodId(m.id)}
                                     onLongPress={() => handleDeletePill('method_id', 'methods', m)}
                                 >
-                                    <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={m.name} size={16} color={methodId === m.id ? "#000" : Colors.dark.text} />
+                                        <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'methods', label: 'Method' })}>
@@ -479,7 +485,10 @@ export default function EditCocktailScreen() {
                                     onPress={() => setGlasswareId(g.id)}
                                     onLongPress={() => handleDeletePill('glassware_id', 'glassware', g)}
                                 >
-                                    <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={g.name} size={16} color={glasswareId === g.id ? "#000" : Colors.dark.text} />
+                                        <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'glassware', label: 'Glassware' })}>
@@ -504,7 +513,10 @@ export default function EditCocktailScreen() {
                                     onPress={() => setFamilyId(f.id)}
                                     onLongPress={() => handleDeletePill('family_id', 'families', f)}
                                 >
-                                    <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={f.name} size={16} color={familyId === f.id ? "#000" : Colors.dark.text} />
+                                        <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'families', label: 'Family' })}>
@@ -529,7 +541,10 @@ export default function EditCocktailScreen() {
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
                                     onLongPress={() => handleDeletePill('ice_id', 'ice', i)}
                                 >
-                                    <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                    <XStack gap="$2" alignItems="center">
+                                        <CustomIcon name={i.name} size={16} color={iceId === i.id ? "#000" : Colors.dark.text} />
+                                        <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                    </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'ice', label: 'Ice' })}>

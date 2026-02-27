@@ -1,3 +1,4 @@
+import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -71,7 +72,7 @@ export default function IngredientDetailScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { fontSize: 20, fontWeight: 'bold' }]}>{ingredient.name}</Text>
+                <Text style={[styles.headerTitle, { fontSize: 20 }]}>{ingredient.name}</Text>
                 <TouchableOpacity 
                     onPress={() => router.push(`/ingredient/${id}/edit`)} 
                     style={styles.headerBtn}
@@ -82,15 +83,24 @@ export default function IngredientDetailScreen() {
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
-                {ingredient.ingredient_images?.[0]?.images?.url && (
-                    <View style={{ alignItems: 'center', marginBottom: 10 }}>
-                        <Image 
-                            source={{ uri: ingredient.ingredient_images[0].images.url }}
-                            style={{ width: 140, height: 140, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                            contentFit="cover"
-                        />
+                <View style={{ alignItems: 'center', marginBottom: 10 }}>
+                    <View style={{ position: 'relative', width: 140, height: 140, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                        {ingredient.ingredient_images?.[0]?.images?.url ? (
+                            <Image 
+                                source={{ uri: ingredient.ingredient_images[0].images.url }}
+                                style={{ width: '100%', height: '100%' }}
+                                contentFit="cover"
+                            />
+                        ) : (
+                            <GenerateImageButton 
+                                type="ingredient" 
+                                id={ingredient.id} 
+                                name={ingredient.name} 
+                                variant="placeholder"
+                            />
+                        )}
                     </View>
-                )}
+                </View>
 
                 {/* Info Card */}
                 <GlassView style={styles.card} intensity={10}>
@@ -196,6 +206,9 @@ const styles = StyleSheet.create({
         flex: 1,
         textAlign: 'center',
         fontSize: 18,
+        fontFamily: 'IBMPlexSansItalic',
+        fontWeight: 'normal',
+        fontStyle: 'italic',
     },
     content: {
         padding: 20,
