@@ -19,8 +19,8 @@ export function BottomSearchBar({ value, onChangeText, style, placeholder = "Fin
         <XStack
             alignItems="center"
             backgroundColor="$backgroundStrong"
-            borderWidth={1}
-            borderColor={isFocused ? "$color8" : "$borderColor"}
+            borderWidth={0}
+            borderColor="transparent"
             borderRadius="$10"
             paddingHorizontal="$4"
             height={56}
@@ -51,7 +51,7 @@ export function BottomSearchBar({ value, onChangeText, style, placeholder = "Fin
             )}
             {onFilterPress && (
                 <Button unstyled onPress={onFilterPress} padding="$2" pressStyle={{ opacity: 0.5 }}>
-                    <IconSymbol name="line.3.horizontal.decrease.circle" size={24} color={theme.color11?.get() as string} />
+                    <IconSymbol name="line.3.horizontal.decrease" size={24} color={theme.color11?.get() as string} />
                 </Button>
             )}
         </XStack>

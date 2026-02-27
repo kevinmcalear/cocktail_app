@@ -15,7 +15,7 @@ import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { Image } from "expo-image";
-import { Paragraph, Separator, Text, XStack, YStack, useTheme } from "tamagui";
+import { Paragraph, Text, XStack, YStack, useTheme } from "tamagui";
 
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 
@@ -213,57 +213,57 @@ export default function CocktailDetailsScreen() {
                         </Swipeable>
                     </View>
                     <TouchableOpacity onPress={() => router.push(`/cocktail/${id}/edit`)} style={{ padding: 8 }}>
-                        <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
+                        <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Core Metadata Badges */}
-                <XStack flexWrap="wrap" gap="$4" paddingHorizontal="$4" marginBottom="$6" marginTop="$2" justifyContent="flex-start" alignItems="flex-start">
+                <XStack flexWrap="wrap" gap="$5" paddingHorizontal={24} marginBottom="$6" marginTop="$2" justifyContent="flex-start" alignItems="flex-start">
                     {cocktail.methods?.name && (
-                        <YStack alignItems="center" gap="$1" width={75} justifyContent="flex-start">
-                            <YStack height={32} justifyContent="flex-end" alignItems="center">
-                                <CustomIcon name={cocktail.methods.name} size={28} color={theme.color?.get() as string} />
+                        <YStack alignItems="center" gap="$1" justifyContent="flex-start">
+                            <YStack height={26} justifyContent="flex-end" alignItems="center">
+                                <CustomIcon name={cocktail.methods.name} size={24} color={theme.color?.get() as string} />
                             </YStack>
-                            <Text color="$color" fontSize={12} opacity={0.7} fontWeight="500" textAlign="center">{cocktail.methods.name}</Text>
+                            <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.methods.name}</Text>
                         </YStack>
                     )}
                     {cocktail.glassware?.name && (
-                        <YStack alignItems="center" gap="$1" width={75} justifyContent="flex-start">
-                            <YStack height={32} justifyContent="flex-end" alignItems="center">
-                                <CustomIcon name={cocktail.glassware.name} size={28} color={theme.color?.get() as string} />
+                        <YStack alignItems="center" gap="$1" justifyContent="flex-start">
+                            <YStack height={26} justifyContent="flex-end" alignItems="center">
+                                <CustomIcon name={cocktail.glassware.name} size={24} color={theme.color?.get() as string} />
                             </YStack>
-                            <Text color="$color" fontSize={12} opacity={0.7} fontWeight="500" textAlign="center">{cocktail.glassware.name}</Text>
+                            <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.glassware.name}</Text>
                         </YStack>
                     )}
                     {cocktail.ice?.name && (
-                        <YStack alignItems="center" gap="$1" width={75} justifyContent="flex-start">
-                            <YStack height={32} justifyContent="flex-end" alignItems="center">
-                                <CustomIcon name={cocktail.ice.name} size={28} color={theme.color?.get() as string} />
+                        <YStack alignItems="center" gap="$1" justifyContent="flex-start">
+                            <YStack height={26} justifyContent="flex-end" alignItems="center">
+                                <CustomIcon name={cocktail.ice.name} size={24} color={theme.color?.get() as string} />
                             </YStack>
-                            <Text color="$color" fontSize={12} opacity={0.7} fontWeight="500" textAlign="center">{cocktail.ice.name}</Text>
+                            <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.ice.name}</Text>
                         </YStack>
                     )}
                     {cocktail.families?.name && (
-                        <YStack alignItems="center" gap="$1" width={75} justifyContent="flex-start">
-                            <YStack height={32} justifyContent="flex-end" alignItems="center">
-                                <CustomIcon name={cocktail.families.name} size={28} color={theme.color?.get() as string} />
+                        <YStack alignItems="center" gap="$1" justifyContent="flex-start">
+                            <YStack height={26} justifyContent="flex-end" alignItems="center">
+                                <CustomIcon name={cocktail.families.name} size={24} color={theme.color?.get() as string} />
                             </YStack>
-                            <Text color="$color" fontSize={12} opacity={0.7} fontWeight="500" textAlign="center">{cocktail.families.name}</Text>
+                            <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.families.name}</Text>
                         </YStack>
                     )}
                     {cocktail.origin && (
-                        <YStack alignItems="center" gap="$1" width={75} justifyContent="flex-start">
-                            <YStack height={32} justifyContent="flex-end" alignItems="center">
-                                <CustomIcon name={cocktail.origin} size={28} color={theme.color?.get() as string} />
+                        <YStack alignItems="center" gap="$1" justifyContent="flex-start">
+                            <YStack height={26} justifyContent="flex-end" alignItems="center">
+                                <CustomIcon name={cocktail.origin} size={24} color={theme.color?.get() as string} />
                             </YStack>
-                            <Text color="$color" fontSize={12} opacity={0.7} fontWeight="500" textAlign="center">{cocktail.origin}</Text>
+                            <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.origin}</Text>
                         </YStack>
                     )}
                 </XStack>
 
                 {/* Garnish info */}
                 {cocktail.garnish_1 && (
-                    <YStack gap="$1" paddingHorizontal="$4" marginBottom="$4">
+                    <YStack gap="$1" paddingHorizontal={24} marginBottom="$4">
                         <Text color="$color" fontSize={12} fontWeight="bold" textTransform="uppercase" letterSpacing={1} opacity={0.7}>Garnish</Text>
                         <Text color="$color" fontSize={16}>{cocktail.garnish_1}</Text>
                     </YStack>
@@ -271,28 +271,56 @@ export default function CocktailDetailsScreen() {
 
                 {/* Ingredients List */}
                 {cocktail.recipes && cocktail.recipes.length > 0 && (
-                    <YStack gap="$2" marginBottom="$4" paddingHorizontal="$4">
-                        <YStack backgroundColor="$backgroundStrong" borderRadius="$4" padding="$3" borderWidth={1} borderColor="$borderColor">
-                            {cocktail.recipes.map((recipe, index) => {
-                                const ingredientsData = recipe.ingredients as any; // Cast for now until types sync up
-                                const imageUrl = ingredientsData?.ingredient_images?.[0]?.images?.url;
-                                return (
-                                    <React.Fragment key={index}>
-                                        <XStack alignItems="center" justifyContent="space-between" paddingVertical="$2">
-                                            <Text color="$color" fontSize={16} flex={1}>{formatIngredient(recipe)}</Text>
-                                            {imageUrl && (
-                                                <Image 
-                                                    source={imageUrl} 
-                                                    style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)' }} 
-                                                    contentFit="cover"
-                                                />
-                                            )}
-                                        </XStack>
-                                        {index < cocktail.recipes!.length - 1 && <Separator borderColor="$borderColor" />}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </YStack>
+                    <YStack gap="$4" marginBottom="$6" paddingHorizontal={24}>
+                        {cocktail.recipes.map((recipe, index) => {
+                            const ingredientsData = recipe.ingredients as any;
+                            const imageUrl = ingredientsData?.ingredient_images?.[0]?.images?.url;
+                            
+                            // Extract measurement parts
+                            const measurementParts = [];
+                            if (recipe.is_top) measurementParts.push(`Top`);
+                            if (recipe.ingredient_ml) measurementParts.push(`${recipe.ingredient_ml}ml`);
+                            if (recipe.ingredient_bsp) measurementParts.push(`${recipe.ingredient_bsp} bsp`);
+                            if (recipe.ingredient_dash) measurementParts.push(`${recipe.ingredient_dash} dash${recipe.ingredient_dash > 1 ? 'es' : ''}`);
+                            if (recipe.ingredient_amount) measurementParts.push(`${recipe.ingredient_amount}`);
+                            const measurement = measurementParts.join(' ');
+
+                            return (
+                                <XStack key={index} alignItems="center" gap="$4">
+                                    <TouchableOpacity 
+                                        onPress={() => ingredientsData?.id && router.push(`/ingredient/${ingredientsData.id}`)}
+                                        activeOpacity={0.7}
+                                    >
+                                        {imageUrl ? (
+                                            <Image 
+                                                source={imageUrl} 
+                                                style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)' }} 
+                                                contentFit="cover"
+                                            />
+                                        ) : (
+                                            <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' }}>
+                                                <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                    <YStack flex={1} gap="$0.5">
+                                        {measurement ? (
+                                            <Text color="$color" fontSize={13} opacity={0.5} fontWeight="600" textTransform="uppercase" letterSpacing={0.5}>
+                                                {measurement}
+                                            </Text>
+                                        ) : null}
+                                        <TouchableOpacity 
+                                            onPress={() => ingredientsData?.id && router.push(`/ingredient/${ingredientsData.id}`)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text color="$color" fontSize={18} fontWeight="400">
+                                                {ingredientsData?.name || 'Unknown Ingredient'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </YStack>
+                                </XStack>
+                            );
+                        })}
                     </YStack>
                 )}
 

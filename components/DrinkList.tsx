@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     topSearchContainer: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
         paddingBottom: 16,
     }
 });
@@ -106,10 +106,18 @@ const getImage = (item: DrinkListItem) => {
 
 const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }) {
     return (
-        <XStack alignItems="center" justifyContent="center" paddingVertical="$4" marginTop="$3" marginBottom="$2" paddingHorizontal="$6">
-            <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
-            <Text fontSize={24} fontWeight="800" color="$color" marginHorizontal="$4" textAlign="center">{letter}</Text>
-            <YStack flex={1} height={2} backgroundColor="$borderColor" opacity={0.5} />
+        <XStack alignItems="center" justifyContent="center" paddingVertical="$0" marginTop="$2" marginBottom="$2" paddingHorizontal="$4">
+            <Text 
+                fontFamily="IBMPlexSansItalic" 
+                fontSize={22} 
+                fontWeight="400" 
+                fontStyle="italic" 
+                color="$color" 
+                opacity={0.3}
+                textAlign="center"
+            >
+                {letter}
+            </Text>
         </XStack>
     );
 });
@@ -162,19 +170,27 @@ const DrinkCard = memo(function DrinkCard({
 
     const cardContent = (
         <Card
-            borderWidth={1}
+            borderWidth={0}
             backgroundColor="$backgroundStrong"
-            borderColor="$borderColor"
+            borderColor="transparent"
             overflow="hidden"
-            marginBottom="$2"
+            marginBottom="$3"
             elevation="$1"
+            borderRadius={20}
             disabled={!onPress && drink.category !== "Cocktail" && drink.category != null}
             pressStyle={{ scale: 0.98 }}
             onPress={onPress ? () => onPress(drink) : undefined}
         >
             <Card.Header flexDirection="row" padding="$3" minHeight={100} alignItems="center">
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
-                    <H4 color="$color" fontSize={20} fontWeight="700" numberOfLines={1}>
+                    <H4 
+                        color="$color" 
+                        fontSize={20} 
+                        fontWeight="400" 
+                        fontFamily="IBMPlexSansItalic"
+                        fontStyle="italic"
+                        numberOfLines={1}
+                    >
                         {drink.name}
                     </H4>
                     <Paragraph color="$color11" size="$3" numberOfLines={2}>
@@ -183,7 +199,7 @@ const DrinkCard = memo(function DrinkCard({
                 </YStack>
                 <Image
                     source={getImage(drink)}
-                    style={{ width: 76, height: 76, borderRadius: 12, backgroundColor: theme.color5?.get() as string }}
+                    style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: theme.color5?.get() as string }}
                     contentFit="cover"
                     transition={500}
                     onError={(e) => {
@@ -304,6 +320,33 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
         }
     }).current;
 
+    const renderHeader = useCallback(() => {
+        return (
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ paddingTop: hideHeader ? (isModal ? 20 : insets.top + 4) : 0 }}>
+                    {!hideHeader && (
+                        <View style={[styles.header, { paddingTop: isModal ? 20 : insets.top + 4 }]}>
+                            <TouchableOpacity onPress={() => onBackPress ? onBackPress() : router.back()} style={styles.headerTitleContainer}>
+                                <IconSymbol name="chevron.down" size={24} color={theme.color?.get() as string} />
+                            </TouchableOpacity>
+                            <H1 fontSize={34} lineHeight={38} letterSpacing={0.5} fontWeight="bold" color="$color">{title}</H1>
+                            <View style={{ width: 40 }} />
+                        </View>
+                    )}
+                    {headerButtons}
+
+                    <View style={[styles.topSearchContainer, { backgroundColor: 'transparent' }]}>
+                        <BottomSearchBar
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            placeholder={`Search drinks...`}
+                            onFilterPress={() => setIsFilterModalVisible(true)}
+                        />
+                    </View>
+                </View>
+            </TouchableWithoutFeedback>
+        );
+    }, [hideHeader, isModal, insets.top, onBackPress, router, theme.color, title, headerButtons, searchQuery, setSearchQuery, setIsFilterModalVisible]);
     const handleToggleFavorite = useCallback((id: string, swipeable: Swipeable) => {
         toggleFavorite(id);
         swipeable.close();
@@ -336,36 +379,21 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
 
     return (
         <YStack style={styles.container} backgroundColor="$background">
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: 'transparent' }} pointerEvents="box-none">
+                {renderHeader()}
+            </View>
             <View style={styles.contentContainer}>
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <View style={{ paddingTop: hideHeader ? (isModal ? 20 : insets.top + 4) : 0 }}>
-                        {!hideHeader && (
-                            <View style={[styles.header, { paddingTop: isModal ? 20 : insets.top + 4 }]}>
-                                <TouchableOpacity onPress={() => onBackPress ? onBackPress() : router.back()} style={styles.headerTitleContainer}>
-                                    <IconSymbol name="chevron.down" size={24} color={theme.color?.get() as string} />
-                                </TouchableOpacity>
-                                <H1 fontSize={34} lineHeight={38} letterSpacing={0.5} fontWeight="bold" color="$color">{title}</H1>
-                                <View style={{ width: 40 }} />
-                            </View>
-                        )}
-                        {headerButtons}
-
-                        <View style={styles.topSearchContainer}>
-                            <BottomSearchBar
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                placeholder={`Search drinks...`}
-                                onFilterPress={() => setIsFilterModalVisible(true)}
-                            />
-                        </View>
-                    </View>
-                </TouchableWithoutFeedback>
-
                 <FlatList
                     ref={flatListRef}
                     data={listData}
                     keyExtractor={(item) => ('name' in item ? item.id : `header-${item.letter}`)}
-                    contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
+                    contentContainerStyle={[
+                        styles.listContent, 
+                        { 
+                            paddingTop: (hideHeader ? (isModal ? 20 : insets.top + 4) : (isModal ? 60 : insets.top + 50)) + 76, 
+                            paddingBottom: 100 + insets.bottom 
+                        }
+                    ]}
                     showsVerticalScrollIndicator={false}
                     keyboardDismissMode="on-drag"
                     keyboardShouldPersistTaps="handled"
