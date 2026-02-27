@@ -423,8 +423,8 @@ const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
   // --- SYSTEM / TABS ---
   TabMenus: (c) => (
     <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
-      <Path d="M4 6 L14 4 L20 6 L20 20 L14 18 L4 20 Z" />
-      <Path d="M14 4 L14 18" />
+      {/* Seamless continuous path for the folded menu to avoid dot artifacts */}
+      <Path d="M4 6 L14 4 L20 6 L20 20 L14 18 L4 20 Z M14 4 L14 18" />
       <Path d="M7 9 h4 M7 12 h4 M7 15 h3" />
     </G>
   ),
