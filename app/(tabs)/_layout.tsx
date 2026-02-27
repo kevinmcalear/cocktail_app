@@ -1,5 +1,5 @@
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { useAuth } from "@/ctx/AuthContext";
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 
@@ -26,7 +26,7 @@ export default function TabLayout() {
         options={{
           title: "Menus",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="book-open-outline" size={size} color={color} />
+            <CustomIcon name="TabMenus" size={size} color={color} />
           ),
         }}
       />
@@ -36,7 +36,7 @@ export default function TabLayout() {
         options={{
           title: "Drinks",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="glass-cocktail" size={size} color={color} />
+            <CustomIcon name="TabDrinks" size={size} color={color} />
           ),
         }}
       />
@@ -46,7 +46,7 @@ export default function TabLayout() {
         options={{
           title: "Ingredients",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="food-apple" size={size} color={color} />
+            <CustomIcon name="TabIngredients" size={size} color={color} />
           ),
         }}
       />
@@ -56,7 +56,7 @@ export default function TabLayout() {
         options={{
           title: "Test",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="flask-outline" size={size} color={color} />
+            <CustomIcon name="TabTest" size={size} color={color} />
           ),
         }}
       />

@@ -419,6 +419,37 @@ const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
        <Path d="M8 18 C ৪ 22 16 22 16 18 C 16 14 12 14 12 10 C 12 6 8 6 8 10 C 8 14 8 14 8 18 Z" />
        <Path d="M6 18 L18 18" />
     </G>
+  ),
+  // --- SYSTEM / TABS ---
+  TabMenus: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M4 6 L14 4 L20 6 L20 20 L14 18 L4 20 Z" />
+      <Path d="M14 4 L14 18" />
+      <Path d="M7 9 h4 M7 12 h4 M7 15 h3" />
+    </G>
+  ),
+  TabDrinks: (c) => (
+    <Path
+      d="M6 4 L18 4 M6 4 C 8 13, 16 13, 18 4 M12 11 L12 21 M8 21 L16 21"
+      stroke={c}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  ),
+  TabIngredients: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M10 3 h4 v3 c2 1 3 2 3 5 v8 a2 2 0 0 1 -2 2 h-6 a2 2 0 0 1 -2 -2 v-8 c0-3 1-4 3-5 Z" />
+      <Path d="M9 14 h6" />
+    </G>
+  ),
+  TabTest: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M5 3 h14 a2 2 0 0 1 2 2 v14 a2 2 0 0 1 -2 2 h-14 a2 2 0 0 1 -2 -2 v-14 a2 2 0 0 1 2 -2 z" />
+      <Path d="M9 10 l2 2 l4 -4" />
+      <Path d="M8 16 h8" />
+    </G>
   )
 };
 
