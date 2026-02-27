@@ -229,9 +229,9 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     cocktailName: {
-        fontSize: 18,
+        fontSize: 20,
         color: Colors.dark.text,
-        fontWeight: "500",
+        fontWeight: "700",
     },
     addDrinkBtn: {
         flexDirection: "row",

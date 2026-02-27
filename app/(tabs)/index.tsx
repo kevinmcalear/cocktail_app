@@ -53,7 +53,7 @@ export default function MenusScreen() {
                                 contentContainerStyle={{ 
                                     paddingHorizontal: 15, 
                                     gap: 10, 
-                                    marginTop: 20, 
+                                    marginTop: 15, 
                                     alignItems: "center",
                                     justifyContent: menus.length === 1 ? "center" : "flex-start",
                                     minWidth: '100%'
@@ -112,8 +112,8 @@ const styles = StyleSheet.create({
 
     sectionHeader: {
         paddingHorizontal: 20,
-        paddingTop: 30,
-        paddingBottom: 10,
+        paddingTop: 10,
+        paddingBottom: 5,
         flexDirection: "row",
         alignItems: "center"
     },

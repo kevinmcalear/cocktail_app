@@ -186,9 +186,7 @@ const DrinkCard = memo(function DrinkCard({
                     <H4 
                         color="$color" 
                         fontSize={20} 
-                        fontWeight="400" 
-                        fontFamily="IBMPlexSansItalic"
-                        fontStyle="italic"
+                        fontWeight="700" 
                         numberOfLines={1}
                     >
                         {drink.name}

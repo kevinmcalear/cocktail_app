@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     name: {
         color: Colors.dark.text,
         fontSize: 20,
-        fontWeight: "600",
+        fontWeight: "700",
         marginBottom: 4,
     },
     description: {
