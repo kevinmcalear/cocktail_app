@@ -43,9 +43,10 @@ export function LiquidTabBar({
             <View style={styles.blurWrapper}>
                 <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
                     <XStack
-                        justifyContent="space-around"
+                        justifyContent="center"
                         alignItems="center"
-                        paddingHorizontal={10}
+                        paddingHorizontal={24}
+                        gap={12}
                         height={65}
                     >
                         {validRoutes.map((route) => {
@@ -101,8 +102,9 @@ export function LiquidTabBar({
 const styles = StyleSheet.create({
     container: {
         position: "absolute",
-        left: 20,
-        right: 20,
+        left: 0,
+        right: 0,
+        alignItems: "center",
         zIndex: 100,
     },
     blurWrapper: {

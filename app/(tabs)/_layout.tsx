@@ -24,19 +24,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Menus",
+          title: "Search",
           tabBarIcon: ({ color, size }) => (
-            <CustomIcon name="TabMenus" size={size} color={color} />
+            <CustomIcon name="TabSearch" size={size} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="search"
+        name="menus"
         options={{
-          title: "Search",
+          title: "Menus",
           tabBarIcon: ({ color, size }) => (
-            <CustomIcon name="TabSearch" size={size} color={color} />
+            <CustomIcon name="TabMenus" size={size} color={color} />
           ),
         }}
       />

@@ -1,120 +1,81 @@
-import { CurrentMenuList } from "@/components/CurrentMenuList";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useDropdowns } from "@/hooks/useDropdowns";
-import { useMenuDetails } from "@/hooks/useMenuDetails";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
+import { SearchItem, SearchList } from "@/components/SearchList";
+import { useBeers } from "@/hooks/useBeers";
+import { useCocktails } from "@/hooks/useCocktails";
+import { useIngredients } from "@/hooks/useIngredients";
+import { useWines } from "@/hooks/useWines";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 
-export default function MenusScreen() {
+export default function SearchScreen() {
     const router = useRouter();
-    const insets = useSafeAreaInsets();
-    const theme = useTheme();
-    
-    const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
-    const menus = dropdowns?.menus || [];
+    const { q } = useLocalSearchParams<{ q?: string }>();
+    const [items, setItems] = useState<SearchItem[]>([]);
 
-    const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-
-    // Initial selection
-    useFocusEffect(
-        useCallback(() => {
-            refetch(); // Ensure we have the latest menus when focusing back
-        }, [])
-    );
+    const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails();
+    const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers();
+    const { data: winesData, isLoading: winesLoading, error: winesError } = useWines();
+    const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } = useIngredients();
 
     useEffect(() => {
-        if (menus.length > 0 && !selectedMenuId) {
-            // Select the last menu created
-            const firstMenu = menus[menus.length - 1];
-            setSelectedMenuId(firstMenu.id);
-        }
-    }, [menus, selectedMenuId]);
+        if (!cocktailsData && !beersData && !winesData && !ingredientsData) return;
 
-    const { data: menuDetails, isLoading: loadingDetails } = useMenuDetails(selectedMenuId);
+        const mappedCocktails: SearchItem[] = (cocktailsData || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            category: "Cocktail",
+            recipes: c.recipes,
+            cocktail_images: c.cocktail_images,
+            method_id: c.method_id,
+            glassware_id: c.glassware_id,
+            family_id: c.family_id
+        }));
 
-    const selectedMenuName = menus.find(m => m.id === selectedMenuId)?.name || "Menu";
+        // Keeping prefix 'beer-' logic matching old drinks.tsx
+        const mappedBeers: SearchItem[] = (beersData || []).map((b: any) => ({
+            id: `beer-${b.id}`,
+            name: b.name,
+            description: b.description,
+            category: "Beer",
+            price: b.price,
+            image: b.beer_images?.[0]?.images?.url ? { uri: b.beer_images[0].images.url } : undefined
+        }));
+
+        // Keeping prefix 'wine-' logic matching old drinks.tsx
+        const mappedWines: SearchItem[] = (winesData || []).map((w: any) => ({
+            id: `wine-${w.id}`,
+            name: w.name,
+            description: w.description,
+            category: "Wine",
+            price: w.price,
+            image: w.wine_images?.[0]?.images?.url ? { uri: w.wine_images[0].images.url } : undefined
+        }));
+
+        // using plain ID for ingredients because ingredient routes relied on the plain ID
+        const mappedIngredients: SearchItem[] = (ingredientsData || []).map((i: any) => ({
+            id: i.id,
+            name: i.name,
+            description: i.description,
+            category: "Ingredient",
+            image: i.ingredient_images?.[0]?.images?.url ? { uri: i.ingredient_images[0].images.url } : undefined
+        }));
+
+        setItems([...mappedCocktails, ...mappedBeers, ...mappedWines, ...mappedIngredients]);
+    }, [cocktailsData, beersData, winesData, ingredientsData]);
+
+    if (cocktailsError || beersError || winesError || ingredientsError) {
+        console.error('Error fetching search items:', cocktailsError || beersError || winesError || ingredientsError);
+    }
 
     return (
-        <YStack flex={1} backgroundColor="$background">
-            <CurrentMenuList
-                sections={menuDetails?.sections || []}
-                ListHeaderComponent={
-                    <View style={{ paddingTop: insets.top }}>
-                        {loadingMenus ? (
-                            <ActivityIndicator color="$color8" style={{ marginVertical: 20 }} />
-                        ) : (
-                        <TamaguiScrollView 
-                                horizontal 
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ 
-                                    paddingHorizontal: 15, 
-                                    gap: 10, 
-                                    marginTop: 15, 
-                                    alignItems: "center",
-                                    justifyContent: menus.length === 1 ? "center" : "flex-start",
-                                    minWidth: '100%'
-                                }}
-                            >
-                                {menus.length === 1 && (
-                                    <View style={{ width: 44 }} /> // Balance out the "+" button so the single pill stays perfectly centered
-                                )}
-                                {menus.map((menu) => {
-                                    const isSelected = selectedMenuId === menu.id;
-                                    return (
-                                        <Button
-                                            key={menu.id}
-                                            size="$3"
-                                            borderRadius="$10"
-                                            backgroundColor={isSelected ? "$color8" : "$backgroundStrong"}
-                                            borderColor={isSelected ? "$color8" : "$borderColor"}
-                                            borderWidth={1}
-                                            onPress={() => setSelectedMenuId(menu.id)}
-                                        >
-                                            <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">
-                                                {menu.name}
-                                            </Text>
-                                        </Button>
-                                    );
-                                })}
-                                
-                                <Button
-                                    size="$3"
-                                    circular
-                                    backgroundColor="$backgroundStrong"
-                                    borderStyle="dashed"
-                                    borderWidth={1}
-                                    borderColor="$borderColor"
-                                    icon={<IconSymbol name="plus" size={16} color={theme.color?.get() as string} />}
-                                    onPress={() => router.push("/menus/create")}
-                                />
-                            </TamaguiScrollView>
-                        )}
-
-                        <View style={styles.sectionHeader}>
-                            {loadingDetails && <ActivityIndicator color="$color8" size="small" />}
-                        </View>
-                    </View>
-                }
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <SearchList
+                title="Search"
+                items={items}
+                initialSearchQuery={q}
+                hideHeader={true}
             />
-        </YStack>
+        </>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-
-    sectionHeader: {
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        paddingBottom: 5,
-        flexDirection: "row",
-        alignItems: "center"
-    },
-});
