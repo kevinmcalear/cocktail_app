@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
         height: "100%",
         alignItems: 'center',
         paddingRight: 4,
-        backgroundColor: "rgba(255, 255, 255, 0.01)", // Explicit unoptimizable invisible color for true touch hitting
+        backgroundColor: "transparent",
     },
     letterWrapper: {
         width: "100%",
