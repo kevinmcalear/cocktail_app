@@ -100,6 +100,10 @@ function RootLayoutNav() {
           options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
+          name="profile/edit"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
           name="ingredient/[id]/index"
           options={{ presentation: "modal", headerShown: false }}
         />

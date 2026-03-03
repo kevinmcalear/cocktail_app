@@ -46,6 +46,23 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
+                        onPress={() => handleNavigation('/profile/edit')}
+                    >
+                        <XStack alignItems="center" gap="$3">
+                            <IconSymbol name="person" size={24} color={theme.color?.get() as string} />
+                            <Text fontSize="$5" color="$color" fontWeight="500">Edit Profile</Text>
+                        </XStack>
+                        <IconSymbol name="chevron.right" size={24} color={theme.color11?.get() as string} />
+                    </XStack>
+
+                    <Separator borderColor="$borderColor" marginLeft={60} />
+
+                    <XStack
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingVertical="$4"
+                        paddingHorizontal="$4"
+                        pressStyle={{ opacity: 0.7 }}
                         onPress={toggleEditMode}
                     >
                         <XStack alignItems="center" gap="$3">

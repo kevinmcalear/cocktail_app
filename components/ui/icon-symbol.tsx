@@ -35,6 +35,7 @@ const MAPPING = {
   'snowflake': 'ac-unit',
   'leaf.fill': 'eco',
   'person.2.fill': 'group',
+  'person': 'person',
   'globe': 'public',
   'note.text': 'notes',
 } as Partial<IconMapping>;
