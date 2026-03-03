@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { Text, useTheme } from "tamagui";
 
 export interface ItemDetailLayoutProps {
@@ -40,6 +41,7 @@ export function ItemDetailLayout({
     const insets = useSafeAreaInsets();
     const { height: windowHeight, width: windowWidth } = useWindowDimensions();
     const theme = useTheme();
+    const { isEditModeEnabled } = useSettingsStore();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -190,7 +192,7 @@ export function ItemDetailLayout({
                                 <Text style={[styles.title, { fontSize: 32, color: theme.color?.get() as string }]}>{title}</Text>
                             </Swipeable>
                         </View>
-                        {onEditPress && (
+                        {onEditPress && isEditModeEnabled && (
                             <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
                                 <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
                             </TouchableOpacity>

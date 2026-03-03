@@ -146,6 +146,19 @@ const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
       <Path d="M9 10 L11 10 M15 10 L13 10 M9 15 Q12 17 15 15" />
     </G>
   ),
+  Beer: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M7 5 L8 20 C8 21 9 22 10 22 L14 22 C15 22 16 21 16 20 L17 5 Z" />
+      <Path d="M7 9 L17 9" />
+    </G>
+  ),
+  Wine: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M7 4 L7 9 C7 14 17 14 17 9 L17 4 Z" />
+      <Path d="M12 13 L12 21 M8 21 L16 21" />
+      <Path d="M7 8 L17 8" />
+    </G>
+  ),
 
   // --- METHODS ---
   Shaken: (c) => (

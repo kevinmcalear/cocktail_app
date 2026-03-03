@@ -3,6 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -13,6 +14,7 @@ export default function MenusScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
+    const { isEditModeEnabled } = useSettingsStore();
     
     const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
     const menus = dropdowns?.menus || [];
@@ -81,16 +83,18 @@ export default function MenusScreen() {
                                     );
                                 })}
                                 
-                                <Button
-                                    size="$3"
-                                    circular
-                                    backgroundColor="$backgroundStrong"
-                                    borderStyle="dashed"
-                                    borderWidth={1}
-                                    borderColor="$borderColor"
-                                    icon={<IconSymbol name="plus" size={16} color={theme.color?.get() as string} />}
-                                    onPress={() => router.push("/menus/create")}
-                                />
+                                {isEditModeEnabled && (
+                                    <Button
+                                        size="$3"
+                                        circular
+                                        backgroundColor="$backgroundStrong"
+                                        borderStyle="dashed"
+                                        borderWidth={1}
+                                        borderColor="$borderColor"
+                                        icon={<IconSymbol name="plus" size={16} color={theme.color?.get() as string} />}
+                                        onPress={() => router.push("/menus/create")}
+                                    />
+                                )}
                             </TamaguiScrollView>
                         )}
 

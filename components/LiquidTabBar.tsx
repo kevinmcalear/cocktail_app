@@ -1,4 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { PlatformPressable } from "@react-navigation/elements";
 import { useLinkBuilder } from "@react-navigation/native";
@@ -6,6 +7,7 @@ import { BlurView } from "expo-blur";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { XStack } from "tamagui";
+import { UniversalCreateButton } from "./UniversalCreateButton";
 
 export function LiquidTabBar({
     state,
@@ -15,6 +17,7 @@ export function LiquidTabBar({
     const { buildHref } = useLinkBuilder();
     const colorScheme = useColorScheme();
     const insets = useSafeAreaInsets();
+    const { isTestingEnabled } = useSettingsStore();
     
     const activeColor = "#FFFFFF";
     const inactiveColor = "rgba(255, 255, 255, 0.4)";
@@ -28,6 +31,11 @@ export function LiquidTabBar({
 
     // Filter routes dynamically
     const validRoutes = state.routes.filter(route => {
+        // Explicitly hide the test tab if testing is not enabled
+        if (route.name === "test" && !isTestingEnabled) {
+            return false;
+        }
+
         const { options } = descriptors[route.key];
         if ((options as any)?.tabBarStyle?.display === "none") {
             return false;
@@ -92,6 +100,7 @@ export function LiquidTabBar({
                                 </PlatformPressable>
                             );
                         })}
+                        <UniversalCreateButton />
                     </XStack>
                 </BlurView>
             </View>

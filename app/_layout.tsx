@@ -57,7 +57,19 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="add-cocktail"
-          options={{ presentation: "fullScreenModal", headerShown: false }}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="add-ingredient"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="add-beer"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="add-wine"
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="import-cocktails"

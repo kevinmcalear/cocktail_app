@@ -130,7 +130,7 @@ export default function AddIngredientScreen() {
     };
 
     return (
-        <YStack style={styles.container}>
+        <YStack style={styles.container} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}

@@ -1,9 +1,10 @@
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { StyleSheet } from "react-native";
-import { Button, Switch, Text, useTheme, XStack, YStack } from "tamagui";
+import { Button, Text, useTheme, XStack, YStack } from "tamagui";
 
 interface FilterModalProps {
     visible: boolean;
@@ -25,7 +26,7 @@ export function FilterModal({
     const theme = useTheme();
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-    const snapPoints = useMemo(() => ['65%'], []);
+    const snapPoints = useMemo(() => ['40%'], []);
 
     useEffect(() => {
         if (visible) {
@@ -69,6 +70,16 @@ export function FilterModal({
     const allCategories = ["Cocktails", "Beers", "Wines", "Ingredients"];
     const isAllSelected = allCategories.every(cat => activeFilters.includes(cat));
 
+    const getCategoryIcon = (cat: string) => {
+        switch (cat) {
+            case "Cocktails": return "TabDrinks";
+            case "Beers": return "Beer";
+            case "Wines": return "Wine";
+            case "Ingredients": return "TabIngredients";
+            default: return null;
+        }
+    };
+
     return (
         <BottomSheetModal
             ref={bottomSheetModalRef}
@@ -76,18 +87,16 @@ export function FilterModal({
             snapPoints={snapPoints}
             onChange={handleSheetChanges}
             backdropComponent={renderBackdrop}
-            backgroundStyle={{ backgroundColor: backgroundColor }}
+            backgroundStyle={{ 
+                backgroundColor: backgroundColor,
+                borderTopLeftRadius: 48,
+                borderTopRightRadius: 48,
+                borderCurve: 'continuous' as any 
+            }}
             handleIndicatorStyle={{ backgroundColor: indicatorColor }}
         >
             <BottomSheetView style={styles.contentContainer}>
                 
-                <XStack justifyContent="space-between" alignItems="center" marginBottom="$5">
-                    <Text fontSize={20} fontWeight="bold" color="$color">Filters</Text>
-                    <Button unstyled onPress={onClose} padding="$2" pressStyle={{ opacity: 0.5 }}>
-                        <IconSymbol name="xmark.circle.fill" size={24} color={theme.color11?.get() as string} />
-                    </Button>
-                </XStack>
-
                 <YStack gap="$2" marginBottom="$5">
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
                         Category
@@ -106,6 +115,7 @@ export function FilterModal({
 
                         {allCategories.map((cat) => {
                             const isSelected = activeFilters.includes(cat);
+                            const iconName = getCategoryIcon(cat);
                             return (
                                 <Button
                                     key={cat}
@@ -115,6 +125,7 @@ export function FilterModal({
                                     backgroundColor={isSelected ? "$color8" : "transparent"}
                                     borderWidth={1}
                                     borderColor={isSelected ? "$color8" : "$borderColor"}
+                                    icon={iconName ? <CustomIcon name={iconName} size={16} color={isSelected ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} /> : undefined}
                                 >
                                     <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">{cat}</Text>
                                 </Button>
@@ -124,42 +135,23 @@ export function FilterModal({
                 </YStack>
 
                 <YStack gap="$2" marginBottom="$5">
-                    <XStack 
-                        justifyContent="space-between" 
-                        alignItems="center" 
-                        padding="$3" 
-                        backgroundColor="$backgroundStrong" 
-                        borderRadius="$5"
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        onPress={handleFavesToggle}
-                        pressStyle={{ opacity: 0.7 }}
-                    >
-                        <XStack alignItems="center" gap="$2">
-                            <IconSymbol name="heart.fill" size={20} color={showFavesOnly ? "#FF4B4B" : theme.color11?.get() as string} />
-                            <Text fontSize={16} fontWeight="500" color="$color">
-                                Only show favourites
-                            </Text>
-                        </XStack>
-                        <Switch 
-                            size="$3" 
-                            checked={showFavesOnly} 
-                            onCheckedChange={handleFavesToggle}
-                            backgroundColor={showFavesOnly ? "$color8" : "$borderColor"}
+                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
+                        Show
+                    </Text>
+                    <XStack flexWrap="wrap" gap="$2">
+                        <Button
+                            onPress={handleFavesToggle}
+                            size="$3"
+                            borderRadius="$6"
+                            backgroundColor={showFavesOnly ? "#FF4B4B" : "transparent"}
+                            borderWidth={1}
+                            borderColor={showFavesOnly ? "#FF4B4B" : "$borderColor"}
+                            icon={<IconSymbol name="heart.fill" size={16} color={showFavesOnly ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />}
                         >
-                            <Switch.Thumb />
-                        </Switch>
+                            <Text color={showFavesOnly ? "$backgroundStrong" : "$color"} fontWeight="600">Favourites</Text>
+                        </Button>
                     </XStack>
                 </YStack>
-
-                <Button 
-                    size="$5" 
-                    backgroundColor="$color8" 
-                    borderRadius="$6" 
-                    onPress={onClose}
-                >
-                    <Text color="$backgroundStrong" fontWeight="bold">Show Results</Text>
-                </Button>
                 
             </BottomSheetView>
         </BottomSheetModal>

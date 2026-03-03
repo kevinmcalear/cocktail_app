@@ -1,9 +1,11 @@
+import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/ctx/AuthContext';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Modal, StyleSheet, Switch, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 
 type ProfileMenuProps = {
     visible: boolean;
@@ -13,6 +15,7 @@ type ProfileMenuProps = {
 export function ProfileMenu({ visible, onClose }: ProfileMenuProps) {
     const router = useRouter();
     const { signOut } = useAuth();
+    const { isEditModeEnabled, isTestingEnabled, toggleEditMode, toggleTesting } = useSettingsStore();
 
     const handleNavigation = (path: string) => {
         onClose();
@@ -36,33 +39,33 @@ export function ProfileMenu({ visible, onClose }: ProfileMenuProps) {
                     <TouchableWithoutFeedback>
                         <View style={styles.menuContainer}>
                             <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={() => handleNavigation('/settings')}
-                                >
-                                    <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
-                                    <Text style={styles.menuText}>Edit Profile</Text>
-                                </TouchableOpacity>
+                                <View style={styles.menuItem}>
+                                    <View style={styles.menuItemContent}>
+                                        <IconSymbol name="pencil" size={20} color={Colors.dark.text} />
+                                        <Text style={styles.menuText}>Enable Edit Mode</Text>
+                                    </View>
+                                    <Switch
+                                        value={isEditModeEnabled}
+                                        onValueChange={toggleEditMode}
+                                        trackColor={{ false: '#767577', true: '#81b0ff' }}
+                                        thumbColor={isEditModeEnabled ? '#ffffff' : '#f4f3f4'}
+                                    />
+                                </View>
 
                                 <View style={styles.separator} />
 
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={() => handleNavigation('/add-cocktail')}
-                                >
-                                    <IconSymbol name="plus.circle" size={20} color={Colors.dark.text} />
-                                    <Text style={styles.menuText}>Create Cocktail</Text>
-                                </TouchableOpacity>
-
-                                <View style={styles.separator} />
-
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={() => handleNavigation('/settings')}
-                                >
-                                    <IconSymbol name="gear" size={20} color={Colors.dark.text} />
-                                    <Text style={styles.menuText}>Settings</Text>
-                                </TouchableOpacity>
+                                <View style={styles.menuItem}>
+                                    <View style={styles.menuItemContent}>
+                                        <CustomIcon name="TabTest" size={20} color={Colors.dark.text} />
+                                        <Text style={styles.menuText}>Enable Testing</Text>
+                                    </View>
+                                    <Switch
+                                        value={isTestingEnabled}
+                                        onValueChange={toggleTesting}
+                                        trackColor={{ false: '#767577', true: '#81b0ff' }}
+                                        thumbColor={isTestingEnabled ? '#ffffff' : '#f4f3f4'}
+                                    />
+                                </View>
 
                                 <View style={styles.separator} />
 
@@ -104,8 +107,13 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingVertical: 12,
         paddingHorizontal: 10,
+    },
+    menuItemContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 12,
     },
     menuText: {

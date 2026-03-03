@@ -1,15 +1,18 @@
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/ctx/AuthContext";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Separator, Text, XStack, YStack, useTheme } from "tamagui";
+import { Separator, Switch, Text, XStack, YStack, useTheme } from "tamagui";
 
 export default function ProfileScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user, signOut } = useAuth();
     const theme = useTheme();
+    const { isEditModeEnabled, isTestingEnabled, toggleEditMode, toggleTesting } = useSettingsStore();
 
     const avatarUrl = user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
@@ -43,13 +46,15 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
-                        onPress={() => handleNavigation('/settings')}
+                        onPress={toggleEditMode}
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
-                            <Text fontSize="$5" color="$color" fontWeight="500">Edit Profile</Text>
+                            <Text fontSize="$5" color="$color" fontWeight="500">Enable Edit Mode</Text>
                         </XStack>
-                        <IconSymbol name="chevron.right" size={20} color={theme.color11?.get() as string} />
+                        <Switch size="$3" checked={isEditModeEnabled} onCheckedChange={toggleEditMode} backgroundColor={isEditModeEnabled ? theme.color?.get() as string : "$borderColor"}>
+                            <Switch.Thumb backgroundColor="$background" />
+                        </Switch>
                     </XStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />
@@ -60,30 +65,15 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
-                        onPress={() => handleNavigation('/add-cocktail')}
+                        onPress={toggleTesting}
                     >
                         <XStack alignItems="center" gap="$3">
-                            <IconSymbol name="plus.circle" size={24} color={theme.color?.get() as string} />
-                            <Text fontSize="$5" color="$color" fontWeight="500">Create Cocktail</Text>
+                            <CustomIcon name="TabTest" size={24} color={theme.color?.get() as string} />
+                            <Text fontSize="$5" color="$color" fontWeight="500">Enable Testing</Text>
                         </XStack>
-                        <IconSymbol name="chevron.right" size={20} color={theme.color11?.get() as string} />
-                    </XStack>
-
-                    <Separator borderColor="$borderColor" marginLeft={60} />
-
-                    <XStack
-                        alignItems="center"
-                        justifyContent="space-between"
-                        paddingVertical="$4"
-                        paddingHorizontal="$4"
-                        pressStyle={{ opacity: 0.7 }}
-                        onPress={() => handleNavigation('/settings')}
-                    >
-                        <XStack alignItems="center" gap="$3">
-                            <IconSymbol name="gear" size={24} color={theme.color?.get() as string} />
-                            <Text fontSize="$5" color="$color" fontWeight="500">Settings</Text>
-                        </XStack>
-                        <IconSymbol name="chevron.right" size={20} color={theme.color11?.get() as string} />
+                        <Switch size="$3" checked={isTestingEnabled} onCheckedChange={toggleTesting} backgroundColor={isTestingEnabled ? theme.color?.get() as string : "$borderColor"}>
+                            <Switch.Thumb backgroundColor="$background" />
+                        </Switch>
                     </XStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />
