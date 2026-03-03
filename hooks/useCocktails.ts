@@ -12,7 +12,11 @@ export function useCocktails() {
                     id,
                     name,
                     description,
+                    method_id,
+                    glassware_id,
+                    family_id,
                     recipes (
+                        ingredient_id,
                         ingredient_ml,
                         ingredient_bsp,
                         ingredient_dash,

@@ -25,7 +25,10 @@ export default function SearchScreen() {
             description: c.description,
             category: "Cocktail",
             recipes: c.recipes,
-            cocktail_images: c.cocktail_images
+            cocktail_images: c.cocktail_images,
+            method_id: c.method_id,
+            glassware_id: c.glassware_id,
+            family_id: c.family_id
         }));
 
         // Keeping prefix 'beer-' logic matching old drinks.tsx

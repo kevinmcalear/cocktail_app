@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BottomSearchBar } from "@/components/BottomSearchBar";
+import { SearchBar } from "@/components/SearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
@@ -262,7 +262,7 @@ export default function AddIngredientScreen() {
                             <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
                         </TouchableOpacity>
                     </View>
-                    <BottomSearchBar
+                    <SearchBar
                         placeholder="Search ingredients..."
                         value={ingredientSearch}
                         onChangeText={setIngredientSearch}

@@ -1,4 +1,4 @@
-import { BottomSearchBar } from "@/components/BottomSearchBar";
+import { SearchBar } from "@/components/SearchBar";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { decode } from "base64-arraybuffer";
@@ -565,7 +565,7 @@ export default function AddCocktailScreen() {
                             <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
                         </TouchableOpacity>
                     </View>
-                    <BottomSearchBar
+                    <SearchBar
                         placeholder="Search ingredients..."
                         value={ingredientSearch}
                         onChangeText={setIngredientSearch}

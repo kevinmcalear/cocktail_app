@@ -15,9 +15,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
+import { SearchBar } from "@/components/SearchBar";
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -768,7 +768,7 @@ export default function EditCocktailScreen() {
                             </TouchableOpacity>
                         </View>
                         
-                        <BottomSearchBar
+                        <SearchBar
                             placeholder="Search ingredients..."
                             value={ingredientSearch}
                             onChangeText={setIngredientSearch}

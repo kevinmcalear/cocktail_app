@@ -1,7 +1,8 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
-import { BottomSearchBar } from "@/components/BottomSearchBar";
 import { FilterModal } from "@/components/FilterModal";
+import { SearchBar, SearchChip } from "@/components/SearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useDropdowns } from "@/hooks/useDropdowns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import * as Haptics from "expo-haptics";
@@ -20,6 +21,7 @@ export interface SearchItem {
     category?: "Cocktail" | "Beer" | "Wine" | "Ingredient";
     price?: string;
     recipes?: {
+        ingredient_id?: string;
         ingredients: {
             name: string;
         } | null;
@@ -30,6 +32,9 @@ export interface SearchItem {
         };
     }[];
     image?: any;
+    method_id?: string | null;
+    glassware_id?: string | null;
+    family_id?: string | null;
 }
 
 interface SearchListProps {
@@ -246,9 +251,11 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
     const [activeFilters, setActiveFilters] = useState<string[]>(allCategories);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
     const [showFavesOnly, setShowFavesOnly] = useState(false);
+    const [activeChips, setActiveChips] = useState<SearchChip[]>([]);
     const flatListRef = useRef<FlatList>(null);
     const { toggleFavorite, isFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
+    const { data: dropdowns } = useDropdowns();
 
     const handleToggleFilter = useCallback((category: string) => {
         if (category === "All") {
@@ -290,7 +297,37 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
             result = result.filter(d => isFavorite(d.id));
         }
 
-        if (searchQuery) {
+        if (activeChips.length > 0) {
+            activeChips.forEach(chip => {
+                if (chip.type === "Search") {
+                    const lowerQuery = chip.label.replace(/"/g, "").toLowerCase();
+                    result = result.filter(
+                        (c) =>
+                            c.name.toLowerCase().includes(lowerQuery) ||
+                            (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery))) ||
+                            (c.description?.toLowerCase().includes(lowerQuery))
+                    );
+                } else if (chip.type === "Ingredient") {
+                    const ingId = chip.id.replace("ingredient-", "");
+                    result = result.filter(
+                        (c) =>
+                           (c.category === "Ingredient" && c.id === ingId) ||
+                           c.recipes?.some(r => r.ingredient_id === ingId)
+                    );
+                } else if (chip.type === "Method") {
+                    const methodId = chip.id.replace("method-", "");
+                    result = result.filter(c => c.method_id === methodId);
+                } else if (chip.type === "Glassware") {
+                    const glasswareId = chip.id.replace("glassware-", "");
+                    result = result.filter(c => c.glassware_id === glasswareId);
+                } else if (chip.type === "Family") {
+                    const familyId = chip.id.replace("family-", "");
+                    result = result.filter(c => c.family_id === familyId);
+                }
+            });
+        }
+
+        if (searchQuery && activeChips.length === 0) {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(
                 (c) =>
@@ -301,7 +338,36 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         }
 
         return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [items, searchQuery, activeFilters, allCategories]);
+    }, [items, searchQuery, activeFilters, allCategories, activeChips, showFavesOnly, isFavorite]);
+
+    const suggestions = useMemo(() => {
+        if (!searchQuery) return [];
+        const query = searchQuery.toLowerCase();
+        const sugs: SearchChip[] = [];
+
+        dropdowns?.ingredients?.filter(i => i.name.toLowerCase().includes(query)).slice(0, 3).forEach(i => {
+            sugs.push({ id: `ingredient-${i.id}`, label: i.name, type: "Ingredient" });
+        });
+
+        dropdowns?.methods?.filter(m => m.name.toLowerCase().includes(query)).slice(0, 2).forEach(m => {
+            sugs.push({ id: `method-${m.id}`, label: m.name, type: "Method" });
+        });
+
+        dropdowns?.glassware?.filter(g => g.name.toLowerCase().includes(query)).slice(0, 2).forEach(g => {
+            sugs.push({ id: `glassware-${g.id}`, label: g.name, type: "Glassware" });
+        });
+
+        dropdowns?.families?.filter(f => f.name.toLowerCase().includes(query)).slice(0, 2).forEach(f => {
+            sugs.push({ id: `family-${f.id}`, label: f.name, type: "Family" });
+        });
+        
+        const existingTextSearch = sugs.find(s => s.type === "Search");
+        if (!existingTextSearch) {
+            sugs.push({ id: `text-${query}`, label: `"${searchQuery}"`, type: "Search" });
+        }
+
+        return sugs;
+    }, [searchQuery, dropdowns]);
 
     // Section Headers Logic
     const listData = useMemo(() => {
@@ -365,17 +431,30 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                     {headerButtons}
 
                     <View style={[styles.topSearchContainer, { backgroundColor: 'transparent' }]}>
-                        <BottomSearchBar
+                        <SearchBar
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             placeholder={`Search drinks...`}
                             onFilterPress={() => setIsFilterModalVisible(true)}
+                            chips={activeChips}
+                            onRemoveChip={(chipId) => {
+                                setActiveChips(prev => prev.filter(c => c.id !== chipId));
+                            }}
+                            suggestions={suggestions}
+                            onSuggestionPress={(sug) => {
+                                setActiveChips(prev => {
+                                    if (prev.find(c => c.id === sug.id)) return prev;
+                                    return [...prev, sug];
+                                });
+                                setSearchQuery("");
+                                Keyboard.dismiss();
+                            }}
                         />
                     </View>
                 </View>
             </TouchableWithoutFeedback>
         );
-    }, [hideHeader, isModal, insets.top, onBackPress, router, theme.color, title, headerButtons, searchQuery, setSearchQuery, setIsFilterModalVisible]);
+    }, [hideHeader, isModal, insets.top, onBackPress, router, theme.color, title, headerButtons, searchQuery, setSearchQuery, setIsFilterModalVisible, activeChips, suggestions]);
     const handleToggleFavorite = useCallback((id: string, swipeable: Swipeable) => {
         toggleFavorite(id);
         swipeable.close();
