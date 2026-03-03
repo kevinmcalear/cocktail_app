@@ -338,18 +338,7 @@ export default function QuizScreen() {
                                 <TouchableOpacity activeOpacity={1} onPress={handleFlip} style={styles.flipContainer}>
                                     <Animated.View style={[styles.card, frontAnimatedStyle]}>
                                         <GlassView style={styles.glassCard} intensity={25}>
-                                            {currentItem.imageUrl ? (
-                                                <View style={styles.imageWrapper}>
-                                                    <Image
-                                                        source={{ uri: currentItem.imageUrl }}
-                                                        style={styles.cardImage}
-                                                        contentFit="cover"
-                                                    />
-                                                    <BlurView intensity={90} style={StyleSheet.absoluteFill} tint="dark" />
-                                                </View>
-                                            ) : (
-                                                <IconSymbol name="wineglass" size={80} color={Colors.dark.icon} />
-                                            )}
+                                            <IconSymbol name="wineglass" size={80} color={Colors.dark.icon} />
                                             <Text style={[styles.cardName, { fontSize: 20, fontWeight: 'bold' }]}>{currentItem.name}</Text>
                                             <Text style={styles.tapToFlip}>TAP TO FLIP</Text>
                                         </GlassView>
