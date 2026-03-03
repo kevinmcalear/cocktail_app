@@ -512,9 +512,10 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                     }}
                     renderItem={renderItem}
                 />
+            {(!searchQuery && activeChips.length === 0) && (
+                <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
+            )}
             </View>
-
-            <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
 
             <FilterModal 
                 visible={isFilterModalVisible}

@@ -7,9 +7,7 @@ import Animated, {
     runOnJS,
     SharedValue,
     useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming
+    useSharedValue, withTiming
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -86,23 +84,19 @@ export function AlphabetScroller({ onScrollToLetter, letters = ALPHABET }: Alpha
 
     const animatedContainerStyle = useAnimatedStyle(() => {
         return {
-            transform: [
-                { scale: withSpring(isTouching.value ? 1.2 : 1) },
-                { translateX: withSpring(isTouching.value ? -10 : 0) }
-            ],
-            backgroundColor: withTiming(isTouching.value ? "rgba(0,0,0,0.2)" : "transparent", { duration: 200 }),
-            borderRadius: 20,
-        }
+            opacity: withTiming(isTouching.value ? 1 : 0, { duration: 200 }),
+        };
     });
 
     return (
         <View
-            style={[styles.container, { top: insets.top + 70, bottom: insets.bottom + 90 }]}
+            style={[styles.container, { top: insets.top + 140, bottom: insets.bottom + 110 }]}
             onLayout={onLayout}
+            pointerEvents="box-none"
         >
-            <Animated.View style={[styles.innerContainer, animatedContainerStyle]}>
-                <GestureDetector gesture={panGesture}>
-                    <Animated.View style={styles.gestureContainer}>
+            <GestureDetector gesture={panGesture}>
+                <Animated.View style={styles.gestureContainer}>
+                    <Animated.View style={[styles.innerContainer, animatedContainerStyle]} pointerEvents="none">
                         {displayLetters.map((letter, index) => (
                             <LetterItem
                                 key={letter}
@@ -113,8 +107,8 @@ export function AlphabetScroller({ onScrollToLetter, letters = ALPHABET }: Alpha
                             />
                         ))}
                     </Animated.View>
-                </GestureDetector>
-            </Animated.View>
+                </Animated.View>
+            </GestureDetector>
         </View>
     );
 }
@@ -142,10 +136,7 @@ const LetterItem = ({
         const distance = Math.abs(activeY.value - centerY);
         const isActive = activeY.value !== -1;
 
-        let scale = 0.3;
-        let translateX = 0;
         let opacity = 0.6;
-        let color = Colors.dark.tint;
         let textShadowRadius = 0;
         let textShadowColor = "transparent";
 
@@ -155,23 +146,16 @@ const LetterItem = ({
             const progress = distance / influenceRange;
             const curve = (Math.cos(progress * Math.PI) + 1) / 2;
 
-            scale = 0.3 + curve * 0.9; // Scale from 0.3 to 1.2
-            translateX = -curve * 50; // Adjusted slide for new scale
             opacity = 0.6 + curve * 0.4;
 
             if (distance < safeLetterHeight / 2) {
                 // Active letter
-                color = "#fff";
-                textShadowRadius = 15;
+                textShadowRadius = 10;
                 textShadowColor = Colors.light.tint; // Use a contrasting tint for glow
             }
         }
 
         return {
-            transform: [
-                { scale },
-                { translateX },
-            ],
             opacity: withTiming(opacity, { duration: 50 }),
             // Animate these for smoothness
             textShadowColor: textShadowColor,
@@ -209,10 +193,10 @@ const styles = StyleSheet.create({
     container: {
         position: "absolute",
         right: 0,
-        width: SCROLLER_WIDTH,
+        width: 40, // Wider touch target since it's invisible
         justifyContent: "center",
-        alignItems: "center",
-        zIndex: 100,
+        alignItems: "flex-end", // Align letters inside the wider touch target to the right
+        zIndex: 10, // Must be high enough to catch touch events
     },
     innerContainer: {
         width: "100%",
@@ -224,6 +208,8 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
         alignItems: 'center',
+        paddingRight: 4,
+        backgroundColor: "rgba(255, 255, 255, 0.01)", // Explicit unoptimizable invisible color for true touch hitting
     },
     letterWrapper: {
         width: "100%",
@@ -237,9 +223,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     letterText: {
-        fontSize: 30, // Large font for sharpness
+        fontSize: 10, // iOS standard size is tiny
         fontWeight: "bold",
-        color: Colors.dark.tint,
+        color: Colors.light.tint, // Classic iOS blue color instead of dark tint
     }
 });
 
