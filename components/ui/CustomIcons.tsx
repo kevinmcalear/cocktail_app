@@ -450,6 +450,12 @@ const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
       <Path d="M9 10 l2 2 l4 -4" />
       <Path d="M8 16 h8" />
     </G>
+  ),
+  TabSearch: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Circle cx="11" cy="11" r="6" />
+      <Path d="M15.5 15.5 L20 20" />
+    </G>
   )
 };
 

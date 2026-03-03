@@ -13,11 +13,11 @@ import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
 
-export interface DrinkListItem {
+export interface SearchItem {
     id: string;
     name: string;
     description?: string;
-    category?: "Cocktail" | "Beer" | "Wine";
+    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient";
     price?: string;
     recipes?: {
         ingredients: {
@@ -32,13 +32,13 @@ export interface DrinkListItem {
     image?: any;
 }
 
-interface DrinkListProps {
+interface SearchListProps {
     title: string;
-    drinks: DrinkListItem[];
+    items: SearchItem[];
     headerButtons?: ReactNode;
     initialSearchQuery?: string;
     hideHeader?: boolean;
-    onDrinkPress?: (drink: DrinkListItem) => void;
+    onDrinkPress?: (drink: SearchItem) => void;
     onBackPress?: () => void;
     isModal?: boolean;
 }
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     }
 });
 
-const getImage = (item: DrinkListItem) => {
+const getImage = (item: SearchItem) => {
     if (item.image) {
         return item.image;
     }
@@ -122,7 +122,7 @@ const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }
     );
 });
 
-const DrinkCard = memo(function DrinkCard({
+const SearchItemCard = memo(function SearchItemCard({
     drink,
     isFav,
     inStudy,
@@ -130,12 +130,12 @@ const DrinkCard = memo(function DrinkCard({
     onToggleStudyPile,
     onPress
 }: {
-    drink: DrinkListItem;
+    drink: SearchItem;
     isFav: boolean;
     inStudy: boolean;
     onToggleFavorite: (id: string, swipeable: Swipeable) => void;
     onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
-    onPress?: (drink: DrinkListItem) => void;
+    onPress?: (drink: SearchItem) => void;
 }) {
     let swipeableRef: Swipeable | null = null;
 
@@ -177,7 +177,6 @@ const DrinkCard = memo(function DrinkCard({
             marginBottom="$3"
             elevation="$1"
             borderRadius={20}
-            disabled={!onPress && drink.category !== "Cocktail" && drink.category != null}
             pressStyle={{ scale: 0.98 }}
             onPress={onPress ? () => onPress(drink) : undefined}
         >
@@ -225,6 +224,10 @@ const DrinkCard = memo(function DrinkCard({
                 <Link href={`/wine/${drink.id}`} asChild>
                     {cardContent}
                 </Link>
+            ) : drink.category === "Ingredient" ? (
+                <Link href={`/ingredient/${drink.id}`} asChild>
+                    {cardContent}
+                </Link>
             ) : (
                 <Link href={`/cocktail/${drink.id}`} asChild>
                     {cardContent}
@@ -234,25 +237,53 @@ const DrinkCard = memo(function DrinkCard({
     );
 });
 
-export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress }: DrinkListProps) {
+export function SearchList({ title, items, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress }: SearchListProps) {
     const router = useRouter();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-    const [selectedCategory, setSelectedCategory] = useState<"All" | "Cocktails" | "Beers" | "Wines">("All");
+    const allCategories = ["Cocktails", "Beers", "Wines", "Ingredients"];
+    const [activeFilters, setActiveFilters] = useState<string[]>(allCategories);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
     const [showFavesOnly, setShowFavesOnly] = useState(false);
     const flatListRef = useRef<FlatList>(null);
     const { toggleFavorite, isFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
+    const handleToggleFilter = useCallback((category: string) => {
+        if (category === "All") {
+            setActiveFilters(prev => {
+                const isAllSelected = allCategories.every(cat => prev.includes(cat));
+                if (isAllSelected) {
+                    return [];
+                } else {
+                    return [...allCategories];
+                }
+            });
+        } else {
+            setActiveFilters(prev => {
+                if (prev.includes(category)) {
+                    return prev.filter(c => c !== category);
+                } else {
+                    return [...prev, category];
+                }
+            });
+        }
+    }, [allCategories]);
+
     // Filter and Sort
     const filteredDrinks = useMemo(() => {
-        let result = drinks;
+        let result = items;
 
-        if (selectedCategory !== "All") {
-            const mappedCategory = selectedCategory === "Cocktails" ? "Cocktail" : selectedCategory === "Beers" ? "Beer" : "Wine";
-            result = result.filter(d => d.category === mappedCategory);
+        if (activeFilters.length !== allCategories.length) {
+            const mappedFilters = activeFilters.map(f => {
+                 if (f === "Cocktails") return "Cocktail";
+                 if (f === "Beers") return "Beer";
+                 if (f === "Wines") return "Wine";
+                 if (f === "Ingredients") return "Ingredient";
+                 return f;
+            });
+            result = result.filter(d => d.category && mappedFilters.includes(d.category));
         }
 
         if (showFavesOnly) {
@@ -270,11 +301,11 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
         }
 
         return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [drinks, searchQuery, selectedCategory]);
+    }, [items, searchQuery, activeFilters, allCategories]);
 
     // Section Headers Logic
     const listData = useMemo(() => {
-        const data: (DrinkListItem | { type: "header"; letter: string; id: string })[] = [];
+        const data: (SearchItem | { type: "header"; letter: string; id: string })[] = [];
         let lastLetter = "";
 
         filteredDrinks.forEach((item) => {
@@ -357,14 +388,14 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, [toggleStudyPile]);
 
-    const renderItem = useCallback(({ item }: { item: DrinkListItem | { type: "header"; letter: string; id: string } }) => {
+    const renderItem = useCallback(({ item }: { item: SearchItem | { type: "header"; letter: string; id: string } }) => {
         if ("type" in item && item.type === "header") {
             return <SectionHeader letter={item.letter} />;
         }
 
-        const drink = item as DrinkListItem;
+        const drink = item as SearchItem;
         return (
-            <DrinkCard
+            <SearchItemCard
                 drink={drink}
                 isFav={isFavorite(drink.id)}
                 inStudy={isInStudyPile(drink.id)}
@@ -409,8 +440,8 @@ export function DrinkList({ title, drinks, headerButtons, initialSearchQuery = "
             <FilterModal 
                 visible={isFilterModalVisible}
                 onClose={() => setIsFilterModalVisible(false)}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
+                activeFilters={activeFilters}
+                onToggleFilter={handleToggleFilter}
                 showFavesOnly={showFavesOnly}
                 onToggleFavesOnly={() => setShowFavesOnly(prev => !prev)}
             />

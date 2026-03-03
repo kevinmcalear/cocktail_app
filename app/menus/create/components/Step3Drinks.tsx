@@ -1,4 +1,4 @@
-import { DrinkList, DrinkListItem } from "@/components/DrinkList";
+import { SearchItem, SearchList } from "@/components/SearchList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useBeers } from "@/hooks/useBeers";
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Props) => {
-    const [allDrinks, setAllDrinks] = useState<DrinkListItem[]>([]);
+    const [allDrinks, setAllDrinks] = useState<SearchItem[]>([]);
     
     // Bottom Sheet State
     const [showPicker, setShowPicker] = useState(false);
@@ -29,7 +29,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
     useEffect(() => {
         if (!cocktailsData && !beersData && !winesData) return;
 
-        const mappedCocktails: DrinkListItem[] = (cocktailsData || []).map((c: any) => ({
+        const mappedCocktails: SearchItem[] = (cocktailsData || []).map((c: any) => ({
             id: c.id,
             name: c.name,
             description: c.description,
@@ -38,7 +38,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             cocktail_images: c.cocktail_images
         }));
 
-        const mappedBeers: DrinkListItem[] = (beersData || []).map((b: any) => ({
+        const mappedBeers: SearchItem[] = (beersData || []).map((b: any) => ({
             id: `beer-${b.id}`,
             name: b.name,
             description: b.description,
@@ -47,7 +47,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             image: b.beer_images?.[0]?.images?.url ? { uri: b.beer_images[0].images.url } : undefined
         }));
 
-        const mappedWines: DrinkListItem[] = (winesData || []).map((w: any) => ({
+        const mappedWines: SearchItem[] = (winesData || []).map((w: any) => ({
             id: `wine-${w.id}`,
             name: w.name,
             description: w.description,
@@ -162,9 +162,9 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
                     setPickingForSection(null);
                 }}
             >
-                <DrinkList
+                <SearchList
                     title={`Add ${sections.find(s => s.id === pickingForSection)?.name || "Drink"}`}
-                    drinks={allDrinks}
+                    items={allDrinks}
                     isModal={true}
                     onDrinkPress={(drink) => handleAddCocktail(drink.id)}
                     onBackPress={() => {

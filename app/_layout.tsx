@@ -87,6 +87,14 @@ function RootLayoutNav() {
           name="wine/[id]/edit"
           options={{ presentation: "modal", headerShown: false }}
         />
+        <Stack.Screen
+          name="ingredient/[id]/index"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="ingredient/[id]/edit"
+          options={{ presentation: "modal", headerShown: false }}
+        />
         <Stack.Screen name="test" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

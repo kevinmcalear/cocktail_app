@@ -32,21 +32,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="drinks"
+        name="search"
         options={{
-          title: "Drinks",
+          title: "Search",
           tabBarIcon: ({ color, size }) => (
-            <CustomIcon name="TabDrinks" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="ingredients"
-        options={{
-          title: "Ingredients",
-          tabBarIcon: ({ color, size }) => (
-            <CustomIcon name="TabIngredients" size={size} color={color} />
+            <CustomIcon name="TabSearch" size={size} color={color} />
           ),
         }}
       />

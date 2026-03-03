@@ -8,8 +8,8 @@ import { Button, Switch, Text, useTheme, XStack, YStack } from "tamagui";
 interface FilterModalProps {
     visible: boolean;
     onClose: () => void;
-    selectedCategory: "All" | "Cocktails" | "Beers" | "Wines";
-    onSelectCategory: (category: "All" | "Cocktails" | "Beers" | "Wines") => void;
+    activeFilters: string[];
+    onToggleFilter: (category: string) => void;
     showFavesOnly: boolean;
     onToggleFavesOnly: () => void;
 }
@@ -17,8 +17,8 @@ interface FilterModalProps {
 export function FilterModal({
     visible,
     onClose,
-    selectedCategory,
-    onSelectCategory,
+    activeFilters,
+    onToggleFilter,
     showFavesOnly,
     onToggleFavesOnly,
 }: FilterModalProps) {
@@ -53,9 +53,9 @@ export function FilterModal({
         []
     );
 
-    const handleCategorySelect = (cat: "All" | "Cocktails" | "Beers" | "Wines") => {
+    const handleCategorySelect = (cat: string) => {
         Haptics.selectionAsync();
-        onSelectCategory(cat);
+        onToggleFilter(cat);
     };
 
     const handleFavesToggle = () => {
@@ -65,6 +65,9 @@ export function FilterModal({
 
     const backgroundColor = theme.background?.get() as string;
     const indicatorColor = theme.borderColor?.get() as string;
+
+    const allCategories = ["Cocktails", "Beers", "Wines", "Ingredients"];
+    const isAllSelected = allCategories.every(cat => activeFilters.includes(cat));
 
     return (
         <BottomSheetModal
@@ -90,12 +93,23 @@ export function FilterModal({
                         Category
                     </Text>
                     <XStack flexWrap="wrap" gap="$2">
-                        {["All", "Cocktails", "Beers", "Wines"].map((cat) => {
-                            const isSelected = selectedCategory === cat;
+                        <Button
+                            onPress={() => handleCategorySelect("All")}
+                            size="$3"
+                            borderRadius="$6"
+                            backgroundColor={isAllSelected ? "$color8" : "transparent"}
+                            borderWidth={1}
+                            borderColor={isAllSelected ? "$color8" : "$borderColor"}
+                        >
+                            <Text color={isAllSelected ? "$backgroundStrong" : "$color"} fontWeight="600">All</Text>
+                        </Button>
+
+                        {allCategories.map((cat) => {
+                            const isSelected = activeFilters.includes(cat);
                             return (
                                 <Button
                                     key={cat}
-                                    onPress={() => handleCategorySelect(cat as any)}
+                                    onPress={() => handleCategorySelect(cat)}
                                     size="$3"
                                     borderRadius="$6"
                                     backgroundColor={isSelected ? "$color8" : "transparent"}
