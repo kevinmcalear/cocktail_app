@@ -42,11 +42,11 @@ serve(async (req: Request) => {
         method:methods(name),
         glassware:glassware(name),
         ice:ice(name),
-        recipes(
+        recipes!new_recipes_recipe_item_id_fkey(
           ingredient_amount,
           ingredient_ml,
           ingredient_dash,
-          ingredient:ingredients!recipes_ingredient_id_fkey(name)
+          ingredient:items!new_recipes_ingredient_item_id_fkey(name)
         )
       `)
       .eq("id", cocktail_id)

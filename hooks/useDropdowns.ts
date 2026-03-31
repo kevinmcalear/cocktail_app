@@ -5,24 +5,22 @@ export function useDropdowns() {
     return useQuery({
         queryKey: ['dropdowns'],
         queryFn: async () => {
-            const [methodsRes, glasswareRes, familiesRes, iceRes, menusRes, ingredientsRes, templatesRes, sectionsRes] = await Promise.all([
-                supabase.from('methods').select('*').order('name'),
-                supabase.from('glassware').select('*').order('name'),
-                supabase.from('families').select('*').order('name'),
-                supabase.from('ice').select('*').order('name'),
+            const [itemsRes, menusRes, templatesRes, sectionsRes] = await Promise.all([
+                supabase.from('items').select('*').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
                 supabase.from('menus').select('id, name, template_id, created_at').eq('is_active', true).order('created_at'),
-                supabase.from('ingredients').select('*').order('name'),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order')
             ]);
+            
+            const items = itemsRes.data || [];
 
             return {
-                methods: methodsRes.data || [],
-                glassware: glasswareRes.data || [],
-                families: familiesRes.data || [],
-                iceTypes: iceRes.data || [],
+                methods: items.filter(item => item.item_type === 'method'),
+                glassware: items.filter(item => item.item_type === 'glassware'),
+                families: items.filter(item => item.item_type === 'family'),
+                iceTypes: items.filter(item => item.item_type === 'ice'),
+                ingredients: items.filter(item => item.item_type === 'ingredient'),
                 menus: menusRes.data || [],
-                ingredients: ingredientsRes.data || [],
                 menuTemplates: templatesRes.data || [],
                 templateSections: sectionsRes.data || [],
             };

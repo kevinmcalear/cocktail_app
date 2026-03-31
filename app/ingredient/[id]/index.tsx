@@ -16,17 +16,16 @@ interface IngredientDetail {
     name: string;
     description: string | null;
     is_batch: boolean;
-    ingredient_images?: { images: { url: string } }[];
+    item_images?: { images: { url: string } }[];
 }
 
 interface RecipeItem {
     id: string;
     ingredient: { name: string };
-    ingredient_bsp: number | null;
-    ingredient_ml: number | null;
-    ingredient_dash: number | null;
-    ingredient_amount: number | null;
-    is_top: boolean | null;
+    amount: string | null;
+    unit: string | null;
+    preparation_notes: string | null;
+    is_optional: boolean | null;
 }
 
 export default function IngredientDetailScreen() {
@@ -61,7 +60,7 @@ export default function IngredientDetailScreen() {
         );
     }
 
-    const images = ingredient.ingredient_images?.map(img => img.images.url).filter(Boolean) as string[] || [];
+    const images = ingredient.item_images?.map(img => img.images.url).filter(Boolean) as string[] || [];
     if (images.length === 0) {
         images.push(require('@/assets/images/cocktails/house_martini.png'));
     }
@@ -108,12 +107,10 @@ export default function IngredientDetailScreen() {
                         <View style={styles.recipeList}>
                             {recipe.map((item, index) => (
                                 <View key={item.id} style={[styles.recipeRow, index !== recipe.length - 1 && styles.recipeBorder]}>
-                                    <Text style={[styles.recipeName, { color: theme.color?.get() as string }]}>{item.is_top ? `Top ` : ''}{item.ingredient?.name || "Unknown"}</Text>
+                                    <Text style={[styles.recipeName, { color: theme.color?.get() as string }]}>{item.ingredient?.name || "Unknown"}</Text>
                                     <View style={styles.amounts}>
-                                        {item.ingredient_ml && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.ingredient_ml} ml</Text>}
-                                        {item.ingredient_bsp && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.ingredient_bsp} bsp</Text>}
-                                        {item.ingredient_dash && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.ingredient_dash} dash</Text>}
-                                        {item.ingredient_amount && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.ingredient_amount}x</Text>}
+                                        {item.amount && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.amount}</Text>}
+                                        {item.unit && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.unit}</Text>}
                                     </View>
                                 </View>
                             ))}
@@ -134,7 +131,7 @@ export default function IngredientDetailScreen() {
                             contentContainerStyle={styles.horizontalScrollContent}
                         >
                             {usedIn.map((item: any) => {
-                                const imageUrl = item.cocktail.cocktail_images?.[0]?.images?.url;
+                                const imageUrl = item.cocktail.item_images?.[0]?.images?.url;
                                 
                                 return (
                                     <TouchableOpacity 

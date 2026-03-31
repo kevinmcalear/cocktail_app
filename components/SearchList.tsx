@@ -17,17 +17,17 @@ import { Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui
 export interface SearchItem {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     category?: "Cocktail" | "Beer" | "Wine" | "Ingredient";
-    price?: string;
+    price?: string | null;
     recipes?: {
-        ingredient_id?: string;
-        ingredients: {
+        ingredient_item_id?: string;
+        ingredient?: {
             name: string;
         } | null;
     }[];
-    cocktail_images?: {
-        images: {
+    item_images?: {
+        images?: {
             url: string;
         };
     }[];
@@ -102,8 +102,8 @@ const getImage = (item: SearchItem) => {
     if (item.image) {
         return item.image;
     }
-    if (item.cocktail_images && item.cocktail_images.length > 0) {
-        return { uri: item.cocktail_images[0].images.url };
+    if (item.item_images && item.item_images.length > 0 && item.item_images[0].images) {
+        return { uri: item.item_images[0].images.url };
     }
     // Fallback to a single reliable image since specific placeholders don't exist yet
     return require("@/assets/images/cocktails/house_martini.png");
@@ -144,7 +144,7 @@ const SearchItemCard = memo(function SearchItemCard({
 }) {
     let swipeableRef: Swipeable | null = null;
 
-    let subText = drink.recipes?.map(r => r.ingredients?.name).filter(Boolean).join(", ") || drink.description || "No description";
+    let subText = drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description";
     if (drink.price) {
         subText = `${drink.price} • ${subText}`;
     }
@@ -304,15 +304,15 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                     result = result.filter(
                         (c) =>
                             c.name.toLowerCase().includes(lowerQuery) ||
-                            (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery))) ||
+                            (c.recipes?.some(r => r.ingredient?.name?.toLowerCase().includes(lowerQuery))) ||
                             (c.description?.toLowerCase().includes(lowerQuery))
                     );
                 } else if (chip.type === "Ingredient") {
                     const ingId = chip.id.replace("ingredient-", "");
                     result = result.filter(
                         (c) =>
-                           (c.category === "Ingredient" && c.id === ingId) ||
-                           c.recipes?.some(r => r.ingredient_id === ingId)
+                           ((c.category === "Ingredient" && c.id === ingId) || false) ||
+                           (c.recipes?.some(r => r.ingredient_item_id === ingId) || false)
                     );
                 } else if (chip.type === "Method") {
                     const methodId = chip.id.replace("method-", "");
@@ -332,7 +332,7 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
             result = result.filter(
                 (c) =>
                     c.name.toLowerCase().includes(lowerQuery) ||
-                    (c.recipes?.some(r => r.ingredients?.name?.toLowerCase().includes(lowerQuery))) ||
+                    (c.recipes?.some(r => r.ingredient?.name?.toLowerCase().includes(lowerQuery))) ||
                     (c.description?.toLowerCase().includes(lowerQuery))
             );
         }

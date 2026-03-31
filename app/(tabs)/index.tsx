@@ -25,8 +25,8 @@ export default function SearchScreen() {
             description: c.description,
             category: "Cocktail",
             recipes: c.recipes,
-            cocktail_images: c.cocktail_images,
-            method_id: c.method_id,
+            item_images: c.item_images,
+            method_id: c.item_methods?.[0]?.method_item_id,
             glassware_id: c.glassware_id,
             family_id: c.family_id
         }));
@@ -38,7 +38,7 @@ export default function SearchScreen() {
             description: b.description,
             category: "Beer",
             price: b.price,
-            image: b.beer_images?.[0]?.images?.url ? { uri: b.beer_images[0].images.url } : undefined
+            image: b.item_images?.[0]?.images?.url ? { uri: b.item_images[0].images.url } : undefined
         }));
 
         // Keeping prefix 'wine-' logic matching old drinks.tsx
@@ -48,7 +48,7 @@ export default function SearchScreen() {
             description: w.description,
             category: "Wine",
             price: w.price,
-            image: w.wine_images?.[0]?.images?.url ? { uri: w.wine_images[0].images.url } : undefined
+            image: w.item_images?.[0]?.images?.url ? { uri: w.item_images[0].images.url } : undefined
         }));
 
         // using plain ID for ingredients because ingredient routes relied on the plain ID
@@ -57,7 +57,7 @@ export default function SearchScreen() {
             name: i.name,
             description: i.description,
             category: "Ingredient",
-            image: i.ingredient_images?.[0]?.images?.url ? { uri: i.ingredient_images[0].images.url } : undefined
+            image: i.item_images?.[0]?.images?.url ? { uri: i.item_images[0].images.url } : undefined
         }));
 
         setItems([...mappedCocktails, ...mappedBeers, ...mappedWines, ...mappedIngredients]);

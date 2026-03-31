@@ -7,13 +7,14 @@ export function useIngredients() {
         queryKey: ['ingredients'],
         queryFn: async () => {
             const { data, error } = await supabase
-                .from('ingredients')
+                .from('items')
                 .select(`
                     *,
-                    ingredient_images (
+                    item_images (
                         images ( url )
                     )
                 `)
+                .eq('item_type', 'ingredient')
                 .order('name');
                 
             if (error) throw error;
@@ -32,13 +33,14 @@ export function useIngredient(id?: string | string[]) {
 
             // 1. Fetch Ingredient Info
             const { data: ingredient, error: ingError } = await supabase
-                .from('ingredients')
+                .from('items')
                 .select(`
                     *,
-                    ingredient_images (
+                    item_images (
                         images ( url )
                     )
                 `)
+                .eq('item_type', 'ingredient')
                 .eq('id', ingredientId)
                 .single();
 
@@ -49,13 +51,12 @@ export function useIngredient(id?: string | string[]) {
                 .from('recipes')
                 .select(`
                     id,
-                    ingredient_id,
-                    ingredient_bsp,
-                    ingredient_ml,
-                    ingredient_dash,
-                    ingredient_amount,
-                    is_top,
-                    ingredient:ingredients!recipes_ingredient_id_fkey(name)
+                    ingredient_item_id,
+                    amount,
+                    unit,
+                    preparation_notes,
+                    is_optional,
+                    ingredient:items!new_recipes_ingredient_item_id_fkey(name)
                 `)
                 .eq('parent_ingredient_id', ingredientId);
 
@@ -66,15 +67,15 @@ export function useIngredient(id?: string | string[]) {
                 .from('recipes')
                 .select(`
                     id,
-                    cocktail:cocktails(
+                    cocktail:items!new_recipes_recipe_item_id_fkey(
                         id, 
                         name,
-                        cocktail_images (
+                        item_images (
                             images ( url )
                         )
                     )
                 `)
-                .eq('ingredient_id', ingredientId)
+                .eq('ingredient_item_id', ingredientId)
                 .not('cocktail', 'is', null);
 
             let usedIn: any[] = [];
@@ -100,7 +101,7 @@ export function useIngredient(id?: string | string[]) {
 
 export const updateIngredientFn = async ({ id, updates }: { id: string, updates: any }) => {
     const { data, error } = await supabase
-        .from('ingredients')
+        .from('items')
         .update(updates)
         .eq('id', id)
         .select()
@@ -112,8 +113,8 @@ export const updateIngredientFn = async ({ id, updates }: { id: string, updates:
 
 export const addIngredientFn = async (newIngredient: any) => {
     const { data, error } = await supabase
-        .from('ingredients')
-        .insert(newIngredient)
+        .from('items')
+        .insert({ ...newIngredient, item_type: 'ingredient' })
         .select()
         .single();
         

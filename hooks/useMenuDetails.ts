@@ -36,9 +36,9 @@ export function useMenuDetails(menuId: string | null) {
                         cocktail_images (
                             images ( url )
                         ),
-                        recipes (
-                            ingredient_amount, ingredient_ml, ingredient_bsp,
-                            ingredients!recipes_ingredient_id_fkey ( name )
+                        recipes!new_recipes_recipe_item_id_fkey (
+                            amount, unit,
+                            ingredient:items!new_recipes_ingredient_item_id_fkey ( name )
                         )
                     ),
                     beers (
@@ -68,8 +68,9 @@ export function useMenuDetails(menuId: string | null) {
                             const c = d.cocktails as any;
                             const rList = Array.isArray(c.recipes) ? c.recipes : [c.recipes];
                             const ingList = rList.filter(Boolean).map((r: any) => {
-                                const amt = r.ingredient_amount ? `${r.ingredient_amount} ` : (r.ingredient_ml ? `${r.ingredient_ml}ml ` : (r.ingredient_bsp ? `${r.ingredient_bsp}bsp ` : ''));
-                                return `${amt}${r.ingredients?.name || ''}`.trim();
+                                const amt = r.amount ? `${r.amount} ` : '';
+                                const u = r.unit ? `${r.unit} ` : '';
+                                return `${amt}${u}${r.ingredient?.name || ''}`.trim();
                             }).filter(Boolean).join(', ');
                             
                             let imageUrl = defaultImage;

@@ -23,9 +23,8 @@ interface RecipeItem {
     id?: string;
     ingredient_id: string;
     name: string;
-    ml: string;
-    dash: string;
     amount: string;
+    unit: string;
 }
 
 export default function AddIngredientScreen() {
@@ -80,12 +79,12 @@ export default function AddIngredientScreen() {
         try {
             // 1. Create Ingredient
             const { data: ingredient, error: ingredientError } = await supabase
-                .from('ingredients')
+                .from('items')
                 .insert({
                     name: name.trim(),
                     description: description.trim() || null,
-                    // We can also set is_batch if desired, or leave it to be inferred/default
-                    // is_batch: recipeItems.length > 0 
+                    item_type: 'ingredient',
+                    is_batch: recipeItems.length > 0 
                 })
                 .select()
                 .single();
@@ -94,14 +93,12 @@ export default function AddIngredientScreen() {
 
             const ingredientId = ingredient.id;
 
-            // 2. Save Recipes (if any)
             if (recipeItems.length > 0) {
                 const recipeInserts = recipeItems.map(item => ({
-                    parent_ingredient_id: ingredientId, // This links the recipe to this ingredient
-                    ingredient_id: item.ingredient_id,
-                    ingredient_ml: parseFloat(item.ml) || null,
-                    ingredient_dash: parseFloat(item.dash) || null,
-                    ingredient_amount: parseFloat(item.amount) || null,
+                    recipe_item_id: ingredientId,
+                    ingredient_item_id: item.ingredient_id,
+                    amount: parseFloat(item.amount) || null,
+                    unit: item.unit || null,
                 }));
 
                 const { error: recipeError } = await supabase
@@ -202,30 +199,6 @@ export default function AddIngredientScreen() {
                             <View style={styles.recipeInputs}>
                                 <TextInput
                                     style={styles.smallInput}
-                                    placeholder="ml"
-                                    placeholderTextColor="#666"
-                                    keyboardType="numeric"
-                                    value={item.ml}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].ml = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <TextInput
-                                    style={styles.smallInput}
-                                    placeholder="dash"
-                                    placeholderTextColor="#666"
-                                    keyboardType="numeric"
-                                    value={item.dash}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].dash = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <TextInput
-                                    style={styles.smallInput}
                                     placeholder="amt"
                                     placeholderTextColor="#666"
                                     keyboardType="numeric"
@@ -233,6 +206,17 @@ export default function AddIngredientScreen() {
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
                                         newItems[index].amount = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
+                                <TextInput
+                                    style={styles.smallInput}
+                                    placeholder="oz"
+                                    placeholderTextColor="#666"
+                                    value={item.unit}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].unit = v;
                                         setRecipeItems(newItems);
                                     }}
                                 />
@@ -276,7 +260,7 @@ export default function AddIngredientScreen() {
                             <TouchableOpacity
                                 style={styles.ingredientOption}
                                 onPress={() => {
-                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
+                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "" }]);
                                     handleDismissModalPress();
                                     setIngredientSearch("");
                                 }}

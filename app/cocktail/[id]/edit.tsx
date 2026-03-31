@@ -24,7 +24,6 @@ import { Colors } from "@/constants/theme";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
-import { DatabaseCocktail } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
@@ -32,11 +31,10 @@ interface RecipeItem {
     id?: string;
     ingredient_id: string;
     name: string;
-    bsp: string;
-    ml: string;
-    dash: string;
     amount: string;
-    is_top: boolean;
+    unit: string;
+    preparation_notes: string;
+    is_optional: boolean;
 }
 
 export default function EditCocktailScreen() {
@@ -62,7 +60,6 @@ export default function EditCocktailScreen() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [origin, setOrigin] = useState("");
-    const [garnish, setGarnish] = useState("");
     const [notes, setNotes] = useState("");
     const [spec, setSpec] = useState("");
 
@@ -82,14 +79,17 @@ export default function EditCocktailScreen() {
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
     
-    const [addingCategory, setAddingCategory] = useState<{table: 'methods'|'glassware'|'families'|'ice', label: string} | null>(null);
+    const [addingCategory, setAddingCategory] = useState<{type: 'method'|'glassware'|'family'|'ice', label: string} | null>(null);
     const [newItemName, setNewItemName] = useState("");
 
     const handleAddPill = async () => {
         if (!addingCategory || !newItemName.trim()) return;
         
         try {
-            const { error } = await supabase.from(addingCategory.table).insert({ name: newItemName.trim() });
+            const { error } = await supabase.from('items').insert({ 
+                name: newItemName.trim(), 
+                item_type: addingCategory.type 
+            });
             if (error) throw error;
             
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
@@ -101,17 +101,19 @@ export default function EditCocktailScreen() {
         }
     };
 
-    const confirmDeletePill = async (type: string, table: string, id: string) => {
+    const confirmDeletePill = async (field: string, id: string) => {
         try {
-            await supabase.from('cocktails').update({ [type]: null }).eq(type, id);
+            // Nullify this field on all items that used this category
+            await supabase.from('items').update({ [field]: null }).eq(field, id);
             
-            const { error } = await supabase.from(table).delete().eq('id', id);
+            // Delete the category itself
+            const { error } = await supabase.from('items').delete().eq('id', id);
             if (error) throw error;
             
-            if (type === 'method_id' && methodId === id) setMethodId(null);
-            if (type === 'glassware_id' && glasswareId === id) setGlasswareId(null);
-            if (type === 'family_id' && familyId === id) setFamilyId(null);
-            if (type === 'ice_id' && iceId === id) setIceId(null);
+            if (field === 'method_id' && methodId === id) setMethodId(null);
+            if (field === 'glassware_id' && glasswareId === id) setGlasswareId(null);
+            if (field === 'family_id' && familyId === id) setFamilyId(null);
+            if (field === 'ice_id' && iceId === id) setIceId(null);
 
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
         } catch (error) {
@@ -120,23 +122,24 @@ export default function EditCocktailScreen() {
         }
     };
 
-    const handleDeletePill = async (type: 'method_id' | 'glassware_id' | 'family_id' | 'ice_id', table: 'methods' | 'glassware' | 'families' | 'ice', item: any) => {
+    const handleDeletePill = async (field: 'method_id' | 'glassware_id' | 'family_id' | 'ice_id', item: any) => {
         try {
             const { data: affected, error } = await supabase
-                .from('cocktails')
+                .from('items')
                 .select('id, name')
-                .eq(type, item.id);
+                .eq(field, item.id)
+                .eq('item_type', 'cocktail');
 
             if (error) throw error;
 
             if (affected && affected.length > 0) {
-                const names = affected.map(c => c.name).join(", ");
+                const names = affected.map((c: any) => c.name).join(", ");
                 Alert.alert(
                     "Warning",
                     `Deleting this item will remove it from ${affected.length} cocktail(s):\n\n${names}\n\nAre you sure you want to delete it?`,
                     [
                         { text: "Cancel", style: "cancel" },
-                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(type, table, item.id) }
+                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(field, item.id) }
                     ]
                 );
             } else {
@@ -145,7 +148,7 @@ export default function EditCocktailScreen() {
                     `Are you sure you want to delete "${item.name}"?`,
                     [
                         { text: "Cancel", style: "cancel" },
-                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(type, table, item.id) }
+                        { text: "Delete", style: "destructive", onPress: () => confirmDeletePill(field, item.id) }
                     ]
                 );
             }
@@ -162,7 +165,6 @@ export default function EditCocktailScreen() {
             setName(c.name || "");
             setDescription(c.description || "");
             setOrigin(c.origin || "");
-            setGarnish(c.garnish_1 || "");
             setNotes(c.notes || "");
             setSpec(c.spec || "");
 
@@ -187,11 +189,14 @@ export default function EditCocktailScreen() {
                     id: r.id,
                     ingredient_id: r.ingredient_id,
                     name: r.ingredients?.name || "Unknown",
-                    bsp: r.ingredient_bsp?.toString() || "",
-                    ml: r.ingredient_ml?.toString() || "",
-                    dash: r.ingredient_dash?.toString() || "",
-                    amount: r.ingredient_amount?.toString() || "",
-                    is_top: r.is_top || false
+                    bsp: "", // Deprecated
+                    ml: "", // Deprecated
+                    dash: "", // Deprecated
+                    amount: r.amount?.toString() || "",
+                    unit: r.unit || "",
+                    preparation_notes: r.preparation_notes || "",
+                    is_optional: r.is_optional || false,
+                    is_top: false // Deprecated
                 }));
                 setRecipeItems(mappedRecipes);
             }
@@ -306,11 +311,10 @@ export default function EditCocktailScreen() {
                     }, { onConflict: 'cocktail_id,image_id' });
             }
 
-            const updates: Partial<DatabaseCocktail> = {
+            const updates: any = {
                 name,
                 description,
                 origin: origin || null,
-                garnish_1: garnish || null,
                 notes: notes || null,
                 spec: spec || null,
                 method_id: methodId,
@@ -320,7 +324,7 @@ export default function EditCocktailScreen() {
             };
 
             const { error } = await supabase
-                .from('cocktails')
+                .from('items')
                 .update(updates)
                 .eq('id', id);
 
@@ -328,20 +332,19 @@ export default function EditCocktailScreen() {
 
             const keptIds = recipeItems.map(r => r.id).filter(Boolean);
             if (keptIds.length > 0) {
-                await supabase.from('recipes').delete().eq('cocktail_id', id).not('id', 'in', `(${keptIds.join(',')})`);
+                await supabase.from('recipes').delete().eq('recipe_item_id', id).not('id', 'in', `(${keptIds.join(',')})`);
             } else {
-                await supabase.from('recipes').delete().eq('cocktail_id', id);
+                await supabase.from('recipes').delete().eq('recipe_item_id', id);
             }
 
             for (const item of recipeItems) {
                 const payload = {
-                    cocktail_id: id,
-                    ingredient_id: item.ingredient_id,
-                    ingredient_bsp: parseFloat(item.bsp) || null,
-                    ingredient_ml: parseFloat(item.ml) || null,
-                    ingredient_dash: parseFloat(item.dash) || null,
-                    ingredient_amount: parseFloat(item.amount) || null,
-                    is_top: item.is_top || false,
+                    recipe_item_id: id,
+                    ingredient_item_id: item.ingredient_id,
+                    amount: parseFloat(item.amount) || null,
+                    unit: item.unit || null,
+                    preparation_notes: item.preparation_notes || null,
+                    is_optional: item.is_optional || false,
                 };
 
                 if (item.id) {
@@ -455,7 +458,7 @@ export default function EditCocktailScreen() {
                                     borderColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
                                     borderWidth={1}
                                     onPress={() => setMethodId(m.id)}
-                                    onLongPress={() => handleDeletePill('method_id', 'methods', m)}
+                                    onLongPress={() => handleDeletePill('method_id', m)}
                                 >
                                     <XStack gap="$2" alignItems="center">
                                         <CustomIcon name={m.name} size={16} color={methodId === m.id ? "#000" : Colors.dark.text} />
@@ -463,7 +466,7 @@ export default function EditCocktailScreen() {
                                     </XStack>
                                 </Button>
                             ))}
-                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'methods', label: 'Method' })}>
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'method', label: 'Method' })}>
                                 <Text color={Colors.dark.tint}>+ Add</Text>
                             </Button>
                         </XStack>
@@ -483,7 +486,7 @@ export default function EditCocktailScreen() {
                                     borderColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
                                     borderWidth={1}
                                     onPress={() => setGlasswareId(g.id)}
-                                    onLongPress={() => handleDeletePill('glassware_id', 'glassware', g)}
+                                    onLongPress={() => handleDeletePill('glassware_id', g)}
                                 >
                                     <XStack gap="$2" alignItems="center">
                                         <CustomIcon name={g.name} size={16} color={glasswareId === g.id ? "#000" : Colors.dark.text} />
@@ -491,7 +494,7 @@ export default function EditCocktailScreen() {
                                     </XStack>
                                 </Button>
                             ))}
-                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'glassware', label: 'Glassware' })}>
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'glassware', label: 'Glassware' })}>
                                 <Text color={Colors.dark.tint}>+ Add</Text>
                             </Button>
                         </XStack>
@@ -511,7 +514,7 @@ export default function EditCocktailScreen() {
                                     borderColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
                                     borderWidth={1}
                                     onPress={() => setFamilyId(f.id)}
-                                    onLongPress={() => handleDeletePill('family_id', 'families', f)}
+                                    onLongPress={() => handleDeletePill('family_id', f)}
                                 >
                                     <XStack gap="$2" alignItems="center">
                                         <CustomIcon name={f.name} size={16} color={familyId === f.id ? "#000" : Colors.dark.text} />
@@ -519,7 +522,7 @@ export default function EditCocktailScreen() {
                                     </XStack>
                                 </Button>
                             ))}
-                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'families', label: 'Family' })}>
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'family', label: 'Family' })}>
                                 <Text color={Colors.dark.tint}>+ Add</Text>
                             </Button>
                         </XStack>
@@ -539,7 +542,7 @@ export default function EditCocktailScreen() {
                                     borderColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
                                     borderWidth={1}
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
-                                    onLongPress={() => handleDeletePill('ice_id', 'ice', i)}
+                                    onLongPress={() => handleDeletePill('ice_id', i)}
                                 >
                                     <XStack gap="$2" alignItems="center">
                                         <CustomIcon name={i.name} size={16} color={iceId === i.id ? "#000" : Colors.dark.text} />
@@ -547,7 +550,7 @@ export default function EditCocktailScreen() {
                                     </XStack>
                                 </Button>
                             ))}
-                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ table: 'ice', label: 'Ice' })}>
+                            <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'ice', label: 'Ice' })}>
                                 <Text color={Colors.dark.tint}>+ Add</Text>
                             </Button>
                         </XStack>
@@ -566,73 +569,11 @@ export default function EditCocktailScreen() {
                         <View key={index} style={styles.recipeRow}>
                             <Text style={styles.recipeName}>{item.name}</Text>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
-                                <Button
-                                    size="$2"
-                                    backgroundColor={item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)'}
-                                    onPress={() => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].is_top = !newItems[index].is_top;
-                                        setRecipeItems(newItems);
-                                    }}
-                                >
-                                    <Text color={item.is_top ? '#000' : '#fff'} fontSize={12}>Top</Text>
-                                </Button>
                                 <View style={styles.inputGroup}>
                                     <Input
                                         size="$2"
-                                        width={50}
-                                        placeholder="bsp"
-                                        keyboardType="numeric"
-                                        backgroundColor="rgba(255,255,255,0.05)"
-                                        borderColor="rgba(255,255,255,0.1)"
-                                        value={item.bsp}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].bsp = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                    />
-                                    <Text style={styles.unitText}>bs</Text>
-                                </View>
-                                <View style={styles.inputGroup}>
-                                    <Input
-                                        size="$2"
-                                        width={50}
-                                        placeholder="ml"
-                                        keyboardType="numeric"
-                                        backgroundColor="rgba(255,255,255,0.05)"
-                                        borderColor="rgba(255,255,255,0.1)"
-                                        value={item.ml}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].ml = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                    />
-                                    <Text style={styles.unitText}>ml</Text>
-                                </View>
-                                <View style={styles.inputGroup}>
-                                    <Input
-                                        size="$2"
-                                        width={50}
-                                        placeholder="dash"
-                                        keyboardType="numeric"
-                                        backgroundColor="rgba(255,255,255,0.05)"
-                                        borderColor="rgba(255,255,255,0.1)"
-                                        value={item.dash}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].dash = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                    />
-                                    <Text style={styles.unitText}>ds</Text>
-                                </View>
-                                <View style={styles.inputGroup}>
-                                    <Input
-                                        size="$2"
-                                        width={50}
-                                        placeholder="amt"
+                                        width={60}
+                                        placeholder="1.5"
                                         keyboardType="numeric"
                                         backgroundColor="rgba(255,255,255,0.05)"
                                         borderColor="rgba(255,255,255,0.1)"
@@ -643,7 +584,21 @@ export default function EditCocktailScreen() {
                                             setRecipeItems(newItems);
                                         }}
                                     />
-                                    <Text style={styles.unitText}>#</Text>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <Input
+                                        size="$2"
+                                        width={60}
+                                        placeholder="oz"
+                                        backgroundColor="rgba(255,255,255,0.05)"
+                                        borderColor="rgba(255,255,255,0.1)"
+                                        value={item.unit}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].unit = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                    />
                                 </View>
                                 <TouchableOpacity onPress={() => {
                                     const newItems = recipeItems.filter((_, i) => i !== index);
@@ -669,18 +624,7 @@ export default function EditCocktailScreen() {
                     />
                 </YStack>
 
-                <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Garnish</Label>
-                    <Input 
-                        value={garnish} 
-                        onChangeText={setGarnish} 
-                        placeholderTextColor="$color11" 
-                        size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
-                    />
-                </YStack>
+
 
                 <YStack gap="$2" marginBottom="$4">
                     <Label color="$color11">Notes</Label>
@@ -788,11 +732,10 @@ export default function EditCocktailScreen() {
                                         setRecipeItems([...recipeItems, {
                                             ingredient_id: item.id,
                                             name: item.name,
-                                            bsp: "",
-                                            ml: "",
-                                            dash: "",
                                             amount: "",
-                                            is_top: false
+                                            unit: "",
+                                            preparation_notes: "",
+                                            is_optional: false
                                         }]);
                                         setShowIngredientPicker(false);
                                     }}

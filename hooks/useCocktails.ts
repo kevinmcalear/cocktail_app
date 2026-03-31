@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { DatabaseCocktail } from '@/types/types';
+import { DatabaseItem } from '@/types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useCocktails() {
@@ -7,35 +7,33 @@ export function useCocktails() {
         queryKey: ['cocktails'],
         queryFn: async () => {
             const { data, error } = await supabase
-                .from('cocktails')
+                .from('items')
                 .select(`
                     id,
                     name,
                     description,
-                    method_id,
                     glassware_id,
                     family_id,
-                    recipes (
-                        ingredient_id,
-                        ingredient_ml,
-                        ingredient_bsp,
-                        ingredient_dash,
-                        ingredient_amount,
-                        is_top,
-                        ingredients!recipes_ingredient_id_fkey (
+                    recipes!new_recipes_recipe_item_id_fkey (
+                        ingredient_item_id,
+                        amount,
+                        unit,
+                        preparation_notes,
+                        ingredient:items!new_recipes_ingredient_item_id_fkey (
                             name
                         )
                     ),
-                    cocktail_images (
+                    item_images (
                         images (
                             url
                         )
                     )
                 `)
+                .eq('item_type', 'cocktail')
                 .order('name', { ascending: true });
 
             if (error) throw error;
-            return data;
+            return data as unknown as DatabaseItem[];
         }
     });
 }
@@ -49,49 +47,52 @@ export function useCocktail(id?: string | string[]) {
             const cocktailId = Array.isArray(id) ? id[0] : id;
 
             const { data, error } = await supabase
-                .from('cocktails')
+                .from('items')
                 .select(`
                     *,
-                    cocktail_images (
+                    item_images (
                         images (
                             url,
                             id
                         )
                     ),
-                    recipes (
+                    recipes!new_recipes_recipe_item_id_fkey (
                         id,
-                        ingredient_bsp,
-                        ingredient_ml,
-                        ingredient_dash,
-                        ingredient_amount,
-                        is_top,
-                        ingredients!recipes_ingredient_id_fkey (
+                        amount,
+                        unit,
+                        preparation_notes,
+                        ingredient:items!new_recipes_ingredient_item_id_fkey (
                             name,
-                            ingredient_images (
+                            item_images (
                                 images (
                                     url
                                 )
                             )
                         )
                     ),
-                    methods ( name ),
-                    glassware ( name ),
-                    families ( name ),
-                    ice ( name )
+                    item_methods (
+                        method_item_id,
+                        method:items!item_methods_method_item_id_fkey (
+                            name
+                        )
+                    ),
+                    glassware:items!items_glassware_id_fkey ( name ),
+                    family:items!items_family_id_fkey ( name ),
+                    ice:items!items_ice_id_fkey ( name )
                 `)
                 .eq('id', cocktailId)
                 .single();
 
             if (error) throw error;
-            return data as DatabaseCocktail;
+            return data as DatabaseItem;
         },
         enabled: !!id,
     });
 }
 
-export const updateCocktailFn = async ({ id, updates }: { id: string, updates: any }) => {
+export const updateCocktailFn = async ({ id, updates }: { id: string, updates: Partial<DatabaseItem> }) => {
     const { data, error } = await supabase
-        .from('cocktails')
+        .from('items')
         .update(updates)
         .eq('id', id)
         .select()
@@ -103,7 +104,7 @@ export const updateCocktailFn = async ({ id, updates }: { id: string, updates: a
 
 export const deleteCocktailFn = async (id: string) => {
     const { error } = await supabase
-        .from('cocktails')
+        .from('items')
         .delete()
         .eq('id', id);
         

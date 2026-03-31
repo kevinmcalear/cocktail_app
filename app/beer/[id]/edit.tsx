@@ -47,14 +47,14 @@ export default function EditBeerScreen() {
             setName(beer.name || "");
             setDescription(beer.description || "");
             setStyle(beer.style || "");
-            setBrewery(beer.brewery || "");
+            setBrewery(beer.brand_maker || "");
             setLocation(beer.location || "");
             setAbv(beer.abv?.toString() || "");
             setPrice(beer.price?.toString() || "");
 
             // Populate existing images
-            if (beer.beer_images) {
-                const sortedImages = beer.beer_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+            if (beer.item_images) {
+                const sortedImages = beer.item_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
                 const fetchedImages = sortedImages.map((bi: any) => ({
                     id: bi.images.id,
                     url: bi.images.url,
@@ -146,46 +146,46 @@ export default function EditBeerScreen() {
                 }
             }
 
-            // Sync beer_images
+            // Sync item_images
             const { data: existingLinks } = await supabase
-                .from('beer_images')
+                .from('item_images')
                 .select('image_id')
-                .eq('beer_id', safeId);
+                .eq('item_id', safeId);
 
             const existingIds = existingLinks?.map(l => l.image_id) || [];
             const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
 
             if (idsToDelete.length > 0) {
                  await supabase
-                    .from('beer_images')
+                    .from('item_images')
                     .delete()
-                    .eq('beer_id', safeId)
+                    .eq('item_id', safeId)
                     .in('image_id', idsToDelete);
             }
 
             for (let i = 0; i < finalImageIds.length; i++) {
                 await supabase
-                    .from('beer_images')
+                    .from('item_images')
                     .upsert({
-                        beer_id: safeId, 
+                        item_id: safeId, 
                         image_id: finalImageIds[i],
                         sort_order: i
-                    }, { onConflict: 'beer_id,image_id' });
+                    }, { onConflict: 'item_id,image_id' });
             }
 
-            // 2. Update Beer metadata
+            // 2. Update metadata
             const updates = {
                 name,
                 description,
                 style: style || null,
-                brewery: brewery || null,
+                brand_maker: brewery || null,
                 location: location || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
             };
 
             const { error } = await supabase
-                .from('beers')
+                .from('items')
                 .update(updates)
                 .eq('id', safeId);
 

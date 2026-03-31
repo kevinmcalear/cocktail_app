@@ -43,7 +43,7 @@ export default function BeerDetailsScreen() {
         );
     }
 
-    const images = beer.beer_images?.map((img: any) => img.images.url).filter(Boolean) as string[] || [];
+    const images = beer.item_images?.map((img: any) => img.images.url).filter(Boolean) as string[] || [];
     if (images.length === 0) {
         images.push(require('@/assets/images/cocktails/house_martini.png'));
     }

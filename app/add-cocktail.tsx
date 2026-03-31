@@ -28,11 +28,10 @@ interface RecipeItem {
     id?: string;
     ingredient_id: string;
     name: string;
-    bsp: string;
-    ml: string;
-    dash: string;
     amount: string;
-    is_top: boolean;
+    unit: string;
+    preparation_notes: string;
+    is_optional: boolean;
 }
 
 interface Menu {
@@ -168,18 +167,18 @@ export default function AddCocktailScreen() {
         try {
             // 1. Create Cocktail
             const { data: cocktail, error: cocktailError } = await supabase
-                .from('cocktails')
+                .from('items')
                 .insert({
                     name,
                     description,
                     origin: origin || null,
-                    garnish_1: garnish || null,
                     notes: notes || null,
                     spec: spec || null,
                     method_id: methodId,
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
+                    item_type: 'cocktail'
                 })
                 .select()
                 .single();
@@ -188,28 +187,25 @@ export default function AddCocktailScreen() {
 
             const cocktailId = cocktail.id;
 
-            // 2. Upload & Link Images
             for (let i = 0; i < localImages.length; i++) {
                 const imgId = await uploadImage(localImages[i].url, cocktailId);
                 if (imgId) {
-                    await supabase.from('cocktail_images').insert({
-                        cocktail_id: cocktailId,
+                    await supabase.from('item_images').insert({
+                        item_id: cocktailId,
                         image_id: imgId,
                         sort_order: i
                     });
                 }
             }
 
-            // 3. Save Recipes
             for (const item of recipeItems) {
                 await supabase.from('recipes').insert({
-                    cocktail_id: cocktailId,
-                    ingredient_id: item.ingredient_id,
-                    ingredient_bsp: parseFloat(item.bsp) || null,
-                    ingredient_ml: parseFloat(item.ml) || null,
-                    ingredient_dash: parseFloat(item.dash) || null,
-                    ingredient_amount: parseFloat(item.amount) || null,
-                    is_top: item.is_top || false,
+                    recipe_item_id: cocktailId,
+                    ingredient_item_id: item.ingredient_id,
+                    amount: parseFloat(item.amount) || null,
+                    unit: item.unit || null,
+                    preparation_notes: item.preparation_notes || null,
+                    is_optional: item.is_optional || false,
                 });
             }
 
@@ -415,63 +411,10 @@ export default function AddCocktailScreen() {
                         <View key={index} style={styles.recipeRow}>
                             <Text style={styles.recipeName}>{item.name}</Text>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
-                                <Button
-                                    size="$2"
-                                    backgroundColor={item.is_top ? Colors.dark.tint : 'rgba(255,255,255,0.05)'}
-                                    onPress={() => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].is_top = !newItems[index].is_top;
-                                        setRecipeItems(newItems);
-                                    }}
-                                >
-                                    <Text color={item.is_top ? '#000' : '#fff'} fontSize={12}>Top</Text>
-                                </Button>
                                 <Input
                                     size="$2"
                                     width={60}
-                                    placeholder="bsp"
-                                    keyboardType="numeric"
-                                    backgroundColor="rgba(255,255,255,0.05)"
-                                    borderColor="rgba(255,255,255,0.1)"
-                                    value={item.bsp}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].bsp = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <Input
-                                    size="$2"
-                                    width={60}
-                                    placeholder="ml"
-                                    keyboardType="numeric"
-                                    backgroundColor="rgba(255,255,255,0.05)"
-                                    borderColor="rgba(255,255,255,0.1)"
-                                    value={item.ml}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].ml = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <Input
-                                    size="$2"
-                                    width={60}
-                                    placeholder="dash"
-                                    keyboardType="numeric"
-                                    backgroundColor="rgba(255,255,255,0.05)"
-                                    borderColor="rgba(255,255,255,0.1)"
-                                    value={item.dash}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].dash = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <Input
-                                    size="$2"
-                                    width={60}
-                                    placeholder="amt"
+                                    placeholder="1.5"
                                     keyboardType="numeric"
                                     backgroundColor="rgba(255,255,255,0.05)"
                                     borderColor="rgba(255,255,255,0.1)"
@@ -479,6 +422,19 @@ export default function AddCocktailScreen() {
                                     onChangeText={(v) => {
                                         const newItems = [...recipeItems];
                                         newItems[index].amount = v;
+                                        setRecipeItems(newItems);
+                                    }}
+                                />
+                                <Input
+                                    size="$2"
+                                    width={60}
+                                    placeholder="oz"
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                    borderColor="rgba(255,255,255,0.1)"
+                                    value={item.unit}
+                                    onChangeText={(v) => {
+                                        const newItems = [...recipeItems];
+                                        newItems[index].unit = v;
                                         setRecipeItems(newItems);
                                     }}
                                 />
@@ -504,18 +460,7 @@ export default function AddCocktailScreen() {
                     />
                 </YStack>
 
-                <YStack gap="$2">
-                    <Label color="$color11">Garnish</Label>
-                    <Input 
-                        value={garnish} 
-                        onChangeText={setGarnish} 
-                        placeholderTextColor="$color11" 
-                        size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
-                    />
-                </YStack>
+
 
                 <YStack gap="$2">
                     <Label color="$color11">Notes</Label>
@@ -579,7 +524,7 @@ export default function AddCocktailScreen() {
                             <TouchableOpacity
                                 style={styles.ingredientOption}
                                 onPress={() => {
-                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, bsp: "", ml: "", dash: "", amount: "", is_top: false }]);
+                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "", preparation_notes: "", is_optional: false }]);
                                     setShowIngredientPicker(false);
                                 }}
                             >

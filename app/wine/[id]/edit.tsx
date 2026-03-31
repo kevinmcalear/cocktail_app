@@ -35,8 +35,8 @@ export default function EditWineScreen() {
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [varietal, setVarietal] = useState("");
-    const [region, setRegion] = useState("");
+    const [style, setStyle] = useState("");
+    const [vintner, setVintner] = useState("");
     const [location, setLocation] = useState("");
     const [abv, setAbv] = useState("");
     const [price, setPrice] = useState("");
@@ -46,15 +46,15 @@ export default function EditWineScreen() {
         if (wine) {
             setName(wine.name || "");
             setDescription(wine.description || "");
-            setVarietal(wine.varietal || "");
-            setRegion(wine.region || "");
+            setStyle(wine.style || "");
+            setVintner(wine.brand_maker || "");
             setLocation(wine.location || "");
             setAbv(wine.abv?.toString() || "");
             setPrice(wine.price?.toString() || "");
 
             // Populate existing images
-            if (wine.wine_images) {
-                const sortedImages = wine.wine_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+            if (wine.item_images) {
+                const sortedImages = wine.item_images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
                 const fetchedImages = sortedImages.map((wi: any) => ({
                     id: wi.images.id,
                     url: wi.images.url,
@@ -146,46 +146,46 @@ export default function EditWineScreen() {
                 }
             }
 
-            // Sync wine_images
+            // Sync item_images
             const { data: existingLinks } = await supabase
-                .from('wine_images')
+                .from('item_images')
                 .select('image_id')
-                .eq('wine_id', safeId);
+                .eq('item_id', safeId);
 
             const existingIds = existingLinks?.map(l => l.image_id) || [];
             const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
 
             if (idsToDelete.length > 0) {
                  await supabase
-                    .from('wine_images')
+                    .from('item_images')
                     .delete()
-                    .eq('wine_id', safeId)
+                    .eq('item_id', safeId)
                     .in('image_id', idsToDelete);
             }
 
             for (let i = 0; i < finalImageIds.length; i++) {
                 await supabase
-                    .from('wine_images')
+                    .from('item_images')
                     .upsert({
-                        wine_id: safeId, 
+                        item_id: safeId, 
                         image_id: finalImageIds[i],
                         sort_order: i
-                    }, { onConflict: 'wine_id,image_id' });
+                    }, { onConflict: 'item_id,image_id' });
             }
 
-            // 2. Update Wine metadata
+            // 2. Update metadata
             const updates = {
                 name,
                 description,
-                varietal: varietal || null,
-                region: region || null,
+                style: style || null,
+                brand_maker: vintner || null,
                 location: location || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
             };
 
             const { error } = await supabase
-                .from('wines')
+                .from('items')
                 .update(updates)
                 .eq('id', safeId);
 
@@ -267,10 +267,10 @@ export default function EditWineScreen() {
                 </YStack>
 
                 <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Varietal</Label>
+                    <Label color="$color11">Style</Label>
                     <Input
-                        value={varietal}
-                        onChangeText={setVarietal}
+                        value={style}
+                        onChangeText={setStyle}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Red"
                         size="$4"
@@ -281,10 +281,10 @@ export default function EditWineScreen() {
                 </YStack>
 
                 <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Region</Label>
+                    <Label color="$color11">Vintner</Label>
                     <Input
-                        value={region}
-                        onChangeText={setRegion}
+                        value={vintner}
+                        onChangeText={setVintner}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Napa Valley"
                         size="$4"
