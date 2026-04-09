@@ -7,7 +7,7 @@ export function useBeers() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('items')
-                .select('*, item_images(images(url))')
+                .select('*, item_images(sort_order,image_id,images(id,url))')
                 .eq('item_type', 'beer')
                 .order('name', { ascending: true });
 
@@ -24,7 +24,7 @@ export function useBeer(id: string) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('items')
-                .select('*, item_images(images(url))')
+                .select('*, item_images(sort_order,image_id,images(id,url))')
                 .eq('id', id)
                 .single();
 

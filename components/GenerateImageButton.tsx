@@ -60,6 +60,9 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
             if (error) {
                  throw new Error(error.message || "Failed to generate image.");
             }
+            if (data && data.error) {
+                 throw new Error(data.error);
+            }
 
             // Success, vibrate
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -153,7 +156,7 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
                     </View>
                 ) : (
                     <View style={styles.tileContent}>
-                        <IconSymbol name="sparkles" size={24} color={Colors.dark.tint} />
+                        <IconSymbol name="sparkles" size={18} color={Colors.dark.tint} />
                         <Text style={styles.tileText}>Generate</Text>
                     </View>
                 )}
@@ -241,25 +244,20 @@ const styles = StyleSheet.create({
         opacity: 0.4,
     },
     tileContainer: {
-        width: 100,
-        height: 125,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: Colors.dark.tint,
-        borderStyle: 'dashed',
+        flex: 1,
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        marginRight: 12,
     },
     tileContent: {
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        flexDirection: 'row',
+        gap: 6,
     },
     tileText: {
-        fontSize: 14,
+        fontSize: 13,
         color: Colors.dark.tint,
-        fontWeight: '600',
+        fontWeight: '500',
     }
 });

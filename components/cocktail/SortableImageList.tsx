@@ -25,20 +25,25 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
         const index = getIndex();
         return (
             <ScaleDecorator>
-                <TouchableOpacity
-                    onLongPress={drag}
-                    disabled={isActive}
+                <View
                     style={[
                         styles.imageThumbContainer,
                         isActive && styles.activeItem
                     ]}
                 >
-                    <ExpoImage 
-                        source={{ uri: item.url }} 
-                        style={styles.imageThumb} 
-                        contentFit="cover" 
-                    />
-                    {item.isNew && <View style={styles.newBadge} />}
+                    <TouchableOpacity 
+                        onLongPress={drag}
+                        disabled={isActive}
+                        style={{ width: '100%', height: '100%' }}
+                        activeOpacity={0.9}
+                    >
+                        <ExpoImage 
+                            source={{ uri: item.url }} 
+                            style={styles.imageThumb} 
+                            contentFit="cover" 
+                        />
+                        {item.isNew && <View style={styles.newBadge} />}
+                    </TouchableOpacity>
                     
                     <TouchableOpacity 
                         style={styles.deleteButton}
@@ -47,12 +52,13 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
                                 onRemove(index);
                             }
                         }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <View style={styles.deleteIconBg}>
                             <IconSymbol name="xmark" size={12} color="#fff" />
                         </View>
                     </TouchableOpacity>
-                </TouchableOpacity>
+                </View>
             </ScaleDecorator>
         );
     };
@@ -65,22 +71,6 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
             </View>
             
             <View style={styles.listContainer}>
-                {/* Add Button - Fixed at start or separate? 
-                    DraggableFlatList works best when all items are draggable. 
-                    Let's keep the Add button separate outside the list for simplicity,
-                    matching the design where it's to the left/start. 
-                    However, vertical list usually has add at end. 
-                    The existing design was horizontal scroll.
-                    Let's try to mimic the existing layout: Add Button | [Draggable List]
-                */}
-                <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity onPress={onAdd} style={styles.addImageBtn}>
-                        <IconSymbol name="plus" size={24} color={Colors.dark.icon} />
-                        <Text style={styles.addImageText}>Add</Text>
-                    </TouchableOpacity>
-                    {generateComponent}
-                </View>
-
                 <DraggableFlatList
                     data={images}
                     style={{ flex: 1 }}
@@ -90,7 +80,19 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.listContent}
-                    activationDistance={10} // Easier activation for horizontal
+                    activationDistance={10}
+                    ListHeaderComponent={
+                        <View style={styles.actionCard}>
+                            <TouchableOpacity onPress={onAdd} style={styles.actionCardTop}>
+                                <IconSymbol name="plus" size={18} color={Colors.dark.icon} />
+                                <Text style={styles.actionCardText}>Add</Text>
+                            </TouchableOpacity>
+                            <View style={styles.actionCardDivider} />
+                            <View style={styles.actionCardBottom}>
+                                {generateComponent}
+                            </View>
+                        </View>
+                    }
                 />
             </View>
         </View>
@@ -119,29 +121,44 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        height: 125, // Fixed height to match items
+        height: 150, 
     },
     listContent: {
         gap: 12,
         paddingRight: 20
     },
-    addImageBtn: {
+    actionCard: {
         width: 100,
         height: 125,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: '#333',
         borderStyle: 'dashed',
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        marginTop: 12.5,
+        overflow: 'hidden',
+    },
+    actionCardTop: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        gap: 8,
-        marginRight: 12, // Gap between button and list
+        flexDirection: 'row',
+        gap: 6,
     },
-    addImageText: {
-        fontSize: 14,
-        color: '#888'
+    actionCardBottom: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    actionCardDivider: {
+        height: 1,
+        backgroundColor: '#333',
+        width: '100%',
+    },
+    actionCardText: {
+        fontSize: 13,
+        color: '#888',
+        fontWeight: '500',
     },
     imageThumbContainer: {
         width: 100,
@@ -150,11 +167,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         position: 'relative',
         backgroundColor: '#1A1A1A',
-        marginRight: 12, // Gap between items in list
+        marginTop: 12.5,
     },
     activeItem: {
         opacity: 0.8,
-        transform: [{ scale: 1.05 }],
         borderColor: Colors.dark.tint,
         borderWidth: 2,
     },

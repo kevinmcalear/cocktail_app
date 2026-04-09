@@ -8,7 +8,7 @@ import {
     ScrollView,
     StyleSheet,
     TextInput,
-    TouchableOpacity, View
+    TouchableOpacity, View, Platform
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -90,8 +90,8 @@ export default function EditIngredientScreen() {
             setDescription(data.ingredient.description || "");
 
             // Populate existing images
-            if (data.ingredient.ingredient_images) {
-                const sortedImages = [...data.ingredient.ingredient_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+            if (data.ingredient.item_images) {
+                const sortedImages = [...data.ingredient.item_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
                 const fetchedImages = sortedImages.map((ii: any) => ({
                     id: ii.images?.id,
                     url: ii.images?.url,
@@ -195,34 +195,34 @@ export default function EditIngredientScreen() {
             }
 
             const { data: existingLinks } = await supabase
-                .from('ingredient_images')
+                .from('item_images')
                 .select('image_id')
-                .eq('ingredient_id', id);
+                .eq('item_id', id);
 
             const existingIds = existingLinks?.map(l => l.image_id) || [];
             const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
 
             if (idsToDelete.length > 0) {
                  await supabase
-                    .from('ingredient_images')
+                    .from('item_images')
                     .delete()
-                    .eq('ingredient_id', id)
+                    .eq('item_id', id)
                     .in('image_id', idsToDelete);
             }
 
             for (let i = 0; i < finalImageIds.length; i++) {
                 await supabase
-                    .from('ingredient_images')
+                    .from('item_images')
                     .upsert({
-                        ingredient_id: id, 
+                        item_id: id, 
                         image_id: finalImageIds[i],
                         sort_order: i
-                    }, { onConflict: 'ingredient_id,image_id' });
+                    }, { onConflict: 'item_id,image_id' });
             }
 
             // 1. Update Ingredient
             const { error: updateError } = await supabase
-                .from('ingredients')
+                .from('items')
                 .update({
                     name: name.trim(),
                     description: description.trim() || null,
@@ -291,7 +291,7 @@ export default function EditIngredientScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 20 : insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>

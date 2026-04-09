@@ -11,7 +11,9 @@ export function useIngredients() {
                 .select(`
                     *,
                     item_images (
-                        images ( url )
+                        sort_order,
+                        image_id,
+                        images ( id, url )
                     ),
                     item_categories (
                         category_id
@@ -40,7 +42,9 @@ export function useIngredient(id?: string | string[]) {
                 .select(`
                     *,
                     item_images (
-                        images ( url )
+                        sort_order,
+                        image_id,
+                        images ( id, url )
                     )
                 `)
                 .eq('item_type', 'ingredient')

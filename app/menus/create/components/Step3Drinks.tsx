@@ -35,7 +35,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             description: c.description,
             category: "Cocktail",
             recipes: c.recipes,
-            cocktail_images: c.cocktail_images
+            item_images: c.item_images
         }));
 
         const mappedBeers: SearchItem[] = (beersData || []).map((b: any) => ({
@@ -44,7 +44,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             description: b.description,
             category: "Beer",
             price: b.price,
-            image: b.beer_images?.[0]?.images?.url ? { uri: b.beer_images[0].images.url } : undefined
+            image: b.item_images?.[0]?.images?.url ? { uri: b.item_images[0].images.url } : undefined
         }));
 
         const mappedWines: SearchItem[] = (winesData || []).map((w: any) => ({
@@ -53,7 +53,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             description: w.description,
             category: "Wine",
             price: w.price,
-            image: w.wine_images?.[0]?.images?.url ? { uri: w.wine_images[0].images.url } : undefined
+            image: w.item_images?.[0]?.images?.url ? { uri: w.item_images[0].images.url } : undefined
         }));
 
         setAllDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);

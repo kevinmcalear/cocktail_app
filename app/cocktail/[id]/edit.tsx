@@ -174,8 +174,8 @@ export default function EditCocktailScreen() {
             setIceId(c.ice_id);
 
             // Populate existing images
-            if (c.cocktail_images) {
-                const sortedImages = [...c.cocktail_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+            if (c.item_images) {
+                const sortedImages = [...c.item_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
                 const fetchedImages = sortedImages.map((ci: any) => ({
                     id: ci.images.id,
                     url: ci.images.url,
@@ -286,29 +286,29 @@ export default function EditCocktailScreen() {
             }
 
             const { data: existingLinks } = await supabase
-                .from('cocktail_images')
+                .from('item_images')
                 .select('image_id')
-                .eq('cocktail_id', id);
+                .eq('item_id', id);
 
             const existingIds = existingLinks?.map(l => l.image_id) || [];
             const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
 
             if (idsToDelete.length > 0) {
                  await supabase
-                    .from('cocktail_images')
+                    .from('item_images')
                     .delete()
-                    .eq('cocktail_id', id)
+                    .eq('item_id', id)
                     .in('image_id', idsToDelete);
             }
 
             for (let i = 0; i < finalImageIds.length; i++) {
                 await supabase
-                    .from('cocktail_images')
+                    .from('item_images')
                     .upsert({
-                        cocktail_id: id, 
+                        item_id: id, 
                         image_id: finalImageIds[i],
                         sort_order: i
-                    }, { onConflict: 'cocktail_id,image_id' });
+                    }, { onConflict: 'item_id,image_id' });
             }
 
             const updates: any = {

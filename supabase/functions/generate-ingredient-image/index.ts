@@ -129,12 +129,12 @@ serve(async (req: Request) => {
         throw new Error(`Failed to insert into images table: ${JSON.stringify(dbInsertError)}`);
     }
 
-    // Link to ingredient_images table
+    // Link to item_images table
     const { error: linkError } = await supabaseClient
-        .from("ingredient_images")
+        .from("item_images")
         .insert([
             {
-                ingredient_id: ingredient_id,
+                item_id: ingredient_id,
                 image_id: imageRecord.id
             }
         ]);
@@ -158,7 +158,7 @@ serve(async (req: Request) => {
     console.error("Edge Function Error:", err);
     return new Response(
         JSON.stringify({ error: err.message || "Internal server error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });

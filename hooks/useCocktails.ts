@@ -27,7 +27,10 @@ export function useCocktails() {
                         )
                     ),
                     item_images (
+                        sort_order,
+                        image_id,
                         images (
+                            id,
                             url
                         )
                     ),

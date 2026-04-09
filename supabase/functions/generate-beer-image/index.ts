@@ -105,8 +105,8 @@ serve(async (req: Request) => {
     if (dbInsertError || !imageRecord) throw new Error(`Failed to insert into images table: ${JSON.stringify(dbInsertError)}`);
 
     const { error: linkError } = await supabaseClient
-        .from("beer_images")
-        .insert([{ beer_id: beer_id, image_id: imageRecord.id }]);
+        .from("item_images")
+        .insert([{ item_id: beer_id, image_id: imageRecord.id }]);
 
     if (linkError) throw new Error(`Failed to link image to beer: ${JSON.stringify(linkError)}`);
 
