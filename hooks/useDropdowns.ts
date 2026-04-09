@@ -5,11 +5,12 @@ export function useDropdowns() {
     return useQuery({
         queryKey: ['dropdowns'],
         queryFn: async () => {
-            const [itemsRes, menusRes, templatesRes, sectionsRes] = await Promise.all([
+            const [itemsRes, menusRes, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
                 supabase.from('items').select('*').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
                 supabase.from('menus').select('id, name, template_id, created_at').eq('is_active', true).order('created_at'),
                 supabase.from('menu_templates').select('*').order('name'),
-                supabase.from('template_sections').select('*').order('sort_order')
+                supabase.from('template_sections').select('*').order('sort_order'),
+                supabase.from('categories').select('*').order('name')
             ]);
             
             const items = itemsRes.data || [];
@@ -23,6 +24,7 @@ export function useDropdowns() {
                 menus: menusRes.data || [],
                 menuTemplates: templatesRes.data || [],
                 templateSections: sectionsRes.data || [],
+                categories: categoriesRes.data || [],
             };
         },
         // We can cache these for a long time since they change rarely

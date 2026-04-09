@@ -19,11 +19,11 @@ export default function CocktailDetailsScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const { data: cocktail, isLoading } = useCocktail(id as string);
+    const { data: cocktail, isLoading, error } = useCocktail(id as string);
     const [notesExpanded, setNotesExpanded] = useState(false);
 
     // Provide default layout if cocktail mapping fails safely
-    if (isLoading || !cocktail) {
+    if (isLoading || error || !cocktail) {
         return (
             <ItemDetailLayout 
                 id={id as string}
@@ -36,7 +36,14 @@ export default function CocktailDetailsScreen() {
                 onToggleStudyPile={() => {}}
             >
                 <YStack style={styles.container}>
-                    <Text>{isLoading ? "Loading..." : "Cocktail not found."}</Text>
+                    {error ? (
+                        <>
+                            <Text color="$red10" fontSize={18} fontWeight="bold" marginBottom="$2">Error Loading Cocktail</Text>
+                            <Text color="$red9" fontSize={14}>{error instanceof Error ? error.message : JSON.stringify(error)}</Text>
+                        </>
+                    ) : (
+                        <Text>{isLoading ? "Loading..." : "Cocktail not found."}</Text>
+                    )}
                 </YStack>
             </ItemDetailLayout>
         );

@@ -18,18 +18,24 @@ export interface SearchItem {
     id: string;
     name: string;
     description?: string | null;
-    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient";
+    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category";
     price?: string | null;
     recipes?: {
         ingredient_item_id?: string;
         ingredient?: {
             name: string;
+            item_categories?: {
+                category_id: string;
+            }[];
         } | null;
     }[];
     item_images?: {
         images?: {
             url: string;
         };
+    }[];
+    item_categories?: {
+        category_id: string;
     }[];
     image?: any;
     method_id?: string | null;
@@ -133,7 +139,8 @@ const SearchItemCard = memo(function SearchItemCard({
     inStudy,
     onToggleFavorite,
     onToggleStudyPile,
-    onPress
+    onPress,
+    onCategoryPress
 }: {
     drink: SearchItem;
     isFav: boolean;
@@ -141,6 +148,7 @@ const SearchItemCard = memo(function SearchItemCard({
     onToggleFavorite: (id: string, swipeable: Swipeable) => void;
     onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
     onPress?: (drink: SearchItem) => void;
+    onCategoryPress?: (id: string, name: string) => void;
 }) {
     let swipeableRef: Swipeable | null = null;
 
@@ -175,9 +183,9 @@ const SearchItemCard = memo(function SearchItemCard({
 
     const cardContent = (
         <Card
-            borderWidth={0}
-            backgroundColor="$backgroundStrong"
-            borderColor="transparent"
+            borderWidth={drink.category === "Category" ? 1 : 0}
+            backgroundColor={drink.category === "Category" ? "$color4" : "$backgroundStrong"}
+            borderColor={drink.category === "Category" ? theme.color8?.get() as string : "transparent"}
             overflow="hidden"
             marginBottom="$3"
             elevation="$1"
@@ -185,7 +193,12 @@ const SearchItemCard = memo(function SearchItemCard({
             pressStyle={{ scale: 0.98 }}
             onPress={onPress ? () => onPress(drink) : undefined}
         >
-            <Card.Header flexDirection="row" padding="$3" minHeight={100} alignItems="center">
+            <Card.Header flexDirection="row" padding="$3" minHeight={drink.category === "Category" ? 80 : 100} alignItems="center">
+                {drink.category === "Category" && (
+                    <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.color7?.get() as string, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                        <IconSymbol name="tag.fill" size={24} color={theme.color11?.get() as string} />
+                    </View>
+                )}
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
                     <H4 
                         color="$color" 
@@ -199,15 +212,20 @@ const SearchItemCard = memo(function SearchItemCard({
                         {subText}
                     </Paragraph>
                 </YStack>
-                <Image
-                    source={getImage(drink)}
-                    style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: theme.color5?.get() as string }}
-                    contentFit="cover"
-                    transition={500}
-                    onError={(e) => {
-                        // Silent fallback
-                    }}
-                />
+                {drink.category !== "Category" && (
+                    <Image
+                        source={getImage(drink)}
+                        style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: theme.color5?.get() as string }}
+                        contentFit="cover"
+                        transition={500}
+                        onError={(e) => {
+                            // Silent fallback
+                        }}
+                    />
+                )}
+                {drink.category === "Category" && (
+                    <IconSymbol name="chevron.right" size={24} color={theme.color8?.get() as string} />
+                )}
             </Card.Header>
         </Card>
     );
@@ -221,6 +239,10 @@ const SearchItemCard = memo(function SearchItemCard({
         >
             {onPress ? (
                 cardContent
+            ) : drink.category === "Category" ? (
+                <TouchableOpacity onPress={() => onCategoryPress?.(drink.id.replace("category-", ""), drink.name)} activeOpacity={0.8}>
+                    {cardContent}
+                </TouchableOpacity>
             ) : drink.category === "Beer" ? (
                 <Link href={`/beer/${drink.id}`} asChild>
                     {cardContent}
@@ -314,6 +336,12 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                            ((c.category === "Ingredient" && c.id === ingId) || false) ||
                            (c.recipes?.some(r => r.ingredient_item_id === ingId) || false)
                     );
+                } else if (chip.type === "Category") {
+                    const categoryId = chip.id.replace("category-", "");
+                    result = result.filter(c => 
+                        (c.item_categories?.some(ic => ic.category_id === categoryId) || false) ||
+                        (c.recipes?.some(r => r.ingredient?.item_categories?.some((ic: any) => ic.category_id === categoryId)) || false)
+                    );
                 } else if (chip.type === "Method") {
                     const methodId = chip.id.replace("method-", "");
                     result = result.filter(c => c.method_id === methodId);
@@ -335,15 +363,36 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                     (c.recipes?.some(r => r.ingredient?.name?.toLowerCase().includes(lowerQuery))) ||
                     (c.description?.toLowerCase().includes(lowerQuery))
             );
+
+            // Inject matching categories directly into the search results
+            const matchedCategories = dropdowns?.categories?.filter((c: any) => c.name.toLowerCase().includes(lowerQuery)) || [];
+            if (matchedCategories.length > 0) {
+                const categorySearchItems: SearchItem[] = matchedCategories.map((cat: any) => ({
+                    id: `category-${cat.id}`,
+                    name: cat.name,
+                    description: "Tap to explore this category",
+                    category: "Category",
+                }));
+                result = [...categorySearchItems, ...result];
+            }
         }
 
-        return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [items, searchQuery, activeFilters, allCategories, activeChips, showFavesOnly, isFavorite]);
+        return result.sort((a, b) => {
+            // Force Categories to always appear at the top
+            if (a.category === "Category" && b.category !== "Category") return -1;
+            if (a.category !== "Category" && b.category === "Category") return 1;
+            return a.name.localeCompare(b.name);
+        });
+    }, [items, searchQuery, activeFilters, allCategories, activeChips, showFavesOnly, isFavorite, dropdowns?.categories]);
 
     const suggestions = useMemo(() => {
         if (!searchQuery) return [];
         const query = searchQuery.toLowerCase();
         const sugs: SearchChip[] = [];
+
+        dropdowns?.categories?.filter((c: any) => c.name.toLowerCase().includes(query)).slice(0, 3).forEach((c: any) => {
+            sugs.push({ id: `category-${c.id}`, label: c.name, type: "Category" });
+        });
 
         dropdowns?.ingredients?.filter(i => i.name.toLowerCase().includes(query)).slice(0, 3).forEach(i => {
             sugs.push({ id: `ingredient-${i.id}`, label: i.name, type: "Ingredient" });
@@ -373,8 +422,15 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
     const listData = useMemo(() => {
         const data: (SearchItem | { type: "header"; letter: string; id: string })[] = [];
         let lastLetter = "";
+        const seenLetters = new Set<string>();
 
         filteredDrinks.forEach((item) => {
+            // Category items are forced to the top and shouldn't trigger alphabetical headers
+            if (item.category === "Category") {
+                data.push(item);
+                return;
+            }
+
             let currentLetter = item.name.charAt(0).toUpperCase();
 
             // Group numbers under "#"
@@ -384,7 +440,11 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
 
             if (currentLetter !== lastLetter) {
                 lastLetter = currentLetter;
-                data.push({ type: "header", letter: currentLetter, id: `header-${currentLetter}` });
+                // Double check to absolutely prevent duplicate keys in React if sorting somehow folds
+                if (!seenLetters.has(currentLetter)) {
+                    seenLetters.add(currentLetter);
+                    data.push({ type: "header", letter: currentLetter, id: `header-${currentLetter}` });
+                }
             }
             data.push(item);
         });
@@ -481,6 +541,13 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                 onToggleFavorite={handleToggleFavorite}
                 onToggleStudyPile={handleToggleStudyPile}
                 onPress={onDrinkPress}
+                onCategoryPress={(id, name) => {
+                    setActiveChips(prev => {
+                        if (prev.find(c => c.id === `category-${id}`)) return prev;
+                        return [...prev, { id: `category-${id}`, label: name, type: "Category" }];
+                    });
+                    setSearchQuery("");
+                }}
             />
         );
     }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile, onDrinkPress]);

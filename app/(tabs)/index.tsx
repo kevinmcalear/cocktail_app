@@ -26,6 +26,7 @@ export default function SearchScreen() {
             category: "Cocktail",
             recipes: c.recipes,
             item_images: c.item_images,
+            item_categories: c.item_categories,
             method_id: c.item_methods?.[0]?.method_item_id,
             glassware_id: c.glassware_id,
             family_id: c.family_id
@@ -57,6 +58,7 @@ export default function SearchScreen() {
             name: i.name,
             description: i.description,
             category: "Ingredient",
+            item_categories: i.item_categories,
             image: i.item_images?.[0]?.images?.url ? { uri: i.item_images[0].images.url } : undefined
         }));
 

@@ -31,23 +31,13 @@ export function useMenuDetails(menuId: string | null) {
                 .select(`
                     template_section_id,
                     sort_order,
-                    cocktails (
-                        id, name, description,
-                        cocktail_images (
-                            images ( url )
-                        ),
-                        recipes!new_recipes_recipe_item_id_fkey (
+                    item:items!item_id (
+                        id, name, description, item_type, style, brand_maker, location, price,
+                        item_images ( images ( url ) ),
+                        recipes!recipe_item_id (
                             amount, unit,
-                            ingredient:items!new_recipes_ingredient_item_id_fkey ( name )
+                            ingredient:items!ingredient_item_id ( name )
                         )
-                    ),
-                    beers (
-                        id, name, description, style, brewery,
-                        beer_images ( images ( url ) )
-                    ),
-                    wines (
-                        id, name, description, price, location,
-                        wine_images ( images ( url ) )
                     )
                 `)
                 .eq('menu_id', menuId);
@@ -62,67 +52,51 @@ export function useMenuDetails(menuId: string | null) {
                     .filter(d => d.template_section_id === sec.id)
                     .sort((a, b) => a.sort_order - b.sort_order)
                     .map(d => {
-                        let item: import('@/components/CurrentMenuList').MenuItem | null = null;
+                        const i: any = d.item;
+                        if (!i) return null;
 
-                        if (d.cocktails) {
-                            const c = d.cocktails as any;
-                            const rList = Array.isArray(c.recipes) ? c.recipes : [c.recipes];
+                        let imageUrl = defaultImage;
+                        if (i.item_images && i.item_images.length > 0) {
+                            const imgArr = Array.isArray(i.item_images) ? i.item_images : [i.item_images];
+                            if (imgArr[0]?.images?.url) {
+                                imageUrl = imgArr[0].images.url;
+                            }
+                        }
+
+                        if (i.item_type === 'cocktail') {
+                            const rList = Array.isArray(i.recipes) ? i.recipes : [i.recipes];
                             const ingList = rList.filter(Boolean).map((r: any) => {
                                 const amt = r.amount ? `${r.amount} ` : '';
                                 const u = r.unit ? `${r.unit} ` : '';
                                 return `${amt}${u}${r.ingredient?.name || ''}`.trim();
                             }).filter(Boolean).join(', ');
                             
-                            let imageUrl = defaultImage;
-                            if (c.cocktail_images && c.cocktail_images.length > 0) {
-                                const imgArr = Array.isArray(c.cocktail_images) ? c.cocktail_images : [c.cocktail_images];
-                                if (imgArr[0]?.images?.url) {
-                                    imageUrl = imgArr[0].images.url;
-                                }
-                            }
-
-                            item = {
-                                id: c.id,
-                                name: c.name,
-                                description: c.description || "",
+                            return {
+                                id: i.id,
+                                name: i.name,
+                                description: i.description || "",
                                 ingredients: ingList,
                                 image: imageUrl,
                             };
-                        } else if (d.beers) {
-                            const b = d.beers as any;
-                            let imageUrl = defaultImage;
-                            if (b.beer_images && b.beer_images.length > 0) {
-                                const imgArr = Array.isArray(b.beer_images) ? b.beer_images : [b.beer_images];
-                                if (imgArr[0]?.images?.url) {
-                                    imageUrl = imgArr[0].images.url;
-                                }
-                            }
-                            item = {
-                                id: `beer-${b.id}`,
-                                name: b.name,
-                                description: b.description || "Craft Beer",
-                                ingredients: b.style || b.brewery || "Beer",
+                        } else if (i.item_type === 'beer') {
+                            return {
+                                id: `beer-${i.id}`,
+                                name: i.name,
+                                description: i.description || "Craft Beer",
+                                ingredients: i.style || i.brand_maker || "Beer",
                                 image: imageUrl,
                             };
-                        } else if (d.wines) {
-                            const w = d.wines as any;
-                            let imageUrl = defaultImage;
-                            if (w.wine_images && w.wine_images.length > 0) {
-                                const imgArr = Array.isArray(w.wine_images) ? w.wine_images : [w.wine_images];
-                                if (imgArr[0]?.images?.url) {
-                                    imageUrl = imgArr[0].images.url;
-                                }
-                            }
-                            item = {
-                                id: `wine-${w.id}`,
-                                name: w.name,
-                                description: w.description || "Wine",
-                                ingredients: w.location || "Wine",
+                        } else if (i.item_type === 'wine') {
+                            return {
+                                id: `wine-${i.id}`,
+                                name: i.name,
+                                description: i.description || "Wine",
+                                ingredients: i.location || "Wine",
                                 image: imageUrl,
                             };
                         }
                         
-                        return item;
+                        return null;
                     }).filter((item): item is import('@/components/CurrentMenuList').MenuItem => item !== null);
                 
                 return {
@@ -134,8 +108,7 @@ export function useMenuDetails(menuId: string | null) {
                 
             return {
                 menuName: menuData.name,
-                // Only return sections that have drinks
-                sections: formattedSections.filter(s => s.data.length > 0)
+                sections: formattedSections
             };
         }
     });

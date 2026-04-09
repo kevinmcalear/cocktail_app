@@ -12,6 +12,9 @@ export function useIngredients() {
                     *,
                     item_images (
                         images ( url )
+                    ),
+                    item_categories (
+                        category_id
                     )
                 `)
                 .eq('item_type', 'ingredient')

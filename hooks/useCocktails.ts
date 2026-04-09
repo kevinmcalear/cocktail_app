@@ -14,19 +14,25 @@ export function useCocktails() {
                     description,
                     glassware_id,
                     family_id,
-                    recipes!new_recipes_recipe_item_id_fkey (
+                    recipes!recipe_item_id (
                         ingredient_item_id,
                         amount,
                         unit,
                         preparation_notes,
-                        ingredient:items!new_recipes_ingredient_item_id_fkey (
-                            name
+                        ingredient:items!ingredient_item_id (
+                            name,
+                            item_categories (
+                                category_id
+                            )
                         )
                     ),
                     item_images (
                         images (
                             url
                         )
+                    ),
+                    item_categories (
+                        category_id
                     )
                 `)
                 .eq('item_type', 'cocktail')
@@ -56,12 +62,12 @@ export function useCocktail(id?: string | string[]) {
                             id
                         )
                     ),
-                    recipes!new_recipes_recipe_item_id_fkey (
+                    recipes!recipe_item_id (
                         id,
                         amount,
                         unit,
                         preparation_notes,
-                        ingredient:items!new_recipes_ingredient_item_id_fkey (
+                        ingredient:items!ingredient_item_id (
                             name,
                             item_images (
                                 images (
@@ -70,15 +76,15 @@ export function useCocktail(id?: string | string[]) {
                             )
                         )
                     ),
-                    item_methods (
+                    item_methods!item_id (
                         method_item_id,
-                        method:items!item_methods_method_item_id_fkey (
+                        method:items!method_item_id (
                             name
                         )
                     ),
-                    glassware:items!items_glassware_id_fkey ( name ),
-                    family:items!items_family_id_fkey ( name ),
-                    ice:items!items_ice_id_fkey ( name )
+                    glassware:items!glassware_id ( name ),
+                    family:items!family_id ( name ),
+                    ice:items!ice_id ( name )
                 `)
                 .eq('id', cocktailId)
                 .single();

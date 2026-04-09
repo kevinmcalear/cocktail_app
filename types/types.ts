@@ -31,6 +31,13 @@ export interface DatabaseItemImage {
     images?: DatabaseImage;
 }
 
+export interface DatabaseItemCategory {
+    item_id: string;
+    category_id: string;
+    is_primary: boolean | null;
+    categorie?: DatabaseCategory; // Supabase usually infers singular/plural, standard is singular. Let's use `categories?` or just `category?`. Often with supabase it uses the table name, so `categories?: DatabaseCategory;`
+}
+
 export interface DatabaseItemMethod {
     item_id: string;
     method_item_id: string;
@@ -75,6 +82,7 @@ export interface DatabaseItem {
     item_images?: DatabaseItemImage[];
     recipes?: DatabaseRecipe[]; // If it's a cocktail, what are its recipes
     item_methods?: DatabaseItemMethod[];
+    item_categories?: DatabaseItemCategory[];
     glassware?: DatabaseItem | null; // Self-referential join
     family?: DatabaseItem | null; // Self-referential join
     ice?: DatabaseItem | null; // Self-referential join
