@@ -99,10 +99,10 @@ export default function QuizScreen() {
             name: c.name,
             description: c.description,
             ingredients: c.recipes?.map((r: any) => ({
-                name: r.ingredients?.name || "Unknown",
+                name: r.ingredient?.name || "Unknown",
                 amount: formatAmount(r)
             })) || [],
-            imageUrl: c.cocktail_images?.[0]?.images?.url
+            imageUrl: c.item_images?.[0]?.images?.url
         }));
 
         if (params.cocktailCategory === "RANDOM") {
@@ -114,11 +114,16 @@ export default function QuizScreen() {
 
     const formatAmount = (r: any) => {
         const parts = [];
-        if (r.is_top) parts.push("Top");
-        if (r.ingredient_ml) parts.push(`${r.ingredient_ml}ml`);
-        if (r.ingredient_bsp) parts.push(`${r.ingredient_bsp} bsp`);
-        if (r.ingredient_dash) parts.push(`${r.ingredient_dash} dash${r.ingredient_dash > 1 ? 'es' : ''}`);
-        if (r.ingredient_amount) parts.push(`${r.ingredient_amount}`);
+        if (r.amount) parts.push(`${r.amount}`);
+        if (r.unit) parts.push(`${r.unit}`);
+        
+        if (parts.length === 0) {
+            if (r.is_top) parts.push("Top");
+            if (r.ingredient_ml) parts.push(`${r.ingredient_ml}ml`);
+            if (r.ingredient_bsp) parts.push(`${r.ingredient_bsp} bsp`);
+            if (r.ingredient_dash) parts.push(`${r.ingredient_dash} dash${r.ingredient_dash > 1 ? 'es' : ''}`);
+            if (r.ingredient_amount) parts.push(`${r.ingredient_amount}`);
+        }
         return parts.join(" ");
     };
 

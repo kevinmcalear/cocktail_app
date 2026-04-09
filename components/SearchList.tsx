@@ -5,6 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
@@ -151,8 +152,12 @@ const SearchItemCard = memo(function SearchItemCard({
     onCategoryPress?: (id: string, name: string) => void;
 }) {
     let swipeableRef: Swipeable | null = null;
+    const { isTestingEnabled } = useSettingsStore();
 
-    let subText = drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description";
+    let subText = isTestingEnabled && (!drink.category || drink.category === "Cocktail")
+        ? (drink.recipes && drink.recipes.length > 0 ? "Ingredients hidden for test" : drink.description || "No description")
+        : (drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description");
+
     if (drink.price) {
         subText = `${drink.price} • ${subText}`;
     }
