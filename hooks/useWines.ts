@@ -7,7 +7,7 @@ export function useWines() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('items')
-                .select('*, item_images(sort_order,image_id,images(id,url))')
+                .select('*, item_images(sort_order,image_id,images(id,url)), item_categories(category_id)')
                 .eq('item_type', 'wine')
                 .order('name', { ascending: true });
 
@@ -24,7 +24,7 @@ export function useWine(id: string) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('items')
-                .select('*, item_images(sort_order,image_id,images(id,url))')
+                .select('*, item_images(sort_order,image_id,images(id,url)), item_categories(category_id)')
                 .eq('id', id)
                 .single();
 

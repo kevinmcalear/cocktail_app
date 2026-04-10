@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export function useDropdowns() {
     return useQuery({
-        queryKey: ['dropdowns'],
+        queryKey: ['dropdowns_v2'],
         queryFn: async () => {
             const [itemsRes, menusRes, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
                 supabase.from('items').select('*').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),

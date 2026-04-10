@@ -17,8 +17,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useWine } from "@/hooks/useWines";
 import { supabase } from "@/lib/supabase";
+import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, Text, TextArea, XStack, YStack } from "tamagui";
+import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
+import { CategoryPickerModal } from "@/components/CategoryPickerModal";
+import { useDropdowns } from "@/hooks/useDropdowns";
 
 export default function EditWineScreen() {
     const { id } = useLocalSearchParams();
@@ -35,22 +38,27 @@ export default function EditWineScreen() {
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [style, setStyle] = useState("");
     const [vintner, setVintner] = useState("");
-    const [location, setLocation] = useState("");
     const [abv, setAbv] = useState("");
     const [price, setPrice] = useState("");
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const { data: dropdowns } = useDropdowns();
+    const categoryPickerRef = React.useRef<BottomSheetModal>(null);
+    const theme = useTheme();
+
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
     useEffect(() => {
         if (wine) {
             setName(wine.name || "");
             setDescription(wine.description || "");
-            setStyle(wine.style || "");
             setVintner(wine.brand_maker || "");
-            setLocation(wine.location || "");
             setAbv(wine.abv?.toString() || "");
             setPrice(wine.price?.toString() || "");
+
+            if (wine.item_categories) {
+                setSelectedCategories(wine.item_categories.map((ic: any) => ic.category_id));
+            }
 
             // Populate existing images
             if (wine.item_images) {
@@ -177,9 +185,7 @@ export default function EditWineScreen() {
             const updates = {
                 name,
                 description,
-                style: style || null,
                 brand_maker: vintner || null,
-                location: location || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
             };
@@ -190,6 +196,34 @@ export default function EditWineScreen() {
                 .eq('id', safeId);
 
             if (error) throw error;
+
+            // Sync item_categories
+            const { data: existingCatLinks } = await supabase
+                .from('item_categories')
+                .select('category_id')
+                .eq('item_id', safeId);
+
+            const existingCatIds = existingCatLinks?.map(l => l.category_id) || [];
+            const catIdsToDelete = existingCatIds.filter(eid => !selectedCategories.includes(eid));
+            const catIdsToAdd = selectedCategories.filter(eid => !existingCatIds.includes(eid));
+
+            if (catIdsToDelete.length > 0) {
+                 await supabase
+                    .from('item_categories')
+                    .delete()
+                    .eq('item_id', safeId)
+                    .in('category_id', catIdsToDelete);
+            }
+
+            for (const catId of catIdsToAdd) {
+                await supabase
+                    .from('item_categories')
+                    .upsert({
+                        item_id: safeId,
+                        category_id: catId,
+                        is_primary: true
+                    }, { onConflict: 'item_id,category_id' });
+            }
 
             queryClient.invalidateQueries({ queryKey: ['wine', safeId] });
             queryClient.invalidateQueries({ queryKey: ['wines'] });
@@ -208,18 +242,19 @@ export default function EditWineScreen() {
 
     if (isLoading) {
         return (
-            <YStack style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.dark.tint} />
+            <YStack flex={1} justifyContent="center" alignItems="center" backgroundColor="$background">
+                <ActivityIndicator size="large" color={theme.color8?.get() as string} />
             </YStack>
         );
     }
 
     return (
-        <YStack style={styles.container}>
+        <BottomSheetModalProvider>
+        <YStack style={styles.container} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
 
             <XStack
-                paddingTop={20}
+                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
@@ -227,7 +262,7 @@ export default function EditWineScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
+                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Wine</Text>
                 <Button 
@@ -236,7 +271,7 @@ export default function EditWineScreen() {
                     size="$3"
                     chromeless
                 >
-                    {saving ? <ActivityIndicator size="small" color={Colors.dark.tint} /> : <Text color={Colors.dark.tint} fontWeight="bold">Save</Text>}
+                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
                 </Button>
             </XStack>
 
@@ -260,52 +295,48 @@ export default function EditWineScreen() {
                         placeholderTextColor="$color11"
                         placeholder="e.g. Cabernet Sauvignon"
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
                 <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Style</Label>
-                    <Input
-                        value={style}
-                        onChangeText={setStyle}
-                        placeholderTextColor="$color11"
-                        placeholder="e.g. Red"
-                        size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
-                    />
-                </YStack>
-
-                <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Vintner</Label>
+                    <Label color="$color11">Vintner / Brand</Label>
                     <Input
                         value={vintner}
                         onChangeText={setVintner}
                         placeholderTextColor="$color11"
-                        placeholder="e.g. Napa Valley"
+                        placeholder="e.g. Napa Valley Winery"
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
-                
+
                 <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Location</Label>
-                    <Input
-                        value={location}
-                        onChangeText={setLocation}
-                        placeholderTextColor="$color11"
-                        placeholder="e.g. California"
-                        size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
-                    />
+                    <XStack justifyContent="space-between" alignItems="center">
+                        <Label color="$color11">Tags (Style, Region)</Label>
+                        <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
+                            <Text color={theme.color8?.get() as string} fontWeight="bold">+ Edit</Text>
+                        </TouchableOpacity>
+                    </XStack>
+                    <XStack flexWrap="wrap" gap="$2">
+                        {selectedCategories.length === 0 ? (
+                            <Text color="$color11" fontStyle="italic">No tags selected</Text>
+                        ) : (
+                            selectedCategories.map(catId => {
+                                const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
+                                if (!cat) return null;
+                                return (
+                                    <XStack key={catId} backgroundColor="$backgroundStrong" paddingHorizontal={12} paddingVertical={6} borderRadius={16}>
+                                        <Text color="$color">{cat.name}</Text>
+                                    </XStack>
+                                );
+                            })
+                        )}
+                    </XStack>
                 </YStack>
 
                 <XStack gap="$3" marginBottom="$4">
@@ -318,9 +349,9 @@ export default function EditWineScreen() {
                             placeholderTextColor="$color11"
                             placeholder="e.g. 13.5"
                             size="$4"
-                            backgroundColor="rgba(255,255,255,0.05)"
-                            borderColor="rgba(255,255,255,0.1)"
-                            focusStyle={{ borderColor: Colors.dark.tint }}
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
                         />
                     </YStack>
                     <YStack flex={1} gap="$2">
@@ -332,9 +363,9 @@ export default function EditWineScreen() {
                             placeholderTextColor="$color11"
                             placeholder="e.g. 60.00"
                             size="$4"
-                            backgroundColor="rgba(255,255,255,0.05)"
-                            borderColor="rgba(255,255,255,0.1)"
-                            focusStyle={{ borderColor: Colors.dark.tint }}
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
                         />
                     </YStack>
                 </XStack>
@@ -347,27 +378,34 @@ export default function EditWineScreen() {
                         numberOfLines={4}
                         placeholderTextColor="$color11"
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
             </ScrollView>
+            
+            <CategoryPickerModal 
+                ref={categoryPickerRef}
+                domain="wine"
+                selectedCategoryIds={selectedCategories}
+                onToggleCategory={(cat) => {
+                    if (selectedCategories.includes(cat.id)) {
+                        setSelectedCategories(prev => prev.filter(id => id !== cat.id));
+                    } else {
+                        setSelectedCategories(prev => [...prev, cat.id]);
+                    }
+                }}
+            />
         </YStack>
+        </BottomSheetModalProvider>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Colors.dark.background,
     },
     content: {
         paddingHorizontal: 16,

@@ -1,0 +1,109 @@
+-- 1. Create top-level parent categories for Beer and Wine
+DO $$
+DECLARE
+    gen_beer_styles_id UUID := gen_random_uuid();
+    gen_beer_regions_id UUID := gen_random_uuid();
+    gen_wine_styles_id UUID := gen_random_uuid();
+    gen_wine_regions_id UUID := gen_random_uuid();
+    
+    cat_id UUID;
+    rec RECORD;
+BEGIN
+    -- Insert root parent domains
+    INSERT INTO public.categories (id, name, domain) VALUES
+    (gen_beer_styles_id, 'Beer Styles', 'beer'),
+    (gen_beer_regions_id, 'Beer Regions', 'beer'),
+    (gen_wine_styles_id, 'Wine Styles', 'wine'),
+    (gen_wine_regions_id, 'Wine Regions', 'wine');
+
+    -- Seed Industry Best Practice Sub-Categories
+    -- BEER STYLES
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('IPA', gen_beer_styles_id, 'beer'),
+    ('Pale Ale', gen_beer_styles_id, 'beer'),
+    ('Stout', gen_beer_styles_id, 'beer'),
+    ('Porter', gen_beer_styles_id, 'beer'),
+    ('Lager', gen_beer_styles_id, 'beer'),
+    ('Pilsner', gen_beer_styles_id, 'beer'),
+    ('Wheat Beer', gen_beer_styles_id, 'beer'),
+    ('Sour', gen_beer_styles_id, 'beer'),
+    ('Amber Ale', gen_beer_styles_id, 'beer'),
+    ('Saison', gen_beer_styles_id, 'beer');
+
+    -- BEER REGIONS
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('USA', gen_beer_regions_id, 'beer'),
+    ('Belgium', gen_beer_regions_id, 'beer'),
+    ('Germany', gen_beer_regions_id, 'beer'),
+    ('UK', gen_beer_regions_id, 'beer'),
+    ('Canada', gen_beer_regions_id, 'beer');
+
+    -- WINE STYLES
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Red', gen_wine_styles_id, 'wine'),
+    ('White', gen_wine_styles_id, 'wine'),
+    ('Rosé', gen_wine_styles_id, 'wine'),
+    ('Sparkling', gen_wine_styles_id, 'wine'),
+    ('Dessert', gen_wine_styles_id, 'wine'),
+    ('Fortified', gen_wine_styles_id, 'wine'),
+    ('Orange', gen_wine_styles_id, 'wine');
+
+    -- WINE REGIONS
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('France', gen_wine_regions_id, 'wine'),
+    ('Italy', gen_wine_regions_id, 'wine'),
+    ('Spain', gen_wine_regions_id, 'wine'),
+    ('USA - California', gen_wine_regions_id, 'wine'),
+    ('Australia', gen_wine_regions_id, 'wine'),
+    ('New Zealand', gen_wine_regions_id, 'wine'),
+    ('Argentina', gen_wine_regions_id, 'wine'),
+    ('Chile', gen_wine_regions_id, 'wine'),
+    ('South Africa', gen_wine_regions_id, 'wine');
+
+    -- 2. Migrate existing items dynamically
+    
+    -- BEER STYLES MIGRATION
+    FOR rec IN SELECT id, style FROM public.items WHERE item_type = 'beer' AND style IS NOT NULL AND TRIM(style) != '' LOOP
+        SELECT id INTO cat_id FROM public.categories WHERE name ILIKE TRIM(rec.style) AND parent_id = gen_beer_styles_id LIMIT 1;
+        IF cat_id IS NULL THEN
+            cat_id := gen_random_uuid();
+            INSERT INTO public.categories (id, name, parent_id, domain) VALUES (cat_id, TRIM(rec.style), gen_beer_styles_id, 'beer');
+        END IF;
+        INSERT INTO public.item_categories (item_id, category_id, is_primary) VALUES (rec.id, cat_id, true) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- BEER REGIONS MIGRATION
+    FOR rec IN SELECT id, location FROM public.items WHERE item_type = 'beer' AND location IS NOT NULL AND TRIM(location) != '' LOOP
+        SELECT id INTO cat_id FROM public.categories WHERE name ILIKE TRIM(rec.location) AND parent_id = gen_beer_regions_id LIMIT 1;
+        IF cat_id IS NULL THEN
+            cat_id := gen_random_uuid();
+            INSERT INTO public.categories (id, name, parent_id, domain) VALUES (cat_id, TRIM(rec.location), gen_beer_regions_id, 'beer');
+        END IF;
+        INSERT INTO public.item_categories (item_id, category_id, is_primary) VALUES (rec.id, cat_id, true) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- WINE STYLES MIGRATION
+    FOR rec IN SELECT id, style FROM public.items WHERE item_type = 'wine' AND style IS NOT NULL AND TRIM(style) != '' LOOP
+        SELECT id INTO cat_id FROM public.categories WHERE name ILIKE TRIM(rec.style) AND parent_id = gen_wine_styles_id LIMIT 1;
+        IF cat_id IS NULL THEN
+            cat_id := gen_random_uuid();
+            INSERT INTO public.categories (id, name, parent_id, domain) VALUES (cat_id, TRIM(rec.style), gen_wine_styles_id, 'wine');
+        END IF;
+        INSERT INTO public.item_categories (item_id, category_id, is_primary) VALUES (rec.id, cat_id, true) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- WINE REGIONS MIGRATION
+    FOR rec IN SELECT id, location FROM public.items WHERE item_type = 'wine' AND location IS NOT NULL AND TRIM(location) != '' LOOP
+        SELECT id INTO cat_id FROM public.categories WHERE name ILIKE TRIM(rec.location) AND parent_id = gen_wine_regions_id LIMIT 1;
+        IF cat_id IS NULL THEN
+            cat_id := gen_random_uuid();
+            INSERT INTO public.categories (id, name, parent_id, domain) VALUES (cat_id, TRIM(rec.location), gen_wine_regions_id, 'wine');
+        END IF;
+        INSERT INTO public.item_categories (item_id, category_id, is_primary) VALUES (rec.id, cat_id, true) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+END $$;
+
+-- 3. Drop the columns from items to enforce the new schema
+ALTER TABLE public.items DROP COLUMN IF EXISTS style;
+ALTER TABLE public.items DROP COLUMN IF EXISTS location;

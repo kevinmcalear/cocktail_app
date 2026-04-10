@@ -75,8 +75,6 @@ export interface DatabaseItem {
     status: string | null;
     brand_maker: string | null;
     abv: number | null;
-    location: string | null;
-    style: string | null;
 
     // Joined Data
     item_images?: DatabaseItemImage[];
