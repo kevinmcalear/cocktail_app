@@ -152,11 +152,8 @@ const SearchItemCard = memo(function SearchItemCard({
     onCategoryPress?: (id: string, name: string) => void;
 }) {
     let swipeableRef: Swipeable | null = null;
-    const { isTestingEnabled } = useSettingsStore();
 
-    let subText = isTestingEnabled && (!drink.category || drink.category === "Cocktail")
-        ? (drink.recipes && drink.recipes.length > 0 ? "Ingredients hidden for test" : drink.description || "No description")
-        : (drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description");
+    let subText = drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description";
 
     if (drink.price) {
         subText = `${drink.price} • ${subText}`;

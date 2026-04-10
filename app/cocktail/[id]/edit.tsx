@@ -372,18 +372,18 @@ export default function EditCocktailScreen() {
     if (loading) {
         return (
             <YStack style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.dark.tint} />
+                <ActivityIndicator size="large" color={theme.color?.get() as string} />
             </YStack>
         );
     }
 
     return (
-        <YStack style={styles.container}>
+        <YStack style={styles.container} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header fixed to top 20px matching Beer and Wine edits exactly */}
             <XStack
-                paddingTop={20}
+                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
@@ -391,7 +391,7 @@ export default function EditCocktailScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="xmark" size={24} color={Colors.dark.text} />
+                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Cocktail</Text>
                 <Button 
@@ -400,10 +400,14 @@ export default function EditCocktailScreen() {
                     size="$3"
                     chromeless
                 >
-                    {saving ? <ActivityIndicator size="small" color={Colors.dark.tint} /> : <Text color={Colors.dark.tint} fontWeight="bold">Save</Text>}
+                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
                 </Button>
             </XStack>
 
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
                 <SortableImageList 
@@ -425,9 +429,9 @@ export default function EditCocktailScreen() {
                         placeholderTextColor="$color11"
                         placeholder="e.g. Negroni"
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
@@ -439,9 +443,9 @@ export default function EditCocktailScreen() {
                         numberOfLines={4}
                         placeholderTextColor="$color11"
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
@@ -454,20 +458,20 @@ export default function EditCocktailScreen() {
                                     key={m.id}
                                     size="$3"
                                     borderRadius="$10"
-                                    backgroundColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
-                                    borderColor={methodId === m.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    backgroundColor={methodId === m.id ? theme.color8?.get() as string : "$backgroundStrong"}
+                                    borderColor={methodId === m.id ? theme.color8?.get() as string : "$borderColor"}
                                     borderWidth={1}
                                     onPress={() => setMethodId(m.id)}
                                     onLongPress={() => handleDeletePill('method_id', m)}
                                 >
                                     <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={m.name} size={16} color={methodId === m.id ? "#000" : Colors.dark.text} />
-                                        <Text color={methodId === m.id ? "#000" : Colors.dark.text} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
+                                        <CustomIcon name={m.name} size={16} color={theme.color?.get() as string} />
+                                        <Text color={theme.color?.get() as string} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
                                     </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'method', label: 'Method' })}>
-                                <Text color={Colors.dark.tint}>+ Add</Text>
+                                <Text color={theme.color8?.get() as string}>+ Add</Text>
                             </Button>
                         </XStack>
                     </ScrollView>
@@ -482,20 +486,20 @@ export default function EditCocktailScreen() {
                                     key={g.id}
                                     size="$3"
                                     borderRadius="$10"
-                                    backgroundColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
-                                    borderColor={glasswareId === g.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    backgroundColor={glasswareId === g.id ? theme.color8?.get() as string : "$backgroundStrong"}
+                                    borderColor={glasswareId === g.id ? theme.color8?.get() as string : "$borderColor"}
                                     borderWidth={1}
                                     onPress={() => setGlasswareId(g.id)}
                                     onLongPress={() => handleDeletePill('glassware_id', g)}
                                 >
                                     <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={g.name} size={16} color={glasswareId === g.id ? "#000" : Colors.dark.text} />
-                                        <Text color={glasswareId === g.id ? "#000" : Colors.dark.text} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
+                                        <CustomIcon name={g.name} size={16} color={theme.color?.get() as string} />
+                                        <Text color={theme.color?.get() as string} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
                                     </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'glassware', label: 'Glassware' })}>
-                                <Text color={Colors.dark.tint}>+ Add</Text>
+                                <Text color={theme.color8?.get() as string}>+ Add</Text>
                             </Button>
                         </XStack>
                     </ScrollView>
@@ -510,20 +514,20 @@ export default function EditCocktailScreen() {
                                     key={f.id}
                                     size="$3"
                                     borderRadius="$10"
-                                    backgroundColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
-                                    borderColor={familyId === f.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    backgroundColor={familyId === f.id ? theme.color8?.get() as string : "$backgroundStrong"}
+                                    borderColor={familyId === f.id ? theme.color8?.get() as string : "$borderColor"}
                                     borderWidth={1}
                                     onPress={() => setFamilyId(f.id)}
                                     onLongPress={() => handleDeletePill('family_id', f)}
                                 >
                                     <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={f.name} size={16} color={familyId === f.id ? "#000" : Colors.dark.text} />
-                                        <Text color={familyId === f.id ? "#000" : Colors.dark.text} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
+                                        <CustomIcon name={f.name} size={16} color={theme.color?.get() as string} />
+                                        <Text color={theme.color?.get() as string} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
                                     </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'family', label: 'Family' })}>
-                                <Text color={Colors.dark.tint}>+ Add</Text>
+                                <Text color={theme.color8?.get() as string}>+ Add</Text>
                             </Button>
                         </XStack>
                     </ScrollView>
@@ -538,20 +542,20 @@ export default function EditCocktailScreen() {
                                     key={i.id}
                                     size="$3"
                                     borderRadius="$10"
-                                    backgroundColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.05)"}
-                                    borderColor={iceId === i.id ? Colors.dark.tint : "rgba(255,255,255,0.1)"}
+                                    backgroundColor={iceId === i.id ? theme.color8?.get() as string : "$backgroundStrong"}
+                                    borderColor={iceId === i.id ? theme.color8?.get() as string : "$borderColor"}
                                     borderWidth={1}
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
                                     onLongPress={() => handleDeletePill('ice_id', i)}
                                 >
                                     <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={i.name} size={16} color={iceId === i.id ? "#000" : Colors.dark.text} />
-                                        <Text color={iceId === i.id ? "#000" : Colors.dark.text} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
+                                        <CustomIcon name={i.name} size={16} color={theme.color?.get() as string} />
+                                        <Text color={theme.color?.get() as string} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
                                     </XStack>
                                 </Button>
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'ice', label: 'Ice' })}>
-                                <Text color={Colors.dark.tint}>+ Add</Text>
+                                <Text color={theme.color8?.get() as string}>+ Add</Text>
                             </Button>
                         </XStack>
                     </ScrollView>
@@ -561,7 +565,7 @@ export default function EditCocktailScreen() {
                     <XStack justifyContent="space-between" alignItems="center" paddingHorizontal="$2">
                         <Label color="$color11">Ingredients</Label>
                         <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                            <Text color={Colors.dark.tint} fontWeight="bold">+ Add</Text>
+                            <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
                         </TouchableOpacity>
                     </XStack>
 
@@ -575,8 +579,8 @@ export default function EditCocktailScreen() {
                                         width={60}
                                         placeholder="1.5"
                                         keyboardType="numeric"
-                                        backgroundColor="rgba(255,255,255,0.05)"
-                                        borderColor="rgba(255,255,255,0.1)"
+                                        backgroundColor="$backgroundStrong"
+                                        borderColor="$borderColor"
                                         value={item.amount}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -590,8 +594,8 @@ export default function EditCocktailScreen() {
                                         size="$2"
                                         width={60}
                                         placeholder="oz"
-                                        backgroundColor="rgba(255,255,255,0.05)"
-                                        borderColor="rgba(255,255,255,0.1)"
+                                        backgroundColor="$backgroundStrong"
+                                        borderColor="$borderColor"
                                         value={item.unit}
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
@@ -618,9 +622,9 @@ export default function EditCocktailScreen() {
                         onChangeText={setOrigin} 
                         placeholderTextColor="$color11" 
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
@@ -634,9 +638,9 @@ export default function EditCocktailScreen() {
                         multiline 
                         placeholderTextColor="$color11" 
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
@@ -648,13 +652,14 @@ export default function EditCocktailScreen() {
                         multiline 
                         placeholderTextColor="$color11" 
                         size="$4"
-                        backgroundColor="rgba(255,255,255,0.05)"
-                        borderColor="rgba(255,255,255,0.1)"
-                        focusStyle={{ borderColor: Colors.dark.tint }}
+                        backgroundColor="$backgroundStrong"
+                        borderColor="$borderColor"
+                        focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
 
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Native Modal for adding categories avoiding gorhom issues */}
             <Modal
@@ -675,8 +680,8 @@ export default function EditCocktailScreen() {
                                 size="$4"
                                 marginBottom="$4"
                                 placeholder={`Enter ${addingCategory?.label} name`}
-                                backgroundColor="rgba(255,255,255,0.05)"
-                                borderColor="rgba(255,255,255,0.1)"
+                                backgroundColor="$backgroundStrong"
+                                borderColor="$borderColor"
                                 value={newItemName}
                                 onChangeText={setNewItemName}
                                 color="$color"
@@ -705,21 +710,24 @@ export default function EditCocktailScreen() {
                 <View style={styles.modalOverlay}>
                     <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
                     <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
-                            <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                            </TouchableOpacity>
+                        <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+                            <View style={styles.modalHeader}>
+                                <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">Select Ingredient</Text>
+                                <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                    <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
+                                </TouchableOpacity>
+                            </View>
+                            
+                            <SearchBar
+                                placeholder="Search ingredients..."
+                                value={ingredientSearch}
+                                onChangeText={setIngredientSearch}
+                                style={{ marginBottom: 16 }}
+                            />
                         </View>
-                        
-                        <SearchBar
-                            placeholder="Search ingredients..."
-                            value={ingredientSearch}
-                            onChangeText={setIngredientSearch}
-                            style={{ marginBottom: 16 }}
-                        />
 
                         <FlatList
+                            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
                             showsVerticalScrollIndicator={false}
                             data={allIngredients.filter((i: any) => 
                                 i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
@@ -727,7 +735,7 @@ export default function EditCocktailScreen() {
                             keyExtractor={item => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={styles.ingredientOption}
+                                    style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
                                     onPress={() => {
                                         setRecipeItems([...recipeItems, {
                                             ingredient_id: item.id,
@@ -740,7 +748,7 @@ export default function EditCocktailScreen() {
                                         setShowIngredientPicker(false);
                                     }}
                                 >
-                                    <Text style={styles.ingredientText}>{item.name}</Text>
+                                    <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
                                 </TouchableOpacity>
                             )}
                         />
@@ -754,13 +762,11 @@ export default function EditCocktailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Colors.dark.background,
     },
     headerBtn: {
         width: 40,
@@ -773,14 +779,12 @@ const styles = StyleSheet.create({
         paddingTop: 16,
     },
     recipeRow: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
         padding: 12,
         borderRadius: 12,
         marginBottom: 8,
     },
     recipeName: {
         flex: 1,
-        color: '#fff',
         fontSize: 16,
         paddingRight: 8
     },
@@ -810,9 +814,9 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     fullSheetModalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
+        borderTopLeftRadius: 48,
+        borderTopRightRadius: 48,
+        borderCurve: 'continuous',
         height: '80%'
     },
     modalHeader: {
@@ -824,18 +828,12 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#fff'
     },
     ingredientOption: {
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center'
-    },
-    ingredientText: {
-        color: '#ccc',
-        fontSize: 16
     }
 });

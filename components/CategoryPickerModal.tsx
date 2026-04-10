@@ -1,32 +1,88 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useCallback, useMemo, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, LayoutAnimation } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Button, Text, useTheme, XStack, YStack } from "tamagui";
-import { SearchBar } from "@/components/SearchBar";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { DatabaseCategory } from "@/types/types";
 
 interface CategoryPickerModalProps {
-    domain: 'beer' | 'wine' | 'spirit';
+    domains: ('beer' | 'wine' | 'spirit')[];
     selectedCategoryIds: string[];
     onToggleCategory: (category: DatabaseCategory) => void;
 }
 
+const CategoryLayer = ({ parentId, allCategories, selectedCategoryIds, handleToggle, depth = 0 }: any) => {
+    const nodes = allCategories.filter((c: any) => c.parent_id === parentId);
+    if (nodes.length === 0) return null;
+
+    return (
+        <YStack gap="$4">
+            <XStack flexWrap="wrap" gap="$2">
+                {nodes.map((child: any) => {
+                    const isSelected = selectedCategoryIds.includes(child.id);
+                    return (
+                        <Button
+                            key={child.id}
+                            onPress={() => handleToggle(child)}
+                            size="$3"
+                            borderRadius="$6"
+                            backgroundColor={isSelected ? "$color8" : "transparent"}
+                            borderWidth={1}
+                            borderColor={isSelected ? "$color8" : "$borderColor"}
+                        >
+                            <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">
+                                {child.name}
+                            </Text>
+                        </Button>
+                    );
+                })}
+            </XStack>
+
+            {nodes.map((node: any) => {
+                const subCategories = allCategories.filter((c: any) => c.parent_id === node.id);
+                if (subCategories.length === 0) return null;
+
+                const isMainSelected = selectedCategoryIds.includes(node.id);
+                
+                const checkHasSelectedDescendant = (id: string): boolean => {
+                    const children = allCategories.filter((c: any) => c.parent_id === id);
+                    if (children.some((c: any) => selectedCategoryIds.includes(c.id))) return true;
+                    return children.some((c: any) => checkHasSelectedDescendant(c.id));
+                };
+                
+                const hasSelectedChild = checkHasSelectedDescendant(node.id);
+                const expanded = isMainSelected || hasSelectedChild;
+
+                if (!expanded) return null;
+
+                return (
+                    <YStack key={`sub-${node.id}`} paddingLeft="$3" borderLeftWidth={2} borderColor="$color8" marginLeft="$2" marginTop="$2">
+                        <Text fontSize={12} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
+                            {node.name} Specifics
+                        </Text>
+                        <CategoryLayer 
+                            parentId={node.id} 
+                            allCategories={allCategories} 
+                            selectedCategoryIds={selectedCategoryIds}
+                            handleToggle={handleToggle}
+                            depth={depth + 1}
+                        />
+                    </YStack>
+                );
+            })}
+        </YStack>
+    );
+};
+
 export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerModalProps>(
-    ({ domain, selectedCategoryIds, onToggleCategory }, ref) => {
+    ({ domains, selectedCategoryIds, onToggleCategory }, ref) => {
         const theme = useTheme();
         const insets = useSafeAreaInsets();
-        const [searchQuery, setSearchQuery] = useState("");
 
         const { data: dropdowns } = useDropdowns();
-        const allCategories = (dropdowns?.categories || []).filter(c => c.domain === domain);
-
-        // Group by parent
-        const parents = allCategories.filter(c => !c.parent_id);
-        const children = allCategories.filter(c => c.parent_id);
+        const allCategories = (dropdowns?.categories || []).filter(c => c.domain && domains.includes(c.domain as any));
 
         const renderBackdrop = useCallback(
             (props: any) => (
@@ -42,45 +98,30 @@ export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerMo
 
         const snapPoints = useMemo(() => ['80%'], []);
 
-        const renderCategoryList = () => {
-            return parents.map(parent => {
-                const myChildren = children.filter(c => c.parent_id === parent.id);
-                
-                // Filter by search
-                const filteredChildren = myChildren.filter(c => 
-                    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-                );
+        const handleToggle = (child: DatabaseCategory) => {
+            Haptics.selectionAsync();
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            onToggleCategory(child);
+        };
 
-                if (filteredChildren.length === 0) return null;
+        const renderCategoryList = () => {
+            const roots = allCategories.filter(c => !c.parent_id);
+
+            return roots.map(root => {
+                const mainPills = allCategories.filter(c => c.parent_id === root.id);
+                if (mainPills.length === 0) return null;
 
                 return (
-                    <YStack key={parent.id} gap="$2" marginBottom="$5">
-                        <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
-                            {parent.name}
+                    <YStack key={root.id} marginBottom="$6">
+                        <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$3">
+                            {root.name}
                         </Text>
-                        <XStack flexWrap="wrap" gap="$2">
-                            {filteredChildren.map(child => {
-                                const isSelected = selectedCategoryIds.includes(child.id);
-                                return (
-                                    <Button
-                                        key={child.id}
-                                        onPress={() => {
-                                            Haptics.selectionAsync();
-                                            onToggleCategory(child);
-                                        }}
-                                        size="$3"
-                                        borderRadius="$6"
-                                        backgroundColor={isSelected ? "$color8" : "transparent"}
-                                        borderWidth={1}
-                                        borderColor={isSelected ? "$color8" : "$borderColor"}
-                                    >
-                                        <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">
-                                            {child.name}
-                                        </Text>
-                                    </Button>
-                                );
-                            })}
-                        </XStack>
+                        <CategoryLayer 
+                            parentId={root.id} 
+                            allCategories={allCategories} 
+                            selectedCategoryIds={selectedCategoryIds}
+                            handleToggle={handleToggle}
+                        />
                     </YStack>
                 );
             });
@@ -100,24 +141,7 @@ export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerMo
                 }}
                 handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
             >
-                <View style={[styles.modalHeader, { paddingHorizontal: 24, paddingVertical: 16 }]}>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.color?.get() as string }}>
-                        Select Tags
-                    </Text>
-                    <TouchableOpacity onPress={() => (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()}>
-                        <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-                    <SearchBar
-                        placeholder="Search tags..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                </View>
-
-                <BottomSheetScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 40 }}>
+                <BottomSheetScrollView contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 40 }}>
                     {renderCategoryList()}
                 </BottomSheetScrollView>
             </BottomSheetModal>

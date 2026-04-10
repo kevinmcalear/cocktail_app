@@ -5,7 +5,7 @@ DO $$
 DECLARE
     gen_spirits_id UUID := gen_random_uuid();
     
-    -- Level 1
+    -- Level 1 Existing
     gin_id UUID := gen_random_uuid();
     vodka_id UUID := gen_random_uuid();
     rum_id UUID := gen_random_uuid();
@@ -15,22 +15,40 @@ DECLARE
     liqueur_id UUID := gen_random_uuid();
     amaro_id UUID := gen_random_uuid();
     vermouth_id UUID := gen_random_uuid();
+    
+    -- Level 1 New Additions
+    absinthe_id UUID := gen_random_uuid();
+    aquavit_id UUID := gen_random_uuid();
+    asian_spirits_id UUID := gen_random_uuid();
+    eau_de_vie_id UUID := gen_random_uuid();
+    schnapps_id UUID := gen_random_uuid();
+
+    -- Level 2 definitions that need Level 3 children
+    scotch_id UUID := gen_random_uuid();
+    tequila_id UUID := gen_random_uuid();
+    mezcal_id UUID := gen_random_uuid();
 BEGIN
     -- Ensure "Spirits" root category exists
     INSERT INTO public.categories (id, name, domain) 
-    VALUES (gen_spirits_id, 'Spirits', 'spirit');
+    VALUES (gen_spirits_id, 'Spirits', 'spirit')
+    ON CONFLICT DO NOTHING;
 
     -- Insert Top Level Categories
     INSERT INTO public.categories (id, name, parent_id, domain) VALUES
     (gin_id, 'Gin', gen_spirits_id, 'spirit'),
     (vodka_id, 'Vodka', gen_spirits_id, 'spirit'),
-    (rum_id, 'Rum', gen_spirits_id, 'spirit'),
+    (rum_id, 'Rum / Sugarcane', gen_spirits_id, 'spirit'),
     (whisky_id, 'Whisk(e)y', gen_spirits_id, 'spirit'),
     (agave_id, 'Agave Spirits', gen_spirits_id, 'spirit'),
     (brandy_id, 'Brandy', gen_spirits_id, 'spirit'),
     (liqueur_id, 'Liqueur', gen_spirits_id, 'spirit'),
-    (amaro_id, 'Amaro', gen_spirits_id, 'spirit'),
-    (vermouth_id, 'Vermouth', gen_spirits_id, 'spirit');
+    (amaro_id, 'Amaro & Bitter', gen_spirits_id, 'spirit'),
+    (vermouth_id, 'Vermouth', gen_spirits_id, 'spirit'),
+    (absinthe_id, 'Absinthe', gen_spirits_id, 'spirit'),
+    (aquavit_id, 'Aquavit', gen_spirits_id, 'spirit'),
+    (asian_spirits_id, 'Asian Spirits', gen_spirits_id, 'spirit'),
+    (eau_de_vie_id, 'Eau-de-Vie', gen_spirits_id, 'spirit'),
+    (schnapps_id, 'Schnapps', gen_spirits_id, 'spirit');
 
     -- Insert Sub-categories: Gin
     INSERT INTO public.categories (name, parent_id, domain) VALUES
@@ -38,24 +56,109 @@ BEGIN
     ('Old Tom Gin', gin_id, 'spirit'),
     ('Navy Strength Gin', gin_id, 'spirit'),
     ('Genever', gin_id, 'spirit'),
+    ('Contemporary / New Western', gin_id, 'spirit'),
     ('Sloe Gin', gin_id, 'spirit');
+
+    -- Insert Sub-categories: Vodka
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Plain Vodka', vodka_id, 'spirit'),
+    ('Flavored Vodka', vodka_id, 'spirit');
+
+    -- Insert Sub-categories: Rum
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Light / White Rum', rum_id, 'spirit'),
+    ('Gold / Pale Rum', rum_id, 'spirit'),
+    ('Dark / Black Rum', rum_id, 'spirit'),
+    ('Aged / Añejo Rum', rum_id, 'spirit'),
+    ('Overproof Rum', rum_id, 'spirit'),
+    ('Spiced Rum', rum_id, 'spirit'),
+    ('Rhum Agricole', rum_id, 'spirit'),
+    ('Cachaça', rum_id, 'spirit');
 
     -- Insert Sub-categories: Whisk(e)y
     INSERT INTO public.categories (name, parent_id, domain) VALUES
     ('Bourbon', whisky_id, 'spirit'),
     ('Rye Whiskey', whisky_id, 'spirit'),
-    ('Scotch Whisky', whisky_id, 'spirit'),
     ('Irish Whiskey', whisky_id, 'spirit'),
     ('Japanese Whisky', whisky_id, 'spirit'),
-    ('Canadian Whisky', whisky_id, 'spirit');
+    ('Canadian Whisky', whisky_id, 'spirit'),
+    ('Tennessee Whiskey', whisky_id, 'spirit');
 
-    -- Insert Sub-categories: Agave Spirits
+    -- Insert Scotch manually with an ID so we can give it Level 3 children
+    INSERT INTO public.categories (id, name, parent_id, domain) VALUES
+    (scotch_id, 'Scotch Whisky', whisky_id, 'spirit');
+
+    -- Level 3: Scotch
     INSERT INTO public.categories (name, parent_id, domain) VALUES
-    ('Tequila', agave_id, 'spirit'),
-    ('Mezcal', agave_id, 'spirit'),
+    ('Single Malt Scotch', scotch_id, 'spirit'),
+    ('Blended Scotch', scotch_id, 'spirit'),
+    ('Islay Scotch', scotch_id, 'spirit'),
+    ('Highland Scotch', scotch_id, 'spirit');
+
+    -- Insert Agave manually with IDs for Level 3
+    INSERT INTO public.categories (id, name, parent_id, domain) VALUES
+    (tequila_id, 'Tequila', agave_id, 'spirit'),
+    (mezcal_id, 'Mezcal', agave_id, 'spirit');
+
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
     ('Sotol', agave_id, 'spirit'),
     ('Raicilla', agave_id, 'spirit'),
     ('Bacanora', agave_id, 'spirit');
+
+    -- Level 3: Tequila
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Blanco', tequila_id, 'spirit'),
+    ('Reposado', tequila_id, 'spirit'),
+    ('Añejo', tequila_id, 'spirit'),
+    ('Extra Añejo', tequila_id, 'spirit');
+
+    -- Level 3: Mezcal
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Espadín', mezcal_id, 'spirit'),
+    ('Tobalá', mezcal_id, 'spirit'),
+    ('Tepeztate', mezcal_id, 'spirit'),
+    ('Ensamble', mezcal_id, 'spirit');
+
+    -- Brandy
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Cognac', brandy_id, 'spirit'),
+    ('Armagnac', brandy_id, 'spirit'),
+    ('Pisco', brandy_id, 'spirit'),
+    ('Calvados', brandy_id, 'spirit'),
+    ('Applejack', brandy_id, 'spirit'),
+    ('Grappa', brandy_id, 'spirit'),
+    ('Brandy de Jerez', brandy_id, 'spirit');
+
+    -- Liqueur
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Orange Liqueur', liqueur_id, 'spirit'),
+    ('Coffee Liqueur', liqueur_id, 'spirit'),
+    ('Herbal / Monastic', liqueur_id, 'spirit'),
+    ('Fruit Liqueur', liqueur_id, 'spirit'),
+    ('Nut/Seed Liqueur', liqueur_id, 'spirit'),
+    ('Cream Liqueur', liqueur_id, 'spirit');
+
+    -- Amaro & Bitters
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Fernet', amaro_id, 'spirit'),
+    ('Alpine Amaro', amaro_id, 'spirit'),
+    ('Rabarbaro', amaro_id, 'spirit'),
+    ('Carciofo', amaro_id, 'spirit'),
+    ('Aperitivo (Red Bitter)', amaro_id, 'spirit');
+
+    -- Vermouth
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Sweet / Rosso Vermouth', vermouth_id, 'spirit'),
+    ('Dry Vermouth', vermouth_id, 'spirit'),
+    ('Blanc / Bianco Vermouth', vermouth_id, 'spirit');
+
+    -- Asian Spirits
+    INSERT INTO public.categories (name, parent_id, domain) VALUES
+    ('Shochu', asian_spirits_id, 'spirit'),
+    ('Soju', asian_spirits_id, 'spirit'),
+    ('Baijiu', asian_spirits_id, 'spirit'),
+    ('Awamori', asian_spirits_id, 'spirit'),
+    ('Arrack', asian_spirits_id, 'spirit');
 
     -- 2. Backfill existing items by dynamically looking up the inserted categories
     
@@ -63,24 +166,21 @@ BEGIN
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, gin_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Gin%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Gin%'
     ON CONFLICT DO NOTHING;
 
     -- VODKA
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, vodka_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Vodka%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Vodka%'
     ON CONFLICT DO NOTHING;
 
     -- RUM
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, rum_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Rum%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Rum%'
     ON CONFLICT DO NOTHING;
 
     -- WHISK(E)Y
@@ -126,24 +226,21 @@ BEGIN
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, amaro_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Amaro%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Amaro%'
     ON CONFLICT DO NOTHING;
 
     -- VERMOUTH
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, vermouth_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Vermouth%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Vermouth%'
     ON CONFLICT DO NOTHING;
 
     -- LIQUEUR
     INSERT INTO public.item_categories (item_id, category_id, is_primary)
     SELECT i.id, liqueur_id, true
     FROM public.items i
-    WHERE i.item_type = 'ingredient' 
-      AND i.name ILIKE '%Liqueur%'
+    WHERE i.item_type = 'ingredient' AND i.name ILIKE '%Liqueur%'
     ON CONFLICT DO NOTHING;
 
 END $$;
@@ -161,7 +258,8 @@ BEGIN
     (gen_beer_styles_id, 'Beer Styles', 'beer'),
     (gen_beer_regions_id, 'Beer Regions', 'beer'),
     (gen_wine_styles_id, 'Wine Styles', 'wine'),
-    (gen_wine_regions_id, 'Wine Regions', 'wine');
+    (gen_wine_regions_id, 'Wine Regions', 'wine')
+    ON CONFLICT DO NOTHING;
 
     -- BEER STYLES
     INSERT INTO public.categories (name, parent_id, domain) VALUES

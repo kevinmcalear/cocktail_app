@@ -10,7 +10,6 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { useSettingsStore } from "@/store/useSettingsStore";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -19,7 +18,6 @@ export default function CocktailDetailsScreen() {
 
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
-    const { isTestingEnabled } = useSettingsStore();
 
     const { data: cocktail, isLoading, error } = useCocktail(id as string);
     const [notesExpanded, setNotesExpanded] = useState(false);
@@ -137,7 +135,6 @@ export default function CocktailDetailsScreen() {
                                             source={imageUrl} 
                                             style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)' }} 
                                             contentFit="cover"
-                                            blurRadius={isTestingEnabled ? 10 : 0}
                                         />
                                     ) : (
                                         <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' }}>
@@ -152,11 +149,11 @@ export default function CocktailDetailsScreen() {
                                         </Text>
                                     ) : null}
                                     <TouchableOpacity 
-                                        onPress={() => !isTestingEnabled && ingredientsData?.name && router.push(`/ingredient/${ingredientsData.id}`)}
-                                        activeOpacity={isTestingEnabled ? 1 : 0.7}
+                                        onPress={() => ingredientsData?.name && router.push(`/ingredient/${ingredientsData.id}`)}
+                                        activeOpacity={0.7}
                                     >
                                         <Text color="$color" fontSize={18} fontWeight="400">
-                                            {isTestingEnabled ? "???" : (ingredientsData?.name || 'Unknown Ingredient')}
+                                            {ingredientsData?.name || 'Unknown Ingredient'}
                                         </Text>
                                     </TouchableOpacity>
                                 </YStack>

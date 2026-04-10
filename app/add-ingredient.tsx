@@ -1,4 +1,4 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Stack, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -7,8 +7,9 @@ import {
     FlatList,
     ScrollView,
     StyleSheet,
-    TextInput,
-    TouchableOpacity, View
+    TouchableOpacity,
+    Platform,
+    KeyboardAvoidingView
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,7 +18,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { Text, YStack, useTheme } from "tamagui";
+import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
+import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 
 interface RecipeItem {
     id?: string;
@@ -30,21 +32,28 @@ interface RecipeItem {
 export default function AddIngredientScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
+    const queryClient = useQueryClient();
 
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [brandMaker, setBrandMaker] = useState("");
+    const [abv, setAbv] = useState("");
+
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const categoryPickerRef = useRef<BottomSheetModal>(null);
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
-    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
-
-    const theme = useTheme();
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => ['80%'], []);
+
+    const { data: dropdowns } = useDropdowns();
+    const allIngredients = dropdowns?.ingredients || [];
 
     const handlePresentModalPress = useCallback(() => {
         bottomSheetModalRef.current?.present();
@@ -66,10 +75,6 @@ export default function AddIngredientScreen() {
         []
     );
 
-    const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
-    const allIngredients = dropdowns?.ingredients || [];
-
     const handleSave = async () => {
         if (!name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
@@ -84,7 +89,9 @@ export default function AddIngredientScreen() {
                     name: name.trim(),
                     description: description.trim() || null,
                     item_type: 'ingredient',
-                    is_batch: recipeItems.length > 0 
+                    is_batch: recipeItems.length > 0,
+                    brand_maker: brandMaker.trim() || null,
+                    abv: abv ? parseFloat(abv) : null
                 })
                 .select()
                 .single();
@@ -92,6 +99,17 @@ export default function AddIngredientScreen() {
             if (ingredientError || !ingredient) throw ingredientError;
 
             const ingredientId = ingredient.id;
+
+            // Categories
+            for (const catId of selectedCategories) {
+                await supabase
+                    .from('item_categories')
+                    .upsert({
+                        item_id: ingredientId,
+                        category_id: catId,
+                        is_primary: true
+                    }, { onConflict: 'item_id,category_id' });
+            }
 
             if (recipeItems.length > 0) {
                 const recipeInserts = recipeItems.map(item => ({
@@ -109,9 +127,6 @@ export default function AddIngredientScreen() {
             }
 
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-            // Since we use the 'dropdowns' query for lists, we might need to invalidate that too,
-            // or just rely on 'ingredients' if that's what other screens use. 
-            // `useDropdowns` uses `['dropdowns']` key. `useIngredients` uses `['ingredients']`. Let's invalidate both to be safe.
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
 
             Alert.alert("Success", "Ingredient created!", [
@@ -127,108 +142,181 @@ export default function AddIngredientScreen() {
     };
 
     return (
+        <BottomSheetModalProvider>
         <YStack style={styles.container} backgroundColor="$background">
-            <Stack.Screen options={{ headerShown: false }} />
+            <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
             
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <XStack
+                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                paddingHorizontal="$4"
+                paddingBottom="$4"
+                alignItems="center"
+                justifyContent="space-between"
+                zIndex={10}
+            >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.color?.get() as string }}>New Ingredient</Text>
-                <TouchableOpacity 
+                <Text fontSize="$5" fontWeight="bold">New Ingredient</Text>
+                <Button 
                     onPress={handleSave} 
-                    disabled={saving} 
-                    style={[styles.headerBtn, { width: 'auto', paddingHorizontal: 10 }]}
+                    disabled={saving}
+                    size="$3"
+                    chromeless
                 >
-                    {saving ? (
-                        <ActivityIndicator size="small" color={theme.color8?.get() as string} />
-                    ) : (
-                        <Text style={{ color: theme.color8?.get() as string, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
-                    )}
-                </TouchableOpacity>
-            </View>
+                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
+                </Button>
+            </XStack>
 
-            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-                
-                {/* Main Info */}
-                <View style={styles.section}>
-                    <Text style={styles.label}>Name *</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        placeholderTextColor="#666"
-                        placeholder="e.g. Rich Simple Syrup"
-                        autoCapitalize="words"
-                    />
-                </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+                    
+                    <YStack gap="$2" marginBottom="$4">
+                        <Label color="$color11">Name *</Label>
+                        <Input
+                            value={name}
+                            onChangeText={setName}
+                            placeholderTextColor="$color11"
+                            placeholder="e.g. Rich Simple Syrup"
+                            size="$4"
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
+                        />
+                    </YStack>
 
-                <View style={styles.section}>
-                    <Text style={styles.label}>Description</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        value={description}
-                        onChangeText={setDescription}
-                        multiline
-                        numberOfLines={3}
-                        placeholderTextColor="#666"
-                        placeholder="Optional description..."
-                    />
-                </View>
+                    <YStack gap="$2" marginBottom="$4">
+                        <Label color="$color11">Brand / Maker</Label>
+                        <Input
+                            value={brandMaker}
+                            onChangeText={setBrandMaker}
+                            placeholderTextColor="$color11"
+                            placeholder="e.g. Campari, Buffalo Trace"
+                            size="$4"
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
+                        />
+                    </YStack>
 
-                {/* Ingredients / Recipe */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.label}>Recipe (for Complex Ingredients)</Text>
-                        <TouchableOpacity onPress={handlePresentModalPress}>
-                            <Text style={[styles.addText, { color: theme.color8?.get() as string }]}>+ Add</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <YStack gap="$2" marginBottom="$4">
+                        <Label color="$color11">ABV (%)</Label>
+                        <Input
+                            value={abv}
+                            onChangeText={setAbv}
+                            keyboardType="numeric"
+                            placeholderTextColor="$color11"
+                            placeholder="e.g. 40"
+                            size="$4"
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
+                        />
+                    </YStack>
 
-                    {recipeItems.length === 0 && (
-                        <Text style={styles.helperText}>
-                            Add ingredients here if this is a pre-batched item (e.g. syrups, infusions). 
-                            Leave empty for raw ingredients.
-                        </Text>
-                    )}
+                    <YStack gap="$2" marginBottom="$4">
+                        <XStack justifyContent="space-between" alignItems="center">
+                            <Label color="$color11">Spirit Tags</Label>
+                            <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
+                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
+                            </TouchableOpacity>
+                        </XStack>
+                        <XStack flexWrap="wrap" gap="$2">
+                            {selectedCategories.length === 0 ? (
+                                <Text color="$color11" fontStyle="italic">No tags selected</Text>
+                            ) : (
+                                selectedCategories.map(catId => {
+                                    const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
+                                    if (!cat) return null;
+                                    return (
+                                        <XStack key={catId} backgroundColor="$backgroundStrong" paddingHorizontal={12} paddingVertical={6} borderRadius={16}>
+                                            <Text color="$color">{cat.name}</Text>
+                                        </XStack>
+                                    );
+                                })
+                            )}
+                        </XStack>
+                    </YStack>
 
-                    {recipeItems.map((item, index) => (
-                        <View key={index} style={styles.recipeRow}>
-                            <Text style={styles.recipeName}>{item.name}</Text>
-                            <View style={styles.recipeInputs}>
-                                <TextInput
-                                    style={styles.smallInput}
-                                    placeholder="amt"
-                                    placeholderTextColor="#666"
-                                    keyboardType="numeric"
-                                    value={item.amount}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].amount = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <TextInput
-                                    style={styles.smallInput}
-                                    placeholder="oz"
-                                    placeholderTextColor="#666"
-                                    value={item.unit}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].unit = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
-                                    <IconSymbol name="trash" size={20} color="#ff4444" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
-                </View>
+                    <YStack gap="$2" marginBottom="$4">
+                        <Label color="$color11">Description / Notes</Label>
+                        <TextArea
+                            value={description}
+                            onChangeText={setDescription}
+                            numberOfLines={4}
+                            placeholderTextColor="$color11"
+                            placeholder="Optional description..."
+                            size="$4"
+                            backgroundColor="$backgroundStrong"
+                            borderColor="$borderColor"
+                            focusStyle={{ borderColor: '$color8' }}
+                        />
+                    </YStack>
 
-            </ScrollView>
+                    {/* Ingredients / Recipe */}
+                    <YStack gap="$2" marginBottom="$4">
+                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
+                            <Label color="$color11">Recipe (for Complex Ingredients)</Label>
+                            <TouchableOpacity onPress={handlePresentModalPress}>
+                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
+                            </TouchableOpacity>
+                        </XStack>
+
+                        {recipeItems.length === 0 && (
+                            <Text color="$color11" fontSize={14} fontStyle="italic" marginBottom="$2">
+                                Add ingredients here if this is a pre-batched item (e.g. syrups, infusions). 
+                                Leave empty for raw ingredients.
+                            </Text>
+                        )}
+
+                        {recipeItems.map((item, index) => (
+                            <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
+                                <Text flex={1} color="$color" fontSize={16}>{item.name}</Text>
+                                <XStack gap="$2" alignItems="center">
+                                    <Input
+                                        width={60}
+                                        size="$3"
+                                        placeholder="amt"
+                                        placeholderTextColor="$color11"
+                                        keyboardType="numeric"
+                                        value={item.amount}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].amount = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                        backgroundColor="$background"
+                                        borderColor="transparent"
+                                        textAlign="center"
+                                    />
+                                    <Input
+                                        width={60}
+                                        size="$3"
+                                        placeholder="oz"
+                                        placeholderTextColor="$color11"
+                                        value={item.unit}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].unit = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                        backgroundColor="$background"
+                                        borderColor="transparent"
+                                        textAlign="center"
+                                    />
+                                    <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
+                                        <IconSymbol name="trash" size={20} color={theme.red10?.get() as string || "#ff4444"} />
+                                    </TouchableOpacity>
+                                </XStack>
+                            </XStack>
+                        ))}
+                    </YStack>
+
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Ingredient Picker Bottom Sheet */}
             <BottomSheetModal
@@ -239,13 +327,13 @@ export default function AddIngredientScreen() {
                 backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
                 handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
             >
-                <BottomSheetView style={styles.modalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={[styles.modalTitle, { color: theme.color?.get() as string }]}>Select Ingredient</Text>
+                <BottomSheetView style={{ flex: 1, padding: 24 }}>
+                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                        <Text fontSize={20} fontWeight="bold" color="$color">Select Ingredient</Text>
                         <TouchableOpacity onPress={handleDismissModalPress}>
                             <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
                         </TouchableOpacity>
-                    </View>
+                    </XStack>
                     <SearchBar
                         placeholder="Search ingredients..."
                         value={ingredientSearch}
@@ -258,21 +346,35 @@ export default function AddIngredientScreen() {
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
                             <TouchableOpacity
-                                style={styles.ingredientOption}
+                                style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                                 onPress={() => {
                                     setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "" }]);
                                     handleDismissModalPress();
                                     setIngredientSearch("");
                                 }}
                             >
-                                <Text style={styles.ingredientText}>{item.name}</Text>
+                                <Text color="$color11" fontSize={16}>{item.name}</Text>
                             </TouchableOpacity>
                         )}
                     />
                 </BottomSheetView>
             </BottomSheetModal>
 
+            <CategoryPickerModal 
+                ref={categoryPickerRef}
+                domains={['spirit']}
+                selectedCategoryIds={selectedCategories}
+                onToggleCategory={(cat) => {
+                    if (selectedCategories.includes(cat.id)) {
+                        setSelectedCategories(prev => prev.filter(id => id !== cat.id));
+                    } else {
+                        setSelectedCategories(prev => [...prev, cat.id]);
+                    }
+                }}
+            />
+
         </YStack>
+        </BottomSheetModalProvider>
     );
 }
 
@@ -280,122 +382,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        zIndex: 10,
+    content: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
     },
     headerBtn: {
         width: 40,
         height: 40,
         justifyContent: 'center',
-        alignItems: 'center',
-    },
-    content: {
-        padding: 20,
-        gap: 24,
-    },
-    section: {
-        gap: 8,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#888',
-        marginLeft: 4,
-    },
-    input: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 12,
-        padding: 16,
-        color: '#fff',
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    textArea: {
-        minHeight: 80,
-        textAlignVertical: 'top',
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8
-    },
-    addText: {
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-    helperText: {
-        color: '#666',
-        fontSize: 14,
-        fontStyle: 'italic',
-        marginBottom: 8,
-    },
-    recipeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        padding: 10,
-        borderRadius: 10,
-        marginBottom: 8
-    },
-    recipeName: {
-        flex: 1,
-        color: '#fff',
-        fontSize: 16
-    },
-    recipeInputs: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center'
-    },
-    smallInput: {
-        width: 50,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 8,
-        padding: 8,
-        color: '#fff',
-        textAlign: 'center',
-        fontSize: 14
-    },
-    modalContent: {
-        flex: 1,
-        padding: 24,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#fff'
-    },
-    searchInput: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        padding: 12,
-        borderRadius: 12,
-        color: '#fff',
-        marginBottom: 10
-    },
-    ingredientOption: {
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    ingredientText: {
-        color: '#ccc',
-        fontSize: 16
+        alignItems: 'flex-start',
     }
 });

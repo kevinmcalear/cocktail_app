@@ -319,7 +319,7 @@ export default function EditWineScreen() {
                     <XStack justifyContent="space-between" alignItems="center">
                         <Label color="$color11">Tags (Style, Region)</Label>
                         <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
-                            <Text color={theme.color8?.get() as string} fontWeight="bold">+ Edit</Text>
+                            <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
                         </TouchableOpacity>
                     </XStack>
                     <XStack flexWrap="wrap" gap="$2">
@@ -388,7 +388,7 @@ export default function EditWineScreen() {
             
             <CategoryPickerModal 
                 ref={categoryPickerRef}
-                domain="wine"
+                domains={['wine']}
                 selectedCategoryIds={selectedCategories}
                 onToggleCategory={(cat) => {
                     if (selectedCategories.includes(cat.id)) {

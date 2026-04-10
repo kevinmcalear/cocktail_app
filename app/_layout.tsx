@@ -10,7 +10,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import { TamaguiProvider } from 'tamagui';
+import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -130,19 +130,21 @@ export default function RootLayout() {
   if (!fontsLoaded) { return null; }
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === "dark" ? "dark" : "light"}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <AuthProvider>
-              <OfflineBanner />
-              <RootLayoutNav />
-            </AuthProvider>
-          </BottomSheetModalProvider>
-        </GestureHandlerRootView>
-      </PersistQueryClientProvider>
+      <Theme name={colorScheme === "dark" ? "dark" : "light"}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: asyncStoragePersister }}
+        >
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetModalProvider>
+              <AuthProvider>
+                <OfflineBanner />
+                <RootLayoutNav />
+              </AuthProvider>
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
+        </PersistQueryClientProvider>
+      </Theme>
     </TamaguiProvider>
   );
 }

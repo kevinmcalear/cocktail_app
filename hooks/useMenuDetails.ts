@@ -32,7 +32,7 @@ export function useMenuDetails(menuId: string | null) {
                     template_section_id,
                     sort_order,
                     item:items!item_id (
-                        id, name, description, item_type, style, brand_maker, location, price,
+                        id, name, description, item_type, brand_maker, origin, price,
                         item_images ( images ( url ) ),
                         recipes!recipe_item_id (
                             amount, unit,
@@ -83,7 +83,7 @@ export function useMenuDetails(menuId: string | null) {
                                 id: `beer-${i.id}`,
                                 name: i.name,
                                 description: i.description || "Craft Beer",
-                                ingredients: i.style || i.brand_maker || "Beer",
+                                ingredients: i.origin || i.brand_maker || "Beer",
                                 image: imageUrl,
                             };
                         } else if (i.item_type === 'wine') {
@@ -91,7 +91,7 @@ export function useMenuDetails(menuId: string | null) {
                                 id: `wine-${i.id}`,
                                 name: i.name,
                                 description: i.description || "Wine",
-                                ingredients: i.location || "Wine",
+                                ingredients: i.origin || "Wine",
                                 image: imageUrl,
                             };
                         }

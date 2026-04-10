@@ -251,7 +251,7 @@ export default function AddBeerScreen() {
                         <XStack justifyContent="space-between" alignItems="center">
                             <Label color="$color11">Tags (Style, Region)</Label>
                             <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
-                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Edit</Text>
+                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
                             </TouchableOpacity>
                         </XStack>
                         <XStack flexWrap="wrap" gap="$2">
@@ -321,7 +321,7 @@ export default function AddBeerScreen() {
             
             <CategoryPickerModal 
                 ref={categoryPickerRef}
-                domain="beer"
+                domains={['beer']}
                 selectedCategoryIds={selectedCategories}
                 onToggleCategory={(cat) => {
                     if (selectedCategories.includes(cat.id)) {
