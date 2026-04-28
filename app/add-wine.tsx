@@ -1,7 +1,7 @@
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
@@ -24,6 +24,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 
 export default function AddWineScreen() {
     const router = useRouter();
+    const { barId } = useLocalSearchParams<{ barId?: string }>();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
 
@@ -119,6 +120,7 @@ export default function AddWineScreen() {
                 brand_maker: vintner || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
+                bar_id: barId || null,
             };
 
             const { data: newWine, error: insertError } = await supabase
@@ -164,6 +166,9 @@ export default function AddWineScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['wines'] });
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            if (barId) {
+                queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            }
 
             Alert.alert("Success", "Wine created!", [
                 { text: "OK", onPress: () => router.back() }

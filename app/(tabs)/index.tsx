@@ -3,6 +3,7 @@ import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
 import { useIngredients } from "@/hooks/useIngredients";
 import { useWines } from "@/hooks/useWines";
+import { BarPicker } from "@/components/BarPicker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -77,6 +78,7 @@ export default function SearchScreen() {
                 items={items}
                 initialSearchQuery={q}
                 hideHeader={true}
+                headerButtons={<BarPicker />}
             />
         </>
     );

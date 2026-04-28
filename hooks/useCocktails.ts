@@ -1,25 +1,36 @@
 import { supabase } from '@/lib/supabase';
 import { DatabaseItem } from '@/types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAppStore } from '@/store/useAppStore';
 
-export function useCocktails() {
+export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boolean }) {
+    const selectedBarId = useAppStore(state => state.selectedBarId);
+
     return useQuery({
-        queryKey: ['cocktails'],
+        queryKey: ['cocktails', selectedBarId, options],
         queryFn: async () => {
-            const { data, error } = await supabase
-                .from('items')
+            let query = supabase
+                .from('app_item_presentation')
                 .select(`
                     id,
                     name,
                     description,
                     glassware_id,
                     family_id,
-                    recipes!recipe_item_id (
+                    recipes:app_recipe_presentation!recipe_item_id (
+                        display_ingredient_id,
                         ingredient_item_id,
+                        parent_ingredient_id,
                         amount,
                         unit,
                         preparation_notes,
-                        ingredient:items!ingredient_item_id (
+                        specific_ingredient:items!ingredient_item_id (
+                            name,
+                            item_categories (
+                                category_id
+                            )
+                        ),
+                        generic_ingredient:items!parent_ingredient_id (
                             name,
                             item_categories (
                                 category_id
@@ -38,11 +49,34 @@ export function useCocktails() {
                         category_id
                     )
                 `)
-                .eq('item_type', 'cocktail')
-                .order('name', { ascending: true });
+                .eq('item_type', 'cocktail');
+
+            if (options?.allContexts) {
+                // Do not filter by bar_id, fetch everything user has access to
+            } else if (options?.globalOnly) {
+                query = query.is('bar_id', null);
+            } else if (selectedBarId) {
+                query = query.eq('bar_id', selectedBarId);
+            } else {
+                query = query.is('bar_id', null);
+            }
+
+            const { data, error } = await query.order('name', { ascending: true });
 
             if (error) throw error;
-            return data as unknown as DatabaseItem[];
+            
+            // Map the secure recipes payload to match the expected UI shapes
+            const processedData = data?.map(cocktail => ({
+                ...cocktail,
+                recipes: cocktail.recipes?.map((recipe: any) => ({
+                    ...recipe,
+                    ingredient: recipe.display_ingredient_id === recipe.parent_ingredient_id 
+                        ? recipe.generic_ingredient 
+                        : recipe.specific_ingredient
+                }))
+            }));
+
+            return processedData as unknown as DatabaseItem[];
         }
     });
 }
@@ -56,7 +90,7 @@ export function useCocktail(id?: string | string[]) {
             const cocktailId = Array.isArray(id) ? id[0] : id;
 
             const { data, error } = await supabase
-                .from('items')
+                .from('app_item_presentation')
                 .select(`
                     *,
                     item_images (
@@ -65,12 +99,23 @@ export function useCocktail(id?: string | string[]) {
                             id
                         )
                     ),
-                    recipes!recipe_item_id (
+                    recipes:app_recipe_presentation!recipe_item_id (
                         id,
                         amount,
                         unit,
                         preparation_notes,
-                        ingredient:items!ingredient_item_id (
+                        display_ingredient_id,
+                        ingredient_item_id,
+                        parent_ingredient_id,
+                        specific_ingredient:items!ingredient_item_id (
+                            name,
+                            item_images (
+                                images (
+                                    url
+                                )
+                            )
+                        ),
+                        generic_ingredient:items!parent_ingredient_id (
                             name,
                             item_images (
                                 images (
@@ -79,20 +124,39 @@ export function useCocktail(id?: string | string[]) {
                             )
                         )
                     ),
-                    item_methods!item_id (
+                    item_methods!item_methods_item_id_fkey (
                         method_item_id,
-                        method:items!method_item_id (
+                        method:items!item_methods_method_item_id_fkey (
                             name
                         )
-                    ),
-                    glassware:items!glassware_id ( name ),
-                    family:items!family_id ( name ),
-                    ice:items!ice_id ( name )
+                    )
                 `)
                 .eq('id', cocktailId)
                 .single();
 
             if (error) throw error;
+            
+            if (data) {
+                // Map the secure recipes payload to match the expected UI shapes
+                data.recipes = data.recipes?.map((recipe: any) => ({
+                    ...recipe,
+                    ingredient: recipe.display_ingredient_id === recipe.parent_ingredient_id 
+                        ? recipe.generic_ingredient 
+                        : recipe.specific_ingredient
+                }));
+
+                // Fetch glassware, family, and ice manually to bypass PostgREST ambiguous relation errors on views
+                const idsToFetch = [data.glassware_id, data.family_id, data.ice_id].filter(Boolean);
+                if (idsToFetch.length > 0) {
+                    const { data: relatedItems } = await supabase.from('items').select('id, name').in('id', idsToFetch);
+                    if (relatedItems) {
+                        if (data.glassware_id) data.glassware = relatedItems.find(i => i.id === data.glassware_id);
+                        if (data.family_id) data.family = relatedItems.find(i => i.id === data.family_id);
+                        if (data.ice_id) data.ice = relatedItems.find(i => i.id === data.ice_id);
+                    }
+                }
+            }
+
             return data as DatabaseItem;
         },
         enabled: !!id,

@@ -4,7 +4,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, Bottom
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -21,10 +21,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useBars } from "@/hooks/useBars";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
+import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -47,6 +48,7 @@ export default function AddCocktailScreen() {
 
     const queryClient = useQueryClient();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: userBars } = useBars();
 
     const methods = dropdowns?.methods || [];
     const glassware = dropdowns?.glassware || [];
@@ -66,11 +68,21 @@ export default function AddCocktailScreen() {
     const [notes, setNotes] = useState("");
     const [spec, setSpec] = useState("");
 
+    const { barId: initialBarId } = useLocalSearchParams<{ barId?: string }>();
+    
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
+
+    // Bar Assignment and Overrides
+    const [barId, setBarId] = useState<string | null>(initialBarId || null);
+    const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
+    const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
+    const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
+    const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
+    const [overridePrep, setOverridePrep] = useState<string | null>(null);
 
 
     // Recipe State
@@ -180,7 +192,13 @@ export default function AddCocktailScreen() {
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
-                    item_type: 'cocktail'
+                    item_type: 'cocktail',
+                    bar_id: barId || null,
+                    override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
+                    override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
+                    override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
+                    override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
+                    override_prep_level: overridePrep ? parseInt(overridePrep) : null,
                 })
                 .select()
                 .single();
@@ -212,6 +230,13 @@ export default function AddCocktailScreen() {
             }
 
 
+
+            queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            // If assigned to a bar, also invalidate that bar's cache
+            if (barId) {
+                queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            }
 
             Alert.alert("Success", "Cocktail created!", [
                 { text: "OK", onPress: () => router.back() }
@@ -496,6 +521,78 @@ export default function AddCocktailScreen() {
                         focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
+
+                <Accordion overflow="hidden" width="100%" type="multiple" backgroundColor="transparent" marginBottom="$6">
+                    <Accordion.Item value="a1" borderRadius="$4" borderColor="$borderColor" borderWidth={1} backgroundColor="$backgroundStrong">
+                        <Accordion.Trigger flexDirection="row" justifyContent="space-between" padding="$3" backgroundColor="$backgroundStrong">
+                            {({ open }) => (
+                                <>
+                                    <XStack gap="$2" alignItems="center">
+                                        <IconSymbol name="lock.shield.fill" size={18} color={theme.color11?.get() as string} />
+                                        <Text color="$color" fontWeight="bold">Bar Assignment & Access</Text>
+                                    </XStack>
+                                    <IconSymbol name={open ? "chevron.up" : "chevron.down"} size={16} color={theme.color11?.get() as string} />
+                                </>
+                            )}
+                        </Accordion.Trigger>
+                        <Accordion.HeightAnimator animation="medium">
+                            <Accordion.Content animation="medium" exitStyle={{ opacity: 0 }} padding="$3" borderTopWidth={1} borderColor="$borderColor">
+                                <YStack gap="$3">
+                                    <YStack gap="$1">
+                                        <Label color="$color11">Assign to Bar (Global if empty)</Label>
+                                        <Select value={barId || 'global'} onValueChange={(val) => setBarId(val === 'global' ? null : val)} disablePreventBodyScroll>
+                                            <Select.Trigger backgroundColor="$background" borderColor="$borderColor">
+                                                <Select.Value placeholder="Select Bar" color="$color" />
+                                            </Select.Trigger>
+                                            <Adapt when="sm" reaches="sm">
+                                                <Sheet modal dismissOnSnapToBottom><Sheet.Frame><Sheet.ScrollView><Adapt.Contents /></Sheet.ScrollView></Sheet.Frame><Sheet.Overlay /></Sheet>
+                                            </Adapt>
+                                            <Select.Content zIndex={200000}>
+                                                <Select.Viewport minWidth={200}>
+                                                    <Select.Group>
+                                                        <Select.Item index={0} value="global"><Select.ItemText>Global / Public</Select.ItemText></Select.Item>
+                                                        {userBars?.map((b: any, i: number) => (
+                                                            <Select.Item key={b.bar_id} index={i+1} value={b.bar_id}><Select.ItemText>{b.bars?.name}</Select.ItemText></Select.Item>
+                                                        ))}
+                                                    </Select.Group>
+                                                </Select.Viewport>
+                                            </Select.Content>
+                                        </Select>
+                                    </YStack>
+                                    
+                                    <Text fontSize={12} color="$color11" marginTop="$2" marginBottom="$1">Leave empty to use the Bar's default rules.</Text>
+                                    
+                                    {['Visibility', 'Generic Ingredient', 'Specific Brand', 'Measurement', 'Prep'].map((field, idx) => {
+                                        const val = [overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep][idx];
+                                        const setVal = [setOverrideVisibility, setOverrideGeneric, setOverrideSpecific, setOverrideMeasurement, setOverridePrep][idx];
+                                        return (
+                                            <XStack key={field} justifyContent="space-between" alignItems="center">
+                                                <Label color="$color11" flex={1}>{field} Level</Label>
+                                                <Select value={val || 'default'} onValueChange={(v) => setVal(v === 'default' ? null : v)} disablePreventBodyScroll>
+                                                    <Select.Trigger width={160} backgroundColor="$background" borderColor="$borderColor" size="$3">
+                                                        <Select.Value placeholder="Bar Default" color="$color" />
+                                                    </Select.Trigger>
+                                                    <Adapt when="sm" reaches="sm"><Sheet modal dismissOnSnapToBottom><Sheet.Frame><Sheet.ScrollView><Adapt.Contents /></Sheet.ScrollView></Sheet.Frame><Sheet.Overlay /></Sheet></Adapt>
+                                                    <Select.Content zIndex={200000}>
+                                                        <Select.Viewport minWidth={200}>
+                                                            <Select.Group>
+                                                                <Select.Item index={0} value="default"><Select.ItemText>Bar Default</Select.ItemText></Select.Item>
+                                                                <Select.Item index={1} value="10"><Select.ItemText>Guest (10)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={2} value="20"><Select.ItemText>Trainee (20)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={3} value="30"><Select.ItemText>Bartender (30)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={4} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
+                                                            </Select.Group>
+                                                        </Select.Viewport>
+                                                    </Select.Content>
+                                                </Select>
+                                            </XStack>
+                                        );
+                                    })}
+                                </YStack>
+                            </Accordion.Content>
+                        </Accordion.HeightAnimator>
+                    </Accordion.Item>
+                </Accordion>
 
             </ScrollView>
             </KeyboardAvoidingView>

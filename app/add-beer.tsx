@@ -1,7 +1,7 @@
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
@@ -24,6 +24,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 
 export default function AddBeerScreen() {
     const router = useRouter();
+    const { barId } = useLocalSearchParams<{ barId?: string }>();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
 
@@ -119,6 +120,7 @@ export default function AddBeerScreen() {
                 brand_maker: brewery || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
+                bar_id: barId || null,
             };
 
             const { data: newBeer, error: insertError } = await supabase
@@ -164,6 +166,9 @@ export default function AddBeerScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['beers'] });
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            if (barId) {
+                queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            }
 
             Alert.alert("Success", "Beer created!", [
                 { text: "OK", onPress: () => router.back() }

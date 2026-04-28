@@ -1,5 +1,5 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -31,6 +31,7 @@ interface RecipeItem {
 
 export default function AddIngredientScreen() {
     const router = useRouter();
+    const { barId } = useLocalSearchParams<{ barId?: string }>();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
 
@@ -91,7 +92,8 @@ export default function AddIngredientScreen() {
                     item_type: 'ingredient',
                     is_batch: recipeItems.length > 0,
                     brand_maker: brandMaker.trim() || null,
-                    abv: abv ? parseFloat(abv) : null
+                    abv: abv ? parseFloat(abv) : null,
+                    bar_id: barId || null
                 })
                 .select()
                 .single();
@@ -128,6 +130,9 @@ export default function AddIngredientScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
             queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            if (barId) {
+                queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            }
 
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => router.back() }
