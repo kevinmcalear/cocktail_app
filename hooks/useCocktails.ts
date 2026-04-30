@@ -25,12 +25,14 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
                         unit,
                         preparation_notes,
                         specific_ingredient:items!ingredient_item_id (
+                            id,
                             name,
                             item_categories (
                                 category_id
                             )
                         ),
                         generic_ingredient:items!parent_ingredient_id (
+                            id,
                             name,
                             item_categories (
                                 category_id
@@ -68,12 +70,18 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
             // Map the secure recipes payload to match the expected UI shapes
             const processedData = data?.map(cocktail => ({
                 ...cocktail,
-                recipes: cocktail.recipes?.map((recipe: any) => ({
-                    ...recipe,
-                    ingredient: recipe.display_ingredient_id === recipe.parent_ingredient_id 
-                        ? recipe.generic_ingredient 
-                        : recipe.specific_ingredient
-                }))
+                recipes: cocktail.recipes?.map((recipe: any) => {
+                    const ingredient = !recipe.display_ingredient_id 
+                        ? null 
+                        : recipe.display_ingredient_id === recipe.parent_ingredient_id 
+                            ? recipe.generic_ingredient 
+                            : recipe.specific_ingredient;
+                    
+                    return {
+                        ...recipe,
+                        ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
+                    };
+                })
             }));
 
             return processedData as unknown as DatabaseItem[];
@@ -108,6 +116,7 @@ export function useCocktail(id?: string | string[]) {
                         ingredient_item_id,
                         parent_ingredient_id,
                         specific_ingredient:items!ingredient_item_id (
+                            id,
                             name,
                             item_images (
                                 images (
@@ -116,6 +125,7 @@ export function useCocktail(id?: string | string[]) {
                             )
                         ),
                         generic_ingredient:items!parent_ingredient_id (
+                            id,
                             name,
                             item_images (
                                 images (
@@ -138,12 +148,18 @@ export function useCocktail(id?: string | string[]) {
             
             if (data) {
                 // Map the secure recipes payload to match the expected UI shapes
-                data.recipes = data.recipes?.map((recipe: any) => ({
-                    ...recipe,
-                    ingredient: recipe.display_ingredient_id === recipe.parent_ingredient_id 
-                        ? recipe.generic_ingredient 
-                        : recipe.specific_ingredient
-                }));
+                data.recipes = data.recipes?.map((recipe: any) => {
+                    const ingredient = !recipe.display_ingredient_id 
+                        ? null 
+                        : recipe.display_ingredient_id === recipe.parent_ingredient_id 
+                            ? recipe.generic_ingredient 
+                            : recipe.specific_ingredient;
+
+                    return {
+                        ...recipe,
+                        ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
+                    };
+                });
 
                 // Fetch glassware, family, and ice manually to bypass PostgREST ambiguous relation errors on views
                 const idsToFetch = [data.glassware_id, data.family_id, data.ice_id].filter(Boolean);

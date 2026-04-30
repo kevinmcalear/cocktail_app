@@ -1,4 +1,4 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -9,7 +9,8 @@ import {
     StyleSheet,
     TouchableOpacity,
     Platform,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
+    Modal
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,9 +33,8 @@ interface RecipeItem {
     id?: string; // ID if existing in recipes table
     ingredient_id: string;
     name: string;
-    ml: string;
-    dash: string;
     amount: string;
+    unit: string;
 }
 
 export default function EditIngredientScreen() {
@@ -116,11 +116,10 @@ export default function EditIngredientScreen() {
         if (data?.recipe) {
             const items: RecipeItem[] = data.recipe.map((r: any) => ({
                 id: r.id,
-                ingredient_id: r.ingredient_id || r.id,
+                ingredient_id: r.ingredient_item_id || r.display_ingredient_id || r.ingredient?.id || r.id,
                 name: r.ingredient?.name || "Unknown",
-                ml: r.ingredient_ml?.toString() || "",
-                dash: r.ingredient_dash?.toString() || "",
-                amount: r.ingredient_amount?.toString() || "",
+                amount: r.amount?.toString() || "",
+                unit: r.unit || "",
             }));
             setRecipeItems(items);
         }
@@ -207,30 +206,24 @@ export default function EditIngredientScreen() {
                 }
             }
 
-            const { data: existingLinks } = await supabase
+            // Delete all existing image links to refresh sort order and prevent duplicate errors
+            const { error: deleteImagesError } = await supabase
                 .from('item_images')
-                .select('image_id')
+                .delete()
                 .eq('item_id', id);
+                
+            if (deleteImagesError) throw deleteImagesError;
 
-            const existingIds = existingLinks?.map(l => l.image_id) || [];
-            const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
-
-            if (idsToDelete.length > 0) {
-                 await supabase
+            if (finalImageIds.length > 0) {
+                const imageInserts = finalImageIds.map((imgId, index) => ({
+                    item_id: id,
+                    image_id: imgId,
+                    sort_order: index
+                }));
+                const { error: insertError } = await supabase
                     .from('item_images')
-                    .delete()
-                    .eq('item_id', id)
-                    .in('image_id', idsToDelete);
-            }
-
-            for (let i = 0; i < finalImageIds.length; i++) {
-                await supabase
-                    .from('item_images')
-                    .upsert({
-                        item_id: id, 
-                        image_id: finalImageIds[i],
-                        sort_order: i
-                    }, { onConflict: 'item_id,image_id' });
+                    .insert(imageInserts);
+                if (insertError) throw insertError;
             }
 
             // 1. Update Ingredient
@@ -283,18 +276,17 @@ export default function EditIngredientScreen() {
             const { error: deleteError } = await supabase
                 .from('recipes')
                 .delete()
-                .eq('parent_ingredient_id', id);
+                .eq('recipe_item_id', id);
             
             if (deleteError) throw deleteError;
 
             // Insert new
             if (recipeItems.length > 0) {
                 const recipeInserts = recipeItems.map(item => ({
-                    parent_ingredient_id: id, 
-                    ingredient_id: item.ingredient_id,
-                    ingredient_ml: parseFloat(item.ml) || null,
-                    ingredient_dash: parseFloat(item.dash) || null,
-                    ingredient_amount: parseFloat(item.amount) || null,
+                    recipe_item_id: id, 
+                    ingredient_item_id: item.ingredient_id,
+                    amount: parseFloat(item.amount) || null,
+                    unit: item.unit || null,
                 }));
 
                 const { error: insertError } = await supabase
@@ -304,8 +296,8 @@ export default function EditIngredientScreen() {
                 if (insertError) throw insertError;
             }
 
-            queryClient.invalidateQueries({ queryKey: ['ingredient', id] });
-            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            await queryClient.invalidateQueries({ queryKey: ['ingredient', id] });
+            await queryClient.invalidateQueries({ queryKey: ['ingredients'] });
 
             Alert.alert("Success", "Ingredient updated!", [
                 { text: "OK", onPress: () => router.back() }
@@ -473,39 +465,7 @@ export default function EditIngredientScreen() {
                                 <Text flex={1} color="$color" fontSize={16}>{item.name}</Text>
                                 <XStack gap="$2" alignItems="center">
                                     <Input
-                                        width={50}
-                                        size="$3"
-                                        placeholder="ml"
-                                        placeholderTextColor="$color11"
-                                        keyboardType="numeric"
-                                        value={item.ml}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].ml = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <Input
-                                        width={50}
-                                        size="$3"
-                                        placeholder="dash"
-                                        placeholderTextColor="$color11"
-                                        keyboardType="numeric"
-                                        value={item.dash}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].dash = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <Input
-                                        width={50}
+                                        width={60}
                                         size="$3"
                                         placeholder="amt"
                                         placeholderTextColor="$color11"
@@ -514,6 +474,21 @@ export default function EditIngredientScreen() {
                                         onChangeText={(v) => {
                                             const newItems = [...recipeItems];
                                             newItems[index].amount = v;
+                                            setRecipeItems(newItems);
+                                        }}
+                                        backgroundColor="$background"
+                                        borderColor="transparent"
+                                        textAlign="center"
+                                    />
+                                    <Input
+                                        width={60}
+                                        size="$3"
+                                        placeholder="oz"
+                                        placeholderTextColor="$color11"
+                                        value={item.unit}
+                                        onChangeText={(v) => {
+                                            const newItems = [...recipeItems];
+                                            newItems[index].unit = v;
                                             setRecipeItems(newItems);
                                         }}
                                         backgroundColor="$background"
@@ -531,50 +506,59 @@ export default function EditIngredientScreen() {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Ingredient Picker Bottom Sheet */}
-            <BottomSheetModal
-                ref={pickerSheetRef}
-                index={0}
-                snapPoints={snapPoints}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ backgroundColor: theme.background?.get() as string }}
-                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
-                onDismiss={() => setShowIngredientPicker(false)}
+            {/* Native Modal for adding ingredients avoiding gorhom issues */}
+            <Modal
+                visible={showIngredientPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowIngredientPicker(false)}
             >
-                <BottomSheetView style={{ flex: 1, padding: 24 }}>
-                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                        <Text fontSize={20} fontWeight="bold" color="$color">Select Ingredient</Text>
-                        <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                        </TouchableOpacity>
-                    </XStack>
-                    <SearchBar
-                        placeholder="Search ingredients..."
-                        value={ingredientSearch}
-                        onChangeText={setIngredientSearch}
-                        style={{ marginBottom: 16 }}
-                    />
-                    <FlatList
-                        data={allIngredients.filter((i: any) => {
-                            if (i.id === id) return false;
-                            return i.name.toLowerCase().includes(ingredientSearch.toLowerCase());
-                        })}
-                        keyExtractor={item => item.id}
-                        showsVerticalScrollIndicator={false}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                                onPress={() => {
-                                    setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, ml: "", dash: "", amount: "" }]);
-                                    setShowIngredientPicker(false);
-                                }}
-                            >
-                                <Text color="$color11" fontSize={16}>{item.name}</Text>
-                            </TouchableOpacity>
-                        )}
-                    />
-                </BottomSheetView>
-            </BottomSheetModal>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
+                        <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
+                            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+                                <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                                    <Text fontSize={20} fontWeight="bold" color="$color">Select Ingredient</Text>
+                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                        <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                                    </TouchableOpacity>
+                                </XStack>
+                                <SearchBar
+                                    placeholder="Search ingredients..."
+                                    value={ingredientSearch}
+                                    onChangeText={setIngredientSearch}
+                                    style={{ marginBottom: 16 }}
+                                />
+                            </View>
+                            <FlatList
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+                                data={allIngredients.filter((i: any) => {
+                                    if (i.id === id) return false;
+                                    return i.name.toLowerCase().includes(ingredientSearch.toLowerCase());
+                                })}
+                                keyExtractor={item => item.id}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                                        onPress={() => {
+                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "" }]);
+                                            setShowIngredientPicker(false);
+                                        }}
+                                    >
+                                        <Text color="$color11" fontSize={16}>{item.name}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
 
             <CategoryPickerModal 
                 ref={categoryPickerRef}
@@ -607,5 +591,16 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: 'center',
         alignItems: 'flex-start',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end'
+    },
+    fullSheetModalContent: {
+        borderTopLeftRadius: 48,
+        borderTopRightRadius: 48,
+        borderCurve: 'continuous',
+        height: '80%'
     }
 });

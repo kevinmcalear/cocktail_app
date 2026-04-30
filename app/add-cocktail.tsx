@@ -14,7 +14,8 @@ import {
     StyleSheet,
     TouchableOpacity, View,
     Platform,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
+    Modal
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -187,8 +188,6 @@ export default function AddCocktailScreen() {
                     description,
                     origin: origin || null,
                     notes: notes || null,
-                    spec: spec || null,
-                    method_id: methodId,
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
@@ -229,10 +228,18 @@ export default function AddCocktailScreen() {
                 });
             }
 
+            if (methodId) {
+                await supabase.from('item_methods').insert({
+                    item_id: cocktailId,
+                    method_item_id: methodId,
+                    sort_order: 0
+                });
+            }
+
 
 
             queryClient.invalidateQueries({ queryKey: ['cocktails'] });
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             // If assigned to a bar, also invalidate that bar's cache
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
@@ -508,19 +515,7 @@ export default function AddCocktailScreen() {
                     />
                 </YStack>
 
-                <YStack gap="$2">
-                    <Label color="$color11">Spec</Label>
-                    <TextArea 
-                        value={spec} 
-                        onChangeText={setSpec} 
-                        multiline 
-                        placeholderTextColor="$color11" 
-                        size="$4"
-                        backgroundColor="$backgroundStrong"
-                        borderColor="$borderColor"
-                        focusStyle={{ borderColor: '$color8' }}
-                    />
-                </YStack>
+
 
                 <Accordion overflow="hidden" width="100%" type="multiple" backgroundColor="transparent" marginBottom="$6">
                     <Accordion.Item value="a1" borderRadius="$4" borderColor="$borderColor" borderWidth={1} backgroundColor="$backgroundStrong">
@@ -578,9 +573,10 @@ export default function AddCocktailScreen() {
                                                             <Select.Group>
                                                                 <Select.Item index={0} value="default"><Select.ItemText>Bar Default</Select.ItemText></Select.Item>
                                                                 <Select.Item index={1} value="10"><Select.ItemText>Guest (10)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={2} value="20"><Select.ItemText>Trainee (20)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={2} value="20"><Select.ItemText>Employee (20)</Select.ItemText></Select.Item>
                                                                 <Select.Item index={3} value="30"><Select.ItemText>Bartender (30)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={4} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={4} value="35"><Select.ItemText>Drink Creator (35)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={5} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
                                                             </Select.Group>
                                                         </Select.Viewport>
                                                     </Select.Content>
@@ -598,55 +594,56 @@ export default function AddCocktailScreen() {
             </KeyboardAvoidingView>
             )}
 
-            {/* Ingredient Picker Bottom Sheet */}
-            <BottomSheetModal
-                ref={pickerSheetRef}
-                index={0}
-                snapPoints={snapPoints}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{ 
-                    backgroundColor: theme.background?.get() as string,
-                    borderTopLeftRadius: 48,
-                    borderTopRightRadius: 48,
-                    borderCurve: 'continuous' as any 
-                }}
-                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
-                onDismiss={() => setShowIngredientPicker(false)}
+            {/* Native Modal for adding ingredients avoiding gorhom issues */}
+            <Modal
+                visible={showIngredientPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowIngredientPicker(false)}
             >
-                <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
-                    <View style={styles.modalHeader}>
-                        <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">Select Ingredient</Text>
-                        <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                            <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
-                        </TouchableOpacity>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
+                        <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
+                            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+                                <View style={styles.modalHeader}>
+                                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">Select Ingredient</Text>
+                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                        <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
+                                    </TouchableOpacity>
+                                </View>
+                                <SearchBar
+                                    placeholder="Search ingredients..."
+                                    value={ingredientSearch}
+                                    onChangeText={setIngredientSearch}
+                                    style={{ marginBottom: 16 }}
+                                />
+                            </View>
+                            <FlatList
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+                                data={allIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                                keyExtractor={item => item.id}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
+                                        onPress={() => {
+                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "", preparation_notes: "", is_optional: false }]);
+                                            setShowIngredientPicker(false);
+                                        }}
+                                    >
+                                        <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
                     </View>
-                    <SearchBar
-                        placeholder="Search ingredients..."
-                        value={ingredientSearch}
-                        onChangeText={setIngredientSearch}
-                        style={{ marginBottom: 16 }}
-                    />
-                </View>
-                <BottomSheetFlatList
-                    contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                    data={allIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
-                    keyExtractor={item => item.id}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
-                            onPress={() => {
-                                setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "", preparation_notes: "", is_optional: false }]);
-                                setShowIngredientPicker(false);
-                            }}
-                        >
-                            <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
-                        </TouchableOpacity>
-                    )}
-                />
-            </BottomSheetModal>
-
-
+                </KeyboardAvoidingView>
+            </Modal>
 
         </YStack>
         </BottomSheetModalProvider>
@@ -776,5 +773,16 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center'
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end'
+    },
+    fullSheetModalContent: {
+        borderTopLeftRadius: 48,
+        borderTopRightRadius: 48,
+        borderCurve: 'continuous',
+        height: '80%'
+    }
 
 });

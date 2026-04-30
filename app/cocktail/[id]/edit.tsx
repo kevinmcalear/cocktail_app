@@ -63,7 +63,6 @@ export default function EditCocktailScreen() {
     const [description, setDescription] = useState("");
     const [origin, setOrigin] = useState("");
     const [notes, setNotes] = useState("");
-    const [spec, setSpec] = useState("");
 
     const isLoaded = useRef(false);
 
@@ -102,7 +101,7 @@ export default function EditCocktailScreen() {
             });
             if (error) throw error;
             
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             setAddingCategory(null);
             setNewItemName("");
         } catch (error) {
@@ -125,7 +124,7 @@ export default function EditCocktailScreen() {
             if (field === 'family_id' && familyId === id) setFamilyId(null);
             if (field === 'ice_id' && iceId === id) setIceId(null);
 
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
         } catch (error) {
             console.error("Delete error:", error);
             Alert.alert("Error", "Failed to delete item.");
@@ -176,9 +175,8 @@ export default function EditCocktailScreen() {
             setDescription(c.description || "");
             setOrigin(c.origin || "");
             setNotes(c.notes || "");
-            setSpec(c.spec || "");
 
-            setMethodId(c.method_id);
+            setMethodId(c.item_methods?.[0]?.method_item_id || null);
             setGlasswareId(c.glassware_id);
             setFamilyId(c.family_id);
             setIceId(c.ice_id);
@@ -307,30 +305,24 @@ export default function EditCocktailScreen() {
                 }
             }
 
-            const { data: existingLinks } = await supabase
+            // Delete all existing image links to refresh sort order and prevent duplicate errors
+            const { error: deleteImagesError } = await supabase
                 .from('item_images')
-                .select('image_id')
+                .delete()
                 .eq('item_id', id);
+                
+            if (deleteImagesError) throw deleteImagesError;
 
-            const existingIds = existingLinks?.map(l => l.image_id) || [];
-            const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
-
-            if (idsToDelete.length > 0) {
-                 await supabase
+            if (finalImageIds.length > 0) {
+                const imageInserts = finalImageIds.map((imgId, index) => ({
+                    item_id: id,
+                    image_id: imgId,
+                    sort_order: index
+                }));
+                const { error: insertError } = await supabase
                     .from('item_images')
-                    .delete()
-                    .eq('item_id', id)
-                    .in('image_id', idsToDelete);
-            }
-
-            for (let i = 0; i < finalImageIds.length; i++) {
-                await supabase
-                    .from('item_images')
-                    .upsert({
-                        item_id: id, 
-                        image_id: finalImageIds[i],
-                        sort_order: i
-                    }, { onConflict: 'item_id,image_id' });
+                    .insert(imageInserts);
+                if (insertError) throw insertError;
             }
 
             const updates: any = {
@@ -338,8 +330,6 @@ export default function EditCocktailScreen() {
                 description,
                 origin: origin || null,
                 notes: notes || null,
-                spec: spec || null,
-                method_id: methodId,
                 glassware_id: glasswareId,
                 family_id: familyId,
                 ice_id: iceId,
@@ -382,8 +372,17 @@ export default function EditCocktailScreen() {
                 }
             }
 
-            queryClient.invalidateQueries({ queryKey: ['cocktail', id] });
-            queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+            await supabase.from('item_methods').delete().eq('item_id', id);
+            if (methodId) {
+                await supabase.from('item_methods').insert({
+                    item_id: id,
+                    method_item_id: methodId,
+                    sort_order: 0
+                });
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ['cocktail', id] });
+            await queryClient.invalidateQueries({ queryKey: ['cocktails'] });
 
             Alert.alert("Success", "Cocktail updated!", [
                 { text: "OK", onPress: () => router.back() }
@@ -672,19 +671,7 @@ export default function EditCocktailScreen() {
                     />
                 </YStack>
 
-                <YStack gap="$2" marginBottom="$4">
-                    <Label color="$color11">Spec</Label>
-                    <TextArea 
-                        value={spec} 
-                        onChangeText={setSpec} 
-                        multiline 
-                        placeholderTextColor="$color11" 
-                        size="$4"
-                        backgroundColor="$backgroundStrong"
-                        borderColor="$borderColor"
-                        focusStyle={{ borderColor: '$color8' }}
-                    />
-                </YStack>
+
 
                 <Accordion overflow="hidden" width="100%" type="multiple" backgroundColor="transparent" marginBottom="$6">
                     <Accordion.Item value="a1" borderRadius="$4" borderColor="$borderColor" borderWidth={1} backgroundColor="$backgroundStrong">
@@ -742,9 +729,10 @@ export default function EditCocktailScreen() {
                                                             <Select.Group>
                                                                 <Select.Item index={0} value="default"><Select.ItemText>Bar Default</Select.ItemText></Select.Item>
                                                                 <Select.Item index={1} value="10"><Select.ItemText>Guest (10)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={2} value="20"><Select.ItemText>Trainee (20)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={2} value="20"><Select.ItemText>Employee (20)</Select.ItemText></Select.Item>
                                                                 <Select.Item index={3} value="30"><Select.ItemText>Bartender (30)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={4} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={4} value="35"><Select.ItemText>Drink Creator (35)</Select.ItemText></Select.Item>
+                                                                <Select.Item index={5} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
                                                             </Select.Group>
                                                         </Select.Viewport>
                                                     </Select.Content>
@@ -807,53 +795,59 @@ export default function EditCocktailScreen() {
                 animationType="slide"
                 onRequestClose={() => setShowIngredientPicker(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
-                    <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
-                        <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
-                            <View style={styles.modalHeader}>
-                                <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">Select Ingredient</Text>
-                                <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                    <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
-                                </TouchableOpacity>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
+                        <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
+                            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+                                <View style={styles.modalHeader}>
+                                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">Select Ingredient</Text>
+                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
+                                        <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                <SearchBar
+                                    placeholder="Search ingredients..."
+                                    value={ingredientSearch}
+                                    onChangeText={setIngredientSearch}
+                                    style={{ marginBottom: 16 }}
+                                />
                             </View>
-                            
-                            <SearchBar
-                                placeholder="Search ingredients..."
-                                value={ingredientSearch}
-                                onChangeText={setIngredientSearch}
-                                style={{ marginBottom: 16 }}
+
+                            <FlatList
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+                                showsVerticalScrollIndicator={false}
+                                data={allIngredients.filter((i: any) => 
+                                    i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+                                )}
+                                keyExtractor={item => item.id}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
+                                        onPress={() => {
+                                            setRecipeItems([...recipeItems, {
+                                                ingredient_id: item.id,
+                                                name: item.name,
+                                                amount: "",
+                                                unit: "",
+                                                preparation_notes: "",
+                                                is_optional: false
+                                            }]);
+                                            setShowIngredientPicker(false);
+                                        }}
+                                    >
+                                        <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                    </TouchableOpacity>
+                                )}
                             />
                         </View>
-
-                        <FlatList
-                            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                            showsVerticalScrollIndicator={false}
-                            data={allIngredients.filter((i: any) => 
-                                i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
-                            )}
-                            keyExtractor={item => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
-                                    onPress={() => {
-                                        setRecipeItems([...recipeItems, {
-                                            ingredient_id: item.id,
-                                            name: item.name,
-                                            amount: "",
-                                            unit: "",
-                                            preparation_notes: "",
-                                            is_optional: false
-                                        }]);
-                                        setShowIngredientPicker(false);
-                                    }}
-                                >
-                                    <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
-                        />
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </YStack>
     );

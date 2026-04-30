@@ -61,7 +61,6 @@ export function useIngredient(id?: string | string[]) {
                         images ( id, url )
                     )
                 `)
-                .eq('item_type', 'ingredient')
                 .eq('id', ingredientId)
                 .single();
 
@@ -79,10 +78,10 @@ export function useIngredient(id?: string | string[]) {
                     unit,
                     preparation_notes,
                     is_optional,
-                    specific_ingredient:items!new_recipes_ingredient_item_id_fkey(name),
-                    generic_ingredient:items!new_recipes_parent_ingredient_id_fkey(name)
+                    specific_ingredient:items!ingredient_item_id(id, name),
+                    generic_ingredient:items!parent_ingredient_id(id, name)
                 `)
-                .eq('parent_ingredient_id', ingredientId);
+                .eq('recipe_item_id', ingredientId);
 
             if (recipeError) throw recipeError;
 

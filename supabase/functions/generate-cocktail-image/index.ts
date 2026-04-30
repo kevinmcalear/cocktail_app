@@ -42,11 +42,10 @@ serve(async (req: Request) => {
         method:methods(name),
         glassware:glassware(name),
         ice:ice(name),
-        recipes!new_recipes_recipe_item_id_fkey(
-          ingredient_amount,
-          ingredient_ml,
-          ingredient_dash,
-          ingredient:items!new_recipes_ingredient_item_id_fkey(name)
+        recipes!recipe_item_id(
+          amount,
+          unit,
+          ingredient:items!ingredient_item_id(name)
         )
       `)
       .eq("id", cocktail_id)
@@ -76,10 +75,8 @@ serve(async (req: Request) => {
     if (cocktail.recipes && (cocktail.recipes as any[]).length > 0) {
       ingredientsDetails = "Contains: " + (cocktail.recipes as any[]).map((r: any) => {
         let amt = [];
-        if (r.ingredient_amount) amt.push(`${r.ingredient_amount} oz`);
-        if (r.ingredient_ml) amt.push(`${r.ingredient_ml} ml`);
-        if (r.ingredient_dash) amt.push(`${r.ingredient_dash} dash`);
-        return `${amt.join(" / ")} ${r.ingredient ? r.ingredient.name : ""}`;
+        if (r.amount) amt.push(`${r.amount} ${r.unit || ""}`.trim());
+        return `${amt.join(" / ")} ${r.ingredient ? r.ingredient.name : ""}`.trim();
       }).join(", ") + ".";
     }
 
