@@ -155,30 +155,24 @@ export default function EditWineScreen() {
             }
 
             // Sync item_images
-            const { data: existingLinks } = await supabase
+            // Delete all existing image links to refresh sort order and prevent duplicate errors
+            const { error: deleteImagesError } = await supabase
                 .from('item_images')
-                .select('image_id')
+                .delete()
                 .eq('item_id', safeId);
+                
+            if (deleteImagesError) throw deleteImagesError;
 
-            const existingIds = existingLinks?.map(l => l.image_id) || [];
-            const idsToDelete = existingIds.filter(eid => !finalImageIds.includes(eid));
-
-            if (idsToDelete.length > 0) {
-                 await supabase
+            if (finalImageIds.length > 0) {
+                const imageInserts = finalImageIds.map((imgId, index) => ({
+                    item_id: safeId,
+                    image_id: imgId,
+                    sort_order: index
+                }));
+                const { error: insertError } = await supabase
                     .from('item_images')
-                    .delete()
-                    .eq('item_id', safeId)
-                    .in('image_id', idsToDelete);
-            }
-
-            for (let i = 0; i < finalImageIds.length; i++) {
-                await supabase
-                    .from('item_images')
-                    .upsert({
-                        item_id: safeId, 
-                        image_id: finalImageIds[i],
-                        sort_order: i
-                    }, { onConflict: 'item_id,image_id' });
+                    .insert(imageInserts);
+                if (insertError) throw insertError;
             }
 
             // 2. Update metadata
@@ -225,8 +219,8 @@ export default function EditWineScreen() {
                     }, { onConflict: 'item_id,category_id' });
             }
 
-            queryClient.invalidateQueries({ queryKey: ['wine', safeId] });
-            queryClient.invalidateQueries({ queryKey: ['wines'] });
+            await queryClient.invalidateQueries({ queryKey: ['wine', safeId] });
+            await queryClient.invalidateQueries({ queryKey: ['wines'] });
 
             Alert.alert("Success", "Wine updated!", [
                 { text: "OK", onPress: () => router.back() }

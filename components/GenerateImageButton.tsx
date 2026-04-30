@@ -67,8 +67,9 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
             // Success, vibrate
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             
-            // Invalidate the cache right away so the UI fetches the new image
-            queryClient.invalidateQueries({ queryKey: [type, id] });
+            // Await the invalidations so the loading spinner stays until the new data is ready
+            await queryClient.invalidateQueries({ queryKey: [type, id] });
+            await queryClient.invalidateQueries({ queryKey: [`${type}s`] });
 
         } catch (err: any) {
             console.error("Generation Error:", err);

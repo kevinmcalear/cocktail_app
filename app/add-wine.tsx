@@ -144,14 +144,16 @@ export default function AddWineScreen() {
                 }
             }
 
-            for (let i = 0; i < finalImageIds.length; i++) {
-                await supabase
+            if (finalImageIds.length > 0) {
+                const imageInserts = finalImageIds.map((imgId, index) => ({
+                    item_id: newWineId,
+                    image_id: imgId,
+                    sort_order: index
+                }));
+                const { error: insertError } = await supabase
                     .from('item_images')
-                    .upsert({
-                        item_id: newWineId, 
-                        image_id: finalImageIds[i],
-                        sort_order: i
-                    }, { onConflict: 'item_id,image_id' });
+                    .insert(imageInserts);
+                if (insertError) throw insertError;
             }
 
             for (const catId of selectedCategories) {
@@ -165,7 +167,7 @@ export default function AddWineScreen() {
             }
 
             queryClient.invalidateQueries({ queryKey: ['wines'] });
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
