@@ -2,7 +2,19 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { AnimatePresence, MotiView } from "moti";
 import { useState } from "react";
 import { ScrollView, TouchableOpacity, View, ViewStyle } from "react-native";
-import { Button, Input, Text, useTheme, XStack, YStack } from "tamagui";
+import { Button, Input, Text, useTheme, XStack, YStack, styled } from "tamagui";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
+
+const StyledBottomSheetTextInput = styled(BottomSheetTextInput, {
+    flex: 1,
+    paddingVertical: 0,
+    fontSize: 16,
+    fontFamily: '$body',
+    color: '$color',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    outlineWidth: 0,
+});
 
 export interface SearchChip {
     id: string;
@@ -20,6 +32,7 @@ interface SearchBarProps {
     onRemoveChip?: (id: string) => void;
     suggestions?: SearchChip[];
     onSuggestionPress?: (suggestion: SearchChip) => void;
+    isBottomSheet?: boolean;
 }
 
 export function SearchBar({ 
@@ -31,7 +44,8 @@ export function SearchBar({
     chips = [],
     onRemoveChip,
     suggestions = [],
-    onSuggestionPress
+    onSuggestionPress,
+    isBottomSheet = false
 }: SearchBarProps) {
     const theme = useTheme();
     const [isFocused, setIsFocused] = useState(false);
@@ -52,21 +66,32 @@ export function SearchBar({
                     gap="$3"
                 >
                     <IconSymbol name="magnifyingglass" size={22} color={isFocused ? theme.color8?.get() as string : theme.color11?.get() as string} />
-                    <Input
-                        flex={1}
-                        unstyled
-                        size="$4"
-                        paddingVertical={0}
-                        placeholder={placeholder}
-                        placeholderTextColor="$color11"
-                        color="$color"
-                        fontSize={16}
-                        value={value}
-                        onChangeText={onChangeText}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
-                        fontFamily="$body"
-                    />
+                    {isBottomSheet ? (
+                        <StyledBottomSheetTextInput
+                            placeholder={placeholder}
+                            placeholderTextColor={theme.color11?.get() as string}
+                            value={value}
+                            onChangeText={onChangeText}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
+                        />
+                    ) : (
+                        <Input
+                            flex={1}
+                            unstyled
+                            size="$4"
+                            paddingVertical={0}
+                            placeholder={placeholder}
+                            placeholderTextColor="$color11"
+                            color="$color"
+                            fontSize={16}
+                            value={value}
+                            onChangeText={onChangeText}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
+                            fontFamily="$body"
+                        />
+                    )}
                     {value.length > 0 && (
                         <Button unstyled onPress={() => onChangeText("")} padding="$1" pressStyle={{ opacity: 0.5 }}>
                             <IconSymbol name="xmark.circle.fill" size={20} color={theme.color11?.get() as string} />
