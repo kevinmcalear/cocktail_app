@@ -10,6 +10,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { useBars } from "@/hooks/useBars";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -21,6 +23,11 @@ export default function CocktailDetailsScreen() {
 
     const { data: cocktail, isLoading, error } = useCocktail(id as string);
     const [notesExpanded, setNotesExpanded] = useState(false);
+
+    const selectedBarId = useAppStore((state) => state.selectedBarId);
+    const { data: bars } = useBars();
+    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
+    const canEdit = currentBarRole > 30;
 
     // Provide default layout if cocktail mapping fails safely
     if (isLoading || error || !cocktail) {
@@ -63,7 +70,7 @@ export default function CocktailDetailsScreen() {
             isInStudyPile={isInStudyPile(cocktail.id)}
             onToggleFavorite={toggleFavorite}
             onToggleStudyPile={toggleStudyPile}
-            onEditPress={() => router.push(`/cocktail/${id}/edit`)}
+            onEditPress={canEdit ? () => router.push(`/cocktail/${id}/edit`) : undefined}
         >
             {/* Core Metadata Badges */}
             <XStack flexWrap="wrap" gap="$5" paddingHorizontal={24} marginBottom="$6" marginTop="$2" justifyContent="flex-start" alignItems="flex-start">
@@ -124,10 +131,12 @@ export default function CocktailDetailsScreen() {
                         if (recipe.unit) measurementParts.push(`${recipe.unit}`);
                         const measurement = measurementParts.join(' ');
 
+                        const ingredientId = ingredientsData?.id || recipe.display_ingredient_id || recipe.ingredient_item_id;
+                        
                         return (
                             <XStack key={index} alignItems="center" gap="$4">
                                 <TouchableOpacity 
-                                    onPress={() => ingredientsData?.name && router.push(`/ingredient/${ingredientsData.id}`)}
+                                    onPress={() => ingredientsData?.name && ingredientId && router.push(`/ingredient/${ingredientId}`)}
                                     activeOpacity={0.7}
                                 >
                                     {imageUrl ? (
@@ -149,7 +158,7 @@ export default function CocktailDetailsScreen() {
                                         </Text>
                                     ) : null}
                                     <TouchableOpacity 
-                                        onPress={() => ingredientsData?.name && router.push(`/ingredient/${ingredientsData.id}`)}
+                                        onPress={() => ingredientsData?.name && ingredientId && router.push(`/ingredient/${ingredientId}`)}
                                         activeOpacity={0.7}
                                     >
                                         <Text color="$color" fontSize={18} fontWeight="400">

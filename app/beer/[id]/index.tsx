@@ -8,6 +8,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBeer } from "@/hooks/useBeers";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { useBars } from "@/hooks/useBars";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function BeerDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -21,6 +23,11 @@ export default function BeerDetailsScreen() {
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     const { data: beer, isLoading } = useBeer(safeId);
+    
+    const selectedBarId = useAppStore((state) => state.selectedBarId);
+    const { data: bars } = useBars();
+    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
+    const canEdit = currentBarRole > 30;
     
     const [notesExpanded, setNotesExpanded] = useState(false);
 
@@ -57,7 +64,7 @@ export default function BeerDetailsScreen() {
             isInStudyPile={isInStudyPile(`beer-${beer.id}`)}
             onToggleFavorite={toggleFavorite}
             onToggleStudyPile={toggleStudyPile}
-            onEditPress={() => router.push(`/beer/${id}/edit`)}
+            onEditPress={canEdit ? () => router.push(`/beer/${id}/edit`) : undefined}
         >
             {/* Core Metadata Badges */}
             <XStack flexWrap="wrap" gap="$2" paddingHorizontal="$4" marginBottom="$4">

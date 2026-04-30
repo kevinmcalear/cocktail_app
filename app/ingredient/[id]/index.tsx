@@ -7,15 +7,16 @@ import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } fr
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useBars } from "@/hooks/useBars";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { useAppStore } from "@/store/useAppStore";
 
 interface IngredientDetail {
     id: string;
     name: string;
     description: string | null;
-    is_batch: boolean;
     item_images?: { images: { url: string } }[];
 }
 
@@ -41,6 +42,11 @@ export default function IngredientDetailScreen() {
     const recipe = data?.recipe as unknown as RecipeItem[] || [];
     const usedIn = data?.usedIn || [];
 
+    const selectedBarId = useAppStore((state) => state.selectedBarId);
+    const { data: bars } = useBars();
+    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
+    const canViewDetails = currentBarRole > 30; // Admin (40) can see complex ingredient details.
+
     if (loading || !ingredient) {
         return (
             <ItemDetailLayout 
@@ -55,6 +61,7 @@ export default function IngredientDetailScreen() {
             >
                 <YStack style={styles.container} justifyContent="center" alignItems="center">
                     <Text color="$color">{loading ? "Loading Ingredient..." : "Ingredient not found."}</Text>
+                    {error && <Text color="$red10">Error: {error.message || JSON.stringify(error)}</Text>}
                 </YStack>
             </ItemDetailLayout>
         );
@@ -74,17 +81,17 @@ export default function IngredientDetailScreen() {
             isInStudyPile={isInStudyPile(`ingredient-${ingredient.id}`)}
             onToggleFavorite={toggleFavorite}
             onToggleStudyPile={toggleStudyPile}
-            onEditPress={() => router.push(`/ingredient/${id}/edit`)}
+            onEditPress={canViewDetails ? () => router.push(`/ingredient/${id}/edit`) : undefined}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
 
                 {/* Info Card */}
-                {(ingredient.description || ingredient.is_batch) && (
+                {(!recipe.length || canViewDetails) && (ingredient.description || recipe.length > 0) && (
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="info.circle" size={24} color={theme.color?.get() as string} />
                             <Text style={[styles.cardTitle, { color: theme.color?.get() as string }]}>About</Text>
-                            {ingredient.is_batch && (
+                            {recipe.length > 0 && (
                                 <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginLeft: 'auto' }}>
                                     <Text style={{ color: theme.color?.get() as string, fontSize: 12, fontWeight: 'bold' }}>BATCH</Text>
                                 </View>
@@ -97,7 +104,7 @@ export default function IngredientDetailScreen() {
                 )}
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
-                {recipe.length > 0 && (
+                {canViewDetails && recipe.length > 0 && (
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="flask" size={24} color={theme.color?.get() as string} />
