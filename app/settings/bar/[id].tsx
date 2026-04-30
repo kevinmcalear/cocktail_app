@@ -10,8 +10,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 
 const ROLE_OPTIONS = [
     { name: "Guest (10)", value: "10" },
-    { name: "Trainee (20)", value: "20" },
+    { name: "Employee (20)", value: "20" },
     { name: "Bartender (30)", value: "30" },
+    { name: "Drink Creator (35)", value: "35" },
     { name: "Admin (40)", value: "40" }
 ];
 
@@ -87,6 +88,22 @@ export default function BarDetailScreen() {
             setNewMemberEmail("");
             queryClient.invalidateQueries({ queryKey: ['bar', id] });
             Alert.alert("Success", "Member added/updated.");
+        } catch (err: any) {
+            Alert.alert("Error", err.message);
+        }
+    };
+
+    const handleUpdateMemberRole = async (email: string, roleValue: string) => {
+        try {
+            const { error } = await supabase.rpc('add_user_to_bar_by_email', {
+                p_email: email,
+                p_bar_id: id,
+                p_role_level: parseInt(roleValue)
+            });
+
+            if (error) throw new Error(error.message);
+            queryClient.invalidateQueries({ queryKey: ['bar', id] });
+            Alert.alert("Success", "Member role updated.");
         } catch (err: any) {
             Alert.alert("Error", err.message);
         }
@@ -213,10 +230,28 @@ export default function BarDetailScreen() {
                             <Text fontWeight="bold" fontSize={16} marginTop="$4">Current Members</Text>
                             {detailData?.members?.map((m: any) => (
                                 <Card key={m.user_id} bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                                    <XStack justifyContent="space-between" alignItems="center">
+                                    <YStack gap="$2">
                                         <Text fontWeight="bold">{m.email}</Text>
-                                        <Text color="$color11">Role: {m.role_level}</Text>
-                                    </XStack>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 0 }}>
+                                            <XStack gap="$2">
+                                                {ROLE_OPTIONS.map((opt) => (
+                                                    <Button
+                                                        key={opt.value}
+                                                        size="$3"
+                                                        borderRadius="$10"
+                                                        backgroundColor={m.role_level.toString() === opt.value ? theme.color8?.get() as string : "$background"}
+                                                        borderColor={m.role_level.toString() === opt.value ? theme.color8?.get() as string : "$borderColor"}
+                                                        borderWidth={1}
+                                                        onPress={() => handleUpdateMemberRole(m.email, opt.value)}
+                                                    >
+                                                        <Text color={m.role_level.toString() === opt.value ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} fontWeight={m.role_level.toString() === opt.value ? "bold" : "normal"}>
+                                                            {opt.name}
+                                                        </Text>
+                                                    </Button>
+                                                ))}
+                                            </XStack>
+                                        </ScrollView>
+                                    </YStack>
                                 </Card>
                             ))}
                         </YStack>

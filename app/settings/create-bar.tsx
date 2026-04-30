@@ -10,8 +10,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 
 const ROLE_OPTIONS = [
     { name: "Guest (10)", value: "10" },
-    { name: "Trainee (20)", value: "20" },
+    { name: "Employee (20)", value: "20" },
     { name: "Bartender (30)", value: "30" },
+    { name: "Drink Creator (35)", value: "35" },
     { name: "Admin (40)", value: "40" }
 ];
 
