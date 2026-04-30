@@ -181,7 +181,7 @@ export default function CreateTemplateScreen() {
             }
 
             // Success
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             
             Alert.alert("Success", `Template ${isEditing ? 'updated' : 'created'} successfully!`, [
                 { text: "OK", onPress: () => router.back() }

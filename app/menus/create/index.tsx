@@ -123,7 +123,7 @@ export default function CreateMenuWizard() {
                 if (drinksError) throw drinksError;
             }
 
-            queryClient.invalidateQueries({ queryKey: ['dropdowns'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             router.back();
         } catch (error) {
             console.error("Save menu error", error);
