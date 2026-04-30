@@ -45,7 +45,7 @@ DROP POLICY IF EXISTS "Users can insert their own bar roles or admins can add us
 -- 3. Replace with a secure policy: Only Admins can INSERT others into user_bars
 -- (The initial insert is handled by the RPC which bypasses RLS)
 CREATE POLICY "Admins can insert user_bars" ON public.user_bars FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.user_bars ub WHERE ub.bar_id = bar_id AND ub.user_id = auth.uid() AND ub.role_level >= 40)
+    EXISTS (SELECT 1 FROM public.user_bars ub WHERE ub.bar_id = bar_id AND ub.user_id = auth.uid() AND ub.role_level >= 35)
 );
 
 -- Note: We also drop the old insert policy on bars since the RPC handles it,

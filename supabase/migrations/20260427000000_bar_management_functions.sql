@@ -18,7 +18,7 @@ BEGIN
     FROM public.user_bars
     WHERE bar_id = p_bar_id AND user_id = auth.uid();
 
-    IF v_admin_role IS NULL OR v_admin_role < 40 THEN
+    IF v_admin_role IS NULL OR v_admin_role < 35 THEN
         RAISE EXCEPTION 'You must be a bar Admin to add members.';
     END IF;
 
@@ -65,7 +65,7 @@ BEGIN
     FROM public.user_bars
     WHERE bar_id = p_bar_id AND user_id = auth.uid();
 
-    IF v_admin_role IS NULL OR v_admin_role < 40 THEN
+    IF v_admin_role IS NULL OR v_admin_role < 35 THEN
         RAISE EXCEPTION 'You must be a bar Admin to update bar settings.';
     END IF;
 
@@ -102,7 +102,7 @@ BEGIN
     FROM public.user_bars
     WHERE bar_id = p_bar_id AND user_id = auth.uid();
 
-    IF v_admin_role IS NULL OR v_admin_role < 40 THEN
+    IF v_admin_role IS NULL OR v_admin_role < 35 THEN
         RAISE EXCEPTION 'You must be a bar Admin to assign items to this bar.';
     END IF;
 

@@ -7,7 +7,7 @@ CREATE POLICY "Admins can update bars" ON public.bars FOR UPDATE USING (
         SELECT 1 FROM public.user_bars 
         WHERE user_bars.bar_id = bars.id 
         AND user_bars.user_id = auth.uid() 
-        AND user_bars.role_level >= 40
+        AND user_bars.role_level >= 35
     )
 );
 
@@ -17,7 +17,7 @@ CREATE POLICY "Admins can delete bars" ON public.bars FOR DELETE USING (
         SELECT 1 FROM public.user_bars 
         WHERE user_bars.bar_id = bars.id 
         AND user_bars.user_id = auth.uid() 
-        AND user_bars.role_level >= 40
+        AND user_bars.role_level >= 35
     )
 );
 
@@ -28,7 +28,7 @@ CREATE POLICY "Users can insert their own bar roles or admins can add users" ON 
         SELECT 1 FROM public.user_bars ub 
         WHERE ub.bar_id = bar_id 
         AND ub.user_id = auth.uid() 
-        AND ub.role_level >= 40
+        AND ub.role_level >= 35
     )
 );
 
@@ -38,7 +38,7 @@ CREATE POLICY "Admins can update bar roles" ON public.user_bars FOR UPDATE USING
         SELECT 1 FROM public.user_bars ub 
         WHERE ub.bar_id = bar_id 
         AND ub.user_id = auth.uid() 
-        AND ub.role_level >= 40
+        AND ub.role_level >= 35
     )
 );
 
@@ -49,6 +49,6 @@ CREATE POLICY "Admins can delete bar roles or users can leave" ON public.user_ba
         SELECT 1 FROM public.user_bars ub 
         WHERE ub.bar_id = bar_id 
         AND ub.user_id = auth.uid() 
-        AND ub.role_level >= 40
+        AND ub.role_level >= 35
     )
 );
