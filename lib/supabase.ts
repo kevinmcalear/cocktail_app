@@ -16,15 +16,21 @@ const ExpoSecureStoreAdapter = {
 
 const WebStorageAdapter = {
     getItem: (key: string) => {
+        if (typeof window === 'undefined') return null;
         if (typeof localStorage === 'undefined') return null;
+        if (typeof localStorage.getItem !== 'function') return null;
         return localStorage.getItem(key);
     },
     setItem: (key: string, value: string) => {
+        if (typeof window === 'undefined') return;
         if (typeof localStorage === 'undefined') return;
+        if (typeof localStorage.setItem !== 'function') return;
         localStorage.setItem(key, value);
     },
     removeItem: (key: string) => {
+        if (typeof window === 'undefined') return;
         if (typeof localStorage === 'undefined') return;
+        if (typeof localStorage.removeItem !== 'function') return;
         localStorage.removeItem(key);
     },
 };

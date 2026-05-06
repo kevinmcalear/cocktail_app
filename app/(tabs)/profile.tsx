@@ -5,14 +5,15 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Separator, Switch, Text, XStack, YStack, useTheme } from "tamagui";
+import { Switch } from "react-native";
+import { Separator, Text, XStack, YStack, useTheme } from "tamagui";
 
 export default function ProfileScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user, signOut } = useAuth();
     const theme = useTheme();
-    const { isEditModeEnabled, isTestingEnabled, toggleEditMode, toggleTesting } = useSettingsStore();
+    const { isEditModeEnabled, isTestingEnabled, setEditMode, setTesting } = useSettingsStore();
 
     const avatarUrl = user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
@@ -80,15 +81,17 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
-                        onPress={toggleEditMode}
+                        onPress={() => setEditMode(!isEditModeEnabled)}
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
                             <Text fontSize="$5" color="$color" fontWeight="500">Enable Edit Mode</Text>
                         </XStack>
-                        <Switch size="$3" checked={isEditModeEnabled} onCheckedChange={toggleEditMode} backgroundColor={isEditModeEnabled ? theme.color?.get() as string : "$borderColor"}>
-                            <Switch.Thumb backgroundColor="$background" />
-                        </Switch>
+                        <Switch 
+                            value={isEditModeEnabled} 
+                            onValueChange={(val) => setEditMode(val)} 
+                            trackColor={{ false: theme.borderColor?.get() as string, true: theme.color8?.get() as string }}
+                        />
                     </XStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />
@@ -99,15 +102,17 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
-                        onPress={toggleTesting}
+                        onPress={() => setTesting(!isTestingEnabled)}
                     >
                         <XStack alignItems="center" gap="$3">
                             <CustomIcon name="TabTest" size={24} color={theme.color?.get() as string} />
                             <Text fontSize="$5" color="$color" fontWeight="500">Enable Testing</Text>
                         </XStack>
-                        <Switch size="$3" checked={isTestingEnabled} onCheckedChange={toggleTesting} backgroundColor={isTestingEnabled ? theme.color?.get() as string : "$borderColor"}>
-                            <Switch.Thumb backgroundColor="$background" />
-                        </Switch>
+                        <Switch 
+                            value={isTestingEnabled} 
+                            onValueChange={(val) => setTesting(val)}
+                            trackColor={{ false: theme.borderColor?.get() as string, true: theme.color8?.get() as string }}
+                        />
                     </XStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />

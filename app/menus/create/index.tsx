@@ -9,10 +9,10 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, T
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack } from "tamagui";
 
-import { Step1Template } from "./components/Step1Template";
-import { Step2Name } from "./components/Step2Name";
-import { Step3Drinks } from "./components/Step3Drinks";
-import { Step4Review } from "./components/Step4Review";
+import { Step1Template } from "./_components/Step1Template";
+import { Step2Name } from "./_components/Step2Name";
+import { Step3Drinks } from "./_components/Step3Drinks";
+import { Step4Review } from "./_components/Step4Review";
 
 export default function CreateMenuWizard() {
     const router = useRouter();

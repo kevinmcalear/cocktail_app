@@ -23,6 +23,7 @@ const MAPPING = {
   'chevron.down': 'expand-more',
   'xmark.circle.fill': 'cancel',
   'plus': 'add',
+  'plus.circle.fill': 'add-circle',
   'trash': 'delete',
   'xmark': 'close',
   'pencil': 'edit',
