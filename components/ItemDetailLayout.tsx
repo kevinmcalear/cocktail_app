@@ -114,26 +114,12 @@ export function ItemDetailLayout({
     };
 
     let swipeableRef: Swipeable | null = null;
+    const isLargeScreen = windowWidth >= 768;
 
-    return (
-        <GestureHandlerRootView style={[styles.container, { paddingBottom: insets.bottom, backgroundColor: theme.background?.get() as string }]}>
-            <Stack.Screen options={{ headerShown: false }} />
-            <StatusBar barStyle="light-content" />
-
-            {/* Scrollable Content overlay */}
-            <Animated.ScrollView
-                style={[styles.scrollContainer, { zIndex: 1 }]}
-                showsVerticalScrollIndicator={false}
-                onScroll={scrollHandler}
-                scrollEventThrottle={16}
-                bounces={false}
-                onLayout={(e) => setModalHeight(e.nativeEvent.layout.height)}
-            >
-                {/* Parallax Image & Grabber */}
-                <Animated.View style={[
-                    { position: 'absolute', top: 0, left: 0, right: 0, height: windowWidth, zIndex: 0 },
-                    parallaxStyle
-                ]}>
+    const mainContent = isLargeScreen ? (
+        <View style={{ flexDirection: 'row', flex: 1, paddingTop: insets.top }}>
+            <View style={{ width: '40%', maxWidth: 450, minWidth: 300, padding: 32, justifyContent: 'flex-start' }}>
+                <View style={{ width: '100%', aspectRatio: 1, borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 12, elevation: 8, backgroundColor: theme.backgroundStrong?.get() as string }}>
                     <ImageCarousel
                         images={images}
                         initialIndex={currentImageIndex}
@@ -141,71 +127,136 @@ export function ItemDetailLayout({
                         onImagePress={() => setModalVisible(true)}
                         paginationBelow={true} 
                     />
-                    
-                    {/* Grabber built into image area */}
-                    <View style={{
-                        position: 'absolute',
-                        top: 12,
-                        left: 0,
-                        right: 0,
-                        alignItems: 'center',
-                        pointerEvents: 'none'
-                    }}>
-                        <View style={{
-                            width: 40,
-                            height: 5,
-                            borderRadius: 2.5,
-                            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 1 },
-                            shadowOpacity: 0.5,
-                            shadowRadius: 2,
-                            elevation: 4,
-                        }} />
+                </View>
+            </View>
+
+            <ScrollView 
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingVertical: 32, paddingBottom: insets.bottom + 40 }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 24 }]}>
+                    <View style={{ flex: 1, paddingRight: 16 }}>
+                        <Text style={[styles.title, { fontSize: 48, lineHeight: 56, color: theme.color?.get() as string }]} numberOfLines={2}>{title}</Text>
                     </View>
-                    
-                    {/* Sticky Title */}
-                    <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
-                        <Text style={[styles.stickyTitleText, { color: '#FFF', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }]}>{title}</Text>
-                    </Animated.View>
-                </Animated.View>
-
-                {/* Transparent Spacer so touches pass through to the Parallax Header */}
-                <View style={{ height: windowWidth, backgroundColor: 'transparent' }} pointerEvents="none" />
-
-                {/* Inner ScrollView mapped dynamically to stop exactly below the grabber */}
-                <ScrollView 
-                    style={[styles.contentSurface, { backgroundColor: theme.background?.get() as string, height: modalHeight - 29 }]}
-                    contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
-                    nestedScrollEnabled={true}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                        <View style={{ flex: 1 }}>
-                            <Swipeable
-                                ref={(ref) => { swipeableRef = ref; }}
-                                renderRightActions={() => renderRightActions(id, swipeableRef!)}
-                                friction={2}
-                                rightThreshold={40}
-                                overshootRight={false}
-                            >
-                                <Text style={[styles.title, { fontSize: 32, color: theme.color?.get() as string }]}>{title}</Text>
-                            </Swipeable>
-                        </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <TouchableOpacity onPress={() => {
+                            onToggleFavorite(id);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                            <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? '#FF4B4B' : theme.color?.get() as string} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            onToggleStudyPile(id);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                            <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? '#4A90E2' : theme.color?.get() as string} />
+                        </TouchableOpacity>
                         {onEditPress && isEditModeEnabled && (
-                            <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
-                                <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
+                            <TouchableOpacity onPress={onEditPress} style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
+                                <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
                             </TouchableOpacity>
                         )}
                     </View>
+                </View>
 
-                    {/* Inject Specific Content Here */}
-                    {children}
+                {children}
+            </ScrollView>
+        </View>
+    ) : (
+        <Animated.ScrollView
+            style={[styles.scrollContainer, { zIndex: 1 }]}
+            showsVerticalScrollIndicator={false}
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+            bounces={false}
+            onLayout={(e) => setModalHeight(e.nativeEvent.layout.height)}
+        >
+            {/* Parallax Image & Grabber */}
+            <Animated.View style={[
+                { position: 'absolute', top: 0, left: 0, right: 0, height: windowWidth, zIndex: 0 },
+                parallaxStyle
+            ]}>
+                <ImageCarousel
+                    images={images}
+                    initialIndex={currentImageIndex}
+                    onIndexChange={setCurrentImageIndex}
+                    onImagePress={() => setModalVisible(true)}
+                    paginationBelow={true} 
+                />
+                
+                {/* Grabber built into image area */}
+                <View style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 0,
+                    right: 0,
+                    alignItems: 'center',
+                    pointerEvents: 'none'
+                }}>
+                    <View style={{
+                        width: 40,
+                        height: 5,
+                        borderRadius: 2.5,
+                        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 2,
+                        elevation: 4,
+                    }} />
+                </View>
+                
+                {/* Sticky Title */}
+                <Animated.View style={[styles.stickyTitleContainer, { bottom: 20, left: 20 }, stickyTitleStyle]}>
+                    <Text style={[styles.stickyTitleText, { color: '#FFF', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }]}>{title}</Text>
+                </Animated.View>
+            </Animated.View>
 
-                    {/* Bottom Spacing */}
-                    <View style={{ height: 40 }} />
-                </ScrollView>
-            </Animated.ScrollView>
+            {/* Transparent Spacer so touches pass through to the Parallax Header */}
+            <View style={{ height: windowWidth, backgroundColor: 'transparent' }} pointerEvents="none" />
+
+            {/* Inner ScrollView mapped dynamically to stop exactly below the grabber */}
+            <ScrollView 
+                style={[styles.contentSurface, { backgroundColor: theme.background?.get() as string, height: modalHeight - 29 }]}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                    <View style={{ flex: 1 }}>
+                        <Swipeable
+                            ref={(ref) => { swipeableRef = ref; }}
+                            renderRightActions={() => renderRightActions(id, swipeableRef!)}
+                            friction={2}
+                            rightThreshold={40}
+                            overshootRight={false}
+                        >
+                            <Text style={[styles.title, { fontSize: 32, color: theme.color?.get() as string }]}>{title}</Text>
+                        </Swipeable>
+                    </View>
+                    {onEditPress && isEditModeEnabled && (
+                        <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
+                            <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Inject Specific Content Here */}
+                {children}
+
+                {/* Bottom Spacing */}
+                <View style={{ height: 40 }} />
+            </ScrollView>
+        </Animated.ScrollView>
+    );
+
+    return (
+        <GestureHandlerRootView style={[styles.container, { paddingBottom: isLargeScreen ? 0 : insets.bottom, backgroundColor: theme.background?.get() as string }]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <StatusBar barStyle="light-content" />
+
+            {mainContent}
 
             {/* Lightbox Modal */}
             <Modal
@@ -337,5 +388,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 20,
         zIndex: 10,
+    },
+    actionButtonDesktop: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

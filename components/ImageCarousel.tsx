@@ -32,7 +32,8 @@ export function ImageCarousel({
     zoomEnabled = false,
     paginationBelow = false,
 }: ImageCarouselProps & { paginationBelow?: boolean }) {
-    const { width } = useWindowDimensions();
+    const { width: windowWidth } = useWindowDimensions();
+    const [containerWidth, setContainerWidth] = useState(windowWidth);
 
     const [activeIndex, setActiveIndex] = useState(initialIndex);
     const [isZoomed, setIsZoomed] = useState(false);
@@ -56,17 +57,18 @@ export function ImageCarousel({
             // or on mount
             setTimeout(() => {
                 scrollViewRef.current?.scrollTo({
-                    x: initialIndex * width,
+                    x: initialIndex * containerWidth,
                     y: 0,
                     animated: false
                 });
             }, 0);
         }
-    }, [initialIndex, width]);
+    }, [initialIndex, containerWidth]);
 
     const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        if (containerWidth === 0) return;
         const slide = Math.round(
-            event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width
+            event.nativeEvent.contentOffset.x / containerWidth
         );
         if (slide !== activeIndex) {
             setActiveIndex(slide);
@@ -80,7 +82,14 @@ export function ImageCarousel({
     if (!images || images.length === 0) return null;
 
     return (
-        <View style={[styles.container, style]}>
+        <View 
+            style={[styles.container, style, { flex: 1 }]}
+            onLayout={(e) => {
+                if (e.nativeEvent.layout.width > 0) {
+                    setContainerWidth(e.nativeEvent.layout.width);
+                }
+            }}
+        >
             <ScrollView
                 ref={scrollViewRef}
                 pagingEnabled
@@ -102,7 +111,7 @@ export function ImageCarousel({
                         <Pressable 
                             key={index} 
                             onPress={zoomEnabled ? undefined : onImagePress} 
-                            style={{ width, height: '100%' }}
+                            style={{ width: containerWidth, height: '100%' }}
                         >
                             {zoomEnabled ? (
                                 <ZoomableImage 
@@ -119,7 +128,7 @@ export function ImageCarousel({
                             ) : (
                                 <Image
                                     source={typeof source === 'string' ? { uri: source } : source}
-                                    style={{ width: width, height: '100%' }}
+                                    style={{ width: containerWidth, height: '100%' }}
                                     resizeMode="cover"
                                 />
                             )}
