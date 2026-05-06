@@ -13,7 +13,7 @@ export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
     const { user, signOut } = useAuth();
     const theme = useTheme();
-    const { isEditModeEnabled, isTestingEnabled, setEditMode, setTesting } = useSettingsStore();
+    const { isTestingEnabled, setTesting } = useSettingsStore();
 
     const avatarUrl = user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
@@ -81,17 +81,13 @@ export default function ProfileScreen() {
                         paddingVertical="$4"
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
-                        onPress={() => setEditMode(!isEditModeEnabled)}
+                        onPress={() => handleNavigation('/edit-mode')}
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
-                            <Text fontSize="$5" color="$color" fontWeight="500">Enable Edit Mode</Text>
+                            <Text fontSize="$5" color="$color" fontWeight="500">Creator Hub</Text>
                         </XStack>
-                        <Switch 
-                            value={isEditModeEnabled} 
-                            onValueChange={(val) => setEditMode(val)} 
-                            trackColor={{ false: theme.borderColor?.get() as string, true: theme.color8?.get() as string }}
-                        />
+                        <IconSymbol name="chevron.right" size={24} color={theme.color11?.get() as string} />
                     </XStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />

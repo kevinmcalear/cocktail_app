@@ -36,6 +36,15 @@ export interface DatabaseAttribute {
     type: AttributeType;
 }
 
+export interface DatabaseDraft {
+    id: string;
+    user_id: string;
+    entity_type: EntityType | 'menu';
+    draft_data: any;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface DatabaseImage {
     id: string;
     url: string;

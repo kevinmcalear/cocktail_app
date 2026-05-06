@@ -23,6 +23,7 @@ import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useBars } from "@/hooks/useBars";
+import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
@@ -69,7 +70,8 @@ export default function AddCocktailScreen() {
     const [notes, setNotes] = useState("");
     const [spec, setSpec] = useState("");
 
-    const { barId: initialBarId } = useLocalSearchParams<{ barId?: string }>();
+    const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
+    const { drafts, saveDraft, deleteDraft } = useDrafts();
     
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
@@ -106,6 +108,48 @@ export default function AddCocktailScreen() {
         ),
         []
     );
+
+    useEffect(() => {
+        if (draftId && drafts.length > 0) {
+            const draft = drafts.find((d: any) => d.id === draftId);
+            if (draft && draft.draft_data) {
+                const data = draft.draft_data;
+                setName(data.name || "");
+                setDescription(data.description || "");
+                setOrigin(data.origin || "");
+                setNotes(data.notes || "");
+                setMethodId(data.methodId || null);
+                setGlasswareId(data.glasswareId || null);
+                setFamilyId(data.familyId || null);
+                setIceId(data.iceId || null);
+                setBarId(data.barId || initialBarId || null);
+                setRecipeItems(data.recipeItems || []);
+                setLocalImages(data.localImages || []);
+                setOverrideVisibility(data.overrideVisibility || null);
+                setOverrideGeneric(data.overrideGeneric || null);
+                setOverrideSpecific(data.overrideSpecific || null);
+                setOverrideMeasurement(data.overrideMeasurement || null);
+                setOverridePrep(data.overridePrep || null);
+            }
+        }
+    }, [draftId, drafts]);
+
+    const handleSaveDraft = async () => {
+        try {
+            setSaving(true);
+            const draftData = {
+                name, description, origin, notes, methodId, glasswareId, familyId, iceId, barId,
+                recipeItems, localImages, overrideVisibility, overrideGeneric, overrideSpecific,
+                overrideMeasurement, overridePrep
+            };
+            await saveDraft({ id: draftId, entityType: 'cocktail', draftData });
+            Alert.alert("Success", "Draft saved successfully!");
+        } catch (error) {
+            Alert.alert("Error", "Failed to save draft.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     useEffect(() => {
         if (showIngredientPicker) {
@@ -240,6 +284,10 @@ export default function AddCocktailScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['cocktails'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            
+            if (draftId) {
+                await deleteDraft(draftId);
+            }
             // If assigned to a bar, also invalidate that bar's cache
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
@@ -276,14 +324,24 @@ export default function AddCocktailScreen() {
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">New Cocktail</Text>
-                <Button 
-                    onPress={handleSave} 
-                    disabled={saving}
-                    size="$3"
-                    chromeless
-                >
-                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
-                </Button>
+                <XStack gap="$2" alignItems="center">
+                    <Button 
+                        onPress={handleSaveDraft} 
+                        disabled={saving}
+                        size="$3"
+                        chromeless
+                    >
+                        <Text color="$color11" fontWeight="500">Save Draft</Text>
+                    </Button>
+                    <Button 
+                        onPress={handleSave} 
+                        disabled={saving}
+                        size="$3"
+                        chromeless
+                    >
+                        {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Publish</Text>}
+                    </Button>
+                </XStack>
             </XStack>
 
             {loading ? (
