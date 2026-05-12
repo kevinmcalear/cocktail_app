@@ -1,8 +1,8 @@
 diff --git a/node_modules/zustand/esm/middleware.mjs b/node_modules/zustand/esm/middleware.mjs
-index 1ea9314..d839130 100644
+index c3c9b8e..18231c3 100644
 --- a/node_modules/zustand/esm/middleware.mjs
 +++ b/node_modules/zustand/esm/middleware.mjs
-@@ -59,7 +59,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
+@@ -61,7 +61,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
    const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
    let extensionConnector;
    try {
@@ -11,7 +11,7 @@ index 1ea9314..d839130 100644
    } catch (e) {
    }
    if (!extensionConnector) {
-@@ -121,7 +121,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
+@@ -123,7 +123,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
      let didWarnAboutReservedActionType = false;
      const originalDispatch = api.dispatch;
      api.dispatch = (...args) => {
