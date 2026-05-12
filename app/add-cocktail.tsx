@@ -255,11 +255,47 @@ export default function AddCocktailScreen() {
         });
 
         if (!result.canceled) {
-            const newImages = result.assets.map(asset => ({
-                id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                url: asset.uri,
-            }));
-            setLocalImages(prev => [...prev, ...newImages]);
+            setSaving(true);
+            try {
+                const newImages: { id: string, url: string }[] = [];
+                for (const asset of result.assets) {
+                    const ext = asset.uri.substring(asset.uri.lastIndexOf('.') + 1) || 'jpg';
+                    const fileName = `drafts/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                    const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
+                    const arrayBuffer = decode(base64);
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('drinks')
+                        .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: false });
+
+                    if (!uploadError) {
+                        const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
+                        
+                        const { data: imgData, error: imgError } = await supabase
+                            .from('images')
+                            .insert({ url: publicUrlData.publicUrl })
+                            .select()
+                            .single();
+                            
+                        if (!imgError && imgData) {
+                            newImages.push({
+                                id: imgData.id,
+                                url: publicUrlData.publicUrl,
+                            });
+                        }
+                    }
+                }
+                setLocalImages(prev => [...prev, ...newImages]);
+            } catch (error) {
+                console.error("Error uploading drafted image", error);
+                if (Platform.OS === 'web') {
+                    window.alert("Error uploading image");
+                } else {
+                    Alert.alert("Error", "Failed to upload image");
+                }
+            } finally {
+                setSaving(false);
+            }
         }
     };
 
@@ -267,7 +303,25 @@ export default function AddCocktailScreen() {
 
     const uploadImage = async (uri: string, cocktailId: string): Promise<string | null> => {
         try {
-            const ext = uri.substring(uri.lastIndexOf('.') + 1);
+            if (uri.startsWith('http')) {
+                const { data: imgData, error: imgError } = await supabase
+                    .from('images')
+                    .select('id')
+                    .eq('url', uri)
+                    .limit(1)
+                    .single();
+                if (imgData && !imgError) return imgData.id;
+                
+                const { data: newImgData, error: newImgError } = await supabase
+                    .from('images')
+                    .insert({ url: uri })
+                    .select()
+                    .single();
+                if (!newImgError && newImgData) return newImgData.id;
+                return null;
+            }
+
+            const ext = uri.substring(uri.lastIndexOf('.') + 1) || 'jpg';
             const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
             const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
             const arrayBuffer = decode(base64);

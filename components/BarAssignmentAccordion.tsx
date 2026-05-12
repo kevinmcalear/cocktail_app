@@ -1,5 +1,7 @@
 import React from "react";
-import { Accordion, Label, Select, Adapt, Sheet, XStack, YStack, Text, useTheme } from "tamagui";
+import { Modal, TouchableOpacity, FlatList, View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Accordion, Label, XStack, YStack, Text, useTheme } from "tamagui";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBars } from "@/hooks/useBars";
 
@@ -17,6 +19,65 @@ interface BarAssignmentAccordionProps {
     overridePrep?: string | null;
     setOverridePrep?: (val: string | null) => void;
     marginBottom?: any;
+}
+
+interface NativeModalPickerProps {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: { label: string; value: string }[];
+    placeholder: string;
+    title: string;
+}
+
+function NativeModalPicker({ value, onValueChange, items, placeholder, title }: NativeModalPickerProps) {
+    const [open, setOpen] = React.useState(false);
+    const theme = useTheme();
+    const insets = useSafeAreaInsets();
+    
+    const selectedItem = items.find(i => i.value === value) || items[0];
+
+    return (
+        <>
+            <TouchableOpacity 
+                style={{ backgroundColor: theme.background?.get() as string, borderColor: theme.borderColor?.get() as string, borderWidth: 1, padding: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minWidth: 160 }}
+                onPress={() => setOpen(true)}
+            >
+                <Text color="$color">{selectedItem ? selectedItem.label : placeholder}</Text>
+                <IconSymbol name="chevron.down" size={16} color={theme.color11?.get() as string} />
+            </TouchableOpacity>
+
+            <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+                    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+                        <View style={{ backgroundColor: theme.backgroundStrong?.get() as string, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Math.max(insets.bottom, 20), maxHeight: '80%' }}>
+                            <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text fontSize={18} fontWeight="bold" color="$color">{title}</Text>
+                                <TouchableOpacity onPress={() => setOpen(false)} style={{ padding: 4 }}>
+                                    <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                                </TouchableOpacity>
+                            </View>
+                            <FlatList 
+                                data={items}
+                                keyExtractor={(item) => item.value}
+                                renderItem={({item}) => (
+                                    <TouchableOpacity 
+                                        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string }}
+                                        onPress={() => {
+                                            onValueChange(item.value);
+                                            setOpen(false);
+                                        }}
+                                    >
+                                        <Text color={value === item.value ? theme.color8?.get() as string : "$color11"} fontSize={16}>{item.label}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+        </>
+    )
 }
 
 export function BarAssignmentAccordion({
@@ -50,31 +111,16 @@ export function BarAssignmentAccordion({
                         <YStack gap="$3">
                             <YStack gap="$1">
                                 <Label color="$color11">Assign to Bar (Global if empty)</Label>
-                                <Select value={barId || 'global'} onValueChange={(val) => setBarId(val === 'global' ? null : val)} disablePreventBodyScroll>
-                                    <Select.Trigger backgroundColor="$background" borderColor="$borderColor">
-                                        <Select.Value placeholder="Select Bar" color="$color" />
-                                    </Select.Trigger>
-                                    <Adapt when="sm" reaches="sm">
-                                        <Sheet modal dismissOnSnapToBottom animation="quick">
-                                            <Sheet.Frame>
-                                                <Sheet.ScrollView>
-                                                    <Adapt.Contents />
-                                                </Sheet.ScrollView>
-                                            </Sheet.Frame>
-                                            <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
-                                        </Sheet>
-                                    </Adapt>
-                                    <Select.Content zIndex={200000}>
-                                        <Select.Viewport minWidth={200}>
-                                            <Select.Group>
-                                                <Select.Item index={0} value="global"><Select.ItemText>Global / Public</Select.ItemText></Select.Item>
-                                                {userBars?.map((b: any, i: number) => (
-                                                    <Select.Item key={b.bar_id} index={i+1} value={b.bar_id}><Select.ItemText>{b.bars?.name}</Select.ItemText></Select.Item>
-                                                ))}
-                                            </Select.Group>
-                                        </Select.Viewport>
-                                    </Select.Content>
-                                </Select>
+                                <NativeModalPicker
+                                    title="Assign to Bar"
+                                    placeholder="Select Bar"
+                                    value={barId || 'global'}
+                                    onValueChange={(val: string) => setBarId(val === 'global' ? null : val)}
+                                    items={[
+                                        { label: 'Global / Public', value: 'global' },
+                                        ...(userBars || []).map((b: any) => ({ label: b.bars?.name, value: b.bar_id }))
+                                    ]}
+                                />
                             </YStack>
                             
                             {setOverrideVisibility && (
@@ -87,33 +133,20 @@ export function BarAssignmentAccordion({
                                         return (
                                             <XStack key={field} justifyContent="space-between" alignItems="center">
                                                 <Label color="$color11" flex={1}>{field} Level</Label>
-                                                <Select value={val || 'default'} onValueChange={(v) => setVal?.(v === 'default' ? null : v)} disablePreventBodyScroll>
-                                                    <Select.Trigger width={160} backgroundColor="$background" borderColor="$borderColor" size="$3">
-                                                        <Select.Value placeholder="Bar Default" color="$color" />
-                                                    </Select.Trigger>
-                                                    <Adapt when="sm" reaches="sm">
-                                                        <Sheet modal dismissOnSnapToBottom animation="quick">
-                                                            <Sheet.Frame>
-                                                                <Sheet.ScrollView>
-                                                                    <Adapt.Contents />
-                                                                </Sheet.ScrollView>
-                                                            </Sheet.Frame>
-                                                            <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
-                                                        </Sheet>
-                                                    </Adapt>
-                                                    <Select.Content zIndex={200000}>
-                                                        <Select.Viewport minWidth={200}>
-                                                            <Select.Group>
-                                                                <Select.Item index={0} value="default"><Select.ItemText>Bar Default</Select.ItemText></Select.Item>
-                                                                <Select.Item index={1} value="10"><Select.ItemText>Guest (10)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={2} value="20"><Select.ItemText>Employee (20)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={3} value="30"><Select.ItemText>Bartender (30)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={4} value="35"><Select.ItemText>Drink Creator (35)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={5} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
-                                                            </Select.Group>
-                                                        </Select.Viewport>
-                                                    </Select.Content>
-                                                </Select>
+                                                <NativeModalPicker
+                                                    title={`${field} Level`}
+                                                    placeholder="Bar Default"
+                                                    value={val || 'default'}
+                                                    onValueChange={(v: string) => setVal?.(v === 'default' ? null : v)}
+                                                    items={[
+                                                        { label: 'Bar Default', value: 'default' },
+                                                        { label: 'Guest (10)', value: '10' },
+                                                        { label: 'Employee (20)', value: '20' },
+                                                        { label: 'Bartender (30)', value: '30' },
+                                                        { label: 'Drink Creator (35)', value: '35' },
+                                                        { label: 'Admin (40)', value: '40' }
+                                                    ]}
+                                                />
                                             </XStack>
                                         );
                                     })}
