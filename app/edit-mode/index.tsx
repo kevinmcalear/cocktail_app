@@ -1,19 +1,34 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ScrollView, View, Alert } from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, XStack, YStack, useTheme, Button } from 'tamagui';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
-import { formatDistanceToNow } from 'date-fns'; // Using standard date formatting if available, otherwise fallback to simple date string. Wait, maybe date-fns is not installed? Let me check package.json. Let's just use JS Date for safety.
+import { useBars } from '@/hooks/useBars';
+import { useAuth } from '@/ctx/AuthContext';
 
 export default function EditModeDashboard() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
+    const { user } = useAuth();
     const { drafts, isLoading, deleteDraft } = useDrafts();
+    const { data: userBars } = useBars();
 
+    const getBarName = (barId: string) => {
+        if (barId === 'personal') return 'Personal Drafts';
+        const bar = userBars?.find((b: any) => b.bar_id === barId);
+        return bar?.bars?.name || 'Unknown Bar';
+    };
+
+    const draftsByBar = drafts.reduce((acc: any, draft: any) => {
+        const barId = draft.bar_id || 'personal';
+        if (!acc[barId]) acc[barId] = [];
+        acc[barId].push(draft);
+        return acc;
+    }, {});
     const options = [
         { label: 'Cocktail', icon: 'TabDrinks', route: '/add-cocktail' },
         { label: 'Ingredient', icon: 'TabIngredients', route: '/add-ingredient' },
@@ -23,14 +38,21 @@ export default function EditModeDashboard() {
     ];
 
     const handleDeleteDraft = (id: string) => {
-        Alert.alert(
-            "Delete Draft",
-            "Are you sure you want to discard this draft?",
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", style: "destructive", onPress: () => deleteDraft(id) }
-            ]
-        );
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm("Are you sure you want to discard this draft?");
+            if (confirmed) {
+                deleteDraft(id);
+            }
+        } else {
+            Alert.alert(
+                "Delete Draft",
+                "Are you sure you want to discard this draft?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", style: "destructive", onPress: () => deleteDraft(id) }
+                ]
+            );
+        }
     };
 
     const handleResumeDraft = (draft: any) => {
@@ -78,7 +100,7 @@ export default function EditModeDashboard() {
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
                 {/* Works in Progress Section */}
-                <YStack gap="$3" marginBottom="$6">
+                <YStack gap="$4" marginBottom="$6">
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
                         Works in Progress
                     </Text>
@@ -87,37 +109,50 @@ export default function EditModeDashboard() {
                     ) : drafts.length === 0 ? (
                         <Text color="$color11">No active drafts.</Text>
                     ) : (
-                        drafts.map((draft: any) => {
-                            const date = new Date(draft.updated_at);
-                            const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            return (
-                                <XStack
-                                    key={draft.id}
-                                    backgroundColor="$backgroundStrong"
-                                    borderRadius="$4"
-                                    borderWidth={1}
-                                    borderColor="$borderColor"
-                                    padding="$3"
-                                    alignItems="center"
-                                    justifyContent="space-between"
-                                >
-                                    <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
-                                        <View style={styles.iconContainer}>
-                                            <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
-                                        </View>
-                                        <YStack marginLeft="$3" flex={1}>
-                                            <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1}>
-                                                {draft.draft_data?.name || `Untitled ${draft.entity_type}`}
-                                            </Text>
-                                            <Text fontSize={12} color="$color11">Last edited: {dateString}</Text>
-                                        </YStack>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
-                                        <IconSymbol name="trash" size={20} color="#ff4444" />
-                                    </TouchableOpacity>
-                                </XStack>
-                            );
-                        })
+                        Object.keys(draftsByBar).map((barId) => (
+                            <YStack key={barId} gap="$3">
+                                <Text fontSize={12} color="$color11" fontWeight="bold">
+                                    {getBarName(barId)}
+                                </Text>
+                                {draftsByBar[barId].map((draft: any) => {
+                                    const date = new Date(draft.updated_at);
+                                    const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    const authorName = draft.user_id === user?.id 
+                                        ? "You" 
+                                        : (draft.draft_data?.last_editor_email || "Another Member");
+
+                                    return (
+                                        <XStack
+                                            key={draft.id}
+                                            backgroundColor="$backgroundStrong"
+                                            borderRadius="$4"
+                                            borderWidth={1}
+                                            borderColor="$borderColor"
+                                            padding="$3"
+                                            alignItems="center"
+                                            justifyContent="space-between"
+                                        >
+                                            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
+                                                <View style={styles.iconContainer}>
+                                                    <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
+                                                </View>
+                                                <YStack marginLeft="$3" flex={1}>
+                                                    <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1}>
+                                                        {draft.draft_data?.name || `Untitled ${draft.entity_type}`}
+                                                    </Text>
+                                                    <Text fontSize={12} color="$color11">
+                                                        Last edited by {authorName} • {dateString}
+                                                    </Text>
+                                                </YStack>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
+                                                <IconSymbol name="trash" size={20} color="#ff4444" />
+                                            </TouchableOpacity>
+                                        </XStack>
+                                    );
+                                })}
+                            </YStack>
+                        ))
                     )}
                 </YStack>
 

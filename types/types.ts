@@ -41,8 +41,10 @@ export interface DatabaseDraft {
     user_id: string;
     entity_type: EntityType | 'menu';
     draft_data: any;
+    bar_id?: string | null;
     created_at: string;
     updated_at: string;
+    user?: { id: string; raw_user_meta_data?: any; email?: string } | null;
 }
 
 export interface DatabaseImage {

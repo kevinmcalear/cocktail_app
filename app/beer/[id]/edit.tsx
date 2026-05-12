@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
 export default function EditBeerScreen() {
     const { id } = useLocalSearchParams();
@@ -48,6 +49,14 @@ export default function EditBeerScreen() {
 
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
 
+    // Bar Assignment and Overrides
+    const [barId, setBarId] = useState<string | null>(null);
+    const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
+    const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
+    const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
+    const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
+    const [overridePrep, setOverridePrep] = useState<string | null>(null);
+
     useEffect(() => {
         if (beer) {
             setName(beer.name || "");
@@ -55,6 +64,12 @@ export default function EditBeerScreen() {
             setBrewery(beer.brand_maker || "");
             setAbv(beer.abv?.toString() || "");
             setPrice(beer.price?.toString() || "");
+            setBarId(beer.bar_id || null);
+            setOverrideVisibility(beer.override_visibility_level?.toString() || null);
+            setOverrideGeneric(beer.override_generic_ingredient_level?.toString() || null);
+            setOverrideSpecific(beer.override_specific_brand_level?.toString() || null);
+            setOverrideMeasurement(beer.override_measurement_level?.toString() || null);
+            setOverridePrep(beer.override_prep_level?.toString() || null);
 
             if (beer.item_categories) {
                 setSelectedCategories(beer.item_categories.map((ic: any) => ic.category_id));
@@ -182,6 +197,12 @@ export default function EditBeerScreen() {
                 brand_maker: brewery || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
+                bar_id: barId || null,
+                override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
+                override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
+                override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
+                override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
+                override_prep_level: overridePrep ? parseInt(overridePrep) : null,
             };
 
             const { error } = await supabase
@@ -377,6 +398,15 @@ export default function EditBeerScreen() {
                         focusStyle={{ borderColor: '$color8' }}
                     />
                 </YStack>
+
+                <BarAssignmentAccordion
+                    barId={barId} setBarId={setBarId}
+                    overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
+                    overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
+                    overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
+                    overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
+                    overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                />
 
             </ScrollView>
             

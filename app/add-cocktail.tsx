@@ -4,7 +4,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, Bottom
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -28,6 +28,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
 interface RecipeItem {
     id?: string;
@@ -46,6 +47,7 @@ interface Menu {
 
 export default function AddCocktailScreen() {
     const router = useRouter();
+    const navigation = useNavigation();
     const insets = useSafeAreaInsets();
 
     const queryClient = useQueryClient();
@@ -59,8 +61,11 @@ export default function AddCocktailScreen() {
     const allIngredients = dropdowns?.ingredients || [];
     const menus = dropdowns?.menus || [];
 
-    const loading = loadingDropdowns;
     const [saving, setSaving] = useState(false);
+    
+    // Exit Modal State
+    const [showExitModal, setShowExitModal] = useState(false);
+    const pendingNavigationActionRef = useRef<any>(null);
 
     // Form State
     const [name, setName] = useState("");
@@ -71,7 +76,10 @@ export default function AddCocktailScreen() {
     const [spec, setSpec] = useState("");
 
     const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
-    const { drafts, saveDraft, deleteDraft } = useDrafts();
+    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+    
+    // Add local state for the active draft ID so newly created drafts are tracked
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
     
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
@@ -93,6 +101,9 @@ export default function AddCocktailScreen() {
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
 
+    // Image State (Local only for creation)
+    const [localImages, setLocalImages] = useState<{ id: string, url: string }[]>([]);
+
     const theme = useTheme();
     const pickerSheetRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => ['80%'], []);
@@ -109,10 +120,28 @@ export default function AddCocktailScreen() {
         []
     );
 
+    const draftLoadedRef = useRef<string | null>(null);
+    const loading = loadingDropdowns || (!!currentDraftId && draftLoadedRef.current !== currentDraftId);
+
+    const currentStateStr = JSON.stringify({ name, description, origin, notes, methodId, glasswareId, familyId, iceId, barId, recipeItems, localImages, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep });
+    const cleanStateStrRef = useRef<string>(currentStateStr);
+    const [needsCleanMark, setNeedsCleanMark] = useState(false);
+
     useEffect(() => {
-        if (draftId && drafts.length > 0) {
-            const draft = drafts.find((d: any) => d.id === draftId);
+        if (needsCleanMark) {
+            cleanStateStrRef.current = currentStateStr;
+            setNeedsCleanMark(false);
+        }
+    }, [needsCleanMark, currentStateStr]);
+
+    useEffect(() => {
+        if (currentDraftId && drafts.length > 0 && draftLoadedRef.current !== currentDraftId) {
+            // Wait for React Query to finish fetching fresh background data
+            if (isFetching) return;
+            
+            const draft = drafts.find((d: any) => d.id === currentDraftId);
             if (draft && draft.draft_data) {
+                draftLoadedRef.current = currentDraftId;
                 const data = draft.draft_data;
                 setName(data.name || "");
                 setDescription(data.description || "");
@@ -130,9 +159,13 @@ export default function AddCocktailScreen() {
                 setOverrideSpecific(data.overrideSpecific || null);
                 setOverrideMeasurement(data.overrideMeasurement || null);
                 setOverridePrep(data.overridePrep || null);
+                setNeedsCleanMark(true); // Mark clean after loading from DB
+            } else {
+                // If draft isn't found even after fetch completes, unblock UI
+                draftLoadedRef.current = currentDraftId;
             }
         }
-    }, [draftId, drafts]);
+    }, [currentDraftId, drafts, isFetching]);
 
     const handleSaveDraft = async () => {
         try {
@@ -142,12 +175,55 @@ export default function AddCocktailScreen() {
                 recipeItems, localImages, overrideVisibility, overrideGeneric, overrideSpecific,
                 overrideMeasurement, overridePrep
             };
-            await saveDraft({ id: draftId, entityType: 'cocktail', draftData });
-            Alert.alert("Success", "Draft saved successfully!");
+            const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'cocktail', draftData });
+            
+            // If this was a new draft, save the ID so subsequent clicks update the same draft
+            if (!currentDraftId && result && result.id) {
+                setCurrentDraftId(result.id);
+                // Also update the URL params silently so refreshing doesn't lose it
+                router.setParams({ draftId: result.id });
+            }
+            
+            if (Platform.OS === 'web') {
+                window.alert("Draft saved successfully!");
+            } else {
+                Alert.alert("Success", "Draft saved successfully!");
+            }
+            setNeedsCleanMark(true); // Mark clean after saving
         } catch (error) {
-            Alert.alert("Error", "Failed to save draft.");
+            if (Platform.OS === 'web') {
+                window.alert("Failed to save draft.");
+            } else {
+                Alert.alert("Error", "Failed to save draft.");
+            }
         } finally {
             setSaving(false);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            const isDirty = currentStateStr !== cleanStateStrRef.current;
+            if (!isDirty) {
+                return;
+            }
+
+            // Always prevent the navigation to show our custom modal
+            e.preventDefault();
+            pendingNavigationActionRef.current = e.data.action;
+            setShowExitModal(true);
+        });
+
+        return unsubscribe;
+    }, [navigation, currentStateStr]);
+
+    const confirmExit = async (shouldSave: boolean) => {
+        setShowExitModal(false);
+        if (shouldSave) {
+            await handleSaveDraft();
+        }
+        if (pendingNavigationActionRef.current) {
+            navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
 
@@ -160,13 +236,14 @@ export default function AddCocktailScreen() {
         }
     }, [showIngredientPicker]);
 
-    // Image State (Local only for creation)
-    const [localImages, setLocalImages] = useState<{ id: string, url: string }[]>([]);
-
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-            Alert.alert("Permission needed", "We need access to your photos.");
+            if (Platform.OS === 'web') {
+                window.alert("Permission needed: We need access to your photos.");
+            } else {
+                Alert.alert("Permission needed", "We need access to your photos.");
+            }
             return;
         }
 
@@ -219,7 +296,11 @@ export default function AddCocktailScreen() {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            Alert.alert("Missing Info", "Name is required.");
+            if (Platform.OS === 'web') {
+                window.alert("Missing Info: Name is required.");
+            } else {
+                Alert.alert("Missing Info", "Name is required.");
+            }
             return;
         }
         setSaving(true);
@@ -293,13 +374,26 @@ export default function AddCocktailScreen() {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
 
-            Alert.alert("Success", "Cocktail created!", [
-                { text: "OK", onPress: () => router.back() }
-            ]);
+            if (Platform.OS === 'web') {
+                window.alert("Success: Cocktail created!");
+                cleanStateStrRef.current = currentStateStr; // Prevent beforeRemove block
+                router.back();
+            } else {
+                Alert.alert("Success", "Cocktail created!", [
+                    { text: "OK", onPress: () => {
+                        cleanStateStrRef.current = currentStateStr;
+                        router.back();
+                    }}
+                ]);
+            }
 
         } catch (error) {
             console.error("Creation error:", error);
-            Alert.alert("Error", "Failed to create cocktail.");
+            if (Platform.OS === 'web') {
+                window.alert("Error: Failed to create cocktail.");
+            } else {
+                Alert.alert("Error", "Failed to create cocktail.");
+            }
         } finally {
             setSaving(false);
         }
@@ -575,78 +669,14 @@ export default function AddCocktailScreen() {
 
 
 
-                <Accordion overflow="hidden" width="100%" type="multiple" backgroundColor="transparent" marginBottom="$6">
-                    <Accordion.Item value="a1" borderRadius="$4" borderColor="$borderColor" borderWidth={1} backgroundColor="$backgroundStrong">
-                        <Accordion.Trigger flexDirection="row" justifyContent="space-between" padding="$3" backgroundColor="$backgroundStrong">
-                            {({ open }) => (
-                                <>
-                                    <XStack gap="$2" alignItems="center">
-                                        <IconSymbol name="lock.shield.fill" size={18} color={theme.color11?.get() as string} />
-                                        <Text color="$color" fontWeight="bold">Bar Assignment & Access</Text>
-                                    </XStack>
-                                    <IconSymbol name={open ? "chevron.up" : "chevron.down"} size={16} color={theme.color11?.get() as string} />
-                                </>
-                            )}
-                        </Accordion.Trigger>
-                        <Accordion.HeightAnimator animation="medium">
-                            <Accordion.Content animation="medium" exitStyle={{ opacity: 0 }} padding="$3" borderTopWidth={1} borderColor="$borderColor">
-                                <YStack gap="$3">
-                                    <YStack gap="$1">
-                                        <Label color="$color11">Assign to Bar (Global if empty)</Label>
-                                        <Select value={barId || 'global'} onValueChange={(val) => setBarId(val === 'global' ? null : val)} disablePreventBodyScroll>
-                                            <Select.Trigger backgroundColor="$background" borderColor="$borderColor">
-                                                <Select.Value placeholder="Select Bar" color="$color" />
-                                            </Select.Trigger>
-                                            <Adapt when="sm" reaches="sm">
-                                                <Sheet modal dismissOnSnapToBottom><Sheet.Frame><Sheet.ScrollView><Adapt.Contents /></Sheet.ScrollView></Sheet.Frame><Sheet.Overlay /></Sheet>
-                                            </Adapt>
-                                            <Select.Content zIndex={200000}>
-                                                <Select.Viewport minWidth={200}>
-                                                    <Select.Group>
-                                                        <Select.Item index={0} value="global"><Select.ItemText>Global / Public</Select.ItemText></Select.Item>
-                                                        {userBars?.map((b: any, i: number) => (
-                                                            <Select.Item key={b.bar_id} index={i+1} value={b.bar_id}><Select.ItemText>{b.bars?.name}</Select.ItemText></Select.Item>
-                                                        ))}
-                                                    </Select.Group>
-                                                </Select.Viewport>
-                                            </Select.Content>
-                                        </Select>
-                                    </YStack>
-                                    
-                                    <Text fontSize={12} color="$color11" marginTop="$2" marginBottom="$1">Leave empty to use the Bar's default rules.</Text>
-                                    
-                                    {['Visibility', 'Generic Ingredient', 'Specific Brand', 'Measurement', 'Prep'].map((field, idx) => {
-                                        const val = [overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep][idx];
-                                        const setVal = [setOverrideVisibility, setOverrideGeneric, setOverrideSpecific, setOverrideMeasurement, setOverridePrep][idx];
-                                        return (
-                                            <XStack key={field} justifyContent="space-between" alignItems="center">
-                                                <Label color="$color11" flex={1}>{field} Level</Label>
-                                                <Select value={val || 'default'} onValueChange={(v) => setVal(v === 'default' ? null : v)} disablePreventBodyScroll>
-                                                    <Select.Trigger width={160} backgroundColor="$background" borderColor="$borderColor" size="$3">
-                                                        <Select.Value placeholder="Bar Default" color="$color" />
-                                                    </Select.Trigger>
-                                                    <Adapt when="sm" reaches="sm"><Sheet modal dismissOnSnapToBottom><Sheet.Frame><Sheet.ScrollView><Adapt.Contents /></Sheet.ScrollView></Sheet.Frame><Sheet.Overlay /></Sheet></Adapt>
-                                                    <Select.Content zIndex={200000}>
-                                                        <Select.Viewport minWidth={200}>
-                                                            <Select.Group>
-                                                                <Select.Item index={0} value="default"><Select.ItemText>Bar Default</Select.ItemText></Select.Item>
-                                                                <Select.Item index={1} value="10"><Select.ItemText>Guest (10)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={2} value="20"><Select.ItemText>Employee (20)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={3} value="30"><Select.ItemText>Bartender (30)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={4} value="35"><Select.ItemText>Drink Creator (35)</Select.ItemText></Select.Item>
-                                                                <Select.Item index={5} value="40"><Select.ItemText>Admin (40)</Select.ItemText></Select.Item>
-                                                            </Select.Group>
-                                                        </Select.Viewport>
-                                                    </Select.Content>
-                                                </Select>
-                                            </XStack>
-                                        );
-                                    })}
-                                </YStack>
-                            </Accordion.Content>
-                        </Accordion.HeightAnimator>
-                    </Accordion.Item>
-                </Accordion>
+                <BarAssignmentAccordion
+                    barId={barId} setBarId={setBarId}
+                    overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
+                    overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
+                    overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
+                    overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
+                    overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                />
 
             </ScrollView>
             </KeyboardAvoidingView>
@@ -701,6 +731,42 @@ export default function AddCocktailScreen() {
                         </View>
                     </View>
                 </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Custom Exit Modal for handling browser back and dirty states safely */}
+            <Modal
+                visible={showExitModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowExitModal(false)}
+            >
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' }]}>
+                    <YStack 
+                        backgroundColor="$backgroundStrong" 
+                        padding="$5" 
+                        borderRadius="$4" 
+                        width="85%" 
+                        maxWidth={400}
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        gap="$4"
+                    >
+                        <Text fontSize="$6" fontWeight="bold" color="$color">Unsaved Changes</Text>
+                        <Text fontSize="$4" color="$color11">You have unsaved changes. Do you want to save your draft before leaving?</Text>
+                        
+                        <XStack justifyContent="flex-end" gap="$3" marginTop="$2">
+                            <Button size="$3" chromeless onPress={() => setShowExitModal(false)}>
+                                <Text color="$color11">Cancel</Text>
+                            </Button>
+                            <Button size="$3" backgroundColor="#ff4444" onPress={() => confirmExit(false)}>
+                                <Text color="white" fontWeight="bold">Discard</Text>
+                            </Button>
+                            <Button size="$3" backgroundColor={theme.color8?.get() as string} onPress={() => confirmExit(true)}>
+                                <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold">Save</Text>
+                            </Button>
+                        </XStack>
+                    </YStack>
+                </View>
             </Modal>
 
         </YStack>

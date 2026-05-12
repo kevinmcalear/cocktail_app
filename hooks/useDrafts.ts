@@ -20,17 +20,26 @@ export function useDrafts() {
             return data as DatabaseDraft[];
         },
         enabled: !!user?.id,
+        staleTime: 0, // Always fetch fresh to sync across Web/Mobile
     });
 
     const saveDraftMutation = useMutation({
         mutationFn: async ({ id, entityType, draftData }: { id?: string, entityType: string, draftData: any }) => {
             if (!user?.id) throw new Error("No user");
             
+            const bar_id = draftData.barId || null;
+            
+            // Augment draftData with the editor's email to avoid complex joins
+            const augmentedDraftData = {
+                ...draftData,
+                last_editor_email: user.email || 'Unknown Email'
+            };
+
             if (id) {
                 // Update existing draft
                 const { data, error } = await supabase
                     .from('drafts')
-                    .update({ draft_data: draftData, updated_at: new Date().toISOString() })
+                    .update({ draft_data: augmentedDraftData, bar_id, user_id: user.id, updated_at: new Date().toISOString() })
                     .eq('id', id)
                     .select()
                     .single();
@@ -40,7 +49,7 @@ export function useDrafts() {
                 // Insert new draft
                 const { data, error } = await supabase
                     .from('drafts')
-                    .insert({ user_id: user.id, entity_type: entityType, draft_data: draftData })
+                    .insert({ user_id: user.id, entity_type: entityType, draft_data: augmentedDraftData, bar_id })
                     .select()
                     .single();
                 if (error) throw error;
@@ -65,6 +74,7 @@ export function useDrafts() {
     return {
         drafts: draftsQuery.data || [],
         isLoading: draftsQuery.isLoading,
+        isFetching: draftsQuery.isFetching,
         saveDraft: saveDraftMutation.mutateAsync,
         deleteDraft: deleteDraftMutation.mutateAsync,
     };

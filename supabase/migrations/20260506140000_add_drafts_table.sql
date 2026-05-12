@@ -1,5 +1,5 @@
 create table drafts (
-    id uuid primary key default uuid_generate_v4(),
+    id uuid primary key default gen_random_uuid(),
     user_id uuid references auth.users not null,
     entity_type text not null check (entity_type in ('cocktail', 'ingredient', 'beer', 'wine', 'menu')),
     draft_data jsonb not null,

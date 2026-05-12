@@ -28,6 +28,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -54,6 +55,14 @@ export default function EditIngredientScreen() {
     const [abv, setAbv] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const categoryPickerRef = useRef<BottomSheetModal>(null);
+
+    // Bar Assignment and Overrides
+    const [barId, setBarId] = useState<string | null>(null);
+    const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
+    const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
+    const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
+    const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
+    const [overridePrep, setOverridePrep] = useState<string | null>(null);
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
@@ -97,6 +106,12 @@ export default function EditIngredientScreen() {
             setDescription(data.ingredient.description || "");
             setBrandMaker(data.ingredient.brand_maker || "");
             setAbv(data.ingredient.abv?.toString() || "");
+            setBarId(data.ingredient.bar_id || null);
+            setOverrideVisibility(data.ingredient.override_visibility_level?.toString() || null);
+            setOverrideGeneric(data.ingredient.override_generic_ingredient_level?.toString() || null);
+            setOverrideSpecific(data.ingredient.override_specific_brand_level?.toString() || null);
+            setOverrideMeasurement(data.ingredient.override_measurement_level?.toString() || null);
+            setOverridePrep(data.ingredient.override_prep_level?.toString() || null);
 
             if (data.ingredient.item_categories) {
                 setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
@@ -233,7 +248,13 @@ export default function EditIngredientScreen() {
                     name: name.trim(),
                     description: description.trim() || null,
                     brand_maker: brandMaker.trim() || null,
-                    abv: abv ? parseFloat(abv) : null
+                    abv: abv ? parseFloat(abv) : null,
+                    bar_id: barId || null,
+                    override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
+                    override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
+                    override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
+                    override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
+                    override_prep_level: overridePrep ? parseInt(overridePrep) : null,
                 })
                 .eq('id', id);
 
@@ -502,6 +523,15 @@ export default function EditIngredientScreen() {
                             </XStack>
                         ))}
                     </YStack>
+
+                    <BarAssignmentAccordion
+                        barId={barId} setBarId={setBarId}
+                        overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
+                        overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
+                        overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
+                        overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
+                        overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                    />
 
                 </ScrollView>
             </KeyboardAvoidingView>

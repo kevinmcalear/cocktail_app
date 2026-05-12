@@ -24,17 +24,25 @@ export const queryClient = new QueryClient({
       retry: 3,
       // Global error handler for all mutations using Burnt
       onError: (error) => {
-        const burnt = require('burnt');
         let message = 'An unexpected error occurred.';
         if (error instanceof Error) {
             message = error.message;
         }
-        burnt.toast({
-          title: 'Error',
-          message: message,
-          preset: 'error',
-          duration: 3,
-        });
+        
+        try {
+          const burnt = require('burnt');
+          burnt.toast({
+            title: 'Error',
+            message: message,
+            preset: 'error',
+            duration: 3,
+          });
+        } catch (e) {
+          // Fallback if burnt isn't installed natively (e.g., in Expo Go)
+          const { Alert } = require('react-native');
+          Alert.alert('Error', message);
+          console.error('Mutation error:', error);
+        }
       },
     }
   },

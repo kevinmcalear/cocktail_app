@@ -1,16 +1,18 @@
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     ScrollView,
     StyleSheet, TouchableOpacity,
-    Platform, KeyboardAvoidingView
+    Platform, KeyboardAvoidingView, Modal
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { useDrafts } from "@/hooks/useDrafts";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -21,15 +23,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
 export default function AddWineScreen() {
     const router = useRouter();
-    const { barId } = useLocalSearchParams<{ barId?: string }>();
+    const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
+    const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
     const queryClient = useQueryClient();
+
+    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+
+    const [showExitModal, setShowExitModal] = useState(false);
+    const pendingNavigationActionRef = React.useRef<any>(null);
 
     // Form State
     const [name, setName] = useState("");
@@ -38,10 +48,111 @@ export default function AddWineScreen() {
     const [abv, setAbv] = useState("");
     const [price, setPrice] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
     
+    // Bar Assignment and Overrides
+    const [barId, setBarId] = useState<string | null>(initialBarId || null);
+    const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
+    const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
+    const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
+    const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
+    const [overridePrep, setOverridePrep] = useState<string | null>(null);
+
     const { data: dropdowns } = useDropdowns();
     const categoryPickerRef = React.useRef<BottomSheetModal>(null);
-    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
+
+    const draftLoadedRef = React.useRef<string | null>(null);
+    const currentStateStr = JSON.stringify({ name, description, vintner, abv, price, selectedCategories, localImages, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep });
+    const cleanStateStrRef = React.useRef<string>(currentStateStr);
+    const [needsCleanMark, setNeedsCleanMark] = useState(false);
+
+    React.useEffect(() => {
+        if (needsCleanMark) {
+            cleanStateStrRef.current = currentStateStr;
+            setNeedsCleanMark(false);
+        }
+    }, [needsCleanMark, currentStateStr]);
+
+    React.useEffect(() => {
+        if (currentDraftId && drafts.length > 0 && draftLoadedRef.current !== currentDraftId) {
+            if (isFetching) return;
+            
+            const draft = drafts.find((d: any) => d.id === currentDraftId);
+            if (draft && draft.draft_data) {
+                draftLoadedRef.current = currentDraftId;
+                const data = draft.draft_data;
+                setName(data.name || "");
+                setDescription(data.description || "");
+                setVintner(data.vintner || "");
+                setAbv(data.abv || "");
+                setPrice(data.price || "");
+                setSelectedCategories(data.selectedCategories || []);
+                setLocalImages(data.localImages || []);
+                setBarId(data.barId || initialBarId || null);
+                setOverrideVisibility(data.overrideVisibility || null);
+                setOverrideGeneric(data.overrideGeneric || null);
+                setOverrideSpecific(data.overrideSpecific || null);
+                setOverrideMeasurement(data.overrideMeasurement || null);
+                setOverridePrep(data.overridePrep || null);
+                setNeedsCleanMark(true);
+            } else {
+                draftLoadedRef.current = currentDraftId;
+            }
+        }
+    }, [currentDraftId, drafts, isFetching]);
+
+    const handleSaveDraft = async () => {
+        try {
+            setSaving(true);
+            const draftData = { name, description, vintner, abv, price, selectedCategories, localImages, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep };
+            const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'wine', draftData });
+            
+            if (!currentDraftId && result && result.id) {
+                setCurrentDraftId(result.id);
+                router.setParams({ draftId: result.id });
+            }
+            
+            if (Platform.OS === 'web') {
+                window.alert("Draft saved successfully!");
+            } else {
+                Alert.alert("Success", "Draft saved successfully!");
+            }
+            setNeedsCleanMark(true);
+        } catch (error) {
+            console.error("Draft error:", error);
+            if (Platform.OS === 'web') {
+                window.alert("Failed to save draft.");
+            } else {
+                Alert.alert("Error", "Failed to save draft.");
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    React.useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            const isDirty = currentStateStr !== cleanStateStrRef.current;
+            if (!isDirty) {
+                return;
+            }
+            e.preventDefault();
+            pendingNavigationActionRef.current = e.data.action;
+            setShowExitModal(true);
+        });
+
+        return unsubscribe;
+    }, [navigation, currentStateStr]);
+
+    const confirmExit = async (shouldSave: boolean) => {
+        setShowExitModal(false);
+        if (shouldSave) {
+            await handleSaveDraft();
+        }
+        if (pendingNavigationActionRef.current) {
+            navigation.dispatch(pendingNavigationActionRef.current);
+        }
+    };
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -121,6 +232,11 @@ export default function AddWineScreen() {
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
                 bar_id: barId || null,
+                override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
+                override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
+                override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
+                override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
+                override_prep_level: overridePrep ? parseInt(overridePrep) : null,
             };
 
             const { data: newWine, error: insertError } = await supabase
@@ -168,12 +284,18 @@ export default function AddWineScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['wines'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            if (currentDraftId) {
+                await deleteDraft(currentDraftId);
+            }
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
 
             Alert.alert("Success", "Wine created!", [
-                { text: "OK", onPress: () => router.back() }
+                { text: "OK", onPress: () => {
+                    cleanStateStrRef.current = currentStateStr;
+                    router.back();
+                } }
             ]);
 
         } catch (error: any) {
@@ -201,14 +323,24 @@ export default function AddWineScreen() {
                     <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Add Wine</Text>
-                <Button 
-                    onPress={handleSave} 
-                    disabled={saving}
-                    size="$3"
-                    chromeless
-                >
-                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
-                </Button>
+                <XStack gap="$2" alignItems="center">
+                    <Button 
+                        onPress={handleSaveDraft} 
+                        disabled={saving}
+                        size="$3"
+                        chromeless
+                    >
+                        <Text color="$color11" fontWeight="500">Save Draft</Text>
+                    </Button>
+                    <Button 
+                        onPress={handleSave} 
+                        disabled={saving}
+                        size="$3"
+                        chromeless
+                    >
+                        {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
+                    </Button>
+                </XStack>
             </XStack>
 
             <KeyboardAvoidingView
@@ -323,6 +455,15 @@ export default function AddWineScreen() {
                         />
                     </YStack>
 
+                    <BarAssignmentAccordion
+                        barId={barId} setBarId={setBarId}
+                        overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
+                        overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
+                        overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
+                        overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
+                        overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                    />
+
                 </ScrollView>
             </KeyboardAvoidingView>
             
@@ -338,6 +479,42 @@ export default function AddWineScreen() {
                     }
                 }}
             />
+
+            {/* Custom Exit Modal */}
+            <Modal
+                visible={showExitModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowExitModal(false)}
+            >
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' }]}>
+                    <YStack 
+                        backgroundColor="$backgroundStrong" 
+                        padding="$5" 
+                        borderRadius="$4" 
+                        width="85%" 
+                        maxWidth={400}
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        gap="$4"
+                    >
+                        <Text fontSize="$6" fontWeight="bold" color="$color">Unsaved Changes</Text>
+                        <Text fontSize="$4" color="$color11">You have unsaved changes. Do you want to save your draft before leaving?</Text>
+                        
+                        <XStack justifyContent="flex-end" gap="$3" marginTop="$2">
+                            <Button size="$3" chromeless onPress={() => setShowExitModal(false)}>
+                                <Text color="$color11">Cancel</Text>
+                            </Button>
+                            <Button size="$3" backgroundColor="#ff4444" onPress={() => confirmExit(false)}>
+                                <Text color="white" fontWeight="bold">Discard</Text>
+                            </Button>
+                            <Button size="$3" backgroundColor={theme.color8?.get() as string} onPress={() => confirmExit(true)}>
+                                <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold">Save</Text>
+                            </Button>
+                        </XStack>
+                    </YStack>
+                </View>
+            </Modal>
         </YStack>
         </BottomSheetModalProvider>
     );
