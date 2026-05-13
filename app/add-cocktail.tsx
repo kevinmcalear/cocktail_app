@@ -29,6 +29,7 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { useAppStore } from "@/store/useAppStore";
 
 interface RecipeItem {
     id?: string;
@@ -67,16 +68,16 @@ export default function AddCocktailScreen() {
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
 
+    const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
+    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+
     // Form State
-    const [name, setName] = useState("");
+    const [name, setName] = useState(initialNameParam || "");
     const [description, setDescription] = useState("");
     const [origin, setOrigin] = useState("");
     const [garnish, setGarnish] = useState("");
     const [notes, setNotes] = useState("");
     const [spec, setSpec] = useState("");
-
-    const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
-    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
     
     // Add local state for the active draft ID so newly created drafts are tracked
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
@@ -100,6 +101,22 @@ export default function AddCocktailScreen() {
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+
+    const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
+
+    useEffect(() => {
+        if (recentlyCreatedItem?.type === 'ingredient') {
+            setRecipeItems(prev => [...prev, { 
+                ingredient_id: recentlyCreatedItem.id, 
+                name: recentlyCreatedItem.name, 
+                amount: "", 
+                unit: "", 
+                preparation_notes: "", 
+                is_optional: false 
+            }]);
+            setRecentlyCreatedItem(null);
+        }
+    }, [recentlyCreatedItem, setRecentlyCreatedItem]);
 
     // Image State (Local only for creation)
     const [localImages, setLocalImages] = useState<{ id: string, url: string }[]>([]);
@@ -427,6 +444,8 @@ export default function AddCocktailScreen() {
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
+
+            setRecentlyCreatedItem({ type: 'cocktail', id: cocktailId, name: name });
 
             if (Platform.OS === 'web') {
                 window.alert("Success: Cocktail created!");
@@ -781,6 +800,28 @@ export default function AddCocktailScreen() {
                                         <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
                                     </TouchableOpacity>
                                 )}
+                                ListEmptyComponent={
+                                    <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
+                                        <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
+                                        <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">No results found</Text>
+                                        <Button 
+                                            marginTop="$4" 
+                                            backgroundColor="$color5" 
+                                            pressStyle={{ scale: 0.97 }}
+                                            onPress={() => {
+                                                setShowIngredientPicker(false);
+                                                router.push({
+                                                    pathname: "/add-ingredient",
+                                                    params: { name: ingredientSearch }
+                                                });
+                                            }}
+                                        >
+                                            <Text color="$color" fontWeight="600">
+                                                Create ingredient
+                                            </Text>
+                                        </Button>
+                                    </YStack>
+                                }
                             />
                         </View>
                     </View>

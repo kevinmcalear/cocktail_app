@@ -23,6 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { useAppStore } from "@/store/useAppStore";
 
 interface RecipeItem {
     id?: string;
@@ -34,7 +35,7 @@ interface RecipeItem {
 
 export default function AddIngredientScreen() {
     const router = useRouter();
-    const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
+    const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -49,7 +50,7 @@ export default function AddIngredientScreen() {
     const pendingNavigationActionRef = useRef<any>(null);
 
     // Form State
-    const [name, setName] = useState("");
+    const [name, setName] = useState(initialNameParam || "");
     const [description, setDescription] = useState("");
     const [brandMaker, setBrandMaker] = useState("");
     const [abv, setAbv] = useState("");
@@ -75,6 +76,20 @@ export default function AddIngredientScreen() {
     const allIngredients = dropdowns?.ingredients || [];
 
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
+
+    const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
+
+    useEffect(() => {
+        if (recentlyCreatedItem?.type === 'ingredient') {
+            setRecipeItems(prev => [...prev, { 
+                ingredient_id: recentlyCreatedItem.id, 
+                name: recentlyCreatedItem.name, 
+                amount: "", 
+                unit: "" 
+            }]);
+            setRecentlyCreatedItem(null);
+        }
+    }, [recentlyCreatedItem, setRecentlyCreatedItem]);
 
     const handlePresentModalPress = useCallback(() => {
         setShowIngredientPicker(true);
@@ -252,6 +267,8 @@ export default function AddIngredientScreen() {
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
+
+            setRecentlyCreatedItem({ type: 'ingredient', id: ingredientId, name: name.trim() });
 
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => {
@@ -510,6 +527,28 @@ export default function AddIngredientScreen() {
                                         <Text color="$color11" fontSize={16}>{item.name}</Text>
                                     </TouchableOpacity>
                                 )}
+                                ListEmptyComponent={
+                                    <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
+                                        <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
+                                        <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">No results found</Text>
+                                        <Button 
+                                            marginTop="$4" 
+                                            backgroundColor="$color5" 
+                                            pressStyle={{ scale: 0.97 }}
+                                            onPress={() => {
+                                                handleDismissModalPress();
+                                                router.push({
+                                                    pathname: "/add-ingredient",
+                                                    params: { name: ingredientSearch }
+                                                });
+                                            }}
+                                        >
+                                            <Text color="$color" fontWeight="600">
+                                                Create ingredient
+                                            </Text>
+                                        </Button>
+                                    </YStack>
+                                }
                             />
                         </View>
                     </View>

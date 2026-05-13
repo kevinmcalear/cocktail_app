@@ -13,7 +13,7 @@ import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
+import { Button, Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
 
 export interface SearchItem {
     id: string;
@@ -53,6 +53,8 @@ interface SearchListProps {
     onDrinkPress?: (drink: SearchItem) => void;
     onBackPress?: () => void;
     isModal?: boolean;
+    onCreateNewPress?: (query: string) => void;
+    createNewText?: string;
 }
 
 const styles = StyleSheet.create({
@@ -266,7 +268,7 @@ const SearchItemCard = memo(function SearchItemCard({
     );
 });
 
-export function SearchList({ title, items, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress }: SearchListProps) {
+export function SearchList({ title, items, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress, onCreateNewPress, createNewText }: SearchListProps) {
     const router = useRouter();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
@@ -580,6 +582,27 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                         flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
                     }}
                     renderItem={renderItem}
+                    ListEmptyComponent={
+                        <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
+                            <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
+                            <H4 color="$color11" textAlign="center">No results found</H4>
+                            {onCreateNewPress && (
+                                <Button 
+                                    marginTop="$4" 
+                                    backgroundColor="$color5" 
+                                    pressStyle={{ scale: 0.97 }}
+                                    onPress={() => {
+                                        const query = searchQuery || activeChips.filter(c => c.type === "Search").map(c => c.label.replace(/"/g, '')).join(" ") || "";
+                                        onCreateNewPress(query);
+                                    }}
+                                >
+                                    <Text color="$color" fontWeight="600">
+                                        {createNewText || "Create New"}
+                                    </Text>
+                                </Button>
+                            )}
+                        </YStack>
+                    }
                 />
             {(!searchQuery && activeChips.length === 0) && (
                 <AlphabetScroller onScrollToLetter={handleScrollToLetter} />

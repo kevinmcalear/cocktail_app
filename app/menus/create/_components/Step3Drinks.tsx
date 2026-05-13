@@ -7,6 +7,8 @@ import { useWines } from "@/hooks/useWines";
 import React, { useEffect, useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "tamagui";
+import { useRouter } from "expo-router";
+import { useAppStore } from "@/store/useAppStore";
 
 interface Props {
     sections: any[];
@@ -16,11 +18,21 @@ interface Props {
 }
 
 export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Props) => {
+    const router = useRouter();
     const [allDrinks, setAllDrinks] = useState<SearchItem[]>([]);
     
     // Bottom Sheet State
     const [showPicker, setShowPicker] = useState(false);
     const [pickingForSection, setPickingForSection] = useState<string | null>(null);
+
+    const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
+
+    useEffect(() => {
+        if (recentlyCreatedItem?.type === 'cocktail' && pickingForSection) {
+            handleAddCocktail(recentlyCreatedItem.id);
+            setRecentlyCreatedItem(null);
+        }
+    }, [recentlyCreatedItem, pickingForSection]);
 
     const { data: cocktailsData } = useCocktails();
     const { data: beersData } = useBeers();
@@ -171,6 +183,14 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
                         setShowPicker(false);
                         setPickingForSection(null);
                     }}
+                    onCreateNewPress={(query) => {
+                        setShowPicker(false);
+                        router.push({
+                            pathname: "/add-cocktail",
+                            params: { name: query }
+                        });
+                    }}
+                    createNewText="Create cocktail"
                 />
             </Modal>
         </View>

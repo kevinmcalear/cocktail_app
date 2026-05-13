@@ -7,8 +7,10 @@ interface AppState {
     // Bar Management Context
     selectedBarId: string | null;
     setSelectedBarId: (id: string | null) => void;
-    // Add more temporary app state here as needed 
-    // e.g., active menu, temporary selections, ui state
+    // Cross-screen creation return values
+    recentlyCreatedItem: { type: 'cocktail' | 'ingredient', id: string, name: string } | null;
+    setRecentlyCreatedItem: (item: { type: 'cocktail' | 'ingredient', id: string, name: string } | null) => void;
+    // Add more temporary app state here as needed
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -16,4 +18,6 @@ export const useAppStore = create<AppState>((set) => ({
     setDraftCocktailId: (id) => set({ draftCocktailId: id }),
     selectedBarId: null,
     setSelectedBarId: (id) => set({ selectedBarId: id }),
+    recentlyCreatedItem: null,
+    setRecentlyCreatedItem: (item) => set({ recentlyCreatedItem: item }),
 }));
