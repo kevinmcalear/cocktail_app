@@ -1,5 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const { resolve: defaultResolver } = require('metro-resolver');
 
 const config = getDefaultConfig(__dirname);
 
@@ -9,7 +10,7 @@ const ALIASES = {
 };
 
 // Configure the resolver to use the alias
-config.resolver.resolveRequest = (context, moduleName, platform) => {
+config.resolver.resolveRequest = (context, moduleName, platform, ...args) => {
   if (moduleName === 'tslib') {
     return {
       filePath: ALIASES.tslib,
@@ -17,8 +18,16 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     };
   }
   
-  // Ensure you call the default resolver for everything else
-  return context.resolveRequest(context, moduleName, platform);
+  // Chain to the default resolver, setting resolveRequest to null to avoid infinite recursion
+  return defaultResolver(
+    {
+      ...context,
+      resolveRequest: null,
+    },
+    moduleName,
+    platform,
+    ...args
+  );
 };
 
 module.exports = config;
