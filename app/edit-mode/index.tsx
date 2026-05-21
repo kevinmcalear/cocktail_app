@@ -84,108 +84,115 @@ export default function EditModeDashboard() {
         <YStack flex={1} backgroundColor="$background">
             <Stack.Screen options={{ headerShown: false }} />
             
-            <XStack
-                paddingTop={insets.top + 20}
-                paddingHorizontal="$4"
-                paddingBottom="$4"
-                alignItems="center"
-                zIndex={10}
+            <YStack
+                width="100%"
+                maxWidth={800}
+                alignSelf="center"
+                flex={1}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
-                </TouchableOpacity>
-                <Text fontSize="$5" fontWeight="bold" marginLeft="$2">Creator Hub</Text>
-            </XStack>
+                <XStack
+                    paddingTop={insets.top + 20}
+                    paddingHorizontal="$4"
+                    paddingBottom="$4"
+                    alignItems="center"
+                    zIndex={10}
+                >
+                    <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                        <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                    </TouchableOpacity>
+                    <Text fontSize="$5" fontWeight="bold" marginLeft="$2">Creator Hub</Text>
+                </XStack>
 
-            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-                
-                {/* Works in Progress Section */}
-                <YStack gap="$4" marginBottom="$6">
-                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
-                        Works in Progress
-                    </Text>
-                    {isLoading ? (
-                        <Text color="$color11">Loading drafts...</Text>
-                    ) : drafts.length === 0 ? (
-                        <Text color="$color11">No active drafts.</Text>
-                    ) : (
-                        Object.keys(draftsByBar).map((barId) => (
-                            <YStack key={barId} gap="$3">
-                                <Text fontSize={12} color="$color11" fontWeight="bold">
-                                    {getBarName(barId)}
-                                </Text>
-                                {draftsByBar[barId].map((draft: any) => {
-                                    const date = new Date(draft.updated_at);
-                                    const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    const authorName = draft.user_id === user?.id 
-                                        ? "You" 
-                                        : (draft.draft_data?.last_editor_email || "Another Member");
+                <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+                    
+                    {/* Works in Progress Section */}
+                    <YStack gap="$4" marginBottom="$6">
+                        <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
+                            Works in Progress
+                        </Text>
+                        {isLoading ? (
+                            <Text color="$color11">Loading drafts...</Text>
+                        ) : drafts.length === 0 ? (
+                            <Text color="$color11">No active drafts.</Text>
+                        ) : (
+                            Object.keys(draftsByBar).map((barId) => (
+                                <YStack key={barId} gap="$3">
+                                    <Text fontSize={12} color="$color11" fontWeight="bold">
+                                        {getBarName(barId)}
+                                    </Text>
+                                    {draftsByBar[barId].map((draft: any) => {
+                                        const date = new Date(draft.updated_at);
+                                        const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                        const authorName = draft.user_id === user?.id 
+                                            ? "You" 
+                                            : (draft.draft_data?.last_editor_email || "Another Member");
 
-                                    return (
-                                        <XStack
-                                            key={draft.id}
-                                            backgroundColor="$backgroundStrong"
-                                            borderRadius="$4"
-                                            borderWidth={1}
-                                            borderColor="$borderColor"
-                                            padding="$3"
-                                            alignItems="center"
-                                            justifyContent="space-between"
-                                        >
-                                            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
-                                                <View style={styles.iconContainer}>
-                                                    <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
-                                                </View>
-                                                <YStack marginLeft="$3" flex={1}>
-                                                    <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1}>
-                                                        {draft.draft_data?.name || `Untitled ${draft.entity_type}`}
-                                                    </Text>
-                                                    <Text fontSize={12} color="$color11">
-                                                        Last edited by {authorName} • {dateString}
-                                                    </Text>
-                                                </YStack>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
-                                                <IconSymbol name="trash" size={20} color="#ff4444" />
-                                            </TouchableOpacity>
-                                        </XStack>
-                                    );
-                                })}
-                            </YStack>
-                        ))
-                    )}
-                </YStack>
+                                        return (
+                                            <XStack
+                                                key={draft.id}
+                                                backgroundColor="$backgroundStrong"
+                                                borderRadius="$4"
+                                                borderWidth={1}
+                                                borderColor="$borderColor"
+                                                padding="$3"
+                                                alignItems="center"
+                                                justifyContent="space-between"
+                                            >
+                                                <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
+                                                    <View style={styles.iconContainer}>
+                                                        <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
+                                                    </View>
+                                                    <YStack marginLeft="$3" flex={1}>
+                                                        <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1}>
+                                                            {draft.draft_data?.name || draft.draft_data?.menuName || `Untitled ${draft.entity_type}`}
+                                                        </Text>
+                                                        <Text fontSize={12} color="$color11">
+                                                            Last edited by {authorName} • {dateString}
+                                                        </Text>
+                                                    </YStack>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
+                                                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                                                </TouchableOpacity>
+                                            </XStack>
+                                        );
+                                    })}
+                                </YStack>
+                            ))
+                        )}
+                    </YStack>
 
-                {/* Create New Section */}
-                <YStack gap="$3">
-                    <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
-                        Create New
-                    </Text>
-                    <XStack flexWrap="wrap" gap="$3" justifyContent="space-between">
-                        {options.map((option, index) => (
-                            <Button
-                                key={index}
-                                width="48%"
-                                height={100}
-                                backgroundColor="$backgroundStrong"
-                                pressStyle={{ opacity: 0.8 }}
-                                justifyContent="center"
-                                alignItems="center"
-                                flexDirection="column"
-                                gap="$2"
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius="$4"
-                                onPress={() => router.push(option.route as any)}
-                            >
-                                <CustomIcon name={option.icon} size={32} color={theme.color?.get() as string} />
-                                <Text color="$color" fontSize={14} fontWeight="500">{option.label}</Text>
-                            </Button>
-                        ))}
-                    </XStack>
-                </YStack>
+                    {/* Create New Section */}
+                    <YStack gap="$3">
+                        <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
+                            Create New
+                        </Text>
+                        <XStack flexWrap="wrap" gap="$3" justifyContent="space-between">
+                            {options.map((option, index) => (
+                                <Button
+                                    key={index}
+                                    width="48%"
+                                    height={100}
+                                    backgroundColor="$backgroundStrong"
+                                    pressStyle={{ opacity: 0.8 }}
+                                    justifyContent="center"
+                                    alignItems="center"
+                                    flexDirection="column"
+                                    gap="$2"
+                                    borderWidth={1}
+                                    borderColor="$borderColor"
+                                    borderRadius="$4"
+                                    onPress={() => router.push(option.route as any)}
+                                >
+                                    <CustomIcon name={option.icon} size={32} color={theme.color?.get() as string} />
+                                    <Text color="$color" fontSize={14} fontWeight="500">{option.label}</Text>
+                                </Button>
+                            ))}
+                        </XStack>
+                    </YStack>
 
-            </ScrollView>
+                </ScrollView>
+            </YStack>
         </YStack>
     );
 }

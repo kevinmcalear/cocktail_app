@@ -20,6 +20,7 @@ export interface SearchItem {
     name: string;
     description?: string | null;
     category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category";
+    isDraft?: boolean;
     price?: string | null;
     recipes?: {
         ingredient_item_id?: string;
@@ -204,14 +205,33 @@ const SearchItemCard = memo(function SearchItemCard({
                     </View>
                 )}
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
-                    <H4 
-                        color="$color" 
-                        fontSize={20} 
-                        fontWeight="700" 
-                        numberOfLines={1}
-                    >
-                        {drink.name}
-                    </H4>
+                    <XStack gap="$2" alignItems="center" flexWrap="wrap">
+                        <H4 
+                            color="$color" 
+                            fontSize={20} 
+                            fontWeight="700" 
+                            numberOfLines={1}
+                            flexShrink={1}
+                        >
+                            {drink.name}
+                        </H4>
+                        {drink.isDraft && (
+                            <View style={{
+                                backgroundColor: "rgba(255, 165, 0, 0.15)",
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: "rgba(255, 165, 0, 0.4)",
+                            }}>
+                                <Text style={{
+                                    color: "#ffa500",
+                                    fontSize: 10,
+                                    fontWeight: "bold",
+                                }} textTransform="uppercase">Draft</Text>
+                            </View>
+                        )}
+                    </XStack>
                     <Paragraph color="$color11" size="$3" numberOfLines={2}>
                         {subText}
                     </Paragraph>

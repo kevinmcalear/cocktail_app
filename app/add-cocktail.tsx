@@ -30,7 +30,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
-import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
+import { resolveIngredientId, updateParentDraftsWithPublishedId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 
 interface RecipeItem {
     id?: string;
@@ -486,8 +486,10 @@ export default function AddCocktailScreen() {
             queryClient.invalidateQueries({ queryKey: ['cocktails'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             
-            if (draftId) {
-                await deleteDraft(draftId);
+            const activeDraftId = currentDraftId || draftId;
+            if (activeDraftId) {
+                await updateMenuDraftsWithPublishedId(activeDraftId, cocktailId, drafts, saveDraft);
+                await deleteDraft(activeDraftId);
             }
             // If assigned to a bar, also invalidate that bar's cache
             if (barId) {

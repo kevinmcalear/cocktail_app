@@ -6,9 +6,10 @@ import { useCocktails } from "@/hooks/useCocktails";
 import { useWines } from "@/hooks/useWines";
 import React, { useEffect, useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text } from "tamagui";
+import { Text, XStack } from "tamagui";
 import { useRouter } from "expo-router";
 import { useAppStore } from "@/store/useAppStore";
+import { useDrafts } from "@/hooks/useDrafts";
 
 interface Props {
     sections: any[];
@@ -26,6 +27,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
     const [pickingForSection, setPickingForSection] = useState<string | null>(null);
 
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
+    const { drafts } = useDrafts();
 
     useEffect(() => {
         if (recentlyCreatedItem?.type === 'cocktail' && pickingForSection) {
@@ -39,7 +41,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
     const { data: winesData } = useWines();
 
     useEffect(() => {
-        if (!cocktailsData && !beersData && !winesData) return;
+        if (!cocktailsData && !beersData && !winesData && !drafts) return;
 
         const mappedCocktails: SearchItem[] = (cocktailsData || []).map((c: any) => ({
             id: c.id,
@@ -68,8 +70,56 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             image: w.item_images?.[0]?.images?.url ? { uri: w.item_images[0].images.url } : undefined
         }));
 
-        setAllDrinks([...mappedCocktails, ...mappedBeers, ...mappedWines]);
-    }, [cocktailsData, beersData, winesData]);
+        const draftCocktails: SearchItem[] = drafts
+            .filter((d: any) => d.entity_type === 'cocktail')
+            .map((d: any) => ({
+                id: d.id,
+                name: d.draft_data?.name || "Untitled Cocktail Draft",
+                description: d.draft_data?.description,
+                category: "Cocktail",
+                isDraft: true,
+                recipes: d.draft_data?.recipeItems?.map((ri: any) => ({
+                    ingredient_item_id: ri.ingredient_id,
+                    ingredient: {
+                        name: ri.name || "Unknown",
+                    }
+                })) || [],
+                image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
+            }));
+
+        const draftBeers: SearchItem[] = drafts
+            .filter((d: any) => d.entity_type === 'beer')
+            .map((d: any) => ({
+                id: `beer-${d.id}`,
+                name: d.draft_data?.name || "Untitled Beer Draft",
+                description: d.draft_data?.description,
+                category: "Beer",
+                isDraft: true,
+                price: d.draft_data?.price,
+                image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
+            }));
+
+        const draftWines: SearchItem[] = drafts
+            .filter((d: any) => d.entity_type === 'wine')
+            .map((d: any) => ({
+                id: `wine-${d.id}`,
+                name: d.draft_data?.name || "Untitled Wine Draft",
+                description: d.draft_data?.description,
+                category: "Wine",
+                isDraft: true,
+                price: d.draft_data?.price,
+                image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
+            }));
+
+        setAllDrinks([
+            ...mappedCocktails, 
+            ...mappedBeers, 
+            ...mappedWines,
+            ...draftCocktails,
+            ...draftBeers,
+            ...draftWines
+        ]);
+    }, [cocktailsData, beersData, winesData, drafts]);
 
     const handleAddCocktail = (cocktailId: string) => {
         if (!pickingForSection) return;
@@ -133,10 +183,17 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
 
                             {selections[sec.id]?.map((cocktailId) => {
                                 // Strip potentially prefixed ids if they don't match, though the picker returns the generated IDs. Just find by ID.
-                                const c = allDrinks.find(x => x.id === cocktailId) || { name: "Unknown Drink" };
+                                const c = allDrinks.find(x => x.id === cocktailId) || { name: "Unknown Drink", isDraft: false };
                                 return (
                                     <View key={cocktailId} style={styles.cocktailRow}>
-                                        <Text style={styles.cocktailName}>{c?.name}</Text>
+                                        <XStack gap="$2" alignItems="center">
+                                            <Text style={styles.cocktailName}>{c?.name}</Text>
+                                            {c?.isDraft && (
+                                                <View style={styles.draftBadge}>
+                                                    <Text style={styles.draftBadgeText} textTransform="uppercase">Draft</Text>
+                                                </View>
+                                            )}
+                                        </XStack>
                                         <TouchableOpacity 
                                             onPress={() => handleRemoveCocktail(sec.id, cocktailId)}
                                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -252,6 +309,19 @@ const styles = StyleSheet.create({
         fontSize: 20,
         color: Colors.dark.text,
         fontWeight: "700",
+    },
+    draftBadge: {
+        backgroundColor: "rgba(255, 165, 0, 0.15)",
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "rgba(255, 165, 0, 0.4)",
+    },
+    draftBadgeText: {
+        color: "#ffa500",
+        fontSize: 10,
+        fontWeight: "bold",
     },
     addDrinkBtn: {
         flexDirection: "row",

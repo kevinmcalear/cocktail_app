@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDrafts } from "@/hooks/useDrafts";
+import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -336,6 +337,7 @@ export default function AddBeerScreen() {
             queryClient.invalidateQueries({ queryKey: ['beers'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             if (currentDraftId) {
+                await updateMenuDraftsWithPublishedId('beer-' + currentDraftId, 'beer-' + newBeerId, drafts, saveDraft);
                 await deleteDraft(currentDraftId);
             }
             if (barId) {

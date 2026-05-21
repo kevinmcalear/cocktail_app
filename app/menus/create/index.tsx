@@ -9,6 +9,7 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, T
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
+import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 
 import { Step1Template } from "./_components/Step1Template";
 import { Step2Name } from "./_components/Step2Name";
@@ -61,7 +62,7 @@ export default function CreateMenuWizard() {
                 const data = draft.draft_data;
                 setStep(data.step || 1);
                 setSelectedTemplateId(data.selectedTemplateId || null);
-                setMenuName(data.menuName || "");
+                setMenuName(data.menuName || data.name || "");
                 setSelections(data.selections || {});
                 setBarId(data.barId || initialBarId || null);
                 setNeedsCleanMark(true);
@@ -74,7 +75,7 @@ export default function CreateMenuWizard() {
     const handleSaveDraft = async () => {
         try {
             setSaving(true);
-            const draftData = { step, selectedTemplateId, menuName, selections, barId };
+            const draftData = { step, selectedTemplateId, menuName, name: menuName, selections, barId };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
             
             if (!currentDraftId && result && result.id) {
@@ -194,11 +195,34 @@ export default function CreateMenuWizard() {
                     let wine_id = null;
 
                     if (drinkId.startsWith('beer-')) {
-                        beer_id = drinkId.replace('beer-', '');
+                        const draftIdPart = drinkId.replace('beer-', '');
+                        const isDraftBeer = drafts.some(d => d.id === draftIdPart && d.entity_type === 'beer');
+                        if (isDraftBeer) {
+                            const resolvedId = await resolveBeerId(draftIdPart, drafts);
+                            await updateMenuDraftsWithPublishedId('beer-' + draftIdPart, 'beer-' + resolvedId, drafts, saveDraft);
+                            beer_id = resolvedId;
+                        } else {
+                            beer_id = draftIdPart;
+                        }
                     } else if (drinkId.startsWith('wine-')) {
-                        wine_id = drinkId.replace('wine-', '');
+                        const draftIdPart = drinkId.replace('wine-', '');
+                        const isDraftWine = drafts.some(d => d.id === draftIdPart && d.entity_type === 'wine');
+                        if (isDraftWine) {
+                            const resolvedId = await resolveWineId(draftIdPart, drafts);
+                            await updateMenuDraftsWithPublishedId('wine-' + draftIdPart, 'wine-' + resolvedId, drafts, saveDraft);
+                            wine_id = resolvedId;
+                        } else {
+                            wine_id = draftIdPart;
+                        }
                     } else {
-                        cocktail_id = drinkId;
+                        const isDraftCocktail = drafts.some(d => d.id === drinkId && d.entity_type === 'cocktail');
+                        if (isDraftCocktail) {
+                            const resolvedId = await resolveCocktailId(drinkId, drafts);
+                            await updateMenuDraftsWithPublishedId(drinkId, resolvedId, drafts, saveDraft);
+                            cocktail_id = resolvedId;
+                        } else {
+                            cocktail_id = drinkId;
+                        }
                     }
 
                     drinksToInsert.push({
