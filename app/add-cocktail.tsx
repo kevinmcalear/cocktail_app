@@ -30,6 +30,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
+import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 
 interface RecipeItem {
     id?: string;
@@ -71,6 +72,28 @@ export default function AddCocktailScreen() {
     const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
+    const mergedIngredients = useMemo(() => {
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({
+            id: i.id,
+            name: i.name
+        }));
+
+        const draftIngredients = drafts
+            .filter((d: any) => d.entity_type === 'ingredient')
+            .map((d: any) => ({
+                id: d.id,
+                name: d.draft_data?.name || "Untitled Ingredient Draft"
+            }));
+
+        const combined = [...draftIngredients, ...published];
+        const seen = new Set();
+        return combined.filter((i: any) => {
+            if (seen.has(i.id)) return false;
+            seen.add(i.id);
+            return true;
+        });
+    }, [dropdowns?.ingredients, drafts]);
+
     // Form State
     const [name, setName] = useState(initialNameParam || "");
     const [description, setDescription] = useState("");
@@ -106,14 +129,19 @@ export default function AddCocktailScreen() {
 
     useEffect(() => {
         if (recentlyCreatedItem?.type === 'ingredient') {
-            setRecipeItems(prev => [...prev, { 
-                ingredient_id: recentlyCreatedItem.id, 
-                name: recentlyCreatedItem.name, 
-                amount: "", 
-                unit: "", 
-                preparation_notes: "", 
-                is_optional: false 
-            }]);
+            setRecipeItems(prev => {
+                if (prev.some(item => item.ingredient_id === recentlyCreatedItem.id)) {
+                    return prev;
+                }
+                return [...prev, { 
+                    ingredient_id: recentlyCreatedItem.id, 
+                    name: recentlyCreatedItem.name, 
+                    amount: "", 
+                    unit: "", 
+                    preparation_notes: "", 
+                    is_optional: false 
+                }];
+            });
             setRecentlyCreatedItem(null);
         }
     }, [recentlyCreatedItem, setRecentlyCreatedItem]);
@@ -184,7 +212,7 @@ export default function AddCocktailScreen() {
         }
     }, [currentDraftId, drafts, isFetching]);
 
-    const handleSaveDraft = async () => {
+    const handleSaveDraft = async (silent = false) => {
         try {
             setSaving(true);
             const draftData = {
@@ -194,25 +222,33 @@ export default function AddCocktailScreen() {
             };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'cocktail', draftData });
             
+            let updatedDraftId = currentDraftId;
             // If this was a new draft, save the ID so subsequent clicks update the same draft
             if (!currentDraftId && result && result.id) {
+                updatedDraftId = result.id;
                 setCurrentDraftId(result.id);
                 // Also update the URL params silently so refreshing doesn't lose it
                 router.setParams({ draftId: result.id });
             }
             
-            if (Platform.OS === 'web') {
-                window.alert("Draft saved successfully!");
-            } else {
-                Alert.alert("Success", "Draft saved successfully!");
+            if (!silent) {
+                if (Platform.OS === 'web') {
+                    window.alert("Draft saved successfully!");
+                } else {
+                    Alert.alert("Success", "Draft saved successfully!");
+                }
             }
             setNeedsCleanMark(true); // Mark clean after saving
+            return updatedDraftId;
         } catch (error) {
-            if (Platform.OS === 'web') {
-                window.alert("Failed to save draft.");
-            } else {
-                Alert.alert("Error", "Failed to save draft.");
+            if (!silent) {
+                if (Platform.OS === 'web') {
+                    window.alert("Failed to save draft.");
+                } else {
+                    Alert.alert("Error", "Failed to save draft.");
+                }
             }
+            return null;
         } finally {
             setSaving(false);
         }
@@ -376,6 +412,19 @@ export default function AddCocktailScreen() {
         }
         setSaving(true);
         try {
+            // Resolve draft ingredients recursively before publishing the cocktail
+            const resolvedRecipeItems = [];
+            for (const item of recipeItems) {
+                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+                if (resolvedId !== item.ingredient_id) {
+                    await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
+                }
+                resolvedRecipeItems.push({
+                    ...item,
+                    ingredient_id: resolvedId
+                });
+            }
+
             // 1. Create Cocktail
             const { data: cocktail, error: cocktailError } = await supabase
                 .from('items')
@@ -413,7 +462,7 @@ export default function AddCocktailScreen() {
                 }
             }
 
-            for (const item of recipeItems) {
+            for (const item of resolvedRecipeItems) {
                 await supabase.from('recipes').insert({
                     recipe_item_id: cocktailId,
                     ingredient_item_id: item.ingredient_id,
@@ -472,6 +521,9 @@ export default function AddCocktailScreen() {
         }
     };
 
+    const isItemDraft = (ingredientId: string) => {
+        return drafts.some((d: any) => d.id === ingredientId && d.entity_type === 'ingredient');
+    };
 
     return (
         <BottomSheetModalProvider>
@@ -673,7 +725,14 @@ export default function AddCocktailScreen() {
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <Text style={styles.recipeName}>{item.name}</Text>
+                            <XStack gap="$2" alignItems="center" flex={1}>
+                                <Text style={styles.recipeName}>{item.name}</Text>
+                                {isItemDraft(item.ingredient_id) && (
+                                    <View style={styles.draftBadge}>
+                                        <Text style={styles.draftBadgeText}>Draft</Text>
+                                    </View>
+                                )}
+                            </XStack>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
                                 <Input
                                     size="$2"
@@ -786,7 +845,7 @@ export default function AddCocktailScreen() {
                             <FlatList
                                 style={{ flex: 1 }}
                                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                                data={allIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                                data={mergedIngredients.filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
                                 keyExtractor={item => item.id}
                                 showsVerticalScrollIndicator={false}
                                 renderItem={({ item }) => (
@@ -797,7 +856,14 @@ export default function AddCocktailScreen() {
                                             setShowIngredientPicker(false);
                                         }}
                                     >
-                                        <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                        <XStack gap="$2" alignItems="center">
+                                            <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                            {isItemDraft(item.id) && (
+                                                <View style={styles.draftBadge}>
+                                                    <Text style={styles.draftBadgeText}>Draft</Text>
+                                                </View>
+                                            )}
+                                        </XStack>
                                     </TouchableOpacity>
                                 )}
                                 ListEmptyComponent={
@@ -808,8 +874,9 @@ export default function AddCocktailScreen() {
                                             marginTop="$4" 
                                             backgroundColor="$color5" 
                                             pressStyle={{ scale: 0.97 }}
-                                            onPress={() => {
+                                            onPress={async () => {
                                                 setShowIngredientPicker(false);
+                                                await handleSaveDraft(true);
                                                 router.push({
                                                     pathname: "/add-ingredient",
                                                     params: { name: ingredientSearch }
@@ -1002,6 +1069,20 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 48,
         borderCurve: 'continuous',
         height: '80%'
+    },
+    draftBadge: {
+        backgroundColor: 'rgba(255, 165, 0, 0.15)',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 165, 0, 0.4)',
+    },
+    draftBadgeText: {
+        color: '#ffa500',
+        fontSize: 10,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
     }
 
 });

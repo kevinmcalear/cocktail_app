@@ -90,6 +90,9 @@ export function SearchBar({
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                             fontFamily="$body"
+                            backgroundColor="transparent"
+                            borderWidth={0}
+                            outlineWidth={0}
                         />
                     )}
                     {value.length > 0 && (

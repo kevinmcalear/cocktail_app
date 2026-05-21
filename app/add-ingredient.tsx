@@ -24,6 +24,7 @@ import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } 
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
+import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 
 interface RecipeItem {
     id?: string;
@@ -75,18 +76,45 @@ export default function AddIngredientScreen() {
     const { data: dropdowns } = useDropdowns();
     const allIngredients = dropdowns?.ingredients || [];
 
+    const mergedIngredients = useMemo(() => {
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({
+            id: i.id,
+            name: i.name
+        }));
+
+        const draftIngredients = drafts
+            .filter((d: any) => d.entity_type === 'ingredient')
+            .map((d: any) => ({
+                id: d.id,
+                name: d.draft_data?.name || "Untitled Ingredient Draft"
+            }));
+
+        const combined = [...draftIngredients, ...published];
+        const seen = new Set();
+        return combined.filter((i: any) => {
+            if (seen.has(i.id)) return false;
+            seen.add(i.id);
+            return true;
+        });
+    }, [dropdowns?.ingredients, drafts]);
+
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
 
     useEffect(() => {
         if (recentlyCreatedItem?.type === 'ingredient') {
-            setRecipeItems(prev => [...prev, { 
-                ingredient_id: recentlyCreatedItem.id, 
-                name: recentlyCreatedItem.name, 
-                amount: "", 
-                unit: "" 
-            }]);
+            setRecipeItems(prev => {
+                if (prev.some(item => item.ingredient_id === recentlyCreatedItem.id)) {
+                    return prev;
+                }
+                return [...prev, { 
+                    ingredient_id: recentlyCreatedItem.id, 
+                    name: recentlyCreatedItem.name, 
+                    amount: "", 
+                    unit: "" 
+                }];
+            });
             setRecentlyCreatedItem(null);
         }
     }, [recentlyCreatedItem, setRecentlyCreatedItem]);
@@ -138,30 +166,48 @@ export default function AddIngredientScreen() {
         }
     }, [currentDraftId, drafts, isFetching]);
 
-    const handleSaveDraft = async () => {
+    const handleSaveDraft = async (silent = false) => {
         try {
             setSaving(true);
             const draftData = { name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'ingredient', draftData });
             
+            let updatedDraftId = currentDraftId;
             if (!currentDraftId && result && result.id) {
+                updatedDraftId = result.id;
                 setCurrentDraftId(result.id);
                 router.setParams({ draftId: result.id });
             }
+
+            // Set recentlyCreatedItem so the parent screen knows about this draft ingredient
+            const draftIdToNotify = updatedDraftId || (result && result.id);
+            if (draftIdToNotify) {
+                setRecentlyCreatedItem({
+                    type: 'ingredient',
+                    id: draftIdToNotify,
+                    name: name.trim() || "Untitled Ingredient Draft"
+                });
+            }
             
-            if (Platform.OS === 'web') {
-                window.alert("Draft saved successfully!");
-            } else {
-                Alert.alert("Success", "Draft saved successfully!");
+            if (!silent) {
+                if (Platform.OS === 'web') {
+                    window.alert("Draft saved successfully!");
+                } else {
+                    Alert.alert("Success", "Draft saved successfully!");
+                }
             }
             setNeedsCleanMark(true);
+            return draftIdToNotify;
         } catch (error) {
             console.error("Draft error:", error);
-            if (Platform.OS === 'web') {
-                window.alert("Failed to save draft.");
-            } else {
-                Alert.alert("Error", "Failed to save draft.");
+            if (!silent) {
+                if (Platform.OS === 'web') {
+                    window.alert("Failed to save draft.");
+                } else {
+                    Alert.alert("Error", "Failed to save draft.");
+                }
             }
+            return null;
         } finally {
             setSaving(false);
         }
@@ -210,6 +256,19 @@ export default function AddIngredientScreen() {
         }
         setSaving(true);
         try {
+            // Resolve draft ingredients recursively before publishing this complex ingredient
+            const resolvedRecipeItems = [];
+            for (const item of recipeItems) {
+                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+                if (resolvedId !== item.ingredient_id) {
+                    await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
+                }
+                resolvedRecipeItems.push({
+                    ...item,
+                    ingredient_id: resolvedId
+                });
+            }
+
             // 1. Create Ingredient
             const { data: ingredient, error: ingredientError } = await supabase
                 .from('items')
@@ -244,8 +303,8 @@ export default function AddIngredientScreen() {
                     }, { onConflict: 'item_id,category_id' });
             }
 
-            if (recipeItems.length > 0) {
-                const recipeInserts = recipeItems.map(item => ({
+            if (resolvedRecipeItems.length > 0) {
+                const recipeInserts = resolvedRecipeItems.map(item => ({
                     recipe_item_id: ingredientId,
                     ingredient_item_id: item.ingredient_id,
                     amount: parseFloat(item.amount) || null,
@@ -262,6 +321,7 @@ export default function AddIngredientScreen() {
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             if (currentDraftId) {
+                await updateParentDraftsWithPublishedId(currentDraftId, ingredientId, drafts, saveDraft);
                 await deleteDraft(currentDraftId);
             }
             if (barId) {
@@ -283,6 +343,10 @@ export default function AddIngredientScreen() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const isItemDraft = (ingredientId: string) => {
+        return drafts.some((d: any) => d.id === ingredientId && d.entity_type === 'ingredient');
     };
 
     return (
@@ -428,7 +492,14 @@ export default function AddIngredientScreen() {
 
                         {recipeItems.map((item, index) => (
                             <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
-                                <Text flex={1} color="$color" fontSize={16}>{item.name}</Text>
+                                <XStack gap="$2" alignItems="center" flex={1}>
+                                    <Text color="$color" fontSize={16}>{item.name}</Text>
+                                    {isItemDraft(item.ingredient_id) && (
+                                        <View style={styles.draftBadge}>
+                                            <Text style={styles.draftBadgeText}>Draft</Text>
+                                        </View>
+                                    )}
+                                </XStack>
                                 <XStack gap="$2" alignItems="center">
                                     <Input
                                         width={60}
@@ -512,7 +583,7 @@ export default function AddIngredientScreen() {
                             <FlatList
                                 style={{ flex: 1 }}
                                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                                data={allIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
+                                data={mergedIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
                                 keyExtractor={item => item.id}
                                 showsVerticalScrollIndicator={false}
                                 renderItem={({ item }) => (
@@ -524,7 +595,14 @@ export default function AddIngredientScreen() {
                                             setIngredientSearch("");
                                         }}
                                     >
-                                        <Text color="$color11" fontSize={16}>{item.name}</Text>
+                                        <XStack gap="$2" alignItems="center">
+                                            <Text color="$color" fontSize={16}>{item.name}</Text>
+                                            {isItemDraft(item.id) && (
+                                                <View style={styles.draftBadge}>
+                                                    <Text style={styles.draftBadgeText}>Draft</Text>
+                                                </View>
+                                            )}
+                                        </XStack>
                                     </TouchableOpacity>
                                 )}
                                 ListEmptyComponent={
@@ -535,8 +613,9 @@ export default function AddIngredientScreen() {
                                             marginTop="$4" 
                                             backgroundColor="$color5" 
                                             pressStyle={{ scale: 0.97 }}
-                                            onPress={() => {
+                                            onPress={async () => {
                                                 handleDismissModalPress();
+                                                await handleSaveDraft(true);
                                                 router.push({
                                                     pathname: "/add-ingredient",
                                                     params: { name: ingredientSearch }
@@ -633,5 +712,19 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 48,
         borderCurve: 'continuous',
         height: '80%'
+    },
+    draftBadge: {
+        backgroundColor: 'rgba(255, 165, 0, 0.15)',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 165, 0, 0.4)',
+    },
+    draftBadgeText: {
+        color: '#ffa500',
+        fontSize: 10,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
     }
 });
