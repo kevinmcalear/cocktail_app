@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDrafts } from "@/hooks/useDrafts";
 import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -278,9 +279,9 @@ export default function AddWineScreen() {
             // 1. Update metadata (insert wine)
             const updates = {
                 item_type: 'wine',
-                name,
+                name: capitalize(name),
                 description,
-                brand_maker: vintner || null,
+                brand_maker: capitalize(vintner) || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
                 bar_id: barId || null,
@@ -415,7 +416,7 @@ export default function AddWineScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Cabernet Sauvignon"
                             size="$4"
@@ -429,7 +430,7 @@ export default function AddWineScreen() {
                         <Label color="$color11">Vintner / Brand</Label>
                         <Input
                             value={vintner}
-                            onChangeText={setVintner}
+                            onChangeText={(val) => setVintner(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Napa Valley Winery"
                             size="$4"

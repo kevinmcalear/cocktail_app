@@ -8,6 +8,9 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useBars } from '@/hooks/useBars';
 import { useAuth } from '@/ctx/AuthContext';
+import { useDropdowns } from '@/hooks/useDropdowns';
+import { calculateDraftProgress } from '@/lib/draftProgress';
+import { capitalize } from '@/lib/stringUtils';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -16,6 +19,7 @@ export default function EditModeDashboard() {
     const { user } = useAuth();
     const { drafts, isLoading, deleteDraft } = useDrafts();
     const { data: userBars } = useBars();
+    const { data: dropdowns } = useDropdowns();
 
     const getBarName = (barId: string) => {
         if (barId === 'personal') return 'Personal Drafts';
@@ -121,39 +125,123 @@ export default function EditModeDashboard() {
                                         const authorName = draft.user_id === user?.id 
                                             ? "You" 
                                             : (draft.draft_data?.last_editor_email || "Another Member");
+                                        
+                                        const progressInfo = calculateDraftProgress(draft, drafts, dropdowns);
 
                                         return (
-                                            <XStack
+                                            <YStack
                                                 key={draft.id}
                                                 backgroundColor="$backgroundStrong"
                                                 borderRadius="$4"
-                                                borderWidth={1}
-                                                borderColor="$borderColor"
+                                                borderWidth={1.5}
+                                                borderColor={progressInfo.color}
                                                 padding="$3"
-                                                alignItems="center"
-                                                justifyContent="space-between"
+                                                gap="$3"
                                                 width="100%"
                                                 $gtSm={{ width: '48.5%' }}
                                                 $gtMd={{ width: '32%' }}
                                                 $gtLg={{ width: '23.8%' }}
                                             >
-                                                <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
-                                                    <View style={styles.iconContainer}>
-                                                        <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
+                                                <XStack alignItems="center" justifyContent="space-between" width="100%">
+                                                    <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
+                                                        <View style={styles.iconContainer}>
+                                                            <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
+                                                        </View>
+                                                        <YStack marginLeft="$3" flex={1} gap="$1">
+                                                            <XStack alignItems="center" gap="$2" flexWrap="wrap">
+                                                                <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1} style={{ flexShrink: 1 }}>
+                                                                    {draft.draft_data?.name || draft.draft_data?.menuName || `Untitled ${draft.entity_type}`}
+                                                                </Text>
+                                                                <View style={[styles.statusBadge, { backgroundColor: progressInfo.badgeBg, borderColor: progressInfo.color, borderWidth: 1 }]}>
+                                                                    <Text style={[styles.statusBadgeText, { color: progressInfo.badgeText }]}>
+                                                                        {progressInfo.label}
+                                                                    </Text>
+                                                                </View>
+                                                            </XStack>
+                                                        </YStack>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
+                                                        <IconSymbol name="trash" size={20} color="#ff4444" />
+                                                    </TouchableOpacity>
+                                                </XStack>
+
+                                                {/* Visual Progress Bar */}
+                                                <YStack width="100%" gap="$1">
+                                                    <View style={styles.progressBarTrack}>
+                                                        <View style={[styles.progressBarFill, { width: `${progressInfo.percentage}%`, backgroundColor: progressInfo.color }]} />
                                                     </View>
-                                                    <YStack marginLeft="$3" flex={1}>
-                                                        <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1}>
-                                                            {draft.draft_data?.name || draft.draft_data?.menuName || `Untitled ${draft.entity_type}`}
+                                                    <XStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
+                                                        <Text fontSize={10} color="$color11" fontWeight="600">
+                                                            {progressInfo.percentage}% complete
                                                         </Text>
-                                                        <Text fontSize={12} color="$color11">
-                                                            Last edited by {authorName} • {dateString}
+                                                        <Text fontSize={10} color="$color11" style={{ flexShrink: 1, textAlign: 'right', marginLeft: 8 }} numberOfLines={1}>
+                                                            Edited by {authorName} • {dateString}
                                                         </Text>
+                                                    </XStack>
+                                                </YStack>
+
+                                                {/* Child Draft Sub-dependencies */}
+                                                {progressInfo.innerDrafts && progressInfo.innerDrafts.length > 0 && (
+                                                    <YStack gap="$2" borderTopWidth={1} borderTopColor="rgba(255, 255, 255, 0.08)" paddingTop="$2.5">
+                                                        <Text fontSize={9} color="$color11" fontWeight="bold" letterSpacing={0.5} textTransform="uppercase">
+                                                            Contains Draft Dependencies:
+                                                        </Text>
+                                                        <YStack gap="$1.5">
+                                                            {progressInfo.innerDrafts.map((childDraft: any) => {
+                                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                                                return (
+                                                                    <TouchableOpacity
+                                                                        key={childDraft.id}
+                                                                        onPress={() => handleResumeDraft(childDraft)}
+                                                                        style={{
+                                                                            flexDirection: 'row',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'space-between',
+                                                                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                                                                            paddingVertical: 6,
+                                                                            paddingHorizontal: 8,
+                                                                            borderRadius: 6,
+                                                                        }}
+                                                                        activeOpacity={0.7}
+                                                                    >
+                                                                        <XStack alignItems="center" gap="$2" flex={1}>
+                                                                            <CustomIcon
+                                                                                name={getIconForType(childDraft.entity_type)}
+                                                                                size={14}
+                                                                                color={theme.color11?.get() as string}
+                                                                            />
+                                                                            <Text fontSize={12} color="$color" fontWeight="500" numberOfLines={1} style={{ flex: 1 }}>
+                                                                                {capitalize(childDraft.draft_data?.name || `Untitled ${childDraft.entity_type}`)}
+                                                                            </Text>
+                                                                        </XStack>
+                                                                        <View
+                                                                            style={{
+                                                                                backgroundColor: childProgress.badgeBg,
+                                                                                borderColor: childProgress.color,
+                                                                                borderWidth: 1,
+                                                                                borderRadius: 4,
+                                                                                paddingHorizontal: 4,
+                                                                                paddingVertical: 1,
+                                                                                marginLeft: 6,
+                                                                            }}
+                                                                        >
+                                                                            <Text
+                                                                                style={{
+                                                                                    color: childProgress.badgeText,
+                                                                                    fontSize: 8,
+                                                                                    fontWeight: 'bold',
+                                                                                }}
+                                                                            >
+                                                                                {childProgress.percentage}%
+                                                                            </Text>
+                                                                        </View>
+                                                                    </TouchableOpacity>
+                                                                );
+                                                            })}
+                                                        </YStack>
                                                     </YStack>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
-                                                    <IconSymbol name="trash" size={20} color="#ff4444" />
-                                                </TouchableOpacity>
-                                            </XStack>
+                                                )}
+                                            </YStack>
                                         );
                                     })}
                                 </XStack>
@@ -216,5 +304,27 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    statusBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    statusBadgeText: {
+        fontSize: 9,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    progressBarTrack: {
+        height: 4,
+        width: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        borderRadius: 2,
     }
 });

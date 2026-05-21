@@ -27,10 +27,12 @@ import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { calculateDraftProgress } from "@/lib/draftProgress";
 
 interface RecipeItem {
     id?: string;
@@ -429,9 +431,9 @@ export default function AddCocktailScreen() {
             const { data: cocktail, error: cocktailError } = await supabase
                 .from('items')
                 .insert({
-                    name,
+                    name: capitalize(name),
                     description,
-                    origin: origin || null,
+                    origin: capitalize(origin) || null,
                     notes: notes || null,
                     glassware_id: glasswareId,
                     family_id: familyId,
@@ -595,7 +597,7 @@ export default function AddCocktailScreen() {
                     <Label color="$color11">Name *</Label>
                     <Input
                         value={name}
-                        onChangeText={setName}
+                        onChangeText={(val) => setName(capitalizeAsYouType(val))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Negroni"
                         size="$4"
@@ -728,12 +730,19 @@ export default function AddCocktailScreen() {
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
                             <XStack gap="$2" alignItems="center" flex={1}>
-                                <Text style={styles.recipeName}>{item.name}</Text>
-                                {isItemDraft(item.ingredient_id) && (
-                                    <View style={styles.draftBadge}>
-                                        <Text style={styles.draftBadgeText}>Draft</Text>
-                                    </View>
-                                )}
+                                <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
+                                {(() => {
+                                    const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
+                                    if (!childDraft) return null;
+                                    const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                    return (
+                                        <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
+                                            <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
+                                                {childProgress.label} ({childProgress.percentage}%)
+                                            </Text>
+                                        </View>
+                                    );
+                                })()}
                             </XStack>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
                                 <Input
@@ -776,7 +785,7 @@ export default function AddCocktailScreen() {
                     <Label color="$color11">Origin</Label>
                     <Input 
                         value={origin} 
-                        onChangeText={setOrigin} 
+                        onChangeText={(val) => setOrigin(capitalizeAsYouType(val))} 
                         placeholderTextColor="$color11" 
                         size="$4"
                         backgroundColor="$backgroundStrong"
@@ -854,12 +863,12 @@ export default function AddCocktailScreen() {
                                     <TouchableOpacity
                                         style={[styles.ingredientOption, { borderBottomColor: theme.borderColor?.get() as string }]}
                                         onPress={() => {
-                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "", preparation_notes: "", is_optional: false }]);
+                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: capitalize(item.name), amount: "", unit: "", preparation_notes: "", is_optional: false }]);
                                             setShowIngredientPicker(false);
                                         }}
                                     >
                                         <XStack gap="$2" alignItems="center">
-                                            <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                            <Text color={theme.color?.get() as string} fontSize={16}>{capitalize(item.name)}</Text>
                                             {isItemDraft(item.id) && (
                                                 <View style={styles.draftBadge}>
                                                     <Text style={styles.draftBadgeText}>Draft</Text>

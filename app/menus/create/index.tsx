@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 import { Step1Template } from "./_components/Step1Template";
 import { Step2Name } from "./_components/Step2Name";
@@ -173,7 +174,7 @@ export default function CreateMenuWizard() {
             const { data: newMenu, error: menuError } = await supabase
                 .from('menus')
                 .insert({
-                    name: menuName,
+                    name: capitalize(menuName),
                     template_id: selectedTemplateId,
                     is_active: true,
                     bar_id: barId || null
@@ -321,7 +322,7 @@ export default function CreateMenuWizard() {
                     >
                         <Step2Name 
                             name={menuName} 
-                            onChange={setMenuName} 
+                            onChange={(val) => setMenuName(capitalizeAsYouType(val))} 
                             onNext={handleNext}
                             barId={barId}
                             setBarId={setBarId}

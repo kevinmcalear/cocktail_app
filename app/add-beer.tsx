@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDrafts } from "@/hooks/useDrafts";
 import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -278,9 +279,9 @@ export default function AddBeerScreen() {
             // 1. Update metadata (insert beer)
             const updates = {
                 item_type: 'beer',
-                name,
+                name: capitalize(name),
                 description,
-                brand_maker: brewery || null,
+                brand_maker: capitalize(brewery) || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
                 bar_id: barId || null,
@@ -415,7 +416,7 @@ export default function AddBeerScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Cottage Lager"
                             size="$4"
@@ -429,7 +430,7 @@ export default function AddBeerScreen() {
                         <Label color="$color11">Brewery / Brand</Label>
                         <Input
                             value={brewery}
-                            onChangeText={setBrewery}
+                            onChangeText={(val) => setBrewery(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Bellwoods"
                             size="$4"

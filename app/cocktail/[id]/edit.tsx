@@ -28,6 +28,7 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 interface RecipeItem {
     id?: string;
@@ -97,7 +98,7 @@ export default function EditCocktailScreen() {
         
         try {
             const { error } = await supabase.from('items').insert({ 
-                name: newItemName.trim(), 
+                name: capitalize(newItemName.trim()), 
                 item_type: addingCategory.type 
             });
             if (error) throw error;
@@ -327,9 +328,9 @@ export default function EditCocktailScreen() {
             }
 
             const updates: any = {
-                name,
+                name: capitalize(name),
                 description,
-                origin: origin || null,
+                origin: capitalize(origin) || null,
                 notes: notes || null,
                 glassware_id: glasswareId,
                 family_id: familyId,
@@ -453,7 +454,7 @@ export default function EditCocktailScreen() {
                     <Label color="$color11">Name *</Label>
                     <Input
                         value={name}
-                        onChangeText={setName}
+                        onChangeText={(val) => setName(capitalizeAsYouType(val))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Negroni"
                         size="$4"
@@ -599,7 +600,7 @@ export default function EditCocktailScreen() {
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <Text style={styles.recipeName}>{item.name}</Text>
+                            <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
                                 <View style={styles.inputGroup}>
                                     <Input
@@ -647,7 +648,7 @@ export default function EditCocktailScreen() {
                     <Label color="$color11">Origin</Label>
                     <Input 
                         value={origin} 
-                        onChangeText={setOrigin} 
+                        onChangeText={(val) => setOrigin(capitalizeAsYouType(val))} 
                         placeholderTextColor="$color11" 
                         size="$4"
                         backgroundColor="$backgroundStrong"
@@ -769,7 +770,7 @@ export default function EditCocktailScreen() {
                                         onPress={() => {
                                             setRecipeItems([...recipeItems, {
                                                 ingredient_id: item.id,
-                                                name: item.name,
+                                                name: capitalize(item.name),
                                                 amount: "",
                                                 unit: "",
                                                 preparation_notes: "",
@@ -778,7 +779,7 @@ export default function EditCocktailScreen() {
                                             setShowIngredientPicker(false);
                                         }}
                                     >
-                                        <Text color={theme.color?.get() as string} fontSize={16}>{item.name}</Text>
+                                        <Text color={theme.color?.get() as string} fontSize={16}>{capitalize(item.name)}</Text>
                                     </TouchableOpacity>
                                 )}
                             />

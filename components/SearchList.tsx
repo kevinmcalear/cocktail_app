@@ -10,6 +10,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { capitalize } from "@/lib/stringUtils";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,6 +22,7 @@ export interface SearchItem {
     description?: string | null;
     category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category";
     isDraft?: boolean;
+    draftProgress?: any;
     price?: string | null;
     recipes?: {
         ingredient_item_id?: string;
@@ -156,7 +158,7 @@ const SearchItemCard = memo(function SearchItemCard({
 }) {
     let swipeableRef: Swipeable | null = null;
 
-    let subText = drink.recipes?.map(r => r.ingredient?.name).filter(Boolean).join(", ") || drink.description || "No description";
+    let subText = drink.recipes?.map(r => r.ingredient?.name ? capitalize(r.ingredient.name) : "").filter(Boolean).join(", ") || drink.description || "No description";
 
     if (drink.price) {
         subText = `${drink.price} • ${subText}`;
@@ -213,22 +215,24 @@ const SearchItemCard = memo(function SearchItemCard({
                             numberOfLines={1}
                             flexShrink={1}
                         >
-                            {drink.name}
+                            {capitalize(drink.name)}
                         </H4>
                         {drink.isDraft && (
                             <View style={{
-                                backgroundColor: "rgba(255, 165, 0, 0.15)",
+                                backgroundColor: drink.draftProgress?.badgeBg || "rgba(255, 165, 0, 0.15)",
                                 paddingHorizontal: 8,
                                 paddingVertical: 2,
                                 borderRadius: 8,
                                 borderWidth: 1,
-                                borderColor: "rgba(255, 165, 0, 0.4)",
+                                borderColor: drink.draftProgress?.color || "rgba(255, 165, 0, 0.4)",
                             }}>
                                 <Text style={{
-                                    color: "#ffa500",
+                                    color: drink.draftProgress?.badgeText || "#ffa500",
                                     fontSize: 10,
                                     fontWeight: "bold",
-                                }} textTransform="uppercase">Draft</Text>
+                                }} textTransform="uppercase">
+                                    {drink.draftProgress ? `${drink.draftProgress.label} (${drink.draftProgress.percentage}%)` : "Draft"}
+                                </Text>
                             </View>
                         )}
                     </XStack>

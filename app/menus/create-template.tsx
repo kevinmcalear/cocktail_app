@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack } from "tamagui";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 interface SectionInput {
     id: string; // temporary for UI key mapping
@@ -115,7 +116,7 @@ export default function CreateTemplateScreen() {
                 const { error: templateError } = await supabase
                     .from('menu_templates')
                     .update({
-                        name: templateName.trim(),
+                        name: capitalize(templateName.trim()),
                         description: templateDescription.trim(),
                     })
                     .eq('id', id);
@@ -125,7 +126,7 @@ export default function CreateTemplateScreen() {
                 const { data: newTemplate, error: templateError } = await supabase
                     .from('menu_templates')
                     .insert({
-                        name: templateName.trim(),
+                        name: capitalize(templateName.trim()),
                         description: templateDescription.trim(),
                     })
                     .select()
@@ -142,7 +143,7 @@ export default function CreateTemplateScreen() {
                 
                 const payload: any = {
                     template_id: templateId,
-                    name: sec.name.trim(),
+                    name: capitalize(sec.name.trim()),
                     min_items: isNaN(min) ? 1 : min,
                     max_items: isNaN(max) ? null : max,
                     sort_order: index
@@ -228,7 +229,7 @@ export default function CreateTemplateScreen() {
                         placeholder="e.g. Caretakers Format"
                         placeholderTextColor="#666"
                         value={templateName}
-                        onChangeText={setTemplateName}
+                        onChangeText={(val) => setTemplateName(capitalizeAsYouType(val))}
                     />
                 </View>
 
@@ -266,7 +267,7 @@ export default function CreateTemplateScreen() {
                             placeholder="Section Name (e.g. Starters)"
                             placeholderTextColor="#666"
                             value={sec.name}
-                            onChangeText={(val) => handleSectionChange(sec.id, 'name', val)}
+                            onChangeText={(val) => handleSectionChange(sec.id, 'name', capitalizeAsYouType(val))}
                         />
                         
                         <View style={styles.requirementsRow}>

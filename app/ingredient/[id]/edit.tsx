@@ -29,6 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -245,9 +246,9 @@ export default function EditIngredientScreen() {
             const { error: updateError } = await supabase
                 .from('items')
                 .update({
-                    name: name.trim(),
+                    name: capitalize(name),
                     description: description.trim() || null,
-                    brand_maker: brandMaker.trim() || null,
+                    brand_maker: capitalize(brandMaker) || null,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -388,7 +389,7 @@ export default function EditIngredientScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Rich Simple Syrup"
                             size="$4"
@@ -402,7 +403,7 @@ export default function EditIngredientScreen() {
                         <Label color="$color11">Brand / Maker</Label>
                         <Input
                             value={brandMaker}
-                            onChangeText={setBrandMaker}
+                            onChangeText={(val) => setBrandMaker(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Campari, Buffalo Trace"
                             size="$4"
@@ -483,7 +484,7 @@ export default function EditIngredientScreen() {
 
                         {recipeItems.map((item, index) => (
                             <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
-                                <Text flex={1} color="$color" fontSize={16}>{item.name}</Text>
+                                <Text flex={1} color="$color" fontSize={16}>{capitalize(item.name)}</Text>
                                 <XStack gap="$2" alignItems="center">
                                     <Input
                                         width={60}
@@ -577,11 +578,11 @@ export default function EditIngredientScreen() {
                                     <TouchableOpacity
                                         style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                                         onPress={() => {
-                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "" }]);
+                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: capitalize(item.name), amount: "", unit: "" }]);
                                             setShowIngredientPicker(false);
                                         }}
                                     >
-                                        <Text color="$color11" fontSize={16}>{item.name}</Text>
+                                        <Text color="$color11" fontSize={16}>{capitalize(item.name)}</Text>
                                     </TouchableOpacity>
                                 )}
                             />

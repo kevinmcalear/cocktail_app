@@ -10,6 +10,9 @@ import { Text, XStack } from "tamagui";
 import { useRouter } from "expo-router";
 import { useAppStore } from "@/store/useAppStore";
 import { useDrafts } from "@/hooks/useDrafts";
+import { useDropdowns } from "@/hooks/useDropdowns";
+import { capitalize } from "@/lib/stringUtils";
+import { calculateDraftProgress } from "@/lib/draftProgress";
 
 interface Props {
     sections: any[];
@@ -28,6 +31,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
 
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
     const { drafts } = useDrafts();
+    const { data: dropdowns } = useDropdowns();
 
     useEffect(() => {
         if (recentlyCreatedItem?.type === 'cocktail' && pickingForSection) {
@@ -45,7 +49,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
 
         const mappedCocktails: SearchItem[] = (cocktailsData || []).map((c: any) => ({
             id: c.id,
-            name: c.name,
+            name: capitalize(c.name),
             description: c.description,
             category: "Cocktail",
             recipes: c.recipes,
@@ -54,7 +58,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
 
         const mappedBeers: SearchItem[] = (beersData || []).map((b: any) => ({
             id: `beer-${b.id}`,
-            name: b.name,
+            name: capitalize(b.name),
             description: b.description,
             category: "Beer",
             price: b.price,
@@ -63,7 +67,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
 
         const mappedWines: SearchItem[] = (winesData || []).map((w: any) => ({
             id: `wine-${w.id}`,
-            name: w.name,
+            name: capitalize(w.name),
             description: w.description,
             category: "Wine",
             price: w.price,
@@ -74,14 +78,15 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             .filter((d: any) => d.entity_type === 'cocktail')
             .map((d: any) => ({
                 id: d.id,
-                name: d.draft_data?.name || "Untitled Cocktail Draft",
+                name: capitalize(d.draft_data?.name || "Untitled Cocktail Draft"),
                 description: d.draft_data?.description,
                 category: "Cocktail",
                 isDraft: true,
+                draftProgress: calculateDraftProgress(d, drafts, dropdowns),
                 recipes: d.draft_data?.recipeItems?.map((ri: any) => ({
                     ingredient_item_id: ri.ingredient_id,
                     ingredient: {
-                        name: ri.name || "Unknown",
+                        name: capitalize(ri.name || "Unknown"),
                     }
                 })) || [],
                 image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
@@ -91,10 +96,11 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             .filter((d: any) => d.entity_type === 'beer')
             .map((d: any) => ({
                 id: `beer-${d.id}`,
-                name: d.draft_data?.name || "Untitled Beer Draft",
+                name: capitalize(d.draft_data?.name || "Untitled Beer Draft"),
                 description: d.draft_data?.description,
                 category: "Beer",
                 isDraft: true,
+                draftProgress: calculateDraftProgress(d, drafts, dropdowns),
                 price: d.draft_data?.price,
                 image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
             }));
@@ -103,10 +109,11 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             .filter((d: any) => d.entity_type === 'wine')
             .map((d: any) => ({
                 id: `wine-${d.id}`,
-                name: d.draft_data?.name || "Untitled Wine Draft",
+                name: capitalize(d.draft_data?.name || "Untitled Wine Draft"),
                 description: d.draft_data?.description,
                 category: "Wine",
                 isDraft: true,
+                draftProgress: calculateDraftProgress(d, drafts, dropdowns),
                 price: d.draft_data?.price,
                 image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
             }));
@@ -119,7 +126,7 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
             ...draftBeers,
             ...draftWines
         ]);
-    }, [cocktailsData, beersData, winesData, drafts]);
+    }, [cocktailsData, beersData, winesData, drafts, dropdowns]);
 
     const handleAddCocktail = (cocktailId: string) => {
         if (!pickingForSection) return;
@@ -187,10 +194,12 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
                                 return (
                                     <View key={cocktailId} style={styles.cocktailRow}>
                                         <XStack gap="$2" alignItems="center">
-                                            <Text style={styles.cocktailName}>{c?.name}</Text>
+                                            <Text style={styles.cocktailName}>{capitalize(c?.name)}</Text>
                                             {c?.isDraft && (
-                                                <View style={styles.draftBadge}>
-                                                    <Text style={styles.draftBadgeText} textTransform="uppercase">Draft</Text>
+                                                <View style={[styles.draftBadge, c.draftProgress && { backgroundColor: c.draftProgress.badgeBg, borderColor: c.draftProgress.color }]}>
+                                                    <Text style={[styles.draftBadgeText, c.draftProgress && { color: c.draftProgress.badgeText }]} textTransform="uppercase">
+                                                        {c.draftProgress ? `${c.draftProgress.label} (${c.draftProgress.percentage}%)` : "Draft"}
+                                                    </Text>
                                                 </View>
                                             )}
                                         </XStack>

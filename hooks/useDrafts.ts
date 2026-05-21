@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/ctx/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DatabaseDraft } from '@/types/types';
+import { capitalize } from '@/lib/stringUtils';
 
 export function useDrafts() {
     const { user } = useAuth();
@@ -29,9 +30,30 @@ export function useDrafts() {
             
             const bar_id = draftData.barId || null;
             
+            // Capitalize fields if present
+            const capitalizedData = { ...draftData };
+            if (capitalizedData.name) {
+                capitalizedData.name = capitalize(capitalizedData.name);
+            }
+            if (capitalizedData.brandMaker) {
+                capitalizedData.brandMaker = capitalize(capitalizedData.brandMaker);
+            }
+            if (capitalizedData.origin) {
+                capitalizedData.origin = capitalize(capitalizedData.origin);
+            }
+            if (capitalizedData.brewery) {
+                capitalizedData.brewery = capitalize(capitalizedData.brewery);
+            }
+            if (capitalizedData.vintner) {
+                capitalizedData.vintner = capitalize(capitalizedData.vintner);
+            }
+            if (capitalizedData.menuName) {
+                capitalizedData.menuName = capitalize(capitalizedData.menuName);
+            }
+            
             // Augment draftData with the editor's email to avoid complex joins
             const augmentedDraftData = {
-                ...draftData,
+                ...capitalizedData,
                 last_editor_email: user.email || 'Unknown Email'
             };
 

@@ -7,7 +7,8 @@ import {
     ActivityIndicator,
     Alert,
     ScrollView,
-    StyleSheet, TouchableOpacity
+    StyleSheet, TouchableOpacity,
+    Platform
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,6 +19,7 @@ import { Colors } from "@/constants/theme";
 import { useBeer } from "@/hooks/useBeers";
 import { supabase } from "@/lib/supabase";
 import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
@@ -192,9 +194,9 @@ export default function EditBeerScreen() {
 
             // 2. Update metadata
             const updates = {
-                name,
+                name: capitalize(name),
                 description,
-                brand_maker: brewery || null,
+                brand_maker: capitalize(brewery) || null,
                 abv: abv ? parseFloat(abv) : null,
                 price: price ? parseFloat(price) : null,
                 bar_id: barId || null,
@@ -306,7 +308,7 @@ export default function EditBeerScreen() {
                     <Label color="$color11">Name *</Label>
                     <Input
                         value={name}
-                        onChangeText={setName}
+                        onChangeText={(val) => setName(capitalizeAsYouType(val))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Cottage Lager"
                         size="$4"
@@ -320,7 +322,7 @@ export default function EditBeerScreen() {
                     <Label color="$color11">Brewery / Brand</Label>
                     <Input
                         value={brewery}
-                        onChangeText={setBrewery}
+                        onChangeText={(val) => setBrewery(capitalizeAsYouType(val))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Bellwoods"
                         size="$4"

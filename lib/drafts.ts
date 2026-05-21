@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { capitalize } from '@/lib/stringUtils';
 
 /**
  * Recursively publishes a draft ingredient and all its draft sub-ingredients,
@@ -29,10 +30,10 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
     const { data: ingredient, error: ingredientError } = await supabase
         .from('items')
         .insert({
-            name: data.name?.trim() || "Untitled Ingredient",
+            name: capitalize(data.name) || "Untitled Ingredient",
             description: data.description?.trim() || null,
             item_type: 'ingredient',
-            brand_maker: data.brandMaker?.trim() || null,
+            brand_maker: capitalize(data.brandMaker) || null,
             abv: data.abv ? parseFloat(data.abv) : null,
             bar_id: data.barId || null,
             override_visibility_level: data.overrideVisibility ? parseInt(data.overrideVisibility) : null,
@@ -150,9 +151,9 @@ export async function resolveCocktailId(id: string, drafts: any[]): Promise<stri
     const { data: cocktail, error: cocktailError } = await supabase
         .from('items')
         .insert({
-            name: data.name?.trim() || "Untitled Cocktail",
+            name: capitalize(data.name) || "Untitled Cocktail",
             description: data.description?.trim() || null,
-            origin: data.origin?.trim() || null,
+            origin: capitalize(data.origin) || null,
             notes: data.notes?.trim() || null,
             glassware_id: data.glasswareId || null,
             family_id: data.familyId || null,
@@ -252,9 +253,9 @@ export async function resolveBeerId(id: string, drafts: any[]): Promise<string> 
         .from('items')
         .insert({
             item_type: 'beer',
-            name: data.name?.trim() || "Untitled Beer",
+            name: capitalize(data.name) || "Untitled Beer",
             description: data.description?.trim() || null,
-            brand_maker: data.brewery?.trim() || null,
+            brand_maker: capitalize(data.brewery) || null,
             abv: data.abv ? parseFloat(data.abv) : null,
             price: data.price ? parseFloat(data.price) : null,
             bar_id: data.barId || null,
@@ -337,9 +338,9 @@ export async function resolveWineId(id: string, drafts: any[]): Promise<string> 
         .from('items')
         .insert({
             item_type: 'wine',
-            name: data.name?.trim() || "Untitled Wine",
+            name: capitalize(data.name) || "Untitled Wine",
             description: data.description?.trim() || null,
-            brand_maker: data.vintner?.trim() || null,
+            brand_maker: capitalize(data.vintner) || null,
             abv: data.abv ? parseFloat(data.abv) : null,
             price: data.price ? parseFloat(data.price) : null,
             bar_id: data.barId || null,

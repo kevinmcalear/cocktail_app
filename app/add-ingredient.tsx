@@ -25,6 +25,8 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
+import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { calculateDraftProgress } from "@/lib/draftProgress";
 
 interface RecipeItem {
     id?: string;
@@ -273,10 +275,10 @@ export default function AddIngredientScreen() {
             const { data: ingredient, error: ingredientError } = await supabase
                 .from('items')
                 .insert({
-                    name: name.trim(),
+                    name: capitalize(name),
                     description: description.trim() || null,
                     item_type: 'ingredient',
-                    brand_maker: brandMaker.trim() || null,
+                    brand_maker: capitalize(brandMaker) || null,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -396,7 +398,7 @@ export default function AddIngredientScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Rich Simple Syrup"
                             size="$4"
@@ -410,7 +412,7 @@ export default function AddIngredientScreen() {
                         <Label color="$color11">Brand / Maker</Label>
                         <Input
                             value={brandMaker}
-                            onChangeText={setBrandMaker}
+                            onChangeText={(val) => setBrandMaker(capitalizeAsYouType(val))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Campari, Buffalo Trace"
                             size="$4"
@@ -493,12 +495,19 @@ export default function AddIngredientScreen() {
                         {recipeItems.map((item, index) => (
                             <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
                                 <XStack gap="$2" alignItems="center" flex={1}>
-                                    <Text color="$color" fontSize={16}>{item.name}</Text>
-                                    {isItemDraft(item.ingredient_id) && (
-                                        <View style={styles.draftBadge}>
-                                            <Text style={styles.draftBadgeText}>Draft</Text>
-                                        </View>
-                                    )}
+                                    <Text color="$color" fontSize={16}>{capitalize(item.name)}</Text>
+                                    {(() => {
+                                        const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
+                                        if (!childDraft) return null;
+                                        const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                        return (
+                                            <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
+                                                <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
+                                                    {childProgress.label} ({childProgress.percentage}%)
+                                                </Text>
+                                            </View>
+                                        );
+                                    })()}
                                 </XStack>
                                 <XStack gap="$2" alignItems="center">
                                     <Input
@@ -590,18 +599,25 @@ export default function AddIngredientScreen() {
                                     <TouchableOpacity
                                         style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                                         onPress={() => {
-                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: item.name, amount: "", unit: "" }]);
+                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: capitalize(item.name), amount: "", unit: "" }]);
                                             handleDismissModalPress();
                                             setIngredientSearch("");
                                         }}
                                     >
                                         <XStack gap="$2" alignItems="center">
-                                            <Text color="$color" fontSize={16}>{item.name}</Text>
-                                            {isItemDraft(item.id) && (
-                                                <View style={styles.draftBadge}>
-                                                    <Text style={styles.draftBadgeText}>Draft</Text>
-                                                </View>
-                                            )}
+                                            <Text color="$color" fontSize={16}>{capitalize(item.name)}</Text>
+                                            {(() => {
+                                                const childDraft = drafts.find((d: any) => d.id === item.id && d.entity_type === 'ingredient');
+                                                if (!childDraft) return null;
+                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                                return (
+                                                    <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
+                                                        <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
+                                                            {childProgress.label} ({childProgress.percentage}%)
+                                                        </Text>
+                                                    </View>
+                                                );
+                                            })()}
                                         </XStack>
                                     </TouchableOpacity>
                                 )}
