@@ -9,11 +9,12 @@ interface Props {
     onNext: () => void;
     barId: string | null;
     setBarId: (val: string | null) => void;
+    onBlur?: () => void;
 }
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
-export const Step2Name = ({ name, onChange, onNext, barId, setBarId }: Props) => {
+export const Step2Name = ({ name, onChange, onNext, barId, setBarId, onBlur }: Props) => {
     const inputRef = useRef<TextInput>(null);
 
     useEffect(() => {
@@ -39,6 +40,7 @@ export const Step2Name = ({ name, onChange, onNext, barId, setBarId }: Props) =>
                     placeholderTextColor="rgba(255,255,255,0.3)"
                     value={name}
                     onChangeText={onChange}
+                    onBlur={onBlur}
                     selectionColor={Colors.dark.tint}
                     autoCapitalize="words"
                     autoCorrect={false}

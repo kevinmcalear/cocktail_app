@@ -78,3 +78,21 @@ export function capitalizeAsYouType(str: string | null | undefined): string {
         .join('');
 }
 
+/**
+ * Handles text input changes with capitalization, avoiding cursor jumps on deletions.
+ */
+export function handleCapitalizedChange(
+    newVal: string,
+    prevVal: string,
+    setter: (val: string) => void
+) {
+    if (newVal.length < prevVal.length) {
+        // Deletion occurred - do not format to prevent cursor jumps
+        setter(newVal);
+    } else {
+        // Addition or paste - format it
+        setter(capitalizeAsYouType(newVal));
+    }
+}
+
+

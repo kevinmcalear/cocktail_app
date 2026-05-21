@@ -19,7 +19,7 @@ import { Colors } from "@/constants/theme";
 import { useBeer } from "@/hooks/useBeers";
 import { supabase } from "@/lib/supabase";
 import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
@@ -308,7 +308,8 @@ export default function EditBeerScreen() {
                     <Label color="$color11">Name *</Label>
                     <Input
                         value={name}
-                        onChangeText={(val) => setName(capitalizeAsYouType(val))}
+                        onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
+                        onBlur={() => setName(capitalize(name))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Cottage Lager"
                         size="$4"
@@ -322,7 +323,8 @@ export default function EditBeerScreen() {
                     <Label color="$color11">Brewery / Brand</Label>
                     <Input
                         value={brewery}
-                        onChangeText={(val) => setBrewery(capitalizeAsYouType(val))}
+                        onChangeText={(val) => handleCapitalizedChange(val, brewery, setBrewery)}
+                        onBlur={() => setBrewery(capitalize(brewery))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Bellwoods"
                         size="$4"

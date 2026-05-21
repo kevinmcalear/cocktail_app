@@ -29,7 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -389,7 +389,8 @@ export default function EditIngredientScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
+                            onBlur={() => setName(capitalize(name))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Rich Simple Syrup"
                             size="$4"
@@ -403,7 +404,8 @@ export default function EditIngredientScreen() {
                         <Label color="$color11">Brand / Maker</Label>
                         <Input
                             value={brandMaker}
-                            onChangeText={(val) => setBrandMaker(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
+                            onBlur={() => setBrandMaker(capitalize(brandMaker))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Campari, Buffalo Trace"
                             size="$4"

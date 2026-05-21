@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack } from "tamagui";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 interface SectionInput {
     id: string; // temporary for UI key mapping
@@ -229,7 +229,8 @@ export default function CreateTemplateScreen() {
                         placeholder="e.g. Caretakers Format"
                         placeholderTextColor="#666"
                         value={templateName}
-                        onChangeText={(val) => setTemplateName(capitalizeAsYouType(val))}
+                        onChangeText={(val) => handleCapitalizedChange(val, templateName, setTemplateName)}
+                        onBlur={() => setTemplateName(capitalize(templateName))}
                     />
                 </View>
 
@@ -267,7 +268,13 @@ export default function CreateTemplateScreen() {
                             placeholder="Section Name (e.g. Starters)"
                             placeholderTextColor="#666"
                             value={sec.name}
-                            onChangeText={(val) => handleSectionChange(sec.id, 'name', capitalizeAsYouType(val))}
+                            onChangeText={(val) => {
+                                const prevVal = sec.name || "";
+                                handleCapitalizedChange(val, prevVal, (newVal) => {
+                                    handleSectionChange(sec.id, 'name', newVal);
+                                });
+                            }}
+                            onBlur={() => handleSectionChange(sec.id, 'name', capitalize(sec.name))}
                         />
                         
                         <View style={styles.requirementsRow}>

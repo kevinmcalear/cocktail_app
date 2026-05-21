@@ -28,7 +28,7 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 interface RecipeItem {
     id?: string;
@@ -454,7 +454,8 @@ export default function EditCocktailScreen() {
                     <Label color="$color11">Name *</Label>
                     <Input
                         value={name}
-                        onChangeText={(val) => setName(capitalizeAsYouType(val))}
+                        onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
+                        onBlur={() => setName(capitalize(name))}
                         placeholderTextColor="$color11"
                         placeholder="e.g. Negroni"
                         size="$4"
@@ -648,7 +649,8 @@ export default function EditCocktailScreen() {
                     <Label color="$color11">Origin</Label>
                     <Input 
                         value={origin} 
-                        onChangeText={(val) => setOrigin(capitalizeAsYouType(val))} 
+                        onChangeText={(val) => handleCapitalizedChange(val, origin, setOrigin)} 
+                        onBlur={() => setOrigin(capitalize(origin))}
                         placeholderTextColor="$color11" 
                         size="$4"
                         backgroundColor="$backgroundStrong"

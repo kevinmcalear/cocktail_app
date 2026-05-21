@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDrafts } from "@/hooks/useDrafts";
 import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -29,7 +29,7 @@ import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
 export default function AddBeerScreen() {
     const router = useRouter();
-    const { barId: initialBarId, draftId } = useLocalSearchParams<{ barId?: string, draftId?: string }>();
+    const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -44,7 +44,7 @@ export default function AddBeerScreen() {
     const pendingNavigationActionRef = React.useRef<any>(null);
 
     // Form State
-    const [name, setName] = useState("");
+    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
     const [description, setDescription] = useState("");
     const [brewery, setBrewery] = useState("");
     const [abv, setAbv] = useState("");
@@ -416,7 +416,8 @@ export default function AddBeerScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
+                            onBlur={() => setName(capitalize(name))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Cottage Lager"
                             size="$4"
@@ -430,7 +431,8 @@ export default function AddBeerScreen() {
                         <Label color="$color11">Brewery / Brand</Label>
                         <Input
                             value={brewery}
-                            onChangeText={(val) => setBrewery(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, brewery, setBrewery)}
+                            onBlur={() => setBrewery(capitalize(brewery))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Bellwoods"
                             size="$4"

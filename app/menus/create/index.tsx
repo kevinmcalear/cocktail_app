@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 import { Step1Template } from "./_components/Step1Template";
 import { Step2Name } from "./_components/Step2Name";
@@ -322,7 +322,8 @@ export default function CreateMenuWizard() {
                     >
                         <Step2Name 
                             name={menuName} 
-                            onChange={(val) => setMenuName(capitalizeAsYouType(val))} 
+                            onChange={(val) => handleCapitalizedChange(val, menuName, setMenuName)} 
+                            onBlur={() => setMenuName(capitalize(menuName))}
                             onNext={handleNext}
                             barId={barId}
                             setBarId={setBarId}

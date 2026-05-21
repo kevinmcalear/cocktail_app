@@ -25,7 +25,7 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
-import { capitalize, capitalizeAsYouType } from "@/lib/stringUtils";
+import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 
 interface RecipeItem {
@@ -53,7 +53,7 @@ export default function AddIngredientScreen() {
     const pendingNavigationActionRef = useRef<any>(null);
 
     // Form State
-    const [name, setName] = useState(initialNameParam || "");
+    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
     const [description, setDescription] = useState("");
     const [brandMaker, setBrandMaker] = useState("");
     const [abv, setAbv] = useState("");
@@ -398,7 +398,8 @@ export default function AddIngredientScreen() {
                         <Label color="$color11">Name *</Label>
                         <Input
                             value={name}
-                            onChangeText={(val) => setName(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
+                            onBlur={() => setName(capitalize(name))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Rich Simple Syrup"
                             size="$4"
@@ -412,7 +413,8 @@ export default function AddIngredientScreen() {
                         <Label color="$color11">Brand / Maker</Label>
                         <Input
                             value={brandMaker}
-                            onChangeText={(val) => setBrandMaker(capitalizeAsYouType(val))}
+                            onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
+                            onBlur={() => setBrandMaker(capitalize(brandMaker))}
                             placeholderTextColor="$color11"
                             placeholder="e.g. Campari, Buffalo Trace"
                             size="$4"
