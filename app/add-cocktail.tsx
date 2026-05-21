@@ -879,7 +879,10 @@ export default function AddCocktailScreen() {
                                                 await handleSaveDraft(true);
                                                 router.push({
                                                     pathname: "/add-ingredient",
-                                                    params: { name: ingredientSearch }
+                                                    params: { 
+                                                        name: ingredientSearch,
+                                                        barId: barId || ""
+                                                    }
                                                 });
                                             }}
                                         >
