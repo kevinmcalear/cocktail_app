@@ -71,7 +71,7 @@ export default function AddCocktailScreen() {
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
 
-    const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
+    const { barId: initialBarId, draftId, name: initialNameParam, menuDraftId, menuSectionId } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string, menuDraftId?: string, menuSectionId?: string }>();
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
     const mergedIngredients = useMemo(() => {
@@ -231,6 +231,27 @@ export default function AddCocktailScreen() {
                 setCurrentDraftId(result.id);
                 // Also update the URL params silently so refreshing doesn't lose it
                 router.setParams({ draftId: result.id });
+            }
+
+            if (menuDraftId && menuSectionId && result && result.id) {
+                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+                if (menuDraft) {
+                    const selections = { ...(menuDraft.draft_data?.selections || {}) };
+                    const currentSectionDrinks = selections[menuSectionId] || [];
+                    if (!currentSectionDrinks.includes(result.id)) {
+                        selections[menuSectionId] = [...currentSectionDrinks, result.id];
+                        const updatedDraftData = {
+                            ...menuDraft.draft_data,
+                            selections
+                        };
+                        await saveDraft({
+                            id: menuDraft.id,
+                            entityType: 'menu',
+                            draftData: updatedDraftData
+                        });
+                    }
+                }
+                setRecentlyCreatedItem({ type: 'cocktail', id: result.id, name: name || "Untitled Cocktail Draft" });
             }
             
             if (!silent) {
@@ -489,6 +510,31 @@ export default function AddCocktailScreen() {
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             
             const activeDraftId = currentDraftId || draftId;
+            if (menuDraftId && menuSectionId) {
+                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+                if (menuDraft) {
+                    const selections = { ...(menuDraft.draft_data?.selections || {}) };
+                    const currentSectionDrinks = selections[menuSectionId] || [];
+                    let updatedSectionDrinks = [...currentSectionDrinks];
+                    if (activeDraftId) {
+                        updatedSectionDrinks = updatedSectionDrinks.filter(id => id !== activeDraftId);
+                    }
+                    if (!updatedSectionDrinks.includes(cocktailId)) {
+                        updatedSectionDrinks.push(cocktailId);
+                    }
+                    selections[menuSectionId] = updatedSectionDrinks;
+                    const updatedDraftData = {
+                        ...menuDraft.draft_data,
+                        selections
+                    };
+                    await saveDraft({
+                        id: menuDraft.id,
+                        entityType: 'menu',
+                        draftData: updatedDraftData
+                    });
+                }
+            }
+
             if (activeDraftId) {
                 await updateMenuDraftsWithPublishedId(activeDraftId, cocktailId, drafts, saveDraft);
                 await deleteDraft(activeDraftId);

@@ -19,9 +19,11 @@ interface Props {
     selections: Record<string, string[]>;
     setSelections: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     onNext: () => void;
+    barId?: string | null;
+    menuDraftId?: string | null;
 }
 
-export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Props) => {
+export const Step3Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId }: Props) => {
     const router = useRouter();
     const [allDrinks, setAllDrinks] = useState<SearchItem[]>([]);
     
@@ -253,7 +255,12 @@ export const Step3Drinks = ({ sections, selections, setSelections, onNext }: Pro
                         setShowPicker(false);
                         router.push({
                             pathname: "/add-cocktail",
-                            params: { name: query }
+                            params: { 
+                                name: query,
+                                barId: barId || "",
+                                menuDraftId: menuDraftId || "",
+                                menuSectionId: pickingForSection || ""
+                            }
                         });
                     }}
                     createNewText="Create cocktail"

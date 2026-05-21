@@ -344,6 +344,8 @@ export default function CreateMenuWizard() {
                             selections={selections} 
                             setSelections={setSelections} 
                             onNext={handleNext}
+                            barId={barId}
+                            menuDraftId={currentDraftId}
                         />
                     </MotiView>
                 )}
