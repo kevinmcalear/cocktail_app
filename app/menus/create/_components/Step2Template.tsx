@@ -13,7 +13,7 @@ interface Props {
     onNext: () => void;
 }
 
-export const Step1Template = ({ templates, selectedId, onSelect, onNext }: Props) => {
+export const Step2Template = ({ templates, selectedId, onSelect, onNext }: Props) => {
     const router = useRouter();
 
     return (

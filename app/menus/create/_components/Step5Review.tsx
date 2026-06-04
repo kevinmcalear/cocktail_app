@@ -4,6 +4,7 @@ import { Colors } from "@/constants/theme";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "tamagui";
+import { useBars } from "@/hooks/useBars";
 
 interface Props {
     template: any;
@@ -12,9 +13,12 @@ interface Props {
     selections: Record<string, string[]>;
     onPublish: () => void;
     saving: boolean;
+    barId: string | null;
 }
 
-export const Step4Review = ({ template, name, sections, selections, onPublish, saving }: Props) => {
+export const Step5Review = ({ template, name, sections, selections, onPublish, saving, barId }: Props) => {
+    const { data: userBars } = useBars();
+    const venueName = userBars?.find((ub: any) => ub.bar_id === barId)?.bars?.name || "Unknown Venue";
     
     const getTotalDrinks = () => {
         let total = 0;
@@ -35,10 +39,20 @@ export const Step4Review = ({ template, name, sections, selections, onPublish, s
                 <GlassView style={styles.summaryCard} intensity={25}>
                     <View style={styles.summaryRow}>
                         <View>
+                            <Text style={styles.label}>Venue</Text>
+                            <Text style={styles.value}>{venueName}</Text>
+                        </View>
+                        <IconSymbol name="mappin.and.ellipse" size={32} color={Colors.dark.tint} />
+                    </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.summaryRow}>
+                        <View>
                             <Text style={styles.label}>Menu Name</Text>
                             <Text style={styles.value}>{name}</Text>
                         </View>
-                        <IconSymbol name="menucard" size={32} color={Colors.dark.tint} />
+                        <IconSymbol name="menucard" size={32} color={Colors.dark.icon} />
                     </View>
                     
                     <View style={styles.divider} />

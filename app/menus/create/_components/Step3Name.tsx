@@ -7,14 +7,10 @@ interface Props {
     name: string;
     onChange: (text: string) => void;
     onNext: () => void;
-    barId: string | null;
-    setBarId: (val: string | null) => void;
     onBlur?: () => void;
 }
 
-import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-
-export const Step2Name = ({ name, onChange, onNext, barId, setBarId, onBlur }: Props) => {
+export const Step3Name = ({ name, onChange, onNext, onBlur }: Props) => {
     const inputRef = useRef<TextInput>(null);
 
     useEffect(() => {
@@ -46,10 +42,6 @@ export const Step2Name = ({ name, onChange, onNext, barId, setBarId, onBlur }: P
                     autoCorrect={false}
                     onSubmitEditing={onNext}
                 />
-
-                <View style={{ marginTop: 40 }}>
-                    <BarAssignmentAccordion barId={barId} setBarId={setBarId} />
-                </View>
             </View>
 
         </View>

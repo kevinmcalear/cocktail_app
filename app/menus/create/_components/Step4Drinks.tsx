@@ -23,7 +23,7 @@ interface Props {
     menuDraftId?: string | null;
 }
 
-export const Step3Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId }: Props) => {
+export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId }: Props) => {
     const router = useRouter();
     const [allDrinks, setAllDrinks] = useState<SearchItem[]>([]);
     

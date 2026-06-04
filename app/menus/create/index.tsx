@@ -12,10 +12,11 @@ import { useDrafts } from "@/hooks/useDrafts";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
-import { Step1Template } from "./_components/Step1Template";
-import { Step2Name } from "./_components/Step2Name";
-import { Step3Drinks } from "./_components/Step3Drinks";
-import { Step4Review } from "./_components/Step4Review";
+import { Step1Venue } from "./_components/Step1Venue";
+import { Step2Template } from "./_components/Step2Template";
+import { Step3Name } from "./_components/Step3Name";
+import { Step4Drinks } from "./_components/Step4Drinks";
+import { Step5Review } from "./_components/Step5Review";
 
 export default function CreateMenuWizard() {
     const router = useRouter();
@@ -41,7 +42,8 @@ export default function CreateMenuWizard() {
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
 
-    const draftLoadedRef = useRef<string | null>(null);
+    const [draftLoaded, setDraftLoaded] = useState(!draftId);
+    const [furthestStep, setFurthestStep] = useState(1);
     const currentStateStr = JSON.stringify({ step, selectedTemplateId, menuName, selections, barId });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
@@ -54,29 +56,87 @@ export default function CreateMenuWizard() {
     }, [needsCleanMark, currentStateStr]);
 
     useEffect(() => {
-        if (currentDraftId && drafts.length > 0 && draftLoadedRef.current !== currentDraftId) {
-            if (isFetching) return;
-            
+        setFurthestStep(prev => Math.max(prev, step));
+    }, [step]);
+
+    useEffect(() => {
+        if (currentDraftId && !draftLoaded && drafts.length > 0) {
             const draft = drafts.find((d: any) => d.id === currentDraftId);
             if (draft && draft.draft_data) {
-                draftLoadedRef.current = currentDraftId;
                 const data = draft.draft_data;
-                setStep(data.step || 1);
+                const loadedStep = data.furthestStep || data.step || 1;
+                
+                // Old draft migration
+                let targetStep = 1;
+                if (data.hasVenueStep) {
+                    targetStep = loadedStep;
+                } else {
+                    if (!data.barId && !initialBarId) {
+                        targetStep = 1; // Must select venue first
+                    } else {
+                        targetStep = loadedStep + 1; // Shift step numbers by 1
+                    }
+                }
+
+                setStep(targetStep);
+                setFurthestStep(targetStep);
                 setSelectedTemplateId(data.selectedTemplateId || null);
                 setMenuName(data.menuName || data.name || "");
                 setSelections(data.selections || {});
                 setBarId(data.barId || initialBarId || null);
+                setDraftLoaded(true);
                 setNeedsCleanMark(true);
-            } else {
-                draftLoadedRef.current = currentDraftId;
             }
         }
-    }, [currentDraftId, drafts, isFetching]);
+    }, [currentDraftId, drafts, draftLoaded, initialBarId]);
+
+    useEffect(() => {
+        if (!draftLoaded) return;
+        const isDirty = currentStateStr !== cleanStateStrRef.current;
+        if (!isDirty) return;
+
+        const timer = setTimeout(() => {
+            const autoSave = async () => {
+                try {
+                    const draftData = {
+                        step,
+                        furthestStep: Math.max(furthestStep, step),
+                        selectedTemplateId,
+                        menuName,
+                        name: menuName,
+                        selections,
+                        barId,
+                        hasVenueStep: true
+                    };
+                    const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
+                    if (!currentDraftId && result && result.id) {
+                        setCurrentDraftId(result.id);
+                        router.setParams({ draftId: result.id });
+                    }
+                    cleanStateStrRef.current = currentStateStr;
+                } catch (error) {
+                    console.error("Auto-save menu draft error:", error);
+                }
+            };
+            autoSave();
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [currentStateStr, currentDraftId, draftLoaded, furthestStep, step, selectedTemplateId, menuName, selections, barId, saveDraft, router]);
 
     const handleSaveDraft = async () => {
         try {
             setSaving(true);
-            const draftData = { step, selectedTemplateId, menuName, name: menuName, selections, barId };
+            const draftData = { 
+                step, 
+                furthestStep: Math.max(furthestStep, step), 
+                selectedTemplateId, 
+                menuName, 
+                name: menuName, 
+                selections, 
+                barId,
+                hasVenueStep: true
+            };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
             
             if (!currentDraftId && result && result.id) {
@@ -132,10 +192,11 @@ export default function CreateMenuWizard() {
         .sort((a, b) => a.sort_order - b.sort_order);
 
     const handleNext = () => {
-        if (step === 1 && !selectedTemplateId) return;
-        if (step === 2 && !menuName.trim()) return;
+        if (step === 1 && !barId) return;
+        if (step === 2 && !selectedTemplateId) return;
+        if (step === 3 && !menuName.trim()) return;
         
-        if (step === 1) {
+        if (step === 2) {
             // Init selections if empty
             const newSelections = { ...selections };
             activeSections.forEach(sec => {
@@ -156,9 +217,10 @@ export default function CreateMenuWizard() {
     };
 
     const isStepValid = () => {
-        if (step === 1) return !!selectedTemplateId;
-        if (step === 2) return !!menuName.trim();
-        if (step === 3) {
+        if (step === 1) return !!barId;
+        if (step === 2) return !!selectedTemplateId;
+        if (step === 3) return !!menuName.trim();
+        if (step === 4) {
             return activeSections.every(sec => {
                 const count = (selections[sec.id] || []).length;
                 return count >= (sec.min_items || 1);
@@ -279,7 +341,7 @@ export default function CreateMenuWizard() {
                 </TouchableOpacity>
                 
                 <View style={styles.progressContainer}>
-                    {[1, 2, 3, 4].map((i) => (
+                    {[1, 2, 3, 4, 5].map((i) => (
                         <View 
                             key={i} 
                             style={[
@@ -303,15 +365,14 @@ export default function CreateMenuWizard() {
                         exit={{ opacity: 0, translateX: -50 }}
                         style={styles.stepContainer}
                     >
-                        <Step1Template 
-                            templates={templates} 
-                            selectedId={selectedTemplateId} 
-                            onSelect={setSelectedTemplateId} 
+                        <Step1Venue 
+                            selectedId={barId} 
+                            onSelect={setBarId} 
                             onNext={handleNext}
                         />
                     </MotiView>
                 )}
-                
+
                 {step === 2 && (
                     <MotiView
                         key="step2"
@@ -320,17 +381,15 @@ export default function CreateMenuWizard() {
                         exit={{ opacity: 0, translateX: -50 }}
                         style={styles.stepContainer}
                     >
-                        <Step2Name 
-                            name={menuName} 
-                            onChange={(val) => handleCapitalizedChange(val, menuName, setMenuName)} 
-                            onBlur={() => setMenuName(capitalize(menuName))}
+                        <Step2Template 
+                            templates={templates} 
+                            selectedId={selectedTemplateId} 
+                            onSelect={setSelectedTemplateId} 
                             onNext={handleNext}
-                            barId={barId}
-                            setBarId={setBarId}
                         />
                     </MotiView>
                 )}
-
+                
                 {step === 3 && (
                     <MotiView
                         key="step3"
@@ -339,13 +398,11 @@ export default function CreateMenuWizard() {
                         exit={{ opacity: 0, translateX: -50 }}
                         style={styles.stepContainer}
                     >
-                        <Step3Drinks 
-                            sections={activeSections} 
-                            selections={selections} 
-                            setSelections={setSelections} 
+                        <Step3Name 
+                            name={menuName} 
+                            onChange={(val) => handleCapitalizedChange(val, menuName, setMenuName)} 
+                            onBlur={() => setMenuName(capitalize(menuName))}
                             onNext={handleNext}
-                            barId={barId}
-                            menuDraftId={currentDraftId}
                         />
                     </MotiView>
                 )}
@@ -358,13 +415,33 @@ export default function CreateMenuWizard() {
                         exit={{ opacity: 0, translateX: -50 }}
                         style={styles.stepContainer}
                     >
-                        <Step4Review 
+                        <Step4Drinks 
+                            sections={activeSections} 
+                            selections={selections} 
+                            setSelections={setSelections} 
+                            onNext={handleNext}
+                            barId={barId}
+                            menuDraftId={currentDraftId}
+                        />
+                    </MotiView>
+                )}
+
+                {step === 5 && (
+                    <MotiView
+                        key="step5"
+                        from={{ opacity: 0, translateX: 50 }}
+                        animate={{ opacity: 1, translateX: 0 }}
+                        exit={{ opacity: 0, translateX: -50 }}
+                        style={styles.stepContainer}
+                    >
+                        <Step5Review 
                             template={templates.find(t => t.id === selectedTemplateId)}
                             name={menuName}
                             sections={activeSections}
                             selections={selections}
                             onPublish={handlePublish}
                             saving={saving}
+                            barId={barId}
                         />
                     </MotiView>
                 )}
@@ -386,13 +463,13 @@ export default function CreateMenuWizard() {
                         (!isStepValid() || saving) && styles.disabledButton
                     ]} 
                     disabled={!isStepValid() || saving}
-                    onPress={step === 4 ? handlePublish : handleNext}
+                    onPress={step === 5 ? handlePublish : handleNext}
                 >
                     {saving ? (
                         <ActivityIndicator size="small" color="#000" />
                     ) : (
                         <>
-                            <Text style={styles.footerNextText}>{step === 4 ? 'Publish Menu' : 'Next'}</Text>
+                            <Text style={styles.footerNextText}>{step === 5 ? 'Publish Menu' : 'Next'}</Text>
                         </>
                     )}
                 </TouchableOpacity>
