@@ -11,6 +11,7 @@ import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 import { Step1Venue } from "./_components/Step1Venue";
 import { Step2Template } from "./_components/Step2Template";
@@ -41,6 +42,7 @@ export default function CreateMenuWizard() {
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
+    const isExitingRef = useRef(false);
 
     const [draftLoaded, setDraftLoaded] = useState(!draftId);
     const [furthestStep, setFurthestStep] = useState(1);
@@ -164,8 +166,11 @@ export default function CreateMenuWizard() {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            const isDirty = currentStateStr !== cleanStateStrRef.current;
-            if (!isDirty) {
+            if (isExitingRef.current) {
+                return;
+            }
+            const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
+            if (!hasProgress) {
                 return;
             }
             e.preventDefault();
@@ -174,7 +179,7 @@ export default function CreateMenuWizard() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr]);
+    }, [navigation, currentStateStr, menuName, selectedTemplateId, barId]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -182,6 +187,7 @@ export default function CreateMenuWizard() {
             await handleSaveDraft();
         }
         if (pendingNavigationActionRef.current) {
+            isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
@@ -229,7 +235,28 @@ export default function CreateMenuWizard() {
         return true;
     };
 
-    const handlePublish = async () => {
+    const handlePublish = () => {
+        const proceed = () => {
+            performPublish();
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to publish this menu?")) {
+                proceed();
+            }
+        } else {
+            Alert.alert(
+                "Publish Menu",
+                "Are you sure you want to publish this menu?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Publish", onPress: proceed }
+                ]
+            );
+        }
+    };
+
+    const performPublish = async () => {
         setSaving(true);
         try {
             // 1. Create Menu
@@ -311,7 +338,7 @@ export default function CreateMenuWizard() {
             }
 
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
-            cleanStateStrRef.current = currentStateStr;
+            isExitingRef.current = true;
             router.back();
         } catch (error) {
             console.error("Save menu error", error);
@@ -336,8 +363,8 @@ export default function CreateMenuWizard() {
         >
             {/* Header */}
             <View style={[styles.header, { paddingTop: 20, justifyContent: 'space-between' }]}>
-                <TouchableOpacity onPress={handleSaveDraft} disabled={saving} style={{ width: 80 }}>
-                    <Text color={Colors.dark.tint} fontWeight="bold">Save Draft</Text>
+                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 
                 <View style={styles.progressContainer}>
@@ -352,7 +379,7 @@ export default function CreateMenuWizard() {
                     ))}
                 </View>
                 
-                <View style={{ width: 80 }} />
+                <View style={{ width: 40 }} />
             </View>
 
             {/* Screens (Moti transitions) */}
@@ -521,6 +548,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingBottom: 20,
         backgroundColor: Colors.dark.background,
+    },
+    headerBtn: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
     },
     progressContainer: {
         flexDirection: "row",

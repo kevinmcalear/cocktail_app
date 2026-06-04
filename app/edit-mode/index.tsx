@@ -11,6 +11,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
+import { UniversalCreateButton } from '@/components/UniversalCreateButton';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -72,13 +73,7 @@ export default function EditModeDashboard() {
         acc[barId].push(draft);
         return acc;
     }, {});
-    const options = [
-        { label: 'Cocktail', icon: 'TabDrinks', route: '/add-cocktail' },
-        { label: 'Ingredient', icon: 'TabIngredients', route: '/add-ingredient' },
-        { label: 'Beer', icon: 'Beer', route: '/add-beer' }, 
-        { label: 'Wine', icon: 'Wine', route: '/add-wine' }, 
-        { label: 'Menu', icon: 'TabMenus', route: '/menus/create' },
-    ];
+
 
     const handleDeleteDraft = (id: string) => {
         if (Platform.OS === 'web') {
@@ -343,31 +338,7 @@ export default function EditModeDashboard() {
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
                         Create New
                     </Text>
-                    <XStack flexWrap="wrap" gap="$3" justifyContent="flex-start">
-                        {options.map((option, index) => (
-                            <Button
-                                key={index}
-                                width="48%"
-                                $gtSm={{ width: '31.5%' }}
-                                $gtMd={{ width: '23.5%' }}
-                                $gtLg={{ width: '18.8%' }}
-                                height={100}
-                                backgroundColor="$backgroundStrong"
-                                pressStyle={{ opacity: 0.8 }}
-                                justifyContent="center"
-                                alignItems="center"
-                                flexDirection="column"
-                                gap="$2"
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius="$4"
-                                onPress={() => router.push(option.route as any)}
-                            >
-                                <CustomIcon name={option.icon} size={32} color={theme.color?.get() as string} />
-                                <Text color="$color" fontSize={14} fontWeight="500">{option.label}</Text>
-                            </Button>
-                        ))}
-                    </XStack>
+                    <UniversalCreateButton variant="button" />
                 </YStack>
 
             </ScrollView>

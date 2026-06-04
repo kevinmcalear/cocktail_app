@@ -70,6 +70,7 @@ export default function AddCocktailScreen() {
     // Exit Modal State
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
+    const isExitingRef = useRef(false);
 
     const { barId: initialBarId, draftId, name: initialNameParam, menuDraftId, menuSectionId } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string, menuDraftId?: string, menuSectionId?: string }>();
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
@@ -279,8 +280,11 @@ export default function AddCocktailScreen() {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            const isDirty = currentStateStr !== cleanStateStrRef.current;
-            if (!isDirty) {
+            if (isExitingRef.current) {
+                return;
+            }
+            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+            if (!hasProgress) {
                 return;
             }
 
@@ -291,7 +295,7 @@ export default function AddCocktailScreen() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr]);
+    }, [navigation, currentStateStr, name, currentDraftId]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -299,6 +303,7 @@ export default function AddCocktailScreen() {
             await handleSaveDraft();
         }
         if (pendingNavigationActionRef.current) {
+            isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
@@ -424,7 +429,7 @@ export default function AddCocktailScreen() {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!name.trim()) {
             if (Platform.OS === 'web') {
                 window.alert("Missing Info: Name is required.");
@@ -433,6 +438,28 @@ export default function AddCocktailScreen() {
             }
             return;
         }
+
+        const proceed = () => {
+            performSave();
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to publish this cocktail?")) {
+                proceed();
+            }
+        } else {
+            Alert.alert(
+                "Publish Cocktail",
+                "Are you sure you want to publish this cocktail?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Publish", onPress: proceed }
+                ]
+            );
+        }
+    };
+
+    const performSave = async () => {
         setSaving(true);
         try {
             // Resolve draft ingredients recursively before publishing the cocktail
@@ -548,12 +575,12 @@ export default function AddCocktailScreen() {
 
             if (Platform.OS === 'web') {
                 window.alert("Success: Cocktail created!");
-                cleanStateStrRef.current = currentStateStr; // Prevent beforeRemove block
+                isExitingRef.current = true;
                 router.back();
             } else {
                 Alert.alert("Success", "Cocktail created!", [
                     { text: "OK", onPress: () => {
-                        cleanStateStrRef.current = currentStateStr;
+                        isExitingRef.current = true;
                         router.back();
                     }}
                 ]);
@@ -594,14 +621,6 @@ export default function AddCocktailScreen() {
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">New Cocktail</Text>
                 <XStack gap="$2" alignItems="center">
-                    <Button 
-                        onPress={handleSaveDraft} 
-                        disabled={saving}
-                        size="$3"
-                        chromeless
-                    >
-                        <Text color="$color11" fontWeight="500">Save Draft</Text>
-                    </Button>
                     <Button 
                         onPress={handleSave} 
                         disabled={saving}

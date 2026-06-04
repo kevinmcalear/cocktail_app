@@ -42,6 +42,7 @@ export default function AddBeerScreen() {
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = React.useRef<any>(null);
+    const isExitingRef = React.useRef(false);
 
     // Form State
     const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
@@ -134,8 +135,11 @@ export default function AddBeerScreen() {
 
     React.useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            const isDirty = currentStateStr !== cleanStateStrRef.current;
-            if (!isDirty) {
+            if (isExitingRef.current) {
+                return;
+            }
+            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+            if (!hasProgress) {
                 return;
             }
             e.preventDefault();
@@ -144,7 +148,7 @@ export default function AddBeerScreen() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr]);
+    }, [navigation, currentStateStr, name, currentDraftId]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -152,6 +156,7 @@ export default function AddBeerScreen() {
             await handleSaveDraft();
         }
         if (pendingNavigationActionRef.current) {
+            isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
@@ -268,12 +273,33 @@ export default function AddBeerScreen() {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!name?.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return;
         }
 
+        const proceed = () => {
+            performSave();
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to publish this beer?")) {
+                proceed();
+            }
+        } else {
+            Alert.alert(
+                "Publish Beer",
+                "Are you sure you want to publish this beer?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Publish", onPress: proceed }
+                ]
+            );
+        }
+    };
+
+    const performSave = async () => {
         setSaving(true);
         try {
             // 1. Update metadata (insert beer)
@@ -347,7 +373,7 @@ export default function AddBeerScreen() {
 
             Alert.alert("Success", "Beer created!", [
                 { text: "OK", onPress: () => {
-                    cleanStateStrRef.current = currentStateStr;
+                    isExitingRef.current = true;
                     router.back();
                 } }
             ]);
@@ -374,18 +400,10 @@ export default function AddBeerScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
+                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Add Beer</Text>
                 <XStack gap="$2" alignItems="center">
-                    <Button 
-                        onPress={handleSaveDraft} 
-                        disabled={saving}
-                        size="$3"
-                        chromeless
-                    >
-                        <Text color="$color11" fontWeight="500">Save Draft</Text>
-                    </Button>
                     <Button 
                         onPress={handleSave} 
                         disabled={saving}

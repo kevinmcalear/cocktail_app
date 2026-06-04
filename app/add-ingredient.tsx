@@ -51,6 +51,7 @@ export default function AddIngredientScreen() {
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
+    const isExitingRef = useRef(false);
 
     // Form State
     const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
@@ -217,8 +218,11 @@ export default function AddIngredientScreen() {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            const isDirty = currentStateStr !== cleanStateStrRef.current;
-            if (!isDirty) {
+            if (isExitingRef.current) {
+                return;
+            }
+            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+            if (!hasProgress) {
                 return;
             }
             e.preventDefault();
@@ -227,7 +231,7 @@ export default function AddIngredientScreen() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr]);
+    }, [navigation, currentStateStr, name, currentDraftId]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -235,6 +239,7 @@ export default function AddIngredientScreen() {
             await handleSaveDraft();
         }
         if (pendingNavigationActionRef.current) {
+            isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
@@ -251,11 +256,33 @@ export default function AddIngredientScreen() {
         []
     );
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return;
         }
+
+        const proceed = () => {
+            performSave();
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to publish this ingredient?")) {
+                proceed();
+            }
+        } else {
+            Alert.alert(
+                "Publish Ingredient",
+                "Are you sure you want to publish this ingredient?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Publish", onPress: proceed }
+                ]
+            );
+        }
+    };
+
+    const performSave = async () => {
         setSaving(true);
         try {
             // Resolve draft ingredients recursively before publishing this complex ingredient
@@ -334,7 +361,7 @@ export default function AddIngredientScreen() {
 
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => {
-                    cleanStateStrRef.current = currentStateStr;
+                    isExitingRef.current = true;
                     router.back();
                 } }
             ]);
@@ -365,18 +392,10 @@ export default function AddIngredientScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
+                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">New Ingredient</Text>
                 <XStack gap="$2" alignItems="center">
-                    <Button 
-                        onPress={handleSaveDraft} 
-                        disabled={saving}
-                        size="$3"
-                        chromeless
-                    >
-                        <Text color="$color11" fontWeight="500">Save Draft</Text>
-                    </Button>
                     <Button 
                         onPress={handleSave} 
                         disabled={saving}
