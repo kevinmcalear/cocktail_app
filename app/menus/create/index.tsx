@@ -260,16 +260,30 @@ export default function CreateMenuWizard() {
         setSaving(true);
         try {
             // 1. Create Menu
-            const { data: newMenu, error: menuError } = await supabase
+            const insertPayload: any = {
+                name: capitalize(menuName),
+                template_id: selectedTemplateId,
+                is_active: true,
+                bar_id: barId || null
+            };
+
+            let { data: newMenu, error: menuError } = await supabase
                 .from('menus')
-                .insert({
-                    name: capitalize(menuName),
-                    template_id: selectedTemplateId,
-                    is_active: true,
-                    bar_id: barId || null
-                })
+                .insert(insertPayload)
                 .select()
                 .single();
+
+            if (menuError && menuError.code === '42703') {
+                console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
+                delete insertPayload.bar_id;
+                const retryRes = await supabase
+                    .from('menus')
+                    .insert(insertPayload)
+                    .select()
+                    .single();
+                newMenu = retryRes.data;
+                menuError = retryRes.error;
+            }
 
             if (menuError || !newMenu) throw menuError;
 

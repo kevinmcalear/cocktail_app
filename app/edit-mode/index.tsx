@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform } from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform, useWindowDimensions } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, XStack, YStack, useTheme, Button } from 'tamagui';
+import { Text, XStack, YStack, useTheme, Button, Card } from 'tamagui';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
@@ -12,6 +12,10 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
+import { DraftPreviewPanel } from '@/components/DraftPreviewPanel';
+import { IngredientDetailPanel } from '@/components/IngredientDetailPanel';
+import { CocktailDetailPanel } from '@/components/CocktailDetailPanel';
+import { DraftFolderTree, SelectedDraftNode } from '@/components/DraftFolderTree';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -21,8 +25,27 @@ export default function EditModeDashboard() {
     const { drafts, isLoading, deleteDraft } = useDrafts();
     const { data: userBars } = useBars();
     const { data: dropdowns } = useDropdowns();
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width >= 768;
 
     const [expandedSections, setExpandedSections] = React.useState<Record<string, Record<string, boolean>>>({});
+    const [selectedNode, setSelectedNode] = React.useState<SelectedDraftNode | null>(null);
+    const [selectedIngredientId, setSelectedIngredientId] = React.useState<string | null>(null);
+    const [showThirdColumn, setShowThirdColumn] = React.useState(false);
+
+    const selectedDraftId = (selectedNode?.type === 'menu_draft' || selectedNode?.type === 'drink_draft' || selectedNode?.type === 'ingredient_draft') ? selectedNode.id : null;
+
+    // Auto-select first draft on large screen when drafts load
+    React.useEffect(() => {
+        if (isLargeScreen && drafts.length > 0 && !selectedNode) {
+            const first = drafts[0];
+            setSelectedNode({
+                type: first.entity_type === 'menu' ? 'menu_draft' : (first.entity_type === 'ingredient' ? 'ingredient_draft' : 'drink_draft'),
+                id: first.id,
+                name: first.draft_data?.name || first.draft_data?.menuName || `Untitled ${first.entity_type}`
+            });
+        }
+    }, [drafts, isLargeScreen, selectedNode]);
 
     const getBarName = (barId: string) => {
         if (barId === 'personal') return 'Personal Drafts';
@@ -76,10 +99,19 @@ export default function EditModeDashboard() {
 
 
     const handleDeleteDraft = (id: string) => {
+        const afterDelete = () => {
+            deleteDraft(id);
+            if (selectedNode?.id === id) {
+                setSelectedNode(null);
+                setSelectedIngredientId(null);
+                setShowThirdColumn(false);
+            }
+        };
+
         if (Platform.OS === 'web') {
             const confirmed = window.confirm("Are you sure you want to discard this draft?");
             if (confirmed) {
-                deleteDraft(id);
+                afterDelete();
             }
         } else {
             Alert.alert(
@@ -87,7 +119,7 @@ export default function EditModeDashboard() {
                 "Are you sure you want to discard this draft?",
                 [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: () => deleteDraft(id) }
+                    { text: "Delete", style: "destructive", onPress: afterDelete }
                 ]
             );
         }
@@ -107,6 +139,15 @@ export default function EditModeDashboard() {
         }
     };
 
+    const handleLoadRecipeStatus = (hasRecipe: boolean) => {
+        if (!hasRecipe) {
+            setSelectedIngredientId(null);
+            setShowThirdColumn(false);
+        } else {
+            setShowThirdColumn(true);
+        }
+    };
+
     const getIconForType = (type: string) => {
         switch(type) {
             case 'cocktail': return 'TabDrinks';
@@ -117,6 +158,107 @@ export default function EditModeDashboard() {
             default: return 'TabDrinks';
         }
     };
+
+    if (isLargeScreen) {
+        return (
+            <XStack flex={1} backgroundColor="$background" style={{ paddingTop: insets.top }}>
+                <Stack.Screen options={{ headerShown: false }} />
+                
+                {/* Column 1: Explorer Tree Sidebar (Left) */}
+                <YStack width={320} borderRightWidth={1} borderRightColor="$borderColor" height="100%" backgroundColor="$backgroundStrong">
+                    <XStack paddingHorizontal="$4" paddingVertical="$4" alignItems="center" borderBottomWidth={1} borderBottomColor="$borderColor">
+                        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                            <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                        </TouchableOpacity>
+                        <Text fontSize="$5" fontWeight="bold" marginLeft="$2">Creator Hub</Text>
+                    </XStack>
+                    <DraftFolderTree 
+                        drafts={drafts}
+                        selectedNode={selectedNode}
+                        onNodeSelect={(node) => {
+                            setSelectedNode(node);
+                            setSelectedIngredientId(null);
+                            setShowThirdColumn(false);
+                        }}
+                    />
+                </YStack>
+
+                {/* Column 2: Selected Details Panel (Middle) */}
+                <YStack flex={1} height="100%">
+                    {(selectedNode?.type === "menu_draft" || selectedNode?.type === "drink_draft" || selectedNode?.type === "ingredient_draft") && (() => {
+                        const activeDraft = drafts.find(d => d.id === selectedNode.id);
+                        return activeDraft ? (
+                            <DraftPreviewPanel 
+                                draft={activeDraft}
+                                onIngredientPress={(ingredientId) => {
+                                    setSelectedIngredientId(ingredientId);
+                                    // Check if it's a draft ingredient that has recipe items
+                                    const childDraft = drafts.find(d => d.id === ingredientId && d.entity_type === 'ingredient');
+                                    if (childDraft) {
+                                        setShowThirdColumn(childDraft.draft_data?.recipeItems?.length > 0);
+                                    } else {
+                                        setShowThirdColumn(true); // Published ingredient
+                                    }
+                                }}
+                                selectedIngredientId={selectedIngredientId}
+                                onResume={() => handleResumeDraft(activeDraft)}
+                                onDiscard={() => handleDeleteDraft(activeDraft.id)}
+                            />
+                        ) : null;
+                    })()}
+
+                    {selectedNode?.type === "published_drink" && (
+                        <CocktailDetailPanel 
+                            id={selectedNode.id} 
+                            onIngredientPress={(ingredientId) => {
+                                setSelectedIngredientId(ingredientId);
+                                setShowThirdColumn(true);
+                            }}
+                            selectedIngredientId={selectedIngredientId}
+                        />
+                    )}
+
+                    {!selectedNode && (
+                        <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
+                            <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
+                            <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4">
+                                Select a draft or drink to view preview.
+                            </Text>
+                        </YStack>
+                    )}
+                </YStack>
+
+                {/* Column 3: Batch Spec / Dependency Details Panel (Right) */}
+                {selectedIngredientId && (
+                    <YStack width={360} height="100%" borderLeftWidth={1} borderLeftColor="$borderColor">
+                        {(() => {
+                            const draftIngredient = drafts.find(d => d.id === selectedIngredientId && d.entity_type === 'ingredient');
+                            if (draftIngredient) {
+                                return (
+                                    <DraftPreviewPanel 
+                                        draft={draftIngredient}
+                                        onResume={() => handleResumeDraft(draftIngredient)}
+                                        onDiscard={() => handleDeleteDraft(draftIngredient.id)}
+                                    />
+                                );
+                            } else {
+                                return (
+                                    <IngredientDetailPanel 
+                                        id={selectedIngredientId} 
+                                        onClose={() => {
+                                            setSelectedIngredientId(null);
+                                            setShowThirdColumn(false);
+                                        }}
+                                        onLoadRecipeStatus={handleLoadRecipeStatus}
+                                    />
+                                );
+                            }
+                        })()}
+                    </YStack>
+                )}
+            </XStack>
+        );
+    }
 
     return (
         <YStack flex={1} backgroundColor="$background">

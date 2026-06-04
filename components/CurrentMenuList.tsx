@@ -11,6 +11,7 @@ export interface MenuItem {
     ingredients: string;
     price?: string;
     image?: any;
+    recipes?: any[];
 }
 
 export interface MenuSection {
@@ -23,9 +24,17 @@ interface CurrentMenuListProps {
     sections: MenuSection[];
     scrollEnabled?: boolean;
     ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+    onItemPress?: (item: MenuItem) => void;
+    selectedItemId?: string | null;
 }
 
-export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComponent }: CurrentMenuListProps) {
+export function CurrentMenuList({ 
+    sections, 
+    scrollEnabled = true, 
+    ListHeaderComponent,
+    onItemPress,
+    selectedItemId
+}: CurrentMenuListProps) {
     const router = useRouter();
     const theme = useTheme();
 
@@ -42,31 +51,37 @@ export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComp
                     <Text fontSize={22} color="$color" fontWeight="bold">{title}</Text>
                 </View>
             )}
-            renderItem={({ item, index }) => (
-                <MotiView
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ type: 'spring', delay: index * 100 }}
-                    style={{ marginBottom: 12 }}
-                >
-                    <Card
-                        size="$4"
-                        borderWidth={1}
-                        backgroundColor="$backgroundStrong"
-                        borderColor="$borderColor"
-                        overflow="hidden"
-                        onPress={() => {
-                            if (item.id.startsWith('beer-')) {
-                                router.push(`/beer/${item.id.replace('beer-', '')}`);
-                            } else if (item.id.startsWith('wine-')) {
-                                router.push(`/wine/${item.id.replace('wine-', '')}`);
-                            } else {
-                                router.push(`/cocktail/${item.id}`);
-                            }
-                        }}
-                        pressStyle={{ scale: 0.98 }}
-                        elevation="$1"
+            renderItem={({ item, index }) => {
+                const isSelected = selectedItemId === item.id;
+                return (
+                    <MotiView
+                        from={{ opacity: 0, translateY: 20 }}
+                        animate={{ opacity: 1, translateY: 0 }}
+                        transition={{ type: 'spring', delay: index * 100 }}
+                        style={{ marginBottom: 12 }}
                     >
+                        <Card
+                            size="$4"
+                            borderWidth={isSelected ? 2 : 1}
+                            backgroundColor={isSelected ? "$backgroundStrong" : "$backgroundStrong"}
+                            borderColor={isSelected ? "$color8" : "$borderColor"}
+                            overflow="hidden"
+                            onPress={() => {
+                                if (onItemPress) {
+                                    onItemPress(item);
+                                } else {
+                                    if (item.id.startsWith('beer-')) {
+                                        router.push(`/beer/${item.id.replace('beer-', '')}`);
+                                    } else if (item.id.startsWith('wine-')) {
+                                        router.push(`/wine/${item.id.replace('wine-', '')}`);
+                                    } else {
+                                        router.push(`/cocktail/${item.id}`);
+                                    }
+                                }
+                            }}
+                            pressStyle={{ scale: 0.98 }}
+                            elevation={isSelected ? "$3" : "$1"}
+                        >
                         <Card.Header flexDirection="row" padding="$3" minHeight={110} alignItems="center">
                             <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
                                 <XStack justifyContent="space-between" alignItems="center">
@@ -98,7 +113,8 @@ export function CurrentMenuList({ sections, scrollEnabled = true, ListHeaderComp
                         </Card.Header>
                     </Card>
                 </MotiView>
-            )}
+                );
+            }}
         />
     );
 }

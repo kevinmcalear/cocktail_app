@@ -1,4 +1,4 @@
-import { MenuSection } from '@/components/CurrentMenuList';
+import { MenuItem, MenuSection } from '@/components/CurrentMenuList';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
@@ -36,7 +36,7 @@ export function useMenuDetails(menuId: string | null) {
                         item_images ( images ( url ) ),
                         recipes!recipe_item_id (
                             amount, unit,
-                            ingredient:items!ingredient_item_id ( name )
+                            ingredient:items!ingredient_item_id ( id, name )
                         )
                     )
                 `)
@@ -51,7 +51,7 @@ export function useMenuDetails(menuId: string | null) {
                 const secDrinks = (drinksData || [])
                     .filter(d => d.template_section_id === sec.id)
                     .sort((a, b) => a.sort_order - b.sort_order)
-                    .map(d => {
+                    .map((d): MenuItem | null => {
                         const i: any = d.item;
                         if (!i) return null;
 
@@ -77,6 +77,7 @@ export function useMenuDetails(menuId: string | null) {
                                 description: i.description || "",
                                 ingredients: ingList,
                                 image: imageUrl,
+                                recipes: rList.filter(Boolean),
                             };
                         } else if (i.item_type === 'beer') {
                             return {
@@ -97,7 +98,7 @@ export function useMenuDetails(menuId: string | null) {
                         }
                         
                         return null;
-                    }).filter((item): item is import('@/components/CurrentMenuList').MenuItem => item !== null);
+                    }).filter((item): item is MenuItem => item !== null);
                 
                 return {
                     id: sec.id,

@@ -5,9 +5,28 @@ export function useDropdowns() {
     return useQuery({
         queryKey: ['dropdowns_v2'],
         queryFn: async () => {
-            const [itemsRes, menusRes, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
+            const menusQuery = async () => {
+                const res = await supabase
+                    .from('menus')
+                    .select('id, name, template_id, bar_id, created_at')
+                    .eq('is_active', true)
+                    .order('created_at');
+                if (res.error) {
+                    console.warn("Failed to fetch menus with bar_id, attempting fallback:", res.error.message);
+                    const fallbackRes = await supabase
+                        .from('menus')
+                        .select('id, name, template_id, created_at')
+                        .eq('is_active', true)
+                        .order('created_at');
+                    if (fallbackRes.error) throw fallbackRes.error;
+                    return fallbackRes.data ? fallbackRes.data.map(m => ({ ...m, bar_id: null })) : [];
+                }
+                return res.data || [];
+            };
+
+            const [itemsRes, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
                 supabase.from('app_item_presentation').select('*').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
-                supabase.from('menus').select('id, name, template_id, created_at').eq('is_active', true).order('created_at'),
+                menusQuery(),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order'),
                 supabase.from('categories').select('*').order('name')
@@ -21,7 +40,7 @@ export function useDropdowns() {
                 families: items.filter(item => item.item_type === 'family'),
                 iceTypes: items.filter(item => item.item_type === 'ice'),
                 ingredients: items.filter(item => item.item_type === 'ingredient'),
-                menus: menusRes.data || [],
+                menus: menusData,
                 menuTemplates: templatesRes.data || [],
                 templateSections: sectionsRes.data || [],
                 categories: categoriesRes.data || [],
