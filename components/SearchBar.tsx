@@ -73,7 +73,7 @@ export function SearchBar({
                             value={value}
                             onChangeText={onChangeText}
                             onFocus={() => setIsFocused(true)}
-                            onBlur={() => setIsFocused(false)}
+                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                         />
                     ) : (
                         <Input
@@ -88,7 +88,7 @@ export function SearchBar({
                             value={value}
                             onChangeText={onChangeText}
                             onFocus={() => setIsFocused(true)}
-                            onBlur={() => setIsFocused(false)}
+                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                             fontFamily="$body"
                             backgroundColor="transparent"
                             borderWidth={0}

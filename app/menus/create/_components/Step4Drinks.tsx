@@ -253,15 +253,17 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                     }}
                     onCreateNewPress={(query) => {
                         setShowPicker(false);
-                        router.push({
-                            pathname: "/add-cocktail",
-                            params: { 
-                                name: query,
-                                barId: barId || "",
-                                menuDraftId: menuDraftId || "",
-                                menuSectionId: pickingForSection || ""
-                            }
-                        });
+                        setTimeout(() => {
+                            router.push({
+                                pathname: "/add-cocktail",
+                                params: { 
+                                    name: query,
+                                    barId: barId || "",
+                                    menuDraftId: menuDraftId || "",
+                                    menuSectionId: pickingForSection || ""
+                                }
+                            });
+                        }, 150);
                     }}
                     createNewText="Create cocktail"
                 />

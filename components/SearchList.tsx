@@ -307,6 +307,16 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const { data: dropdowns } = useDropdowns();
 
+    const emptyStateQuery = useMemo(() => {
+        return searchQuery || activeChips.filter(c => c.type === "Search").map(c => c.label.replace(/"/g, '')).join(" ") || "";
+    }, [searchQuery, activeChips]);
+
+    const emptyStateButtonText = useMemo(() => {
+        return emptyStateQuery 
+            ? `${createNewText || "Create New"} "${emptyStateQuery}"`
+            : (createNewText || "Create New");
+    }, [emptyStateQuery, createNewText]);
+
     const handleToggleFilter = useCallback((category: string) => {
         if (category === "All") {
             setActiveFilters(prev => {
@@ -418,6 +428,16 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         const query = searchQuery.toLowerCase();
         const sugs: SearchChip[] = [];
 
+        const queryTrimmed = searchQuery.trim();
+        if (onCreateNewPress && queryTrimmed) {
+            const hasExactMatch = items.some(
+                item => item.name.toLowerCase() === queryTrimmed.toLowerCase()
+            );
+            if (!hasExactMatch) {
+                sugs.push({ id: `create-${queryTrimmed}`, label: `Create "${queryTrimmed}"`, type: "Create" });
+            }
+        }
+
         dropdowns?.categories?.filter((c: any) => c.name.toLowerCase().includes(query)).slice(0, 3).forEach((c: any) => {
             sugs.push({ id: `category-${c.id}`, label: c.name, type: "Category" });
         });
@@ -438,13 +458,23 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
             sugs.push({ id: `family-${f.id}`, label: f.name, type: "Family" });
         });
         
-        const existingTextSearch = sugs.find(s => s.type === "Search");
-        if (!existingTextSearch) {
-            sugs.push({ id: `text-${query}`, label: `"${searchQuery}"`, type: "Search" });
+        // Only show search chip suggestion if there is actually something in the list matching the query
+        const queryLower = queryTrimmed.toLowerCase();
+        const hasAnyMatches = items.some(
+            c => c.name.toLowerCase().includes(queryLower) ||
+                 (c.recipes?.some(r => r.ingredient?.name?.toLowerCase().includes(queryLower))) ||
+                 (c.description?.toLowerCase().includes(queryLower))
+        );
+
+        if (hasAnyMatches) {
+            const existingTextSearch = sugs.find(s => s.type === "Search");
+            if (!existingTextSearch) {
+                sugs.push({ id: `text-${query}`, label: `"${searchQuery}"`, type: "Search" });
+            }
         }
 
         return sugs;
-    }, [searchQuery, dropdowns]);
+    }, [searchQuery, dropdowns, items, onCreateNewPress]);
 
     // Section Headers Logic
     const listData = useMemo(() => {
@@ -530,6 +560,10 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                             }}
                             suggestions={suggestions}
                             onSuggestionPress={(sug) => {
+                                if (sug.type === "Create") {
+                                    onCreateNewPress?.(sug.id.replace("create-", ""));
+                                    return;
+                                }
                                 setActiveChips(prev => {
                                     if (prev.find(c => c.id === sug.id)) return prev;
                                     return [...prev, sug];
@@ -613,15 +647,14 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                             {onCreateNewPress && (
                                 <Button 
                                     marginTop="$4" 
-                                    backgroundColor="$color5" 
+                                    backgroundColor="$color8" 
                                     pressStyle={{ scale: 0.97 }}
                                     onPress={() => {
-                                        const query = searchQuery || activeChips.filter(c => c.type === "Search").map(c => c.label.replace(/"/g, '')).join(" ") || "";
-                                        onCreateNewPress(query);
+                                        onCreateNewPress(emptyStateQuery);
                                     }}
                                 >
-                                    <Text color="$color" fontWeight="600">
-                                        {createNewText || "Create New"}
+                                    <Text color="$backgroundStrong" fontWeight="700">
+                                        {emptyStateButtonText}
                                     </Text>
                                 </Button>
                             )}

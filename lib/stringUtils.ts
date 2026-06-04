@@ -31,13 +31,24 @@ export function capitalize(str: string | null | undefined): string {
         })
         .join(' ');
 }
+const PRESERVED_ACRONYMS = new Set([
+    // Beer & Brew styles / details
+    'IPA', 'DIPA', 'IIPA', 'NEIPA', 'APA', 'DDH', 'ABV', 'IBU', 'SRM', 'OG', 'FG', 'IGA',
+    // Spirits & Wine designations
+    'VSOP', 'XO', 'VS', 'NV', 'PX', 'RTD',
+    // Wine classifications
+    'DOC', 'DOCG', 'AOC', 'IGT', 'VDP', 'DO', 'DOQ', 'AVA',
+    // Units of measure
+    'OZ', 'ML', 'CL', 'DL', 'L',
+    // Common countries / states
+    'US', 'USA', 'UK', 'NY', 'CA'
+]);
 
 function capitalizePart(word: string): string {
     if (!word) return '';
     
-    // Keep acronyms/abbreviations in uppercase (2-4 uppercase letters, e.g. IPA, ABV, VSOP, XO, OZ, ML)
-    const isAcronym = /^[A-Z]{2,4}$/.test(word);
-    if (isAcronym) {
+    // Keep specified acronyms/abbreviations in uppercase if they were typed in uppercase
+    if (PRESERVED_ACRONYMS.has(word)) {
         return word;
     }
     
