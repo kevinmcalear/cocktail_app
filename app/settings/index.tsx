@@ -221,6 +221,7 @@ export default function Settings() {
                         onPress={handleSave}
                         disabled={loading}
                         opacity={loading ? 0.7 : 1}
+                        cursor="pointer"
                     >
                         {loading ? <ActivityIndicator color="white" /> : <Text color="white" fontWeight="600">Save Changes</Text>}
                     </Button>

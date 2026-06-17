@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
 
 export default function EditProfile() {
@@ -124,11 +124,11 @@ export default function EditProfile() {
 
                 {/* Header Navbar */}
                 <XStack alignItems="center" justifyContent="space-between" padding="$4" borderBottomWidth={1} borderColor="$borderColor">
-                    <Button size="$3" variant="outlined" onPress={() => router.back()} backgroundColor="$background" borderColor="$borderColor">
-                        <Text color="$color11">Cancel</Text>
-                    </Button>
+                    <TouchableOpacity onPress={() => router.back()} style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start', cursor: 'pointer' as any }} activeOpacity={0.7}>
+                        <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                    </TouchableOpacity>
                     <Text fontSize={18} fontWeight="bold" color="$color">Edit Profile</Text>
-                    <Button size="$3" onPress={handleSave} disabled={loading} backgroundColor="$color">
+                    <Button size="$3" onPress={handleSave} disabled={loading} backgroundColor="$color" cursor="pointer">
                         {loading ? <ActivityIndicator color={theme.background?.get() as string} /> : <Text color="$background" fontWeight="bold">Save</Text>}
                     </Button>
                 </XStack>
@@ -151,13 +151,14 @@ export default function EditProfile() {
                                     backgroundColor="$color"
                                     onPress={() => pickImage(false)}
                                     icon={<IconSymbol name="pencil" size={16} color={theme.background?.get() as string} />}
+                                    cursor="pointer"
                                 />
                             </YStack>
                             <XStack gap="$3">
-                                <Button size="$3" variant="outlined" onPress={() => pickImage(false)} borderColor="$borderColor">
+                                <Button size="$3" variant="outlined" onPress={() => pickImage(false)} borderColor="$borderColor" cursor="pointer">
                                     <Text color="$color">Choose Photo</Text>
                                 </Button>
-                                <Button size="$3" variant="outlined" onPress={() => pickImage(true)} borderColor="$borderColor">
+                                <Button size="$3" variant="outlined" onPress={() => pickImage(true)} borderColor="$borderColor" cursor="pointer">
                                     <View>
                                         <Text color="$color">Take Photo</Text>
                                     </View>

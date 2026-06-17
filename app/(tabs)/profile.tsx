@@ -48,6 +48,7 @@ export default function ProfileScreen() {
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/profile/edit')}
+                        cursor="pointer"
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="person" size={24} color={theme.color?.get() as string} />
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/settings/bar-management')}
+                        cursor="pointer"
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="building.2" size={24} color={theme.color?.get() as string} />
@@ -82,6 +84,7 @@ export default function ProfileScreen() {
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
                         onPress={() => handleNavigation('/edit-mode')}
+                        cursor="pointer"
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="pencil" size={24} color={theme.color?.get() as string} />
@@ -99,6 +102,7 @@ export default function ProfileScreen() {
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
                         onPress={() => setTesting(!isTestingEnabled)}
+                        cursor="pointer"
                     >
                         <XStack alignItems="center" gap="$3">
                             <CustomIcon name="TabTest" size={24} color={theme.color?.get() as string} />
@@ -120,6 +124,7 @@ export default function ProfileScreen() {
                         paddingHorizontal="$4"
                         pressStyle={{ opacity: 0.7 }}
                         onPress={handleSignOut}
+                        cursor="pointer"
                     >
                         <XStack alignItems="center" gap="$3">
                             <IconSymbol name="rectangle.portrait.and.arrow.right" size={24} color="#FF6B6B" />
