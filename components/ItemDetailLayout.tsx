@@ -118,7 +118,7 @@ export function ItemDetailLayout({
 
     const mainContent = isLargeScreen ? (
         <View style={{ flexDirection: 'row', flex: 1, paddingTop: insets.top }}>
-            <View style={{ width: '40%', maxWidth: 450, minWidth: 300, padding: 32, justifyContent: 'flex-start' }}>
+            <View style={{ width: '40%', maxWidth: 450, minWidth: 300, padding: 32, paddingTop: 80, justifyContent: 'flex-start' }}>
                 <View style={{ width: '100%', aspectRatio: 1, borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 12, elevation: 8, backgroundColor: theme.backgroundStrong?.get() as string }}>
                     <ImageCarousel
                         images={images}
@@ -255,6 +255,23 @@ export function ItemDetailLayout({
         <GestureHandlerRootView style={[styles.container, { paddingBottom: isLargeScreen ? 0 : insets.bottom, backgroundColor: theme.background?.get() as string }]}>
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="light-content" />
+
+            {/* Floating Back Button */}
+            <TouchableOpacity
+                style={{
+                    position: 'absolute',
+                    left: isLargeScreen ? 32 : 16,
+                    top: isLargeScreen ? (insets.top > 0 ? insets.top + 16 : 24) : (insets.top > 0 ? insets.top + 8 : 16),
+                    zIndex: 100,
+                    cursor: 'pointer' as any,
+                }}
+                onPress={() => router.back()}
+                activeOpacity={0.7}
+            >
+                <GlassView intensity={50} style={styles.buttonGlass}>
+                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                </GlassView>
+            </TouchableOpacity>
 
             {mainContent}
 
