@@ -33,6 +33,7 @@ interface DraftFolderTreeProps {
     publishedIngredients?: any[];
     selectedNode: SelectedDraftNode | null;
     onNodeSelect: (node: SelectedDraftNode) => void;
+    onCreateNode?: (type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu', barId: string) => void;
 }
 
 export function DraftFolderTree({ 
@@ -42,7 +43,8 @@ export function DraftFolderTree({
     publishedWines = [], 
     publishedIngredients = [], 
     selectedNode, 
-    onNodeSelect 
+    onNodeSelect,
+    onCreateNode
 }: DraftFolderTreeProps) {
     const theme = useTheme();
     const { data: userBars, isLoading: loadingBars } = useBars();
@@ -125,6 +127,7 @@ export function DraftFolderTree({
                         dropdowns={dropdowns}
                         selectedNode={selectedNode}
                         onNodeSelect={onNodeSelect}
+                        onCreateNode={onCreateNode}
                         isPersonal={true}
                     />
                 )}
@@ -155,6 +158,7 @@ export function DraftFolderTree({
                             dropdowns={dropdowns}
                             selectedNode={selectedNode}
                             onNodeSelect={onNodeSelect}
+                            onCreateNode={onCreateNode}
                         />
                     );
                 })}
@@ -178,6 +182,7 @@ interface BarDraftNodeProps {
     dropdowns: any;
     selectedNode: SelectedDraftNode | null;
     onNodeSelect: (node: SelectedDraftNode) => void;
+    onCreateNode?: (type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu', barId: string) => void;
     isPersonal?: boolean;
 }
 
@@ -329,6 +334,7 @@ function BarDraftNode({
     dropdowns,
     selectedNode, 
     onNodeSelect, 
+    onCreateNode,
     isPersonal = false 
 }: BarDraftNodeProps) {
     const theme = useTheme();
@@ -378,26 +384,43 @@ function BarDraftNode({
                        wineDrafts.length + barPublishedWines.length +
                        ingredientDrafts.length + barPublishedIngredients.length;
 
+    const handleCreate = (type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu') => {
+        const barQueryId = id === 'personal' ? '' : id;
+        if (onCreateNode) {
+            onCreateNode(type, barQueryId);
+        } else {
+            let route = '';
+            switch(type) {
+                case 'cocktail': route = `/add-cocktail?barId=${barQueryId}`; break;
+                case 'beer': route = `/add-beer?barId=${barQueryId}`; break;
+                case 'wine': route = `/add-wine?barId=${barQueryId}`; break;
+                case 'ingredient': route = `/add-ingredient?barId=${barQueryId}`; break;
+                case 'menu': route = `/menus/create?barId=${barQueryId}`; break;
+            }
+            router.push(route as any);
+        }
+    };
+
     const itemOptions = [
         { 
             label: "Add Cocktail", 
             icon: "wineglass" as const, 
-            onPress: () => router.push(`/add-cocktail?barId=${id === 'personal' ? '' : id}` as any) 
+            onPress: () => handleCreate('cocktail')
         },
         { 
             label: "Add Beer", 
             icon: "mug.fill" as const, 
-            onPress: () => router.push(`/add-beer?barId=${id === 'personal' ? '' : id}` as any) 
+            onPress: () => handleCreate('beer')
         },
         { 
             label: "Add Wine", 
             icon: "wineglass.fill" as const, 
-            onPress: () => router.push(`/add-wine?barId=${id === 'personal' ? '' : id}` as any) 
+            onPress: () => handleCreate('wine')
         },
         { 
             label: "Add Ingredient", 
             icon: "flask" as const, 
-            onPress: () => router.push(`/add-ingredient?barId=${id === 'personal' ? '' : id}` as any) 
+            onPress: () => handleCreate('ingredient')
         },
     ];
 
@@ -438,7 +461,7 @@ function BarDraftNode({
                         <CategoryFolderNode 
                             label="Menus" 
                             count={menusCount}
-                            onAddPress={() => router.push(`/menus/create?barId=${id === 'personal' ? '' : id}` as any)}
+                            onAddPress={() => handleCreate('menu')}
                         >
                             {menuDrafts.map((menuDraft) => (
                                 <MenuDraftTreeNode 

@@ -49,7 +49,15 @@ interface Menu {
     name: string;
 }
 
-export default function AddCocktailScreen() {
+interface AddCocktailProps {
+    isInline?: boolean;
+    draftIdProp?: string;
+    barIdProp?: string;
+    onClose?: () => void;
+    onSave?: () => void;
+}
+
+export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, onClose, onSave }: AddCocktailProps = {}) {
     const router = useRouter();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
@@ -73,6 +81,9 @@ export default function AddCocktailScreen() {
     const isExitingRef = useRef(false);
 
     const { barId: initialBarId, draftId, name: initialNameParam, menuDraftId, menuSectionId } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string, menuDraftId?: string, menuSectionId?: string }>();
+    const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
+    const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
     const mergedIngredients = useMemo(() => {
@@ -106,7 +117,7 @@ export default function AddCocktailScreen() {
     const [spec, setSpec] = useState("");
     
     // Add local state for the active draft ID so newly created drafts are tracked
-    const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
     
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
@@ -115,7 +126,7 @@ export default function AddCocktailScreen() {
     const [iceId, setIceId] = useState<string | null>(null);
 
     // Bar Assignment and Overrides
-    const [barId, setBarId] = useState<string | null>(initialBarId || null);
+    const [barId, setBarId] = useState<string | null>(activeBarIdProp || null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
     const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
     const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
@@ -231,7 +242,9 @@ export default function AddCocktailScreen() {
                 updatedDraftId = result.id;
                 setCurrentDraftId(result.id);
                 // Also update the URL params silently so refreshing doesn't lose it
-                router.setParams({ draftId: result.id });
+                if (!isInline) {
+                    router.setParams({ draftId: result.id });
+                }
             }
 
             if (menuDraftId && menuSectionId && result && result.id) {
@@ -279,6 +292,7 @@ export default function AddCocktailScreen() {
     };
 
     useEffect(() => {
+        if (isInline) return;
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
             if (isExitingRef.current) {
                 return;
@@ -295,14 +309,16 @@ export default function AddCocktailScreen() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr, name, currentDraftId]);
+    }, [navigation, currentStateStr, name, currentDraftId, isInline]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
         if (shouldSave) {
             await handleSaveDraft();
         }
-        if (pendingNavigationActionRef.current) {
+        if (isInline) {
+            if (onClose) onClose();
+        } else if (pendingNavigationActionRef.current) {
             isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
@@ -576,12 +592,20 @@ export default function AddCocktailScreen() {
             if (Platform.OS === 'web') {
                 window.alert("Success: Cocktail created!");
                 isExitingRef.current = true;
-                router.back();
+                if (isInline) {
+                    if (onSave) onSave();
+                } else {
+                    router.back();
+                }
             } else {
                 Alert.alert("Success", "Cocktail created!", [
                     { text: "OK", onPress: () => {
                         isExitingRef.current = true;
-                        router.back();
+                        if (isInline) {
+                            if (onSave) onSave();
+                        } else {
+                            router.back();
+                        }
                     }}
                 ]);
             }
@@ -605,18 +629,32 @@ export default function AddCocktailScreen() {
     return (
         <BottomSheetModalProvider>
         <YStack style={styles.container} backgroundColor="$background">
-            <Stack.Screen options={{ headerShown: false }} />
+            {!isInline && <Stack.Screen options={{ headerShown: false }} />}
             
             {/* Header */}
             <XStack
-                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
                 justifyContent="space-between"
                 zIndex={10}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (isInline) {
+                            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+                            if (hasProgress) {
+                                setShowExitModal(true);
+                            } else {
+                                if (onClose) onClose();
+                            }
+                        } else {
+                            router.back();
+                        }
+                    }} 
+                    style={styles.headerBtn}
+                >
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">New Cocktail</Text>

@@ -40,8 +40,16 @@ interface RecipeItem {
     is_optional: boolean;
 }
 
-export default function EditCocktailScreen() {
-    const { id } = useLocalSearchParams();
+interface EditCocktailProps {
+    isInline?: boolean;
+    idProp?: string;
+    onClose?: () => void;
+    onSave?: () => void;
+}
+
+export default function EditCocktailScreen({ isInline, idProp, onClose, onSave }: EditCocktailProps = {}) {
+    const { id: paramId } = useLocalSearchParams();
+    const id = idProp !== undefined ? idProp : paramId;
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -387,7 +395,13 @@ export default function EditCocktailScreen() {
             await queryClient.invalidateQueries({ queryKey: ['cocktails'] });
 
             Alert.alert("Success", "Cocktail updated!", [
-                { text: "OK", onPress: () => router.back() }
+                { text: "OK", onPress: () => {
+                    if (isInline) {
+                        if (onSave) onSave();
+                    } else {
+                        router.back();
+                    }
+                }}
             ]);
 
         } catch (error) {
@@ -408,18 +422,27 @@ export default function EditCocktailScreen() {
 
     return (
         <YStack style={styles.container} backgroundColor="$background">
-            <Stack.Screen options={{ headerShown: false }} />
+            {!isInline && <Stack.Screen options={{ headerShown: false }} />}
 
             {/* Header fixed to top 20px matching Beer and Wine edits exactly */}
             <XStack
-                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
                 justifyContent="space-between"
                 zIndex={10}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (isInline) {
+                            if (onClose) onClose();
+                        } else {
+                            router.back();
+                        }
+                    }} 
+                    style={styles.headerBtn}
+                >
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Cocktail</Text>

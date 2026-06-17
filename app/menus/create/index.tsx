@@ -19,15 +19,25 @@ import { Step3Name } from "./_components/Step3Name";
 import { Step4Drinks } from "./_components/Step4Drinks";
 import { Step5Review } from "./_components/Step5Review";
 
-export default function CreateMenuWizard() {
+interface CreateMenuWizardProps {
+    isInline?: boolean;
+    draftIdProp?: string;
+    barIdProp?: string;
+    onClose?: () => void;
+    onSave?: () => void;
+}
+
+export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onClose, onSave }: CreateMenuWizardProps = {}) {
     const router = useRouter();
     const navigation = useNavigation();
     const { draftId, barId: initialBarId } = useLocalSearchParams<{ draftId?: string, barId?: string }>();
+    const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
+    const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
 
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
-    const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
 
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
     const templates = dropdowns?.menuTemplates || [];
@@ -38,13 +48,13 @@ export default function CreateMenuWizard() {
     const [menuName, setMenuName] = useState("");
     const [selections, setSelections] = useState<Record<string, string[]>>({});
     const [saving, setSaving] = useState(false);
-    const [barId, setBarId] = useState<string | null>(initialBarId || null);
+    const [barId, setBarId] = useState<string | null>(activeBarIdProp || null);
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
     const isExitingRef = useRef(false);
 
-    const [draftLoaded, setDraftLoaded] = useState(!draftId);
+    const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp);
     const [furthestStep, setFurthestStep] = useState(1);
     const currentStateStr = JSON.stringify({ step, selectedTemplateId, menuName, selections, barId });
     const cleanStateStrRef = useRef<string>(currentStateStr);
@@ -113,7 +123,9 @@ export default function CreateMenuWizard() {
                     const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
                     if (!currentDraftId && result && result.id) {
                         setCurrentDraftId(result.id);
-                        router.setParams({ draftId: result.id });
+                        if (!isInline) {
+                            router.setParams({ draftId: result.id });
+                        }
                     }
                     cleanStateStrRef.current = currentStateStr;
                 } catch (error) {
@@ -124,7 +136,7 @@ export default function CreateMenuWizard() {
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [currentStateStr, currentDraftId, draftLoaded, furthestStep, step, selectedTemplateId, menuName, selections, barId, saveDraft, router]);
+    }, [currentStateStr, currentDraftId, draftLoaded, furthestStep, step, selectedTemplateId, menuName, selections, barId, saveDraft, router, isInline]);
 
     const handleSaveDraft = async () => {
         try {
@@ -143,7 +155,9 @@ export default function CreateMenuWizard() {
             
             if (!currentDraftId && result && result.id) {
                 setCurrentDraftId(result.id);
-                router.setParams({ draftId: result.id });
+                if (!isInline) {
+                    router.setParams({ draftId: result.id });
+                }
             }
             
             if (Platform.OS === 'web') {
@@ -165,6 +179,7 @@ export default function CreateMenuWizard() {
     };
 
     useEffect(() => {
+        if (isInline) return;
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
             if (isExitingRef.current) {
                 return;
@@ -179,14 +194,16 @@ export default function CreateMenuWizard() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr, menuName, selectedTemplateId, barId]);
+    }, [navigation, currentStateStr, menuName, selectedTemplateId, barId, isInline]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
         if (shouldSave) {
             await handleSaveDraft();
         }
-        if (pendingNavigationActionRef.current) {
+        if (isInline) {
+            if (onClose) onClose();
+        } else if (pendingNavigationActionRef.current) {
             isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
@@ -216,7 +233,16 @@ export default function CreateMenuWizard() {
 
     const handleBack = () => {
         if (step === 1) {
-            router.back();
+            if (isInline) {
+                const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
+                if (hasProgress) {
+                    setShowExitModal(true);
+                } else {
+                    if (onClose) onClose();
+                }
+            } else {
+                router.back();
+            }
         } else {
             setStep(prev => prev - 1);
         }
@@ -353,7 +379,11 @@ export default function CreateMenuWizard() {
 
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             isExitingRef.current = true;
-            router.back();
+            if (isInline) {
+                if (onSave) onSave();
+            } else {
+                router.back();
+            }
         } catch (error) {
             console.error("Save menu error", error);
             Alert.alert("Error", "Failed to publish the menu.");
@@ -376,8 +406,22 @@ export default function CreateMenuWizard() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
             {/* Header */}
-            <View style={[styles.header, { paddingTop: 20, justifyContent: 'space-between' }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+            <View style={[styles.header, { paddingTop: isInline ? 10 : 20, justifyContent: 'space-between' }]}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (isInline) {
+                            const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
+                            if (hasProgress) {
+                                setShowExitModal(true);
+                            } else {
+                                if (onClose) onClose();
+                            }
+                        } else {
+                            router.back();
+                        }
+                    }} 
+                    style={styles.headerBtn}
+                >
                     <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
                 </TouchableOpacity>
                 

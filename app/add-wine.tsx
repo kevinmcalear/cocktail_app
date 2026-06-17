@@ -27,9 +27,19 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
-export default function AddWineScreen() {
+interface AddWineProps {
+    isInline?: boolean;
+    draftIdProp?: string;
+    barIdProp?: string;
+    onClose?: () => void;
+    onSave?: () => void;
+}
+
+export default function AddWineScreen({ isInline, draftIdProp, barIdProp, onClose, onSave }: AddWineProps = {}) {
     const router = useRouter();
     const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
+    const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
+    const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -38,7 +48,7 @@ export default function AddWineScreen() {
     const queryClient = useQueryClient();
 
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
-    const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = React.useRef<any>(null);
@@ -54,7 +64,7 @@ export default function AddWineScreen() {
     const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
     
     // Bar Assignment and Overrides
-    const [barId, setBarId] = useState<string | null>(initialBarId || null);
+    const [barId, setBarId] = useState<string | null>(activeBarIdProp || null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
     const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
     const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
@@ -112,7 +122,9 @@ export default function AddWineScreen() {
             
             if (!currentDraftId && result && result.id) {
                 setCurrentDraftId(result.id);
-                router.setParams({ draftId: result.id });
+                if (!isInline) {
+                    router.setParams({ draftId: result.id });
+                }
             }
             
             if (Platform.OS === 'web') {
@@ -134,6 +146,7 @@ export default function AddWineScreen() {
     };
 
     React.useEffect(() => {
+        if (isInline) return;
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
             if (isExitingRef.current) {
                 return;
@@ -148,14 +161,16 @@ export default function AddWineScreen() {
         });
 
         return unsubscribe;
-    }, [navigation, currentStateStr, name, currentDraftId]);
+    }, [navigation, currentStateStr, name, currentDraftId, isInline]);
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
         if (shouldSave) {
             await handleSaveDraft();
         }
-        if (pendingNavigationActionRef.current) {
+        if (isInline) {
+            if (onClose) onClose();
+        } else if (pendingNavigationActionRef.current) {
             isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
         }
@@ -374,7 +389,11 @@ export default function AddWineScreen() {
             Alert.alert("Success", "Wine created!", [
                 { text: "OK", onPress: () => {
                     isExitingRef.current = true;
-                    router.back();
+                    if (isInline) {
+                        if (onSave) onSave();
+                    } else {
+                        router.back();
+                    }
                 } }
             ]);
 
@@ -389,17 +408,31 @@ export default function AddWineScreen() {
     return (
         <BottomSheetModalProvider>
             <YStack style={styles.container} backgroundColor="$background">
-                <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
+                {!isInline && <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />}
 
             <XStack
-                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
                 justifyContent="space-between"
                 zIndex={10}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (isInline) {
+                            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+                            if (hasProgress) {
+                                setShowExitModal(true);
+                            } else {
+                                if (onClose) onClose();
+                            }
+                        } else {
+                            router.back();
+                        }
+                    }} 
+                    style={styles.headerBtn}
+                >
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Add Wine</Text>

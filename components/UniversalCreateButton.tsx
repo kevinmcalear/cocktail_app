@@ -13,9 +13,10 @@ import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
 
 type UniversalCreateButtonProps = {
     variant?: 'tab' | 'button';
+    width?: any;
 };
 
-export function UniversalCreateButton({ variant = 'tab' }: UniversalCreateButtonProps) {
+export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreateButtonProps) {
     const { isEditModeEnabled } = useSettingsStore();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -106,8 +107,8 @@ export function UniversalCreateButton({ variant = 'tab' }: UniversalCreateButton
                     paddingHorizontal="$4"
                     height={50}
                     onPress={openSheet}
-                    alignSelf="flex-start"
-                    width={200}
+                    alignSelf={width ? undefined : "flex-start"}
+                    width={width ?? 200}
                     icon={<IconSymbol name="plus" size={18} color={theme.color?.get() as string} />}
                 >
                     <Text color="$color" fontSize={15} fontWeight="600">Create New</Text>

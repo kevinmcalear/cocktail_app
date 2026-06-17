@@ -26,8 +26,16 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 
-export default function EditBeerScreen() {
-    const { id } = useLocalSearchParams();
+interface EditBeerProps {
+    isInline?: boolean;
+    idProp?: string;
+    onClose?: () => void;
+    onSave?: () => void;
+}
+
+export default function EditBeerScreen({ isInline, idProp, onClose, onSave }: EditBeerProps = {}) {
+    const { id: paramId } = useLocalSearchParams();
+    const id = idProp !== undefined ? idProp : paramId;
     // Safely unprefix id if necessary
     const safeId = (id as string)?.replace('beer-', '');
 
@@ -246,7 +254,13 @@ export default function EditBeerScreen() {
             await queryClient.invalidateQueries({ queryKey: ['beers'] });
 
             Alert.alert("Success", "Beer updated!", [
-                { text: "OK", onPress: () => router.back() }
+                { text: "OK", onPress: () => {
+                    if (isInline) {
+                        if (onSave) onSave();
+                    } else {
+                        router.back();
+                    }
+                } }
             ]);
 
         } catch (error) {
@@ -268,17 +282,26 @@ export default function EditBeerScreen() {
     return (
         <BottomSheetModalProvider>
         <YStack style={styles.container} backgroundColor="$background">
-            <Stack.Screen options={{ headerShown: false }} />
+            {!isInline && <Stack.Screen options={{ headerShown: false }} />}
 
             <XStack
-                paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
                 paddingHorizontal="$4"
                 paddingBottom="$4"
                 alignItems="center"
                 justifyContent="space-between"
                 zIndex={10}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (isInline) {
+                            if (onClose) onClose();
+                        } else {
+                            router.back();
+                        }
+                    }} 
+                    style={styles.headerBtn}
+                >
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Beer</Text>
