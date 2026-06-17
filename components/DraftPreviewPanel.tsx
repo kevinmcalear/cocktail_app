@@ -122,19 +122,27 @@ export function DraftPreviewPanel({
                         <Text fontSize={12} fontWeight="bold" color="$color">
                             {draft.isPublished ? "Status Info" : "Progress Check"}
                         </Text>
-                        <View style={{ backgroundColor: progressInfo.badgeBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: progressInfo.color }}>
-                            <Text fontSize={9} fontWeight="bold" color={progressInfo.badgeText} textTransform="uppercase">
-                                {progressInfo.label}
-                            </Text>
-                        </View>
+                        {draft.isPublished ? (
+                            <IconSymbol name="checkmark" size={16} color="#34C759" />
+                        ) : (
+                            <View style={{ backgroundColor: progressInfo.badgeBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: progressInfo.color }}>
+                                <Text fontSize={9} fontWeight="bold" color={progressInfo.badgeText} textTransform="uppercase">
+                                    {progressInfo.label}
+                                </Text>
+                            </View>
+                        )}
                     </XStack>
                     <View style={styles.progressBarTrack}>
                         <View style={[styles.progressBarFill, { width: `${progressInfo.percentage}%`, backgroundColor: progressInfo.color }]} />
                     </View>
                     <XStack justifyContent="space-between" alignItems="center">
-                        <Text fontSize={10} color="$color11" fontWeight="600">
-                            {draft.isPublished ? "Published" : `${progressInfo.percentage}% complete`}
-                        </Text>
+                        {draft.isPublished ? (
+                            <IconSymbol name="checkmark" size={12} color="#34C759" />
+                        ) : (
+                            <Text fontSize={10} color="$color11" fontWeight="600">
+                                {`${progressInfo.percentage}% complete`}
+                            </Text>
+                        )}
                         <Text fontSize={10} color="$color11">
                             {draft.isPublished ? "Published" : "Edited"} {dateString}
                         </Text>

@@ -7,6 +7,7 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 import { capitalize } from "@/lib/stringUtils";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
+import { useRouter } from "expo-router";
 
 export type DraftNodeType = 
     | "bar" 
@@ -180,6 +181,139 @@ interface BarDraftNodeProps {
     isPersonal?: boolean;
 }
 
+interface CategoryFolderNodeProps {
+    label: string;
+    children: React.ReactNode;
+    count: number;
+    onAddPress?: () => void;
+    options?: { label: string; icon: string; onPress: () => void }[];
+}
+
+function CategoryFolderNode({ label, children, count, onAddPress, options }: CategoryFolderNodeProps) {
+    const theme = useTheme();
+    const [expanded, setExpanded] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    const handleAddClick = (e: any) => {
+        e?.stopPropagation();
+        if (options && options.length > 0) {
+            setShowDropdown(!showDropdown);
+        } else if (onAddPress) {
+            onAddPress();
+        }
+    };
+
+    return (
+        <YStack>
+            {/* Hover and dropdown container */}
+            <YStack
+                position="relative"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => {
+                    setIsHovered(false);
+                    setShowDropdown(false);
+                }}
+            >
+                <XStack 
+                    alignItems="center" 
+                    paddingVertical="$1.5" 
+                    paddingHorizontal="$2"
+                    borderRadius={6}
+                    gap="$2"
+                    hoverStyle={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+                    justifyContent="space-between"
+                >
+                    <TouchableOpacity onPress={() => setExpanded(!expanded)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={styles.chevronTouch}>
+                            <IconSymbol 
+                                name={expanded ? "chevron.down" : "chevron.right"} 
+                                size={12} 
+                                color={theme.color11?.get() as string} 
+                            />
+                        </View>
+
+                        <XStack alignItems="center" gap="$2" style={styles.contentTouch}>
+                            <IconSymbol 
+                                name="folder.fill" 
+                                size={14} 
+                                color={theme.color8?.get() as string} 
+                            />
+                            <Text fontSize={13} fontWeight="600" color="$color">
+                                {label} ({count})
+                            </Text>
+                        </XStack>
+                    </TouchableOpacity>
+
+                    {isHovered && (onAddPress || (options && options.length > 0)) && (
+                        <TouchableOpacity 
+                            onPress={handleAddClick}
+                            style={{ padding: 4, borderRadius: 4, backgroundColor: showDropdown ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                        >
+                            <IconSymbol 
+                                name="plus" 
+                                size={14} 
+                                color={theme.color8?.get() as string} 
+                            />
+                        </TouchableOpacity>
+                    )}
+                </XStack>
+
+                {showDropdown && options && options.length > 0 && (
+                    <YStack
+                        position="absolute"
+                        top={30}
+                        right={10}
+                        backgroundColor="$backgroundStrong"
+                        borderRadius={6}
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        padding="$1.5"
+                        gap="$1.5"
+                        zIndex={9999}
+                        style={{
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                            elevation: 5,
+                        }}
+                    >
+                        {options.map(opt => (
+                            <TouchableOpacity 
+                                key={opt.label} 
+                                onPress={(e) => {
+                                    e?.stopPropagation();
+                                    setShowDropdown(false);
+                                    opt.onPress();
+                                }}
+                            >
+                                <XStack 
+                                    paddingHorizontal="$2.5" 
+                                    paddingVertical="$1.5" 
+                                    gap="$2.5" 
+                                    alignItems="center" 
+                                    hoverStyle={{ backgroundColor: 'rgba(255,255,255,0.05)' }} 
+                                    borderRadius={4}
+                                >
+                                    <IconSymbol name={opt.icon as any} size={12} color={theme.color11?.get() as string} />
+                                    <Text fontSize={11} fontWeight="500" color="$color">{opt.label}</Text>
+                                </XStack>
+                            </TouchableOpacity>
+                        ))}
+                    </YStack>
+                )}
+            </YStack>
+
+            {expanded && (
+                <YStack style={styles.childContainer}>
+                    {children}
+                </YStack>
+            )}
+        </YStack>
+    );
+}
+
 function BarDraftNode({ 
     id, 
     name, 
@@ -198,22 +332,39 @@ function BarDraftNode({
     isPersonal = false 
 }: BarDraftNodeProps) {
     const theme = useTheme();
-    const [expanded, setExpanded] = useState(true);
+    const router = useRouter();
+    const [expanded, setExpanded] = useState(false);
 
     const isMatchBar = (itemBarId: string | null) => {
         const normalized = itemBarId || 'personal';
         return normalized === id;
     };
 
+    // 1. Menus
     const menuDrafts = drafts.filter((d: any) => d.entity_type === "menu");
     const barPublishedMenus = (dropdowns?.menus || []).filter((m: any) => isMatchBar(m.bar_id));
+    const menusCount = menuDrafts.length + barPublishedMenus.length;
 
-    const drinkDrafts = drafts.filter((d: any) => 
-        (d.entity_type === "cocktail" || d.entity_type === "beer" || d.entity_type === "wine") &&
-        !referencedDrinks.has(d.entity_type === "cocktail" ? d.id : `${d.entity_type}-${d.id}`)
+    // 2. Items (Cocktails, Beers, Wines, Ingredients)
+    const cocktailDrafts = drafts.filter((d: any) => 
+        d.entity_type === "cocktail" && !referencedDrinks.has(d.id)
     );
-    const barPublishedDrinks = allDrinks.filter((d: any) => 
-        isMatchBar(d.bar_id) && !referencedDrinks.has(d.id)
+    const barPublishedCocktails = allDrinks.filter((d: any) => 
+        isMatchBar(d.bar_id) && d.type === "cocktail" && !referencedDrinks.has(d.id)
+    );
+
+    const beerDrafts = drafts.filter((d: any) => 
+        d.entity_type === "beer" && !referencedDrinks.has(`beer-${d.id}`)
+    );
+    const barPublishedBeers = allDrinks.filter((d: any) => 
+        isMatchBar(d.bar_id) && d.type === "beer" && !referencedDrinks.has(d.id)
+    );
+
+    const wineDrafts = drafts.filter((d: any) => 
+        d.entity_type === "wine" && !referencedDrinks.has(`wine-${d.id}`)
+    );
+    const barPublishedWines = allDrinks.filter((d: any) => 
+        isMatchBar(d.bar_id) && d.type === "wine" && !referencedDrinks.has(d.id)
     );
 
     const ingredientDrafts = drafts.filter((d: any) => 
@@ -222,6 +373,33 @@ function BarDraftNode({
     const barPublishedIngredients = (publishedIngredients || []).filter((i: any) => 
         isMatchBar(i.bar_id) && !referencedIngredients.has(i.id)
     );
+    const itemsCount = cocktailDrafts.length + barPublishedCocktails.length +
+                       beerDrafts.length + barPublishedBeers.length +
+                       wineDrafts.length + barPublishedWines.length +
+                       ingredientDrafts.length + barPublishedIngredients.length;
+
+    const itemOptions = [
+        { 
+            label: "Add Cocktail", 
+            icon: "wineglass" as const, 
+            onPress: () => router.push(`/add-cocktail?barId=${id === 'personal' ? '' : id}` as any) 
+        },
+        { 
+            label: "Add Beer", 
+            icon: "mug.fill" as const, 
+            onPress: () => router.push(`/add-beer?barId=${id === 'personal' ? '' : id}` as any) 
+        },
+        { 
+            label: "Add Wine", 
+            icon: "wineglass.fill" as const, 
+            onPress: () => router.push(`/add-wine?barId=${id === 'personal' ? '' : id}` as any) 
+        },
+        { 
+            label: "Add Ingredient", 
+            icon: "flask" as const, 
+            onPress: () => router.push(`/add-ingredient?barId=${id === 'personal' ? '' : id}` as any) 
+        },
+    ];
 
     return (
         <YStack>
@@ -255,73 +433,140 @@ function BarDraftNode({
 
             {expanded && (
                 <YStack style={styles.childContainer}>
-                    {/* Menus Section (Draft & Published) */}
-                    {menuDrafts.map((menuDraft) => (
-                        <MenuDraftTreeNode 
-                            key={menuDraft.id}
-                            menuDraft={menuDraft}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedMenus.map((menu: any) => (
-                        <PublishedMenuTreeNode 
-                            key={menu.id}
-                            menu={menu}
-                            allDrinks={allDrinks}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
+                    {/* Menus Category */}
+                    {menusCount > 0 && (
+                        <CategoryFolderNode 
+                            label="Menus" 
+                            count={menusCount}
+                            onAddPress={() => router.push(`/menus/create?barId=${id === 'personal' ? '' : id}` as any)}
+                        >
+                            {menuDrafts.map((menuDraft) => (
+                                <MenuDraftTreeNode 
+                                    key={menuDraft.id}
+                                    menuDraft={menuDraft}
+                                    allDrafts={allDrafts}
+                                    allDrinks={allDrinks}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                            {barPublishedMenus.map((menu: any) => (
+                                <PublishedMenuTreeNode 
+                                    key={menu.id}
+                                    menu={menu}
+                                    allDrinks={allDrinks}
+                                    allDrafts={allDrafts}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                        </CategoryFolderNode>
+                    )}
 
-                    {/* Drinks Section (Draft & Published) */}
-                    {drinkDrafts.map((drinkDraft) => (
-                        <DrinkDraftTreeNode 
-                            key={drinkDraft.id}
-                            drinkDraft={drinkDraft}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedDrinks.map((drink: any) => (
-                        <PublishedDrinkTreeNode 
-                            key={drink.id}
-                            id={drink.id}
-                            name={drink.name}
-                            recipes={drink.recipes || []}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
+                    {/* Items Category */}
+                    {itemsCount > 0 && (
+                        <CategoryFolderNode 
+                            label="Items" 
+                            count={itemsCount}
+                            options={itemOptions}
+                        >
+                            {/* Cocktails (Recipes) */}
+                            {cocktailDrafts.map((drinkDraft) => (
+                                <DrinkDraftTreeNode 
+                                    key={drinkDraft.id}
+                                    drinkDraft={drinkDraft}
+                                    allDrafts={allDrafts}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                            {barPublishedCocktails.map((drink: any) => (
+                                <PublishedDrinkTreeNode 
+                                    key={drink.id}
+                                    id={drink.id}
+                                    name={drink.name}
+                                    recipes={drink.recipes || []}
+                                    allDrafts={allDrafts}
+                                    allDrinks={allDrinks}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
 
-                    {/* Ingredients Section (Draft & Published) */}
-                    {ingredientDrafts.map((ingDraft) => (
-                        <IngredientDraftTreeNode 
-                            key={ingDraft.id}
-                            ingredientDraft={ingDraft}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedIngredients.map((ing: any) => (
-                        <PublishedIngredientTreeNode 
-                            key={ing.id}
-                            id={ing.id}
-                            name={ing.name}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
+                            {/* Beers */}
+                            {beerDrafts.map((drinkDraft) => (
+                                <DrinkDraftTreeNode 
+                                    key={drinkDraft.id}
+                                    drinkDraft={drinkDraft}
+                                    allDrafts={allDrafts}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                            {barPublishedBeers.map((drink: any) => (
+                                <PublishedDrinkTreeNode 
+                                    key={drink.id}
+                                    id={drink.id}
+                                    name={drink.name}
+                                    recipes={drink.recipes || []}
+                                    allDrafts={allDrafts}
+                                    allDrinks={allDrinks}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+
+                            {/* Wines */}
+                            {wineDrafts.map((drinkDraft) => (
+                                <DrinkDraftTreeNode 
+                                    key={drinkDraft.id}
+                                    drinkDraft={drinkDraft}
+                                    allDrafts={allDrafts}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                            {barPublishedWines.map((drink: any) => (
+                                <PublishedDrinkTreeNode 
+                                    key={drink.id}
+                                    id={drink.id}
+                                    name={drink.name}
+                                    recipes={drink.recipes || []}
+                                    allDrafts={allDrafts}
+                                    allDrinks={allDrinks}
+                                    dropdowns={dropdowns}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+
+                            {/* Ingredients */}
+                            {ingredientDrafts.map((ingDraft) => (
+                                <IngredientDraftTreeNode 
+                                    key={ingDraft.id}
+                                    ingredientDraft={ingDraft}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                            {barPublishedIngredients.map((ing: any) => (
+                                <PublishedIngredientTreeNode 
+                                    key={ing.id}
+                                    id={ing.id}
+                                    name={ing.name}
+                                    selectedNode={selectedNode}
+                                    onNodeSelect={onNodeSelect}
+                                />
+                            ))}
+                        </CategoryFolderNode>
+                    )}
                 </YStack>
             )}
         </YStack>
@@ -387,18 +632,16 @@ function MenuDraftTreeNode({ menuDraft, allDrafts, allDrinks, dropdowns, selecte
                     onPress={() => onNodeSelect({ type: "menu_draft", id: menuDraft.id, name })} 
                     style={styles.contentTouch}
                 >
-                    <XStack alignItems="center" justifyContent="space-between" flex={1}>
-                        <XStack alignItems="center" gap="$2">
-                            <IconSymbol 
-                                name="folder.fill" 
-                                size={15} 
-                                color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
-                            />
-                            <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
-                                {name}
-                            </Text>
-                        </XStack>
-                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold">
+                    <XStack alignItems="center" gap="$2">
+                        <IconSymbol 
+                            name="folder.fill" 
+                            size={15} 
+                            color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
+                        />
+                        <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
+                            {name}
+                        </Text>
+                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold" marginLeft="$1">
                             {progressInfo.percentage}%
                         </Text>
                     </XStack>
@@ -536,14 +779,12 @@ function DrinkDraftTreeNode({ drinkDraft, allDrafts, dropdowns, selectedNode, on
                     onPress={() => onNodeSelect({ type: "drink_draft", id: drinkDraft.id, name })} 
                     style={styles.contentTouch}
                 >
-                    <XStack alignItems="center" justifyContent="space-between" flex={1}>
-                        <XStack alignItems="center" gap="$2">
-                            <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
-                            <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
-                                {name}
-                            </Text>
-                        </XStack>
-                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold">
+                    <XStack alignItems="center" gap="$2">
+                        <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
+                        <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
+                            {name}
+                        </Text>
+                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold" marginLeft="$1">
                             {progressInfo.percentage}%
                         </Text>
                     </XStack>
@@ -640,16 +881,12 @@ function PublishedDrinkTreeNode({ id, name, recipes, allDrafts, allDrinks, dropd
                     onPress={() => onNodeSelect({ type: "published_drink", id, name })} 
                     style={styles.contentTouch}
                 >
-                    <XStack alignItems="center" justifyContent="space-between" flex={1}>
-                        <XStack alignItems="center" gap="$2">
-                            <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
-                            <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
-                                {name}
-                            </Text>
-                        </XStack>
-                        <Text fontSize={10} color="#34C759" fontWeight="bold">
-                            Published
+                    <XStack alignItems="center" gap="$2">
+                        <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
+                        <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
+                            {name}
                         </Text>
+                        <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>
@@ -766,20 +1003,16 @@ function PublishedIngredientTreeNode({ id, name, selectedNode, onNodeSelect }: P
                 onPress={() => onNodeSelect({ type: "published_ingredient", id, name })} 
                 style={styles.contentTouch}
             >
-                <XStack alignItems="center" justifyContent="space-between" flex={1}>
-                    <XStack alignItems="center" gap="$2">
-                        <IconSymbol 
-                            name="drop.fill" 
-                            size={12} 
-                            color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} 
-                        />
-                        <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
-                            {name}
-                        </Text>
-                    </XStack>
-                    <Text fontSize={10} color="#34C759" fontWeight="bold">
-                        Published
+                <XStack alignItems="center" gap="$2">
+                    <IconSymbol 
+                        name="drop.fill" 
+                        size={12} 
+                        color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} 
+                    />
+                    <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
+                        {name}
                     </Text>
+                    <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                 </XStack>
             </TouchableOpacity>
         </XStack>
@@ -850,20 +1083,16 @@ function PublishedMenuTreeNode({ menu, allDrinks, allDrafts, dropdowns, selected
                     onPress={() => onNodeSelect({ type: "published_menu", id: menu.id, name: menu.name })} 
                     style={styles.contentTouch}
                 >
-                    <XStack alignItems="center" justifyContent="space-between" flex={1}>
-                        <XStack alignItems="center" gap="$2">
-                            <IconSymbol 
-                                name="folder.fill" 
-                                size={15} 
-                                color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
-                            />
-                            <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
-                                {menu.name}
-                            </Text>
-                        </XStack>
-                        <Text fontSize={10} color="#34C759" fontWeight="bold">
-                            Published
+                    <XStack alignItems="center" gap="$2">
+                        <IconSymbol 
+                            name="folder.fill" 
+                            size={15} 
+                            color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
+                        />
+                        <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
+                            {menu.name}
                         </Text>
+                        <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>

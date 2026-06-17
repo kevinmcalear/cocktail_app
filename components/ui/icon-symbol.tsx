@@ -33,12 +33,22 @@ const MAPPING = {
   'book.fill': 'menu-book',
   'hammer.fill': 'build',
   'wineglass': 'wine-bar',
+  'wineglass.fill': 'wine-bar',
+  'mug.fill': 'sports-bar',
   'snowflake': 'ac-unit',
   'leaf.fill': 'eco',
   'person.2.fill': 'group',
   'person': 'person',
   'globe': 'public',
   'note.text': 'notes',
+  'checkmark': 'check',
+  'folder.fill': 'folder',
+  'tag.fill': 'local-offer',
+  'person.circle.fill': 'account-circle',
+  'building.2.fill': 'business',
+  'plus.circle': 'add-circle-outline',
+  'play.fill': 'play-arrow',
+  'flask': 'science',
 } as Partial<IconMapping>;
 
 /**

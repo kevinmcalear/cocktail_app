@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform, useWindowDimensions, PanResponder } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, XStack, YStack, useTheme, Button, Card } from 'tamagui';
@@ -47,6 +47,85 @@ export default function EditModeDashboard() {
     const [selectedNode, setSelectedNode] = React.useState<SelectedDraftNode | null>(null);
     const [selectedIngredientId, setSelectedIngredientId] = React.useState<string | null>(null);
     const [showThirdColumn, setShowThirdColumn] = React.useState(false);
+
+    const [sidebarWidth, setSidebarWidth] = React.useState(320);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
+    const sidebarWidthRef = React.useRef(sidebarWidth);
+    const initialWidthRef = React.useRef(sidebarWidth);
+
+    React.useEffect(() => {
+        sidebarWidthRef.current = sidebarWidth;
+    }, [sidebarWidth]);
+
+    const panResponder = React.useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: () => {
+                setIsDragging(true);
+                initialWidthRef.current = sidebarWidthRef.current;
+            },
+            onPanResponderMove: (evt, gestureState) => {
+                const newWidth = initialWidthRef.current + gestureState.dx;
+                const minWidth = 200;
+                const maxWidth = Math.min(600, width * 0.5);
+                if (newWidth >= minWidth && newWidth <= maxWidth) {
+                    setSidebarWidth(newWidth);
+                } else if (newWidth < minWidth) {
+                    setSidebarWidth(minWidth);
+                } else if (newWidth > maxWidth) {
+                    setSidebarWidth(maxWidth);
+                }
+            },
+            onPanResponderRelease: () => {
+                setIsDragging(false);
+            },
+            onPanResponderTerminate: () => {
+                setIsDragging(false);
+            }
+        })
+    ).current;
+
+    const handleMouseDown = (e: any) => {
+        if (Platform.OS !== 'web') return;
+        e.preventDefault();
+        setIsDragging(true);
+        const startX = e.clientX;
+        const startWidth = sidebarWidthRef.current;
+
+        if (typeof document !== 'undefined') {
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        }
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const deltaX = moveEvent.clientX - startX;
+            const newWidth = startWidth + deltaX;
+            const minWidth = 200;
+            const maxWidth = Math.min(600, width * 0.5);
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                setSidebarWidth(newWidth);
+            } else if (newWidth < minWidth) {
+                setSidebarWidth(minWidth);
+            } else if (newWidth > maxWidth) {
+                setSidebarWidth(maxWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+            if (typeof document !== 'undefined') {
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    };
 
     const mapPublishedItem = (item: any, type: string) => {
         return {
@@ -175,26 +254,21 @@ export default function EditModeDashboard() {
         barId: string,
         sectionKey: string,
         hasMenus: boolean,
-        hasDrinks: boolean,
-        hasIngredients: boolean
+        hasItems: boolean
     ) => {
         if (expandedSections[barId]?.[sectionKey] !== undefined) {
             return expandedSections[barId][sectionKey];
         }
-        if (sectionKey === 'menu') return hasMenus;
-        if (sectionKey === 'drink') return hasDrinks && !hasMenus;
-        if (sectionKey === 'ingredient') return hasIngredients && !hasMenus && !hasDrinks;
-        return false;
+        return false; // Collapse by default on first load
     };
 
     const toggleSection = (
         barId: string,
         sectionKey: string,
         hasMenus: boolean,
-        hasDrinks: boolean,
-        hasIngredients: boolean
+        hasItems: boolean
     ) => {
-        const currentVal = isSectionExpanded(barId, sectionKey, hasMenus, hasDrinks, hasIngredients);
+        const currentVal = isSectionExpanded(barId, sectionKey, hasMenus, hasItems);
         setExpandedSections((prev) => ({
             ...prev,
             [barId]: {
@@ -279,7 +353,7 @@ export default function EditModeDashboard() {
                 <Stack.Screen options={{ headerShown: false }} />
                 
                 {/* Column 1: Explorer Tree Sidebar (Left) */}
-                <YStack width={320} borderRightWidth={1} borderRightColor="$borderColor" height="100%" backgroundColor="$backgroundStrong">
+                <YStack width={sidebarWidth} borderRightWidth={1} borderRightColor="$borderColor" height="100%" backgroundColor="$backgroundStrong">
                     <XStack paddingHorizontal="$4" paddingVertical="$4" alignItems="center" borderBottomWidth={1} borderBottomColor="$borderColor">
                         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                             <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
@@ -298,6 +372,32 @@ export default function EditModeDashboard() {
                             setSelectedIngredientId(null);
                             setShowThirdColumn(false);
                         }}
+                    />
+                </YStack>
+
+                {/* Drag Handle */}
+                <YStack
+                    position="absolute"
+                    top={0}
+                    left={sidebarWidth - 5}
+                    bottom={0}
+                    width={10}
+                    zIndex={100}
+                    alignItems="center"
+                    backgroundColor="transparent"
+                    {...(Platform.OS === 'web' ? { onMouseDown: handleMouseDown } : panResponder.panHandlers)}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    style={{ cursor: 'col-resize' } as any}
+                    hoverStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)'
+                    }}
+                >
+                    <YStack
+                        width={2}
+                        height="100%"
+                        backgroundColor={(isDragging || isHovered) ? "$color" : "transparent"}
+                        opacity={isDragging ? 0.8 : 0.4}
                     />
                 </YStack>
 
@@ -409,17 +509,14 @@ export default function EditModeDashboard() {
                         Object.keys(itemsByBar).map((barId) => {
                             const barItems = itemsByBar[barId] || [];
                             const menus = barItems.filter((d: any) => d.entity_type === 'menu');
-                            const drinks = barItems.filter((d: any) => d.entity_type === 'cocktail' || d.entity_type === 'beer' || d.entity_type === 'wine');
-                            const ingredients = barItems.filter((d: any) => d.entity_type === 'ingredient');
+                            const items = barItems.filter((d: any) => d.entity_type === 'ingredient' || d.entity_type === 'beer' || d.entity_type === 'wine' || d.entity_type === 'cocktail');
 
                             const hasMenus = menus.length > 0;
-                            const hasDrinks = drinks.length > 0;
-                            const hasIngredients = ingredients.length > 0;
+                            const hasItems = items.length > 0;
 
                             const sections = [
                                 { key: 'menu', label: 'Menus', icon: 'TabMenus', items: menus },
-                                { key: 'drink', label: 'Drinks', icon: 'TabDrinks', items: drinks },
-                                { key: 'ingredient', label: 'Ingredients', icon: 'TabIngredients', items: ingredients }
+                                { key: 'item', label: 'Items', icon: 'TabIngredients', items: items }
                             ].filter(s => s.items.length > 0);
 
                             return (
@@ -429,11 +526,11 @@ export default function EditModeDashboard() {
                                     </Text>
                                     <YStack gap="$2.5" width="100%">
                                         {sections.map((section) => {
-                                            const expanded = isSectionExpanded(barId, section.key, hasMenus, hasDrinks, hasIngredients);
+                                            const expanded = isSectionExpanded(barId, section.key, hasMenus, hasItems);
                                             return (
                                                 <YStack key={section.key} width="100%" gap="$2.5">
                                                     <TouchableOpacity
-                                                        onPress={() => toggleSection(barId, section.key, hasMenus, hasDrinks, hasIngredients)}
+                                                        onPress={() => toggleSection(barId, section.key, hasMenus, hasItems)}
                                                         activeOpacity={0.7}
                                                     >
                                                         <XStack
@@ -496,11 +593,15 @@ export default function EditModeDashboard() {
                                                                                         <Text fontSize={16} fontWeight="bold" color="$color" numberOfLines={1} style={{ flexShrink: 1 }}>
                                                                                             {draft.draft_data?.name || draft.draft_data?.menuName || `Untitled ${draft.entity_type}`}
                                                                                         </Text>
-                                                                                        <View style={[styles.statusBadge, { backgroundColor: progressInfo.badgeBg, borderColor: progressInfo.color, borderWidth: 1 }]}>
-                                                                                            <Text style={[styles.statusBadgeText, { color: progressInfo.badgeText }]}>
-                                                                                                {progressInfo.label}
-                                                                                            </Text>
-                                                                                        </View>
+                                                                                        {draft.isPublished ? (
+                                                                                            <IconSymbol name="checkmark" size={14} color="#34C759" />
+                                                                                        ) : (
+                                                                                            <View style={[styles.statusBadge, { backgroundColor: progressInfo.badgeBg, borderColor: progressInfo.color, borderWidth: 1 }]}>
+                                                                                                <Text style={[styles.statusBadgeText, { color: progressInfo.badgeText }]}>
+                                                                                                    {progressInfo.label}
+                                                                                                </Text>
+                                                                                            </View>
+                                                                                        )}
                                                                                     </XStack>
                                                                                 </YStack>
                                                                             </TouchableOpacity>
@@ -518,9 +619,13 @@ export default function EditModeDashboard() {
                                                                                 <View style={[styles.progressBarFill, { width: `${progressInfo.percentage}%`, backgroundColor: progressInfo.color }]} />
                                                                             </View>
                                                                             <XStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
-                                                                                <Text fontSize={10} color="$color11" fontWeight="600">
-                                                                                    {draft.isPublished ? "Published" : `${progressInfo.percentage}% complete`}
-                                                                                </Text>
+                                                                                {draft.isPublished ? (
+                                                                                    <IconSymbol name="checkmark" size={12} color="#34C759" />
+                                                                                ) : (
+                                                                                    <Text fontSize={10} color="$color11" fontWeight="600">
+                                                                                        {`${progressInfo.percentage}% complete`}
+                                                                                    </Text>
+                                                                                )}
                                                                                 <Text fontSize={10} color="$color11" style={{ flexShrink: 1, textAlign: 'right', marginLeft: 8 }} numberOfLines={1}>
                                                                                     {infoString}
                                                                                 </Text>
