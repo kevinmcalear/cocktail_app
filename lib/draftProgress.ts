@@ -27,6 +27,17 @@ export function calculateDraftProgress(
     dropdowns?: any,
     visited: Set<string> = new Set<string>()
 ): ProgressInfo {
+    if (draft && draft.isPublished) {
+        return {
+            percentage: 100,
+            color: '#34C759', // Green
+            label: 'Published',
+            badgeBg: 'rgba(52, 199, 89, 0.1)',
+            badgeText: '#34C759',
+            innerDrafts: []
+        };
+    }
+
     if (!draft || !draft.draft_data || !draft.id || visited.has(draft.id)) {
         return {
             percentage: 0,

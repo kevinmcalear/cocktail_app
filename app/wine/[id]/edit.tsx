@@ -279,7 +279,7 @@ export default function EditWineScreen() {
                 zIndex={10}
             >
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
+                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">Edit Wine</Text>
                 <Button 

@@ -16,15 +16,30 @@ import { DraftPreviewPanel } from '@/components/DraftPreviewPanel';
 import { IngredientDetailPanel } from '@/components/IngredientDetailPanel';
 import { CocktailDetailPanel } from '@/components/CocktailDetailPanel';
 import { DraftFolderTree, SelectedDraftNode } from '@/components/DraftFolderTree';
+import { useCocktails } from '@/hooks/useCocktails';
+import { useBeers } from '@/hooks/useBeers';
+import { useWines } from '@/hooks/useWines';
+import { useIngredients } from '@/hooks/useIngredients';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 export default function EditModeDashboard() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
     const { user } = useAuth();
-    const { drafts, isLoading, deleteDraft } = useDrafts();
-    const { data: userBars } = useBars();
-    const { data: dropdowns } = useDropdowns();
+    const queryClient = useQueryClient();
+    const { drafts, isLoading: loadingDrafts, deleteDraft } = useDrafts();
+    const { data: userBars, isLoading: loadingBars } = useBars();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+
+    const { data: publishedCocktails, isLoading: loadingCocktails } = useCocktails({ allContexts: true });
+    const { data: publishedBeers, isLoading: loadingBeers } = useBeers({ allContexts: true });
+    const { data: publishedWines, isLoading: loadingWines } = useWines({ allContexts: true });
+    const { data: publishedIngredients, isLoading: loadingIngredients } = useIngredients({ allContexts: true });
+
+    const isLoading = loadingDrafts || loadingBars || loadingDropdowns || loadingCocktails || loadingBeers || loadingWines || loadingIngredients;
+
     const { width } = useWindowDimensions();
     const isLargeScreen = width >= 768;
 
@@ -33,19 +48,118 @@ export default function EditModeDashboard() {
     const [selectedIngredientId, setSelectedIngredientId] = React.useState<string | null>(null);
     const [showThirdColumn, setShowThirdColumn] = React.useState(false);
 
-    const selectedDraftId = (selectedNode?.type === 'menu_draft' || selectedNode?.type === 'drink_draft' || selectedNode?.type === 'ingredient_draft') ? selectedNode.id : null;
+    const mapPublishedItem = (item: any, type: string) => {
+        return {
+            id: item.id,
+            entity_type: type,
+            isPublished: true,
+            bar_id: item.bar_id || 'personal',
+            updated_at: item.updated_at || item.created_at || new Date().toISOString(),
+            user_id: item.user_id || null,
+            draft_data: {
+                name: item.name,
+                menuName: item.name,
+                description: item.description,
+                brandMaker: item.brand_maker,
+                recipeItems: item.recipes || [],
+                selections: item.selections || {}
+            }
+        };
+    };
 
-    // Auto-select first draft on large screen when drafts load
+    const allItems = [
+        ...drafts.map(d => ({ ...d, isPublished: false })),
+        ...(dropdowns?.menus || []).map(m => mapPublishedItem(m, 'menu')),
+        ...(publishedCocktails || []).map(c => mapPublishedItem(c, 'cocktail')),
+        ...(publishedBeers || []).map(b => mapPublishedItem(b, 'beer')),
+        ...(publishedWines || []).map(w => mapPublishedItem(w, 'wine')),
+        ...(publishedIngredients || []).map(i => mapPublishedItem(i, 'ingredient'))
+    ];
+
+    allItems.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+
+    const itemsByBar = allItems.reduce((acc: any, item: any) => {
+        const barId = item.bar_id || 'personal';
+        if (!acc[barId]) acc[barId] = [];
+        acc[barId].push(item);
+        return acc;
+    }, {});
+
+    const handleDeletePublished = async (id: string, entityType: string) => {
+        const afterDelete = async () => {
+            try {
+                if (entityType === 'menu') {
+                    const { error } = await supabase.from('menus').delete().eq('id', id);
+                    if (error) throw error;
+                    queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+                } else {
+                    const { error } = await supabase.from('items').delete().eq('id', id);
+                    if (error) throw error;
+                    if (entityType === 'cocktail') queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+                    if (entityType === 'beer') queryClient.invalidateQueries({ queryKey: ['beers'] });
+                    if (entityType === 'wine') queryClient.invalidateQueries({ queryKey: ['wines'] });
+                    if (entityType === 'ingredient') queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+                }
+                
+                if (selectedNode?.id === id) {
+                    setSelectedNode(null);
+                    setSelectedIngredientId(null);
+                    setShowThirdColumn(false);
+                }
+            } catch (err: any) {
+                console.error("Delete error:", err);
+                Alert.alert("Error", `Failed to delete published ${entityType}: ${err.message || err}`);
+            }
+        };
+
+        const itemName = entityType.toUpperCase();
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm(`Are you sure you want to permanently delete this published ${itemName}? This action cannot be undone.`);
+            if (confirmed) {
+                await afterDelete();
+            }
+        } else {
+            Alert.alert(
+                `Delete Published ${entityType}`,
+                `Are you sure you want to permanently delete this published ${itemName}? This action cannot be undone.`,
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", style: "destructive", onPress: afterDelete }
+                ]
+            );
+        }
+    };
+
+    const handleEditPublished = (item: any) => {
+        let route = '';
+        const id = item.id;
+        const cleanId = id.replace("beer-", "").replace("wine-", "");
+        
+        switch(item.entity_type) {
+            case 'cocktail': route = `/cocktail/${id}/edit`; break;
+            case 'ingredient': route = `/ingredient/${id}/edit`; break;
+            case 'beer': route = `/beer/${cleanId}/edit`; break;
+            case 'wine': route = `/wine/${cleanId}/edit`; break;
+            case 'menu': route = `/menus/create?menuId=${id}`; break;
+        }
+        if (route) {
+            router.push(route as any);
+        }
+    };
+
+    // Auto-select first item on large screen when items load
     React.useEffect(() => {
-        if (isLargeScreen && drafts.length > 0 && !selectedNode) {
-            const first = drafts[0];
+        if (isLargeScreen && allItems.length > 0 && !selectedNode) {
+            const first = allItems[0];
             setSelectedNode({
-                type: first.entity_type === 'menu' ? 'menu_draft' : (first.entity_type === 'ingredient' ? 'ingredient_draft' : 'drink_draft'),
+                type: first.isPublished 
+                    ? (first.entity_type === 'menu' ? 'published_menu' : (first.entity_type === 'ingredient' ? 'published_ingredient' : 'published_drink'))
+                    : (first.entity_type === 'menu' ? 'menu_draft' : (first.entity_type === 'ingredient' ? 'ingredient_draft' : 'drink_draft')),
                 id: first.id,
                 name: first.draft_data?.name || first.draft_data?.menuName || `Untitled ${first.entity_type}`
             });
         }
-    }, [drafts, isLargeScreen, selectedNode]);
+    }, [allItems, isLargeScreen, selectedNode]);
 
     const getBarName = (barId: string) => {
         if (barId === 'personal') return 'Personal Drafts';
@@ -174,6 +288,10 @@ export default function EditModeDashboard() {
                     </XStack>
                     <DraftFolderTree 
                         drafts={drafts}
+                        publishedCocktails={publishedCocktails || []}
+                        publishedBeers={publishedBeers || []}
+                        publishedWines={publishedWines || []}
+                        publishedIngredients={publishedIngredients || []}
                         selectedNode={selectedNode}
                         onNodeSelect={(node) => {
                             setSelectedNode(node);
@@ -185,11 +303,18 @@ export default function EditModeDashboard() {
 
                 {/* Column 2: Selected Details Panel (Middle) */}
                 <YStack flex={1} height="100%">
-                    {(selectedNode?.type === "menu_draft" || selectedNode?.type === "drink_draft" || selectedNode?.type === "ingredient_draft") && (() => {
-                        const activeDraft = drafts.find(d => d.id === selectedNode.id);
-                        return activeDraft ? (
+                    {(selectedNode?.type === "menu_draft" || selectedNode?.type === "drink_draft" || selectedNode?.type === "ingredient_draft" ||
+                      selectedNode?.type === "published_drink" || selectedNode?.type === "published_ingredient" || selectedNode?.type === "published_menu") && (() => {
+                        const activeItem = allItems.find(item => {
+                            if (selectedNode.type.startsWith("published_")) {
+                                return item.isPublished && item.id === selectedNode.id;
+                            } else {
+                                return !item.isPublished && item.id === selectedNode.id;
+                            }
+                        });
+                        return activeItem ? (
                             <DraftPreviewPanel 
-                                draft={activeDraft}
+                                draft={activeItem}
                                 onIngredientPress={(ingredientId) => {
                                     setSelectedIngredientId(ingredientId);
                                     // Check if it's a draft ingredient that has recipe items
@@ -197,26 +322,16 @@ export default function EditModeDashboard() {
                                     if (childDraft) {
                                         setShowThirdColumn(childDraft.draft_data?.recipeItems?.length > 0);
                                     } else {
-                                        setShowThirdColumn(true); // Published ingredient
+                                        const publishedIng = publishedIngredients?.find(i => i.id === ingredientId);
+                                        setShowThirdColumn(!!publishedIng?.recipes?.length || (publishedIng?.item_type === 'ingredient'));
                                     }
                                 }}
                                 selectedIngredientId={selectedIngredientId}
-                                onResume={() => handleResumeDraft(activeDraft)}
-                                onDiscard={() => handleDeleteDraft(activeDraft.id)}
+                                onResume={() => activeItem.isPublished ? handleEditPublished(activeItem) : handleResumeDraft(activeItem)}
+                                onDiscard={() => activeItem.isPublished ? handleDeletePublished(activeItem.id, activeItem.entity_type) : handleDeleteDraft(activeItem.id)}
                             />
                         ) : null;
                     })()}
-
-                    {selectedNode?.type === "published_drink" && (
-                        <CocktailDetailPanel 
-                            id={selectedNode.id} 
-                            onIngredientPress={(ingredientId) => {
-                                setSelectedIngredientId(ingredientId);
-                                setShowThirdColumn(true);
-                            }}
-                            selectedIngredientId={selectedIngredientId}
-                        />
-                    )}
 
                     {!selectedNode && (
                         <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
@@ -242,16 +357,18 @@ export default function EditModeDashboard() {
                                     />
                                 );
                             } else {
-                                return (
-                                    <IngredientDetailPanel 
-                                        id={selectedIngredientId} 
-                                        onClose={() => {
-                                            setSelectedIngredientId(null);
-                                            setShowThirdColumn(false);
-                                        }}
-                                        onLoadRecipeStatus={handleLoadRecipeStatus}
-                                    />
-                                );
+                                const publishedIng = publishedIngredients?.find(i => i.id === selectedIngredientId);
+                                if (publishedIng) {
+                                    const mapped = mapPublishedItem(publishedIng, 'ingredient');
+                                    return (
+                                        <DraftPreviewPanel 
+                                            draft={mapped}
+                                            onResume={() => handleEditPublished(mapped)}
+                                            onDiscard={() => handleDeletePublished(mapped.id, 'ingredient')}
+                                        />
+                                    );
+                                }
+                                return null;
                             }
                         })()}
                     </YStack>
@@ -279,21 +396,21 @@ export default function EditModeDashboard() {
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
-                {/* Works in Progress Section */}
+                {/* Workspace Items Section */}
                 <YStack gap="$4" marginBottom="$6">
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
-                        Works in Progress
+                        Workspace Items
                     </Text>
                     {isLoading ? (
-                        <Text color="$color11">Loading drafts...</Text>
-                    ) : drafts.length === 0 ? (
-                        <Text color="$color11">No active drafts.</Text>
+                        <Text color="$color11">Loading workspace items...</Text>
+                    ) : allItems.length === 0 ? (
+                        <Text color="$color11">No items in workspace.</Text>
                     ) : (
-                        Object.keys(draftsByBar).map((barId) => {
-                            const barDrafts = draftsByBar[barId] || [];
-                            const menus = barDrafts.filter((d: any) => d.entity_type === 'menu');
-                            const drinks = barDrafts.filter((d: any) => d.entity_type === 'cocktail' || d.entity_type === 'beer' || d.entity_type === 'wine');
-                            const ingredients = barDrafts.filter((d: any) => d.entity_type === 'ingredient');
+                        Object.keys(itemsByBar).map((barId) => {
+                            const barItems = itemsByBar[barId] || [];
+                            const menus = barItems.filter((d: any) => d.entity_type === 'menu');
+                            const drinks = barItems.filter((d: any) => d.entity_type === 'cocktail' || d.entity_type === 'beer' || d.entity_type === 'wine');
+                            const ingredients = barItems.filter((d: any) => d.entity_type === 'ingredient');
 
                             const hasMenus = menus.length > 0;
                             const hasDrinks = drinks.length > 0;
@@ -341,11 +458,16 @@ export default function EditModeDashboard() {
                                                             {section.items.map((draft: any) => {
                                                                 const date = new Date(draft.updated_at);
                                                                 const dateString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                                                const authorName = draft.user_id === user?.id 
-                                                                    ? "You" 
-                                                                    : (draft.draft_data?.last_editor_email || "Another Member");
+                                                                const authorName = draft.isPublished 
+                                                                    ? "Published"
+                                                                    : (draft.user_id === user?.id 
+                                                                        ? "You" 
+                                                                        : (draft.draft_data?.last_editor_email || "Another Member"));
                                                                 
                                                                 const progressInfo = calculateDraftProgress(draft, drafts, dropdowns);
+                                                                const infoString = draft.isPublished 
+                                                                    ? `Published • ${dateString}` 
+                                                                    : `Edited by ${authorName} • ${dateString}`;
 
                                                                 return (
                                                                     <YStack
@@ -362,7 +484,10 @@ export default function EditModeDashboard() {
                                                                         $gtLg={{ width: '23.8%' }}
                                                                     >
                                                                         <XStack alignItems="center" justifyContent="space-between" width="100%">
-                                                                            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleResumeDraft(draft)}>
+                                                                            <TouchableOpacity 
+                                                                                style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} 
+                                                                                onPress={() => draft.isPublished ? handleEditPublished(draft) : handleResumeDraft(draft)}
+                                                                            >
                                                                                 <View style={styles.iconContainer}>
                                                                                     <CustomIcon name={getIconForType(draft.entity_type)} size={24} color={theme.color?.get() as string} />
                                                                                 </View>
@@ -379,7 +504,10 @@ export default function EditModeDashboard() {
                                                                                     </XStack>
                                                                                 </YStack>
                                                                             </TouchableOpacity>
-                                                                            <TouchableOpacity onPress={() => handleDeleteDraft(draft.id)} style={{ padding: 8 }}>
+                                                                            <TouchableOpacity 
+                                                                                onPress={() => draft.isPublished ? handleDeletePublished(draft.id, draft.entity_type) : handleDeleteDraft(draft.id)} 
+                                                                                style={{ padding: 8 }}
+                                                                            >
                                                                                 <IconSymbol name="trash" size={20} color="#ff4444" />
                                                                             </TouchableOpacity>
                                                                         </XStack>
@@ -391,10 +519,10 @@ export default function EditModeDashboard() {
                                                                             </View>
                                                                             <XStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
                                                                                 <Text fontSize={10} color="$color11" fontWeight="600">
-                                                                                    {progressInfo.percentage}% complete
+                                                                                    {draft.isPublished ? "Published" : `${progressInfo.percentage}% complete`}
                                                                                 </Text>
                                                                                 <Text fontSize={10} color="$color11" style={{ flexShrink: 1, textAlign: 'right', marginLeft: 8 }} numberOfLines={1}>
-                                                                                    Edited by {authorName} • {dateString}
+                                                                                    {infoString}
                                                                                 </Text>
                                                                             </XStack>
                                                                         </YStack>

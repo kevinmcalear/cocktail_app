@@ -91,8 +91,10 @@ export function DraftPreviewPanel({
                             style={[styles.actionButton, { backgroundColor: theme.color8?.get() as string }]}
                         >
                             <XStack alignItems="center" gap="$1" paddingHorizontal="$3" paddingVertical="$1.5">
-                                <IconSymbol name="play.fill" size={12} color={theme.backgroundStrong?.get() as string} />
-                                <Text fontSize={12} fontWeight="bold" color="$backgroundStrong">Resume</Text>
+                                <IconSymbol name={draft.isPublished ? "pencil" : "play.fill"} size={12} color={theme.backgroundStrong?.get() as string} />
+                                <Text fontSize={12} fontWeight="bold" color="$backgroundStrong">
+                                    {draft.isPublished ? "Edit" : "Resume"}
+                                </Text>
                             </XStack>
                         </TouchableOpacity>
                     )}
@@ -103,7 +105,9 @@ export function DraftPreviewPanel({
                         >
                             <XStack alignItems="center" gap="$1" paddingHorizontal="$3" paddingVertical="$1.5">
                                 <IconSymbol name="trash" size={12} color="#ff4444" />
-                                <Text fontSize={12} fontWeight="bold" color="#ff4444">Discard</Text>
+                                <Text fontSize={12} fontWeight="bold" color="#ff4444">
+                                    {draft.isPublished ? "Delete" : "Discard"}
+                                </Text>
                             </XStack>
                         </TouchableOpacity>
                     )}
@@ -115,7 +119,9 @@ export function DraftPreviewPanel({
                 {/* Progress bar */}
                 <YStack gap="$2" backgroundColor="$backgroundStrong" padding="$4" borderRadius={14} borderWidth={1} borderColor="$borderColor">
                     <XStack justifyContent="space-between" alignItems="center">
-                        <Text fontSize={12} fontWeight="bold" color="$color">Progress Check</Text>
+                        <Text fontSize={12} fontWeight="bold" color="$color">
+                            {draft.isPublished ? "Status Info" : "Progress Check"}
+                        </Text>
                         <View style={{ backgroundColor: progressInfo.badgeBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: progressInfo.color }}>
                             <Text fontSize={9} fontWeight="bold" color={progressInfo.badgeText} textTransform="uppercase">
                                 {progressInfo.label}
@@ -126,8 +132,12 @@ export function DraftPreviewPanel({
                         <View style={[styles.progressBarFill, { width: `${progressInfo.percentage}%`, backgroundColor: progressInfo.color }]} />
                     </View>
                     <XStack justifyContent="space-between" alignItems="center">
-                        <Text fontSize={10} color="$color11" fontWeight="600">{progressInfo.percentage}% complete</Text>
-                        <Text fontSize={10} color="$color11">Edited {dateString}</Text>
+                        <Text fontSize={10} color="$color11" fontWeight="600">
+                            {draft.isPublished ? "Published" : `${progressInfo.percentage}% complete`}
+                        </Text>
+                        <Text fontSize={10} color="$color11">
+                            {draft.isPublished ? "Published" : "Edited"} {dateString}
+                        </Text>
                     </XStack>
                 </YStack>
 

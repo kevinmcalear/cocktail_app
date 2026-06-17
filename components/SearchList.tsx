@@ -540,7 +540,7 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                     {!hideHeader && (
                         <View style={[styles.header, { paddingTop: isModal ? 20 : insets.top + 4 }]}>
                             <TouchableOpacity onPress={() => onBackPress ? onBackPress() : router.back()} style={styles.headerTitleContainer}>
-                                <IconSymbol name="chevron.down" size={24} color={theme.color?.get() as string} />
+                                <IconSymbol name={isModal ? "chevron.down" : "chevron.left"} size={24} color={theme.color?.get() as string} />
                             </TouchableOpacity>
                             <H1 fontSize={34} lineHeight={38} letterSpacing={0.5} fontWeight="bold" color="$color">{title}</H1>
                             <View style={{ width: 40 }} />
