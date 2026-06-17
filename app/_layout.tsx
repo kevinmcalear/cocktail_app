@@ -22,6 +22,8 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
+import { Platform } from 'react-native';
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { session, loading } = useAuth();
@@ -44,6 +46,13 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      {Platform.OS === 'web' && (
+        <style dangerouslySetInnerHTML={{__html: `
+          a, button, [role="button"], [role="link"] {
+            cursor: pointer !important;
+          }
+        `}} />
+      )}
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
