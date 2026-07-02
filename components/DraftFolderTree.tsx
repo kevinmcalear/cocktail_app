@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import { Text, XStack, YStack, useTheme, ScrollView } from "tamagui";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CustomIcon } from "@/components/ui/CustomIcons";
 import { useBars } from "@/hooks/useBars";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { calculateDraftProgress } from "@/lib/draftProgress";
@@ -19,8 +20,68 @@ function DraftProgressBadge({ percentage }: { percentage: number }) {
     );
 }
 
-function folderIconColor(isSelected: boolean, theme: ReturnType<typeof useTheme>) {
-    return isSelected ? (theme.color8?.get() as string) : DRAFT_AMBER;
+type TreeTheme = ReturnType<typeof useTheme>;
+
+function treeItemIconColor(isSelected: boolean, theme: TreeTheme, isUnpublished: boolean) {
+    if (isSelected) return theme.color8?.get() as string;
+    return isUnpublished ? DRAFT_AMBER : (theme.color11?.get() as string);
+}
+
+function getGlasswareIconName(glasswareId: string | null | undefined, dropdowns: any): string | null {
+    if (!glasswareId) return null;
+    return dropdowns?.glassware?.find((g: any) => g.id === glasswareId)?.name ?? null;
+}
+
+function MenuTreeIcon({
+    isSelected,
+    isUnpublished,
+    theme,
+    size = 15,
+}: {
+    isSelected: boolean;
+    isUnpublished: boolean;
+    theme: TreeTheme;
+    size?: number;
+}) {
+    return (
+        <CustomIcon
+            name="TabMenus"
+            size={size}
+            color={treeItemIconColor(isSelected, theme, isUnpublished)}
+        />
+    );
+}
+
+function DrinkTreeIcon({
+    entityType,
+    drinkId,
+    glasswareId,
+    dropdowns,
+    isSelected,
+    isUnpublished = false,
+    theme,
+    size = 13,
+}: {
+    entityType?: string;
+    drinkId?: string;
+    glasswareId?: string | null;
+    dropdowns: any;
+    isSelected: boolean;
+    isUnpublished?: boolean;
+    theme: TreeTheme;
+    size?: number;
+}) {
+    const color = treeItemIconColor(isSelected, theme, isUnpublished);
+
+    if (entityType === "beer" || drinkId?.startsWith("beer-")) {
+        return <IconSymbol name="mug.fill" size={size} color={color} />;
+    }
+    if (entityType === "wine" || drinkId?.startsWith("wine-")) {
+        return <IconSymbol name="wineglass.fill" size={size} color={color} />;
+    }
+
+    const glasswareName = getGlasswareIconName(glasswareId, dropdowns);
+    return <CustomIcon name={glasswareName || "TabDrinks"} size={size} color={color} />;
 }
 
 export type DraftNodeType = 
@@ -78,7 +139,7 @@ export function DraftFolderTree({
 
     // Gather all published drinks
     const allDrinks = [
-        ...publishedCocktails.map(c => ({ id: c.id, name: c.name, type: 'cocktail', recipes: c.recipes, bar_id: c.bar_id })),
+        ...publishedCocktails.map(c => ({ id: c.id, name: c.name, type: 'cocktail', recipes: c.recipes, bar_id: c.bar_id, glassware_id: c.glassware_id })),
         ...publishedBeers.map(b => ({ id: `beer-${b.id}`, name: b.name, type: 'beer', recipes: [], bar_id: b.bar_id })),
         ...publishedWines.map(w => ({ id: `wine-${w.id}`, name: w.name, type: 'wine', recipes: [], bar_id: w.bar_id }))
     ];
@@ -206,9 +267,10 @@ interface CategoryFolderNodeProps {
     count: number;
     onAddPress?: () => void;
     options?: { label: string; icon: string; onPress: () => void }[];
+    customIcon?: string;
 }
 
-function CategoryFolderNode({ label, children, count, onAddPress, options }: CategoryFolderNodeProps) {
+function CategoryFolderNode({ label, children, count, onAddPress, options, customIcon }: CategoryFolderNodeProps) {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -253,11 +315,19 @@ function CategoryFolderNode({ label, children, count, onAddPress, options }: Cat
                         </View>
 
                         <XStack alignItems="center" gap="$2" style={styles.contentTouch}>
-                            <IconSymbol 
-                                name="folder.fill" 
-                                size={14} 
-                                color={theme.color8?.get() as string} 
-                            />
+                            {customIcon ? (
+                                <CustomIcon
+                                    name={customIcon}
+                                    size={14}
+                                    color={theme.color8?.get() as string}
+                                />
+                            ) : (
+                                <IconSymbol
+                                    name="folder.fill"
+                                    size={14}
+                                    color={theme.color8?.get() as string}
+                                />
+                            )}
                             <Text fontSize={13} fontWeight="600" color="$color">
                                 {label} ({count})
                             </Text>
@@ -475,6 +545,7 @@ function BarDraftNode({
                         <CategoryFolderNode 
                             label="Menus" 
                             count={menusCount}
+                            customIcon="TabMenus"
                             onAddPress={() => handleCreate('menu')}
                         >
                             {menuDrafts.map((menuDraft) => (
@@ -670,11 +741,7 @@ function MenuDraftTreeNode({ menuDraft, allDrafts, allDrinks, dropdowns, selecte
                     style={styles.contentTouch}
                 >
                     <XStack alignItems="center" gap="$2">
-                        <IconSymbol 
-                            name="folder.fill" 
-                            size={15} 
-                            color={folderIconColor(isSelected, theme)} 
-                        />
+                        <MenuTreeIcon isSelected={isSelected} isUnpublished theme={theme} />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
@@ -781,11 +848,7 @@ function DrinkDraftTreeNode({ drinkDraft, allDrafts, dropdowns, selectedNode, on
     const recipeItems = data.recipeItems || [];
     const hasIngredients = recipeItems.length > 0;
 
-    const getIcon = () => {
-        if (drinkDraft.entity_type === "beer") return "mug.fill";
-        if (drinkDraft.entity_type === "wine") return "wineglass.fill";
-        return "wineglass";
-    };
+    const glasswareId = data.glasswareId || data.glassware_id || null;
 
     return (
         <YStack>
@@ -815,7 +878,14 @@ function DrinkDraftTreeNode({ drinkDraft, allDrafts, dropdowns, selectedNode, on
                     style={styles.contentTouch}
                 >
                     <XStack alignItems="center" gap="$2">
-                        <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
+                        <DrinkTreeIcon
+                            entityType={drinkDraft.entity_type}
+                            glasswareId={glasswareId}
+                            dropdowns={dropdowns}
+                            isSelected={isSelected}
+                            isUnpublished
+                            theme={theme}
+                        />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
@@ -880,12 +950,7 @@ function PublishedDrinkTreeNode({ id, name, recipes, allDrafts, allDrinks, dropd
     const isSelected = selectedNode?.type === "published_drink" && selectedNode?.id === id;
 
     const hasIngredients = recipes && recipes.length > 0;
-
-    const getIcon = () => {
-        if (id.startsWith("beer-")) return "mug.fill";
-        if (id.startsWith("wine-")) return "wineglass.fill";
-        return "wineglass";
-    };
+    const glasswareId = allDrinks.find((d) => d.id === id)?.glassware_id ?? null;
 
     return (
         <YStack>
@@ -915,7 +980,13 @@ function PublishedDrinkTreeNode({ id, name, recipes, allDrafts, allDrinks, dropd
                     style={styles.contentTouch}
                 >
                     <XStack alignItems="center" gap="$2">
-                        <IconSymbol name={getIcon() as any} size={13} color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} />
+                        <DrinkTreeIcon
+                            drinkId={id}
+                            glasswareId={glasswareId}
+                            dropdowns={dropdowns}
+                            isSelected={isSelected}
+                            theme={theme}
+                        />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
@@ -994,7 +1065,7 @@ function IngredientDraftTreeNode({ ingredientDraft, selectedNode, onNodeSelect }
                     <IconSymbol 
                         name="drop.fill" 
                         size={12} 
-                        color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} 
+                        color={treeItemIconColor(isSelected, theme, true)} 
                     />
                     <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                         {name}
@@ -1115,11 +1186,7 @@ function PublishedMenuTreeNode({ menu, allDrinks, allDrafts, dropdowns, selected
                     style={styles.contentTouch}
                 >
                     <XStack alignItems="center" gap="$2">
-                        <IconSymbol 
-                            name="folder.fill" 
-                            size={15} 
-                            color={folderIconColor(isSelected, theme)} 
-                        />
+                        <MenuTreeIcon isSelected={isSelected} isUnpublished={false} theme={theme} />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {menu.name}
                         </Text>
