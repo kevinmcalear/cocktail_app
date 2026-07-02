@@ -2,10 +2,13 @@ import { SelectedDraftNode } from '@/components/DraftFolderTree';
 
 export interface EditingState {
     mode: 'create' | 'edit';
-    type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu';
+    type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu' | 'bar';
     draftId?: string;
     barId?: string;
     publishedId?: string;
+    menuDraftId?: string;
+    menuSectionId?: string;
+    initialName?: string;
 }
 
 export interface WorkspaceFrame {

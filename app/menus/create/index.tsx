@@ -1,9 +1,9 @@
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useNavigation, useLocalSearchParams } from "expo-router";
-import { MotiView } from "moti";
 import React, { useState, useRef, useEffect } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,11 +13,8 @@ import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPu
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
-import { Step1Venue } from "./_components/Step1Venue";
-import { Step2Template } from "./_components/Step2Template";
-import { Step3Name } from "./_components/Step3Name";
-import { Step4Drinks } from "./_components/Step4Drinks";
-import { Step5Review } from "./_components/Step5Review";
+import { MenuEditorForm } from "@/components/menu/MenuEditorForm";
+import type { EditorChromeState } from "@/lib/editorChrome";
 
 interface CreateMenuWizardProps {
     isInline?: boolean;
@@ -26,15 +23,36 @@ interface CreateMenuWizardProps {
     barIdProp?: string;
     onClose?: () => void;
     onSave?: () => void;
+    onChromeState?: (state: EditorChromeState | null) => void;
+    onCreateDrinkPress?: (params: {
+        query: string;
+        barId: string;
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => void;
 }
 
-export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, barIdProp, onClose, onSave }: CreateMenuWizardProps = {}) {
+export default function CreateMenuWizard({
+    isInline,
+    draftIdProp,
+    menuIdProp,
+    barIdProp,
+    onClose,
+    onSave,
+    onChromeState,
+    onCreateDrinkPress,
+}: CreateMenuWizardProps = {}) {
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme];
+    const isDark = colorScheme === "dark";
     const router = useRouter();
     const navigation = useNavigation();
-    const { draftId, menuId, barId: initialBarId } = useLocalSearchParams<{ draftId?: string, menuId?: string, barId?: string }>();
+    const { draftId, menuId, barId: barIdFromParams } = useLocalSearchParams<{ draftId?: string, menuId?: string, barId?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeMenuIdProp = menuIdProp !== undefined ? menuIdProp : menuId;
-    const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+    const activeBarIdProp = barIdProp !== undefined ? barIdProp : barIdFromParams;
+    const resolvedBarId = activeBarIdProp || null;
+    const skipVenueStep = !!resolvedBarId && !activeMenuIdProp;
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
 
@@ -45,12 +63,12 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
     const templates = dropdowns?.menuTemplates || [];
     const allSections = dropdowns?.templateSections || [];
 
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(skipVenueStep ? 2 : 1);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [menuName, setMenuName] = useState("");
     const [selections, setSelections] = useState<Record<string, string[]>>({});
     const [saving, setSaving] = useState(false);
-    const [barId, setBarId] = useState<string | null>(activeBarIdProp || null);
+    const [barId, setBarId] = useState<string | null>(resolvedBarId);
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
@@ -58,7 +76,7 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
 
     const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
     const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
-    const [furthestStep, setFurthestStep] = useState(1);
+    const [furthestStep, setFurthestStep] = useState(skipVenueStep ? 2 : 1);
     const currentStateStr = JSON.stringify({ step, selectedTemplateId, menuName, selections, barId });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
@@ -85,8 +103,11 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
                 let targetStep = 1;
                 if (data.hasVenueStep) {
                     targetStep = loadedStep;
+                    if (targetStep === 1 && (data.barId || activeBarIdProp)) {
+                        targetStep = 2;
+                    }
                 } else {
-                    if (!data.barId && !initialBarId) {
+                    if (!data.barId && !activeBarIdProp) {
                         targetStep = 1; // Must select venue first
                     } else {
                         targetStep = loadedStep + 1; // Shift step numbers by 1
@@ -98,12 +119,12 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
                 setSelectedTemplateId(data.selectedTemplateId || null);
                 setMenuName(data.menuName || data.name || "");
                 setSelections(data.selections || {});
-                setBarId(data.barId || initialBarId || null);
+                setBarId(data.barId || activeBarIdProp || null);
                 setDraftLoaded(true);
                 setNeedsCleanMark(true);
             }
         }
-    }, [currentDraftId, drafts, draftLoaded, initialBarId]);
+    }, [currentDraftId, drafts, draftLoaded, activeBarIdProp]);
 
     useEffect(() => {
         if (!activeMenuIdProp || menuLoaded) return;
@@ -144,7 +165,6 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
                 setSelectedTemplateId(menuData.template_id || null);
                 setBarId(menuData.bar_id || null);
                 setSelections(loadedSelections);
-                setStep(4);
                 setFurthestStep(4);
                 setMenuLoaded(true);
                 setDraftLoaded(true);
@@ -259,7 +279,7 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
             await handleSaveDraft();
         }
         if (isInline) {
-            if (onClose) onClose();
+            onClose?.();
         } else if (pendingNavigationActionRef.current) {
             isExitingRef.current = true;
             navigation.dispatch(pendingNavigationActionRef.current);
@@ -271,52 +291,58 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
         .filter(s => s.template_id === selectedTemplateId)
         .sort((a, b) => a.sort_order - b.sort_order);
 
-    const handleNext = () => {
-        if (step === 1 && !barId) return;
-        if (step === 2 && !selectedTemplateId) return;
-        if (step === 3 && !menuName.trim()) return;
-        
-        if (step === 2) {
-            // Init selections if empty
-            const newSelections = { ...selections };
-            activeSections.forEach(sec => {
-                if (!newSelections[sec.id]) newSelections[sec.id] = [];
-            });
-            setSelections(newSelections);
-        }
-        
-        setStep(prev => prev + 1);
+    const initSectionsForTemplate = () => {
+        if (!selectedTemplateId) return;
+        const missing = activeSections.some((sec) => selections[sec.id] === undefined);
+        if (!missing) return;
+        const newSelections = { ...selections };
+        activeSections.forEach((sec) => {
+            if (!newSelections[sec.id]) newSelections[sec.id] = [];
+        });
+        setSelections(newSelections);
     };
 
-    const handleBack = () => {
-        if (step === 1) {
-            if (isInline) {
-                const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
-                if (hasProgress) {
-                    setShowExitModal(true);
-                } else {
-                    if (onClose) onClose();
-                }
-            } else {
-                router.back();
-            }
+    const handleTemplateSelect = (id: string) => {
+        setSelectedTemplateId(id);
+    };
+
+    const isFormComplete = () => {
+        if (!skipVenueStep && !barId) return false;
+        if (!selectedTemplateId) return false;
+        if (!menuName.trim()) return false;
+        return activeSections.every((sec) => {
+            const count = (selections[sec.id] || []).length;
+            return count >= (sec.min_items || 1);
+        });
+    };
+
+    const isDirty = currentStateStr !== cleanStateStrRef.current;
+
+    const requestClose = () => {
+        const hasProgress =
+            menuName.trim() !== "" ||
+            selectedTemplateId !== null ||
+            barId !== null ||
+            isDirty;
+        if (hasProgress) {
+            setShowExitModal(true);
+        } else if (isInline) {
+            onClose?.();
         } else {
-            setStep(prev => prev - 1);
+            router.back();
         }
     };
 
-    const isStepValid = () => {
-        if (step === 1) return !!barId;
-        if (step === 2) return !!selectedTemplateId;
-        if (step === 3) return !!menuName.trim();
-        if (step === 4) {
-            return activeSections.every(sec => {
-                const count = (selections[sec.id] || []).length;
-                return count >= (sec.min_items || 1);
-            });
-        }
-        return true;
-    };
+    useEffect(() => {
+        if (!isInline || !onChromeState || loadingDropdowns) return;
+        onChromeState({
+            save: handleSaveDraft,
+            cancel: requestClose,
+            saving,
+            isDirty,
+        });
+        return () => onChromeState(null);
+    }, [isInline, onChromeState, loadingDropdowns, saving, isDirty]);
 
     const handlePublish = () => {
         const proceed = () => {
@@ -479,174 +505,71 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
         }
     };
 
+    const styles = StyleSheet.create({
+        headerBtn: {
+            width: 40,
+            height: 40,
+            justifyContent: "center",
+            alignItems: "flex-start",
+        },
+    });
+
     if (loadingDropdowns) {
         return (
-            <YStack flex={1} backgroundColor={Colors.dark.background} justifyContent="center" alignItems="center">
-                <ActivityIndicator size="large" color={Colors.dark.tint} />
+            <YStack flex={1} backgroundColor="$background" justifyContent="center" alignItems="center">
+                <ActivityIndicator size="large" color={colors.tint} />
             </YStack>
         );
     }
 
     return (
-        <KeyboardAvoidingView 
-            style={{ flex: 1, backgroundColor: Colors.dark.background }}
+        <KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: isInline ? undefined : colors.background }}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: isInline ? 10 : 20, justifyContent: 'space-between' }]}>
-                <TouchableOpacity 
-                    onPress={() => {
-                        if (isInline) {
-                            const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
-                            if (hasProgress) {
-                                setShowExitModal(true);
-                            } else {
-                                if (onClose) onClose();
-                            }
-                        } else {
-                            router.back();
-                        }
-                    }} 
-                    style={styles.headerBtn}
+            {!isInline && (
+                <XStack
+                    paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
+                    paddingHorizontal="$4"
+                    paddingBottom="$3"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    backgroundColor={colors.background}
                 >
-                    <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
-                </TouchableOpacity>
-                
-                <View style={styles.progressContainer}>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                        <View 
-                            key={i} 
-                            style={[
-                                styles.progressDot, 
-                                { backgroundColor: i <= step ? Colors.dark.tint : "rgba(255,255,255,0.1)" }
-                            ]} 
-                        />
-                    ))}
-                </View>
-                
-                <View style={{ width: 40 }} />
-            </View>
+                    <TouchableOpacity onPress={requestClose} style={styles.headerBtn}>
+                        <IconSymbol name="chevron.left" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text fontSize="$5" fontWeight="bold" color={colors.text}>
+                        {activeMenuIdProp ? 'Edit Menu' : 'New Menu'}
+                    </Text>
+                    <View style={{ width: 40 }} />
+                </XStack>
+            )}
 
-            {/* Screens (Moti transitions) */}
-            <View style={styles.content}>
-                {step === 1 && (
-                    <MotiView
-                        key="step1"
-                        from={{ opacity: 0, translateX: -50 }}
-                        animate={{ opacity: 1, translateX: 0 }}
-                        exit={{ opacity: 0, translateX: -50 }}
-                        style={styles.stepContainer}
-                    >
-                        <Step1Venue 
-                            selectedId={barId} 
-                            onSelect={setBarId} 
-                            onNext={handleNext}
-                        />
-                    </MotiView>
-                )}
+            <YStack flex={1} backgroundColor={isInline ? '$background' : colors.background}>
+                <MenuEditorForm
+                    embedded={!!isInline}
+                    skipVenueStep={skipVenueStep}
+                    barId={barId}
+                    onBarIdChange={setBarId}
+                    templates={templates}
+                    selectedTemplateId={selectedTemplateId}
+                    onTemplateSelect={handleTemplateSelect}
+                    menuName={menuName}
+                    onMenuNameChange={setMenuName}
+                    onMenuNameBlur={() => setMenuName(capitalize(menuName))}
+                    activeSections={activeSections}
+                    selections={selections}
+                    setSelections={setSelections}
+                    menuDraftId={currentDraftId}
+                    onInitSections={initSectionsForTemplate}
+                    canPublish={isFormComplete()}
+                    saving={saving}
+                    onPublish={handlePublish}
+                    onCreateDrinkPress={onCreateDrinkPress}
+                />
+            </YStack>
 
-                {step === 2 && (
-                    <MotiView
-                        key="step2"
-                        from={{ opacity: 0, translateX: 50 }}
-                        animate={{ opacity: 1, translateX: 0 }}
-                        exit={{ opacity: 0, translateX: -50 }}
-                        style={styles.stepContainer}
-                    >
-                        <Step2Template 
-                            templates={templates} 
-                            selectedId={selectedTemplateId} 
-                            onSelect={setSelectedTemplateId} 
-                            onNext={handleNext}
-                        />
-                    </MotiView>
-                )}
-                
-                {step === 3 && (
-                    <MotiView
-                        key="step3"
-                        from={{ opacity: 0, translateX: 50 }}
-                        animate={{ opacity: 1, translateX: 0 }}
-                        exit={{ opacity: 0, translateX: -50 }}
-                        style={styles.stepContainer}
-                    >
-                        <Step3Name 
-                            name={menuName} 
-                            onChange={(val) => handleCapitalizedChange(val, menuName, setMenuName)} 
-                            onBlur={() => setMenuName(capitalize(menuName))}
-                            onNext={handleNext}
-                        />
-                    </MotiView>
-                )}
-
-                {step === 4 && (
-                    <MotiView
-                        key="step4"
-                        from={{ opacity: 0, translateX: 50 }}
-                        animate={{ opacity: 1, translateX: 0 }}
-                        exit={{ opacity: 0, translateX: -50 }}
-                        style={styles.stepContainer}
-                    >
-                        <Step4Drinks 
-                            sections={activeSections} 
-                            selections={selections} 
-                            setSelections={setSelections} 
-                            onNext={handleNext}
-                            barId={barId}
-                            menuDraftId={currentDraftId}
-                        />
-                    </MotiView>
-                )}
-
-                {step === 5 && (
-                    <MotiView
-                        key="step5"
-                        from={{ opacity: 0, translateX: 50 }}
-                        animate={{ opacity: 1, translateX: 0 }}
-                        exit={{ opacity: 0, translateX: -50 }}
-                        style={styles.stepContainer}
-                    >
-                        <Step5Review 
-                            template={templates.find(t => t.id === selectedTemplateId)}
-                            name={menuName}
-                            sections={activeSections}
-                            selections={selections}
-                            onPublish={handlePublish}
-                            saving={saving}
-                            barId={barId}
-                        />
-                    </MotiView>
-                )}
-            </View>
-
-            {/* Unified Footer */}
-            <View style={[styles.unifiedFooter, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-                <TouchableOpacity 
-                    style={styles.footerCancelBtn} 
-                    onPress={handleBack}
-                    disabled={saving}
-                >
-                    <Text style={styles.footerCancelText}>{step === 1 ? 'Cancel' : 'Back'}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={[
-                        styles.footerNextBtn, 
-                        (!isStepValid() || saving) && styles.disabledButton
-                    ]} 
-                    disabled={!isStepValid() || saving}
-                    onPress={step === 5 ? handlePublish : handleNext}
-                >
-                    {saving ? (
-                        <ActivityIndicator size="small" color="#000" />
-                    ) : (
-                        <>
-                            <Text style={styles.footerNextText}>{step === 5 ? 'Publish Menu' : 'Next'}</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
-            {/* Custom Exit Modal */}
             <Modal
                 visible={showExitModal}
                 transparent={true}
@@ -674,8 +597,8 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
                             <Button size="$3" backgroundColor="#ff4444" onPress={() => confirmExit(false)}>
                                 <Text color="white" fontWeight="bold">Discard</Text>
                             </Button>
-                            <Button size="$3" backgroundColor={Colors.dark.tint} onPress={() => confirmExit(true)}>
-                                <Text color="#000" fontWeight="bold">Save</Text>
+                            <Button size="$3" backgroundColor={colors.tint} onPress={() => confirmExit(true)}>
+                                <Text color={isDark ? "#000" : "#fff"} fontWeight="bold">Save</Text>
                             </Button>
                         </XStack>
                     </YStack>
@@ -684,74 +607,3 @@ export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, ba
         </KeyboardAvoidingView>
     );
 }
-
-const styles = StyleSheet.create({
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        backgroundColor: Colors.dark.background,
-    },
-    headerBtn: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    progressContainer: {
-        flexDirection: "row",
-        gap: 8,
-    },
-    progressDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    content: {
-        flex: 1,
-    },
-    stepContainer: {
-        flex: 1,
-    },
-    unifiedFooter: {
-        flexDirection: "row",
-        paddingHorizontal: 20,
-        paddingTop: 16,
-        gap: 12,
-        backgroundColor: Colors.dark.background,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.05)",
-    },
-    footerCancelBtn: {
-        flex: 1,
-        paddingVertical: 18,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    footerCancelText: {
-        color: Colors.dark.icon,
-        fontSize: 18,
-        fontWeight: "500",
-    },
-    footerNextBtn: {
-        flex: 2,
-        flexDirection: "row",
-        backgroundColor: Colors.dark.tint,
-        paddingVertical: 18,
-        borderRadius: 32,
-        borderCurve: "continuous",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-    },
-    footerNextText: {
-        color: "#000",
-        fontSize: 18,
-        fontWeight: "bold",
-    },
-    disabledButton: {
-        opacity: 0.3,
-    }
-});

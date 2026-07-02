@@ -1,38 +1,52 @@
-import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Paragraph, Text, XStack, YStack, useTheme } from "tamagui";
+import { StyleSheet, View } from "react-native";
+import { Text, YStack } from "tamagui";
 
+import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
+import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
-import { CustomIcon } from "@/components/ui/CustomIcons";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
+import { useBars } from "@/hooks/useBars";
 import { useCocktail } from "@/hooks/useCocktails";
+import { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { useBars } from "@/hooks/useBars";
+import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
-    const router = useRouter();
-    const theme = useTheme();
 
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     const { data: cocktail, isLoading, error } = useCocktail(id as string);
-    const [notesExpanded, setNotesExpanded] = useState(false);
 
     const selectedBarId = useAppStore((state) => state.selectedBarId);
     const { data: bars } = useBars();
     const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
     const canEdit = currentBarRole > 30;
+    const [isEditing, setIsEditing] = useState(false);
 
-    // Provide default layout if cocktail mapping fails safely
+    const editor = useCocktailEditor(id as string, { enabled: isEditing });
+    const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+
+    const handleSave = async () => {
+        const ok = await editor.handleSave();
+        if (ok) setShowPhotoSheet(false);
+    };
+
+    const handleCancelEdit = () => {
+        editor.discardChanges();
+        setIsEditing(false);
+        setShowPhotoSheet(false);
+    };
+
     if (isLoading || error || !cocktail) {
         return (
-            <ItemDetailLayout 
+            <ItemDetailLayout
                 id={id as string}
                 title={isLoading ? "Loading..." : "Not Found"}
                 images={[]}
@@ -45,8 +59,12 @@ export default function CocktailDetailsScreen() {
                 <YStack style={styles.container}>
                     {error ? (
                         <>
-                            <Text color="$red10" fontSize={18} fontWeight="bold" marginBottom="$2">Error Loading Cocktail</Text>
-                            <Text color="$red9" fontSize={14}>{error instanceof Error ? error.message : JSON.stringify(error)}</Text>
+                            <Text color="$red10" fontSize={18} fontWeight="bold" marginBottom="$2">
+                                Error Loading Cocktail
+                            </Text>
+                            <Text color="$red9" fontSize={14}>
+                                {error instanceof Error ? error.message : JSON.stringify(error)}
+                            </Text>
                         </>
                     ) : (
                         <Text>{isLoading ? "Loading..." : "Cocktail not found."}</Text>
@@ -56,157 +74,67 @@ export default function CocktailDetailsScreen() {
         );
     }
 
-    const images = cocktail.item_images?.map(img => img.images?.url).filter(Boolean) as string[] || [];
-    if (images.length === 0) {
-        images.push(require('@/assets/images/cocktails/house_martini.png'));
-    }
+    const displayImages = isEditing && editor.localImages.length > 0
+        ? editor.localImages.map((img) => img.url)
+        : cocktail.item_images?.map((img) => img.images?.url).filter(Boolean) as string[] || [];
+
+    const images = displayImages.length > 0
+        ? displayImages
+        : [require("@/assets/images/cocktails/house_martini.png")];
+
+    const displayTitle = isEditing ? editor.name : cocktail.name;
 
     return (
-        <ItemDetailLayout
-            id={cocktail.id}
-            title={cocktail.name}
-            images={images}
-            isFavorite={isFavorite(cocktail.id)}
-            isInStudyPile={isInStudyPile(cocktail.id)}
-            onToggleFavorite={toggleFavorite}
-            onToggleStudyPile={toggleStudyPile}
-            onEditPress={canEdit ? () => router.push(`/cocktail/${id}/edit`) : undefined}
-        >
-            {/* Core Metadata Badges */}
-            <XStack flexWrap="wrap" gap="$5" paddingHorizontal={24} marginBottom="$6" marginTop="$2" justifyContent="flex-start" alignItems="flex-start">
-                {cocktail.item_methods?.[0]?.method?.name && (
-                    <YStack alignItems="center" gap="$1" justifyContent="flex-start">
-                        <YStack height={26} justifyContent="flex-end" alignItems="center">
-                            <CustomIcon name={cocktail.item_methods[0].method.name} size={24} color={theme.color?.get() as string} />
-                        </YStack>
-                        <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.item_methods[0].method.name}</Text>
-                    </YStack>
-                )}
-                {cocktail.glassware?.name && (
-                    <YStack alignItems="center" gap="$1" justifyContent="flex-start">
-                        <YStack height={26} justifyContent="flex-end" alignItems="center">
-                            <CustomIcon name={cocktail.glassware.name} size={24} color={theme.color?.get() as string} />
-                        </YStack>
-                        <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.glassware.name}</Text>
-                    </YStack>
-                )}
-                {cocktail.ice?.name && (
-                    <YStack alignItems="center" gap="$1" justifyContent="flex-start">
-                        <YStack height={26} justifyContent="flex-end" alignItems="center">
-                            <CustomIcon name={cocktail.ice.name} size={24} color={theme.color?.get() as string} />
-                        </YStack>
-                        <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.ice.name}</Text>
-                    </YStack>
-                )}
-                {cocktail.family?.name && (
-                    <YStack alignItems="center" gap="$1" justifyContent="flex-start">
-                        <YStack height={26} justifyContent="flex-end" alignItems="center">
-                            <CustomIcon name={cocktail.family.name} size={24} color={theme.color?.get() as string} />
-                        </YStack>
-                        <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.family.name}</Text>
-                    </YStack>
-                )}
-                {cocktail.origin && (
-                    <YStack alignItems="center" gap="$1" justifyContent="flex-start">
-                        <YStack height={26} justifyContent="flex-end" alignItems="center">
-                            <CustomIcon name={cocktail.origin} size={24} color={theme.color?.get() as string} />
-                        </YStack>
-                        <Text color="$color" fontSize={9} opacity={0.6} fontWeight="600" textAlign="center" textTransform="uppercase" letterSpacing={0.5}>{cocktail.origin}</Text>
-                    </YStack>
-                )}
-            </XStack>
+        <>
+            <ItemDetailLayout
+                id={cocktail.id}
+                title={displayTitle}
+                images={images}
+                isFavorite={isFavorite(cocktail.id)}
+                isInStudyPile={isInStudyPile(cocktail.id)}
+                onToggleFavorite={toggleFavorite}
+                onToggleStudyPile={toggleStudyPile}
+                canEdit={canEdit}
+                onStartEdit={() => setIsEditing(true)}
+                onCancelEdit={handleCancelEdit}
+                isEditing={isEditing}
+                onSave={isEditing ? handleSave : undefined}
+                saving={editor.saving}
+                isDirty={editor.isDirty}
+                editableTitle={
+                    isEditing
+                        ? {
+                              value: editor.name,
+                              onChange: (val) => handleCapitalizedChange(val, editor.name, editor.setName),
+                              onBlur: () => editor.setName(capitalize(editor.name)),
+                          }
+                        : undefined
+                }
+                onManageImages={isEditing ? () => setShowPhotoSheet(true) : undefined}
+            >
+                <CocktailDetailContent cocktail={cocktail} isEditing={isEditing} editor={isEditing ? editor : null} />
+            </ItemDetailLayout>
 
-
-
-            {/* Ingredients List */}
-            {cocktail.recipes && cocktail.recipes.length > 0 && (
-                <YStack gap="$4" marginBottom="$6" paddingHorizontal={24}>
-                    {cocktail.recipes.map((recipe, index) => {
-                        const ingredientsData = recipe.ingredient;
-                        const imageUrl = ingredientsData?.item_images?.[0]?.images?.url;
-                        
-                        // Extract measurement parts
-                        const measurementParts = [];
-                        if (recipe.amount) measurementParts.push(`${recipe.amount}`);
-                        if (recipe.unit) measurementParts.push(`${recipe.unit}`);
-                        const measurement = measurementParts.join(' ');
-
-                        const ingredientId = ingredientsData?.id || recipe.display_ingredient_id || recipe.ingredient_item_id;
-                        
-                        return (
-                            <XStack key={index} alignItems="center" gap="$4">
-                                <TouchableOpacity 
-                                    onPress={() => ingredientsData?.name && ingredientId && router.push(`/ingredient/${ingredientId}`)}
-                                    activeOpacity={0.7}
-                                >
-                                    {imageUrl ? (
-                                        <Image 
-                                            source={imageUrl} 
-                                            style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)' }} 
-                                            contentFit="cover"
-                                        />
-                                    ) : (
-                                        <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' }}>
-                                            <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                                <YStack flex={1} gap="$0.5">
-                                    {measurement ? (
-                                        <Text color="$color" fontSize={13} opacity={0.5} fontWeight="600" textTransform="uppercase" letterSpacing={0.5}>
-                                            {measurement}
-                                        </Text>
-                                    ) : null}
-                                    <TouchableOpacity 
-                                        onPress={() => ingredientsData?.name && ingredientId && router.push(`/ingredient/${ingredientId}`)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text color="$color" fontSize={18} fontWeight="400">
-                                            {ingredientsData?.name || 'Unknown Ingredient'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </YStack>
-                            </XStack>
-                        );
-                    })}
-                </YStack>
-            )}
-
-            {/* Description and Notes */}
-            {(cocktail.description || cocktail.notes) && (
-                <YStack gap="$3" paddingHorizontal="$4" marginBottom="$4">
-                    {cocktail.description && (
-                        <Paragraph color="$color" fontSize={16} lineHeight={24}>
-                            {cocktail.description}
-                        </Paragraph>
-                    )}
-                    {cocktail.notes && (
-                        <TouchableOpacity 
-                            style={[styles.notesToggle, { backgroundColor: theme.backgroundStrong?.get() as string, borderColor: theme.borderColor?.get() as string, borderWidth: 1 }]} 
-                            onPress={() => setNotesExpanded(!notesExpanded)}
-                            activeOpacity={0.7}
-                        >
-                            <XStack alignItems="center" gap="$2">
-                                <IconSymbol name="note.text" size={16} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
-                                <Text color="$color" fontSize={14} fontWeight="bold" textTransform="uppercase" letterSpacing={1}>Notes</Text>
-                                <View style={{ flex: 1 }} />
-                                <IconSymbol 
-                                    name={notesExpanded ? "chevron.up" : "chevron.down"} 
-                                    size={14} 
-                                    color={theme.color?.get() as string} 
-                                    style={{ opacity: 0.6 }}
-                                />
-                            </XStack>
-                            {notesExpanded && (
-                                <Paragraph color="$color" fontSize={16} lineHeight={24} marginTop="$3" opacity={0.9}>
-                                    {cocktail.notes}
-                                </Paragraph>
-                            )}
-                        </TouchableOpacity>
-                    )}
-                </YStack>
-            )}
-        </ItemDetailLayout>
+            <AdaptiveSheetModal
+                visible={showPhotoSheet}
+                onClose={() => setShowPhotoSheet(false)}
+                title="Photos"
+            >
+                <View style={{ paddingHorizontal: 24 }}>
+                    <SortableImageList
+                        images={editor.localImages}
+                        onReorder={editor.setLocalImages}
+                        onRemove={(index) =>
+                            editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))
+                        }
+                        onAdd={editor.pickImage}
+                        generateComponent={
+                            <GenerateImageButton type="cocktail" id={id as string} variant="tile" />
+                        }
+                    />
+                </View>
+            </AdaptiveSheetModal>
+        </>
     );
 }
 
@@ -214,10 +142,5 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 24,
-    },
-    notesToggle: {
-        padding: 16,
-        borderRadius: 12,
-        width: '100%',
     },
 });

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { Image } from "expo-image";
 import { Text, XStack, YStack, useTheme, ScrollView } from "tamagui";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CustomIcon } from "@/components/ui/CustomIcons";
@@ -215,12 +216,14 @@ export function DraftFolderTree({
                     const barDrafts = draftsByBar[barId] || [];
 
                     const barName = (Array.isArray(bar) ? bar[0]?.name : (bar as any)?.name) || "Unknown Bar";
+                    const logoUrl = (Array.isArray(bar) ? bar[0]?.logo_url : (bar as any)?.logo_url) ?? null;
 
                     return (
                         <BarDraftNode 
                             key={barId}
                             id={barId}
                             name={barName}
+                            logoUrl={logoUrl}
                             drafts={barDrafts}
                             referencedDrinks={referencedDrinks}
                             referencedIngredients={referencedIngredients}
@@ -245,6 +248,7 @@ export function DraftFolderTree({
 interface BarDraftNodeProps {
     id: string;
     name: string;
+    logoUrl?: string | null;
     drafts: any[];
     referencedDrinks: Set<string>;
     referencedIngredients: Set<string>;
@@ -406,6 +410,7 @@ function CategoryFolderNode({ label, children, count, onAddPress, options, custo
 function BarDraftNode({ 
     id, 
     name, 
+    logoUrl,
     drafts, 
     referencedDrinks, 
     referencedIngredients, 
@@ -424,6 +429,8 @@ function BarDraftNode({
     const theme = useTheme();
     const router = useRouter();
     const [expanded, setExpanded] = useState(false);
+
+    const isSelected = !isPersonal && selectedNode?.type === "bar" && selectedNode?.id === id;
 
     const isMatchBar = (itemBarId: string | null) => {
         const normalized = itemBarId || 'personal';
@@ -515,6 +522,7 @@ function BarDraftNode({
                 paddingVertical="$2" 
                 paddingHorizontal="$2"
                 borderRadius={6}
+                backgroundColor={isSelected ? "rgba(0, 122, 255, 0.08)" : "transparent"}
                 gap="$2"
                 hoverStyle={{ backgroundColor: "rgba(255,255,255,0.03)" }}
             >
@@ -526,16 +534,30 @@ function BarDraftNode({
                     />
                 </TouchableOpacity>
 
-                <XStack alignItems="center" gap="$2" style={styles.contentTouch}>
-                    <IconSymbol 
-                        name={isPersonal ? "person.circle.fill" : "building.2.fill"} 
-                        size={16} 
-                        color={theme.color11?.get() as string} 
-                    />
-                    <Text fontSize={13} fontWeight="bold" color="$color">
-                        {name}
-                    </Text>
-                </XStack>
+                <TouchableOpacity
+                    onPress={() => {
+                        if (!isPersonal) {
+                            onNodeSelect({ type: "bar", id, name });
+                        }
+                    }}
+                    disabled={isPersonal}
+                    style={styles.contentTouch}
+                >
+                    <XStack alignItems="center" gap="$2">
+                        {logoUrl ? (
+                            <Image source={{ uri: logoUrl }} cacheKey={logoUrl} style={styles.barLogo} contentFit="cover" />
+                        ) : (
+                            <IconSymbol 
+                                name={isPersonal ? "person.circle.fill" : "building.2.fill"} 
+                                size={16} 
+                                color={isSelected ? theme.color8?.get() as string : theme.color11?.get() as string} 
+                            />
+                        )}
+                        <Text fontSize={13} fontWeight="bold" color={isSelected ? "$color8" : "$color"}>
+                            {name}
+                        </Text>
+                    </XStack>
+                </TouchableOpacity>
             </XStack>
 
             {expanded && (
@@ -1286,5 +1308,10 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         marginTop: 2,
         marginBottom: 2,
+    },
+    barLogo: {
+        width: 16,
+        height: 16,
+        borderRadius: 4,
     },
 });

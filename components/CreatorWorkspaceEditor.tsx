@@ -1,5 +1,6 @@
 import React from 'react';
 import { EditingState } from '@/lib/creatorWorkspaceUtils';
+import type { EditorChromeState } from '@/lib/editorChrome';
 import AddCocktailScreen from '@/app/add-cocktail';
 import EditCocktailScreen from '@/app/cocktail/[id]/edit';
 import AddBeerScreen from '@/app/add-beer';
@@ -9,12 +10,20 @@ import EditWineScreen from '@/app/wine/[id]/edit';
 import AddIngredientScreen from '@/app/add-ingredient';
 import EditIngredientScreen from '@/app/ingredient/[id]/edit';
 import CreateMenuWizard from '@/app/menus/create/index';
+import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 
 interface CreatorWorkspaceEditorProps {
     editing: EditingState;
     onClose: () => void;
     onSave: () => void;
     onNestedItemPress: (ingredientId: string) => void;
+    onCreateDrinkPress?: (params: {
+        query: string;
+        barId: string;
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => void;
+    onChromeState?: (state: EditorChromeState | null) => void;
 }
 
 export function CreatorWorkspaceEditor({
@@ -22,6 +31,8 @@ export function CreatorWorkspaceEditor({
     onClose,
     onSave,
     onNestedItemPress,
+    onCreateDrinkPress,
+    onChromeState,
 }: CreatorWorkspaceEditorProps) {
     const nestedProps = { onNestedItemPress };
 
@@ -34,6 +45,7 @@ export function CreatorWorkspaceEditor({
                         idProp={editing.publishedId}
                         onClose={onClose}
                         onSave={onSave}
+                        onChromeState={onChromeState}
                         {...nestedProps}
                     />
                 );
@@ -43,8 +55,12 @@ export function CreatorWorkspaceEditor({
                     isInline
                     draftIdProp={editing.draftId}
                     barIdProp={editing.barId}
+                    menuDraftIdProp={editing.menuDraftId}
+                    menuSectionIdProp={editing.menuSectionId}
+                    initialNameProp={editing.initialName}
                     onClose={onClose}
                     onSave={onSave}
+                    onChromeState={onChromeState}
                     {...nestedProps}
                 />
             );
@@ -119,6 +135,16 @@ export function CreatorWorkspaceEditor({
                     barIdProp={editing.barId}
                     onClose={onClose}
                     onSave={onSave}
+                    onChromeState={onChromeState}
+                    onCreateDrinkPress={onCreateDrinkPress}
+                />
+            );
+        case 'bar':
+            return (
+                <BarInlineEditor
+                    barId={editing.barId || editing.publishedId!}
+                    onClose={onClose}
+                    onChromeState={onChromeState}
                 />
             );
         default:

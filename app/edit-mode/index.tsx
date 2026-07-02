@@ -30,6 +30,7 @@ import { useWines } from '@/hooks/useWines';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import type { EditorChromeState } from '@/lib/editorChrome';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -54,6 +55,7 @@ export default function EditModeDashboard() {
     const [expandedSections, setExpandedSections] = React.useState<Record<string, Record<string, boolean>>>({});
     const [selectedNode, setSelectedNode] = React.useState<SelectedDraftNode | null>(null);
     const [navigationStack, setNavigationStack] = React.useState<WorkspaceFrame[]>([]);
+    const [editorChrome, setEditorChrome] = React.useState<EditorChromeState | null>(null);
 
     const [sidebarWidth, setSidebarWidth] = React.useState(320);
     const [isDragging, setIsDragging] = React.useState(false);
@@ -242,6 +244,14 @@ export default function EditModeDashboard() {
     };
 
     const openWorkspace = React.useCallback((node: SelectedDraftNode) => {
+        if (node.type === 'bar') {
+            setSelectedNode(node);
+            setNavigationStack([{
+                node,
+                editing: { mode: 'edit', type: 'bar', barId: node.id, publishedId: node.id },
+            }]);
+            return;
+        }
         const frame = buildWorkspaceFrame(node, allItems);
         if (!frame) return;
         setSelectedNode(node);
@@ -259,6 +269,32 @@ export default function EditModeDashboard() {
             },
             editing: { mode: 'create', type, barId },
         }]);
+    };
+
+    const handleCreateDrinkPress = (params: {
+        query: string;
+        barId: string;
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => {
+        setNavigationStack((prev) => [
+            ...prev,
+            {
+                node: {
+                    type: 'drink_draft',
+                    id: '__new__',
+                    name: params.query || 'New Cocktail',
+                },
+                editing: {
+                    mode: 'create',
+                    type: 'cocktail',
+                    barId: params.barId,
+                    menuDraftId: params.menuDraftId,
+                    menuSectionId: params.menuSectionId,
+                    initialName: params.query,
+                },
+            },
+        ]);
     };
 
     const handleEditorClose = () => {
@@ -298,7 +334,18 @@ export default function EditModeDashboard() {
     };
 
     const activeFrame = navigationStack.at(-1) ?? null;
-    const activeItem = activeFrame ? findItemByNode(activeFrame.node, allItems) : null;
+    const activeItem = activeFrame && activeFrame.editing.type !== 'bar'
+        ? findItemByNode(activeFrame.node, allItems)
+        : null;
+    const workspaceMeta = activeFrame?.editing.type === 'bar'
+        ? { type: 'bar', name: activeFrame.node.name }
+        : activeFrame?.node.id === '__new__'
+        ? { type: activeFrame.editing.type, name: activeFrame.node.name }
+        : null;
+
+    React.useEffect(() => {
+        setEditorChrome(null);
+    }, [activeFrame?.node.id, activeFrame?.editing.mode]);
 
     // Auto-select first item on large screen when items load
     React.useEffect(() => {
@@ -464,6 +511,7 @@ export default function EditModeDashboard() {
                         <CreatorWorkspace
                             navigationStack={navigationStack}
                             activeItem={activeItem}
+                            workspaceMeta={workspaceMeta}
                             drafts={drafts}
                             dropdowns={dropdowns}
                             onNavigateToFrame={handleNavigateToFrame}
@@ -472,6 +520,10 @@ export default function EditModeDashboard() {
                                     ? handleDeletePublished(activeItem.id, activeItem.entity_type)
                                     : handleDeleteDraft(activeItem.id)
                             ) : undefined}
+                            onCancel={editorChrome?.cancel}
+                            onSave={editorChrome ? () => void editorChrome.save() : undefined}
+                            saving={editorChrome?.saving}
+                            isDirty={editorChrome?.isDirty}
                         >
                             <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}`}>
                                 <CreatorWorkspaceEditor
@@ -479,6 +531,8 @@ export default function EditModeDashboard() {
                                     onClose={handleEditorClose}
                                     onSave={handleSaveComplete}
                                     onNestedItemPress={handleNestedItemPress}
+                                    onCreateDrinkPress={handleCreateDrinkPress}
+                                    onChromeState={setEditorChrome}
                                 />
                             </React.Fragment>
                         </CreatorWorkspace>

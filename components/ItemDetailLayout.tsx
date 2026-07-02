@@ -1,16 +1,17 @@
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Modal, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Modal, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView, RectButton, Swipeable } from "react-native-gesture-handler";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { CocktailPhotoPlaceholder } from "@/components/cocktail/CocktailPhotoPlaceholder";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useSettingsStore } from "@/store/useSettingsStore";
-import { Text, useTheme } from "tamagui";
+import { Text, useTheme, XStack } from "tamagui";
 
 export interface ItemDetailLayoutProps {
     id: string;
@@ -22,6 +23,25 @@ export interface ItemDetailLayoutProps {
     onToggleFavorite: (id: string) => void;
     onToggleStudyPile: (id: string) => void;
     onEditPress?: () => void;
+    canEdit?: boolean;
+    onStartEdit?: () => void;
+    onCancelEdit?: () => void;
+    isEditing?: boolean;
+    onSave?: () => void;
+    saving?: boolean;
+    isDirty?: boolean;
+    editableTitle?: {
+        value: string;
+        onChange: (value: string) => void;
+        onBlur?: () => void;
+        placeholder?: string;
+    };
+    onManageImages?: () => void;
+    onBack?: () => void;
+    /** Hides back, fav/study, cancel/save — for creator workspace inline edit */
+    embedded?: boolean;
+    /** When true and images is empty, show a generic add-photo placeholder (draft create) */
+    emptyPhotoPlaceholder?: boolean;
     children: React.ReactNode;
 }
 
@@ -35,6 +55,18 @@ export function ItemDetailLayout({
     onToggleFavorite,
     onToggleStudyPile,
     onEditPress,
+    canEdit = false,
+    onStartEdit,
+    onCancelEdit,
+    isEditing = false,
+    onSave,
+    saving = false,
+    isDirty = false,
+    editableTitle,
+    onManageImages,
+    onBack,
+    embedded = false,
+    emptyPhotoPlaceholder = false,
     children
 }: ItemDetailLayoutProps) {
     const router = useRouter();
@@ -46,6 +78,19 @@ export function ItemDetailLayout({
     const [modalVisible, setModalVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [modalHeight, setModalHeight] = useState(windowHeight);
+    const [titleFocused, setTitleFocused] = useState(false);
+
+    useEffect(() => {
+        if (!isEditing) setTitleFocused(false);
+    }, [isEditing]);
+
+    const handleImagePress = () => {
+        if (isEditing && onManageImages) {
+            onManageImages();
+            return;
+        }
+        setModalVisible(true);
+    };
 
     const scrollY = useSharedValue(0);
 
@@ -116,17 +161,164 @@ export function ItemDetailLayout({
     let swipeableRef: Swipeable | null = null;
     const isLargeScreen = windowWidth >= 768;
 
+    const renderTitle = (fontSize: number, lineHeight?: number, numberOfLines?: number) => {
+        const color = theme.color?.get() as string;
+        const placeholderColor = theme.color11?.get() as string;
+        const titlePlaceholder = editableTitle?.placeholder ?? "Cocktail name";
+        const displayValue = editableTitle?.value ?? title;
+        const isEmpty = !displayValue?.trim();
+        const titleStyle = {
+            fontSize,
+            lineHeight: lineHeight || fontSize + 4,
+            fontFamily: "IBMPlexSansItalic" as const,
+            fontStyle: "italic" as const,
+            fontWeight: "normal" as const,
+            color: isEmpty && editableTitle && isEditing ? placeholderColor : color,
+            opacity: isEmpty && editableTitle && isEditing ? 0.55 : 1,
+        };
+
+        const titleText = (
+            <Text style={[styles.title, titleStyle]} numberOfLines={numberOfLines}>
+                {isEmpty && editableTitle && isEditing ? titlePlaceholder : displayValue}
+            </Text>
+        );
+
+        if (editableTitle && titleFocused) {
+            return (
+                <TextInput
+                    value={editableTitle.value}
+                    onChangeText={editableTitle.onChange}
+                    onBlur={() => {
+                        editableTitle.onBlur?.();
+                        setTitleFocused(false);
+                    }}
+                    placeholder={titlePlaceholder}
+                    placeholderTextColor={placeholderColor}
+                    style={[titleStyle, styles.titleInput, { color, opacity: 1 }]}
+                    numberOfLines={numberOfLines}
+                    autoFocus
+                />
+            );
+        }
+
+        if (editableTitle && isEditing) {
+            return (
+                <TouchableOpacity onPress={() => setTitleFocused(true)} activeOpacity={0.7}>
+                    {titleText}
+                </TouchableOpacity>
+            );
+        }
+
+        return titleText;
+    };
+
+    const renderHeaderAction = () => {
+        if (embedded) return null;
+        if (isEditing && onSave) {
+            return (
+                <XStack alignItems="center" gap="$1">
+                    {onCancelEdit && (
+                        <TouchableOpacity onPress={onCancelEdit} style={{ padding: 8 }}>
+                            <Text color="$color11" fontWeight="600" fontSize={16}>Cancel</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        onPress={onSave}
+                        disabled={saving || !isDirty}
+                        style={{ padding: 8, opacity: isDirty ? 1 : 0.4 }}
+                    >
+                        <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
+                            {saving ? "Saving…" : "Save"}
+                        </Text>
+                    </TouchableOpacity>
+                </XStack>
+            );
+        }
+        if (canEdit && onStartEdit) {
+            return (
+                <TouchableOpacity onPress={onStartEdit} style={{ padding: 8 }}>
+                    <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>Edit</Text>
+                </TouchableOpacity>
+            );
+        }
+        if (onEditPress && isEditModeEnabled) {
+            return (
+                <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
+                    <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
+                </TouchableOpacity>
+            );
+        }
+        return null;
+    };
+
+    const renderDesktopHeaderAction = () => {
+        if (embedded) return null;
+        if (isEditing && onSave) {
+            return (
+                <XStack alignItems="center" gap="$2">
+                    {onCancelEdit && (
+                        <TouchableOpacity
+                            onPress={onCancelEdit}
+                            style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string, width: 'auto', paddingHorizontal: 16 }]}
+                        >
+                            <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        onPress={onSave}
+                        disabled={saving || !isDirty}
+                        style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4, width: 'auto', paddingHorizontal: 20 }]}
+                    >
+                        <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
+                            {saving ? "…" : "Save"}
+                        </Text>
+                    </TouchableOpacity>
+                </XStack>
+            );
+        }
+        if (canEdit && onStartEdit) {
+            return (
+                <TouchableOpacity
+                    onPress={onStartEdit}
+                    style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, width: 'auto', paddingHorizontal: 20 }]}
+                >
+                    <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>Edit</Text>
+                </TouchableOpacity>
+            );
+        }
+        if (onEditPress && isEditModeEnabled) {
+            return (
+                <TouchableOpacity onPress={onEditPress} style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
+                    <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
+                </TouchableOpacity>
+            );
+        }
+        return null;
+    };
+
+    const renderHeroImage = (paginationBelow?: boolean) => {
+        if (images.length > 0) {
+            return (
+                <ImageCarousel
+                    images={images}
+                    initialIndex={currentImageIndex}
+                    onIndexChange={setCurrentImageIndex}
+                    onImagePress={handleImagePress}
+                    paginationBelow={paginationBelow}
+                />
+            );
+        }
+        if (emptyPhotoPlaceholder) {
+            return <CocktailPhotoPlaceholder onPress={handleImagePress} />;
+        }
+        return null;
+    };
+
     const mainContent = isLargeScreen ? (
         <View style={{ flexDirection: 'row', flex: 1, paddingTop: insets.top }}>
             <View style={{ width: '40%', maxWidth: 450, minWidth: 300, padding: 32, paddingTop: 80, justifyContent: 'flex-start' }}>
                 <View style={{ width: '100%', aspectRatio: 1, borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 12, elevation: 8, backgroundColor: theme.backgroundStrong?.get() as string }}>
-                    <ImageCarousel
-                        images={images}
-                        initialIndex={currentImageIndex}
-                        onIndexChange={setCurrentImageIndex}
-                        onImagePress={() => setModalVisible(true)}
-                        paginationBelow={true} 
-                    />
+                    {renderHeroImage(true)}
                 </View>
             </View>
 
@@ -137,26 +329,26 @@ export function ItemDetailLayout({
             >
                 <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 24 }]}>
                     <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.title, { fontSize: 48, lineHeight: 56, color: theme.color?.get() as string }]} numberOfLines={2}>{title}</Text>
+                        {renderTitle(48, 56, 2)}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                        <TouchableOpacity onPress={() => {
-                            onToggleFavorite(id);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
-                            <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? '#FF4B4B' : theme.color?.get() as string} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                            onToggleStudyPile(id);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
-                            <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? '#4A90E2' : theme.color?.get() as string} />
-                        </TouchableOpacity>
-                        {onEditPress && isEditModeEnabled && (
-                            <TouchableOpacity onPress={onEditPress} style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
-                                <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
-                            </TouchableOpacity>
+                        {!isEditing && (
+                            <>
+                                <TouchableOpacity onPress={() => {
+                                    onToggleFavorite(id);
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                }} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                                    <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? '#FF4B4B' : theme.color?.get() as string} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => {
+                                    onToggleStudyPile(id);
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                }} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                                    <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? '#4A90E2' : theme.color?.get() as string} />
+                                </TouchableOpacity>
+                            </>
                         )}
+                        {renderDesktopHeaderAction()}
                     </View>
                 </View>
 
@@ -177,13 +369,7 @@ export function ItemDetailLayout({
                 { position: 'absolute', top: 0, left: 0, right: 0, height: windowWidth, zIndex: 0 },
                 parallaxStyle
             ]}>
-                <ImageCarousel
-                    images={images}
-                    initialIndex={currentImageIndex}
-                    onIndexChange={setCurrentImageIndex}
-                    onImagePress={() => setModalVisible(true)}
-                    paginationBelow={true} 
-                />
+                {renderHeroImage(true)}
                 
                 {/* Grabber built into image area */}
                 <View style={{
@@ -225,21 +411,21 @@ export function ItemDetailLayout({
             >
                 <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                     <View style={{ flex: 1 }}>
-                        <Swipeable
-                            ref={(ref) => { swipeableRef = ref; }}
-                            renderRightActions={() => renderRightActions(id, swipeableRef!)}
-                            friction={2}
-                            rightThreshold={40}
-                            overshootRight={false}
-                        >
-                            <Text style={[styles.title, { fontSize: 32, color: theme.color?.get() as string }]}>{title}</Text>
-                        </Swipeable>
+                        {isEditing ? (
+                            renderTitle(32, 36)
+                        ) : (
+                            <Swipeable
+                                ref={(ref) => { swipeableRef = ref; }}
+                                renderRightActions={() => renderRightActions(id, swipeableRef!)}
+                                friction={2}
+                                rightThreshold={40}
+                                overshootRight={false}
+                            >
+                                {renderTitle(32, 36)}
+                            </Swipeable>
+                        )}
                     </View>
-                    {onEditPress && isEditModeEnabled && (
-                        <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
-                            <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
-                        </TouchableOpacity>
-                    )}
+                    {renderHeaderAction()}
                 </View>
 
                 {/* Inject Specific Content Here */}
@@ -257,6 +443,7 @@ export function ItemDetailLayout({
             <StatusBar barStyle="light-content" />
 
             {/* Floating Back Button */}
+            {!embedded && !isEditing && (
             <TouchableOpacity
                 style={{
                     position: 'absolute',
@@ -265,13 +452,14 @@ export function ItemDetailLayout({
                     zIndex: 100,
                     cursor: 'pointer' as any,
                 }}
-                onPress={() => router.back()}
+                onPress={() => (onBack ? onBack() : router.back())}
                 activeOpacity={0.7}
             >
                 <GlassView intensity={50} style={styles.buttonGlass}>
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </GlassView>
             </TouchableOpacity>
+            )}
 
             {mainContent}
 
@@ -358,6 +546,15 @@ const styles = StyleSheet.create({
         fontWeight: 'normal',
         fontStyle: 'italic',
         textAlign: 'left',
+    },
+    titleInput: {
+        padding: 0,
+        margin: 0,
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        width: '100%',
+        // @ts-expect-error web outline
+        outlineStyle: 'none',
     },
     buttonGlass: {
         width: 44,

@@ -1,9 +1,10 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -28,6 +29,9 @@ export default function CreateTemplateScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme];
+    const isDark = colorScheme === "dark";
     const { id } = useLocalSearchParams<{ id?: string }>();
     const isEditing = !!id;
 
@@ -196,10 +200,108 @@ export default function CreateTemplateScreen() {
         }
     };
 
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: { flex: 1, backgroundColor: colors.background },
+                header: {
+                    paddingHorizontal: 20,
+                    paddingBottom: 20,
+                    borderBottomLeftRadius: 30,
+                    borderBottomRightRadius: 30,
+                    marginBottom: 10,
+                },
+                headerRow: { flexDirection: "row", alignItems: "center", gap: 15, marginBottom: 8 },
+                backButton: { padding: 5 },
+                title: { fontSize: 34, color: colors.text },
+                subtitle: { fontSize: 16, color: colors.icon, marginLeft: 4 },
+                content: { padding: 20, gap: 20 },
+                inputSection: {},
+                label: { fontSize: 16, fontWeight: "bold", color: colors.text, marginBottom: 8, marginLeft: 4 },
+                subLabel: { fontSize: 13, color: colors.icon, marginBottom: 6, marginLeft: 4 },
+                input: {
+                    backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                    borderRadius: 15,
+                    padding: 16,
+                    color: colors.text,
+                    fontSize: 16,
+                    borderWidth: 1,
+                    borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                },
+                inputSmall: {
+                    backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                    borderRadius: 12,
+                    padding: 14,
+                    color: colors.text,
+                    fontSize: 16,
+                    borderWidth: 1,
+                    borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                },
+                sectionsHeader: {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: 10,
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                    paddingBottom: 10,
+                },
+                addSectionBtnSmall: {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: 6,
+                    paddingHorizontal: 12,
+                    backgroundColor: "rgba(230, 126, 34, 0.15)",
+                    borderRadius: 12,
+                },
+                sectionBlock: {
+                    backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                    borderWidth: 1,
+                    borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                    borderRadius: 20,
+                    padding: 16,
+                },
+                sectionBlockHeader: {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                    paddingHorizontal: 4,
+                },
+                sectionBlockTitle: { fontWeight: "bold", fontSize: 16, color: colors.text },
+                requirementsRow: { flexDirection: "row", gap: 12 },
+                addSectionBtnLarge: {
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: 16,
+                    borderRadius: 15,
+                    borderWidth: 1,
+                    borderStyle: "dashed",
+                    borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)",
+                    gap: 8,
+                },
+                addSectionText: { color: colors.icon, fontSize: 16, fontWeight: "600" },
+                footerSpacer: { height: 60 },
+                footer: {
+                    paddingHorizontal: 20,
+                    paddingTop: 10,
+                    backgroundColor: colors.background,
+                    borderTopWidth: 1,
+                    borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+                },
+                createButton: { backgroundColor: colors.tint, padding: 18, borderRadius: 15, alignItems: "center" },
+                disabledButton: { opacity: 0.5 },
+                createButtonText: { color: isDark ? "#000" : "#fff", fontWeight: "bold", fontSize: 18 },
+            }),
+        [colors, isDark],
+    );
+
     if (isLoading) {
         return (
-            <YStack style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={Colors.dark.tint} />
+            <YStack style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+                <ActivityIndicator size="large" color={colors.tint} />
             </YStack>
         );
     }
@@ -209,7 +311,7 @@ export default function CreateTemplateScreen() {
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <IconSymbol name="chevron.left" size={24} color={Colors.dark.text} />
+                        <IconSymbol name="chevron.left" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[styles.title, { fontSize: 34, fontWeight: 'bold' }]}>
                         {isEditing ? 'Edit Template' : 'Create Template'}
@@ -227,7 +329,7 @@ export default function CreateTemplateScreen() {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. Caretakers Format"
-                        placeholderTextColor="#666"
+                        placeholderTextColor={colors.icon}
                         value={templateName}
                         onChangeText={(val) => handleCapitalizedChange(val, templateName, setTemplateName)}
                         onBlur={() => setTemplateName(capitalize(templateName))}
@@ -239,7 +341,7 @@ export default function CreateTemplateScreen() {
                     <TextInput
                         style={[styles.input, { minHeight: 80, paddingTop: 16 }]}
                         placeholder="A brief description of this template's use case..."
-                        placeholderTextColor="#666"
+                        placeholderTextColor={colors.icon}
                         value={templateDescription}
                         onChangeText={setTemplateDescription}
                         multiline
@@ -249,8 +351,8 @@ export default function CreateTemplateScreen() {
                 <View style={styles.sectionsHeader}>
                     <Text style={[styles.label, { marginBottom: 0 }]}>Menu Sections</Text>
                     <TouchableOpacity onPress={handleAddSection} style={styles.addSectionBtnSmall}>
-                        <IconSymbol name="plus" size={16} color={Colors.dark.tint} />
-                        <Text style={{color: Colors.dark.tint, fontWeight: 'bold'}}>Add</Text>
+                        <IconSymbol name="plus" size={16} color={colors.tint} />
+                        <Text style={{ color: colors.tint, fontWeight: "bold" }}>Add</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -266,7 +368,7 @@ export default function CreateTemplateScreen() {
                         <TextInput
                             style={[styles.input, { marginBottom: 12 }]}
                             placeholder="Section Name (e.g. Starters)"
-                            placeholderTextColor="#666"
+                            placeholderTextColor={colors.icon}
                             value={sec.name}
                             onChangeText={(val) => {
                                 const prevVal = sec.name || "";
@@ -283,7 +385,7 @@ export default function CreateTemplateScreen() {
                                 <TextInput
                                     style={styles.inputSmall}
                                     placeholder="1"
-                                    placeholderTextColor="#666"
+                                    placeholderTextColor={colors.icon}
                                     keyboardType="numeric"
                                     value={sec.minItems}
                                     onChangeText={(val) => handleSectionChange(sec.id, 'minItems', val)}
@@ -294,7 +396,7 @@ export default function CreateTemplateScreen() {
                                 <TextInput
                                     style={styles.inputSmall}
                                     placeholder="No limit"
-                                    placeholderTextColor="#666"
+                                    placeholderTextColor={colors.icon}
                                     keyboardType="numeric"
                                     value={sec.maxItems}
                                     onChangeText={(val) => handleSectionChange(sec.id, 'maxItems', val)}
@@ -305,7 +407,7 @@ export default function CreateTemplateScreen() {
                 ))}
 
                 <TouchableOpacity style={styles.addSectionBtnLarge} onPress={handleAddSection}>
-                    <IconSymbol name="plus" size={20} color={Colors.dark.icon} />
+                    <IconSymbol name="plus" size={20} color={colors.icon} />
                     <Text style={styles.addSectionText}>Add Another Section</Text>
                 </TouchableOpacity>
 
@@ -319,7 +421,7 @@ export default function CreateTemplateScreen() {
                     onPress={handleSave}
                 >
                     {saving ? (
-                        <ActivityIndicator size="small" color="#000" />
+                        <ActivityIndicator size="small" color={isDark ? "#000" : "#fff"} />
                     ) : (
                         <Text style={styles.createButtonText}>Save Template</Text>
                     )}
@@ -329,154 +431,3 @@ export default function CreateTemplateScreen() {
         </YStack>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.dark.background,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        marginBottom: 10,
-    },
-    headerRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 15,
-        marginBottom: 8
-    },
-    backButton: {
-        padding: 5
-    },
-    title: {
-        fontSize: 34,
-        color: Colors.dark.text
-    },
-    subtitle: {
-        fontSize: 16,
-        color: Colors.dark.icon,
-        marginLeft: 4,
-    },
-    content: {
-        padding: 20,
-        gap: 20
-    },
-    inputSection: {
-        // block wrapper
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: Colors.dark.text,
-        marginBottom: 8,
-        marginLeft: 4,
-    },
-    subLabel: {
-        fontSize: 13,
-        color: Colors.dark.icon,
-        marginBottom: 6,
-        marginLeft: 4,
-    },
-    input: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 15,
-        padding: 16,
-        color: '#fff',
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    inputSmall: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 12,
-        padding: 14,
-        color: '#fff',
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    sectionsHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.1)",
-        paddingBottom: 10,
-    },
-    addSectionBtnSmall: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        padding: 6,
-        paddingHorizontal: 12,
-        backgroundColor: "rgba(230, 126, 34, 0.15)",
-        borderRadius: 12,
-    },
-    sectionBlock: {
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        borderRadius: 20,
-        padding: 16,
-    },
-    sectionBlockHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 12,
-        paddingHorizontal: 4,
-    },
-    sectionBlockTitle: {
-        fontWeight: "bold",
-        fontSize: 16,
-        color: Colors.dark.text,
-    },
-    requirementsRow: {
-        flexDirection: "row",
-        gap: 12,
-    },
-    addSectionBtnLarge: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-        borderRadius: 15,
-        borderWidth: 1,
-        borderStyle: "dashed",
-        borderColor: "rgba(255,255,255,0.2)",
-        gap: 8,
-    },
-    addSectionText: {
-        color: Colors.dark.icon,
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    footerSpacer: {
-        height: 60,
-    },
-    footer: {
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        backgroundColor: Colors.dark.background,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.05)",
-    },
-    createButton: {
-        backgroundColor: Colors.dark.tint,
-        padding: 18,
-        borderRadius: 15,
-        alignItems: "center"
-    },
-    disabledButton: {
-        opacity: 0.5
-    },
-    createButtonText: {
-        color: "#000",
-        fontWeight: "bold",
-        fontSize: 18
-    },
-});

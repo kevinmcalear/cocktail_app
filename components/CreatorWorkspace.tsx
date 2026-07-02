@@ -9,20 +9,30 @@ import { WorkspaceFrame } from '@/lib/creatorWorkspaceUtils';
 interface CreatorWorkspaceProps {
     navigationStack: WorkspaceFrame[];
     activeItem: any | null;
+    workspaceMeta?: { type: string; name: string } | null;
     drafts: any[];
     dropdowns: any;
     onNavigateToFrame: (index: number) => void;
     onDiscard?: () => void;
+    onCancel?: () => void;
+    onSave?: () => void;
+    saving?: boolean;
+    isDirty?: boolean;
     children: React.ReactNode;
 }
 
 export function CreatorWorkspace({
     navigationStack,
     activeItem,
+    workspaceMeta = null,
     drafts,
     dropdowns,
     onNavigateToFrame,
     onDiscard,
+    onCancel,
+    onSave,
+    saving = false,
+    isDirty = false,
     children,
 }: CreatorWorkspaceProps) {
     const theme = useTheme();
@@ -41,11 +51,12 @@ export function CreatorWorkspace({
           })
         : null;
 
-    const entityType = activeItem?.entity_type;
+    const entityType = activeItem?.entity_type ?? workspaceMeta?.type;
+    const showHeader = showBreadcrumbs || activeItem || workspaceMeta;
 
     return (
         <YStack flex={1} height="100%" backgroundColor="$background">
-            {(showBreadcrumbs || activeItem) && (
+            {showHeader && (
                 <YStack
                     borderBottomWidth={1}
                     borderBottomColor="$borderColor"
@@ -58,7 +69,7 @@ export function CreatorWorkspace({
                         />
                     )}
 
-                    {activeItem && (
+                    {(activeItem || workspaceMeta) && (
                         <XStack
                             paddingHorizontal="$4"
                             paddingVertical="$2.5"
@@ -67,7 +78,7 @@ export function CreatorWorkspace({
                             gap="$3"
                         >
                             <XStack alignItems="center" gap="$2" flex={1} flexWrap="wrap">
-                                {activeItem.isPublished ? (
+                                {activeItem?.isPublished ? (
                                     <View style={[styles.badge, { backgroundColor: 'rgba(52, 199, 89, 0.15)' }]}>
                                         <XStack alignItems="center" gap="$1">
                                             <IconSymbol name="checkmark" size={10} color="#34C759" />
@@ -82,9 +93,15 @@ export function CreatorWorkspace({
                                             Draft · {progressInfo.percentage}%
                                         </Text>
                                     </View>
+                                ) : workspaceMeta ? (
+                                    <View style={[styles.badge, { backgroundColor: theme.color5?.get() as string }]}>
+                                        <Text fontSize={9} fontWeight="bold" color="$color11" textTransform="uppercase">
+                                            Venue
+                                        </Text>
+                                    </View>
                                 ) : null}
 
-                                {entityType && (
+                                {entityType && entityType !== 'bar' && (
                                     <View style={[styles.badge, { backgroundColor: theme.color5?.get() as string }]}>
                                         <Text fontSize={9} fontWeight="bold" color="$color11" textTransform="uppercase">
                                             {entityType}
@@ -97,18 +114,43 @@ export function CreatorWorkspace({
                                         Saved {lastSaved}
                                     </Text>
                                 )}
+                                {workspaceMeta && !lastSaved && (
+                                    <Text fontSize={13} fontWeight="600" color="$color" numberOfLines={1}>
+                                        {workspaceMeta.name}
+                                    </Text>
+                                )}
                             </XStack>
 
-                            {onDiscard && (
-                                <TouchableOpacity onPress={onDiscard} style={styles.discardBtn}>
-                                    <XStack alignItems="center" gap="$1">
-                                        <IconSymbol name="trash" size={12} color="#ff4444" />
-                                        <Text fontSize={11} fontWeight="600" color="#ff4444">
-                                            {activeItem.isPublished ? 'Delete' : 'Discard'}
+                            <XStack alignItems="center" gap="$2">
+                                {onCancel && (
+                                    <TouchableOpacity onPress={onCancel} style={styles.textBtn}>
+                                        <Text fontSize={12} fontWeight="600" color="$color11">
+                                            Cancel
                                         </Text>
-                                    </XStack>
-                                </TouchableOpacity>
-                            )}
+                                    </TouchableOpacity>
+                                )}
+                                {onSave && (
+                                    <TouchableOpacity
+                                        onPress={onSave}
+                                        disabled={saving || !isDirty}
+                                        style={[styles.saveBtn, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4 }]}
+                                    >
+                                        <Text fontSize={12} fontWeight="bold" color={theme.backgroundStrong?.get() as string}>
+                                            {saving ? "Saving…" : "Save"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                                {onDiscard && (
+                                    <TouchableOpacity onPress={onDiscard} style={styles.discardBtn}>
+                                        <XStack alignItems="center" gap="$1">
+                                            <IconSymbol name="trash" size={12} color="#ff4444" />
+                                            <Text fontSize={11} fontWeight="600" color="#ff4444">
+                                                {activeItem.isPublished ? "Delete" : "Discard"}
+                                            </Text>
+                                        </XStack>
+                                    </TouchableOpacity>
+                                )}
+                            </XStack>
                         </XStack>
                     )}
                 </YStack>
@@ -177,5 +219,15 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 6,
         backgroundColor: 'rgba(255, 68, 68, 0.08)',
+    },
+    textBtn: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    saveBtn: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 6,
     },
 });

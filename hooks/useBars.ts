@@ -24,7 +24,10 @@ export function useBars() {
                     role_level,
                     bars:bar_id (
                         id,
-                        name
+                        name,
+                        logo_url,
+                        primary_color,
+                        secondary_color
                     )
                 `)
                 .eq('user_id', userId);

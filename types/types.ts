@@ -19,6 +19,9 @@ export interface DatabaseBar {
     default_specific_brand_level: number;
     default_measurement_level: number;
     default_prep_level: number;
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
     created_at: string;
 }
 
@@ -107,6 +110,8 @@ export interface DatabaseItem {
     brand_maker: string | null;
     abv: number | null;
     bar_id: string | null;
+    icon_key?: string | null;
+    icon_url?: string | null;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;

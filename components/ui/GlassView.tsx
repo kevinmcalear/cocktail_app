@@ -1,7 +1,8 @@
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { BlurView } from "expo-blur";
 import React from "react";
-import { StyleProp, StyleSheet, useColorScheme, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 
 interface GlassViewProps {
     style?: StyleProp<ViewStyle>;
@@ -18,9 +19,6 @@ export function GlassView({
 }: GlassViewProps) {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === "dark";
-    const glassTheme = Colors.dark.glass; // Use dark glass theme primarily for this app style
-
-    // Default to dark tint if in dark mode or if the specific design calls for it
     const blurTint = tint || (isDark ? "systemUltraThinMaterialDark" : "light");
 
     return (
@@ -29,11 +27,15 @@ export function GlassView({
             tint={blurTint as any}
             style={[
                 styles.container,
-                isDark && {
-                    // Use theme background (now translucent system gray)
-                    backgroundColor: glassTheme.background,
-                    borderColor: glassTheme.border,
-                },
+                isDark
+                    ? {
+                          backgroundColor: Colors.dark.glass.background,
+                          borderColor: Colors.dark.glass.border,
+                      }
+                    : {
+                          backgroundColor: "rgba(255, 255, 255, 0.72)",
+                          borderColor: "rgba(0, 0, 0, 0.08)",
+                      },
                 style,
             ]}
         >

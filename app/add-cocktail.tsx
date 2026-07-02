@@ -5,7 +5,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, Bottom
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter, useNavigation, Stack } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -34,6 +34,7 @@ import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { CocktailDraftInlineEditor } from "@/components/cocktail/CocktailDraftInlineEditor";
 
 interface RecipeItem {
     id?: string;
@@ -54,12 +55,43 @@ interface AddCocktailProps {
     isInline?: boolean;
     draftIdProp?: string;
     barIdProp?: string;
+    menuDraftIdProp?: string;
+    menuSectionIdProp?: string;
+    initialNameProp?: string;
     onClose?: () => void;
     onSave?: () => void;
     onNestedItemPress?: (ingredientId: string) => void;
+    onChromeState?: (state: import("@/lib/editorChrome").EditorChromeState | null) => void;
 }
 
-export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress }: AddCocktailProps = {}) {
+export default function AddCocktailScreen({
+    isInline,
+    draftIdProp,
+    barIdProp,
+    menuDraftIdProp,
+    menuSectionIdProp,
+    initialNameProp,
+    onClose,
+    onSave,
+    onNestedItemPress,
+    onChromeState,
+}: AddCocktailProps = {}) {
+    if (isInline) {
+        return (
+            <CocktailDraftInlineEditor
+                draftId={draftIdProp}
+                barId={barIdProp}
+                menuDraftId={menuDraftIdProp}
+                menuSectionId={menuSectionIdProp}
+                initialName={initialNameProp}
+                onClose={onClose}
+                onSave={onSave}
+                onNestedItemPress={onNestedItemPress}
+                onChromeState={onChromeState}
+            />
+        );
+    }
+
     const router = useRouter();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
@@ -85,6 +117,9 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
     const { barId: initialBarId, draftId, name: initialNameParam, menuDraftId, menuSectionId } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string, menuDraftId?: string, menuSectionId?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+    const activeMenuDraftId = menuDraftIdProp !== undefined ? menuDraftIdProp : menuDraftId;
+    const activeMenuSectionId = menuSectionIdProp !== undefined ? menuSectionIdProp : menuSectionId;
+    const activeInitialName = initialNameProp !== undefined ? initialNameProp : initialNameParam;
 
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
@@ -111,7 +146,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
     }, [dropdowns?.ingredients, drafts]);
 
     // Form State
-    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
+    const [name, setName] = useState(activeInitialName ? capitalize(activeInitialName) : "");
     const [description, setDescription] = useState("");
     const [origin, setOrigin] = useState("");
     const [garnish, setGarnish] = useState("");
@@ -249,13 +284,13 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                 }
             }
 
-            if (menuDraftId && menuSectionId && result && result.id) {
-                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+            if (activeMenuDraftId && activeMenuSectionId && result && result.id) {
+                const menuDraft = drafts.find((d: any) => d.id === activeMenuDraftId);
                 if (menuDraft) {
                     const selections = { ...(menuDraft.draft_data?.selections || {}) };
-                    const currentSectionDrinks = selections[menuSectionId] || [];
+                    const currentSectionDrinks = selections[activeMenuSectionId] || [];
                     if (!currentSectionDrinks.includes(result.id)) {
-                        selections[menuSectionId] = [...currentSectionDrinks, result.id];
+                        selections[activeMenuSectionId] = [...currentSectionDrinks, result.id];
                         const updatedDraftData = {
                             ...menuDraft.draft_data,
                             selections
@@ -556,11 +591,11 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             
             const activeDraftId = currentDraftId || draftId;
-            if (menuDraftId && menuSectionId) {
-                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+            if (activeMenuDraftId && activeMenuSectionId) {
+                const menuDraft = drafts.find((d: any) => d.id === activeMenuDraftId);
                 if (menuDraft) {
                     const selections = { ...(menuDraft.draft_data?.selections || {}) };
-                    const currentSectionDrinks = selections[menuSectionId] || [];
+                    const currentSectionDrinks = selections[activeMenuSectionId] || [];
                     let updatedSectionDrinks = [...currentSectionDrinks];
                     if (activeDraftId) {
                         updatedSectionDrinks = updatedSectionDrinks.filter(id => id !== activeDraftId);
@@ -568,7 +603,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     if (!updatedSectionDrinks.includes(cocktailId)) {
                         updatedSectionDrinks.push(cocktailId);
                     }
-                    selections[menuSectionId] = updatedSectionDrinks;
+                    selections[activeMenuSectionId] = updatedSectionDrinks;
                     const updatedDraftData = {
                         ...menuDraft.draft_data,
                         selections

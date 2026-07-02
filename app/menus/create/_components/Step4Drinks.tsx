@@ -1,18 +1,82 @@
 import { SearchItem, SearchList } from "@/components/SearchList";
+import { CustomIcon } from "@/components/ui/CustomIcons";
+import { GlasswareIcon } from "@/components/ui/GlasswareIcon";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
 import { useWines } from "@/hooks/useWines";
-import React, { useEffect, useState } from "react";
+import { Image } from "expo-image";
+import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text, XStack } from "tamagui";
+import { Text, useTheme, XStack, YStack } from "tamagui";
 import { useRouter } from "expo-router";
 import { useAppStore } from "@/store/useAppStore";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { capitalize } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
+
+const DRAFT_AMBER = "#E5A93B";
+
+function getDrinkPhotoSource(item: SearchItem) {
+    if (item.image) return item.image;
+    if (item.item_images?.[0]?.images?.url) return { uri: item.item_images[0].images.url };
+    return null;
+}
+
+function DrinkThumb({
+    item,
+    dropdowns,
+    theme,
+    isDark,
+}: {
+    item: SearchItem;
+    dropdowns: any;
+    theme: ReturnType<typeof useTheme>;
+    isDark: boolean;
+}) {
+    const photo = getDrinkPhotoSource(item);
+    const thumbBg = theme.color5?.get() as string;
+    const placeholderBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+    const iconColor = theme.color11?.get() as string;
+
+    if (photo) {
+        return (
+            <Image
+                source={photo}
+                style={[styles.drinkThumb, { backgroundColor: thumbBg }]}
+                contentFit="cover"
+                transition={300}
+            />
+        );
+    }
+
+    const isBeer = item.category === "Beer" || item.id.startsWith("beer-");
+    const isWine = item.category === "Wine" || item.id.startsWith("wine-");
+    const glassware = dropdowns?.glassware?.find((g: any) => g.id === item.glassware_id);
+
+    return (
+        <View style={[styles.drinkThumb, styles.drinkThumbPlaceholder, { backgroundColor: placeholderBg }]}>
+            {isBeer ? (
+                <IconSymbol name="mug.fill" size={24} color={iconColor} />
+            ) : isWine ? (
+                <IconSymbol name="wineglass.fill" size={22} color={iconColor} />
+            ) : glassware ? (
+                <GlasswareIcon
+                    name={glassware.name}
+                    iconKey={glassware.icon_key}
+                    iconUrl={glassware.icon_url}
+                    size={26}
+                    color={iconColor}
+                />
+            ) : (
+                <CustomIcon name="TabDrinks" size={26} color={iconColor} />
+            )}
+        </View>
+    );
+}
 
 interface Props {
     sections: any[];
@@ -21,10 +85,21 @@ interface Props {
     onNext: () => void;
     barId?: string | null;
     menuDraftId?: string | null;
+    embedded?: boolean;
+    onCreateDrinkPress?: (params: {
+        query: string;
+        barId: string;
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => void;
 }
 
-export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId }: Props) => {
+export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId, embedded, onCreateDrinkPress }: Props) => {
     const router = useRouter();
+    const theme = useTheme();
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme];
+    const isDark = colorScheme === "dark";
     const [allDrinks, setAllDrinks] = useState<SearchItem[]>([]);
     
     // Bottom Sheet State
@@ -55,7 +130,8 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
             description: c.description,
             category: "Cocktail",
             recipes: c.recipes,
-            item_images: c.item_images
+            item_images: c.item_images,
+            glassware_id: c.glassware_id,
         }));
 
         const mappedBeers: SearchItem[] = (beersData || []).map((b: any) => ({
@@ -91,7 +167,8 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                         name: capitalize(ri.name || "Unknown"),
                     }
                 })) || [],
-                image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined
+                image: d.draft_data?.localImages?.[0]?.url ? { uri: d.draft_data.localImages[0].url } : undefined,
+                glassware_id: d.draft_data?.glasswareId || d.draft_data?.glassware_id || null,
             }));
 
         const draftBeers: SearchItem[] = drafts
@@ -167,14 +244,63 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
         return count >= (sec.min_items || 1);
     });
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Build your Menu</Text>
-                <Text style={styles.subtitle}>Add drinks to meet the template requirements.</Text>
-            </View>
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: { flex: 1 },
+                header: { paddingHorizontal: 20, marginBottom: 20 },
+                title: { fontSize: 34, fontWeight: "bold", color: colors.text, marginBottom: 8 },
+                subtitle: { fontSize: 16, color: colors.icon },
+                scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+                sectionContainer: { marginBottom: 24 },
+                sectionHeaderRow: {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    marginBottom: 12,
+                    paddingHorizontal: 4,
+                },
+                sectionTitle: { fontSize: 22, fontWeight: "bold", color: colors.text },
+                sectionCount: { fontSize: 14, color: colors.icon, marginBottom: 4 },
+                cocktailRow: {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                    padding: 12,
+                    borderRadius: 15,
+                    marginBottom: 8,
+                },
+                drinkThumb: {
+                    width: 52,
+                    height: 52,
+                    borderRadius: 12,
+                },
+                drinkThumbPlaceholder: {
+                    justifyContent: "center",
+                    alignItems: "center",
+                },
+                cocktailName: { fontSize: 17, color: colors.text, fontWeight: "700", flexShrink: 1 },
+                draftPct: { color: DRAFT_AMBER, fontSize: 11, fontWeight: "bold" },
+                addDrinkBtn: {
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: 16,
+                    borderRadius: 15,
+                    borderWidth: 1,
+                    borderStyle: "dashed",
+                    borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)",
+                    gap: 8,
+                    marginTop: 4,
+                },
+                addDrinkText: { color: colors.icon, fontSize: 16, fontWeight: "600" },
+            }),
+        [colors, isDark],
+    );
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+    const content = (
+            <>
                 {sections.map((sec) => {
                     const count = (selections[sec.id] || []).length;
                     const isFulfilled = count >= (sec.min_items || 1);
@@ -184,28 +310,37 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                         <View key={sec.id} style={styles.sectionContainer}>
                             <View style={styles.sectionHeaderRow}>
                                 <Text style={styles.sectionTitle}>{sec.name}</Text>
-                                <Text style={[styles.sectionCount, isFulfilled && { color: Colors.dark.tint }]}>
+                                <Text style={[styles.sectionCount, isFulfilled && { color: colors.tint }]}>
                                     {count} / {sec.max_items || '∞'} 
                                     {sec.min_items && sec.min_items > 0 ? ` (Min ${sec.min_items})` : ''}
                                 </Text>
                             </View>
 
                             {selections[sec.id]?.map((cocktailId) => {
-                                // Strip potentially prefixed ids if they don't match, though the picker returns the generated IDs. Just find by ID.
                                 const c = allDrinks.find(x => x.id === cocktailId) || { name: "Unknown Drink", isDraft: false };
                                 return (
                                     <View key={cocktailId} style={styles.cocktailRow}>
-                                        <XStack gap="$2" alignItems="center">
-                                            <Text style={styles.cocktailName}>{capitalize(c?.name)}</Text>
-                                            {c?.isDraft && (
-                                                <View style={[styles.draftBadge, c.draftProgress && { backgroundColor: c.draftProgress.badgeBg, borderColor: c.draftProgress.color }]}>
-                                                    <Text style={[styles.draftBadgeText, c.draftProgress && { color: c.draftProgress.badgeText }]} textTransform="uppercase">
-                                                        {c.draftProgress ? `${c.draftProgress.label} (${c.draftProgress.percentage}%)` : "Draft"}
+                                        <XStack flex={1} alignItems="center" gap="$3" marginRight="$2">
+                                            <DrinkThumb
+                                                item={c as SearchItem}
+                                                dropdowns={dropdowns}
+                                                theme={theme}
+                                                isDark={isDark}
+                                            />
+                                            <YStack flex={1} gap="$0.5">
+                                                <XStack alignItems="center" gap="$2" flexWrap="wrap">
+                                                    <Text style={styles.cocktailName} numberOfLines={1}>
+                                                        {capitalize(c?.name)}
                                                     </Text>
-                                                </View>
-                                            )}
+                                                    {c?.isDraft && (
+                                                        <Text style={styles.draftPct}>
+                                                            {c.draftProgress?.percentage ?? 0}%
+                                                        </Text>
+                                                    )}
+                                                </XStack>
+                                            </YStack>
                                         </XStack>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             onPress={() => handleRemoveCocktail(sec.id, cocktailId)}
                                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                         >
@@ -223,14 +358,30 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                                         setShowPicker(true);
                                     }}
                                 >
-                                    <IconSymbol name="plus" size={20} color={Colors.dark.icon} />
+                                    <IconSymbol name="plus" size={20} color={colors.icon} />
                                     <Text style={styles.addDrinkText}>Add Drink</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
                     );
                 })}
-            </ScrollView>
+            </>
+    );
+
+    return (
+        <View style={styles.container}>
+            {!embedded && (
+                <View style={styles.header}>
+                    <Text style={styles.title}>Build your Menu</Text>
+                    <Text style={styles.subtitle}>Add drinks to meet the template requirements.</Text>
+                </View>
+            )}
+
+            {embedded ? content : (
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {content}
+                </ScrollView>
+            )}
 
             {/* Drink Selection Native Modal */}
             <Modal
@@ -253,16 +404,26 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                     }}
                     onCreateNewPress={(query) => {
                         setShowPicker(false);
+                        const params = {
+                            query,
+                            barId: barId || "",
+                            menuDraftId: menuDraftId || undefined,
+                            menuSectionId: pickingForSection || undefined,
+                        };
                         setTimeout(() => {
-                            router.push({
-                                pathname: "/add-cocktail",
-                                params: { 
-                                    name: query,
-                                    barId: barId || "",
-                                    menuDraftId: menuDraftId || "",
-                                    menuSectionId: pickingForSection || ""
-                                }
-                            });
+                            if (onCreateDrinkPress) {
+                                onCreateDrinkPress(params);
+                            } else {
+                                router.push({
+                                    pathname: "/add-cocktail",
+                                    params: {
+                                        name: query,
+                                        barId: params.barId,
+                                        menuDraftId: params.menuDraftId || "",
+                                        menuSectionId: params.menuSectionId || "",
+                                    },
+                                });
+                            }
                         }, 150);
                     }}
                     createNewText="Create cocktail"
@@ -271,91 +432,3 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        paddingHorizontal: 20,
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 34,
-        fontWeight: "bold",
-        color: Colors.dark.text,
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: Colors.dark.icon,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-        paddingBottom: 40,
-    },
-    sectionContainer: {
-        marginBottom: 24,
-    },
-    sectionHeaderRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "flex-end",
-        marginBottom: 12,
-        paddingHorizontal: 4,
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: Colors.dark.text,
-    },
-    sectionCount: {
-        fontSize: 14,
-        color: Colors.dark.icon,
-        marginBottom: 4,
-    },
-    cocktailRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.05)",
-        padding: 16,
-        borderRadius: 15,
-        marginBottom: 8,
-    },
-    cocktailName: {
-        fontSize: 20,
-        color: Colors.dark.text,
-        fontWeight: "700",
-    },
-    draftBadge: {
-        backgroundColor: "rgba(255, 165, 0, 0.15)",
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: "rgba(255, 165, 0, 0.4)",
-    },
-    draftBadgeText: {
-        color: "#ffa500",
-        fontSize: 10,
-        fontWeight: "bold",
-    },
-    addDrinkBtn: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-        borderRadius: 15,
-        borderWidth: 1,
-        borderStyle: "dashed",
-        borderColor: "rgba(255,255,255,0.2)",
-        gap: 8,
-        marginTop: 4,
-    },
-    addDrinkText: {
-        color: Colors.dark.icon,
-        fontSize: 16,
-        fontWeight: "600",
-    }
-});
