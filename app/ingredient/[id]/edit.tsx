@@ -44,9 +44,10 @@ interface EditIngredientProps {
     idProp?: string;
     onClose?: () => void;
     onSave?: () => void;
+    onNestedItemPress?: (ingredientId: string) => void;
 }
 
-export default function EditIngredientScreen({ isInline, idProp, onClose, onSave }: EditIngredientProps = {}) {
+export default function EditIngredientScreen({ isInline, idProp, onClose, onSave, onNestedItemPress }: EditIngredientProps = {}) {
     const { id: paramId } = useLocalSearchParams<{ id: string }>();
     const id = idProp !== undefined ? idProp : paramId;
     const router = useRouter();
@@ -509,7 +510,13 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
 
                         {recipeItems.map((item, index) => (
                             <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
-                                <Text flex={1} color="$color" fontSize={16}>{capitalize(item.name)}</Text>
+                                {onNestedItemPress ? (
+                                    <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7} style={{ flex: 1 }}>
+                                        <Text color="$color8" fontSize={16} textDecorationLine="underline">{capitalize(item.name)}</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <Text flex={1} color="$color" fontSize={16}>{capitalize(item.name)}</Text>
+                                )}
                                 <XStack gap="$2" alignItems="center">
                                     <Input
                                         width={60}

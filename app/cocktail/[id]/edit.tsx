@@ -45,9 +45,10 @@ interface EditCocktailProps {
     idProp?: string;
     onClose?: () => void;
     onSave?: () => void;
+    onNestedItemPress?: (ingredientId: string) => void;
 }
 
-export default function EditCocktailScreen({ isInline, idProp, onClose, onSave }: EditCocktailProps = {}) {
+export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, onNestedItemPress }: EditCocktailProps = {}) {
     const { id: paramId } = useLocalSearchParams();
     const id = idProp !== undefined ? idProp : paramId;
     const router = useRouter();
@@ -624,7 +625,15 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave }
 
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
-                            <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
+                            {onNestedItemPress ? (
+                                <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7}>
+                                    <Text style={[styles.recipeName, { color: theme.color8?.get() as string, textDecorationLine: 'underline' }]}>
+                                        {capitalize(item.name)}
+                                    </Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
+                            )}
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
                                 <View style={styles.inputGroup}>
                                     <Input

@@ -22,16 +22,18 @@ import { Step5Review } from "./_components/Step5Review";
 interface CreateMenuWizardProps {
     isInline?: boolean;
     draftIdProp?: string;
+    menuIdProp?: string;
     barIdProp?: string;
     onClose?: () => void;
     onSave?: () => void;
 }
 
-export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onClose, onSave }: CreateMenuWizardProps = {}) {
+export default function CreateMenuWizard({ isInline, draftIdProp, menuIdProp, barIdProp, onClose, onSave }: CreateMenuWizardProps = {}) {
     const router = useRouter();
     const navigation = useNavigation();
-    const { draftId, barId: initialBarId } = useLocalSearchParams<{ draftId?: string, barId?: string }>();
+    const { draftId, menuId, barId: initialBarId } = useLocalSearchParams<{ draftId?: string, menuId?: string, barId?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
+    const activeMenuIdProp = menuIdProp !== undefined ? menuIdProp : menuId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
@@ -54,7 +56,8 @@ export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onC
     const pendingNavigationActionRef = useRef<any>(null);
     const isExitingRef = useRef(false);
 
-    const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp);
+    const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
+    const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
     const [furthestStep, setFurthestStep] = useState(1);
     const currentStateStr = JSON.stringify({ step, selectedTemplateId, menuName, selections, barId });
     const cleanStateStrRef = useRef<string>(currentStateStr);
@@ -101,6 +104,60 @@ export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onC
             }
         }
     }, [currentDraftId, drafts, draftLoaded, initialBarId]);
+
+    useEffect(() => {
+        if (!activeMenuIdProp || menuLoaded) return;
+
+        const loadPublishedMenu = async () => {
+            try {
+                const { data: menuData, error: menuErr } = await supabase
+                    .from('menus')
+                    .select('*')
+                    .eq('id', activeMenuIdProp)
+                    .single();
+
+                if (menuErr || !menuData) throw menuErr || new Error('Menu not found');
+
+                const { data: drinksData, error: drinksErr } = await supabase
+                    .from('menu_drinks')
+                    .select('template_section_id, cocktail_id, beer_id, wine_id')
+                    .eq('menu_id', activeMenuIdProp);
+
+                if (drinksErr) throw drinksErr;
+
+                const loadedSelections: Record<string, string[]> = {};
+                for (const drink of drinksData || []) {
+                    const sectionId = drink.template_section_id;
+                    if (!sectionId) continue;
+                    if (!loadedSelections[sectionId]) loadedSelections[sectionId] = [];
+
+                    if (drink.cocktail_id) {
+                        loadedSelections[sectionId].push(drink.cocktail_id);
+                    } else if (drink.beer_id) {
+                        loadedSelections[sectionId].push(`beer-${drink.beer_id}`);
+                    } else if (drink.wine_id) {
+                        loadedSelections[sectionId].push(`wine-${drink.wine_id}`);
+                    }
+                }
+
+                setMenuName(menuData.name || '');
+                setSelectedTemplateId(menuData.template_id || null);
+                setBarId(menuData.bar_id || null);
+                setSelections(loadedSelections);
+                setStep(4);
+                setFurthestStep(4);
+                setMenuLoaded(true);
+                setDraftLoaded(true);
+                setNeedsCleanMark(true);
+            } catch (error) {
+                console.error('Failed to load published menu:', error);
+                Alert.alert('Error', 'Failed to load menu for editing.');
+                setMenuLoaded(true);
+            }
+        };
+
+        loadPublishedMenu();
+    }, [activeMenuIdProp, menuLoaded]);
 
     useEffect(() => {
         if (!draftLoaded) return;
@@ -285,7 +342,6 @@ export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onC
     const performPublish = async () => {
         setSaving(true);
         try {
-            // 1. Create Menu
             const insertPayload: any = {
                 name: capitalize(menuName),
                 template_id: selectedTemplateId,
@@ -293,25 +349,56 @@ export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onC
                 bar_id: barId || null
             };
 
-            let { data: newMenu, error: menuError } = await supabase
-                .from('menus')
-                .insert(insertPayload)
-                .select()
-                .single();
+            let menuId = activeMenuIdProp || null;
 
-            if (menuError && menuError.code === '42703') {
-                console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
-                delete insertPayload.bar_id;
-                const retryRes = await supabase
+            if (activeMenuIdProp) {
+                const updatePayload = { ...insertPayload };
+                let { error: updateError } = await supabase
+                    .from('menus')
+                    .update(updatePayload)
+                    .eq('id', activeMenuIdProp);
+
+                if (updateError && updateError.code === '42703') {
+                    delete updatePayload.bar_id;
+                    const retryRes = await supabase
+                        .from('menus')
+                        .update(updatePayload)
+                        .eq('id', activeMenuIdProp);
+                    updateError = retryRes.error;
+                }
+
+                if (updateError) throw updateError;
+
+                const { error: deleteDrinksError } = await supabase
+                    .from('menu_drinks')
+                    .delete()
+                    .eq('menu_id', activeMenuIdProp);
+
+                if (deleteDrinksError) throw deleteDrinksError;
+            } else {
+                let { data: newMenu, error: menuError } = await supabase
                     .from('menus')
                     .insert(insertPayload)
                     .select()
                     .single();
-                newMenu = retryRes.data;
-                menuError = retryRes.error;
+
+                if (menuError && menuError.code === '42703') {
+                    console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
+                    delete insertPayload.bar_id;
+                    const retryRes = await supabase
+                        .from('menus')
+                        .insert(insertPayload)
+                        .select()
+                        .single();
+                    newMenu = retryRes.data;
+                    menuError = retryRes.error;
+                }
+
+                if (menuError || !newMenu) throw menuError;
+                menuId = newMenu.id;
             }
 
-            if (menuError || !newMenu) throw menuError;
+            if (!menuId) throw new Error('Failed to resolve menu id');
 
             // 2. Add Drinks
             let globalSortOrder = 0;
@@ -356,7 +443,7 @@ export default function CreateMenuWizard({ isInline, draftIdProp, barIdProp, onC
                     }
 
                     drinksToInsert.push({
-                        menu_id: newMenu.id,
+                        menu_id: menuId,
                         cocktail_id: cocktail_id || undefined,
                         beer_id: beer_id || undefined,
                         wine_id: wine_id || undefined,

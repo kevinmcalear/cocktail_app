@@ -55,9 +55,10 @@ interface AddCocktailProps {
     barIdProp?: string;
     onClose?: () => void;
     onSave?: () => void;
+    onNestedItemPress?: (ingredientId: string) => void;
 }
 
-export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, onClose, onSave }: AddCocktailProps = {}) {
+export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress }: AddCocktailProps = {}) {
     const router = useRouter();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
@@ -834,19 +835,43 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     {recipeItems.map((item, index) => (
                         <View key={index} style={styles.recipeRow}>
                             <XStack gap="$2" alignItems="center" flex={1}>
-                                <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
-                                {(() => {
-                                    const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
-                                    if (!childDraft) return null;
-                                    const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                    return (
-                                        <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                            <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                {childProgress.label} ({childProgress.percentage}%)
+                                {onNestedItemPress ? (
+                                    <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7}>
+                                        <XStack gap="$2" alignItems="center">
+                                            <Text style={[styles.recipeName, { color: theme.color8?.get() as string, textDecorationLine: 'underline' }]}>
+                                                {capitalize(item.name)}
                                             </Text>
-                                        </View>
-                                    );
-                                })()}
+                                            {(() => {
+                                                const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
+                                                if (!childDraft) return null;
+                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                                return (
+                                                    <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
+                                                        <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
+                                                            {childProgress.label} ({childProgress.percentage}%)
+                                                        </Text>
+                                                    </View>
+                                                );
+                                            })()}
+                                        </XStack>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <>
+                                        <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
+                                        {(() => {
+                                            const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
+                                            if (!childDraft) return null;
+                                            const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
+                                            return (
+                                                <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
+                                                    <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
+                                                        {childProgress.label} ({childProgress.percentage}%)
+                                                    </Text>
+                                                </View>
+                                            );
+                                        })()}
+                                    </>
+                                )}
                             </XStack>
                             <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
                                 <Input

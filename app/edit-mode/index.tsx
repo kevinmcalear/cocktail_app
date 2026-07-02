@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform, useWindowDimensions, PanResponder } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, XStack, YStack, useTheme, Button, Card } from 'tamagui';
+import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
@@ -12,26 +12,24 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
-import { DraftPreviewPanel } from '@/components/DraftPreviewPanel';
-import { IngredientDetailPanel } from '@/components/IngredientDetailPanel';
-import { CocktailDetailPanel } from '@/components/CocktailDetailPanel';
+import { CreatorWorkspace } from '@/components/CreatorWorkspace';
+import { CreatorWorkspaceEditor } from '@/components/CreatorWorkspaceEditor';
 import { DraftFolderTree, SelectedDraftNode } from '@/components/DraftFolderTree';
+import {
+    WorkspaceFrame,
+    EditingState,
+    buildNodeFromItem,
+    buildWorkspaceFrame,
+    findItemByNode,
+    buildNodeFromIngredientId,
+    isNavigableIngredient,
+} from '@/lib/creatorWorkspaceUtils';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useBeers } from '@/hooks/useBeers';
 import { useWines } from '@/hooks/useWines';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-
-import AddCocktailScreen from '../add-cocktail';
-import EditCocktailScreen from '../cocktail/[id]/edit';
-import AddBeerScreen from '../add-beer';
-import EditBeerScreen from '../beer/[id]/edit';
-import AddWineScreen from '../add-wine';
-import EditWineScreen from '../wine/[id]/edit';
-import AddIngredientScreen from '../add-ingredient';
-import EditIngredientScreen from '../ingredient/[id]/edit';
-import CreateMenuWizard from '../menus/create/index';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -55,17 +53,7 @@ export default function EditModeDashboard() {
 
     const [expandedSections, setExpandedSections] = React.useState<Record<string, Record<string, boolean>>>({});
     const [selectedNode, setSelectedNode] = React.useState<SelectedDraftNode | null>(null);
-    const [selectedIngredientId, setSelectedIngredientId] = React.useState<string | null>(null);
-    const [showThirdColumn, setShowThirdColumn] = React.useState(false);
-
-    interface EditingState {
-        mode: 'create' | 'edit';
-        type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu';
-        draftId?: string;
-        barId?: string;
-        publishedId?: string;
-    }
-    const [editingState, setEditingState] = React.useState<EditingState | null>(null);
+    const [navigationStack, setNavigationStack] = React.useState<WorkspaceFrame[]>([]);
 
     const [sidebarWidth, setSidebarWidth] = React.useState(320);
     const [isDragging, setIsDragging] = React.useState(false);
@@ -183,6 +171,13 @@ export default function EditModeDashboard() {
         return acc;
     }, {});
 
+    const clearWorkspaceIfContains = (id: string) => {
+        if (selectedNode?.id === id || navigationStack.some((frame) => frame.node.id === id)) {
+            setSelectedNode(null);
+            setNavigationStack([]);
+        }
+    };
+
     const handleDeletePublished = async (id: string, entityType: string) => {
         const afterDelete = async () => {
             try {
@@ -199,11 +194,7 @@ export default function EditModeDashboard() {
                     if (entityType === 'ingredient') queryClient.invalidateQueries({ queryKey: ['ingredients'] });
                 }
                 
-                if (selectedNode?.id === id) {
-                    setSelectedNode(null);
-                    setSelectedIngredientId(null);
-                    setShowThirdColumn(false);
-                }
+                clearWorkspaceIfContains(id);
             } catch (err: any) {
                 console.error("Delete error:", err);
                 Alert.alert("Error", `Failed to delete published ${entityType}: ${err.message || err}`);
@@ -233,11 +224,7 @@ export default function EditModeDashboard() {
         const cleanId = id.replace("beer-", "").replace("wine-", "");
         
         if (isLargeScreen) {
-            setEditingState({
-                mode: 'edit',
-                type: item.entity_type,
-                publishedId: cleanId
-            });
+            openWorkspace(buildNodeFromItem(item));
             return;
         }
 
@@ -254,19 +241,71 @@ export default function EditModeDashboard() {
         }
     };
 
+    const openWorkspace = React.useCallback((node: SelectedDraftNode) => {
+        const frame = buildWorkspaceFrame(node, allItems);
+        if (!frame) return;
+        setSelectedNode(node);
+        setNavigationStack([frame]);
+    }, [allItems]);
+
+    const openCreateWorkspace = (type: EditingState['type'], barId: string) => {
+        const nodeType = type === 'menu' ? 'menu_draft' : type === 'ingredient' ? 'ingredient_draft' : 'drink_draft';
+        setSelectedNode(null);
+        setNavigationStack([{
+            node: {
+                type: nodeType,
+                id: '__new__',
+                name: `New ${capitalize(type)}`,
+            },
+            editing: { mode: 'create', type, barId },
+        }]);
+    };
+
+    const handleEditorClose = () => {
+        setNavigationStack((prev) => {
+            if (prev.length > 1) {
+                const newStack = prev.slice(0, -1);
+                setSelectedNode(newStack[newStack.length - 1].node);
+                return newStack;
+            }
+            setSelectedNode(null);
+            return [];
+        });
+    };
+
+    const handleSaveComplete = () => {
+        setNavigationStack([]);
+        setSelectedNode(null);
+        queryClient.invalidateQueries();
+    };
+
+    const handleNavigateToFrame = (index: number) => {
+        setNavigationStack((prev) => {
+            const newStack = prev.slice(0, index + 1);
+            setSelectedNode(newStack[newStack.length - 1].node);
+            return newStack;
+        });
+    };
+
+    const handleNestedItemPress = (ingredientId: string) => {
+        if (!isNavigableIngredient(ingredientId, drafts, publishedIngredients)) return;
+        const node = buildNodeFromIngredientId(ingredientId, drafts, publishedIngredients);
+        if (!node) return;
+        const frame = buildWorkspaceFrame(node, allItems);
+        if (!frame) return;
+        setNavigationStack((prev) => [...prev, frame]);
+        setSelectedNode(node);
+    };
+
+    const activeFrame = navigationStack.at(-1) ?? null;
+    const activeItem = activeFrame ? findItemByNode(activeFrame.node, allItems) : null;
+
     // Auto-select first item on large screen when items load
     React.useEffect(() => {
-        if (isLargeScreen && allItems.length > 0 && !selectedNode) {
-            const first = allItems[0];
-            setSelectedNode({
-                type: first.isPublished 
-                    ? (first.entity_type === 'menu' ? 'published_menu' : (first.entity_type === 'ingredient' ? 'published_ingredient' : 'published_drink'))
-                    : (first.entity_type === 'menu' ? 'menu_draft' : (first.entity_type === 'ingredient' ? 'ingredient_draft' : 'drink_draft')),
-                id: first.id,
-                name: first.draft_data?.name || first.draft_data?.menuName || `Untitled ${first.entity_type}`
-            });
+        if (isLargeScreen && allItems.length > 0 && navigationStack.length === 0 && !selectedNode) {
+            openWorkspace(buildNodeFromItem(allItems[0]));
         }
-    }, [allItems, isLargeScreen, selectedNode]);
+    }, [isLargeScreen, allItems.length, navigationStack.length, selectedNode, openWorkspace]);
 
     const getBarName = (barId: string) => {
         if (barId === 'personal') return 'Personal Drafts';
@@ -306,22 +345,10 @@ export default function EditModeDashboard() {
         }));
     };
 
-    const draftsByBar = drafts.reduce((acc: any, draft: any) => {
-        const barId = draft.bar_id || 'personal';
-        if (!acc[barId]) acc[barId] = [];
-        acc[barId].push(draft);
-        return acc;
-    }, {});
-
-
     const handleDeleteDraft = (id: string) => {
         const afterDelete = () => {
             deleteDraft(id);
-            if (selectedNode?.id === id) {
-                setSelectedNode(null);
-                setSelectedIngredientId(null);
-                setShowThirdColumn(false);
-            }
+            clearWorkspaceIfContains(id);
         };
 
         if (Platform.OS === 'web') {
@@ -343,11 +370,7 @@ export default function EditModeDashboard() {
 
     const handleResumeDraft = (draft: any) => {
         if (isLargeScreen) {
-            setEditingState({
-                mode: 'create',
-                type: draft.entity_type,
-                draftId: draft.id
-            });
+            openWorkspace(buildNodeFromItem({ ...draft, isPublished: false }));
             return;
         }
 
@@ -361,15 +384,6 @@ export default function EditModeDashboard() {
         }
         if (route) {
             router.push(`${route}?draftId=${draft.id}` as any);
-        }
-    };
-
-    const handleLoadRecipeStatus = (hasRecipe: boolean) => {
-        if (!hasRecipe) {
-            setSelectedIngredientId(null);
-            setShowThirdColumn(false);
-        } else {
-            setShowThirdColumn(true);
         }
     };
 
@@ -406,17 +420,10 @@ export default function EditModeDashboard() {
                             publishedIngredients={publishedIngredients || []}
                             selectedNode={selectedNode}
                             onNodeSelect={(node) => {
-                                setSelectedNode(node);
-                                setSelectedIngredientId(null);
-                                setShowThirdColumn(false);
-                                setEditingState(null);
+                                openWorkspace(node);
                             }}
                             onCreateNode={(type, barId) => {
-                                setEditingState({
-                                    mode: 'create',
-                                    type,
-                                    barId
-                                });
+                                openCreateWorkspace(type, barId);
                             }}
                         />
                     </YStack>
@@ -451,189 +458,39 @@ export default function EditModeDashboard() {
                     />
                 </YStack>
 
-                {/* Column 2: Selected Details Panel (Middle) */}
+                {/* Column 2: Creator Workspace */}
                 <YStack flex={1} height="100%">
-                    {editingState ? (() => {
-                        const handleClose = () => {
-                            setEditingState(null);
-                        };
-                        const handleSaveComplete = () => {
-                            setEditingState(null);
-                            queryClient.invalidateQueries();
-                        };
-
-                        switch (editingState.type) {
-                            case 'cocktail':
-                                if (editingState.mode === 'edit') {
-                                    return (
-                                        <EditCocktailScreen 
-                                            isInline 
-                                            idProp={editingState.publishedId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                } else {
-                                    return (
-                                        <AddCocktailScreen 
-                                            isInline 
-                                            draftIdProp={editingState.draftId} 
-                                            barIdProp={editingState.barId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                }
-                            case 'beer':
-                                if (editingState.mode === 'edit') {
-                                    return (
-                                        <EditBeerScreen 
-                                            isInline 
-                                            idProp={editingState.publishedId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                } else {
-                                    return (
-                                        <AddBeerScreen 
-                                            isInline 
-                                            draftIdProp={editingState.draftId} 
-                                            barIdProp={editingState.barId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                }
-                            case 'wine':
-                                if (editingState.mode === 'edit') {
-                                    return (
-                                        <EditWineScreen 
-                                            isInline 
-                                            idProp={editingState.publishedId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                } else {
-                                    return (
-                                        <AddWineScreen 
-                                            isInline 
-                                            draftIdProp={editingState.draftId} 
-                                            barIdProp={editingState.barId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                }
-                            case 'ingredient':
-                                if (editingState.mode === 'edit') {
-                                    return (
-                                        <EditIngredientScreen 
-                                            isInline 
-                                            idProp={editingState.publishedId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                } else {
-                                    return (
-                                        <AddIngredientScreen 
-                                            isInline 
-                                            draftIdProp={editingState.draftId} 
-                                            barIdProp={editingState.barId} 
-                                            onClose={handleClose} 
-                                            onSave={handleSaveComplete} 
-                                        />
-                                    );
-                                }
-                            case 'menu':
-                                return (
-                                    <CreateMenuWizard 
-                                        isInline 
-                                        draftIdProp={editingState.draftId} 
-                                        barIdProp={editingState.barId} 
-                                        onClose={handleClose} 
-                                        onSave={handleSaveComplete} 
-                                    />
-                                );
-                            default:
-                                return null;
-                        }
-                    })() : (
-                        <>
-                            {(selectedNode?.type === "menu_draft" || selectedNode?.type === "drink_draft" || selectedNode?.type === "ingredient_draft" ||
-                              selectedNode?.type === "published_drink" || selectedNode?.type === "published_ingredient" || selectedNode?.type === "published_menu") && (() => {
-                                const activeItem = allItems.find(item => {
-                                    if (selectedNode.type.startsWith("published_")) {
-                                        return item.isPublished && item.id === selectedNode.id;
-                                    } else {
-                                        return !item.isPublished && item.id === selectedNode.id;
-                                    }
-                                });
-                                return activeItem ? (
-                                    <DraftPreviewPanel 
-                                        draft={activeItem}
-                                        onIngredientPress={(ingredientId) => {
-                                            setSelectedIngredientId(ingredientId);
-                                            // Check if it's a draft ingredient that has recipe items
-                                            const childDraft = drafts.find(d => d.id === ingredientId && d.entity_type === 'ingredient');
-                                            if (childDraft) {
-                                                setShowThirdColumn(childDraft.draft_data?.recipeItems?.length > 0);
-                                            } else {
-                                                const publishedIng = publishedIngredients?.find(i => i.id === ingredientId);
-                                                setShowThirdColumn(!!publishedIng?.recipes?.length || (publishedIng?.item_type === 'ingredient'));
-                                            }
-                                        }}
-                                        selectedIngredientId={selectedIngredientId}
-                                        onResume={() => activeItem.isPublished ? handleEditPublished(activeItem) : handleResumeDraft(activeItem)}
-                                        onDiscard={() => activeItem.isPublished ? handleDeletePublished(activeItem.id, activeItem.entity_type) : handleDeleteDraft(activeItem.id)}
-                                    />
-                                ) : null;
-                            })()}
-
-                            {!selectedNode && (
-                                <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
-                                    <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
-                                    <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4">
-                                        Select a draft or drink to view preview.
-                                    </Text>
-                                </YStack>
-                            )}
-                        </>
+                    {activeFrame ? (
+                        <CreatorWorkspace
+                            navigationStack={navigationStack}
+                            activeItem={activeItem}
+                            drafts={drafts}
+                            dropdowns={dropdowns}
+                            onNavigateToFrame={handleNavigateToFrame}
+                            onDiscard={activeItem ? () => (
+                                activeItem.isPublished
+                                    ? handleDeletePublished(activeItem.id, activeItem.entity_type)
+                                    : handleDeleteDraft(activeItem.id)
+                            ) : undefined}
+                        >
+                            <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}`}>
+                                <CreatorWorkspaceEditor
+                                    editing={activeFrame.editing}
+                                    onClose={handleEditorClose}
+                                    onSave={handleSaveComplete}
+                                    onNestedItemPress={handleNestedItemPress}
+                                />
+                            </React.Fragment>
+                        </CreatorWorkspace>
+                    ) : (
+                        <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
+                            <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
+                            <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4" textAlign="center">
+                                Select an item from the tree to start editing, or create something new.
+                            </Text>
+                        </YStack>
                     )}
                 </YStack>
-
-                {/* Column 3: Batch Spec / Dependency Details Panel (Right) */}
-                {!editingState && selectedIngredientId && (
-                    <YStack width={360} height="100%" borderLeftWidth={1} borderLeftColor="$borderColor">
-                        {(() => {
-                            const draftIngredient = drafts.find(d => d.id === selectedIngredientId && d.entity_type === 'ingredient');
-                            if (draftIngredient) {
-                                return (
-                                    <DraftPreviewPanel 
-                                        draft={draftIngredient}
-                                        onResume={() => handleResumeDraft(draftIngredient)}
-                                        onDiscard={() => handleDeleteDraft(draftIngredient.id)}
-                                    />
-                                );
-                            } else {
-                                const publishedIng = publishedIngredients?.find(i => i.id === selectedIngredientId);
-                                if (publishedIng) {
-                                    const mapped = mapPublishedItem(publishedIng, 'ingredient');
-                                    return (
-                                        <DraftPreviewPanel 
-                                            draft={mapped}
-                                            onResume={() => handleEditPublished(mapped)}
-                                            onDiscard={() => handleDeletePublished(mapped.id, 'ingredient')}
-                                        />
-                                    );
-                                }
-                                return null;
-                            }
-                        })()}
-                    </YStack>
-                )}
             </XStack>
         );
     }
