@@ -3,11 +3,12 @@ import { XStack } from "tamagui";
 
 import { SpecBadge } from "@/components/cocktail/SpecBadge";
 import { SpecPickerSheet } from "@/components/cocktail/SpecPickerSheet";
+import type { useCocktailDraftEditor } from "@/hooks/useCocktailDraftEditor";
 import type { SpecCategory, useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { buildOriginOptions } from "@/lib/cocktailOrigins";
 import { capitalize } from "@/lib/stringUtils";
 
-type Editor = ReturnType<typeof useCocktailEditor>;
+type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 
 const SPEC_FIELDS: { key: SpecCategory; label: string; allowDeselect?: boolean }[] = [
     { key: "method", label: "Method" },

@@ -195,7 +195,6 @@ export function ItemDetailLayout({
                     placeholder={titlePlaceholder}
                     placeholderTextColor={placeholderColor}
                     style={[titleStyle, styles.titleInput, { color, opacity: 1 }]}
-                    numberOfLines={numberOfLines}
                     autoFocus
                 />
             );
@@ -553,8 +552,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         borderWidth: 0,
         width: '100%',
-        // @ts-expect-error web outline
-        outlineStyle: 'none',
     },
     buttonGlass: {
         width: 44,

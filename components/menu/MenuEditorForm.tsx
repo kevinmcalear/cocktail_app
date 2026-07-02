@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
     Button,
@@ -16,7 +16,7 @@ import {
 import { Step4Drinks } from '@/app/menus/create/_components/Step4Drinks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useBars } from '@/hooks/useBars';
-import { capitalize, handleCapitalizedChange } from '@/lib/stringUtils';
+import { handleCapitalizedChange } from '@/lib/stringUtils';
 
 interface MenuEditorFormProps {
     embedded?: boolean;
@@ -105,7 +105,7 @@ export function MenuEditorForm({
             showsVerticalScrollIndicator={false}
         >
             {!skipVenueStep && (
-                <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                     <SectionLabel>Venue</SectionLabel>
                     {loadingBars ? (
                         <ActivityIndicator color={theme.color8?.get() as string} />
@@ -141,7 +141,7 @@ export function MenuEditorForm({
                 </Card>
             )}
 
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <SectionLabel>Template</SectionLabel>
                 <YStack gap="$2">
                     {templates.map((template) => {
@@ -213,7 +213,7 @@ export function MenuEditorForm({
                 </YStack>
             </Card>
 
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$2">
                     <Label color="$color11">Menu Name *</Label>
                     <Input
@@ -231,7 +231,7 @@ export function MenuEditorForm({
             </Card>
 
             {selectedTemplateId && activeSections.length > 0 && (
-                <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                     <SectionLabel>Drinks</SectionLabel>
                     <View style={styles.drinksEmbed}>
                         <Step4Drinks
@@ -239,7 +239,6 @@ export function MenuEditorForm({
                             sections={activeSections}
                             selections={selections}
                             setSelections={setSelections}
-                            onNext={() => {}}
                             barId={barId}
                             menuDraftId={menuDraftId}
                             onCreateDrinkPress={onCreateDrinkPress}
@@ -249,7 +248,7 @@ export function MenuEditorForm({
             )}
 
             {selectedTemplateId && menuName.trim() && (
-                <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                     <SectionLabel>Summary</SectionLabel>
                     <YStack gap="$3">
                         <XStack justifyContent="space-between">

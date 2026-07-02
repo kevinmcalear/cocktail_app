@@ -20,6 +20,18 @@ import { calculateDraftProgress } from "@/lib/draftProgress";
 
 const DRAFT_AMBER = "#E5A93B";
 
+const drinkThumbStyles = StyleSheet.create({
+    drinkThumb: {
+        width: 52,
+        height: 52,
+        borderRadius: 12,
+    },
+    drinkThumbPlaceholder: {
+        justifyContent: "center",
+        alignItems: "center",
+    },
+});
+
 function getDrinkPhotoSource(item: SearchItem) {
     if (item.image) return item.image;
     if (item.item_images?.[0]?.images?.url) return { uri: item.item_images[0].images.url };
@@ -46,7 +58,7 @@ function DrinkThumb({
         return (
             <Image
                 source={photo}
-                style={[styles.drinkThumb, { backgroundColor: thumbBg }]}
+                style={[drinkThumbStyles.drinkThumb, { backgroundColor: thumbBg }]}
                 contentFit="cover"
                 transition={300}
             />
@@ -58,7 +70,7 @@ function DrinkThumb({
     const glassware = dropdowns?.glassware?.find((g: any) => g.id === item.glassware_id);
 
     return (
-        <View style={[styles.drinkThumb, styles.drinkThumbPlaceholder, { backgroundColor: placeholderBg }]}>
+        <View style={[drinkThumbStyles.drinkThumb, drinkThumbStyles.drinkThumbPlaceholder, { backgroundColor: placeholderBg }]}>
             {isBeer ? (
                 <IconSymbol name="mug.fill" size={24} color={iconColor} />
             ) : isWine ? (
@@ -82,7 +94,7 @@ interface Props {
     sections: any[];
     selections: Record<string, string[]>;
     setSelections: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
-    onNext: () => void;
+    onNext?: () => void;
     barId?: string | null;
     menuDraftId?: string | null;
     embedded?: boolean;
@@ -94,7 +106,7 @@ interface Props {
     }) => void;
 }
 
-export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId, menuDraftId, embedded, onCreateDrinkPress }: Props) => {
+export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDraftId, embedded, onCreateDrinkPress }: Props) => {
     const router = useRouter();
     const theme = useTheme();
     const colorScheme = useColorScheme();
@@ -239,11 +251,6 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
         }));
     };
 
-    const isValid = sections.every(sec => {
-        const count = (selections[sec.id] || []).length;
-        return count >= (sec.min_items || 1);
-    });
-
     const styles = useMemo(
         () =>
             StyleSheet.create({
@@ -270,15 +277,6 @@ export const Step4Drinks = ({ sections, selections, setSelections, onNext, barId
                     padding: 12,
                     borderRadius: 15,
                     marginBottom: 8,
-                },
-                drinkThumb: {
-                    width: 52,
-                    height: 52,
-                    borderRadius: 12,
-                },
-                drinkThumbPlaceholder: {
-                    justifyContent: "center",
-                    alignItems: "center",
                 },
                 cocktailName: { fontSize: 17, color: colors.text, fontWeight: "700", flexShrink: 1 },
                 draftPct: { color: DRAFT_AMBER, fontSize: 11, fontWeight: "bold" },

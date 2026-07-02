@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
-import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
+import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 import { MenuEditorForm } from "@/components/menu/MenuEditorForm";
@@ -56,14 +56,13 @@ export default function CreateMenuWizard({
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
 
-    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+    const { drafts, saveDraft, deleteDraft } = useDrafts();
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
 
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
     const templates = dropdowns?.menuTemplates || [];
     const allSections = dropdowns?.templateSections || [];
 
-    const [step, setStep] = useState(skipVenueStep ? 2 : 1);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [menuName, setMenuName] = useState("");
     const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -76,8 +75,7 @@ export default function CreateMenuWizard({
 
     const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
     const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
-    const [furthestStep, setFurthestStep] = useState(skipVenueStep ? 2 : 1);
-    const currentStateStr = JSON.stringify({ step, selectedTemplateId, menuName, selections, barId });
+    const currentStateStr = JSON.stringify({ selectedTemplateId, menuName, selections, barId });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -89,33 +87,10 @@ export default function CreateMenuWizard({
     }, [needsCleanMark, currentStateStr]);
 
     useEffect(() => {
-        setFurthestStep(prev => Math.max(prev, step));
-    }, [step]);
-
-    useEffect(() => {
         if (currentDraftId && !draftLoaded && drafts.length > 0) {
             const draft = drafts.find((d: any) => d.id === currentDraftId);
             if (draft && draft.draft_data) {
                 const data = draft.draft_data;
-                const loadedStep = data.furthestStep || data.step || 1;
-                
-                // Old draft migration
-                let targetStep = 1;
-                if (data.hasVenueStep) {
-                    targetStep = loadedStep;
-                    if (targetStep === 1 && (data.barId || activeBarIdProp)) {
-                        targetStep = 2;
-                    }
-                } else {
-                    if (!data.barId && !activeBarIdProp) {
-                        targetStep = 1; // Must select venue first
-                    } else {
-                        targetStep = loadedStep + 1; // Shift step numbers by 1
-                    }
-                }
-
-                setStep(targetStep);
-                setFurthestStep(targetStep);
                 setSelectedTemplateId(data.selectedTemplateId || null);
                 setMenuName(data.menuName || data.name || "");
                 setSelections(data.selections || {});
@@ -165,7 +140,6 @@ export default function CreateMenuWizard({
                 setSelectedTemplateId(menuData.template_id || null);
                 setBarId(menuData.bar_id || null);
                 setSelections(loadedSelections);
-                setFurthestStep(4);
                 setMenuLoaded(true);
                 setDraftLoaded(true);
                 setNeedsCleanMark(true);
@@ -188,14 +162,12 @@ export default function CreateMenuWizard({
             const autoSave = async () => {
                 try {
                     const draftData = {
-                        step,
-                        furthestStep: Math.max(furthestStep, step),
                         selectedTemplateId,
                         menuName,
                         name: menuName,
                         selections,
                         barId,
-                        hasVenueStep: true
+                        hasVenueStep: true,
                     };
                     const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
                     if (!currentDraftId && result && result.id) {
@@ -213,20 +185,18 @@ export default function CreateMenuWizard({
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [currentStateStr, currentDraftId, draftLoaded, furthestStep, step, selectedTemplateId, menuName, selections, barId, saveDraft, router, isInline]);
+    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, saveDraft, router, isInline]);
 
     const handleSaveDraft = async () => {
         try {
             setSaving(true);
-            const draftData = { 
-                step, 
-                furthestStep: Math.max(furthestStep, step), 
-                selectedTemplateId, 
-                menuName, 
-                name: menuName, 
-                selections, 
+            const draftData = {
+                selectedTemplateId,
+                menuName,
+                name: menuName,
+                selections,
                 barId,
-                hasVenueStep: true
+                hasVenueStep: true,
             };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
             

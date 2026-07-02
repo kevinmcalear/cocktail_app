@@ -5,8 +5,8 @@ export const COCKTAIL_ORIGIN_OPTIONS = [
     { id: "Varient", name: "Varient" },
 ] as const;
 
-export function buildOriginOptions(current?: string | null) {
-    const options = [...COCKTAIL_ORIGIN_OPTIONS];
+export function buildOriginOptions(current?: string | null): { id: string; name: string }[] {
+    const options: { id: string; name: string }[] = [...COCKTAIL_ORIGIN_OPTIONS];
     if (current && !options.some((o) => o.id === current)) {
         options.unshift({ id: current, name: current });
     }

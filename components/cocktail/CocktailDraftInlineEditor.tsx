@@ -66,7 +66,9 @@ export function CocktailDraftInlineEditor({
         if (!onChromeState || editor.loading) return;
         const canPublish = Boolean(editor.name.trim()) || editor.isDirty;
         onChromeState({
-            save: handleSave,
+            save: async () => {
+                await handleSave();
+            },
             cancel: handleClose,
             saving: editor.saving,
             isDirty: canPublish,

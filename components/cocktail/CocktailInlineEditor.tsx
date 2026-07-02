@@ -52,7 +52,9 @@ export function CocktailInlineEditor({
     useEffect(() => {
         if (!onChromeState || editor.loading) return;
         onChromeState({
-            save: handleSave,
+            save: async () => {
+                await handleSave();
+            },
             cancel: handleClose,
             saving: editor.saving,
             isDirty: editor.isDirty,
