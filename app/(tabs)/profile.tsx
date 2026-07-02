@@ -1,7 +1,7 @@
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/ctx/AuthContext";
-import { useSettingsStore } from "@/store/useSettingsStore";
+import { useSettingsStore, THEME_MODES } from "@/store/useSettingsStore";
 import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +13,7 @@ export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
     const { user, signOut } = useAuth();
     const theme = useTheme();
-    const { isTestingEnabled, setTesting } = useSettingsStore();
+    const { isTestingEnabled, setTesting, themeMode, setThemeMode } = useSettingsStore();
 
     const avatarUrl = user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
@@ -92,6 +92,44 @@ export default function ProfileScreen() {
                         </XStack>
                         <IconSymbol name="chevron.right" size={24} color={theme.color11?.get() as string} />
                     </XStack>
+
+                    <Separator borderColor="$borderColor" marginLeft={60} />
+
+                    <YStack paddingVertical="$4" paddingHorizontal="$4" gap="$3">
+                        <XStack alignItems="center" gap="$3">
+                            <IconSymbol name="circle.lefthalf.filled" size={24} color={theme.color?.get() as string} />
+                            <Text fontSize="$5" color="$color" fontWeight="500">Appearance</Text>
+                        </XStack>
+                        <XStack gap="$2">
+                            {THEME_MODES.map(({ id, label }) => {
+                                const selected = themeMode === id;
+                                return (
+                                    <XStack
+                                        key={id}
+                                        flex={1}
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        paddingVertical="$2"
+                                        borderRadius="$3"
+                                        backgroundColor={selected ? '$color8' : '$backgroundHover'}
+                                        borderWidth={1}
+                                        borderColor={selected ? '$color8' : '$borderColor'}
+                                        pressStyle={{ opacity: 0.7 }}
+                                        onPress={() => setThemeMode(id)}
+                                        cursor="pointer"
+                                    >
+                                        <Text
+                                            fontSize="$3"
+                                            fontWeight={selected ? '700' : '500'}
+                                            color={selected ? '$backgroundStrong' : '$color'}
+                                        >
+                                            {label}
+                                        </Text>
+                                    </XStack>
+                                );
+                            })}
+                        </XStack>
+                    </YStack>
 
                     <Separator borderColor="$borderColor" marginLeft={60} />
 
