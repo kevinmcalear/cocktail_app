@@ -51,6 +51,7 @@ const MAPPING = {
   'flask': 'science',
   'line.3.horizontal': 'drag-handle',
   'line.3.horizontal.decrease': 'sort',
+  'camera.fill': 'photo-camera',
 } as Partial<IconMapping>;
 
 /**

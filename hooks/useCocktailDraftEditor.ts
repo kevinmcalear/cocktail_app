@@ -14,6 +14,7 @@ import {
     updateMenuDraftsWithPublishedId,
     updateParentDraftsWithPublishedId,
 } from "@/lib/drafts";
+import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { capitalize } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import type { SpecCategory, SpecDbField } from "@/hooks/useCocktailEditor";
@@ -356,19 +357,7 @@ export function useCocktailDraftEditor({
         await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
     };
 
-    const identifyGlassware = async (imageBase64: string, mimeType: string) => {
-        const { data, error } = await supabase.functions.invoke("identify-glassware", {
-            body: { image_base64: imageBase64, mime_type: mimeType },
-        });
-        if (error) throw new Error(error.message || "Identification failed");
-        if (data?.error) throw new Error(data.error);
-        return {
-            suggestedName: data.suggestedName as string,
-            matchedIcon: (data.matchedIcon as string | null) ?? null,
-            iconUrl: (data.iconUrl as string | null) ?? null,
-            confidence: data.confidence as number | undefined,
-        };
-    };
+    const identifyGlassware = identifyGlasswareFromPhoto;
 
     const handleAddGlassware = async (payload: {
         name: string;

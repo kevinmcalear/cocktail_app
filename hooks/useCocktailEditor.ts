@@ -7,6 +7,7 @@ import { Alert } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { capitalize } from "@/lib/stringUtils";
 import { mapPresentationRecipeToEditItem, sortRecipesByOrder } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
@@ -198,19 +199,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
     };
 
-    const identifyGlassware = async (imageBase64: string, mimeType: string) => {
-        const { data, error } = await supabase.functions.invoke("identify-glassware", {
-            body: { image_base64: imageBase64, mime_type: mimeType },
-        });
-        if (error) throw new Error(error.message || "Identification failed");
-        if (data?.error) throw new Error(data.error);
-        return {
-            suggestedName: data.suggestedName as string,
-            matchedIcon: (data.matchedIcon as string | null) ?? null,
-            iconUrl: (data.iconUrl as string | null) ?? null,
-            confidence: data.confidence as number | undefined,
-        };
-    };
+    const identifyGlassware = identifyGlasswareFromPhoto;
 
     const handleAddGlassware = async (payload: {
         name: string;
