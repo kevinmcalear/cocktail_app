@@ -1,7 +1,7 @@
 import { GlasswareIcon } from "@/components/ui/GlasswareIcon";
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { Text, useTheme, YStack } from "tamagui";
 
 interface SpecBadgeProps {
@@ -19,6 +19,7 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
     const display = value || emptyLabel || label;
     const isEmpty = !value;
     const interactive = isEditing && onPress;
+    const labelUsesAccent = isEmpty || interactive;
 
     const content = (
         <YStack alignItems="center" gap="$1" justifyContent="flex-start" minWidth={52}>
@@ -45,9 +46,9 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
                 )}
             </YStack>
             <Text
-                color={isEmpty ? "$color8" : "$color"}
+                color={labelUsesAccent ? "$color8" : "$color"}
                 fontSize={9}
-                opacity={isEmpty ? 0.9 : 0.6}
+                opacity={labelUsesAccent ? 0.9 : 0.6}
                 fontWeight="600"
                 textAlign="center"
                 textTransform="uppercase"
@@ -56,9 +57,6 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
             >
                 {display}
             </Text>
-            {interactive && !isEmpty && (
-                <View style={[styles.editDot, { borderColor: theme.color8?.get() as string }]} />
-            )}
         </YStack>
     );
 
@@ -70,16 +68,3 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
         </TouchableOpacity>
     );
 }
-
-const styles = StyleSheet.create({
-    editDot: {
-        position: "absolute",
-        top: -2,
-        right: 4,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        borderWidth: 1.5,
-        backgroundColor: "rgba(0,122,255,0.25)",
-    },
-});
