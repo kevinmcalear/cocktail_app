@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { SearchBar } from "@/components/SearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -30,6 +31,8 @@ import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } 
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
+import { sortRecipesByOrder } from "@/lib/recipeUtils";
+import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 
 interface RecipeItem {
     id?: string; // ID if existing in recipes table
@@ -139,7 +142,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             }
         }
         if (data?.recipe) {
-            const items: RecipeItem[] = data.recipe.map((r: any) => ({
+            const items: RecipeItem[] = sortRecipesByOrder(data.recipe).map((r: any) => ({
                 id: r.id,
                 ingredient_id: r.ingredient_item_id || r.display_ingredient_id || r.ingredient?.id || r.id,
                 name: r.ingredient?.name || "Unknown",
@@ -313,11 +316,12 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
 
             // Insert new
             if (recipeItems.length > 0) {
-                const recipeInserts = recipeItems.map(item => ({
+                const recipeInserts = recipeItems.map((item, index) => ({
                     recipe_item_id: id, 
                     ingredient_item_id: item.ingredient_id,
                     amount: parseFloat(item.amount) || null,
                     unit: item.unit || null,
+                    sort_order: index,
                 }));
 
                 const { error: insertError } = await supabase
@@ -396,7 +400,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+                <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                     
                     <SortableImageList 
                         images={localImages}
@@ -508,53 +512,18 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                             </Text>
                         )}
 
-                        {recipeItems.map((item, index) => (
-                            <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
-                                {onNestedItemPress ? (
-                                    <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7} style={{ flex: 1 }}>
-                                        <Text color="$color8" fontSize={16} textDecorationLine="underline">{capitalize(item.name)}</Text>
-                                    </TouchableOpacity>
-                                ) : (
-                                    <Text flex={1} color="$color" fontSize={16}>{capitalize(item.name)}</Text>
-                                )}
-                                <XStack gap="$2" alignItems="center">
-                                    <Input
-                                        width={60}
-                                        size="$3"
-                                        placeholder="amt"
-                                        placeholderTextColor="$color11"
-                                        keyboardType="numeric"
-                                        value={item.amount}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].amount = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <Input
-                                        width={60}
-                                        size="$3"
-                                        placeholder="oz"
-                                        placeholderTextColor="$color11"
-                                        value={item.unit}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].unit = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
-                                        <IconSymbol name="trash" size={20} color={theme.red10?.get() as string || "#ff4444"} />
-                                    </TouchableOpacity>
-                                </XStack>
-                            </XStack>
-                        ))}
+                        <SortableRecipeList
+                            items={recipeItems}
+                            onReorder={setRecipeItems}
+                            onUpdateItem={(index, updates) => {
+                                const newItems = [...recipeItems];
+                                newItems[index] = { ...newItems[index], ...updates };
+                                setRecipeItems(newItems);
+                            }}
+                            onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                            variant="card"
+                            onNestedItemPress={onNestedItemPress}
+                        />
                     </YStack>
 
                     <BarAssignmentAccordion
@@ -566,7 +535,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                         overridePrep={overridePrep} setOverridePrep={setOverridePrep}
                     />
 
-                </ScrollView>
+                </FormScrollContainer>
             </KeyboardAvoidingView>
 
             {/* Native Modal for adding ingredients avoiding gorhom issues */}

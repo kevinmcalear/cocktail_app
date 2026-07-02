@@ -1,5 +1,6 @@
 import { SearchBar } from "@/components/SearchBar";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
@@ -19,7 +20,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CustomIcon } from "@/components/ui/CustomIcons";
+import { SpecPillButton } from "@/components/SpecPillButton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useBars } from "@/hooks/useBars";
@@ -29,10 +30,10 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
+import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
-import { calculateDraftProgress } from "@/lib/draftProgress";
 
 interface RecipeItem {
     id?: string;
@@ -529,7 +530,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                 }
             }
 
-            for (const item of resolvedRecipeItems) {
+            for (const [index, item] of resolvedRecipeItems.entries()) {
                 await supabase.from('recipes').insert({
                     recipe_item_id: cocktailId,
                     ingredient_item_id: item.ingredient_id,
@@ -537,6 +538,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
+                    sort_order: index,
                 });
             }
 
@@ -680,7 +682,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+            <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
                 {/* Image List */}
                 <SortableImageList 
@@ -732,20 +734,12 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <XStack gap="$2">
                             {methods.map(m => (
-                                <Button
+                                <SpecPillButton
                                     key={m.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={methodId === m.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={methodId === m.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={m.name}
+                                    selected={methodId === m.id}
                                     onPress={() => setMethodId(m.id)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={m.name} size={16} color={methodId === m.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />
-                                        <Text color={methodId === m.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                         </XStack>
                     </ScrollView>
@@ -756,20 +750,12 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <XStack gap="$2">
                             {glassware.map(g => (
-                                <Button
+                                <SpecPillButton
                                     key={g.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={glasswareId === g.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={glasswareId === g.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={g.name}
+                                    selected={glasswareId === g.id}
                                     onPress={() => setGlasswareId(g.id)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={g.name} size={16} color={glasswareId === g.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />
-                                        <Text color={glasswareId === g.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                         </XStack>
                     </ScrollView>
@@ -780,20 +766,12 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <XStack gap="$2">
                             {families.map(f => (
-                                <Button
+                                <SpecPillButton
                                     key={f.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={familyId === f.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={familyId === f.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={f.name}
+                                    selected={familyId === f.id}
                                     onPress={() => setFamilyId(f.id)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={f.name} size={16} color={familyId === f.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />
-                                        <Text color={familyId === f.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                         </XStack>
                     </ScrollView>
@@ -804,20 +782,12 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <XStack gap="$2">
                             {iceTypes.map(i => (
-                                <Button
+                                <SpecPillButton
                                     key={i.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={iceId === i.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={iceId === i.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={i.name}
+                                    selected={iceId === i.id}
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={i.name} size={16} color={iceId === i.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />
-                                        <Text color={iceId === i.id ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                         </XStack>
                     </ScrollView>
@@ -832,81 +802,20 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                         </TouchableOpacity>
                     </View>
 
-                    {recipeItems.map((item, index) => (
-                        <View key={index} style={styles.recipeRow}>
-                            <XStack gap="$2" alignItems="center" flex={1}>
-                                {onNestedItemPress ? (
-                                    <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7}>
-                                        <XStack gap="$2" alignItems="center">
-                                            <Text style={[styles.recipeName, { color: theme.color8?.get() as string, textDecorationLine: 'underline' }]}>
-                                                {capitalize(item.name)}
-                                            </Text>
-                                            {(() => {
-                                                const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
-                                                if (!childDraft) return null;
-                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                                return (
-                                                    <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                                        <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                            {childProgress.label} ({childProgress.percentage}%)
-                                                        </Text>
-                                                    </View>
-                                                );
-                                            })()}
-                                        </XStack>
-                                    </TouchableOpacity>
-                                ) : (
-                                    <>
-                                        <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
-                                        {(() => {
-                                            const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
-                                            if (!childDraft) return null;
-                                            const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                            return (
-                                                <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                                    <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                        {childProgress.label} ({childProgress.percentage}%)
-                                                    </Text>
-                                                </View>
-                                            );
-                                        })()}
-                                    </>
-                                )}
-                            </XStack>
-                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
-                                <Input
-                                    size="$2"
-                                    width={60}
-                                    placeholder="1.5"
-                                    keyboardType="numeric"
-                                    backgroundColor="$backgroundStrong"
-                                    borderColor="$borderColor"
-                                    value={item.amount}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].amount = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <Input
-                                    size="$2"
-                                    width={60}
-                                    placeholder="oz"
-                                    backgroundColor="$backgroundStrong"
-                                    borderColor="$borderColor"
-                                    value={item.unit}
-                                    onChangeText={(v) => {
-                                        const newItems = [...recipeItems];
-                                        newItems[index].unit = v;
-                                        setRecipeItems(newItems);
-                                    }}
-                                />
-                                <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
-                                    <IconSymbol name="trash" size={20} color="#ff4444" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
+                    <SortableRecipeList
+                        items={recipeItems}
+                        onReorder={setRecipeItems}
+                        onUpdateItem={(index, updates) => {
+                            const newItems = [...recipeItems];
+                            newItems[index] = { ...newItems[index], ...updates };
+                            setRecipeItems(newItems);
+                        }}
+                        onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                        variant="row"
+                        onNestedItemPress={onNestedItemPress}
+                        drafts={drafts}
+                        dropdowns={dropdowns}
+                    />
                 </View>
 
                 {/* Extra Details */}
@@ -951,7 +860,7 @@ export default function AddCocktailScreen({ isInline, draftIdProp, barIdProp, on
                     overridePrep={overridePrep} setOverridePrep={setOverridePrep}
                 />
 
-            </ScrollView>
+            </FormScrollContainer>
             </KeyboardAvoidingView>
             )}
 
@@ -1134,51 +1043,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
     },
-    pillContainer: {
-        flexDirection: 'row',
-    },
-    pill: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginRight: 8,
-        borderWidth: 1,
-    },
-    pillText: {
-        color: '#ccc',
-        fontSize: 14,
-    },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 8
-    },
-    recipeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 10,
-        borderRadius: 10,
-        marginBottom: 8
-    },
-    recipeName: {
-        flex: 1,
-        fontSize: 16,
-        paddingRight: 8
-    },
-    recipeInputs: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center'
-    },
-    smallInput: {
-        width: 44,
-        borderRadius: 8,
-        padding: 8,
-        textAlign: 'center',
-        justifyContent: 'center',
-        fontSize: 14
     },
     modalHeader: {
         flexDirection: 'row',

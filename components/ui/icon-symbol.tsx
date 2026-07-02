@@ -49,6 +49,8 @@ const MAPPING = {
   'plus.circle': 'add-circle-outline',
   'play.fill': 'play-arrow',
   'flask': 'science',
+  'line.3.horizontal': 'drag-handle',
+  'line.3.horizontal.decrease': 'sort',
 } as Partial<IconMapping>;
 
 /**

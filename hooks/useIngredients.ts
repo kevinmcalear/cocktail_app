@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -71,6 +72,8 @@ export function useIngredient(id?: string | string[]) {
                 .from('app_recipe_presentation')
                 .select(`
                     id,
+                    sort_order,
+                    created_at,
                     display_ingredient_id,
                     ingredient_item_id,
                     parent_ingredient_id,
@@ -85,7 +88,7 @@ export function useIngredient(id?: string | string[]) {
 
             if (recipeError) throw recipeError;
 
-            const recipe = rawRecipe?.map((r: any) => ({
+            const recipe = sortRecipesByOrder(rawRecipe)?.map((r: any) => ({
                 ...r,
                 ingredient: r.display_ingredient_id === r.parent_ingredient_id 
                     ? r.generic_ingredient 

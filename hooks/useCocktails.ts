@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,6 +19,8 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
                     glassware_id,
                     family_id,
                     recipes:app_recipe_presentation!recipe_item_id (
+                        sort_order,
+                        created_at,
                         display_ingredient_id,
                         ingredient_item_id,
                         parent_ingredient_id,
@@ -70,7 +73,8 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
             // Map the secure recipes payload to match the expected UI shapes
             const processedData = data?.map(cocktail => ({
                 ...cocktail,
-                recipes: cocktail.recipes?.map((recipe: any) => {
+                recipes: sortRecipesByOrder(
+                    cocktail.recipes?.map((recipe: any) => {
                     const ingredient = !recipe.display_ingredient_id 
                         ? null 
                         : recipe.display_ingredient_id === recipe.parent_ingredient_id 
@@ -82,6 +86,7 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
                         ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
                     };
                 })
+                )
             }));
 
             return processedData as unknown as DatabaseItem[];
@@ -109,6 +114,8 @@ export function useCocktail(id?: string | string[]) {
                     ),
                     recipes:app_recipe_presentation!recipe_item_id (
                         id,
+                        sort_order,
+                        created_at,
                         amount,
                         unit,
                         preparation_notes,
@@ -148,7 +155,8 @@ export function useCocktail(id?: string | string[]) {
             
             if (data) {
                 // Map the secure recipes payload to match the expected UI shapes
-                data.recipes = data.recipes?.map((recipe: any) => {
+                data.recipes = sortRecipesByOrder(
+                    data.recipes?.map((recipe: any) => {
                     const ingredient = !recipe.display_ingredient_id 
                         ? null 
                         : recipe.display_ingredient_id === recipe.parent_ingredient_id 
@@ -159,7 +167,8 @@ export function useCocktail(id?: string | string[]) {
                         ...recipe,
                         ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
                     };
-                });
+                })
+                );
 
                 // Fetch glassware, family, and ice manually to bypass PostgREST ambiguous relation errors on views
                 const idsToFetch = [data.glassware_id, data.family_id, data.ice_id].filter(Boolean);

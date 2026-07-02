@@ -64,11 +64,12 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
     
     // Insert recipe items
     if (resolvedRecipeItems.length > 0) {
-        const recipeInserts = resolvedRecipeItems.map(item => ({
+        const recipeInserts = resolvedRecipeItems.map((item, index) => ({
             recipe_item_id: ingredientId,
             ingredient_item_id: item.ingredient_id,
             amount: parseFloat(item.amount) || null,
             unit: item.unit || null,
+            sort_order: index,
         }));
         
         const { error: recipeError } = await supabase
@@ -207,13 +208,14 @@ export async function resolveCocktailId(id: string, drafts: any[]): Promise<stri
     
     // Insert recipe items
     if (resolvedRecipeItems.length > 0) {
-        const recipeInserts = resolvedRecipeItems.map(item => ({
+        const recipeInserts = resolvedRecipeItems.map((item, index) => ({
             recipe_item_id: cocktailId,
             ingredient_item_id: item.ingredient_id,
             amount: parseFloat(item.amount) || null,
             unit: item.unit || null,
             preparation_notes: item.preparation_notes || null,
             is_optional: item.is_optional || false,
+            sort_order: index,
         }));
         
         const { error: recipeError } = await supabase

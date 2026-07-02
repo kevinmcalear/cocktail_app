@@ -85,6 +85,7 @@ export interface DatabaseRecipe {
     preparation_notes: string | null;
     is_optional: boolean | null;
     parent_ingredient_id: string | null;
+    sort_order: number | null;
     ingredient?: DatabaseItem; // The actual ingredient item
 }
 

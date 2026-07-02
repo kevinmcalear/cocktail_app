@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SearchBar } from "@/components/SearchBar";
+import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
@@ -27,6 +28,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
+import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 
 interface RecipeItem {
     id?: string;
@@ -349,11 +351,12 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             }
 
             if (resolvedRecipeItems.length > 0) {
-                const recipeInserts = resolvedRecipeItems.map(item => ({
+                const recipeInserts = resolvedRecipeItems.map((item, index) => ({
                     recipe_item_id: ingredientId,
                     ingredient_item_id: item.ingredient_id,
                     amount: parseFloat(item.amount) || null,
                     unit: item.unit || null,
+                    sort_order: index,
                 }));
 
                 const { error: recipeError } = await supabase
@@ -445,7 +448,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+                <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                     
                     <YStack gap="$2" marginBottom="$4">
                         <Label color="$color11">Name *</Label>
@@ -547,85 +550,20 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             </Text>
                         )}
 
-                        {recipeItems.map((item, index) => (
-                            <XStack key={index} alignItems="center" justifyContent="space-between" backgroundColor="$backgroundStrong" padding="$3" borderRadius="$3" marginBottom="$2">
-                                <XStack gap="$2" alignItems="center" flex={1}>
-                                    {onNestedItemPress ? (
-                                        <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7}>
-                                            <XStack gap="$2" alignItems="center">
-                                                <Text color="$color8" fontSize={16} textDecorationLine="underline">
-                                                    {capitalize(item.name)}
-                                                </Text>
-                                                {(() => {
-                                                    const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
-                                                    if (!childDraft) return null;
-                                                    const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                                    return (
-                                                        <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                                            <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                                {childProgress.label} ({childProgress.percentage}%)
-                                                            </Text>
-                                                        </View>
-                                                    );
-                                                })()}
-                                            </XStack>
-                                        </TouchableOpacity>
-                                    ) : (
-                                        <>
-                                            <Text color="$color" fontSize={16}>{capitalize(item.name)}</Text>
-                                            {(() => {
-                                                const childDraft = drafts.find((d: any) => d.id === item.ingredient_id && d.entity_type === 'ingredient');
-                                                if (!childDraft) return null;
-                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                                return (
-                                                    <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                                        <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                            {childProgress.label} ({childProgress.percentage}%)
-                                                        </Text>
-                                                    </View>
-                                                );
-                                            })()}
-                                        </>
-                                    )}
-                                </XStack>
-                                <XStack gap="$2" alignItems="center">
-                                    <Input
-                                        width={60}
-                                        size="$3"
-                                        placeholder="amt"
-                                        placeholderTextColor="$color11"
-                                        keyboardType="numeric"
-                                        value={item.amount}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].amount = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <Input
-                                        width={60}
-                                        size="$3"
-                                        placeholder="oz"
-                                        placeholderTextColor="$color11"
-                                        value={item.unit}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].unit = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                        backgroundColor="$background"
-                                        borderColor="transparent"
-                                        textAlign="center"
-                                    />
-                                    <TouchableOpacity onPress={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}>
-                                        <IconSymbol name="trash" size={20} color={theme.red10?.get() as string || "#ff4444"} />
-                                    </TouchableOpacity>
-                                </XStack>
-                            </XStack>
-                        ))}
+                        <SortableRecipeList
+                            items={recipeItems}
+                            onReorder={setRecipeItems}
+                            onUpdateItem={(index, updates) => {
+                                const newItems = [...recipeItems];
+                                newItems[index] = { ...newItems[index], ...updates };
+                                setRecipeItems(newItems);
+                            }}
+                            onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                            variant="card"
+                            onNestedItemPress={onNestedItemPress}
+                            drafts={drafts}
+                            dropdowns={dropdowns}
+                        />
                     </YStack>
 
                     <BarAssignmentAccordion
@@ -637,7 +575,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                         overridePrep={overridePrep} setOverridePrep={setOverridePrep}
                     />
 
-                </ScrollView>
+                </FormScrollContainer>
             </KeyboardAvoidingView>
 
             {/* Native Modal for adding ingredients avoiding gorhom issues */}

@@ -16,9 +16,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { SearchBar } from "@/components/SearchBar";
-import { CustomIcon } from "@/components/ui/CustomIcons";
+import { SpecPillButton } from "@/components/SpecPillButton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useBars } from "@/hooks/useBars";
@@ -29,6 +30,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, Select, Adapt, Sheet, Accordion } from "tamagui";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
+import { sortRecipesByOrder, mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
+import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 
 interface RecipeItem {
     id?: string;
@@ -204,10 +207,10 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
             }
 
             if (c.recipes) {
-                const mappedRecipes = c.recipes.map((r: any) => ({
+                const mappedRecipes = sortRecipesByOrder(c.recipes).map((r: any) => ({
                     id: r.id,
-                    ingredient_id: r.ingredient_id,
-                    name: r.ingredients?.name || "Unknown",
+                    ingredient_id: r.ingredient?.id || r.display_ingredient_id || r.ingredient_item_id,
+                    name: r.ingredient?.name || "Unknown",
                     bsp: "", // Deprecated
                     ml: "", // Deprecated
                     dash: "", // Deprecated
@@ -366,7 +369,7 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                 await supabase.from('recipes').delete().eq('recipe_item_id', id);
             }
 
-            for (const item of recipeItems) {
+            for (const [index, item] of recipeItems.entries()) {
                 const payload = {
                     recipe_item_id: id,
                     ingredient_item_id: item.ingredient_id,
@@ -374,6 +377,7 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
+                    sort_order: index,
                 };
 
                 if (item.id) {
@@ -461,7 +465,7 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+            <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
 
                 <SortableImageList 
                     images={localImages}
@@ -508,21 +512,13 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
                         <XStack gap="$2">
                             {methods.map((m: any) => (
-                                <Button
+                                <SpecPillButton
                                     key={m.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={methodId === m.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={methodId === m.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={m.name}
+                                    selected={methodId === m.id}
                                     onPress={() => setMethodId(m.id)}
                                     onLongPress={() => handleDeletePill('method_id', m)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={m.name} size={16} color={theme.color?.get() as string} />
-                                        <Text color={theme.color?.get() as string} fontWeight={methodId === m.id ? "bold" : "normal"}>{m.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'method', label: 'Method' })}>
                                 <Text color={theme.color8?.get() as string}>+ Add</Text>
@@ -536,21 +532,13 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
                         <XStack gap="$2">
                             {glassware.map((g: any) => (
-                                <Button
+                                <SpecPillButton
                                     key={g.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={glasswareId === g.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={glasswareId === g.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={g.name}
+                                    selected={glasswareId === g.id}
                                     onPress={() => setGlasswareId(g.id)}
                                     onLongPress={() => handleDeletePill('glassware_id', g)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={g.name} size={16} color={theme.color?.get() as string} />
-                                        <Text color={theme.color?.get() as string} fontWeight={glasswareId === g.id ? "bold" : "normal"}>{g.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'glassware', label: 'Glassware' })}>
                                 <Text color={theme.color8?.get() as string}>+ Add</Text>
@@ -564,21 +552,13 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
                         <XStack gap="$2">
                             {families.map((f: any) => (
-                                <Button
+                                <SpecPillButton
                                     key={f.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={familyId === f.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={familyId === f.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={f.name}
+                                    selected={familyId === f.id}
                                     onPress={() => setFamilyId(f.id)}
                                     onLongPress={() => handleDeletePill('family_id', f)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={f.name} size={16} color={theme.color?.get() as string} />
-                                        <Text color={theme.color?.get() as string} fontWeight={familyId === f.id ? "bold" : "normal"}>{f.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'family', label: 'Family' })}>
                                 <Text color={theme.color8?.get() as string}>+ Add</Text>
@@ -592,21 +572,13 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
                         <XStack gap="$2">
                             {iceTypes.map((i: any) => (
-                                <Button
+                                <SpecPillButton
                                     key={i.id}
-                                    size="$3"
-                                    borderRadius="$10"
-                                    backgroundColor={iceId === i.id ? theme.color8?.get() as string : "$backgroundStrong"}
-                                    borderColor={iceId === i.id ? theme.color8?.get() as string : "$borderColor"}
-                                    borderWidth={1}
+                                    name={i.name}
+                                    selected={iceId === i.id}
                                     onPress={() => setIceId(iceId === i.id ? null : i.id)}
                                     onLongPress={() => handleDeletePill('ice_id', i)}
-                                >
-                                    <XStack gap="$2" alignItems="center">
-                                        <CustomIcon name={i.name} size={16} color={theme.color?.get() as string} />
-                                        <Text color={theme.color?.get() as string} fontWeight={iceId === i.id ? "bold" : "normal"}>{i.name}</Text>
-                                    </XStack>
-                                </Button>
+                                />
                             ))}
                             <Button size="$3" borderRadius="$10" borderStyle="dashed" backgroundColor="transparent" borderWidth={1} borderColor="rgba(255,255,255,0.2)" onPress={() => setAddingCategory({ type: 'ice', label: 'Ice' })}>
                                 <Text color={theme.color8?.get() as string}>+ Add</Text>
@@ -623,58 +595,18 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                         </TouchableOpacity>
                     </XStack>
 
-                    {recipeItems.map((item, index) => (
-                        <View key={index} style={styles.recipeRow}>
-                            {onNestedItemPress ? (
-                                <TouchableOpacity onPress={() => onNestedItemPress(item.ingredient_id)} activeOpacity={0.7}>
-                                    <Text style={[styles.recipeName, { color: theme.color8?.get() as string, textDecorationLine: 'underline' }]}>
-                                        {capitalize(item.name)}
-                                    </Text>
-                                </TouchableOpacity>
-                            ) : (
-                                <Text style={styles.recipeName}>{capitalize(item.name)}</Text>
-                            )}
-                            <View style={[styles.recipeInputs, { flexWrap: 'wrap', justifyContent: 'flex-end', flex: 2, gap: 4 }]}>
-                                <View style={styles.inputGroup}>
-                                    <Input
-                                        size="$2"
-                                        width={60}
-                                        placeholder="1.5"
-                                        keyboardType="numeric"
-                                        backgroundColor="$backgroundStrong"
-                                        borderColor="$borderColor"
-                                        value={item.amount}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].amount = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                    />
-                                </View>
-                                <View style={styles.inputGroup}>
-                                    <Input
-                                        size="$2"
-                                        width={60}
-                                        placeholder="oz"
-                                        backgroundColor="$backgroundStrong"
-                                        borderColor="$borderColor"
-                                        value={item.unit}
-                                        onChangeText={(v) => {
-                                            const newItems = [...recipeItems];
-                                            newItems[index].unit = v;
-                                            setRecipeItems(newItems);
-                                        }}
-                                    />
-                                </View>
-                                <TouchableOpacity onPress={() => {
-                                    const newItems = recipeItems.filter((_, i) => i !== index);
-                                    setRecipeItems(newItems);
-                                }}>
-                                    <IconSymbol name="trash" size={20} color="#ff4444" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
+                    <SortableRecipeList
+                        items={recipeItems}
+                        onReorder={setRecipeItems}
+                        onUpdateItem={(index, updates) => {
+                            const newItems = [...recipeItems];
+                            newItems[index] = { ...newItems[index], ...updates };
+                            setRecipeItems(newItems);
+                        }}
+                        onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                        variant="row"
+                        onNestedItemPress={onNestedItemPress}
+                    />
                 </YStack>
 
                 <YStack gap="$2" marginBottom="$4">
@@ -718,7 +650,7 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
                     overridePrep={overridePrep} setOverridePrep={setOverridePrep}
                 />
 
-            </ScrollView>
+            </FormScrollContainer>
             </KeyboardAvoidingView>
 
             {/* Native Modal for adding categories avoiding gorhom issues */}
@@ -843,30 +775,6 @@ const styles = StyleSheet.create({
     content: {
         paddingHorizontal: 16,
         paddingTop: 16,
-    },
-    recipeRow: {
-        padding: 12,
-        borderRadius: 12,
-        marginBottom: 8,
-    },
-    recipeName: {
-        flex: 1,
-        fontSize: 16,
-        paddingRight: 8
-    },
-    recipeInputs: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center'
-    },
-    inputGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4
-    },
-    unitText: {
-        color: '#666',
-        fontSize: 12
     },
     modalOverlay: {
         flex: 1,
