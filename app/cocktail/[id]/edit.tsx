@@ -207,19 +207,9 @@ export default function EditCocktailScreen({ isInline, idProp, onClose, onSave, 
             }
 
             if (c.recipes) {
-                const mappedRecipes = sortRecipesByOrder(c.recipes).map((r: any) => ({
-                    id: r.id,
-                    ingredient_id: r.ingredient?.id || r.display_ingredient_id || r.ingredient_item_id,
-                    name: r.ingredient?.name || "Unknown",
-                    bsp: "", // Deprecated
-                    ml: "", // Deprecated
-                    dash: "", // Deprecated
-                    amount: r.amount?.toString() || "",
-                    unit: r.unit || "",
-                    preparation_notes: r.preparation_notes || "",
-                    is_optional: r.is_optional || false,
-                    is_top: false // Deprecated
-                }));
+                const mappedRecipes = sortRecipesByOrder(c.recipes).map((r: any) =>
+                    mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })
+                );
                 setRecipeItems(mappedRecipes);
             }
 

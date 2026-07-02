@@ -31,7 +31,7 @@ import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } 
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
-import { sortRecipesByOrder } from "@/lib/recipeUtils";
+import { sortRecipesByOrder, mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
 
 interface RecipeItem {
@@ -142,14 +142,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             }
         }
         if (data?.recipe) {
-            const items: RecipeItem[] = sortRecipesByOrder(data.recipe).map((r: any) => ({
-                id: r.id,
-                ingredient_id: r.ingredient_item_id || r.display_ingredient_id || r.ingredient?.id || r.id,
-                name: r.ingredient?.name || "Unknown",
-                amount: r.amount?.toString() || "",
-                unit: r.unit || "",
-            }));
-            setRecipeItems(items);
+            setRecipeItems(sortRecipesByOrder(data.recipe).map(mapPresentationRecipeToEditItem));
         }
     }, [data]);
 

@@ -27,7 +27,6 @@ interface SortableRecipeListProps {
     onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove: (index: number) => void;
     variant?: 'row' | 'card';
-    nested?: boolean;
     onNestedItemPress?: (ingredientId: string) => void;
     drafts?: any[];
     dropdowns?: any;
@@ -39,7 +38,6 @@ export function SortableRecipeList({
     onUpdateItem,
     onRemove,
     variant = 'row',
-    nested = true,
     onNestedItemPress,
     drafts,
     dropdowns,
@@ -175,8 +173,7 @@ export function SortableRecipeList({
         );
     };
 
-    const ListComponent =
-        nested && supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
+    const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
     if (items.length === 0) return null;
 
