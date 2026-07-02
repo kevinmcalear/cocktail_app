@@ -10,7 +10,7 @@ import { useWines } from "@/hooks/useWines";
 import { Image } from "expo-image";
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text, useTheme, XStack, YStack } from "tamagui";
+import { Text, useTheme, XStack } from "tamagui";
 import { useRouter } from "expo-router";
 import { useAppStore } from "@/store/useAppStore";
 import { useDrafts } from "@/hooks/useDrafts";
@@ -36,6 +36,21 @@ function getDrinkPhotoSource(item: SearchItem) {
     if (item.image) return item.image;
     if (item.item_images?.[0]?.images?.url) return { uri: item.item_images[0].images.url };
     return null;
+}
+
+function inferDrinkCategory(id: string, category?: SearchItem["category"]): SearchItem["category"] {
+    if (category === "Beer" || category === "Wine" || category === "Cocktail") return category;
+    if (id.startsWith("beer-")) return "Beer";
+    if (id.startsWith("wine-")) return "Wine";
+    return "Cocktail";
+}
+
+function resolveMenuDrink(cocktailId: string, allDrinks: SearchItem[]): SearchItem {
+    return allDrinks.find((x) => x.id === cocktailId) ?? {
+        id: cocktailId,
+        name: "Unknown Drink",
+        category: inferDrinkCategory(cocktailId),
+    };
 }
 
 function DrinkThumb({
@@ -65,15 +80,15 @@ function DrinkThumb({
         );
     }
 
-    const isBeer = item.category === "Beer" || item.id.startsWith("beer-");
-    const isWine = item.category === "Wine" || item.id.startsWith("wine-");
+    const id = item.id ?? "";
+    const category = inferDrinkCategory(id, item.category);
     const glassware = dropdowns?.glassware?.find((g: any) => g.id === item.glassware_id);
 
     return (
         <View style={[drinkThumbStyles.drinkThumb, drinkThumbStyles.drinkThumbPlaceholder, { backgroundColor: placeholderBg }]}>
-            {isBeer ? (
+            {category === "Beer" ? (
                 <IconSymbol name="mug.fill" size={24} color={iconColor} />
-            ) : isWine ? (
+            ) : category === "Wine" ? (
                 <IconSymbol name="wineglass.fill" size={22} color={iconColor} />
             ) : glassware ? (
                 <GlasswareIcon
@@ -315,28 +330,26 @@ export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDr
                             </View>
 
                             {selections[sec.id]?.map((cocktailId) => {
-                                const c = allDrinks.find(x => x.id === cocktailId) || { name: "Unknown Drink", isDraft: false };
+                                const drink = resolveMenuDrink(cocktailId, allDrinks);
                                 return (
                                     <View key={cocktailId} style={styles.cocktailRow}>
                                         <XStack flex={1} alignItems="center" gap="$3" marginRight="$2">
                                             <DrinkThumb
-                                                item={c as SearchItem}
+                                                item={drink}
                                                 dropdowns={dropdowns}
                                                 theme={theme}
                                                 isDark={isDark}
                                             />
-                                            <YStack flex={1} gap="$0.5">
-                                                <XStack alignItems="center" gap="$2" flexWrap="wrap">
-                                                    <Text style={styles.cocktailName} numberOfLines={1}>
-                                                        {capitalize(c?.name)}
+                                            <XStack alignItems="center" gap="$2" flex={1} flexWrap="wrap">
+                                                <Text style={styles.cocktailName} numberOfLines={1}>
+                                                    {capitalize(drink.name)}
+                                                </Text>
+                                                {drink.isDraft && (
+                                                    <Text style={styles.draftPct}>
+                                                        {drink.draftProgress?.percentage ?? 0}%
                                                     </Text>
-                                                    {c?.isDraft && (
-                                                        <Text style={styles.draftPct}>
-                                                            {c.draftProgress?.percentage ?? 0}%
-                                                        </Text>
-                                                    )}
-                                                </XStack>
-                                            </YStack>
+                                                )}
+                                            </XStack>
                                         </XStack>
                                         <TouchableOpacity
                                             onPress={() => handleRemoveCocktail(sec.id, cocktailId)}
