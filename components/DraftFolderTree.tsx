@@ -9,6 +9,20 @@ import { capitalize } from "@/lib/stringUtils";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useRouter } from "expo-router";
 
+const DRAFT_AMBER = "#E5A93B";
+
+function DraftProgressBadge({ percentage }: { percentage: number }) {
+    return (
+        <Text fontSize={10} color={DRAFT_AMBER} fontWeight="bold" marginLeft="$1">
+            {percentage}%
+        </Text>
+    );
+}
+
+function folderIconColor(isSelected: boolean, theme: ReturnType<typeof useTheme>) {
+    return isSelected ? (theme.color8?.get() as string) : DRAFT_AMBER;
+}
+
 export type DraftNodeType = 
     | "bar" 
     | "folder" 
@@ -613,7 +627,7 @@ function MenuDraftTreeNode({ menuDraft, allDrafts, allDrinks, dropdowns, selecte
     const [expanded, setExpanded] = useState(false);
 
     const isSelected = selectedNode?.type === "menu_draft" && selectedNode?.id === menuDraft.id;
-    const progressInfo = calculateDraftProgress(menuDraft, allDrafts, dropdowns);
+    const { percentage } = calculateDraftProgress(menuDraft, allDrafts, dropdowns);
 
     const data = menuDraft.draft_data || {};
     const name = data.name || data.menuName || "Untitled Menu";
@@ -659,14 +673,12 @@ function MenuDraftTreeNode({ menuDraft, allDrafts, allDrinks, dropdowns, selecte
                         <IconSymbol 
                             name="folder.fill" 
                             size={15} 
-                            color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
+                            color={folderIconColor(isSelected, theme)} 
                         />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
-                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold" marginLeft="$1">
-                            {progressInfo.percentage}%
-                        </Text>
+                        <DraftProgressBadge percentage={percentage} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>
@@ -761,7 +773,7 @@ function DrinkDraftTreeNode({ drinkDraft, allDrafts, dropdowns, selectedNode, on
     const [expanded, setExpanded] = useState(false);
 
     const isSelected = selectedNode?.type === "drink_draft" && selectedNode?.id === drinkDraft.id;
-    const progressInfo = calculateDraftProgress(drinkDraft, allDrafts, dropdowns);
+    const { percentage } = calculateDraftProgress(drinkDraft, allDrafts, dropdowns);
 
     const data = drinkDraft.draft_data || {};
     const name = data.name || `Untitled ${capitalize(drinkDraft.entity_type)}`;
@@ -807,9 +819,7 @@ function DrinkDraftTreeNode({ drinkDraft, allDrafts, dropdowns, selectedNode, on
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
-                        <Text fontSize={10} color={progressInfo.color} fontWeight="bold" marginLeft="$1">
-                            {progressInfo.percentage}%
-                        </Text>
+                        <DraftProgressBadge percentage={percentage} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>
@@ -909,7 +919,6 @@ function PublishedDrinkTreeNode({ id, name, recipes, allDrafts, allDrinks, dropd
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {name}
                         </Text>
-                        <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>
@@ -1035,7 +1044,6 @@ function PublishedIngredientTreeNode({ id, name, selectedNode, onNodeSelect }: P
                     <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                         {name}
                     </Text>
-                    <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                 </XStack>
             </TouchableOpacity>
         </XStack>
@@ -1110,12 +1118,11 @@ function PublishedMenuTreeNode({ menu, allDrinks, allDrafts, dropdowns, selected
                         <IconSymbol 
                             name="folder.fill" 
                             size={15} 
-                            color={isSelected ? theme.color8?.get() as string : "#E5A93B"} 
+                            color={folderIconColor(isSelected, theme)} 
                         />
                         <Text fontSize={13} color={isSelected ? "$color8" : "$color"}>
                             {menu.name}
                         </Text>
-                        <IconSymbol name="checkmark" size={14} color="#34C759" style={{ marginLeft: 4 }} />
                     </XStack>
                 </TouchableOpacity>
             </XStack>
