@@ -46,12 +46,17 @@ const MAPPING = {
   'tag.fill': 'local-offer',
   'person.circle.fill': 'account-circle',
   'building.2.fill': 'business',
+  'building.2': 'business',
   'plus.circle': 'add-circle-outline',
   'play.fill': 'play-arrow',
   'flask': 'science',
   'line.3.horizontal': 'drag-handle',
   'line.3.horizontal.decrease': 'sort',
   'camera.fill': 'photo-camera',
+  'circle.lefthalf.filled': 'brightness-6',
+  'rectangle.portrait.and.arrow.right': 'logout',
+  'magnifyingglass': 'search',
+  'arrow.up': 'arrow-upward',
 } as Partial<IconMapping>;
 
 /**

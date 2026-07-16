@@ -12,6 +12,8 @@ interface BarInlineEditorProps {
     barId: string;
     onClose?: () => void;
     onChromeState?: (state: EditorChromeState | null) => void;
+    /** Skip own ScrollView when nested in a parent scroller (e.g. Settings). */
+    embedded?: boolean;
 }
 
 function getRoleName(level: number) {
@@ -90,7 +92,7 @@ function ColorField({
     );
 }
 
-export function BarInlineEditor({ barId, onClose, onChromeState }: BarInlineEditorProps) {
+export function BarInlineEditor({ barId, onClose, onChromeState, embedded = false }: BarInlineEditorProps) {
     const theme = useTheme();
     const editor = useBarEditor(barId);
     const saveRef = useRef(editor.handleSave);
@@ -156,9 +158,8 @@ export function BarInlineEditor({ barId, onClose, onChromeState }: BarInlineEdit
         </YStack>
     );
 
-    return (
-        <YStack flex={1}>
-            <ScrollView flex={1} contentContainerStyle={{ padding: 24, gap: 20 }} showsVerticalScrollIndicator={false}>
+    const body = (
+        <YStack gap="$4">
             <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$4" alignItems="center">
                     <TouchableOpacity
@@ -299,7 +300,18 @@ export function BarInlineEditor({ barId, onClose, onChromeState }: BarInlineEdit
                     <Text color="$color11" fontStyle="italic" fontSize={13}>No items assigned to this venue yet.</Text>
                 )}
             </YStack>
-        </ScrollView>
+        </YStack>
+    );
+
+    if (embedded) {
+        return <YStack padding="$2">{body}</YStack>;
+    }
+
+    return (
+        <YStack flex={1}>
+            <ScrollView flex={1} contentContainerStyle={{ padding: 24, gap: 20 }} showsVerticalScrollIndicator={false}>
+                {body}
+            </ScrollView>
         </YStack>
     );
 }
