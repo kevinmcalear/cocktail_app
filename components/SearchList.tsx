@@ -1,26 +1,40 @@
 import { AlphabetScroller } from "@/components/AlphabetScroller";
 import { FilterModal } from "@/components/FilterModal";
 import { SearchBar, SearchChip } from "@/components/SearchBar";
+import { WEB_SIDEBAR_WIDTH } from "@/components/WebSidebar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { useSettingsStore } from "@/store/useSettingsStore";
+import { useAppStore } from "@/store/useAppStore";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { capitalize } from "@/lib/stringUtils";
-import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken } from "react-native";
+import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken, useWindowDimensions } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
+
+// ponytail: columns from the panel width (not the window — sidebar steals space)
+const DESKTOP_BREAKPOINT = 768;
+const GRID_PAD_H = 28;
+const GRID_GAP = 20;
+const ALPHA_SCROLLER_WIDTH = 40; // matches AlphabetScroller
+function getGridColumns(width: number) {
+    if (width >= 1200) return 5;
+    if (width >= 900) return 4;
+    if (width >= DESKTOP_BREAKPOINT) return 3;
+    if (width >= 520) return 2;
+    return 1;
+}
 
 export interface SearchItem {
     id: string;
     name: string;
     description?: string | null;
-    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category";
+    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category" | "Menu";
     isDraft?: boolean;
     draftProgress?: any;
     price?: string | null;
@@ -45,6 +59,7 @@ export interface SearchItem {
     method_id?: string | null;
     glassware_id?: string | null;
     family_id?: string | null;
+    ice_id?: string | null;
 }
 
 interface SearchListProps {
@@ -63,13 +78,23 @@ interface SearchListProps {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        overflow: "hidden",
+        minWidth: 0,
     },
     contentContainer: {
         flex: 1,
+        overflow: "hidden",
+        minWidth: 0,
     },
     listContent: {
         paddingHorizontal: 16,
         paddingTop: 0,
+    },
+    gridRow: {
+        flexDirection: "row",
+        flexWrap: "nowrap",
+        gap: GRID_GAP,
+        marginBottom: GRID_GAP,
     },
     header: {
         flexDirection: "row",
@@ -146,7 +171,8 @@ const SearchItemCard = memo(function SearchItemCard({
     onToggleFavorite,
     onToggleStudyPile,
     onPress,
-    onCategoryPress
+    onCategoryPress,
+    layout = "list",
 }: {
     drink: SearchItem;
     isFav: boolean;
@@ -155,8 +181,10 @@ const SearchItemCard = memo(function SearchItemCard({
     onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
     onPress?: (drink: SearchItem) => void;
     onCategoryPress?: (id: string, name: string) => void;
+    layout?: "list" | "grid";
 }) {
     let swipeableRef: Swipeable | null = null;
+    const isGrid = layout === "grid";
 
     let subText = drink.recipes?.map(r => r.ingredient?.name ? capitalize(r.ingredient.name) : "").filter(Boolean).join(", ") || drink.description || "No description";
 
@@ -164,7 +192,9 @@ const SearchItemCard = memo(function SearchItemCard({
         subText = `${drink.price} • ${subText}`;
     }
     if (drink.category && drink.category !== "Cocktail") {
-        subText = `${drink.category.toUpperCase()} • ${subText}`;
+        subText = drink.category === "Menu"
+            ? "Menu"
+            : `${drink.category.toUpperCase()} • ${subText}`;
     }
 
     const renderRightActions = () => (
@@ -188,11 +218,74 @@ const SearchItemCard = memo(function SearchItemCard({
 
     const theme = useTheme();
 
-    const cardContent = (
+    const draftBadge = drink.isDraft ? (
+        <View style={{
+            backgroundColor: drink.draftProgress?.badgeBg || "rgba(255, 165, 0, 0.15)",
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: drink.draftProgress?.color || "rgba(255, 165, 0, 0.4)",
+            alignSelf: "flex-start",
+        }}>
+            <Text style={{
+                color: drink.draftProgress?.badgeText || "#ffa500",
+                fontSize: 10,
+                fontWeight: "bold",
+            }} textTransform="uppercase">
+                {drink.draftProgress ? `${drink.draftProgress.label} (${drink.draftProgress.percentage}%)` : "Draft"}
+            </Text>
+        </View>
+    ) : null;
+
+    const cardContent = isGrid ? (
         <Card
-            borderWidth={drink.category === "Category" ? 1 : 0}
-            backgroundColor={drink.category === "Category" ? "$color4" : "$backgroundStrong"}
-            borderColor={drink.category === "Category" ? theme.color8?.get() as string : "transparent"}
+            borderWidth={0}
+            backgroundColor="$backgroundStrong"
+            overflow="hidden"
+            elevation={0}
+            borderRadius={16}
+            width="100%"
+            marginBottom={0}
+            pressStyle={{ scale: 0.985, opacity: 0.92 }}
+            onPress={onPress ? () => onPress(drink) : undefined}
+            cursor="pointer"
+        >
+            {drink.category === "Category" || drink.category === "Menu" ? (
+                <YStack width="100%" aspectRatio={1} alignItems="center" justifyContent="center" backgroundColor="$color4" gap="$3">
+                    <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: theme.color7?.get() as string, justifyContent: 'center', alignItems: 'center' }}>
+                        <IconSymbol name={drink.category === "Menu" ? "note.text" : "tag.fill"} size={26} color={theme.color11?.get() as string} />
+                    </View>
+                </YStack>
+            ) : (
+                <Image
+                    source={getImage(drink)}
+                    style={{ width: "100%", aspectRatio: 1, backgroundColor: theme.color5?.get() as string }}
+                    contentFit="cover"
+                    transition={400}
+                />
+            )}
+            <YStack paddingHorizontal="$3" paddingTop="$3" paddingBottom="$4" gap="$1.5">
+                <H4
+                    color="$color"
+                    fontSize={16}
+                    fontWeight="600"
+                    numberOfLines={1}
+                    letterSpacing={-0.2}
+                >
+                    {capitalize(drink.name)}
+                </H4>
+                {draftBadge}
+                <Paragraph color="$color11" size="$2" numberOfLines={2} opacity={0.85}>
+                    {subText}
+                </Paragraph>
+            </YStack>
+        </Card>
+    ) : (
+        <Card
+            borderWidth={drink.category === "Category" || drink.category === "Menu" ? 1 : 0}
+            backgroundColor={drink.category === "Category" || drink.category === "Menu" ? "$color4" : "$backgroundStrong"}
+            borderColor={drink.category === "Category" || drink.category === "Menu" ? theme.color8?.get() as string : "transparent"}
             overflow="hidden"
             marginBottom="$3"
             elevation="$1"
@@ -200,10 +293,10 @@ const SearchItemCard = memo(function SearchItemCard({
             pressStyle={{ scale: 0.98 }}
             onPress={onPress ? () => onPress(drink) : undefined}
         >
-            <Card.Header flexDirection="row" padding="$3" minHeight={drink.category === "Category" ? 80 : 100} alignItems="center">
-                {drink.category === "Category" && (
+            <Card.Header flexDirection="row" padding="$3" minHeight={drink.category === "Category" || drink.category === "Menu" ? 80 : 100} alignItems="center">
+                {(drink.category === "Category" || drink.category === "Menu") && (
                     <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.color7?.get() as string, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                        <IconSymbol name="tag.fill" size={24} color={theme.color11?.get() as string} />
+                        <IconSymbol name={drink.category === "Menu" ? "note.text" : "tag.fill"} size={24} color={theme.color11?.get() as string} />
                     </View>
                 )}
                 <YStack flex={1} paddingRight="$3" gap="$1" justifyContent="center">
@@ -217,46 +310,62 @@ const SearchItemCard = memo(function SearchItemCard({
                         >
                             {capitalize(drink.name)}
                         </H4>
-                        {drink.isDraft && (
-                            <View style={{
-                                backgroundColor: drink.draftProgress?.badgeBg || "rgba(255, 165, 0, 0.15)",
-                                paddingHorizontal: 8,
-                                paddingVertical: 2,
-                                borderRadius: 8,
-                                borderWidth: 1,
-                                borderColor: drink.draftProgress?.color || "rgba(255, 165, 0, 0.4)",
-                            }}>
-                                <Text style={{
-                                    color: drink.draftProgress?.badgeText || "#ffa500",
-                                    fontSize: 10,
-                                    fontWeight: "bold",
-                                }} textTransform="uppercase">
-                                    {drink.draftProgress ? `${drink.draftProgress.label} (${drink.draftProgress.percentage}%)` : "Draft"}
-                                </Text>
-                            </View>
-                        )}
+                        {draftBadge}
                     </XStack>
                     <Paragraph color="$color11" size="$3" numberOfLines={2}>
                         {subText}
                     </Paragraph>
                 </YStack>
-                {drink.category !== "Category" && (
+                {drink.category !== "Category" && drink.category !== "Menu" && (
                     <Image
                         source={getImage(drink)}
                         style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: theme.color5?.get() as string }}
                         contentFit="cover"
                         transition={500}
-                        onError={(e) => {
+                        onError={() => {
                             // Silent fallback
                         }}
                     />
                 )}
-                {drink.category === "Category" && (
+                {(drink.category === "Category" || drink.category === "Menu") && (
                     <IconSymbol name="chevron.right" size={24} color={theme.color8?.get() as string} />
                 )}
             </Card.Header>
         </Card>
     );
+
+    const linked = onPress ? (
+        cardContent
+    ) : drink.category === "Category" ? (
+        <TouchableOpacity onPress={() => onCategoryPress?.(drink.id.replace("category-", ""), drink.name)} activeOpacity={0.8}>
+            {cardContent}
+        </TouchableOpacity>
+    ) : drink.category === "Menu" ? (
+        <Link href="/(tabs)/menus" asChild>
+            {cardContent}
+        </Link>
+    ) : drink.category === "Beer" ? (
+        <Link href={`/beer/${drink.id}`} asChild>
+            {cardContent}
+        </Link>
+    ) : drink.category === "Wine" ? (
+        <Link href={`/wine/${drink.id}`} asChild>
+            {cardContent}
+        </Link>
+    ) : drink.category === "Ingredient" ? (
+        <Link href={`/ingredient/${drink.id}`} asChild>
+            {cardContent}
+        </Link>
+    ) : (
+        <Link href={`/cocktail/${drink.id}`} asChild>
+            {cardContent}
+        </Link>
+    );
+
+    // ponytail: swipe gestures are mobile-only; desktop uses click-through
+    if (isGrid) {
+        return linked;
+    }
 
     return (
         <Swipeable
@@ -265,39 +374,34 @@ const SearchItemCard = memo(function SearchItemCard({
             friction={2}
             rightThreshold={40}
         >
-            {onPress ? (
-                cardContent
-            ) : drink.category === "Category" ? (
-                <TouchableOpacity onPress={() => onCategoryPress?.(drink.id.replace("category-", ""), drink.name)} activeOpacity={0.8}>
-                    {cardContent}
-                </TouchableOpacity>
-            ) : drink.category === "Beer" ? (
-                <Link href={`/beer/${drink.id}`} asChild>
-                    {cardContent}
-                </Link>
-            ) : drink.category === "Wine" ? (
-                <Link href={`/wine/${drink.id}`} asChild>
-                    {cardContent}
-                </Link>
-            ) : drink.category === "Ingredient" ? (
-                <Link href={`/ingredient/${drink.id}`} asChild>
-                    {cardContent}
-                </Link>
-            ) : (
-                <Link href={`/cocktail/${drink.id}`} asChild>
-                    {cardContent}
-                </Link>
-            )}
+            {linked}
         </Swipeable>
     );
 });
 
-export function SearchList({ title, items, headerButtons, initialSearchQuery = "", hideHeader = false, isModal = false, onDrinkPress, onBackPress, onCreateNewPress, createNewText }: SearchListProps) {
+export function SearchList({
+    title,
+    items,
+    headerButtons,
+    initialSearchQuery = "",
+    hideHeader = false,
+    isModal = false,
+    onDrinkPress,
+    onBackPress,
+    onCreateNewPress,
+    createNewText,
+}: SearchListProps) {
     const router = useRouter();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
+    const { width: windowWidth } = useWindowDimensions();
+    const [containerWidth, setContainerWidth] = useState(0);
+    // Prefer measured panel; before layout, subtract default sidebar so first paint doesn't overflow
+    const layoutWidth = containerWidth > 0
+        ? containerWidth
+        : Math.max(0, windowWidth - WEB_SIDEBAR_WIDTH);
     const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-    const allCategories = ["Cocktails", "Beers", "Wines", "Ingredients"];
+    const allCategories = ["Menus", "Cocktails", "Beers", "Wines", "Ingredients"];
     const [activeFilters, setActiveFilters] = useState<string[]>(allCategories);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
     const [showFavesOnly, setShowFavesOnly] = useState(false);
@@ -306,6 +410,16 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
     const { toggleFavorite, isFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const { data: dropdowns } = useDropdowns();
+    const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
+
+    const alphabetVisible = !searchQuery && activeChips.length === 0;
+    const alphabetReserve = alphabetVisible ? ALPHA_SCROLLER_WIDTH : 0;
+    const usableWidth = Math.max(0, layoutWidth - alphabetReserve);
+    const numColumns = getGridColumns(usableWidth);
+    const isGrid = numColumns > 1;
+    const gridItemWidth = isGrid
+        ? (usableWidth - GRID_PAD_H * 2 - GRID_GAP * (numColumns - 1)) / numColumns
+        : undefined;
 
     const emptyStateQuery = useMemo(() => {
         return searchQuery || activeChips.filter(c => c.type === "Search").map(c => c.label.replace(/"/g, '')).join(" ") || "";
@@ -344,6 +458,7 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
 
         if (activeFilters.length !== allCategories.length) {
             const mappedFilters = activeFilters.map(f => {
+                 if (f === "Menus") return "Menu";
                  if (f === "Cocktails") return "Cocktail";
                  if (f === "Beers") return "Beer";
                  if (f === "Wines") return "Wine";
@@ -416,9 +531,10 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         }
 
         return result.sort((a, b) => {
-            // Force Categories to always appear at the top
-            if (a.category === "Category" && b.category !== "Category") return -1;
-            if (a.category !== "Category" && b.category === "Category") return 1;
+            const rank = (c?: SearchItem["category"]) =>
+                c === "Category" ? 0 : c === "Menu" ? 1 : 2;
+            const diff = rank(a.category) - rank(b.category);
+            if (diff !== 0) return diff;
             return a.name.localeCompare(b.name);
         });
     }, [items, searchQuery, activeFilters, allCategories, activeChips, showFavesOnly, isFavorite, dropdowns?.categories]);
@@ -476,9 +592,25 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         return sugs;
     }, [searchQuery, dropdowns, items, onCreateNewPress]);
 
-    // Section Headers Logic
+    type ListRow = { type: "row"; id: string; items: SearchItem[] };
+    type ListHeader = { type: "header"; letter: string; id: string };
+    type ListEntry = SearchItem | ListHeader | ListRow;
+
+    // Grid: chunk into rows (numColumns is flaky on RN web). List: A–Z headers.
     const listData = useMemo(() => {
-        const data: (SearchItem | { type: "header"; letter: string; id: string })[] = [];
+        if (isGrid) {
+            const rows: ListRow[] = [];
+            for (let i = 0; i < filteredDrinks.length; i += numColumns) {
+                rows.push({
+                    type: "row",
+                    id: `row-${i}`,
+                    items: filteredDrinks.slice(i, i + numColumns),
+                });
+            }
+            return rows as ListEntry[];
+        }
+
+        const data: ListEntry[] = [];
         let lastLetter = "";
         const seenLetters = new Set<string>();
 
@@ -508,10 +640,17 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         });
 
         return data;
-    }, [filteredDrinks]);
+    }, [filteredDrinks, isGrid, numColumns]);
 
     const handleScrollToLetter = useCallback((letter: string) => {
         const index = listData.findIndex((item) => {
+            if ("type" in item && item.type === "row") {
+                return item.items.some((drink) => {
+                    let first = drink.name.charAt(0).toUpperCase();
+                    if (/[0-9]/.test(first)) first = "#";
+                    return first === letter;
+                });
+            }
             if ("type" in item && item.type === "header") {
                 return item.letter === letter;
             }
@@ -552,7 +691,7 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                         <SearchBar
                             value={searchQuery}
                             onChangeText={setSearchQuery}
-                            placeholder={`Search drinks...`}
+                            placeholder="Search drinks..."
                             onFilterPress={() => setIsFilterModalVisible(true)}
                             chips={activeChips}
                             onRemoveChip={(chipId) => {
@@ -589,52 +728,101 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, [toggleStudyPile]);
 
-    const renderItem = useCallback(({ item }: { item: SearchItem | { type: "header"; letter: string; id: string } }) => {
+    const handleCategoryPress = useCallback((id: string, name: string) => {
+        setActiveChips(prev => {
+            if (prev.find(c => c.id === `category-${id}`)) return prev;
+            return [...prev, { id: `category-${id}`, label: name, type: "Category" }];
+        });
+        setSearchQuery("");
+    }, []);
+
+    const openItem = useCallback((drink: SearchItem) => {
+        if (drink.category === "Menu") {
+            setSelectedMenuId(drink.id.replace("menu-", ""));
+            router.push("/(tabs)/menus" as any);
+        } else if (drink.category === "Beer") {
+            router.push(`/beer/${drink.id}` as any);
+        } else if (drink.category === "Wine") {
+            router.push(`/wine/${drink.id}` as any);
+        } else if (drink.category === "Ingredient") {
+            router.push(`/ingredient/${drink.id}` as any);
+        } else if (drink.category === "Category") {
+            handleCategoryPress(drink.id.replace("category-", ""), drink.name);
+        } else {
+            router.push(`/cocktail/${drink.id}` as any);
+        }
+        onDrinkPress?.(drink);
+    }, [onDrinkPress, router, setSelectedMenuId, handleCategoryPress]);
+
+    const renderDrinkCard = useCallback((drink: SearchItem, layout: "list" | "grid") => (
+        <SearchItemCard
+            drink={drink}
+            isFav={isFavorite(drink.id)}
+            inStudy={isInStudyPile(drink.id)}
+            onToggleFavorite={handleToggleFavorite}
+            onToggleStudyPile={handleToggleStudyPile}
+            onPress={drink.category === "Menu" || onDrinkPress ? openItem : undefined}
+            layout={layout}
+            onCategoryPress={handleCategoryPress}
+        />
+    ), [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile, onDrinkPress, openItem, handleCategoryPress]);
+
+    const renderItem = useCallback(({ item }: { item: ListEntry }) => {
         if ("type" in item && item.type === "header") {
             return <SectionHeader letter={item.letter} />;
         }
 
-        const drink = item as SearchItem;
-        return (
-            <SearchItemCard
-                drink={drink}
-                isFav={isFavorite(drink.id)}
-                inStudy={isInStudyPile(drink.id)}
-                onToggleFavorite={handleToggleFavorite}
-                onToggleStudyPile={handleToggleStudyPile}
-                onPress={onDrinkPress}
-                onCategoryPress={(id, name) => {
-                    setActiveChips(prev => {
-                        if (prev.find(c => c.id === `category-${id}`)) return prev;
-                        return [...prev, { id: `category-${id}`, label: name, type: "Category" }];
-                    });
-                    setSearchQuery("");
-                }}
-            />
-        );
-    }, [isFavorite, isInStudyPile, handleToggleFavorite, handleToggleStudyPile, onDrinkPress]);
+        if ("type" in item && item.type === "row") {
+            return (
+                <View style={styles.gridRow}>
+                    {item.items.map((drink) => (
+                        <View key={drink.id} style={{ width: gridItemWidth }}>
+                            {renderDrinkCard(drink, "grid")}
+                        </View>
+                    ))}
+                </View>
+            );
+        }
+
+        return renderDrinkCard(item as SearchItem, "list");
+    }, [gridItemWidth, renderDrinkCard]);
 
     return (
-        <YStack style={styles.container} backgroundColor="$background">
+        <YStack
+            style={styles.container}
+            backgroundColor="$background"
+            onLayout={(e) => {
+                const next = e.nativeEvent.layout.width;
+                setContainerWidth((prev) => (prev === next ? prev : next));
+            }}
+        >
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: 'transparent' }} pointerEvents="box-none">
                 {renderHeader()}
             </View>
             <View style={styles.contentContainer}>
                 <FlatList
+                    key={`search-${isGrid ? numColumns : "list"}`}
                     ref={flatListRef}
                     data={listData}
-                    keyExtractor={(item) => ('name' in item ? item.id : `header-${item.letter}`)}
+                    keyExtractor={(item) => {
+                        if ("type" in item) return item.id;
+                        return item.id;
+                    }}
                     contentContainerStyle={[
-                        styles.listContent, 
+                        styles.listContent,
+                        isGrid && {
+                            paddingLeft: GRID_PAD_H,
+                            paddingRight: GRID_PAD_H + alphabetReserve,
+                        },
                         { 
                             paddingTop: (hideHeader ? (isModal ? 20 : insets.top + 4) : (isModal ? 60 : insets.top + 50)) + 76, 
-                            paddingBottom: 100 + insets.bottom 
+                            paddingBottom: 100 + insets.bottom,
                         }
                     ]}
                     showsVerticalScrollIndicator={false}
                     keyboardDismissMode="on-drag"
                     keyboardShouldPersistTaps="handled"
-                    onViewableItemsChanged={onViewableItemsChanged}
+                    onViewableItemsChanged={isGrid ? undefined : onViewableItemsChanged}
                     viewabilityConfig={{ itemVisiblePercentThreshold: 10 }}
                     onScrollToIndexFailed={(info) => {
                         flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
@@ -661,7 +849,7 @@ export function SearchList({ title, items, headerButtons, initialSearchQuery = "
                         </YStack>
                     }
                 />
-            {(!searchQuery && activeChips.length === 0) && (
+            {alphabetVisible && (
                 <AlphabetScroller onScrollToLetter={handleScrollToLetter} />
             )}
             </View>

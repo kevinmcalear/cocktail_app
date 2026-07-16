@@ -1,26 +1,31 @@
 import { config } from '@tamagui/config/v3'
 import { createFont, createTamagui } from 'tamagui'
 
+// ponytail: Inter for system UI; cocktail/menu presentation opts into IBMPlexSansItalic explicitly
 const bodyFont = createFont({
   ...config.fonts.body,
-  family: 'IBMPlexSans',
+  family: 'Inter',
   face: {
-    normal: { normal: 'IBMPlexSans' },
-    400: { normal: 'IBMPlexSans' },
-    700: { normal: 'IBMPlexSansBold' },
+    normal: { normal: 'Inter' },
+    400: { normal: 'Inter' },
+    500: { normal: 'InterMedium' },
+    600: { normal: 'InterSemiBold' },
+    700: { normal: 'InterBold' },
   }
 })
 
 const headingFont = createFont({
   ...config.fonts.heading,
-  family: 'IBMPlexSans',
+  family: 'Inter',
   face: {
     ...config.fonts.heading.face,
-    normal: { normal: 'IBMPlexSans' },
-    400: { normal: 'IBMPlexSans' },
-    700: { normal: 'IBMPlexSansBold' },
-    800: { normal: 'IBMPlexSansBold' },
-    900: { normal: 'IBMPlexSansBold' },
+    normal: { normal: 'Inter' },
+    400: { normal: 'Inter' },
+    500: { normal: 'InterMedium' },
+    600: { normal: 'InterSemiBold' },
+    700: { normal: 'InterBold' },
+    800: { normal: 'InterBold' },
+    900: { normal: 'InterBold' },
   }
 })
 

@@ -31,6 +31,7 @@ import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { EditorChromeState } from '@/lib/editorChrome';
+import { useCreatorNavStore } from '@/store/useCreatorNavStore';
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -51,6 +52,12 @@ export default function EditModeDashboard() {
 
     const { width } = useWindowDimensions();
     const isLargeScreen = width >= 768;
+    // ponytail: on web the explorer lives in WebSidebar; this screen is workspace-only
+    const isWebShell = Platform.OS === 'web';
+
+    const storeNode = useCreatorNavStore((s) => s.selectedNode);
+    const pendingCreate = useCreatorNavStore((s) => s.pendingCreate);
+    const clearPendingCreate = useCreatorNavStore((s) => s.clearPendingCreate);
 
     const [expandedSections, setExpandedSections] = React.useState<Record<string, Record<string, boolean>>>({});
     const [selectedNode, setSelectedNode] = React.useState<SelectedDraftNode | null>(null);
@@ -347,12 +354,26 @@ export default function EditModeDashboard() {
         setEditorChrome(null);
     }, [activeFrame?.node.id, activeFrame?.editing.mode]);
 
-    // Auto-select first item on large screen when items load
+    // Web sidebar drives selection / create into this workspace
     React.useEffect(() => {
+        if (!isWebShell || !storeNode || pendingCreate) return;
+        if (selectedNode?.id === storeNode.id && selectedNode?.type === storeNode.type) return;
+        openWorkspace(storeNode);
+    }, [isWebShell, storeNode, pendingCreate, selectedNode?.id, selectedNode?.type, openWorkspace]);
+
+    React.useEffect(() => {
+        if (!isWebShell || !pendingCreate) return;
+        openCreateWorkspace(pendingCreate.type, pendingCreate.barId);
+        clearPendingCreate();
+    }, [isWebShell, pendingCreate, clearPendingCreate]);
+
+    // Auto-select first item on large screen when items load (native / non-shell only)
+    React.useEffect(() => {
+        if (isWebShell) return;
         if (isLargeScreen && allItems.length > 0 && navigationStack.length === 0 && !selectedNode) {
             openWorkspace(buildNodeFromItem(allItems[0]));
         }
-    }, [isLargeScreen, allItems.length, navigationStack.length, selectedNode, openWorkspace]);
+    }, [isWebShell, isLargeScreen, allItems.length, navigationStack.length, selectedNode, openWorkspace]);
 
     const getBarName = (barId: string) => {
         if (barId === 'personal') return 'Personal Drafts';
@@ -446,11 +467,62 @@ export default function EditModeDashboard() {
     };
 
     if (isLargeScreen) {
+        const workspace = (
+            <YStack flex={1} height="100%">
+                {activeFrame ? (
+                    <CreatorWorkspace
+                        navigationStack={navigationStack}
+                        activeItem={activeItem}
+                        workspaceMeta={workspaceMeta}
+                        drafts={drafts}
+                        dropdowns={dropdowns}
+                        onNavigateToFrame={handleNavigateToFrame}
+                        onDiscard={activeItem ? () => (
+                            activeItem.isPublished
+                                ? handleDeletePublished(activeItem.id, activeItem.entity_type)
+                                : handleDeleteDraft(activeItem.id)
+                        ) : undefined}
+                        onCancel={editorChrome?.cancel}
+                        onSave={editorChrome ? () => void editorChrome.save() : undefined}
+                        saving={editorChrome?.saving}
+                        isDirty={editorChrome?.isDirty}
+                    >
+                        <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}`}>
+                            <CreatorWorkspaceEditor
+                                editing={activeFrame.editing}
+                                onClose={handleEditorClose}
+                                onSave={handleSaveComplete}
+                                onNestedItemPress={handleNestedItemPress}
+                                onCreateDrinkPress={handleCreateDrinkPress}
+                                onChromeState={setEditorChrome}
+                            />
+                        </React.Fragment>
+                    </CreatorWorkspace>
+                ) : (
+                    <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
+                        <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
+                        <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4" textAlign="center">
+                            Select an item from the sidebar to start editing, or create something new.
+                        </Text>
+                    </YStack>
+                )}
+            </YStack>
+        );
+
+        // Web: explorer is in WebSidebar — workspace fills the content column
+        if (isWebShell) {
+            return (
+                <YStack flex={1} backgroundColor="$background">
+                    <Stack.Screen options={{ headerShown: false }} />
+                    {workspace}
+                </YStack>
+            );
+        }
+
         return (
             <XStack flex={1} backgroundColor="$background" style={{ paddingTop: insets.top }}>
                 <Stack.Screen options={{ headerShown: false }} />
                 
-                {/* Column 1: Explorer Tree Sidebar (Left) */}
                 <YStack width={sidebarWidth} borderRightWidth={1} borderRightColor="$borderColor" height="100%" backgroundColor="$backgroundStrong">
                     <XStack paddingHorizontal="$4" paddingVertical="$4" alignItems="center" borderBottomWidth={1} borderBottomColor="$borderColor">
                         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
@@ -479,7 +551,6 @@ export default function EditModeDashboard() {
                     </YStack>
                 </YStack>
 
-                {/* Drag Handle */}
                 <YStack
                     position="absolute"
                     top={0}
@@ -489,7 +560,7 @@ export default function EditModeDashboard() {
                     zIndex={100}
                     alignItems="center"
                     backgroundColor="transparent"
-                    {...(Platform.OS === 'web' ? { onMouseDown: handleMouseDown } : panResponder.panHandlers)}
+                    {...panResponder.panHandlers}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     style={{ cursor: 'col-resize' } as any}
@@ -505,46 +576,7 @@ export default function EditModeDashboard() {
                     />
                 </YStack>
 
-                {/* Column 2: Creator Workspace */}
-                <YStack flex={1} height="100%">
-                    {activeFrame ? (
-                        <CreatorWorkspace
-                            navigationStack={navigationStack}
-                            activeItem={activeItem}
-                            workspaceMeta={workspaceMeta}
-                            drafts={drafts}
-                            dropdowns={dropdowns}
-                            onNavigateToFrame={handleNavigateToFrame}
-                            onDiscard={activeItem ? () => (
-                                activeItem.isPublished
-                                    ? handleDeletePublished(activeItem.id, activeItem.entity_type)
-                                    : handleDeleteDraft(activeItem.id)
-                            ) : undefined}
-                            onCancel={editorChrome?.cancel}
-                            onSave={editorChrome ? () => void editorChrome.save() : undefined}
-                            saving={editorChrome?.saving}
-                            isDirty={editorChrome?.isDirty}
-                        >
-                            <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}`}>
-                                <CreatorWorkspaceEditor
-                                    editing={activeFrame.editing}
-                                    onClose={handleEditorClose}
-                                    onSave={handleSaveComplete}
-                                    onNestedItemPress={handleNestedItemPress}
-                                    onCreateDrinkPress={handleCreateDrinkPress}
-                                    onChromeState={setEditorChrome}
-                                />
-                            </React.Fragment>
-                        </CreatorWorkspace>
-                    ) : (
-                        <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
-                            <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
-                            <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4" textAlign="center">
-                                Select an item from the tree to start editing, or create something new.
-                            </Text>
-                        </YStack>
-                    )}
-                </YStack>
+                {workspace}
             </XStack>
         );
     }
