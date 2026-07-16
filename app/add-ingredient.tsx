@@ -19,6 +19,7 @@ import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
@@ -147,6 +148,24 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const currentStateStr = JSON.stringify({ name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    useTrackRecent(
+        !!trackedDraft,
+        trackedDraft
+            ? recentEntry(
+                  'ingredient',
+                  trackedDraft.id,
+                  trackedDraft.draft_data?.name || name || 'Untitled Ingredient',
+                  {
+                      isDraft: true,
+                      barId: trackedDraft.bar_id ?? barId ?? null,
+                  }
+              )
+            : null
+    );
 
     useEffect(() => {
         if (needsCleanMark) {

@@ -5,6 +5,7 @@ import { beers } from "@/data/beers";
 import { wines } from "@/data/wines";
 import { useCocktails } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -40,6 +41,17 @@ export default function QuizScreen() {
     const includeMeasurements = params.includeMeasurements === "true";
 
     const { data: allCocktails, isLoading: loadingCocktails } = useCocktails();
+
+    const quizKey = [params.subject, params.cocktailCategory, params.cardCount].filter(Boolean).join('-');
+    useTrackRecent(
+        !!params.subject,
+        params.subject
+            ? recentEntry('quiz', quizKey || params.subject, `${params.subject} quiz`, {
+                subtitle: params.cocktailCategory || 'Quiz',
+                href: '/(tabs)/test',
+              })
+            : null
+    );
 
     useEffect(() => {
         if (!loadingCocktails) {

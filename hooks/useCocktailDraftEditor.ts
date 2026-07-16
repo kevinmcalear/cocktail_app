@@ -9,6 +9,7 @@ import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import {
     resolveIngredientId,
     updateMenuDraftsWithPublishedId,
@@ -68,6 +69,25 @@ export function useCocktailDraftEditor({
     const [overridePrep, setOverridePrep] = useState<string | null>(null);
     const [recipeItems, setRecipeItems] = useState<SortableRecipeItem[]>([]);
     const [localImages, setLocalImages] = useState<ImageItem[]>([]);
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    useTrackRecent(
+        enabled && !!trackedDraft,
+        trackedDraft
+            ? recentEntry(
+                  'cocktail',
+                  trackedDraft.id,
+                  trackedDraft.draft_data?.name || name || 'Untitled Cocktail',
+                  {
+                      isDraft: true,
+                      imageUrl: trackedDraft.draft_data?.localImages?.[0]?.url,
+                      barId: trackedDraft.bar_id ?? barId ?? null,
+                  }
+              )
+            : null
+    );
 
     const markDirty = useCallback(() => setIsDirty(true), []);
     const wrap = <T,>(setter: (v: T) => void) => (v: T) => {

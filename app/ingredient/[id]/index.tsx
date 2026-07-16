@@ -11,6 +11,7 @@ import { useBars } from "@/hooks/useBars";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useAppStore } from "@/store/useAppStore";
 
 interface IngredientDetail {
@@ -41,6 +42,16 @@ export default function IngredientDetailScreen() {
     const ingredient = data?.ingredient as IngredientDetail | null;
     const recipe = data?.recipe as unknown as RecipeItem[] || [];
     const usedIn = data?.usedIn || [];
+
+    useTrackRecent(
+        !!ingredient,
+        ingredient
+            ? recentEntry('ingredient', ingredient.id, ingredient.name, {
+                imageUrl: ingredient.item_images?.[0]?.images?.url,
+                barId: ingredient.bar_id ?? null,
+              })
+            : null
+    );
 
     const selectedBarId = useAppStore((state) => state.selectedBarId);
     const { data: bars } = useBars();

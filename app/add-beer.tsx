@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDrafts } from "@/hooks/useDrafts";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
@@ -78,6 +79,25 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, onClos
     const currentStateStr = JSON.stringify({ name, description, brewery, abv, price, selectedCategories, localImages, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep });
     const cleanStateStrRef = React.useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    useTrackRecent(
+        !!trackedDraft,
+        trackedDraft
+            ? recentEntry(
+                  'beer',
+                  trackedDraft.id,
+                  trackedDraft.draft_data?.name || name || 'Untitled Beer',
+                  {
+                      isDraft: true,
+                      imageUrl: trackedDraft.draft_data?.localImages?.[0]?.url,
+                      barId: trackedDraft.bar_id ?? barId ?? null,
+                  }
+              )
+            : null
+    );
 
     React.useEffect(() => {
         if (needsCleanMark) {

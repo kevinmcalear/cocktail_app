@@ -13,6 +13,7 @@ import { useCocktail } from "@/hooks/useCocktails";
 import { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -23,6 +24,16 @@ export default function CocktailDetailsScreen() {
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     const { data: cocktail, isLoading, error } = useCocktail(id as string);
+
+    useTrackRecent(
+        !!cocktail,
+        cocktail
+            ? recentEntry('cocktail', cocktail.id, cocktail.name, {
+                imageUrl: cocktail.item_images?.[0]?.images?.url,
+                barId: cocktail.bar_id ?? null,
+              })
+            : null
+    );
 
     const selectedBarId = useAppStore((state) => state.selectedBarId);
     const { data: bars } = useBars();

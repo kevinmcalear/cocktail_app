@@ -7,6 +7,7 @@ import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useWine } from "@/hooks/useWines";
 import { useBars } from "@/hooks/useBars";
 import { useAppStore } from "@/store/useAppStore";
@@ -23,6 +24,16 @@ export default function WineDetailsScreen() {
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     const { data: wine, isLoading } = useWine(safeId);
+
+    useTrackRecent(
+        !!wine,
+        wine
+            ? recentEntry('wine', wine.id, wine.name, {
+                imageUrl: wine.item_images?.[0]?.images?.url,
+                barId: wine.bar_id ?? null,
+              })
+            : null
+    );
     
     const selectedBarId = useAppStore((state) => state.selectedBarId);
     const { data: bars } = useBars();

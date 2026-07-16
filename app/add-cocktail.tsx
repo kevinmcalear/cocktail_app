@@ -26,6 +26,7 @@ import { Colors } from "@/constants/theme";
 import { useBars } from "@/hooks/useBars";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
@@ -155,7 +156,7 @@ export default function AddCocktailScreen({
     
     // Add local state for the active draft ID so newly created drafts are tracked
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
-    
+
     // Checkbox/Selection State (IDs)
     const [methodId, setMethodId] = useState<string | null>(null);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
@@ -175,6 +176,25 @@ export default function AddCocktailScreen({
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    useTrackRecent(
+        !!trackedDraft,
+        trackedDraft
+            ? recentEntry(
+                  'cocktail',
+                  trackedDraft.id,
+                  trackedDraft.draft_data?.name || name || 'Untitled Cocktail',
+                  {
+                      isDraft: true,
+                      imageUrl: trackedDraft.draft_data?.localImages?.[0]?.url,
+                      barId: trackedDraft.bar_id ?? barId ?? null,
+                  }
+              )
+            : null
+    );
 
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
 

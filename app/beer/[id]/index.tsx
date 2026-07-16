@@ -8,6 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBeer } from "@/hooks/useBeers";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useBars } from "@/hooks/useBars";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -23,6 +24,16 @@ export default function BeerDetailsScreen() {
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     const { data: beer, isLoading } = useBeer(safeId);
+
+    useTrackRecent(
+        !!beer,
+        beer
+            ? recentEntry('beer', beer.id, beer.name, {
+                imageUrl: beer.item_images?.[0]?.images?.url,
+                barId: beer.bar_id ?? null,
+              })
+            : null
+    );
     
     const selectedBarId = useAppStore((state) => state.selectedBarId);
     const { data: bars } = useBars();
