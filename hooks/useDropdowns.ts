@@ -8,18 +8,26 @@ export function useDropdowns() {
             const menusQuery = async () => {
                 const res = await supabase
                     .from('menus')
-                    .select('id, name, template_id, bar_id, created_at')
+                    .select('id, name, template_id, bar_id, created_at, cover_url')
                     .eq('is_active', true)
                     .order('created_at');
                 if (res.error) {
-                    console.warn("Failed to fetch menus with bar_id, attempting fallback:", res.error.message);
+                    console.warn("Failed to fetch menus with cover_url/bar_id, attempting fallback:", res.error.message);
+                    const withBar = await supabase
+                        .from('menus')
+                        .select('id, name, template_id, bar_id, created_at')
+                        .eq('is_active', true)
+                        .order('created_at');
+                    if (!withBar.error) {
+                        return (withBar.data || []).map((m) => ({ ...m, cover_url: null }));
+                    }
                     const fallbackRes = await supabase
                         .from('menus')
                         .select('id, name, template_id, created_at')
                         .eq('is_active', true)
                         .order('created_at');
                     if (fallbackRes.error) throw fallbackRes.error;
-                    return fallbackRes.data ? fallbackRes.data.map(m => ({ ...m, bar_id: null })) : [];
+                    return (fallbackRes.data || []).map((m) => ({ ...m, bar_id: null, cover_url: null }));
                 }
                 return res.data || [];
             };

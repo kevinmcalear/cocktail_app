@@ -1,20 +1,39 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { uriToBase64 } from "@/lib/imageBase64";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { decode } from "base64-arraybuffer";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter, useNavigation, useLocalSearchParams } from "expo-router";
 import React, { useState, useRef, useEffect } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { useDrafts } from "@/hooks/useDrafts";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 import { MenuEditorForm } from "@/components/menu/MenuEditorForm";
 import type { EditorChromeState } from "@/lib/editorChrome";
+
+async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
+    const ext = (uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
+    const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+    const path = menuId
+        ? `menus/${menuId}/${Date.now()}.${safeExt}`
+        : `menus/drafts/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+    const base64 = await uriToBase64(uri);
+    const { error } = await supabase.storage.from('drinks').upload(path, decode(base64), {
+        contentType: `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`,
+        upsert: false,
+    });
+    if (error) throw error;
+    return supabase.storage.from('drinks').getPublicUrl(path).data.publicUrl;
+}
 
 interface CreateMenuWizardProps {
     isInline?: boolean;
@@ -65,9 +84,33 @@ export default function CreateMenuWizard({
 
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [menuName, setMenuName] = useState("");
+    const [coverUrl, setCoverUrl] = useState<string | null>(null);
+    const [uploadingCover, setUploadingCover] = useState(false);
     const [selections, setSelections] = useState<Record<string, string[]>>({});
     const [saving, setSaving] = useState(false);
     const [barId, setBarId] = useState<string | null>(resolvedBarId);
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    useTrackRecent(
+        !!trackedDraft,
+        trackedDraft
+            ? recentEntry(
+                  'menu',
+                  trackedDraft.id,
+                  trackedDraft.draft_data?.menuName ||
+                      trackedDraft.draft_data?.name ||
+                      menuName ||
+                      'Untitled Menu',
+                  {
+                      isDraft: true,
+                      barId: trackedDraft.bar_id ?? barId ?? null,
+                      imageUrl: trackedDraft.draft_data?.coverUrl || coverUrl || null,
+                  }
+              )
+            : null
+    );
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
@@ -75,7 +118,7 @@ export default function CreateMenuWizard({
 
     const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
     const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
-    const currentStateStr = JSON.stringify({ selectedTemplateId, menuName, selections, barId });
+    const currentStateStr = JSON.stringify({ selectedTemplateId, menuName, selections, barId, coverUrl });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -93,6 +136,7 @@ export default function CreateMenuWizard({
                 const data = draft.draft_data;
                 setSelectedTemplateId(data.selectedTemplateId || null);
                 setMenuName(data.menuName || data.name || "");
+                setCoverUrl(data.coverUrl || null);
                 setSelections(data.selections || {});
                 setBarId(data.barId || activeBarIdProp || null);
                 setDraftLoaded(true);
@@ -139,6 +183,7 @@ export default function CreateMenuWizard({
                 setMenuName(menuData.name || '');
                 setSelectedTemplateId(menuData.template_id || null);
                 setBarId(menuData.bar_id || null);
+                setCoverUrl(menuData.cover_url || null);
                 setSelections(loadedSelections);
                 setMenuLoaded(true);
                 setDraftLoaded(true);
@@ -167,6 +212,7 @@ export default function CreateMenuWizard({
                         name: menuName,
                         selections,
                         barId,
+                        coverUrl,
                         hasVenueStep: true,
                     };
                     const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
@@ -185,7 +231,7 @@ export default function CreateMenuWizard({
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, saveDraft, router, isInline]);
+    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, saveDraft, router, isInline]);
 
     const handleSaveDraft = async () => {
         try {
@@ -196,6 +242,7 @@ export default function CreateMenuWizard({
                 name: menuName,
                 selections,
                 barId,
+                coverUrl,
                 hasVenueStep: true,
             };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
@@ -276,6 +323,33 @@ export default function CreateMenuWizard({
         setSelectedTemplateId(id);
     };
 
+    const pickCover = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission needed', 'We need access to your photos.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8,
+        });
+        if (result.canceled || !result.assets?.length) return;
+
+        setUploadingCover(true);
+        try {
+            const url = await uploadMenuCover(result.assets[0].uri, activeMenuIdProp || null);
+            setCoverUrl(url);
+        } catch (error) {
+            console.error('Menu cover upload error:', error);
+            Alert.alert('Error', 'Failed to upload cover image.');
+        } finally {
+            setUploadingCover(false);
+        }
+    };
+
     const isFormComplete = () => {
         if (!skipVenueStep && !barId) return false;
         if (!selectedTemplateId) return false;
@@ -342,7 +416,8 @@ export default function CreateMenuWizard({
                 name: capitalize(menuName),
                 template_id: selectedTemplateId,
                 is_active: true,
-                bar_id: barId || null
+                bar_id: barId || null,
+                cover_url: coverUrl || null,
             };
 
             let menuId = activeMenuIdProp || null;
@@ -354,13 +429,20 @@ export default function CreateMenuWizard({
                     .update(updatePayload)
                     .eq('id', activeMenuIdProp);
 
-                if (updateError && updateError.code === '42703') {
-                    delete updatePayload.bar_id;
-                    const retryRes = await supabase
+                // ponytail: optional columns may not exist until migrations land
+                if (updateError?.code === '42703' && 'cover_url' in updatePayload) {
+                    delete updatePayload.cover_url;
+                    ({ error: updateError } = await supabase
                         .from('menus')
                         .update(updatePayload)
-                        .eq('id', activeMenuIdProp);
-                    updateError = retryRes.error;
+                        .eq('id', activeMenuIdProp));
+                }
+                if (updateError?.code === '42703' && 'bar_id' in updatePayload) {
+                    delete updatePayload.bar_id;
+                    ({ error: updateError } = await supabase
+                        .from('menus')
+                        .update(updatePayload)
+                        .eq('id', activeMenuIdProp));
                 }
 
                 if (updateError) throw updateError;
@@ -378,16 +460,22 @@ export default function CreateMenuWizard({
                     .select()
                     .single();
 
-                if (menuError && menuError.code === '42703') {
-                    console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
-                    delete insertPayload.bar_id;
-                    const retryRes = await supabase
+                if (menuError?.code === '42703' && 'cover_url' in insertPayload) {
+                    delete insertPayload.cover_url;
+                    ({ data: newMenu, error: menuError } = await supabase
                         .from('menus')
                         .insert(insertPayload)
                         .select()
-                        .single();
-                    newMenu = retryRes.data;
-                    menuError = retryRes.error;
+                        .single());
+                }
+                if (menuError?.code === '42703' && 'bar_id' in insertPayload) {
+                    console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
+                    delete insertPayload.bar_id;
+                    ({ data: newMenu, error: menuError } = await supabase
+                        .from('menus')
+                        .insert(insertPayload)
+                        .select()
+                        .single());
                 }
 
                 if (menuError || !newMenu) throw menuError;
@@ -528,6 +616,10 @@ export default function CreateMenuWizard({
                     menuName={menuName}
                     onMenuNameChange={setMenuName}
                     onMenuNameBlur={() => setMenuName(capitalize(menuName))}
+                    coverUrl={coverUrl}
+                    uploadingCover={uploadingCover}
+                    onPickCover={pickCover}
+                    onClearCover={() => setCoverUrl(null)}
                     activeSections={activeSections}
                     selections={selections}
                     setSelections={setSelections}

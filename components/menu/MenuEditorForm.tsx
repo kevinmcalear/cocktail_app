@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
     Button,
@@ -29,6 +30,10 @@ interface MenuEditorFormProps {
     menuName: string;
     onMenuNameChange: (val: string) => void;
     onMenuNameBlur: () => void;
+    coverUrl: string | null;
+    uploadingCover: boolean;
+    onPickCover: () => void;
+    onClearCover: () => void;
     activeSections: any[];
     selections: Record<string, string[]>;
     setSelections: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
@@ -71,6 +76,10 @@ export function MenuEditorForm({
     menuName,
     onMenuNameChange,
     onMenuNameBlur,
+    coverUrl,
+    uploadingCover,
+    onPickCover,
+    onClearCover,
     activeSections,
     selections,
     setSelections,
@@ -214,7 +223,7 @@ export function MenuEditorForm({
             </Card>
 
             <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                <YStack gap="$2">
+                <YStack gap="$3">
                     <Label color="$color11">Menu Name *</Label>
                     <Input
                         value={menuName}
@@ -227,6 +236,36 @@ export function MenuEditorForm({
                         borderColor="$borderColor"
                         focusStyle={{ borderColor: '$color8' }}
                     />
+                    <YStack gap="$2">
+                        <Label color="$color11">Cover Image</Label>
+                        <TouchableOpacity onPress={onPickCover} activeOpacity={0.8} disabled={uploadingCover}>
+                            <View style={[styles.coverBox, { borderColor: theme.borderColor?.get() as string }]}>
+                                {uploadingCover ? (
+                                    <ActivityIndicator color={theme.color8?.get() as string} />
+                                ) : coverUrl ? (
+                                    <Image
+                                        source={{ uri: coverUrl }}
+                                        style={styles.coverImage}
+                                        contentFit="cover"
+                                    />
+                                ) : (
+                                    <YStack alignItems="center" gap="$2">
+                                        <IconSymbol name="camera.fill" size={28} color={theme.color11?.get() as string} />
+                                        <Text color="$color11" fontSize={12}>
+                                            Tap to upload cover
+                                        </Text>
+                                    </YStack>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+                        {coverUrl && !uploadingCover ? (
+                            <TouchableOpacity onPress={onClearCover} hitSlop={8}>
+                                <Text color="$color8" fontSize={12} fontWeight="600">
+                                    Remove cover
+                                </Text>
+                            </TouchableOpacity>
+                        ) : null}
+                    </YStack>
                 </YStack>
             </Card>
 
@@ -314,5 +353,20 @@ const styles = StyleSheet.create({
     },
     drinksEmbed: {
         marginHorizontal: -4,
+    },
+    coverBox: {
+        width: '100%',
+        aspectRatio: 16 / 9,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderStyle: 'dashed',
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+    },
+    coverImage: {
+        width: '100%',
+        height: '100%',
     },
 });
