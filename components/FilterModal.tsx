@@ -67,11 +67,12 @@ export function FilterModal({
     const backgroundColor = theme.background?.get() as string;
     const indicatorColor = theme.borderColor?.get() as string;
 
-    const allCategories = ["Cocktails", "Beers", "Wines", "Ingredients"];
+    const allCategories = ["Menus", "Cocktails", "Beers", "Wines", "Ingredients"];
     const isAllSelected = allCategories.every(cat => activeFilters.includes(cat));
 
     const getCategoryIcon = (cat: string) => {
         switch (cat) {
+            case "Menus": return "TabMenus";
             case "Cocktails": return "TabDrinks";
             case "Beers": return "Beer";
             case "Wines": return "Wine";
@@ -99,7 +100,7 @@ export function FilterModal({
                 
                 <YStack gap="$2" marginBottom="$5">
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600" marginBottom="$2">
-                        Category
+                        Filter
                     </Text>
                     <XStack flexWrap="wrap" gap="$2">
                         <Button
