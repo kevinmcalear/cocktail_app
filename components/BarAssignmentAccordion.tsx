@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Accordion, Label, XStack, YStack, Text, useTheme } from "tamagui";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBars } from "@/hooks/useBars";
+import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 
 interface BarAssignmentAccordionProps {
     barId: string | null;
@@ -110,14 +111,14 @@ export function BarAssignmentAccordion({
                     <Accordion.Content animation="medium" exitStyle={{ opacity: 0 }} padding="$3" borderTopWidth={1} borderColor="$borderColor">
                         <YStack gap="$3">
                             <YStack gap="$1">
-                                <Label color="$color11">Assign to Bar (Global if empty)</Label>
+                                <Label color="$color11">Assign to Bar (Personal if empty)</Label>
                                 <NativeModalPicker
                                     title="Assign to Bar"
                                     placeholder="Select Bar"
-                                    value={barId || 'global'}
-                                    onValueChange={(val: string) => setBarId(val === 'global' ? null : val)}
+                                    value={barId || PERSONAL_CONTEXT}
+                                    onValueChange={(val: string) => setBarId(val === PERSONAL_CONTEXT ? null : val)}
                                     items={[
-                                        { label: 'Global / Public', value: 'global' },
+                                        { label: 'Personal', value: PERSONAL_CONTEXT },
                                         ...(userBars || []).map((b: any) => ({ label: b.bars?.name, value: b.bar_id }))
                                     ]}
                                 />

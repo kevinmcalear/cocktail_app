@@ -2,13 +2,14 @@ import { supabase } from '@/lib/supabase';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
-export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boolean }) {
-    const selectedBarId = useAppStore(state => state.selectedBarId);
+export function useCocktails(options?: { allContexts?: boolean }) {
+    const selectedContextIds = useAppStore((state) => state.selectedContextIds);
 
     return useQuery({
-        queryKey: ['cocktails', selectedBarId, options],
+        queryKey: ['cocktails', selectedContextIds, options],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -16,8 +17,13 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
                     id,
                     name,
                     description,
+                    bar_id,
                     glassware_id,
                     family_id,
+                    ice_id,
+                    item_methods (
+                        method_item_id
+                    ),
                     recipes:app_recipe_presentation!recipe_item_id (
                         sort_order,
                         created_at,
@@ -56,14 +62,8 @@ export function useCocktails(options?: { globalOnly?: boolean; allContexts?: boo
                 `)
                 .eq('item_type', 'cocktail');
 
-            if (options?.allContexts) {
-                // Do not filter by bar_id, fetch everything user has access to
-            } else if (options?.globalOnly) {
-                query = query.is('bar_id', null);
-            } else if (selectedBarId) {
-                query = query.eq('bar_id', selectedBarId);
-            } else {
-                query = query.is('bar_id', null);
+            if (!options?.allContexts) {
+                query = applyBarContextFilter(query, selectedContextIds);
             }
 
             const { data, error } = await query.order('name', { ascending: true });

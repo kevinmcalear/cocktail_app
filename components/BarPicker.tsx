@@ -1,4 +1,5 @@
 import { useBars } from '@/hooks/useBars';
+import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { XStack, Text, useTheme, Select, YStack, Adapt, Sheet } from 'tamagui';
@@ -12,15 +13,15 @@ export function BarPicker() {
         return null; // Don't show picker if user has no bars
     }
 
-    const currentBarName = selectedBarId 
-        ? bars.find((b: any) => b.bar_id === selectedBarId)?.bars?.name || 'Global' 
-        : 'Global Context';
+    const currentBarName = selectedBarId
+        ? bars.find((b: any) => b.bar_id === selectedBarId)?.bars?.name || 'Personal'
+        : 'Personal';
 
     return (
         <XStack paddingHorizontal="$4" paddingBottom="$3" paddingTop="$1">
             <Select
-                value={selectedBarId || 'global'}
-                onValueChange={(val) => setSelectedBarId(val === 'global' ? null : val)}
+                value={selectedBarId || PERSONAL_CONTEXT}
+                onValueChange={(val) => setSelectedBarId(val === PERSONAL_CONTEXT ? null : val)}
                 disablePreventBodyScroll
             >
                 <Select.Trigger width="100%" backgroundColor="$color3" borderRadius="$4" borderWidth={0} iconAfter={<IconSymbol name="chevron.down" size={16} color={theme.color11?.get() as string} />}>
@@ -47,8 +48,8 @@ export function BarPicker() {
                     <Select.Viewport minWidth={200}>
                         <Select.Group>
                             <Select.Label>Switch Context</Select.Label>
-                            <Select.Item index={0} value="global">
-                                <Select.ItemText>Global Context</Select.ItemText>
+                            <Select.Item index={0} value={PERSONAL_CONTEXT}>
+                                <Select.ItemText>Personal</Select.ItemText>
                                 <Select.ItemIndicator marginLeft="auto">
                                     <IconSymbol name="checkmark" size={16} color={theme.color?.get() as string} />
                                 </Select.ItemIndicator>

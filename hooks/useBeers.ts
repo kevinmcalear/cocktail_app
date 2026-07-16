@@ -1,26 +1,21 @@
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
+import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
-export function useBeers(options?: { globalOnly?: boolean; allContexts?: boolean }) {
-    const selectedBarId = useAppStore(state => state.selectedBarId);
+export function useBeers(options?: { allContexts?: boolean }) {
+    const selectedContextIds = useAppStore((state) => state.selectedContextIds);
 
     return useQuery({
-        queryKey: ['beers', selectedBarId, options],
+        queryKey: ['beers', selectedContextIds, options],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
                 .select('*, item_images(sort_order,image_id,images(id,url)), item_categories(category_id)')
                 .eq('item_type', 'beer');
 
-            if (options?.allContexts) {
-                // Do not filter by bar_id
-            } else if (options?.globalOnly) {
-                query = query.is('bar_id', null);
-            } else if (selectedBarId) {
-                query = query.eq('bar_id', selectedBarId);
-            } else {
-                query = query.is('bar_id', null);
+            if (!options?.allContexts) {
+                query = applyBarContextFilter(query, selectedContextIds);
             }
 
             const { data, error } = await query.order('name', { ascending: true });

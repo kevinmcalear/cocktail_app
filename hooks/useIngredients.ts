@@ -1,14 +1,15 @@
 import { supabase } from '@/lib/supabase';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
 // Standard ingredient list query
-export function useIngredients(options?: { globalOnly?: boolean; allContexts?: boolean }) {
-    const selectedBarId = useAppStore(state => state.selectedBarId);
+export function useIngredients(options?: { allContexts?: boolean }) {
+    const selectedContextIds = useAppStore((state) => state.selectedContextIds);
 
     return useQuery({
-        queryKey: ['ingredients', selectedBarId, options],
+        queryKey: ['ingredients', selectedContextIds, options],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -24,15 +25,9 @@ export function useIngredients(options?: { globalOnly?: boolean; allContexts?: b
                     )
                 `)
                 .eq('item_type', 'ingredient');
-                
-            if (options?.allContexts) {
-                // Do not filter by bar_id
-            } else if (options?.globalOnly) {
-                query = query.is('bar_id', null);
-            } else if (selectedBarId) {
-                query = query.eq('bar_id', selectedBarId);
-            } else {
-                query = query.is('bar_id', null);
+
+            if (!options?.allContexts) {
+                query = applyBarContextFilter(query, selectedContextIds);
             }
 
             const { data, error } = await query.order('name');
