@@ -1,4 +1,5 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { contextLabel, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
@@ -32,17 +33,18 @@ function ContextIcon({
   size: number;
   color: string;
 }) {
-  if (option.id === PERSONAL_CONTEXT) {
-    return <IconSymbol name="person.circle.fill" size={size} color={color} />;
-  }
   if (option.logoUrl) {
+    const radius = option.id === PERSONAL_CONTEXT ? size / 2 : size / 4;
     return (
       <Image
         source={{ uri: option.logoUrl }}
-        style={{ width: size, height: size, borderRadius: size / 4 }}
+        style={{ width: size, height: size, borderRadius: radius }}
         contentFit="cover"
       />
     );
+  }
+  if (option.id === PERSONAL_CONTEXT) {
+    return <IconSymbol name="person.circle.fill" size={size} color={color} />;
   }
   return <IconSymbol name="building.2" size={size} color={color} />;
 }
@@ -50,6 +52,7 @@ function ContextIcon({
 /** Multi-select: Personal + venues. Drives catalog context. */
 export function VenueContextPicker() {
   const theme = useTheme();
+  const { user } = useAuth();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { data: bars } = useBars();
   const selectedContextIds = useAppStore((s) => s.selectedContextIds);
@@ -63,6 +66,7 @@ export function VenueContextPicker() {
   const color = theme.color?.get() as string;
   const border = theme.borderColor?.get() as string;
   const surface = theme.backgroundStrong?.get() as string;
+  const avatarUrl = (user?.user_metadata?.avatar_url as string | undefined) ?? null;
 
   const venueOptions = useMemo(
     () =>
@@ -79,14 +83,14 @@ export function VenueContextPicker() {
 
   const options: Option[] = useMemo(
     () => [
-      { id: PERSONAL_CONTEXT, label: 'Personal' },
+      { id: PERSONAL_CONTEXT, label: 'Personal', logoUrl: avatarUrl },
       ...venueOptions.map((v) => ({
         id: v.bar_id,
         label: v.name,
         logoUrl: v.logo_url,
       })),
     ],
-    [venueOptions]
+    [venueOptions, avatarUrl]
   );
 
   const label = contextLabel(
@@ -96,16 +100,11 @@ export function VenueContextPicker() {
   const allIds = options.map((o) => o.id);
   const allSelected = allIds.every((id) => selectedContextIds.includes(id));
 
-  // Logo only when exactly one venue is selected; multi → generic building
-  const triggerOption: Option = useMemo(() => {
-    if (selectedContextIds.length === 1) {
-      return options.find((o) => o.id === selectedContextIds[0]) || {
-        id: PERSONAL_CONTEXT,
-        label: 'Personal',
-      };
-    }
-    return { id: 'multi', label };
-  }, [selectedContextIds, options, label]);
+  // Single selection → that option's icon; multi → generic building
+  const triggerOption: Option =
+    selectedContextIds.length === 1
+      ? options.find((o) => o.id === selectedContextIds[0]) || options[0]
+      : { id: 'multi', label };
 
   const openMenu = () => {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
@@ -143,10 +142,12 @@ export function VenueContextPicker() {
           style={styles.trigger}
         >
           <XStack alignItems="center" gap={6}>
-            <ContextIcon option={triggerOption} size={14} color={muted} />
-            <Text fontSize={13} color="$color11" fontWeight="500">
-              {label}
-            </Text>
+            <ContextIcon option={triggerOption} size={16} color={muted} />
+            {label === 'All' && (
+              <Text fontSize={13} color="$color11" fontWeight="500">
+                All
+              </Text>
+            )}
             <IconSymbol name="chevron.down" size={11} color={muted} />
           </XStack>
         </Pressable>
