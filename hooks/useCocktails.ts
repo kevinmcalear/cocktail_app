@@ -21,7 +21,7 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     glassware_id,
                     family_id,
                     ice_id,
-                    item_methods (
+                    item_methods!item_methods_item_id_fkey (
                         method_item_id
                     ),
                     recipes:app_recipe_presentation!recipe_item_id (
