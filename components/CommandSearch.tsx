@@ -558,8 +558,6 @@ export function CommandSearch({
   }, []);
 
   const mod = Platform.OS === 'ios' || Platform.OS === 'web' ? '⌘' : 'Ctrl';
-  const chromeMaxWidth = hideChrome && Platform.OS === 'web' ? HOME_CHROME_MAX : undefined;
-  const chromeAlign = hideChrome && Platform.OS === 'web' ? ('center' as const) : ('stretch' as const);
 
   const renderCell = (cell: Selectable, selIndex: number) => {
     const isActive = selIndex === activeIndex;
@@ -774,7 +772,7 @@ export function CommandSearch({
           onPress={onDismiss ? (e) => e.stopPropagation() : undefined}
           style={{
             width: '100%',
-            maxWidth: chromeCentered ? 880 : undefined,
+            maxWidth: chromeCentered ? HOME_CHROME_MAX : undefined,
             paddingHorizontal: hideChrome ? 0 : 16,
             gap: 8,
           }}
@@ -954,13 +952,6 @@ function Hint({ label, keys, muted }: { label: string; keys: string; muted: stri
 }
 
 const styles = StyleSheet.create({
-  input: {
-    fontSize: 18,
-    fontWeight: '400',
-    paddingVertical: 4,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
   inputBoxed: {
     fontSize: 17,
     fontWeight: '400',

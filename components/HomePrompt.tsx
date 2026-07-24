@@ -1,4 +1,9 @@
-import { CommandFilter, CommandSearch, searchPlaceholder } from '@/components/CommandSearch';
+import {
+  CommandFilter,
+  CommandSearch,
+  HOME_CHROME_MAX,
+  searchPlaceholder,
+} from '@/components/CommandSearch';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
@@ -188,7 +193,7 @@ export function HomePrompt({
         width="100%"
       >
         {/* Search stays capped; results below use the full panel width on web. */}
-        <YStack width="100%" maxWidth={880} gap={14} alignItems="stretch">
+        <YStack width="100%" maxWidth={HOME_CHROME_MAX} gap={14} alignItems="stretch">
           <Pressable onPress={(e) => e.stopPropagation()}>{searchChrome}</Pressable>
 
           {!expanded && recent.length > 0 && (
