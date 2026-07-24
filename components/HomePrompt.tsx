@@ -1,31 +1,51 @@
-import {
-  CommandFilter,
-  CommandSearch,
-  HOME_CHROME_MAX,
-  searchPlaceholder,
-} from '@/components/CommandSearch';
-import { VenueContextPicker } from '@/components/VenueContextPicker';
+import { HOME_CHROME_MAX } from '@/components/CommandSearch';
 import { CustomIcon } from '@/components/ui/CustomIcons';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useAuth } from '@/ctx/AuthContext';
+import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
-import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { recentMatchesContext } from '@/hooks/useTrackRecent';
+import { recentEntry, recentMatchesContext } from '@/hooks/useTrackRecent';
+import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
+import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
 import { RecentActivity, RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutAnimation, Platform, Pressable, StyleSheet, TextInput, UIManager } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 
 const DRAFT_AMBER = '#E5A93B';
 
-export const HOME_PILLS = ['Menus', 'Cocktails', 'Beer', 'Wine', 'Ingredients'] as const;
-export type HomePill = (typeof HOME_PILLS)[number];
+const ENTITY_SECTIONS = [
+  { type: 'cocktail', label: 'Unfinished drinks', kind: 'cocktail' as const },
+  { type: 'beer', label: 'Unfinished beer', kind: 'beer' as const },
+  { type: 'wine', label: 'Unfinished wine', kind: 'wine' as const },
+  { type: 'menu', label: 'Unfinished menus', kind: 'menu' as const },
+  { type: 'ingredient', label: 'Unfinished ingredients', kind: 'ingredient' as const },
+] as const;
 
-type HomePromptProps = {
-  initialQuery?: string;
-  initialFilter?: CommandFilter;
+// ponytail: same routes as UniversalCreateButton — direct links, no sheet
+const QUICK_CREATE = [
+  { label: 'Drink', icon: 'TabDrinks' as const, route: '/add-cocktail' },
+  { label: 'Beer', icon: 'Beer' as const, route: '/add-beer' },
+  { label: 'Wine', icon: 'Wine' as const, route: '/add-wine' },
+  { label: 'Ingredient', icon: 'TabIngredients' as const, route: '/add-ingredient' },
+  { label: 'Menu', icon: 'TabMenus' as const, route: '/menus/create' },
+] as const;
+
+type VenueGroup = {
+  key: string;
+  name: string;
+  logoUrl: string | null;
+  drafts: any[];
 };
+
+function timeGreeting(hour = new Date().getHours()) {
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 function timeAgo(at: number) {
   const s = Math.max(0, Math.floor((Date.now() - at) / 1000));
@@ -52,25 +72,31 @@ function kindIcon(kind: RecentKind) {
   }
 }
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+function draftTitle(d: { entity_type: string; draft_data?: any }) {
+  const data = d.draft_data || {};
+  const raw = data.name || data.menuName || `Untitled ${capitalize(d.entity_type || 'Draft')}`;
+  return capitalize(raw);
 }
 
-export function HomePrompt({
-  initialQuery = '',
-  initialFilter = 'All',
-}: HomePromptProps) {
+function draftImageUrl(d: { entity_type: string; draft_data?: any }) {
+  const data = d.draft_data || {};
+  if (d.entity_type === 'menu') return data.coverUrl || null;
+  return data.localImages?.[0]?.url || null;
+}
+
+export function HomePrompt() {
   const theme = useTheme();
   const router = useRouter();
-  const { items, error } = useSearchCatalog();
-  const inputRef = useRef<TextInput>(null);
-  const [query, setQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState<CommandFilter>(initialFilter);
-  const [expanded, setExpanded] = useState(initialQuery.length > 0 || initialFilter !== 'All');
+  const { user } = useAuth();
+  const { drafts } = useDrafts();
+  const { data: userBars } = useBars();
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const selectedContextIds = useAppStore((s) => s.selectedContextIds);
   const recentItems = useRecentActivityStore((s) => s.items);
-  const { drafts } = useDrafts();
+
+  const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
+  const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
+
   const recent = useMemo(() => {
     const draftIds = new Set(drafts.map((d: any) => d.id));
     return recentItems
@@ -79,243 +105,325 @@ export function HomePrompt({
       .slice(0, 3);
   }, [recentItems, selectedContextIds, drafts]);
 
-  const muted = theme.color11?.get() as string;
-  const color = theme.color?.get() as string;
-  const border = theme.borderColor?.get() as string;
-  const surface = theme.backgroundStrong?.get() as string;
-  const cardSurface = theme.color4?.get() as string;
+  const venueGroups = useMemo((): VenueGroup[] => {
+    const barMeta = new Map<string, { name: string; logoUrl: string | null }>();
+    for (const ub of userBars || []) {
+      const bar = Array.isArray(ub.bars) ? ub.bars[0] : ub.bars;
+      if (!ub.bar_id) continue;
+      barMeta.set(ub.bar_id, {
+        name: bar?.name || 'Venue',
+        logoUrl: bar?.logo_url || null,
+      });
+    }
 
-  useEffect(() => {
-    if (error) console.error('HomePrompt catalog error:', error);
-  }, [error]);
+    const byVenue = new Map<string, any[]>();
+    for (const d of drafts) {
+      const key = d.bar_id || PERSONAL_CONTEXT;
+      const list = byVenue.get(key);
+      if (list) list.push(d);
+      else byVenue.set(key, [d]);
+    }
 
-  const expand = (nextFilter: CommandFilter = filter) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFilter(nextFilter);
-    setExpanded(true);
-  };
-
-  const collapse = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(false);
-    setFilter('All');
-    inputRef.current?.blur();
-  };
-
-  const onQueryChange = (next: string) => {
-    setQuery(next);
-    if (next.trim().length > 0 && !expanded) expand(filter);
-  };
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined' || !expanded) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        collapse();
+    const groups: VenueGroup[] = [];
+    for (const [key, venueDrafts] of byVenue) {
+      venueDrafts.sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+      if (key === PERSONAL_CONTEXT) {
+        groups.push({ key, name: 'Personal', logoUrl: null, drafts: venueDrafts });
+      } else {
+        const meta = barMeta.get(key);
+        groups.push({
+          key,
+          name: meta?.name || 'Venue',
+          logoUrl: meta?.logoUrl || null,
+          drafts: venueDrafts,
+        });
       }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [expanded]);
+    }
+
+    // ponytail: venues by freshest draft, Personal last when tied to a real bar list
+    groups.sort((a, b) => {
+      if (a.key === PERSONAL_CONTEXT && b.key !== PERSONAL_CONTEXT) return 1;
+      if (b.key === PERSONAL_CONTEXT && a.key !== PERSONAL_CONTEXT) return -1;
+      const aAt = new Date(a.drafts[0]?.updated_at || 0).getTime();
+      const bAt = new Date(b.drafts[0]?.updated_at || 0).getTime();
+      return bAt - aAt;
+    });
+    return groups;
+  }, [drafts, userBars]);
+
+  const muted = theme.color11?.get() as string;
+  const border = theme.borderColor?.get() as string;
+  const cardSurface = theme.color4?.get() as string;
 
   const openRecent = (r: RecentActivity) => {
     if (r.kind === 'menu' && !r.isDraft) setSelectedMenuId(r.id);
     router.push(r.href as any);
   };
 
-  const searchChrome = (
-    <YStack width="100%" gap={8}>
+  const openDraft = (d: any) => {
+    const kind = d.entity_type as RecentKind;
+    const entry = recentEntry(kind, d.id, draftTitle(d), {
+      imageUrl: draftImageUrl(d),
+      barId: d.bar_id ?? null,
+      isDraft: true,
+    });
+    router.push(entry.href as any);
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1, width: '100%' }}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <YStack
         width="100%"
-        borderRadius={16}
-        borderWidth={1}
-        borderColor={border}
-        backgroundColor={surface}
-        overflow="hidden"
-        style={styles.boxShadow as any}
+        maxWidth={HOME_CHROME_MAX}
+        alignSelf="center"
+        gap={28}
+        paddingHorizontal={24}
+        paddingTop={28}
+        paddingBottom={40}
       >
-        <TextInput
-          ref={inputRef}
-          value={query}
-          onChangeText={onQueryChange}
-          placeholder={searchPlaceholder(filter)}
-          placeholderTextColor={muted}
-          onSubmitEditing={() => {
-            if (!expanded) expand(filter);
-          }}
-          onFocus={() => {
-            if (!expanded) expand(filter);
-          }}
-          returnKeyType="search"
-          style={[styles.input, { color }]}
-        />
-      </YStack>
+        <YStack gap={14}>
+          <YStack gap={6}>
+            <Text
+              fontSize={28}
+              fontWeight="700"
+              color="$color"
+              letterSpacing={-0.4}
+              lineHeight={34}
+            >
+              {hello}
+            </Text>
+            <Text fontSize={15} color="$color11" lineHeight={21}>
+              {venueGroups.length > 0
+                ? 'Pick up where you left off — your drafts are waiting.'
+                : 'Your bar is clear. Start something below.'}
+            </Text>
+          </YStack>
 
-      {!expanded && (
-        <XStack alignItems="center" justifyContent="space-between" gap={8}>
-          <XStack flex={1} flexWrap="wrap" gap={8} alignItems="center">
-            {HOME_PILLS.map((pill) => (
+          <XStack flexWrap="wrap" gap={8}>
+            {QUICK_CREATE.map((item) => (
               <Pressable
-                key={pill}
-                onPress={() => expand(pill)}
+                key={item.route}
+                onPress={() => router.push(item.route as any)}
                 accessibilityRole="button"
-                accessibilityLabel={`Search ${pill}`}
-                style={[styles.pill, { borderColor: border, backgroundColor: surface }]}
+                accessibilityLabel={`Create ${item.label}`}
+                style={[
+                  styles.quickCreate,
+                  {
+                    borderColor: border,
+                    backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                  },
+                ]}
               >
-                <Text fontSize={13} color="$color11" fontWeight="500">
-                  {pill}
+                <CustomIcon name={item.icon} size={16} color={muted} />
+                <Text fontSize={13} fontWeight="600" color="$color">
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
           </XStack>
-          <VenueContextPicker />
-        </XStack>
-      )}
-    </YStack>
-  );
-
-  return (
-    <Pressable
-      disabled={!expanded}
-      onPress={collapse}
-      accessibilityRole={expanded ? 'button' : undefined}
-      accessibilityLabel={expanded ? 'Dismiss search' : undefined}
-      style={{ flex: 1, width: '100%' }}
-    >
-      <YStack
-        flex={1}
-        justifyContent={expanded ? 'flex-start' : 'center'}
-        alignItems="center"
-        paddingHorizontal={24}
-        paddingTop={expanded ? 12 : 0}
-        minHeight={0}
-        width="100%"
-      >
-        {/* Search stays capped; results below use the full panel width on web. */}
-        <YStack width="100%" maxWidth={HOME_CHROME_MAX} gap={14} alignItems="stretch">
-          <Pressable onPress={(e) => e.stopPropagation()}>{searchChrome}</Pressable>
-
-          {!expanded && recent.length > 0 && (
-            <YStack width="100%" marginTop={20} gap={8}>
-              <Text
-                fontSize={11}
-                fontWeight="600"
-                color="$color11"
-                letterSpacing={0.7}
-                textTransform="uppercase"
-                paddingHorizontal={4}
-                opacity={0.75}
-              >
-                Jump back in
-              </Text>
-              <XStack gap={8} width="100%">
-                {recent.map((r) => {
-                  const imageUrl = r.imageUrl || null;
-                  return (
-                    <Pressable
-                      key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
-                      onPress={() => openRecent(r)}
-                      accessibilityRole="button"
-                      accessibilityLabel={r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`}
-                      style={[
-                        styles.card,
-                        {
-                          borderColor: r.isDraft ? DRAFT_AMBER : border,
-                          backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
-                        },
-                      ]}
-                    >
-                      {imageUrl ? (
-                        <Image
-                          source={{ uri: imageUrl }}
-                          style={styles.cardImage}
-                          contentFit="cover"
-                          transition={200}
-                        />
-                      ) : (
-                        <YStack
-                          width="100%"
-                          aspectRatio={1}
-                          alignItems="center"
-                          justifyContent="center"
-                          backgroundColor="$color5"
-                          gap={4}
-                          padding={4}
-                        >
-                          <CustomIcon name={kindIcon(r.kind)} size={18} color={muted} />
-                          <Text
-                            fontSize={10}
-                            fontWeight="600"
-                            color="$color"
-                            numberOfLines={2}
-                            textAlign="center"
-                          >
-                            {r.title}
-                          </Text>
-                        </YStack>
-                      )}
-                      {!!imageUrl && (
-                        <YStack paddingHorizontal={5} paddingVertical={5} gap={1}>
-                          <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
-                            {r.title}
-                          </Text>
-                          <Text fontSize={9} color="$color11" numberOfLines={1}>
-                            {timeAgo(r.at)}
-                          </Text>
-                        </YStack>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </XStack>
-            </YStack>
-          )}
         </YStack>
 
-        {expanded && (
-          <Pressable
-            onPress={(e) => e.stopPropagation()}
-            style={{ flex: 1, minHeight: 0, width: '100%', marginTop: 8 }}
-          >
-            <CommandSearch
-              items={items}
-              hideChrome
-              query={query}
-              onQueryChange={onQueryChange}
-              filter={filter}
-              onFilterChange={setFilter}
-              showFooter
-              onDismiss={collapse}
-            />
-          </Pressable>
+        {recent.length > 0 && (
+          <YStack width="100%" gap={8}>
+            <Text
+              fontSize={11}
+              fontWeight="600"
+              color="$color11"
+              letterSpacing={0.7}
+              textTransform="uppercase"
+              paddingHorizontal={4}
+              opacity={0.75}
+            >
+              Jump back in
+            </Text>
+            <XStack gap={8} width="100%">
+              {recent.map((r) => {
+                const imageUrl = r.imageUrl || null;
+                return (
+                  <Pressable
+                    key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
+                    onPress={() => openRecent(r)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`
+                    }
+                    style={[
+                      styles.card,
+                      {
+                        borderColor: r.isDraft ? DRAFT_AMBER : border,
+                        backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                      },
+                    ]}
+                  >
+                    {imageUrl ? (
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.cardImage}
+                        contentFit="cover"
+                        transition={200}
+                      />
+                    ) : (
+                      <YStack
+                        width="100%"
+                        aspectRatio={1}
+                        alignItems="center"
+                        justifyContent="center"
+                        backgroundColor="$color5"
+                        gap={4}
+                        padding={4}
+                      >
+                        <CustomIcon name={kindIcon(r.kind)} size={18} color={muted} />
+                        <Text
+                          fontSize={10}
+                          fontWeight="600"
+                          color="$color"
+                          numberOfLines={2}
+                          textAlign="center"
+                        >
+                          {r.title}
+                        </Text>
+                      </YStack>
+                    )}
+                    {!!imageUrl && (
+                      <YStack paddingHorizontal={5} paddingVertical={5} gap={1}>
+                        <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
+                          {r.title}
+                        </Text>
+                        <Text fontSize={9} color="$color11" numberOfLines={1}>
+                          {timeAgo(r.at)}
+                        </Text>
+                      </YStack>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </XStack>
+          </YStack>
+        )}
+
+        {venueGroups.length > 0 && (
+          <YStack width="100%" gap={20}>
+            <Text
+              fontSize={11}
+              fontWeight="600"
+              color="$color11"
+              letterSpacing={0.7}
+              textTransform="uppercase"
+              paddingHorizontal={4}
+              opacity={0.75}
+            >
+              Unfinished
+            </Text>
+
+            {venueGroups.map((group) => (
+              <YStack key={group.key} gap={12}>
+                <XStack alignItems="center" gap={10} paddingHorizontal={4}>
+                  {group.logoUrl ? (
+                    <Image
+                      source={{ uri: group.logoUrl }}
+                      style={styles.venueLogo}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  ) : (
+                    <YStack
+                      width={32}
+                      height={32}
+                      borderRadius={6}
+                      alignItems="center"
+                      justifyContent="center"
+                      backgroundColor="$color5"
+                    >
+                      <IconSymbol
+                        name={group.key === PERSONAL_CONTEXT ? 'person.circle.fill' : 'building.2.fill'}
+                        size={18}
+                        color={muted}
+                      />
+                    </YStack>
+                  )}
+                  <Text fontSize={17} fontWeight="700" color="$color" flex={1} numberOfLines={1}>
+                    {group.name}
+                  </Text>
+                </XStack>
+
+                <YStack gap={14}>
+                  {ENTITY_SECTIONS.map((section) => {
+                    const items = group.drafts.filter((d) => d.entity_type === section.type);
+                    if (items.length === 0) return null;
+                    return (
+                      <YStack key={section.type} gap={6}>
+                        <Text
+                          fontSize={12}
+                          fontWeight="600"
+                          color="$color11"
+                          paddingHorizontal={4}
+                        >
+                          {section.label}
+                        </Text>
+                        <YStack gap={4}>
+                          {items.map((d) => (
+                            <Pressable
+                              key={d.id}
+                              onPress={() => openDraft(d)}
+                              accessibilityRole="link"
+                              accessibilityLabel={`Continue ${draftTitle(d)}`}
+                              style={[
+                                styles.draftRow,
+                                {
+                                  borderColor: border,
+                                  backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                                },
+                              ]}
+                            >
+                              <XStack alignItems="center" gap={10} flex={1} minWidth={0}>
+                                <CustomIcon name={kindIcon(section.kind)} size={16} color={muted} />
+                                <Text
+                                  fontSize={14}
+                                  fontWeight="500"
+                                  color="$color"
+                                  flex={1}
+                                  numberOfLines={1}
+                                >
+                                  {draftTitle(d)}
+                                </Text>
+                              </XStack>
+                              <Text fontSize={12} fontWeight="600" color={DRAFT_AMBER}>
+                                Continue
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </YStack>
+                      </YStack>
+                    );
+                  })}
+                </YStack>
+              </YStack>
+            ))}
+          </YStack>
         )}
       </YStack>
-    </Pressable>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  boxShadow: {
-    boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
+  scrollContent: {
+    flexGrow: 1,
   },
-  input: {
-    fontSize: 17,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    outlineWidth: 0,
-    outlineStyle: 'none',
-    boxShadow: 'none',
-  } as any,
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
+  quickCreate: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   card: {
     flex: 1,
@@ -327,5 +435,21 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
     backgroundColor: 'rgba(127,127,127,0.15)',
+  },
+  venueLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: 'rgba(127,127,127,0.15)',
+  },
+  draftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
   },
 });

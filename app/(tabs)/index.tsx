@@ -1,18 +1,10 @@
-import { CommandFilter } from '@/components/CommandSearch';
 import { HomePrompt } from '@/components/HomePrompt';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { YStack } from 'tamagui';
 
 export default function HomeScreen() {
-  const { q, filter } = useLocalSearchParams<{ q?: string; filter?: string }>();
   const insets = useSafeAreaInsets();
-
-  const initialFilter =
-    filter &&
-    ['All', 'Menus', 'Cocktails', 'Beer', 'Wine', 'Ingredients'].includes(filter)
-      ? (filter as CommandFilter)
-      : 'All';
 
   return (
     <>
@@ -24,10 +16,7 @@ export default function HomeScreen() {
         paddingBottom={insets.bottom}
         minHeight={0}
       >
-        <HomePrompt
-          initialQuery={typeof q === 'string' ? q : ''}
-          initialFilter={initialFilter}
-        />
+        <HomePrompt />
       </YStack>
     </>
   );
