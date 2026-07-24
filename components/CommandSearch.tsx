@@ -18,6 +18,7 @@ import {
 } from '@/lib/commandFilterAttrs';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
+import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -85,14 +86,6 @@ const SECTION_ORDER: SearchItem['category'][] = [
 ];
 
 const DRAFT_AMBER = '#E5A93B';
-
-const DRAFT_ROUTE: Partial<Record<NonNullable<SearchItem['category']>, string>> = {
-  Cocktail: '/add-cocktail',
-  Ingredient: '/add-ingredient',
-  Beer: '/add-beer',
-  Wine: '/add-wine',
-  Menu: '/menus/create',
-};
 
 const SECTION_LABEL: Record<string, string> = {
   Menu: 'Menu',
@@ -466,11 +459,21 @@ export function CommandSearch({
   const openItem = useCallback(
     (item: SearchItem) => {
       if (item.isDraft) {
-        const route = item.category ? DRAFT_ROUTE[item.category] : null;
-        if (route) {
-          const draftId = item.id.replace(/^(beer|wine|menu)-/, '');
-          router.push(`${route}?draftId=${draftId}` as any);
-        }
+        const draftId = item.id.replace(/^(beer|wine|menu)-/, '');
+        const entityType =
+          item.category === 'Menu'
+            ? 'menu'
+            : item.category === 'Beer'
+              ? 'beer'
+              : item.category === 'Wine'
+                ? 'wine'
+                : item.category === 'Ingredient'
+                  ? 'ingredient'
+                  : 'cocktail';
+        openDraftInCreator(
+          { id: draftId, entity_type: entityType, draft_data: { name: item.name } },
+          (href) => router.push(href as any)
+        );
         onSelect?.();
         return;
       }
@@ -493,7 +496,24 @@ export function CommandSearch({
 
   const openRecent = useCallback(
     (r: RecentActivity) => {
-      if (r.kind === 'menu' && !r.isDraft) setSelectedMenuId(r.id);
+      if (r.isDraft) {
+        openInCreator(
+          {
+            type:
+              r.kind === 'menu'
+                ? 'menu_draft'
+                : r.kind === 'ingredient'
+                  ? 'ingredient_draft'
+                  : 'drink_draft',
+            id: r.id,
+            name: r.title,
+          },
+          (href) => router.push(href as any)
+        );
+        onSelect?.();
+        return;
+      }
+      if (r.kind === 'menu') setSelectedMenuId(r.id);
       router.push(r.href as any);
       onSelect?.();
     },

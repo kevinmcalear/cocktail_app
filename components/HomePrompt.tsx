@@ -4,10 +4,11 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
-import { recentEntry, recentMatchesContext } from '@/hooks/useTrackRecent';
+import { recentMatchesContext } from '@/hooks/useTrackRecent';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
+import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -76,12 +77,6 @@ function draftTitle(d: { entity_type: string; draft_data?: any }) {
   const data = d.draft_data || {};
   const raw = data.name || data.menuName || `Untitled ${capitalize(d.entity_type || 'Draft')}`;
   return capitalize(raw);
-}
-
-function draftImageUrl(d: { entity_type: string; draft_data?: any }) {
-  const data = d.draft_data || {};
-  if (d.entity_type === 'menu') return data.coverUrl || null;
-  return data.localImages?.[0]?.url || null;
 }
 
 export function HomePrompt() {
@@ -157,19 +152,31 @@ export function HomePrompt() {
   const border = theme.borderColor?.get() as string;
   const cardSurface = theme.color4?.get() as string;
 
+  const pushCreator = (href: '/edit-mode') => router.push(href as any);
+
   const openRecent = (r: RecentActivity) => {
-    if (r.kind === 'menu' && !r.isDraft) setSelectedMenuId(r.id);
+    if (r.isDraft) {
+      openInCreator(
+        {
+          type:
+            r.kind === 'menu'
+              ? 'menu_draft'
+              : r.kind === 'ingredient'
+                ? 'ingredient_draft'
+                : 'drink_draft',
+          id: r.id,
+          name: r.title,
+        },
+        pushCreator
+      );
+      return;
+    }
+    if (r.kind === 'menu') setSelectedMenuId(r.id);
     router.push(r.href as any);
   };
 
   const openDraft = (d: any) => {
-    const kind = d.entity_type as RecentKind;
-    const entry = recentEntry(kind, d.id, draftTitle(d), {
-      imageUrl: draftImageUrl(d),
-      barId: d.bar_id ?? null,
-      isDraft: true,
-    });
-    router.push(entry.href as any);
+    openDraftInCreator(d, pushCreator);
   };
 
   return (
