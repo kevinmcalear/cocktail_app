@@ -469,7 +469,12 @@ const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
       <Circle cx="11" cy="11" r="6" />
       <Path d="M15.5 15.5 L20 20" />
     </G>
-  )
+  ),
+  TabHome: (c) => (
+    <G stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M4 11 L12 4 L20 11 V20 H14 V14 H10 V20 H4 Z" />
+    </G>
+  ),
 };
 
 export function hasCustomIcon(name: string) {

@@ -32,7 +32,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <CustomIcon name="TabSearch" size={size} color={color} />
+            <CustomIcon name="TabHome" size={size} color={color} />
           ),
         }}
       />

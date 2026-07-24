@@ -30,7 +30,7 @@ const SIDEBAR_MAX = 400;
 type NavItem = {
   href: string;
   label: string;
-  icon: 'TabSearch' | 'TabTest';
+  icon: 'TabHome' | 'TabTest';
   match: (pathname: string) => boolean;
   requiresTesting?: boolean;
 };
@@ -39,7 +39,7 @@ const NAV: NavItem[] = [
   {
     href: '/(tabs)',
     label: 'Home',
-    icon: 'TabSearch',
+    icon: 'TabHome',
     match: (p) => p === '/' || p === '' || p === '/(tabs)' || p.endsWith('/index'),
   },
   {

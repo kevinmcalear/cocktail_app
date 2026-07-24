@@ -60,6 +60,14 @@ function toggleId(list: string[], id: string) {
 export const COMMAND_FILTERS = ['All', 'Menus', 'Cocktails', 'Beer', 'Wine', 'Ingredients'] as const;
 export type CommandFilter = (typeof COMMAND_FILTERS)[number];
 
+/** Home search + filter chrome width on web. */
+export const HOME_CHROME_MAX = 880;
+
+export function searchPlaceholder(filter: CommandFilter = 'All') {
+  if (filter === 'All') return 'Search menus, cocktails, beer, wine…';
+  return `Search ${filter.toLowerCase()}`;
+}
+
 const FILTER_TO_CATEGORY: Record<Exclude<CommandFilter, 'All'>, SearchItem['category']> = {
   Menus: 'Menu',
   Cocktails: 'Cocktail',
@@ -171,11 +179,13 @@ type CommandSearchProps = {
   autoFocus?: boolean;
   showFooter?: boolean;
   onSelect?: () => void;
+  /** Home: click left/right of the filter chrome to collapse. */
+  onDismiss?: () => void;
 };
 
 export function CommandSearch({
   items,
-  placeholder = 'What do you want to do?',
+  placeholder,
   initialQuery = '',
   initialFilter = 'All',
   query: queryProp,
@@ -186,6 +196,7 @@ export function CommandSearch({
   autoFocus = false,
   showFooter = true,
   onSelect,
+  onDismiss,
 }: CommandSearchProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -200,6 +211,7 @@ export function CommandSearch({
     if (onFilterChange) onFilterChange(next);
     else setFilterInternal(next);
   };
+  const resolvedPlaceholder = placeholder ?? searchPlaceholder(filter);
   const [attrs, setAttrs] = useState<AttrSelection>(EMPTY_ATTRS);
   const [draftAttrs, setDraftAttrs] = useState<AttrSelection>(EMPTY_ATTRS);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -506,34 +518,48 @@ export function CommandSearch({
     [filter, onFilterChange]
   );
 
+  // ponytail: refs so one capture listener stays fresh without resubscribing
+  const keyRef = useRef({ activeIndex, selectable, cols, activate, cycleFilter });
+  keyRef.current = { activeIndex, selectable, cols, activate, cycleFilter };
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
+      const { activeIndex: idx, selectable: cells, cols: c, activate: open, cycleFilter: cycle } =
+        keyRef.current;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex((i) => Math.min(i + cols, Math.max(0, selectable.length - 1)));
+        setActiveIndex((i) => Math.min(i + c, Math.max(0, cells.length - 1)));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveIndex((i) => Math.max(i - cols, 0));
+        setActiveIndex((i) => Math.max(i - c, 0));
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        setActiveIndex((i) => Math.min(i + 1, Math.max(0, selectable.length - 1)));
+        setActiveIndex((i) => Math.min(i + 1, Math.max(0, cells.length - 1)));
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         setActiveIndex((i) => Math.max(i - 1, 0));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        activate(activeIndex);
-      } else if ((e.metaKey || e.ctrlKey) && (e.key === '[' || e.key === ']')) {
+        open(idx);
+      } else if (
+        (e.metaKey || e.ctrlKey) &&
+        (e.code === 'BracketLeft' || e.code === 'BracketRight')
+      ) {
+        // capture + preventDefault so Chrome doesn't treat ⌘[ / ⌘] as history
         e.preventDefault();
-        cycleFilter(e.key === ']' ? 1 : -1);
+        e.stopPropagation();
+        cycle(e.code === 'BracketRight' ? 1 : -1);
       }
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [activate, activeIndex, selectable.length, cycleFilter, cols]);
+    // capture: beat TextInput caret / submit handling
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, []);
 
   const mod = Platform.OS === 'ios' || Platform.OS === 'web' ? '⌘' : 'Ctrl';
+  const chromeMaxWidth = hideChrome && Platform.OS === 'web' ? HOME_CHROME_MAX : undefined;
+  const chromeAlign = hideChrome && Platform.OS === 'web' ? ('center' as const) : ('stretch' as const);
 
   const renderCell = (cell: Selectable, selIndex: number) => {
     const isActive = selIndex === activeIndex;
@@ -616,6 +642,112 @@ export function CommandSearch({
     );
   };
 
+  const filterChrome = (
+    <YStack gap={6}>
+      <XStack alignItems="center" gap={8}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flex: 1 }}
+        >
+          <XStack gap={8} paddingBottom={2} alignItems="center">
+            {COMMAND_FILTERS.map((f) => {
+              const selected = filter === f;
+              return (
+                <Pressable
+                  key={f}
+                  onPress={() => setFilter(f)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={f}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: selected ? highlight : 'transparent',
+                      borderColor: selected ? 'transparent' : border,
+                    },
+                  ]}
+                >
+                  <Text
+                    fontSize={13}
+                    fontWeight="500"
+                    color={selected ? '$color' : '$color11'}
+                  >
+                    {f}
+                  </Text>
+                </Pressable>
+              );
+            })}
+
+            {attrRows.length > 0 && (
+              <Pressable
+                onPress={openFilters}
+                accessibilityRole="button"
+                accessibilityLabel="Additional filters"
+                style={[
+                  styles.pill,
+                  {
+                    backgroundColor: appliedPills.length ? highlight : 'transparent',
+                    borderColor: appliedPills.length ? 'transparent' : border,
+                    flexDirection: 'row',
+                    gap: 6,
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="line.3.horizontal.decrease"
+                  size={14}
+                  color={appliedPills.length ? color : muted}
+                />
+                <Text
+                  fontSize={13}
+                  fontWeight="500"
+                  color={appliedPills.length ? '$color' : '$color11'}
+                >
+                  Filters
+                  {appliedPills.length > 0 ? ` · ${appliedPills.length}` : ''}
+                </Text>
+              </Pressable>
+            )}
+          </XStack>
+        </ScrollView>
+
+        <VenueContextPicker />
+      </XStack>
+
+      {appliedPills.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <XStack gap={8} paddingBottom={2}>
+            {appliedPills.map((p) => (
+              <Pressable
+                key={`${p.key}-${p.id}`}
+                onPress={() => removeAttr(p.key, p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${p.label} filter`}
+                style={[
+                  styles.pill,
+                  {
+                    backgroundColor: highlight,
+                    borderColor: 'transparent',
+                    flexDirection: 'row',
+                    gap: 6,
+                  },
+                ]}
+              >
+                <Text fontSize={12} fontWeight="500" color="$color">
+                  {capitalize(p.label)}
+                </Text>
+                <IconSymbol name="xmark" size={11} color={muted} />
+              </Pressable>
+            ))}
+          </XStack>
+        </ScrollView>
+      )}
+    </YStack>
+  );
+
+  const chromeCentered = hideChrome && Platform.OS === 'web';
+
   return (
     <YStack
       flex={1}
@@ -626,17 +758,26 @@ export function CommandSearch({
         setPanelWidth((prev) => (prev === w ? prev : w));
       }}
     >
-      <YStack
-        width="100%"
-        alignItems={hideChrome && Platform.OS === 'web' ? 'center' : 'stretch'}
-        paddingTop={hideChrome ? 2 : 12}
-        paddingBottom={8}
+      {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. */}
+      <Pressable
+        onPress={onDismiss}
+        accessibilityRole={onDismiss ? 'button' : undefined}
+        accessibilityLabel={onDismiss ? 'Dismiss search' : undefined}
+        style={{
+          width: '100%',
+          alignItems: chromeCentered ? 'center' : 'stretch',
+          paddingTop: hideChrome ? 2 : 12,
+          paddingBottom: 8,
+        }}
       >
-        <YStack
-          width="100%"
-          maxWidth={hideChrome && Platform.OS === 'web' ? 640 : undefined}
-          paddingHorizontal={hideChrome ? 0 : 16}
-          gap={8}
+        <Pressable
+          onPress={onDismiss ? (e) => e.stopPropagation() : undefined}
+          style={{
+            width: '100%',
+            maxWidth: chromeCentered ? 880 : undefined,
+            paddingHorizontal: hideChrome ? 0 : 16,
+            gap: 8,
+          }}
         >
           {!hideChrome && (
             <YStack
@@ -650,119 +791,16 @@ export function CommandSearch({
                 ref={inputRef}
                 value={query}
                 onChangeText={setQuery}
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 placeholderTextColor={muted}
                 autoFocus={autoFocus}
                 style={[styles.inputBoxed, { color }]}
-                // @ts-expect-error web outline
-                outlineStyle="none"
               />
             </YStack>
           )}
-
-          <YStack gap={6}>
-            <XStack alignItems="center" gap={8}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ flex: 1 }}
-              >
-                <XStack gap={8} paddingBottom={2} alignItems="center">
-                  {COMMAND_FILTERS.map((f) => {
-                    const selected = filter === f;
-                    return (
-                      <Pressable
-                        key={f}
-                        onPress={() => setFilter(f)}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={f}
-                        style={[
-                          styles.pill,
-                          {
-                            backgroundColor: selected ? highlight : 'transparent',
-                            borderColor: selected ? 'transparent' : border,
-                          },
-                        ]}
-                      >
-                        <Text
-                          fontSize={13}
-                          fontWeight="500"
-                          color={selected ? '$color' : '$color11'}
-                        >
-                          {f}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-
-                  {attrRows.length > 0 && (
-                    <Pressable
-                      onPress={openFilters}
-                      accessibilityRole="button"
-                      accessibilityLabel="Additional filters"
-                      style={[
-                        styles.pill,
-                        {
-                          backgroundColor: appliedPills.length ? highlight : 'transparent',
-                          borderColor: appliedPills.length ? 'transparent' : border,
-                          flexDirection: 'row',
-                          gap: 6,
-                        },
-                      ]}
-                    >
-                      <IconSymbol
-                        name="line.3.horizontal.decrease"
-                        size={14}
-                        color={appliedPills.length ? color : muted}
-                      />
-                      <Text
-                        fontSize={13}
-                        fontWeight="500"
-                        color={appliedPills.length ? '$color' : '$color11'}
-                      >
-                        Filters
-                        {appliedPills.length > 0 ? ` · ${appliedPills.length}` : ''}
-                      </Text>
-                    </Pressable>
-                  )}
-                </XStack>
-              </ScrollView>
-
-              <VenueContextPicker />
-            </XStack>
-
-            {appliedPills.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <XStack gap={8} paddingBottom={2}>
-                  {appliedPills.map((p) => (
-                    <Pressable
-                      key={`${p.key}-${p.id}`}
-                      onPress={() => removeAttr(p.key, p.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remove ${p.label} filter`}
-                      style={[
-                        styles.pill,
-                        {
-                          backgroundColor: highlight,
-                          borderColor: 'transparent',
-                          flexDirection: 'row',
-                          gap: 6,
-                        },
-                      ]}
-                    >
-                      <Text fontSize={12} fontWeight="500" color="$color">
-                        {capitalize(p.label)}
-                      </Text>
-                      <IconSymbol name="xmark" size={11} color={muted} />
-                    </Pressable>
-                  ))}
-                </XStack>
-              </ScrollView>
-            )}
-          </YStack>
-        </YStack>
-      </YStack>
+          {filterChrome}
+        </Pressable>
+      </Pressable>
 
       <AdaptiveSheetModal
         visible={filtersOpen}
@@ -930,7 +968,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: 'transparent',
     borderWidth: 0,
-  },
+    outlineWidth: 0,
+    outlineStyle: 'none',
+    boxShadow: 'none',
+  } as any,
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 8,

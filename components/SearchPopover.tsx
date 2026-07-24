@@ -58,7 +58,6 @@ export function SearchPopover({
           <CommandSearch
             key={`${initialQuery}|${initialFilter}|${visible}`}
             items={items}
-            placeholder="What do you want to do?"
             initialQuery={initialQuery}
             initialFilter={initialFilter}
             autoFocus

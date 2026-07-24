@@ -1,4 +1,4 @@
-import { CommandFilter, CommandSearch } from '@/components/CommandSearch';
+import { CommandFilter, CommandSearch, searchPlaceholder } from '@/components/CommandSearch';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
@@ -8,7 +8,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { RecentActivity, RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, StyleSheet, TextInput, UIManager } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 
@@ -58,6 +58,7 @@ export function HomePrompt({
   const theme = useTheme();
   const router = useRouter();
   const { items, error } = useSearchCatalog();
+  const inputRef = useRef<TextInput>(null);
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<CommandFilter>(initialFilter);
   const [expanded, setExpanded] = useState(initialQuery.length > 0 || initialFilter !== 'All');
@@ -93,6 +94,7 @@ export function HomePrompt({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(false);
     setFilter('All');
+    inputRef.current?.blur();
   };
 
   const onQueryChange = (next: string) => {
@@ -129,18 +131,19 @@ export function HomePrompt({
         style={styles.boxShadow as any}
       >
         <TextInput
+          ref={inputRef}
           value={query}
           onChangeText={onQueryChange}
-          placeholder="What do you want to do?"
+          placeholder={searchPlaceholder(filter)}
           placeholderTextColor={muted}
-          onSubmitEditing={() => expand(filter)}
+          onSubmitEditing={() => {
+            if (!expanded) expand(filter);
+          }}
           onFocus={() => {
             if (!expanded) expand(filter);
           }}
           returnKeyType="search"
           style={[styles.input, { color }]}
-          // @ts-expect-error web
-          outlineStyle="none"
         />
       </YStack>
 
@@ -168,110 +171,122 @@ export function HomePrompt({
   );
 
   return (
-    <YStack
-      flex={1}
-      justifyContent={expanded ? 'flex-start' : 'center'}
-      alignItems="center"
-      paddingHorizontal={24}
-      paddingTop={expanded ? 12 : 0}
-      minHeight={0}
-      width="100%"
+    <Pressable
+      disabled={!expanded}
+      onPress={collapse}
+      accessibilityRole={expanded ? 'button' : undefined}
+      accessibilityLabel={expanded ? 'Dismiss search' : undefined}
+      style={{ flex: 1, width: '100%' }}
     >
-      {/* Search stays capped; results below use the full panel width on web. */}
-      <YStack width="100%" maxWidth={640} gap={14} alignItems="stretch">
-        {searchChrome}
+      <YStack
+        flex={1}
+        justifyContent={expanded ? 'flex-start' : 'center'}
+        alignItems="center"
+        paddingHorizontal={24}
+        paddingTop={expanded ? 12 : 0}
+        minHeight={0}
+        width="100%"
+      >
+        {/* Search stays capped; results below use the full panel width on web. */}
+        <YStack width="100%" maxWidth={880} gap={14} alignItems="stretch">
+          <Pressable onPress={(e) => e.stopPropagation()}>{searchChrome}</Pressable>
 
-        {!expanded && recent.length > 0 && (
-          <YStack width="100%" marginTop={20} gap={8}>
-            <Text
-              fontSize={11}
-              fontWeight="600"
-              color="$color11"
-              letterSpacing={0.7}
-              textTransform="uppercase"
-              paddingHorizontal={4}
-              opacity={0.75}
-            >
-              Jump back in
-            </Text>
-            <XStack gap={8} width="100%">
-              {recent.map((r) => {
-                const imageUrl = r.imageUrl || null;
-                return (
-                  <Pressable
-                    key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
-                    onPress={() => openRecent(r)}
-                    accessibilityRole="button"
-                    accessibilityLabel={r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`}
-                    style={[
-                      styles.card,
-                      {
-                        borderColor: r.isDraft ? DRAFT_AMBER : border,
-                        backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
-                      },
-                    ]}
-                  >
-                    {imageUrl ? (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.cardImage}
-                        contentFit="cover"
-                        transition={200}
-                      />
-                    ) : (
-                      <YStack
-                        width="100%"
-                        aspectRatio={1}
-                        alignItems="center"
-                        justifyContent="center"
-                        backgroundColor="$color5"
-                        gap={4}
-                        padding={4}
-                      >
-                        <CustomIcon name={kindIcon(r.kind)} size={18} color={muted} />
-                        <Text
-                          fontSize={10}
-                          fontWeight="600"
-                          color="$color"
-                          numberOfLines={2}
-                          textAlign="center"
+          {!expanded && recent.length > 0 && (
+            <YStack width="100%" marginTop={20} gap={8}>
+              <Text
+                fontSize={11}
+                fontWeight="600"
+                color="$color11"
+                letterSpacing={0.7}
+                textTransform="uppercase"
+                paddingHorizontal={4}
+                opacity={0.75}
+              >
+                Jump back in
+              </Text>
+              <XStack gap={8} width="100%">
+                {recent.map((r) => {
+                  const imageUrl = r.imageUrl || null;
+                  return (
+                    <Pressable
+                      key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
+                      onPress={() => openRecent(r)}
+                      accessibilityRole="button"
+                      accessibilityLabel={r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`}
+                      style={[
+                        styles.card,
+                        {
+                          borderColor: r.isDraft ? DRAFT_AMBER : border,
+                          backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                        },
+                      ]}
+                    >
+                      {imageUrl ? (
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.cardImage}
+                          contentFit="cover"
+                          transition={200}
+                        />
+                      ) : (
+                        <YStack
+                          width="100%"
+                          aspectRatio={1}
+                          alignItems="center"
+                          justifyContent="center"
+                          backgroundColor="$color5"
+                          gap={4}
+                          padding={4}
                         >
-                          {r.title}
-                        </Text>
-                      </YStack>
-                    )}
-                    {!!imageUrl && (
-                      <YStack paddingHorizontal={5} paddingVertical={5} gap={1}>
-                        <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
-                          {r.title}
-                        </Text>
-                        <Text fontSize={9} color="$color11" numberOfLines={1}>
-                          {timeAgo(r.at)}
-                        </Text>
-                      </YStack>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </XStack>
-          </YStack>
+                          <CustomIcon name={kindIcon(r.kind)} size={18} color={muted} />
+                          <Text
+                            fontSize={10}
+                            fontWeight="600"
+                            color="$color"
+                            numberOfLines={2}
+                            textAlign="center"
+                          >
+                            {r.title}
+                          </Text>
+                        </YStack>
+                      )}
+                      {!!imageUrl && (
+                        <YStack paddingHorizontal={5} paddingVertical={5} gap={1}>
+                          <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
+                            {r.title}
+                          </Text>
+                          <Text fontSize={9} color="$color11" numberOfLines={1}>
+                            {timeAgo(r.at)}
+                          </Text>
+                        </YStack>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </XStack>
+            </YStack>
+          )}
+        </YStack>
+
+        {expanded && (
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{ flex: 1, minHeight: 0, width: '100%', marginTop: 8 }}
+          >
+            <CommandSearch
+              items={items}
+              hideChrome
+              query={query}
+              onQueryChange={onQueryChange}
+              filter={filter}
+              onFilterChange={setFilter}
+              showFooter
+              onDismiss={collapse}
+            />
+          </Pressable>
         )}
       </YStack>
-
-      {expanded && (
-        <YStack flex={1} minHeight={0} width="100%" marginTop={8}>
-          <CommandSearch
-            items={items}
-            hideChrome
-            query={query}
-            onQueryChange={onQueryChange}
-            filter={filter}
-            onFilterChange={setFilter}
-            showFooter
-          />
-        </YStack>
-      )}
-    </YStack>
+    </Pressable>
   );
 }
 
@@ -285,7 +300,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: 'transparent',
     borderWidth: 0,
-  },
+    outlineWidth: 0,
+    outlineStyle: 'none',
+    boxShadow: 'none',
+  } as any,
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
