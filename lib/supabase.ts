@@ -35,8 +35,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: Platform.OS === 'web' ? WebStorageAdapter : ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    // web: pick up ?code= from email redirects; native: AuthContext handles Linking
-    detectSessionInUrl: Platform.OS === 'web',
+    // ponytail: never auto-exchange on load — mail scanners burn one-time links.
+    // EmailLinkGate exchanges on an explicit Continue tap instead.
+    detectSessionInUrl: false,
     flowType: 'pkce',
   },
 });

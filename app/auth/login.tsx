@@ -1,4 +1,5 @@
 import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
+import { PasswordField } from '@/components/auth/PasswordField';
 import { useAuth } from '@/ctx/AuthContext';
 import { Link } from 'expo-router';
 import { useState } from 'react';
@@ -79,21 +80,15 @@ export default function Login() {
           />
         </AuthField>
 
-        <AuthField label="Password">
-          <Input
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Your password"
-            secureTextEntry
-            autoComplete="password"
-            textContentType="password"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-            height={44}
-            onSubmitEditing={handleSignIn}
-          />
-        </AuthField>
+        <PasswordField
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Your password"
+          autoComplete="password"
+          textContentType="password"
+          onSubmitEditing={handleSignIn}
+        />
 
         <XStack justifyContent="flex-end">
           <Link href="/auth/forgot-password" asChild>

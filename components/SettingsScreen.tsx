@@ -1,3 +1,4 @@
+import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -253,23 +254,21 @@ export function SettingsScreen() {
         <Text fontSize={13} fontWeight="600" color="$color">
           Change password
         </Text>
-        <Input
+        <PasswordField
+          label="New password"
           value={password}
           onChangeText={setPassword}
           placeholder="New password"
-          secureTextEntry
-          backgroundColor="$background"
-          borderColor="$borderColor"
-          color="$color"
+          autoComplete="new-password"
+          textContentType="newPassword"
         />
-        <Input
+        <PasswordField
+          label="Confirm password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder="Confirm new password"
-          secureTextEntry
-          backgroundColor="$background"
-          borderColor="$borderColor"
-          color="$color"
+          autoComplete="new-password"
+          textContentType="newPassword"
         />
       </YStack>
 

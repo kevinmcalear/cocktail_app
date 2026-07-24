@@ -1,4 +1,5 @@
 import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
+import { PasswordField } from '@/components/auth/PasswordField';
 import { useAuth } from '@/ctx/AuthContext';
 import { Link } from 'expo-router';
 import { useState } from 'react';
@@ -124,36 +125,24 @@ export default function SignUp() {
           />
         </AuthField>
 
-        <AuthField label="Password">
-          <Input
-            value={password}
-            onChangeText={setPassword}
-            placeholder="At least 6 characters"
-            secureTextEntry
-            autoComplete="new-password"
-            textContentType="newPassword"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-            height={44}
-          />
-        </AuthField>
+        <PasswordField
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="At least 6 characters"
+          autoComplete="new-password"
+          textContentType="newPassword"
+        />
 
-        <AuthField label="Confirm password">
-          <Input
-            value={confirm}
-            onChangeText={setConfirm}
-            placeholder="Re-enter password"
-            secureTextEntry
-            autoComplete="new-password"
-            textContentType="newPassword"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-            height={44}
-            onSubmitEditing={handleSignUp}
-          />
-        </AuthField>
+        <PasswordField
+          label="Confirm password"
+          value={confirm}
+          onChangeText={setConfirm}
+          placeholder="Re-enter password"
+          autoComplete="new-password"
+          textContentType="newPassword"
+          onSubmitEditing={handleSignUp}
+        />
 
         {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
 

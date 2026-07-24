@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Native email-link / recovery deep links (web uses detectSessionInUrl)
+  // Native deep links only — web exchanges via EmailLinkGate on Continue tap
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
