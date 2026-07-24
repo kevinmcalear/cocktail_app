@@ -13,6 +13,9 @@ interface AppState {
     selectedContextIds: string[];
     setSelectedContextIds: (ids: string[]) => void;
     toggleContextId: (id: string) => void;
+    /** True after settings default is applied once bars are known. */
+    contextDefaultApplied: boolean;
+    markContextDefaultApplied: () => void;
     /** First selected venue (not personal); used for role checks. */
     selectedBarId: string | null;
     setSelectedBarId: (id: string | null) => void;
@@ -27,8 +30,10 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
     draftCocktailId: null,
     setDraftCocktailId: (id) => set({ draftCocktailId: id }),
-    // ponytail: default personal-only (matches old selectedBarId: null)
+    // ponytail: placeholder until VenueContextPicker applies settings default
     selectedContextIds: [PERSONAL_CONTEXT],
+    contextDefaultApplied: false,
+    markContextDefaultApplied: () => set({ contextDefaultApplied: true }),
     setSelectedContextIds: (ids) =>
         set({
             selectedContextIds: ids.length ? ids : [PERSONAL_CONTEXT],

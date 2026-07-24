@@ -4,7 +4,13 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
+import {
+  DEFAULT_SEARCH_ALL,
+  PERSONAL_CONTEXT,
+  resolveDefaultContextIds,
+} from '@/lib/barContextFilter';
 import { supabase } from '@/lib/supabase';
+import { useAppStore } from '@/store/useAppStore';
 import { THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
 import { decode } from 'base64-arraybuffer';
 import { Image } from 'expo-image';
@@ -69,7 +75,15 @@ export function SettingsScreen() {
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const { data: userBars, isLoading: barsLoading } = useBars();
-  const { isTestingEnabled, setTesting, themeMode, setThemeMode } = useSettingsStore();
+  const {
+    isTestingEnabled,
+    setTesting,
+    themeMode,
+    setThemeMode,
+    defaultSearchContext,
+    setDefaultSearchContext,
+  } = useSettingsStore();
+  const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -455,6 +469,63 @@ export function SettingsScreen() {
     </Section>
   );
 
+  const pickDefaultSearch = (value: string) => {
+    setDefaultSearchContext(value);
+    const barIds = (userBars || []).map((ub: any) => ub.bar_id as string);
+    setSelectedContextIds(resolveDefaultContextIds(value, barIds));
+  };
+
+  const searchDefaultOptions: { id: string; label: string }[] = [
+    { id: DEFAULT_SEARCH_ALL, label: 'All' },
+    { id: PERSONAL_CONTEXT, label: 'Personal' },
+    ...(userBars || []).map((ub: any) => {
+      const bar = Array.isArray(ub.bars) ? ub.bars[0] : ub.bars;
+      return { id: ub.bar_id as string, label: (bar?.name as string) || 'Venue' };
+    }),
+  ];
+
+  const searchFilterPanel = (
+    <Section title="Default search filter" minWidth={240}>
+      <Text fontSize={12} color="$color11">
+        Applied when the app opens
+      </Text>
+      <YStack gap="$2">
+        {searchDefaultOptions.map(({ id, label }) => {
+          const selected = defaultSearchContext === id;
+          return (
+            <Pressable key={id} onPress={() => pickDefaultSearch(id)}>
+              <XStack
+                alignItems="center"
+                justifyContent="space-between"
+                paddingVertical="$2.5"
+                paddingHorizontal="$3"
+                borderRadius={8}
+                backgroundColor={selected ? '$color8' : '$background'}
+                borderWidth={1}
+                borderColor={selected ? '$color8' : '$borderColor'}
+              >
+                <Text
+                  fontSize={14}
+                  fontWeight={selected ? '700' : '500'}
+                  color={selected ? '$backgroundStrong' : '$color'}
+                >
+                  {label}
+                </Text>
+                {selected && (
+                  <IconSymbol
+                    name="checkmark"
+                    size={16}
+                    color={theme.backgroundStrong?.get() as string}
+                  />
+                )}
+              </XStack>
+            </Pressable>
+          );
+        })}
+      </YStack>
+    </Section>
+  );
+
   const testingPanel = (
     <Section title="Testing" minWidth={240}>
       <XStack alignItems="center" justifyContent="space-between" gap="$3">
@@ -509,6 +580,7 @@ export function SettingsScreen() {
 
         <XStack flexWrap="wrap" gap="$5" alignItems="flex-start">
           {appearancePanel}
+          {searchFilterPanel}
           {testingPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable onPress={() => signOut()}>

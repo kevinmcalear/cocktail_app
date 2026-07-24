@@ -1,10 +1,15 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
-import { contextLabel, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
+import {
+  contextLabel,
+  PERSONAL_CONTEXT,
+  resolveDefaultContextIds,
+} from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 
@@ -49,18 +54,77 @@ function ContextIcon({
   return <IconSymbol name="building.2" size={size} color={color} />;
 }
 
+/** ≤3 icons stacked; >3 → first 2 + "+N". */
+function StackedContextIcons({
+  options,
+  size,
+  color,
+}: {
+  options: Option[];
+  size: number;
+  color: string;
+}) {
+  const show = options.length <= 3 ? options : options.slice(0, 2);
+  const extra = options.length > 3 ? options.length - 2 : 0;
+  const step = size * 0.55;
+  const width = size + (show.length - 1 + (extra ? 1 : 0)) * step;
+
+  return (
+    <View style={{ width, height: size }}>
+      {show.map((opt, i) => (
+        <View
+          key={opt.id}
+          style={[styles.stackItem, { left: i * step, zIndex: i + 1, width: size, height: size }]}
+        >
+          <ContextIcon option={opt} size={size} color={color} />
+        </View>
+      ))}
+      {extra > 0 && (
+        <View
+          style={[
+            styles.stackItem,
+            styles.stackPlus,
+            {
+              left: show.length * step,
+              zIndex: show.length + 1,
+              width: size,
+              height: size,
+              borderRadius: size / 4,
+            },
+          ]}
+        >
+          <Text fontSize={9} fontWeight="700" color="$color11">
+            +{extra}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 /** Multi-select: Personal + venues. Drives catalog context. */
 export function VenueContextPicker() {
   const theme = useTheme();
   const { user } = useAuth();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const { data: bars } = useBars();
+  const { data: bars, isFetched } = useBars();
   const selectedContextIds = useAppStore((s) => s.selectedContextIds);
   const toggleContextId = useAppStore((s) => s.toggleContextId);
   const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
+  const contextDefaultApplied = useAppStore((s) => s.contextDefaultApplied);
+  const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
+  const defaultSearchContext = useSettingsStore((s) => s.defaultSearchContext);
+  const [settingsReady, setSettingsReady] = useState(
+    () => useSettingsStore.persist.hasHydrated()
+  );
   const triggerRef = useRef<View>(null);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
+
+  useEffect(() => {
+    if (settingsReady) return;
+    return useSettingsStore.persist.onFinishHydration(() => setSettingsReady(true));
+  }, [settingsReady]);
 
   const muted = theme.color11?.get() as string;
   const color = theme.color?.get() as string;
@@ -93,6 +157,22 @@ export function VenueContextPicker() {
     [venueOptions, avatarUrl]
   );
 
+  // Apply persisted default once settings + bars are known
+  useEffect(() => {
+    if (!settingsReady || !isFetched || contextDefaultApplied) return;
+    const barIds = venueOptions.map((v) => v.bar_id);
+    setSelectedContextIds(resolveDefaultContextIds(defaultSearchContext, barIds));
+    markContextDefaultApplied();
+  }, [
+    settingsReady,
+    isFetched,
+    contextDefaultApplied,
+    defaultSearchContext,
+    venueOptions,
+    setSelectedContextIds,
+    markContextDefaultApplied,
+  ]);
+
   const label = contextLabel(
     selectedContextIds,
     venueOptions.map((v) => ({ bar_id: v.bar_id, name: v.name }))
@@ -100,7 +180,15 @@ export function VenueContextPicker() {
   const allIds = options.map((o) => o.id);
   const allSelected = allIds.every((id) => selectedContextIds.includes(id));
 
-  // Single selection → that option's icon; multi → generic building
+  // Single → that icon; All with bars → stack bar logos; other multi → stack selected
+  const stackOptions: Option[] | null = useMemo(() => {
+    if (selectedContextIds.length <= 1) return null;
+    if (allSelected && venueOptions.length > 0) {
+      return options.filter((o) => o.id !== PERSONAL_CONTEXT);
+    }
+    return options.filter((o) => selectedContextIds.includes(o.id));
+  }, [selectedContextIds, allSelected, venueOptions.length, options]);
+
   const triggerOption: Option =
     selectedContextIds.length === 1
       ? options.find((o) => o.id === selectedContextIds[0]) || options[0]
@@ -142,7 +230,11 @@ export function VenueContextPicker() {
           style={styles.trigger}
         >
           <XStack alignItems="center" gap={6}>
-            <ContextIcon option={triggerOption} size={16} color={muted} />
+            {stackOptions ? (
+              <StackedContextIcons options={stackOptions} size={16} color={muted} />
+            ) : (
+              <ContextIcon option={triggerOption} size={16} color={muted} />
+            )}
             {label === 'All' && (
               <Text fontSize={13} color="$color11" fontWeight="500">
                 All
@@ -234,5 +326,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  stackItem: {
+    position: 'absolute',
+    top: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stackPlus: {
+    backgroundColor: 'rgba(128,128,128,0.2)',
   },
 });

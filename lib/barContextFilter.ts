@@ -1,6 +1,27 @@
 /** Sentinel for personal items (bar_id IS NULL). */
 export const PERSONAL_CONTEXT = 'personal';
 
+/** Settings default: all contexts, personal only, or a specific bar id. */
+export const DEFAULT_SEARCH_ALL = 'all';
+
+/** Resolve persisted default into selectedContextIds once bars are known. */
+export function resolveDefaultContextIds(
+  defaultSearchContext: string,
+  barIds: string[]
+): string[] {
+  if (defaultSearchContext === DEFAULT_SEARCH_ALL) {
+    return [PERSONAL_CONTEXT, ...barIds];
+  }
+  if (defaultSearchContext === PERSONAL_CONTEXT) {
+    return [PERSONAL_CONTEXT];
+  }
+  if (barIds.includes(defaultSearchContext)) {
+    return [defaultSearchContext];
+  }
+  // ponytail: missing bar → all, same as fresh default
+  return [PERSONAL_CONTEXT, ...barIds];
+}
+
 /** Client-side: is this bar_id in the selected venue contexts? */
 export function inSelectedContext(
   barId: string | null | undefined,
