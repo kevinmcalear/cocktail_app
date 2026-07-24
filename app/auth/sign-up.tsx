@@ -1,176 +1,179 @@
-import { Colors } from '@/constants/theme';
+import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
 import { useAuth } from '@/ctx/AuthContext';
-import { BlurView } from 'expo-blur';
-import { Link, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { Alert, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import { Button, Input, Text, XStack, YStack } from 'tamagui';
+import { Link } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable } from 'react-native';
+import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
 
 export default function SignUp() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
-    const { signUp } = useAuth();
+  const theme = useTheme();
+  const { signUp, resendConfirmation } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingVerify, setPendingVerify] = useState(false);
 
-    const handleSignUp = async () => {
-        setLoading(true);
-        const { data, error } = await signUp(email, password);
-        setLoading(false);
+  const handleSignUp = async () => {
+    setError(null);
+    const trimmed = email.trim();
+    if (!trimmed || !password) {
+      setError('Enter an email and password.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
 
-        if (error) {
-            Alert.alert('Sign Up Failed', error.message);
-        } else if (!data.session) {
-            // If no session, email verification is likely required
-            Alert.alert('Success', 'Please check your inbox for email verification!');
-            router.replace('/auth/login');
-        }
-        // If session exists, RootLayout will handle the redirect to tabs
-    };
+    setLoading(true);
+    const { session, error: err } = await signUp(trimmed, password);
+    setLoading(false);
 
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    if (!session) setPendingVerify(true);
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    setError(null);
+    const { error: err } = await resendConfirmation(email.trim());
+    setLoading(false);
+    if (err) setError(err.message);
+  };
+
+  if (pendingVerify) {
     return (
-        <ImageBackground
-            source={require('../../assets/images/cocktail-bg.png')}
-            resizeMode="cover"
-            style={styles.container}
-        >
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                <StatusBar style="light" />
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.keyboardView}
-                >
-                    <View style={styles.glassContainer}>
-                        <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-                            <Text fontSize="$8" fontWeight="bold" color="$color" marginBottom="$2">Create Account</Text>
-                            <Text fontSize="$4" color="$icon" marginBottom="$6" textAlign="center">Join us and discover liquid art</Text>
-
-                            <YStack width="100%" gap="$4" marginBottom="$4">
-                                <Input
-                                    size="$4"
-                                    placeholder="Email"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    backgroundColor="rgba(255, 255, 255, 0.05)"
-                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                />
-
-                                <Input
-                                    size="$4"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry
-                                    backgroundColor="rgba(255, 255, 255, 0.05)"
-                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                />
-                            </YStack>
-
-                            <Button
-                                size="$4"
-                                width="100%"
-                                backgroundColor={Colors.dark.tint}
-                                onPress={handleSignUp}
-                                disabled={loading}
-                                opacity={loading ? 0.7 : 1}
-                            >
-                                <Text color="white" fontSize="$5" fontWeight="bold">
-                                    {loading ? 'Creating account...' : 'Sign Up'}
-                                </Text>
-                            </Button>
-
-                            <XStack marginTop="$6" alignItems="center">
-                                <Text color="$icon" fontSize="$3">Already have an account? </Text>
-                                <Link href="/auth/login" asChild>
-                                    <Text color="$tint" fontWeight="bold" fontSize="$3" pressStyle={{ opacity: 0.7 }}>Sign In</Text>
-                                </Link>
-                            </XStack>
-                        </BlurView>
-                    </View>
-                </KeyboardAvoidingView>
-            </View>
-        </ImageBackground>
+      <AuthShell
+        title="Check your email"
+        subtitle={`We sent a confirmation link to ${email.trim()}. Open it to activate your account.`}
+        footer={
+          <Link href="/auth/login" asChild>
+            <Pressable>
+              <Text color="$color8" fontSize={14} fontWeight="700">
+                Back to sign in
+              </Text>
+            </Pressable>
+          </Link>
+        }
+      >
+        <YStack gap="$3">
+          {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+          <Button
+            backgroundColor="$color8"
+            onPress={handleResend}
+            disabled={loading}
+            borderRadius={8}
+            height={44}
+            opacity={loading ? 0.7 : 1}
+          >
+            {loading ? (
+              <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
+            ) : (
+              <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
+                Resend email
+              </Text>
+            )}
+          </Button>
+        </YStack>
+      </AuthShell>
     );
-}
+  }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    glassContainer: {
-        borderRadius: 30,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: Colors.dark.glass.border,
-    },
-    blurContainer: {
-        padding: 30,
-        alignItems: 'center',
-        // backgroundColor: Colors.dark.glass.background,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: Colors.dark.text,
-        marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: Colors.dark.icon,
-        marginBottom: 40,
-        textAlign: 'center',
-    },
-    inputContainer: {
-        width: '100%',
-        marginBottom: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 15,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    input: {
-        width: '100%',
-        padding: 15,
-        color: Colors.dark.text,
-        fontSize: 16,
-    },
-    button: {
-        width: '100%',
-        backgroundColor: '#1E362D', // Paisley Green
-        padding: 15,
-        borderRadius: 15,
-        alignItems: 'center',
-        marginTop: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    buttonDisabled: {
-        opacity: 0.7,
-    },
-    buttonText: {
-        color: '#FFF',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    footer: {
-        flexDirection: 'row',
-        marginTop: 30,
-    },
-    footerText: {
-        color: Colors.dark.icon,
-        fontSize: 14,
-    },
-    linkText: {
-        color: Colors.dark.tint,
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-});
+  return (
+    <AuthShell
+      title="Create account"
+      subtitle="Email and password. That’s it."
+      footer={
+        <XStack alignItems="center" gap="$1">
+          <Text color="$color11" fontSize={14}>
+            Already have an account?
+          </Text>
+          <Link href="/auth/login" asChild>
+            <Pressable>
+              <Text color="$color8" fontSize={14} fontWeight="700">
+                Sign in
+              </Text>
+            </Pressable>
+          </Link>
+        </XStack>
+      }
+    >
+      <YStack gap="$3">
+        <AuthField label="Email">
+          <Input
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@venue.com"
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            backgroundColor="$background"
+            borderColor="$borderColor"
+            color="$color"
+            height={44}
+          />
+        </AuthField>
+
+        <AuthField label="Password">
+          <Input
+            value={password}
+            onChangeText={setPassword}
+            placeholder="At least 6 characters"
+            secureTextEntry
+            autoComplete="new-password"
+            textContentType="newPassword"
+            backgroundColor="$background"
+            borderColor="$borderColor"
+            color="$color"
+            height={44}
+          />
+        </AuthField>
+
+        <AuthField label="Confirm password">
+          <Input
+            value={confirm}
+            onChangeText={setConfirm}
+            placeholder="Re-enter password"
+            secureTextEntry
+            autoComplete="new-password"
+            textContentType="newPassword"
+            backgroundColor="$background"
+            borderColor="$borderColor"
+            color="$color"
+            height={44}
+            onSubmitEditing={handleSignUp}
+          />
+        </AuthField>
+
+        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+
+        <Button
+          backgroundColor="$color8"
+          onPress={handleSignUp}
+          disabled={loading}
+          borderRadius={8}
+          height={44}
+          opacity={loading ? 0.7 : 1}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
+          ) : (
+            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
+              Create account
+            </Text>
+          )}
+        </Button>
+      </YStack>
+    </AuthShell>
+  );
+}

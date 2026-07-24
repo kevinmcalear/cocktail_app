@@ -1,177 +1,138 @@
-import { Colors } from '@/constants/theme';
+import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
 import { useAuth } from '@/ctx/AuthContext';
-import { BlurView } from 'expo-blur';
-import { Link, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { Alert, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import { Button, Input, Text, XStack, YStack } from 'tamagui';
+import { Link } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable } from 'react-native';
+import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
-    const { signIn } = useAuth();
+  const theme = useTheme();
+  const { signIn, resendConfirmation } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
-    const handleSignIn = async () => {
-        setLoading(true);
-        const { error } = await signIn(email, password);
-        setLoading(false);
+  const handleSignIn = async () => {
+    setError(null);
+    setInfo(null);
+    if (!email.trim() || !password) {
+      setError('Enter your email and password.');
+      return;
+    }
+    setLoading(true);
+    const { error: err } = await signIn(email.trim(), password);
+    setLoading(false);
+    if (err) setError(err.message);
+  };
 
-        if (error) {
-            Alert.alert('Login Failed', error.message);
-        } else {
-            router.replace('/(tabs)');
-        }
-    };
+  const handleResend = async () => {
+    if (!email.trim()) {
+      setError('Enter your email to resend confirmation.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { error: err } = await resendConfirmation(email.trim());
+    setLoading(false);
+    if (err) setError(err.message);
+    else setInfo('Confirmation email sent. Check your inbox.');
+  };
 
-    return (
-        <ImageBackground
-            source={require('../../assets/images/cocktail-bg.png')}
-            // Actually, the user asked for "Liquid Glass" style. Glass usually implies a background image behind it.
-            // I will check assets later. For now, let's use a dark view background and maybe a gradient if I can't find an image.
-            // Wait, I can't check assets inside this tool content generation.
-            // I'll stick to a View with background color for now, and let the user            resizeMode="cover"
-            resizeMode="cover"
-            style={styles.container}
+  const needsConfirm =
+    !!error && /confirm|verified|verification/i.test(error);
+
+  return (
+    <AuthShell
+      title="Sign in"
+      subtitle="Access your bars, menus, and recipes."
+      footer={
+        <XStack alignItems="center" gap="$1">
+          <Text color="$color11" fontSize={14}>
+            No account?
+          </Text>
+          <Link href="/auth/sign-up" asChild>
+            <Pressable>
+              <Text color="$color8" fontSize={14} fontWeight="700">
+                Create one
+              </Text>
+            </Pressable>
+          </Link>
+        </XStack>
+      }
+    >
+      <YStack gap="$3">
+        <AuthField label="Email">
+          <Input
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@venue.com"
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            backgroundColor="$background"
+            borderColor="$borderColor"
+            color="$color"
+            height={44}
+          />
+        </AuthField>
+
+        <AuthField label="Password">
+          <Input
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Your password"
+            secureTextEntry
+            autoComplete="password"
+            textContentType="password"
+            backgroundColor="$background"
+            borderColor="$borderColor"
+            color="$color"
+            height={44}
+            onSubmitEditing={handleSignIn}
+          />
+        </AuthField>
+
+        <XStack justifyContent="flex-end">
+          <Link href="/auth/forgot-password" asChild>
+            <Pressable>
+              <Text fontSize={13} color="$color8" fontWeight="600">
+                Forgot password?
+              </Text>
+            </Pressable>
+          </Link>
+        </XStack>
+
+        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+        {info ? <AuthMessage tone="info">{info}</AuthMessage> : null}
+
+        {needsConfirm ? (
+          <Pressable onPress={handleResend} disabled={loading}>
+            <Text fontSize={13} color="$color8" fontWeight="600">
+              Resend confirmation email
+            </Text>
+          </Pressable>
+        ) : null}
+
+        <Button
+          backgroundColor="$color8"
+          onPress={handleSignIn}
+          disabled={loading}
+          borderRadius={8}
+          height={44}
+          opacity={loading ? 0.7 : 1}
         >
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                <StatusBar style="light" />
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.keyboardView}
-                >
-                    <View style={styles.glassContainer}>
-                        <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-                            <Text fontSize="$8" fontWeight="bold" color="$color" marginBottom="$2">Welcome Back</Text>
-                            <Text fontSize="$4" color="$icon" marginBottom="$6" textAlign="center">Sign in to access your collection</Text>
-
-                            <YStack width="100%" gap="$4" marginBottom="$4">
-                                <Input
-                                    size="$4"
-                                    placeholder="Email"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    backgroundColor="rgba(255, 255, 255, 0.05)"
-                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                />
-
-                                <Input
-                                    size="$4"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry
-                                    backgroundColor="rgba(255, 255, 255, 0.05)"
-                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                />
-                            </YStack>
-
-                            <Button
-                                size="$4"
-                                width="100%"
-                                backgroundColor={Colors.dark.tint}
-                                onPress={handleSignIn}
-                                disabled={loading}
-                                opacity={loading ? 0.7 : 1}
-                            >
-                                <Text color="white" fontSize="$5" fontWeight="bold">
-                                    {loading ? 'Signing in...' : 'Sign In'}
-                                </Text>
-                            </Button>
-
-                            <XStack marginTop="$6" alignItems="center">
-                                <Text color="$icon" fontSize="$3">Don't have an account? </Text>
-                                <Link href="/auth/sign-up" asChild>
-                                    <Text color="$tint" fontWeight="bold" fontSize="$3" pressStyle={{ opacity: 0.7 }}>Sign Up</Text>
-                                </Link>
-                            </XStack>
-                        </BlurView>
-                    </View>
-                </KeyboardAvoidingView>
-            </View>
-        </ImageBackground>
-    );
+          {loading ? (
+            <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
+          ) : (
+            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
+              Sign in
+            </Text>
+          )}
+        </Button>
+      </YStack>
+    </AuthShell>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    glassContainer: {
-        borderRadius: 30,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: Colors.dark.glass.border,
-    },
-    blurContainer: {
-        padding: 30,
-        alignItems: 'center',
-        // backgroundColor: Colors.dark.glass.background, // Removed to be more "glassy"
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: Colors.dark.text,
-        marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: Colors.dark.icon,
-        marginBottom: 40,
-        textAlign: 'center',
-    },
-    inputContainer: {
-        width: '100%',
-        marginBottom: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 15,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    input: {
-        width: '100%',
-        padding: 15,
-        color: Colors.dark.text,
-        fontSize: 16,
-    },
-    button: {
-        width: '100%',
-        backgroundColor: '#1E362D', // Paisley Green (Deep Green)
-        padding: 15,
-        borderRadius: 15,
-        alignItems: 'center',
-        marginTop: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    buttonDisabled: {
-        opacity: 0.7,
-    },
-    buttonText: {
-        color: '#FFF', // White text on dark green
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    footer: {
-        flexDirection: 'row',
-        marginTop: 30,
-    },
-    footerText: {
-        color: Colors.dark.icon,
-        fontSize: 14,
-    },
-    linkText: {
-        color: Colors.dark.tint,
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-});

@@ -32,7 +32,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { session, loading } = useAuth();
+  const { session, loading, passwordRecovery } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -40,15 +40,24 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    const authScreen = segments[1];
+    // stay on recovery / email-link routes while session is established
+    const stayInAuth =
+      authScreen === 'reset-password' ||
+      authScreen === 'callback' ||
+      passwordRecovery;
+
+    if (passwordRecovery && authScreen !== 'reset-password') {
+      router.replace('/auth/reset-password');
+      return;
+    }
 
     if (!session && !inAuthGroup) {
-      // Redirect to the sign-in page.
       router.replace('/auth/login');
-    } else if (session && inAuthGroup) {
-      // Redirect away from the sign-in page.
+    } else if (session && inAuthGroup && !stayInAuth) {
       router.replace('/(tabs)');
     }
-  }, [session, loading, segments]);
+  }, [session, loading, segments, passwordRecovery]);
 
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts
   const showWebSidebar =
