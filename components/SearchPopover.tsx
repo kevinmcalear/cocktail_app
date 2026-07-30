@@ -1,4 +1,5 @@
 import { CommandFilter, CommandSearch } from '@/components/CommandSearch';
+import type { SearchItem } from '@/components/SearchList';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useEffect } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
@@ -9,6 +10,10 @@ type SearchPopoverProps = {
   onClose: () => void;
   initialQuery?: string;
   initialFilter?: CommandFilter;
+  /** Override catalog (e.g. menu drink picker). */
+  items?: SearchItem[];
+  /** Pick mode: select instead of navigate. */
+  onItemSelect?: (item: SearchItem) => void;
 };
 
 /** Cursor-style search palette (overlay only — not the home screen). */
@@ -17,10 +22,13 @@ export function SearchPopover({
   onClose,
   initialQuery = '',
   initialFilter = 'All',
+  items: itemsProp,
+  onItemSelect,
 }: SearchPopoverProps) {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
-  const { items, error } = useSearchCatalog();
+  const { items: catalogItems, error } = useSearchCatalog();
+  const items = itemsProp ?? catalogItems;
 
   useEffect(() => {
     if (!visible || typeof document === 'undefined') return;
@@ -63,6 +71,7 @@ export function SearchPopover({
             autoFocus
             showFooter
             onSelect={onClose}
+            onItemSelect={onItemSelect}
           />
         </Pressable>
       </Pressable>

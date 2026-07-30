@@ -172,6 +172,8 @@ type CommandSearchProps = {
   autoFocus?: boolean;
   showFooter?: boolean;
   onSelect?: () => void;
+  /** Pick mode: select item instead of navigating (e.g. add to menu). */
+  onItemSelect?: (item: SearchItem) => void;
   /** Home: click left/right of the filter chrome to collapse. */
   onDismiss?: () => void;
 };
@@ -189,6 +191,7 @@ export function CommandSearch({
   autoFocus = false,
   showFooter = true,
   onSelect,
+  onItemSelect,
   onDismiss,
 }: CommandSearchProps) {
   const theme = useTheme();
@@ -458,6 +461,11 @@ export function CommandSearch({
 
   const openItem = useCallback(
     (item: SearchItem) => {
+      if (onItemSelect) {
+        // ponytail: caller closes (keeps palette open on reject, e.g. duplicate)
+        onItemSelect(item);
+        return;
+      }
       if (item.isDraft) {
         const draftId = item.id.replace(/^(beer|wine|menu)-/, '');
         const entityType =
@@ -491,11 +499,18 @@ export function CommandSearch({
       }
       onSelect?.();
     },
-    [onSelect, router, setSelectedMenuId]
+    [onItemSelect, onSelect, router, setSelectedMenuId]
   );
 
   const openRecent = useCallback(
     (r: RecentActivity) => {
+      if (onItemSelect) {
+        const id =
+          r.kind === 'beer' ? `beer-${r.id}` : r.kind === 'wine' ? `wine-${r.id}` : r.kind === 'menu' ? `menu-${r.id}` : r.id;
+        const item = items.find((i) => i.id === id);
+        if (item) onItemSelect(item);
+        return;
+      }
       if (r.isDraft) {
         openInCreator(
           {
@@ -517,7 +532,7 @@ export function CommandSearch({
       router.push(r.href as any);
       onSelect?.();
     },
-    [onSelect, router, setSelectedMenuId]
+    [items, onItemSelect, onSelect, router, setSelectedMenuId]
   );
 
   const activate = useCallback(

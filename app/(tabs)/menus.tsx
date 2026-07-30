@@ -1,5 +1,6 @@
 import { CurrentMenuList, MenuItem, MenuSection } from "@/components/CurrentMenuList";
-import { SearchItem, SearchList } from "@/components/SearchList";
+import { SearchItem } from "@/components/SearchList";
+import { SearchPopover } from "@/components/SearchPopover";
 import { NotionCover } from "@/components/menu/NotionCover";
 import { TemplatePicker } from "@/components/menu/TemplatePicker";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
@@ -13,6 +14,7 @@ import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useMenuEditor } from "@/hooks/useMenuEditor";
 import { useWines } from "@/hooks/useWines";
 import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
 import { creatorCreateHref, openDraftInCreator } from "@/store/useCreatorNavStore";
@@ -21,7 +23,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    Modal,
     Pressable,
     StyleSheet,
     TextInput,
@@ -124,45 +125,16 @@ export default function MenusScreen() {
     const { data: menuDetails, isLoading: loadingDetails } = useMenuDetails(selectedMenuId);
     const selectedMenu = menus.find((m) => m.id === selectedMenuId) ?? null;
 
-    const drinkIndex = useMemo(() => {
-        const map = new Map<string, SearchItem>();
-        for (const c of cocktailsData || []) {
-            map.set(c.id, {
-                id: c.id,
-                name: capitalize(c.name),
-                description: c.description,
-                category: "Cocktail",
-                recipes: c.recipes,
-                item_images: c.item_images,
-                price: c.price,
-            });
-        }
-        for (const b of beersData || []) {
-            map.set(`beer-${b.id}`, {
-                id: `beer-${b.id}`,
-                name: capitalize(b.name),
-                description: b.description,
-                category: "Beer",
-                price: b.price,
-                image: b.item_images?.[0]?.images?.url
-                    ? { uri: b.item_images[0].images.url }
-                    : undefined,
-            });
-        }
-        for (const w of winesData || []) {
-            map.set(`wine-${w.id}`, {
-                id: `wine-${w.id}`,
-                name: capitalize(w.name),
-                description: w.description,
-                category: "Wine",
-                price: w.price,
-                image: w.item_images?.[0]?.images?.url
-                    ? { uri: w.item_images[0].images.url }
-                    : undefined,
-            });
-        }
-        return map;
-    }, [cocktailsData, beersData, winesData]);
+    const drinkIndex = useMemo(
+        () =>
+            buildMenuDrinkIndex({
+                drafts,
+                cocktails: cocktailsData,
+                beers: beersData,
+                wines: winesData,
+            }),
+        [cocktailsData, beersData, winesData, drafts]
+    );
 
     const viewItemsById = useMemo(() => {
         const map = new Map<string, MenuItem>();
@@ -470,33 +442,25 @@ export default function MenusScreen() {
                 onAddToSection={(sectionId) => setPickingSectionId(sectionId)}
             />
 
-            <Modal
+            <SearchPopover
                 visible={!!pickingSectionId}
-                animationType="slide"
-                onRequestClose={() => setPickingSectionId(null)}
-            >
-                <View style={{ flex: 1, backgroundColor: theme.background?.get() as string }}>
-                    <SearchList
-                        title="Add Drink"
-                        items={Array.from(drinkIndex.values())}
-                        isModal
-                        onBackPress={() => setPickingSectionId(null)}
-                        onDrinkPress={(drink) => {
-                            if (!pickingSectionId) return;
-                            const current = editor.selections[pickingSectionId] || [];
-                            if (current.includes(drink.id)) {
-                                Alert.alert("Already Added", "This drink is already in this section.");
-                                return;
-                            }
-                            editor.setSelections((prev) => ({
-                                ...prev,
-                                [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
-                            }));
-                            setPickingSectionId(null);
-                        }}
-                    />
-                </View>
-            </Modal>
+                onClose={() => setPickingSectionId(null)}
+                initialFilter="Cocktails"
+                items={Array.from(drinkIndex.values())}
+                onItemSelect={(drink) => {
+                    if (!pickingSectionId) return;
+                    const current = editor.selections[pickingSectionId] || [];
+                    if (current.includes(drink.id)) {
+                        Alert.alert("Already Added", "This drink is already in this section.");
+                        return;
+                    }
+                    editor.setSelections((prev) => ({
+                        ...prev,
+                        [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
+                    }));
+                    setPickingSectionId(null);
+                }}
+            />
 
             <AdaptiveSheetModal visible={actionsOpen} onClose={() => setActionsOpen(false)} title="Menu">
                 <YStack paddingHorizontal="$4">

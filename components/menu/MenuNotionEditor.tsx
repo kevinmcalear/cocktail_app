@@ -1,4 +1,4 @@
-import { CurrentMenuList, MenuSection } from '@/components/CurrentMenuList';
+import { CurrentMenuList, MenuItem, MenuSection } from '@/components/CurrentMenuList';
 import { NotionCover } from '@/components/menu/NotionCover';
 import { TemplatePicker } from '@/components/menu/TemplatePicker';
 import { capitalize, handleCapitalizedChange } from '@/lib/stringUtils';
@@ -30,6 +30,7 @@ interface MenuNotionEditorProps {
     headerRight?: React.ReactNode;
     onRemoveItem: (sectionId: string, itemId: string) => void;
     onAddToSection: (sectionId: string) => void;
+    onItemPress?: (item: MenuItem) => void;
     /** Extra top inset when not under app chrome (standalone create route) */
     topInset?: number;
 }
@@ -51,6 +52,7 @@ export function MenuNotionEditor({
     headerRight,
     onRemoveItem,
     onAddToSection,
+    onItemPress,
     topInset = 0,
 }: MenuNotionEditorProps) {
     const theme = useTheme();
@@ -165,6 +167,7 @@ export function MenuNotionEditor({
                 isEditing
                 onRemoveItem={onRemoveItem}
                 onAddToSection={onAddToSection}
+                onItemPress={onItemPress}
             />
         </YStack>
     );

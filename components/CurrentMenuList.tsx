@@ -111,9 +111,13 @@ export function CurrentMenuList({
     }, [sections, cols, isEditing, onAddToSection]);
 
     const openItem = (item: MenuItem) => {
+        // ponytail: edit mode still opens drinks when parent wires onItemPress (Creator Hub stack)
+        if (onItemPress) {
+            onItemPress(item);
+            return;
+        }
         if (isEditing) return;
-        if (onItemPress) onItemPress(item);
-        else router.push(openHref(item) as any);
+        router.push(openHref(item) as any);
     };
 
     return (

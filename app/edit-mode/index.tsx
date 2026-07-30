@@ -316,32 +316,6 @@ export default function EditModeDashboard() {
         if (syncUrl) syncCreatorUrl(creatorCreateHref(type, barId));
     }, [setStoreNode, syncCreatorUrl]);
 
-    const handleCreateDrinkPress = (params: {
-        query: string;
-        barId: string;
-        menuDraftId?: string;
-        menuSectionId?: string;
-    }) => {
-        setNavigationStack((prev) => [
-            ...prev,
-            {
-                node: {
-                    type: 'drink_draft',
-                    id: '__new__',
-                    name: params.query || 'New Cocktail',
-                },
-                editing: {
-                    mode: 'create',
-                    type: 'cocktail',
-                    barId: params.barId,
-                    menuDraftId: params.menuDraftId,
-                    menuSectionId: params.menuSectionId,
-                    initialName: params.query,
-                },
-            },
-        ]);
-    };
-
     const handleEditorClose = () => {
         if (navigationStack.length <= 1) {
             clearWorkspace();
@@ -614,7 +588,6 @@ export default function EditModeDashboard() {
                                 onClose={handleEditorClose}
                                 onSave={handleSaveComplete}
                                 onNestedItemPress={handleNestedItemPress}
-                                onCreateDrinkPress={handleCreateDrinkPress}
                                 onOpenDrink={handleOpenMenuDrink}
                                 onChromeState={setEditorChrome}
                             />

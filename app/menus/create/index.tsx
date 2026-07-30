@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
 import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
@@ -25,7 +26,8 @@ import { useAppStore } from "@/store/useAppStore";
 import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
 import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
-import { SearchItem, SearchList } from "@/components/SearchList";
+import { SearchItem } from "@/components/SearchList";
+import { SearchPopover } from "@/components/SearchPopover";
 import type { EditorChromeState } from "@/lib/editorChrome";
 
 function toMenuItem(drink: SearchItem): MenuItem {
@@ -74,12 +76,6 @@ interface CreateMenuWizardProps {
     onClose?: () => void;
     onSave?: () => void;
     onChromeState?: (state: EditorChromeState | null) => void;
-    onCreateDrinkPress?: (params: {
-        query: string;
-        barId: string;
-        menuDraftId?: string;
-        menuSectionId?: string;
-    }) => void;
     onOpenDrink?: (drink: SearchItem) => void;
 }
 
@@ -91,7 +87,6 @@ export default function CreateMenuWizard({
     onClose,
     onSave,
     onChromeState,
-    onCreateDrinkPress,
     onOpenDrink,
 }: CreateMenuWizardProps = {}) {
     const colorScheme = useColorScheme();
@@ -395,45 +390,16 @@ export default function CreateMenuWizard({
         if (selectedTemplateId) initSectionsForTemplate();
     }, [selectedTemplateId, activeSections.length]);
 
-    const drinkIndex = useMemo(() => {
-        const map = new Map<string, SearchItem>();
-        for (const c of cocktailsData || []) {
-            map.set(c.id, {
-                id: c.id,
-                name: capitalize(c.name),
-                description: c.description,
-                category: 'Cocktail',
-                recipes: c.recipes,
-                item_images: c.item_images,
-                price: c.price,
-            });
-        }
-        for (const b of beersData || []) {
-            map.set(`beer-${b.id}`, {
-                id: `beer-${b.id}`,
-                name: capitalize(b.name),
-                description: b.description,
-                category: 'Beer',
-                price: b.price,
-                image: b.item_images?.[0]?.images?.url
-                    ? { uri: b.item_images[0].images.url }
-                    : undefined,
-            });
-        }
-        for (const w of winesData || []) {
-            map.set(`wine-${w.id}`, {
-                id: `wine-${w.id}`,
-                name: capitalize(w.name),
-                description: w.description,
-                category: 'Wine',
-                price: w.price,
-                image: w.item_images?.[0]?.images?.url
-                    ? { uri: w.item_images[0].images.url }
-                    : undefined,
-            });
-        }
-        return map;
-    }, [cocktailsData, beersData, winesData]);
+    const drinkIndex = useMemo(
+        () =>
+            buildMenuDrinkIndex({
+                drafts,
+                cocktails: cocktailsData,
+                beers: beersData,
+                wines: winesData,
+            }),
+        [cocktailsData, beersData, winesData, drafts]
+    );
 
     const displaySections: MenuSection[] = useMemo(
         () =>
@@ -753,49 +719,36 @@ export default function CreateMenuWizard({
                         }));
                     }}
                     onAddToSection={(sectionId) => setPickingSectionId(sectionId)}
+                    onItemPress={
+                        onOpenDrink
+                            ? (item) => {
+                                  const drink = drinkIndex.get(item.id);
+                                  if (drink) onOpenDrink(drink);
+                              }
+                            : undefined
+                    }
                 />
             </YStack>
 
-            <Modal
+            <SearchPopover
                 visible={!!pickingSectionId}
-                animationType="slide"
-                onRequestClose={() => setPickingSectionId(null)}
-            >
-                <View style={{ flex: 1, backgroundColor: colors.background }}>
-                    <SearchList
-                        title="Add Drink"
-                        items={Array.from(drinkIndex.values())}
-                        isModal
-                        onBackPress={() => setPickingSectionId(null)}
-                        onDrinkPress={(drink) => {
-                            if (!pickingSectionId) return;
-                            const current = selections[pickingSectionId] || [];
-                            if (current.includes(drink.id)) {
-                                Alert.alert('Already Added', 'This drink is already in this section.');
-                                return;
-                            }
-                            setSelections((prev) => ({
-                                ...prev,
-                                [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
-                            }));
-                            setPickingSectionId(null);
-                        }}
-                        onCreateNewPress={
-                            onCreateDrinkPress
-                                ? (query) => {
-                                      onCreateDrinkPress({
-                                          query,
-                                          barId: barId || '',
-                                          menuDraftId: currentDraftId || undefined,
-                                          menuSectionId: pickingSectionId || undefined,
-                                      });
-                                      setPickingSectionId(null);
-                                  }
-                                : undefined
-                        }
-                    />
-                </View>
-            </Modal>
+                onClose={() => setPickingSectionId(null)}
+                initialFilter="Cocktails"
+                items={Array.from(drinkIndex.values())}
+                onItemSelect={(drink) => {
+                    if (!pickingSectionId) return;
+                    const current = selections[pickingSectionId] || [];
+                    if (current.includes(drink.id)) {
+                        Alert.alert('Already Added', 'This drink is already in this section.');
+                        return;
+                    }
+                    setSelections((prev) => ({
+                        ...prev,
+                        [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
+                    }));
+                    setPickingSectionId(null);
+                }}
+            />
 
             <Modal
                 visible={showExitModal}
