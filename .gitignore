@@ -48,3 +48,8 @@ app-example
 /android
 
 supabase/.temp/
+supabase/config.toml
+supabase/.gitignore
+
+# local Cursor agent tooling
+.cursor/

@@ -76,6 +76,7 @@ export function useMenuDetails(menuId: string | null) {
                                 name: i.name,
                                 description: i.description || "",
                                 ingredients: ingList,
+                                price: i.price || undefined,
                                 image: imageUrl,
                                 recipes: rList.filter(Boolean),
                             };
@@ -85,6 +86,7 @@ export function useMenuDetails(menuId: string | null) {
                                 name: i.name,
                                 description: i.description || "Craft Beer",
                                 ingredients: i.origin || i.brand_maker || "Beer",
+                                price: i.price || undefined,
                                 image: imageUrl,
                             };
                         } else if (i.item_type === 'wine') {
@@ -93,6 +95,7 @@ export function useMenuDetails(menuId: string | null) {
                                 name: i.name,
                                 description: i.description || "Wine",
                                 ingredients: i.origin || "Wine",
+                                price: i.price || undefined,
                                 image: imageUrl,
                             };
                         }
