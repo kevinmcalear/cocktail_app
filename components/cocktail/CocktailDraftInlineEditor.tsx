@@ -122,6 +122,10 @@ export function CocktailDraftInlineEditor({
                 onToggleStudyPile={() => {}}
                 embedded={embedded}
                 isEditing
+                onSave={embedded ? undefined : () => { void handleSave(); }}
+                onCancelEdit={embedded ? undefined : handleClose}
+                saving={editor.saving}
+                isDirty={Boolean(editor.name.trim()) || editor.isDirty}
                 editableTitle={{
                     value: editor.name,
                     onChange: (val) => handleCapitalizedChange(val, editor.name, editor.setName),

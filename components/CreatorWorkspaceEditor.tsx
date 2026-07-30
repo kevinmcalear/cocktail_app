@@ -11,6 +11,7 @@ import AddIngredientScreen from '@/app/add-ingredient';
 import EditIngredientScreen from '@/app/ingredient/[id]/edit';
 import CreateMenuWizard from '@/app/menus/create/index';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
+import type { SearchItem } from '@/components/SearchList';
 
 interface CreatorWorkspaceEditorProps {
     editing: EditingState;
@@ -23,6 +24,7 @@ interface CreatorWorkspaceEditorProps {
         menuDraftId?: string;
         menuSectionId?: string;
     }) => void;
+    onOpenDrink?: (drink: SearchItem) => void;
     onChromeState?: (state: EditorChromeState | null) => void;
 }
 
@@ -32,6 +34,7 @@ export function CreatorWorkspaceEditor({
     onSave,
     onNestedItemPress,
     onCreateDrinkPress,
+    onOpenDrink,
     onChromeState,
 }: CreatorWorkspaceEditorProps) {
     const nestedProps = { onNestedItemPress };
@@ -137,6 +140,7 @@ export function CreatorWorkspaceEditor({
                     onSave={onSave}
                     onChromeState={onChromeState}
                     onCreateDrinkPress={onCreateDrinkPress}
+                    onOpenDrink={onOpenDrink}
                 />
             );
         case 'bar':

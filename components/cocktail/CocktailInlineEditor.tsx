@@ -9,6 +9,7 @@ import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useCocktailEditor } from "@/hooks/useCocktailEditor";
+import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 
@@ -33,6 +34,16 @@ export function CocktailInlineEditor({
     const { data: cocktail, isLoading } = useCocktail(id);
     const editor = useCocktailEditor(id, { enabled: true });
     const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+
+    useTrackRecent(
+        !!cocktail,
+        cocktail
+            ? recentEntry('cocktail', cocktail.id, cocktail.name, {
+                  imageUrl: cocktail.item_images?.[0]?.images?.url,
+                  barId: cocktail.bar_id ?? null,
+              })
+            : null
+    );
 
     const handleSave = async () => {
         const ok = await editor.handleSave();
@@ -70,13 +81,10 @@ export function CocktailInlineEditor({
         );
     }
 
-    const displayImages =
+    const images =
         editor.localImages.length > 0
             ? editor.localImages.map((img) => img.url)
             : (cocktail.item_images?.map((img) => img.images?.url).filter(Boolean) as string[]) || [];
-
-    const images =
-        displayImages.length > 0 ? displayImages : [require("@/assets/images/cocktails/house_martini.png")];
 
     return (
         <>
@@ -84,6 +92,7 @@ export function CocktailInlineEditor({
                 id={cocktail.id}
                 title={editor.name}
                 images={images}
+                emptyPhotoPlaceholder={images.length === 0}
                 isFavorite={false}
                 isInStudyPile={false}
                 onToggleFavorite={() => {}}

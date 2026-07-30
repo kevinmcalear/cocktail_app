@@ -75,10 +75,10 @@ function DetailRecipeRow({
                 </TouchableOpacity>
 
                 {imageUrl ? (
-                    <Image source={imageUrl} style={styles.detailImage} contentFit="cover" />
+                    <Image source={{ uri: imageUrl }} style={styles.detailImage} contentFit="cover" />
                 ) : (
-                    <View style={styles.detailImagePlaceholder}>
-                        <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
+                    <View style={[styles.detailImagePlaceholder, { borderColor: theme.color11?.get() as string }]}>
+                        <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
                     </View>
                 )}
             </View>
@@ -417,6 +417,8 @@ const styles = StyleSheet.create({
         height: 64,
         borderRadius: 16,
         backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export function useDropdowns() {
     return useQuery({
-        queryKey: ['dropdowns_v2'],
+        queryKey: ['dropdowns_v3'],
         queryFn: async () => {
             const menusQuery = async () => {
                 const res = await supabase
@@ -33,7 +33,7 @@ export function useDropdowns() {
             };
 
             const [itemsRes, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
-                supabase.from('app_item_presentation').select('*').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
+                supabase.from('app_item_presentation').select('*, item_images(images(url))').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
                 menusQuery(),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order'),

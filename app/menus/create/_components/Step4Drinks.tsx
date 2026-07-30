@@ -17,6 +17,7 @@ import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { capitalize } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
+import { openDraftInCreator } from "@/store/useCreatorNavStore";
 
 const DRAFT_AMBER = "#E5A93B";
 
@@ -119,9 +120,10 @@ interface Props {
         menuDraftId?: string;
         menuSectionId?: string;
     }) => void;
+    onOpenDrink?: (drink: SearchItem) => void;
 }
 
-export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDraftId, embedded, onCreateDrinkPress }: Props) => {
+export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDraftId, embedded, onCreateDrinkPress, onOpenDrink }: Props) => {
     const router = useRouter();
     const theme = useTheme();
     const colorScheme = useColorScheme();
@@ -266,6 +268,28 @@ export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDr
         }));
     };
 
+    // ponytail: creator passes onOpenDrink to stack; otherwise same routes as CommandSearch
+    const openDrink = (drink: SearchItem) => {
+        if (onOpenDrink) {
+            onOpenDrink(drink);
+            return;
+        }
+        if (drink.isDraft) {
+            const draftId = drink.id.replace(/^(beer|wine)-/, "");
+            const entityType =
+                drink.category === "Beer" ? "beer" : drink.category === "Wine" ? "wine" : "cocktail";
+            openDraftInCreator(
+                { id: draftId, entity_type: entityType, draft_data: { name: drink.name } },
+                (href) => router.push(href as any)
+            );
+            return;
+        }
+        const category = inferDrinkCategory(drink.id, drink.category);
+        if (category === "Beer") router.push(`/beer/${drink.id.replace(/^beer-/, "")}` as any);
+        else if (category === "Wine") router.push(`/wine/${drink.id.replace(/^wine-/, "")}` as any);
+        else router.push(`/cocktail/${drink.id}` as any);
+    };
+
     const styles = useMemo(
         () =>
             StyleSheet.create({
@@ -332,7 +356,13 @@ export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDr
                             {selections[sec.id]?.map((cocktailId) => {
                                 const drink = resolveMenuDrink(cocktailId, allDrinks);
                                 return (
-                                    <View key={cocktailId} style={styles.cocktailRow}>
+                                    <TouchableOpacity
+                                        key={cocktailId}
+                                        style={styles.cocktailRow}
+                                        onPress={() => openDrink(drink)}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Open ${capitalize(drink.name)}`}
+                                    >
                                         <XStack flex={1} alignItems="center" gap="$3" marginRight="$2">
                                             <DrinkThumb
                                                 item={drink}
@@ -357,7 +387,7 @@ export const Step4Drinks = ({ sections, selections, setSelections, barId, menuDr
                                         >
                                             <IconSymbol name="minus.circle.fill" size={24} color="#ff4444" />
                                         </TouchableOpacity>
-                                    </View>
+                                    </TouchableOpacity>
                                 );
                             })}
 

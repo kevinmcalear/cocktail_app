@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { sortRecipesByOrder } from '@/lib/recipeUtils';
+import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
@@ -74,18 +74,10 @@ export function useCocktails(options?: { allContexts?: boolean }) {
             const processedData = data?.map(cocktail => ({
                 ...cocktail,
                 recipes: sortRecipesByOrder(
-                    cocktail.recipes?.map((recipe: any) => {
-                    const ingredient = !recipe.display_ingredient_id 
-                        ? null 
-                        : recipe.display_ingredient_id === recipe.parent_ingredient_id 
-                            ? recipe.generic_ingredient 
-                            : recipe.specific_ingredient;
-                    
-                    return {
+                    cocktail.recipes?.map((recipe: any) => ({
                         ...recipe,
-                        ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
-                    };
-                })
+                        ingredient: resolvePresentationIngredient(recipe),
+                    }))
                 )
             }));
 
@@ -156,18 +148,10 @@ export function useCocktail(id?: string | string[]) {
             if (data) {
                 // Map the secure recipes payload to match the expected UI shapes
                 data.recipes = sortRecipesByOrder(
-                    data.recipes?.map((recipe: any) => {
-                    const ingredient = !recipe.display_ingredient_id 
-                        ? null 
-                        : recipe.display_ingredient_id === recipe.parent_ingredient_id 
-                            ? recipe.generic_ingredient 
-                            : recipe.specific_ingredient;
-
-                    return {
+                    data.recipes?.map((recipe: any) => ({
                         ...recipe,
-                        ingredient: ingredient ? { ...ingredient, id: ingredient.id || recipe.display_ingredient_id || recipe.ingredient_item_id } : null
-                    };
-                })
+                        ingredient: resolvePresentationIngredient(recipe),
+                    }))
                 );
 
                 // Fetch glassware, family, and ice manually to bypass PostgREST ambiguous relation errors on views

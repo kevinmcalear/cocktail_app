@@ -78,7 +78,12 @@ export function useDrafts() {
                 return data;
             }
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            // ponytail: keep cache warm so useTrackRecent can see the draft immediately
+            queryClient.setQueryData(['drafts', user?.id], (old: DatabaseDraft[] | undefined) => {
+                const list = old || [];
+                return [data, ...list.filter((d) => d.id !== data.id)];
+            });
             queryClient.invalidateQueries({ queryKey: ['drafts'] });
         }
     });
@@ -88,7 +93,10 @@ export function useDrafts() {
             const { error } = await supabase.from('drafts').delete().eq('id', id);
             if (error) throw error;
         },
-        onSuccess: () => {
+        onSuccess: (_data, id) => {
+            queryClient.setQueryData(['drafts', user?.id], (old: DatabaseDraft[] | undefined) =>
+                (old || []).filter((d) => d.id !== id)
+            );
             queryClient.invalidateQueries({ queryKey: ['drafts'] });
         }
     });

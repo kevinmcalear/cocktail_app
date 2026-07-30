@@ -15,6 +15,7 @@ import { UniversalCreateButton } from '@/components/UniversalCreateButton';
 import { CreatorWorkspace } from '@/components/CreatorWorkspace';
 import { CreatorWorkspaceEditor } from '@/components/CreatorWorkspaceEditor';
 import { DraftFolderTree, SelectedDraftNode } from '@/components/DraftFolderTree';
+import type { SearchItem } from '@/components/SearchList';
 import {
     WorkspaceFrame,
     EditingState,
@@ -340,6 +341,18 @@ export default function EditModeDashboard() {
         setSelectedNode(node);
     };
 
+    // ponytail: same stack push as nested ingredients — back returns to the menu
+    const handleOpenMenuDrink = (drink: SearchItem) => {
+        const cleanId = drink.id.replace(/^(beer|wine)-/, '');
+        const node: SelectedDraftNode = drink.isDraft
+            ? { type: 'drink_draft', id: cleanId, name: drink.name }
+            : { type: 'published_drink', id: cleanId, name: drink.name };
+        const frame = buildWorkspaceFrame(node, allItems);
+        if (!frame) return;
+        setNavigationStack((prev) => [...prev, frame]);
+        setSelectedNode(node);
+    };
+
     const activeFrame = navigationStack.at(-1) ?? null;
     const activeItem = activeFrame && activeFrame.editing.type !== 'bar'
         ? findItemByNode(activeFrame.node, allItems)
@@ -494,6 +507,7 @@ export default function EditModeDashboard() {
                                 onSave={handleSaveComplete}
                                 onNestedItemPress={handleNestedItemPress}
                                 onCreateDrinkPress={handleCreateDrinkPress}
+                                onOpenDrink={handleOpenMenuDrink}
                                 onChromeState={setEditorChrome}
                             />
                         </React.Fragment>

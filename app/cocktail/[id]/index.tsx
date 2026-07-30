@@ -91,7 +91,9 @@ export default function CocktailDetailsScreen() {
 
     const images = displayImages.length > 0
         ? displayImages
-        : [require("@/assets/images/cocktails/house_martini.png")];
+        : isEditing
+            ? []
+            : [require("@/assets/images/cocktails/house_martini.png")];
 
     const displayTitle = isEditing ? editor.name : cocktail.name;
 
@@ -101,6 +103,7 @@ export default function CocktailDetailsScreen() {
                 id={cocktail.id}
                 title={displayTitle}
                 images={images}
+                emptyPhotoPlaceholder={isEditing && images.length === 0}
                 isFavorite={isFavorite(cocktail.id)}
                 isInStudyPile={isInStudyPile(cocktail.id)}
                 onToggleFavorite={toggleFavorite}

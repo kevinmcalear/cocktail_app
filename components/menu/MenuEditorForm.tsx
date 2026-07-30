@@ -15,6 +15,7 @@ import {
 } from 'tamagui';
 
 import { Step4Drinks } from '@/app/menus/create/_components/Step4Drinks';
+import type { SearchItem } from '@/components/SearchList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useBars } from '@/hooks/useBars';
 import { handleCapitalizedChange } from '@/lib/stringUtils';
@@ -48,6 +49,7 @@ interface MenuEditorFormProps {
         menuDraftId?: string;
         menuSectionId?: string;
     }) => void;
+    onOpenDrink?: (drink: SearchItem) => void;
 }
 
 function SectionLabel({ children }: { children: string }) {
@@ -89,6 +91,7 @@ export function MenuEditorForm({
     saving,
     onPublish,
     onCreateDrinkPress,
+    onOpenDrink,
 }: MenuEditorFormProps) {
     const theme = useTheme();
     const router = useRouter();
@@ -281,6 +284,7 @@ export function MenuEditorForm({
                             barId={barId}
                             menuDraftId={menuDraftId}
                             onCreateDrinkPress={onCreateDrinkPress}
+                            onOpenDrink={onOpenDrink}
                         />
                     </View>
                 </Card>

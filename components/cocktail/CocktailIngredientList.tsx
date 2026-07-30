@@ -6,21 +6,11 @@ import { Text, XStack, YStack, useTheme } from "tamagui";
 
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { buildIngredientImageMap } from "@/lib/recipeUtils";
+
+export { buildIngredientImageMap };
 
 const EDIT_ROW_HEIGHT = 80;
-
-export function buildIngredientImageMap(recipes: any[] | undefined): Record<string, string> {
-    const map: Record<string, string> = {};
-    recipes?.forEach((recipe) => {
-        const id =
-            recipe.ingredient?.id ||
-            recipe.ingredient_item_id ||
-            recipe.display_ingredient_id;
-        const url = recipe.ingredient?.item_images?.[0]?.images?.url;
-        if (id && url) map[id] = url;
-    });
-    return map;
-}
 
 interface CocktailIngredientListProps {
     isEditing: boolean;
@@ -29,6 +19,7 @@ interface CocktailIngredientListProps {
     ingredientImageMap: Record<string, string>;
     onReorder?: (items: SortableRecipeItem[]) => void;
     onUpdateItem?: (index: number, updates: Partial<SortableRecipeItem>) => void;
+    onRemove?: (index: number) => void;
     onIngredientPress?: (ingredientId: string) => void;
 }
 
@@ -39,6 +30,8 @@ function EditIngredientRow({
     drag,
     isActive,
     onUpdateItem,
+    onRemove,
+    onIngredientPress,
 }: {
     item: SortableRecipeItem;
     index: number;
@@ -46,10 +39,13 @@ function EditIngredientRow({
     drag: () => void;
     isActive: boolean;
     onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
+    onRemove: (index: number) => void;
+    onIngredientPress?: (id: string) => void;
 }) {
     const theme = useTheme();
     const [editingMeasure, setEditingMeasure] = useState(false);
     const measurement = [item.amount, item.unit].filter(Boolean).join(" ");
+    const muted = theme.color11?.get() as string;
 
     return (
         <View style={[styles.row, isActive && styles.rowActive]}>
@@ -63,15 +59,21 @@ function EditIngredientRow({
                         hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                         accessibilityLabel="Drag to reorder"
                     >
-                        <IconSymbol name="line.3.horizontal" size={12} color={theme.color11?.get() as string} style={{ opacity: 0.45 }} />
+                        <IconSymbol name="line.3.horizontal" size={12} color={muted} style={{ opacity: 0.45 }} />
                     </TouchableOpacity>
-                    {imageUrl ? (
-                        <Image source={imageUrl} style={styles.image} contentFit="cover" />
-                    ) : (
-                        <View style={styles.imagePlaceholder}>
-                            <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
-                        </View>
-                    )}
+                    <TouchableOpacity
+                        onPress={() => onIngredientPress?.(item.ingredient_id)}
+                        activeOpacity={0.7}
+                        accessibilityLabel={imageUrl ? "Open ingredient" : "Add ingredient photo"}
+                    >
+                        {imageUrl ? (
+                            <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
+                        ) : (
+                            <View style={[styles.imagePlaceholder, { borderColor: muted }]}>
+                                <IconSymbol name="camera.fill" size={18} color={muted} style={{ opacity: 0.7 }} />
+                            </View>
+                        )}
+                    </TouchableOpacity>
                 </View>
 
                 <YStack flex={1} gap="$0.5" minWidth={0}>
@@ -105,6 +107,14 @@ function EditIngredientRow({
                         {item.name}
                     </Text>
                 </YStack>
+
+                <TouchableOpacity
+                    onPress={() => onRemove(index)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="Remove ingredient"
+                >
+                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                </TouchableOpacity>
             </XStack>
         </View>
     );
@@ -136,10 +146,10 @@ function ViewIngredientRow({
                 activeOpacity={0.7}
             >
                 {imageUrl ? (
-                    <Image source={imageUrl} style={styles.image} contentFit="cover" />
+                    <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
                 ) : (
-                    <View style={styles.imagePlaceholder}>
-                        <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
+                    <View style={[styles.imagePlaceholder, { borderColor: theme.color11?.get() as string }]}>
+                        <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
                     </View>
                 )}
             </TouchableOpacity>
@@ -169,13 +179,14 @@ export function CocktailIngredientList({
     ingredientImageMap,
     onReorder,
     onUpdateItem,
+    onRemove,
     onIngredientPress,
 }: CocktailIngredientListProps) {
     const listHeight = editItems.length * EDIT_ROW_HEIGHT;
 
     const renderEditItem = ({ item, drag, isActive, getIndex }: RenderItemParams<SortableRecipeItem>) => {
         const index = getIndex();
-        if (index === undefined || !onUpdateItem) return null;
+        if (index === undefined || !onUpdateItem || !onRemove) return null;
 
         return (
             <ScaleDecorator>
@@ -186,12 +197,14 @@ export function CocktailIngredientList({
                     drag={drag}
                     isActive={isActive}
                     onUpdateItem={onUpdateItem}
+                    onRemove={onRemove}
+                    onIngredientPress={onIngredientPress}
                 />
             </ScaleDecorator>
         );
     };
 
-    if (isEditing && onReorder && onUpdateItem) {
+    if (isEditing && onReorder && onUpdateItem && onRemove) {
         return (
             <View style={{ height: listHeight, width: "100%" }}>
                 <DraggableFlatList
@@ -263,6 +276,8 @@ const styles = StyleSheet.create({
         height: 64,
         borderRadius: 16,
         backgroundColor: "rgba(255,255,255,0.05)",
+        borderWidth: 1,
+        borderStyle: "dashed",
         justifyContent: "center",
         alignItems: "center",
     },

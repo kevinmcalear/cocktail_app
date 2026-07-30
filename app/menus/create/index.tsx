@@ -16,8 +16,10 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 
 import { MenuEditorForm } from "@/components/menu/MenuEditorForm";
+import type { SearchItem } from "@/components/SearchList";
 import type { EditorChromeState } from "@/lib/editorChrome";
 
 async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
@@ -49,6 +51,7 @@ interface CreateMenuWizardProps {
         menuDraftId?: string;
         menuSectionId?: string;
     }) => void;
+    onOpenDrink?: (drink: SearchItem) => void;
 }
 
 export default function CreateMenuWizard({
@@ -60,6 +63,7 @@ export default function CreateMenuWizard({
     onSave,
     onChromeState,
     onCreateDrinkPress,
+    onOpenDrink,
 }: CreateMenuWizardProps = {}) {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme];
@@ -90,34 +94,41 @@ export default function CreateMenuWizard({
     const [saving, setSaving] = useState(false);
     const [barId, setBarId] = useState<string | null>(resolvedBarId);
 
-    const trackedDraft = currentDraftId
-        ? drafts.find((d: any) => d.id === currentDraftId)
-        : null;
-    useTrackRecent(
-        !!trackedDraft,
-        trackedDraft
-            ? recentEntry(
-                  'menu',
-                  trackedDraft.id,
-                  trackedDraft.draft_data?.menuName ||
-                      trackedDraft.draft_data?.name ||
-                      menuName ||
-                      'Untitled Menu',
-                  {
-                      isDraft: true,
-                      barId: trackedDraft.bar_id ?? barId ?? null,
-                      imageUrl: trackedDraft.draft_data?.coverUrl || coverUrl || null,
-                  }
-              )
-            : null
-    );
-
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
     const isExitingRef = useRef(false);
 
     const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
     const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
+
+    const trackedDraft = currentDraftId
+        ? drafts.find((d: any) => d.id === currentDraftId)
+        : null;
+    // Published menu edit → track published id; new menu → track draft once it exists
+    useTrackRecent(
+        !!(activeMenuIdProp && menuLoaded) || !!trackedDraft,
+        activeMenuIdProp && menuLoaded
+            ? recentEntry('menu', activeMenuIdProp, menuName || 'Untitled Menu', {
+                  href: '/(tabs)/menus',
+                  barId: barId ?? null,
+                  imageUrl: coverUrl || null,
+              })
+            : trackedDraft
+              ? recentEntry(
+                    'menu',
+                    trackedDraft.id,
+                    trackedDraft.draft_data?.menuName ||
+                        trackedDraft.draft_data?.name ||
+                        menuName ||
+                        'Untitled Menu',
+                    {
+                        isDraft: true,
+                        barId: trackedDraft.bar_id ?? barId ?? null,
+                        imageUrl: trackedDraft.draft_data?.coverUrl || coverUrl || null,
+                    }
+                )
+              : null
+    );
     const currentStateStr = JSON.stringify({ selectedTemplateId, menuName, selections, barId, coverUrl });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
@@ -548,6 +559,14 @@ export default function CreateMenuWizard({
                 await deleteDraft(currentDraftId);
             }
 
+            useRecentActivityStore.getState().push(
+                recentEntry('menu', menuId, menuName || 'Untitled Menu', {
+                    href: '/(tabs)/menus',
+                    barId: barId ?? null,
+                    imageUrl: coverUrl || null,
+                })
+            );
+
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             isExitingRef.current = true;
             if (isInline) {
@@ -629,6 +648,7 @@ export default function CreateMenuWizard({
                     saving={saving}
                     onPublish={handlePublish}
                     onCreateDrinkPress={onCreateDrinkPress}
+                    onOpenDrink={onOpenDrink}
                 />
             </YStack>
 

@@ -18,6 +18,7 @@ import {
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { capitalize } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
+import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import type { SpecCategory, SpecDbField } from "@/hooks/useCocktailEditor";
 
 const SPEC_DB_FIELD: Record<SpecCategory, SpecDbField> = {
@@ -101,13 +102,21 @@ export function useCocktailDraftEditor({
     const iceTypes = dropdowns?.iceTypes || [];
 
     const allIngredients = useMemo(() => {
-        const published = (dropdowns?.ingredients || []).map((i: any) => ({ id: i.id, name: i.name }));
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({
+            id: i.id,
+            name: i.name,
+            item_images: i.item_images,
+        }));
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === "ingredient")
-            .map((d: any) => ({
-                id: d.id,
-                name: d.draft_data?.name || "Untitled Ingredient Draft",
-            }));
+            .map((d: any) => {
+                const url = d.draft_data?.localImages?.[0]?.url;
+                return {
+                    id: d.id,
+                    name: d.draft_data?.name || "Untitled Ingredient Draft",
+                    item_images: url ? [{ images: { url } }] : undefined,
+                };
+            });
         const combined = [...draftIngredients, ...published];
         const seen = new Set<string>();
         return combined.filter((i) => {
@@ -556,6 +565,13 @@ export function useCocktailDraftEditor({
                 await updateMenuDraftsWithPublishedId(activeDraftId, cocktailId, drafts, saveDraft);
                 await deleteDraft(activeDraftId);
             }
+
+            useRecentActivityStore.getState().push(
+                recentEntry('cocktail', cocktailId, name || 'Untitled Cocktail', {
+                    barId: barId ?? null,
+                    imageUrl: localImages[0]?.url,
+                })
+            );
 
             if (barId) {
                 queryClient.invalidateQueries({ queryKey: ["bar", barId] });

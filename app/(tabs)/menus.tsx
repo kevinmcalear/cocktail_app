@@ -39,10 +39,8 @@ export default function MenusScreen() {
         }
     }, [menus, selectedMenuId, setSelectedMenuId]);
 
-    useEffect(() => {
-        if (!selectedMenuId) return;
-        const menu = menus.find((m) => m.id === selectedMenuId);
-        if (!menu) return;
+    const selectMenu = (menu: { id: string; name: string; bar_id?: string | null; cover_url?: string | null }) => {
+        setSelectedMenuId(menu.id);
         pushRecent({
             id: menu.id,
             kind: 'menu',
@@ -52,7 +50,7 @@ export default function MenusScreen() {
             barId: menu.bar_id ?? null,
             imageUrl: menu.cover_url ?? null,
         });
-    }, [selectedMenuId, menus, pushRecent]);
+    };
 
     const { data: menuDetails, isLoading: loadingDetails } = useMenuDetails(selectedMenuId);
     const selectedCoverUrl = menus.find((m) => m.id === selectedMenuId)?.cover_url ?? null;
@@ -98,7 +96,7 @@ export default function MenusScreen() {
                                             backgroundColor={isSelected ? "$color8" : "$backgroundStrong"}
                                             borderColor={isSelected ? "$color8" : "$borderColor"}
                                             borderWidth={1}
-                                            onPress={() => setSelectedMenuId(menu.id)}
+                                            onPress={() => selectMenu(menu)}
                                         >
                                             <Text color={isSelected ? "$backgroundStrong" : "$color"} fontWeight="600">
                                                 {menu.name}

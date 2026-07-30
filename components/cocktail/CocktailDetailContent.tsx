@@ -60,8 +60,8 @@ export function CocktailDetailContent({
     const notes = isEditing && editor ? editor.notes : cocktail.notes;
 
     const ingredientImageMap = useMemo(
-        () => buildIngredientImageMap(cocktail.recipes),
-        [cocktail.recipes]
+        () => buildIngredientImageMap(cocktail.recipes, editor?.allIngredients),
+        [cocktail.recipes, editor?.allIngredients]
     );
 
     const navigateIngredient = (ingredientId: string) => {
@@ -105,13 +105,13 @@ export function CocktailDetailContent({
                     >
                         {imageUrl ? (
                             <Image
-                                source={imageUrl}
+                                source={{ uri: imageUrl }}
                                 style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)" }}
                                 contentFit="cover"
                             />
                         ) : (
                             <View style={styles.ingPlaceholder}>
-                                <IconSymbol name="drop.fill" size={16} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
+                                <IconSymbol name="camera.fill" size={14} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
                             </View>
                         )}
                         <YStack flex={1} gap="$0.5">
@@ -134,13 +134,13 @@ export function CocktailDetailContent({
                 <TouchableOpacity onPress={() => ingredientId && navigateIngredient(ingredientId)} activeOpacity={0.7}>
                     {imageUrl ? (
                         <Image
-                            source={imageUrl}
+                            source={{ uri: imageUrl }}
                             style={styles.ingImage}
                             contentFit="cover"
                         />
                     ) : (
                         <View style={styles.ingImagePlaceholder}>
-                            <IconSymbol name="drop.fill" size={24} color={theme.color?.get() as string} style={{ opacity: 0.2 }} />
+                            <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
                         </View>
                     )}
                 </TouchableOpacity>
@@ -218,6 +218,9 @@ export function CocktailDetailContent({
                                         next[index] = { ...next[index], ...updates };
                                         editor.setRecipeItems(next);
                                     }}
+                                    onRemove={(index) =>
+                                        editor.setRecipeItems(editor.recipeItems.filter((_, i) => i !== index))
+                                    }
                                     onIngredientPress={navigateIngredient}
                                 />
                                 <TouchableOpacity onPress={() => setShowIngredientPicker(true)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
