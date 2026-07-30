@@ -32,15 +32,17 @@ interface AddBeerProps {
     isInline?: boolean;
     draftIdProp?: string;
     barIdProp?: string;
+    initialNameProp?: string;
     onClose?: () => void;
     onSave?: () => void;
 }
 
-export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, onClose, onSave }: AddBeerProps = {}) {
+export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, initialNameProp, onClose, onSave }: AddBeerProps = {}) {
     const router = useRouter();
     const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+    const seedName = initialNameProp !== undefined ? initialNameProp : initialNameParam;
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -56,7 +58,7 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, onClos
     const isExitingRef = React.useRef(false);
 
     // Form State
-    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
+    const [name, setName] = useState(seedName ? capitalize(seedName) : "");
     const [description, setDescription] = useState("");
     const [brewery, setBrewery] = useState("");
     const [abv, setAbv] = useState("");

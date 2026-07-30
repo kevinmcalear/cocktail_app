@@ -15,10 +15,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SearchBar } from "@/components/SearchBar";
-import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
+import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
+import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,7 +27,8 @@ import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } 
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
-import { resolveIngredientId, updateParentDraftsWithPublishedId } from "@/lib/drafts";
+import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
+import type { EditorChromeState } from "@/lib/editorChrome";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
@@ -46,9 +48,10 @@ interface AddIngredientProps {
     onClose?: () => void;
     onSave?: () => void;
     onNestedItemPress?: (ingredientId: string) => void;
+    onChromeState?: (state: EditorChromeState | null) => void;
 }
 
-export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress }: AddIngredientProps = {}) {
+export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress, onChromeState }: AddIngredientProps = {}) {
     const router = useRouter();
     const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
@@ -92,6 +95,19 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
     const { data: dropdowns } = useDropdowns();
     const allIngredients = dropdowns?.ingredients || [];
+
+    const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
+        setRecipeItems(items);
+    }, []);
+
+    const { onMerge } = useRecipeMergeHandler({
+        items: recipeItems,
+        setItems: setMergeRecipeItems,
+        persistence: 'draft',
+        barId,
+        drafts,
+        saveDraft,
+    });
 
     const mergedIngredients = useMemo(() => {
         const published = (dropdowns?.ingredients || []).map((i: any) => ({
@@ -219,11 +235,19 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             // Set recentlyCreatedItem so the parent screen knows about this draft ingredient
             const draftIdToNotify = updatedDraftId || (result && result.id);
             if (draftIdToNotify) {
+                const displayName = capitalize(name.trim()) || "Untitled Ingredient Draft";
                 setRecentlyCreatedItem({
                     type: 'ingredient',
                     id: draftIdToNotify,
-                    name: name.trim() || "Untitled Ingredient Draft"
+                    name: displayName
                 });
+                // Keep parent cocktail/ingredient recipe lines in sync (merge-created "New batch")
+                await syncIngredientRefsInParentDrafts(
+                    draftIdToNotify,
+                    { name: displayName },
+                    drafts,
+                    saveDraft
+                );
             }
             
             if (!silent) {
@@ -388,7 +412,13 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
             if (currentDraftId) {
-                await updateParentDraftsWithPublishedId(currentDraftId, ingredientId, drafts, saveDraft);
+                await updateParentDraftsWithPublishedId(
+                    currentDraftId,
+                    ingredientId,
+                    drafts,
+                    saveDraft,
+                    capitalize(name)
+                );
                 await deleteDraft(currentDraftId);
             }
             if (barId) {
@@ -401,7 +431,9 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 { text: "OK", onPress: () => {
                     isExitingRef.current = true;
                     if (isInline) {
-                        if (onSave) onSave();
+                        // ponytail: pop nested stack (onSave clears whole workspace)
+                        if (onClose) onClose();
+                        else if (onSave) onSave();
                     } else {
                         router.back();
                     }
@@ -415,6 +447,45 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             setSaving(false);
         }
     };
+
+    // ponytail: existing draft (e.g. merge-created batch) → Save persists draft; brand-new → publish
+    const handleHeaderSave = async () => {
+        if (!name.trim()) {
+            Alert.alert("Missing Info", "Name is required.");
+            return;
+        }
+        if (currentDraftId) {
+            const savedId = await handleSaveDraft(true);
+            if (!savedId) return;
+            if (isInline) {
+                onClose?.();
+            } else if (Platform.OS === 'web') {
+                window.alert("Draft saved successfully!");
+            } else {
+                Alert.alert("Success", "Draft saved successfully!");
+            }
+            return;
+        }
+        handleSave();
+    };
+
+    useEffect(() => {
+        if (!isInline || !onChromeState) return;
+        const dirty = currentStateStr !== cleanStateStrRef.current;
+        onChromeState({
+            save: async () => {
+                await handleHeaderSave();
+            },
+            cancel: () => {
+                if (dirty) setShowExitModal(true);
+                else onClose?.();
+            },
+            saving,
+            isDirty: dirty || Boolean(name.trim()) || currentDraftId !== null,
+        });
+        return () => onChromeState(null);
+        // ponytail: chrome rebinds when draft fields change so Save isn't stale
+    }, [isInline, onChromeState, saving, currentStateStr, name, currentDraftId, recipeItems, description, brandMaker, abv, selectedCategories, barId]);
 
     const isItemDraft = (ingredientId: string) => {
         return drafts.some((d: any) => d.id === ingredientId && d.entity_type === 'ingredient');
@@ -450,10 +521,12 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 >
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
-                <Text fontSize="$5" fontWeight="bold">New Ingredient</Text>
+                <Text fontSize="$5" fontWeight="bold">
+                    {currentDraftId ? 'Edit Ingredient' : 'New Ingredient'}
+                </Text>
                 <XStack gap="$2" alignItems="center">
                     <Button 
-                        onPress={handleSave} 
+                        onPress={() => { void handleHeaderSave(); }}
                         disabled={saving}
                         size="$3"
                         chromeless
@@ -578,6 +651,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                                 setRecipeItems(newItems);
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                            onMerge={onMerge}
                             variant="card"
                             onNestedItemPress={onNestedItemPress}
                             drafts={drafts}

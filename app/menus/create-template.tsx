@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { DROPDOWNS_QUERY_KEY } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,14 +17,26 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack } from "tamagui";
-import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
+import {
+    ALL_SECTION_DRINK_TYPES,
+    normalizeAllowedTypes,
+    type SectionDrinkType,
+} from "@/lib/sectionAllowedTypes";
+import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 
 interface SectionInput {
     id: string; // temporary for UI key mapping
     name: string;
     minItems: string;
     maxItems: string;
+    allowedTypes: SectionDrinkType[];
 }
+
+const TYPE_TOGGLE_LABEL: Record<SectionDrinkType, string> = {
+    cocktail: "Cocktails",
+    beer: "Beer",
+    wine: "Wine",
+};
 
 export default function CreateTemplateScreen() {
     const router = useRouter();
@@ -40,7 +53,7 @@ export default function CreateTemplateScreen() {
     
     // Start with one blank section by default
     const [sections, setSections] = useState<SectionInput[]>([
-        { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '' }
+        { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '', allowedTypes: [...ALL_SECTION_DRINK_TYPES] }
     ]);
     const [saving, setSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(isEditing);
@@ -62,10 +75,11 @@ export default function CreateTemplateScreen() {
                         id: s.id, // real UUID
                         name: s.name,
                         minItems: s.min_items ? s.min_items.toString() : '1',
-                        maxItems: s.max_items ? s.max_items.toString() : ''
+                        maxItems: s.max_items ? s.max_items.toString() : '',
+                        allowedTypes: normalizeAllowedTypes(s.allowed_types),
                     })));
                 } else {
-                    setSections([{ id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '' }]);
+                    setSections([{ id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '', allowedTypes: [...ALL_SECTION_DRINK_TYPES] }]);
                 }
             } catch (err) {
                 console.error("Error loading template", err);
@@ -81,7 +95,7 @@ export default function CreateTemplateScreen() {
     const handleAddSection = () => {
         setSections(prev => [
             ...prev,
-            { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '' }
+            { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '', allowedTypes: [...ALL_SECTION_DRINK_TYPES] }
         ]);
     };
 
@@ -93,10 +107,24 @@ export default function CreateTemplateScreen() {
         setSections(prev => prev.filter(s => s.id !== idToRemove));
     };
 
-    const handleSectionChange = (id: string, field: keyof SectionInput, value: string) => {
-        setSections(prev => prev.map(s => 
+    const handleSectionChange = (id: string, field: 'name' | 'minItems' | 'maxItems', value: string) => {
+        setSections(prev => prev.map(s =>
             s.id === id ? { ...s, [field]: value } : s
         ));
+    };
+
+    const toggleAllowedType = (id: string, type: SectionDrinkType) => {
+        setSections(prev => prev.map(s => {
+            if (s.id !== id) return s;
+            const has = s.allowedTypes.includes(type);
+            if (has && s.allowedTypes.length === 1) return s; // need at least one
+            return {
+                ...s,
+                allowedTypes: has
+                    ? s.allowedTypes.filter(t => t !== type)
+                    : ALL_SECTION_DRINK_TYPES.filter(t => t === type || s.allowedTypes.includes(t)),
+            };
+        }));
     };
 
     const handleSave = async () => {
@@ -150,7 +178,8 @@ export default function CreateTemplateScreen() {
                     name: capitalize(sec.name.trim()),
                     min_items: isNaN(min) ? 1 : min,
                     max_items: isNaN(max) ? null : max,
-                    sort_order: index
+                    sort_order: index,
+                    allowed_types: normalizeAllowedTypes(sec.allowedTypes),
                 };
                 
                 if (!sec.id.startsWith('sec-')) {
@@ -186,7 +215,7 @@ export default function CreateTemplateScreen() {
             }
 
             // Success
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
             
             Alert.alert("Success", `Template ${isEditing ? 'updated' : 'created'} successfully!`, [
                 { text: "OK", onPress: () => router.back() }
@@ -271,6 +300,13 @@ export default function CreateTemplateScreen() {
                 },
                 sectionBlockTitle: { fontWeight: "bold", fontSize: 16, color: colors.text },
                 requirementsRow: { flexDirection: "row", gap: 12 },
+                typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+                typeChip: {
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                },
                 addSectionBtnLarge: {
                     flexDirection: "row",
                     justifyContent: "center",
@@ -402,6 +438,30 @@ export default function CreateTemplateScreen() {
                                     onChangeText={(val) => handleSectionChange(sec.id, 'maxItems', val)}
                                 />
                             </View>
+                        </View>
+
+                        <Text style={[styles.subLabel, { marginTop: 12 }]}>Allowed drinks</Text>
+                        <View style={styles.typeRow}>
+                            {ALL_SECTION_DRINK_TYPES.map((type) => {
+                                const on = sec.allowedTypes.includes(type);
+                                return (
+                                    <TouchableOpacity
+                                        key={type}
+                                        onPress={() => toggleAllowedType(sec.id, type)}
+                                        style={[
+                                            styles.typeChip,
+                                            {
+                                                backgroundColor: on ? "rgba(230, 126, 34, 0.2)" : "transparent",
+                                                borderColor: on ? colors.tint : (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"),
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={{ color: on ? colors.tint : colors.icon, fontWeight: "600", fontSize: 13 }}>
+                                            {TYPE_TOGGLE_LABEL[type]}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
                         </View>
                     </View>
                 ))}

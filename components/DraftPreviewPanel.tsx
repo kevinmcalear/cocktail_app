@@ -363,14 +363,26 @@ export function DraftPreviewPanel({
                                                             }
                                                             
                                                             const draftDrink = drafts.find((d: any) => d.id === cleanId && d.entity_type === cleanType);
-                                                            const name = draftDrink 
-                                                                ? `[Draft] ${draftDrink.draft_data?.name || `Untitled ${cleanType}`}`
+                                                            const childProgress = draftDrink
+                                                                ? calculateDraftProgress(draftDrink, drafts, dropdowns)
+                                                                : null;
+                                                            const name = draftDrink
+                                                                ? draftDrink.draft_data?.name || `Untitled ${cleanType}`
                                                                 : `Standard ${cleanType} (ID: ${cleanId})`; // Real resolution is handled dynamically, let's keep it simple
 
                                                             return (
-                                                                <Text key={drinkId} color="$color" fontSize={13} opacity={0.9}>
-                                                                    • {name}
-                                                                </Text>
+                                                                <XStack key={drinkId} alignItems="center" justifyContent="space-between" gap="$2">
+                                                                    <Text color="$color" fontSize={13} opacity={0.9} flex={1} numberOfLines={1}>
+                                                                        • {draftDrink ? `[Draft] ${name}` : name}
+                                                                    </Text>
+                                                                    {childProgress ? (
+                                                                        <View style={{ backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 }}>
+                                                                            <Text fontSize={9} fontWeight="bold" color={childProgress.badgeText}>
+                                                                                {childProgress.percentage}%
+                                                                            </Text>
+                                                                        </View>
+                                                                    ) : null}
+                                                                </XStack>
                                                             );
                                                         })}
                                                     </YStack>

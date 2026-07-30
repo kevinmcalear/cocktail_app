@@ -86,41 +86,62 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
 }
 
 /**
- * Scans all user drafts and updates references to an old draft ID with the new published ID.
+ * Patch recipe lines in other drafts that point at this ingredient
+ * (e.g. rename a merge-created batch so the parent cocktail line updates).
  */
-export async function updateParentDraftsWithPublishedId(
-    oldDraftId: string, 
-    newPublishedId: string, 
-    userDrafts: any[], 
+export async function syncIngredientRefsInParentDrafts(
+    ingredientId: string,
+    patch: { ingredient_id?: string; name?: string },
+    userDrafts: any[],
     saveDraftFn: any
 ) {
     for (const draft of userDrafts) {
         if (!draft.draft_data || !draft.draft_data.recipeItems) continue;
-        
+        if (draft.id === ingredientId) continue;
+
         let changed = false;
         const updatedRecipeItems = draft.draft_data.recipeItems.map((item: any) => {
-            if (item.ingredient_id === oldDraftId) {
-                changed = true;
-                return {
-                    ...item,
-                    ingredient_id: newPublishedId
-                };
-            }
-            return item;
-        });
-        
-        if (changed) {
-            const updatedDraftData = {
-                ...draft.draft_data,
-                recipeItems: updatedRecipeItems
+            if (item.ingredient_id !== ingredientId) return item;
+            changed = true;
+            return {
+                ...item,
+                ...(patch.ingredient_id ? { ingredient_id: patch.ingredient_id } : {}),
+                ...(patch.name != null ? { name: patch.name } : {}),
             };
+        });
+
+        if (changed) {
             await saveDraftFn({
                 id: draft.id,
                 entityType: draft.entity_type,
-                draftData: updatedDraftData
+                draftData: {
+                    ...draft.draft_data,
+                    recipeItems: updatedRecipeItems,
+                },
             });
         }
     }
+}
+
+/**
+ * Scans all user drafts and updates references to an old draft ID with the new published ID.
+ */
+export async function updateParentDraftsWithPublishedId(
+    oldDraftId: string,
+    newPublishedId: string,
+    userDrafts: any[],
+    saveDraftFn: any,
+    name?: string
+) {
+    await syncIngredientRefsInParentDrafts(
+        oldDraftId,
+        {
+            ingredient_id: newPublishedId,
+            ...(name != null ? { name } : {}),
+        },
+        userDrafts,
+        saveDraftFn
+    );
 }
 
 /**

@@ -276,7 +276,7 @@ export function useMenuEditor(menuId: string | null, enabled: boolean) {
                 if (error) throw error;
             }
 
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v3'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v4'] });
             await queryClient.invalidateQueries({ queryKey: ['menu', menuId] });
             cleanRef.current = stateStr;
             return true;

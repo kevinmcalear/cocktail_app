@@ -1,8 +1,10 @@
 import { CommandFilter, CommandSearch } from '@/components/CommandSearch';
 import type { SearchItem } from '@/components/SearchList';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
+import type { SectionDrinkType } from '@/lib/sectionAllowedTypes';
+import { useMenuEditDropStore } from '@/store/useMenuEditDropStore';
 import { useEffect } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme } from 'tamagui';
 
 type SearchPopoverProps = {
@@ -10,10 +12,16 @@ type SearchPopoverProps = {
   onClose: () => void;
   initialQuery?: string;
   initialFilter?: CommandFilter;
+  /** Limit filter pills (e.g. section-allowed drink types). */
+  filters?: readonly CommandFilter[];
   /** Override catalog (e.g. menu drink picker). */
   items?: SearchItem[];
   /** Pick mode: select instead of navigate. */
   onItemSelect?: (item: SearchItem) => void;
+  /** Empty-state create from search query + active filter. */
+  onCreateNew?: (info: { name: string; type: SectionDrinkType }) => void;
+  /** Lock venue picker to this menu's venue. */
+  lockedContextId?: string;
 };
 
 /** Cursor-style search palette (overlay only — not the home screen). */
@@ -22,13 +30,18 @@ export function SearchPopover({
   onClose,
   initialQuery = '',
   initialFilter = 'All',
+  filters,
   items: itemsProp,
   onItemSelect,
+  onCreateNew,
+  lockedContextId,
 }: SearchPopoverProps) {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const { items: catalogItems, error } = useSearchCatalog();
   const items = itemsProp ?? catalogItems;
+  const canDropOnMenu = useMenuEditDropStore((s) => !!s.handler);
+  const startDrag = useMenuEditDropStore((s) => s.startDrag);
 
   useEffect(() => {
     if (!visible || typeof document === 'undefined') return;
@@ -64,14 +77,26 @@ export function SearchPopover({
           onPress={(e) => e.stopPropagation()}
         >
           <CommandSearch
-            key={`${initialQuery}|${initialFilter}|${visible}`}
+            key={`${initialQuery}|${initialFilter}|${filters?.join(',') ?? ''}|${visible}`}
             items={items}
             initialQuery={initialQuery}
             initialFilter={initialFilter}
+            filters={filters}
             autoFocus
             showFooter
             onSelect={onClose}
             onItemSelect={onItemSelect}
+            onItemDragStart={
+              // ponytail: ⌘K + window pointer tracking is web; native still taps Add → select
+              canDropOnMenu && Platform.OS === 'web'
+                ? (item, pos) => {
+                    onClose();
+                    requestAnimationFrame(() => startDrag(item, pos.x, pos.y));
+                  }
+                : undefined
+            }
+            onCreateNew={onCreateNew}
+            lockedContextId={lockedContextId}
           />
         </Pressable>
       </Pressable>

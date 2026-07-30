@@ -15,13 +15,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
-import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
+import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { SearchBar } from "@/components/SearchBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { useDrafts } from "@/hooks/useDrafts";
 import { useIngredient } from "@/hooks/useIngredients";
+import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { decode } from "base64-arraybuffer";
@@ -81,9 +83,23 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+    const { drafts, saveDraft } = useDrafts();
 
     const pickerSheetRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => ['80%'], []);
+
+    const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
+        setRecipeItems(items);
+    }, []);
+
+    const { onMerge } = useRecipeMergeHandler({
+        items: recipeItems,
+        setItems: setMergeRecipeItems,
+        persistence: 'published',
+        barId,
+        drafts,
+        saveDraft,
+    });
 
     const renderBackdrop = useCallback(
         (props: any) => (
@@ -142,7 +158,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             }
         }
         if (data?.recipe) {
-            setRecipeItems(sortRecipesByOrder(data.recipe).map(mapPresentationRecipeToEditItem));
+            setRecipeItems(sortRecipesByOrder(data.recipe).map((r) => mapPresentationRecipeToEditItem(r)));
         }
     }, [data]);
 
@@ -326,11 +342,16 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
 
             await queryClient.invalidateQueries({ queryKey: ['ingredient', id] });
             await queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            await queryClient.invalidateQueries({ queryKey: ['cocktail'] });
+            await queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
 
             Alert.alert("Success", "Ingredient updated!", [
                 { text: "OK", onPress: () => {
                     if (isInline) {
-                        if (onSave) onSave();
+                        // ponytail: pop nested stack (onSave clears whole workspace)
+                        if (onClose) onClose();
+                        else if (onSave) onSave();
                     } else {
                         router.back();
                     }
@@ -514,8 +535,10 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                                 setRecipeItems(newItems);
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
+                            onMerge={onMerge}
                             variant="card"
                             onNestedItemPress={onNestedItemPress}
+                            drafts={drafts}
                         />
                     </YStack>
 

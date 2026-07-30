@@ -109,9 +109,24 @@ export function TemplatePicker({
                                                     </Text>
                                                 ) : null}
                                             </YStack>
+                                            <Pressable
+                                                onPress={(e) => {
+                                                    e.stopPropagation?.();
+                                                    closeMenu();
+                                                    router.push(`/menus/create-template?id=${t.id}` as any);
+                                                }}
+                                                hitSlop={8}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={`Edit ${t.name}`}
+                                                style={styles.editBtn}
+                                            >
+                                                <IconSymbol name="pencil" size={14} color={muted} />
+                                            </Pressable>
                                             {checked ? (
                                                 <IconSymbol name="checkmark" size={16} color={color} />
-                                            ) : null}
+                                            ) : (
+                                                <View style={styles.checkSpacer} />
+                                            )}
                                         </Pressable>
                                     );
                                 })}
@@ -161,5 +176,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 14,
         paddingVertical: 12,
+        gap: 8,
+    },
+    editBtn: {
+        padding: 4,
+    },
+    checkSpacer: {
+        width: 16,
+        height: 16,
     },
 });

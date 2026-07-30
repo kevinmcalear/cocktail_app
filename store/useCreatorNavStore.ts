@@ -32,8 +32,14 @@ export function creatorNodeHref(node: Pick<SelectedDraftNode, 'type' | 'id'>): s
   return `/edit-mode?type=${encodeURIComponent(node.type)}&id=${encodeURIComponent(node.id)}`;
 }
 
-export function creatorCreateHref(type: PendingCreate['type'], barId: string): string {
-  return `/edit-mode?create=${encodeURIComponent(type)}&barId=${encodeURIComponent(barId)}`;
+export function creatorCreateHref(
+  type: PendingCreate['type'],
+  barId: string,
+  name?: string
+): string {
+  const base = `/edit-mode?create=${encodeURIComponent(type)}&barId=${encodeURIComponent(barId)}`;
+  const trimmed = name?.trim();
+  return trimmed ? `${base}&name=${encodeURIComponent(trimmed)}` : base;
 }
 
 /** Record a Creator tree/hub selection in Jump Back In. */

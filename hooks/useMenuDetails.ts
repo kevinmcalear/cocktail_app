@@ -1,4 +1,5 @@
 import { MenuItem, MenuSection } from '@/components/CurrentMenuList';
+import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
@@ -106,6 +107,7 @@ export function useMenuDetails(menuId: string | null) {
                 return {
                     id: sec.id,
                     title: sec.name,
+                    allowedTypes: normalizeAllowedTypes(sec.allowed_types),
                     data: secDrinks
                 };
             });

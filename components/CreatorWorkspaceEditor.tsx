@@ -76,6 +76,7 @@ export function CreatorWorkspaceEditor({
                     isInline
                     draftIdProp={editing.draftId}
                     barIdProp={editing.barId}
+                    initialNameProp={editing.initialName}
                     onClose={onClose}
                     onSave={onSave}
                 />
@@ -96,6 +97,7 @@ export function CreatorWorkspaceEditor({
                     isInline
                     draftIdProp={editing.draftId}
                     barIdProp={editing.barId}
+                    initialNameProp={editing.initialName}
                     onClose={onClose}
                     onSave={onSave}
                 />
@@ -119,6 +121,7 @@ export function CreatorWorkspaceEditor({
                     barIdProp={editing.barId}
                     onClose={onClose}
                     onSave={onSave}
+                    onChromeState={onChromeState}
                     {...nestedProps}
                 />
             );

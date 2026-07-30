@@ -19,8 +19,11 @@ const map = buildMenuDrinkIndex({
 
 assert.equal(map.get('draft-1')?.name, 'Dark And Stormy');
 assert.equal(map.get('draft-1')?.isDraft, true);
+assert.equal(typeof map.get('draft-1')?.draftProgress?.percentage, 'number');
 assert.equal(map.get('beer-draft-beer')?.name, 'House Lager');
+assert.equal(typeof map.get('beer-draft-beer')?.draftProgress?.percentage, 'number');
 assert.equal(map.get('pub-1')?.name, 'Martini');
+assert.equal(map.get('pub-1')?.draftProgress, undefined);
 assert.equal(map.get('missing')?.name ?? 'Unknown', 'Unknown');
 
 console.log('menuDrinkIndex.check: ok');

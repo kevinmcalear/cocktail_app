@@ -16,6 +16,11 @@ import {
   appliedAttrPills,
   pruneAttrs,
 } from '@/lib/commandFilterAttrs';
+import {
+  createTypeFromFilter,
+  isSectionDrinkItem,
+  type SectionDrinkType,
+} from '@/lib/sectionAllowedTypes';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
 import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
@@ -162,6 +167,8 @@ type CommandSearchProps = {
   placeholder?: string;
   initialQuery?: string;
   initialFilter?: CommandFilter;
+  /** Limit which filter pills are shown (e.g. section drink types). */
+  filters?: readonly CommandFilter[];
   /** Controlled query — when set, parent owns the text field. */
   query?: string;
   onQueryChange?: (query: string) => void;
@@ -174,6 +181,12 @@ type CommandSearchProps = {
   onSelect?: () => void;
   /** Pick mode: select item instead of navigating (e.g. add to menu). */
   onItemSelect?: (item: SearchItem) => void;
+  /** Long-press drink → drag onto menu Add zones (parent fades search). */
+  onItemDragStart?: (item: SearchItem, pos: { x: number; y: number }) => void;
+  /** Empty-state create — type comes from active filter + venue from parent. */
+  onCreateNew?: (info: { name: string; type: SectionDrinkType }) => void;
+  /** Lock venue selector to this context id (bar id or personal). */
+  lockedContextId?: string;
   /** Home: click left/right of the filter chrome to collapse. */
   onDismiss?: () => void;
 };
@@ -183,6 +196,7 @@ export function CommandSearch({
   placeholder,
   initialQuery = '',
   initialFilter = 'All',
+  filters: filtersProp,
   query: queryProp,
   onQueryChange,
   filter: filterProp,
@@ -192,8 +206,12 @@ export function CommandSearch({
   showFooter = true,
   onSelect,
   onItemSelect,
+  onItemDragStart,
+  onCreateNew,
+  lockedContextId,
   onDismiss,
 }: CommandSearchProps) {
+  const availableFilters = filtersProp?.length ? filtersProp : COMMAND_FILTERS;
   const theme = useTheme();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
@@ -214,7 +232,8 @@ export function CommandSearch({
   const [activeIndex, setActiveIndex] = useState(0);
   const [panelWidth, setPanelWidth] = useState(0);
   const recent = useRecentActivityStore((s) => s.items);
-  const selectedContextIds = useAppStore((s) => s.selectedContextIds);
+  const storeContextIds = useAppStore((s) => s.selectedContextIds);
+  const selectedContextIds = lockedContextId ? [lockedContextId] : storeContextIds;
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const { data: dropdowns } = useDropdowns();
   const { drafts } = useDrafts();
@@ -547,10 +566,12 @@ export function CommandSearch({
 
   const cycleFilter = useCallback(
     (dir: 1 | -1) => {
-      const i = COMMAND_FILTERS.indexOf(filter);
-      setFilter(COMMAND_FILTERS[(i + dir + COMMAND_FILTERS.length) % COMMAND_FILTERS.length]);
+      const i = availableFilters.indexOf(filter);
+      const len = availableFilters.length;
+      if (i < 0 || len === 0) return;
+      setFilter(availableFilters[(i + dir + len) % len]);
     },
-    [filter, onFilterChange]
+    [availableFilters, filter, onFilterChange]
   );
 
   // ponytail: refs so one capture listener stays fresh without resubscribing
@@ -594,6 +615,15 @@ export function CommandSearch({
 
   const mod = Platform.OS === 'ios' || Platform.OS === 'web' ? '⌘' : 'Ctrl';
 
+  const drinkFromCell = (cell: Selectable): SearchItem | null => {
+    if (cell.kind === 'item') return isSectionDrinkItem(cell.item) ? cell.item : null;
+    const r = cell.recent;
+    if (r.kind === 'menu' || r.kind === 'ingredient' || r.kind === 'quiz') return null;
+    const id = r.kind === 'beer' ? `beer-${r.id}` : r.kind === 'wine' ? `wine-${r.id}` : r.id;
+    const found = items.find((i) => i.id === id);
+    return found && isSectionDrinkItem(found) ? found : null;
+  };
+
   const renderCell = (cell: Selectable, selIndex: number) => {
     const isActive = selIndex === activeIndex;
     const isDraft =
@@ -611,11 +641,30 @@ export function CommandSearch({
         : categoryIcon(cell.item.category);
     const meta =
       cell.kind === 'recent' ? timeAgo(cell.recent.at) : undefined;
+    const dragItem = onItemDragStart ? drinkFromCell(cell) : null;
 
     return (
       <Pressable
         key={cell.id}
         onPress={() => activate(selIndex)}
+        delayLongPress={350}
+        onLongPress={
+          dragItem && onItemDragStart
+            ? (e) => {
+                const ne = e.nativeEvent as {
+                  pageX?: number;
+                  pageY?: number;
+                  clientX?: number;
+                  clientY?: number;
+                };
+                // client* matches position:fixed + elementFromPoint
+                onItemDragStart(dragItem, {
+                  x: ne.clientX ?? ne.pageX ?? 0,
+                  y: ne.clientY ?? ne.pageY ?? 0,
+                });
+              }
+            : undefined
+        }
         {...(Platform.OS === 'web'
           ? { onHoverIn: () => setActiveIndex(selIndex) }
           : {})}
@@ -684,7 +733,7 @@ export function CommandSearch({
           style={{ flex: 1 }}
         >
           <XStack gap={8} paddingBottom={2} alignItems="center">
-            {COMMAND_FILTERS.map((f) => {
+            {availableFilters.map((f) => {
               const selected = filter === f;
               return (
                 <Pressable
@@ -745,7 +794,7 @@ export function CommandSearch({
           </XStack>
         </ScrollView>
 
-        <VenueContextPicker />
+        <VenueContextPicker lockedContextId={lockedContextId} />
       </XStack>
 
       {appliedPills.length > 0 && (
@@ -919,10 +968,37 @@ export function CommandSearch({
           flexGrow: 1,
         }}
         ListEmptyComponent={
-          <YStack padding="$5" alignItems="center">
+          <YStack padding="$5" alignItems="center" gap="$3">
             <Text color="$color11" fontSize={14}>
               No results
             </Text>
+            {(() => {
+              const name = query.trim();
+              const type = onCreateNew ? createTypeFromFilter(filter, availableFilters) : null;
+              if (!onCreateNew || !name || !type) return null;
+              const label =
+                type === 'cocktail' ? 'cocktail' : type === 'beer' ? 'beer' : 'wine';
+              return (
+                <Pressable
+                  onPress={() => onCreateNew({ name, type })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Create ${label} ${name}`}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: highlight,
+                      borderColor: 'transparent',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    },
+                  ]}
+                >
+                  <Text fontSize={14} fontWeight="600" color="$color">
+                    Create {label} “{name}”
+                  </Text>
+                </Pressable>
+              );
+            })()}
           </YStack>
         }
         renderItem={({ item: row }) => {

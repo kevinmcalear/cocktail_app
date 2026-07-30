@@ -103,7 +103,7 @@ function StackedContextIcons({
 }
 
 /** Multi-select: Personal + venues. Drives catalog context. */
-export function VenueContextPicker() {
+export function VenueContextPicker({ lockedContextId }: { lockedContextId?: string } = {}) {
   const theme = useTheme();
   const { user } = useAuth();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -114,6 +114,7 @@ export function VenueContextPicker() {
   const contextDefaultApplied = useAppStore((s) => s.contextDefaultApplied);
   const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
   const defaultSearchContext = useSettingsStore((s) => s.defaultSearchContext);
+  const activeContextIds = lockedContextId ? [lockedContextId] : selectedContextIds;
   const [settingsReady, setSettingsReady] = useState(
     () => useSettingsStore.persist.hasHydrated()
   );
@@ -174,27 +175,28 @@ export function VenueContextPicker() {
   ]);
 
   const label = contextLabel(
-    selectedContextIds,
+    activeContextIds,
     venueOptions.map((v) => ({ bar_id: v.bar_id, name: v.name }))
   );
   const allIds = options.map((o) => o.id);
-  const allSelected = allIds.every((id) => selectedContextIds.includes(id));
+  const allSelected = allIds.every((id) => activeContextIds.includes(id));
 
   // Single → that icon; All with bars → stack bar logos; other multi → stack selected
   const stackOptions: Option[] | null = useMemo(() => {
-    if (selectedContextIds.length <= 1) return null;
+    if (activeContextIds.length <= 1) return null;
     if (allSelected && venueOptions.length > 0) {
       return options.filter((o) => o.id !== PERSONAL_CONTEXT);
     }
-    return options.filter((o) => selectedContextIds.includes(o.id));
-  }, [selectedContextIds, allSelected, venueOptions.length, options]);
+    return options.filter((o) => activeContextIds.includes(o.id));
+  }, [activeContextIds, allSelected, venueOptions.length, options]);
 
   const triggerOption: Option =
-    selectedContextIds.length === 1
-      ? options.find((o) => o.id === selectedContextIds[0]) || options[0]
+    activeContextIds.length === 1
+      ? options.find((o) => o.id === activeContextIds[0]) || options[0]
       : { id: 'multi', label };
 
   const openMenu = () => {
+    if (lockedContextId) return;
     triggerRef.current?.measureInWindow((x, y, width, height) => {
       setAnchor({ x, y, width, height });
       setOpen(true);
@@ -225,8 +227,13 @@ export function VenueContextPicker() {
       <View ref={triggerRef} collapsable={false}>
         <Pressable
           onPress={openMenu}
+          disabled={!!lockedContextId}
           accessibilityRole="button"
-          accessibilityLabel={`Contexts: ${label}. Opens multi-select.`}
+          accessibilityLabel={
+            lockedContextId
+              ? `Venue: ${label}`
+              : `Contexts: ${label}. Opens multi-select.`
+          }
           style={styles.trigger}
         >
           <XStack alignItems="center" gap={6}>
@@ -235,17 +242,19 @@ export function VenueContextPicker() {
             ) : (
               <ContextIcon option={triggerOption} size={16} color={muted} />
             )}
-            {label === 'All' && (
-              <Text fontSize={13} color="$color11" fontWeight="500">
-                All
+            {(label === 'All' || lockedContextId) && (
+              <Text fontSize={13} color="$color11" fontWeight="500" numberOfLines={1} maxWidth={120}>
+                {label}
               </Text>
             )}
-            <IconSymbol name="chevron.down" size={11} color={muted} />
+            {!lockedContextId ? (
+              <IconSymbol name="chevron.down" size={11} color={muted} />
+            ) : null}
           </XStack>
         </Pressable>
       </View>
 
-      <Modal transparent visible={open} animationType="fade" onRequestClose={closeMenu}>
+      <Modal transparent visible={open && !lockedContextId} animationType="fade" onRequestClose={closeMenu}>
         <Pressable style={styles.overlay} onPress={closeMenu}>
           {menuStyle && (
             <Pressable

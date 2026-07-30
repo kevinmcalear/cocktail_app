@@ -1,9 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
+/** Bump when template_sections shape changes so hour-long cache can't serve stale rows. */
+export const DROPDOWNS_QUERY_KEY = ['dropdowns_v4'] as const;
+
 export function useDropdowns() {
     return useQuery({
-        queryKey: ['dropdowns_v3'],
+        queryKey: DROPDOWNS_QUERY_KEY,
         queryFn: async () => {
             const menusQuery = async () => {
                 const res = await supabase

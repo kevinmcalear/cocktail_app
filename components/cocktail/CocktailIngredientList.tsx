@@ -6,6 +6,8 @@ import { Text, XStack, YStack, useTheme } from "tamagui";
 
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useDragMergeDwell } from "@/hooks/useDragMergeDwell";
 import { buildIngredientImageMap } from "@/lib/recipeUtils";
 
 export { buildIngredientImageMap };
@@ -21,6 +23,7 @@ interface CocktailIngredientListProps {
     onUpdateItem?: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove?: (index: number) => void;
     onIngredientPress?: (ingredientId: string) => void;
+    onMerge?: (fromIndex: number, targetIndex: number) => void;
 }
 
 function EditIngredientRow({
@@ -29,6 +32,7 @@ function EditIngredientRow({
     imageUrl,
     drag,
     isActive,
+    isMergeTarget,
     onUpdateItem,
     onRemove,
     onIngredientPress,
@@ -38,6 +42,7 @@ function EditIngredientRow({
     imageUrl?: string;
     drag: () => void;
     isActive: boolean;
+    isMergeTarget?: boolean;
     onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove: (index: number) => void;
     onIngredientPress?: (id: string) => void;
@@ -48,7 +53,7 @@ function EditIngredientRow({
     const muted = theme.color11?.get() as string;
 
     return (
-        <View style={[styles.row, isActive && styles.rowActive]}>
+        <View style={[styles.row, isActive && styles.rowActive, isMergeTarget && styles.mergeTarget]}>
             <XStack alignItems="center" gap="$4" width="100%">
                 <View style={styles.imageCol}>
                     <TouchableOpacity
@@ -103,9 +108,14 @@ function EditIngredientRow({
                             </Text>
                         </TouchableOpacity>
                     )}
-                    <Text color="$color" fontSize={18} fontWeight="400">
-                        {item.name}
-                    </Text>
+                    <TouchableOpacity
+                        onPress={() => onIngredientPress?.(item.ingredient_id)}
+                        activeOpacity={0.7}
+                    >
+                        <Text color="$color" fontSize={18} fontWeight="400">
+                            {item.name}
+                        </Text>
+                    </TouchableOpacity>
                 </YStack>
 
                 <TouchableOpacity
@@ -181,8 +191,10 @@ export function CocktailIngredientList({
     onUpdateItem,
     onRemove,
     onIngredientPress,
+    onMerge,
 }: CocktailIngredientListProps) {
     const listHeight = editItems.length * EDIT_ROW_HEIGHT;
+    const dwell = useDragMergeDwell(!!onMerge);
 
     const renderEditItem = ({ item, drag, isActive, getIndex }: RenderItemParams<SortableRecipeItem>) => {
         const index = getIndex();
@@ -196,6 +208,7 @@ export function CocktailIngredientList({
                     imageUrl={ingredientImageMap[item.ingredient_id]}
                     drag={drag}
                     isActive={isActive}
+                    isMergeTarget={dwell.mergeTargetIndex === index}
                     onUpdateItem={onUpdateItem}
                     onRemove={onRemove}
                     onIngredientPress={onIngredientPress}
@@ -209,7 +222,16 @@ export function CocktailIngredientList({
             <View style={{ height: listHeight, width: "100%" }}>
                 <DraggableFlatList
                     data={editItems}
-                    onDragEnd={({ data }) => onReorder(data)}
+                    onDragBegin={dwell.onDragBegin}
+                    onPlaceholderIndexChange={dwell.onPlaceholderIndexChange}
+                    onDragEnd={({ data, from }) => {
+                        const merge = dwell.consumeMergeOnDragEnd(from);
+                        if (merge && onMerge) {
+                            onMerge(merge.from, merge.target);
+                            return;
+                        }
+                        onReorder(data);
+                    }}
                     keyExtractor={(item, index) => item.id || `${item.ingredient_id}-${index}`}
                     renderItem={renderEditItem}
                     scrollEnabled={false}
@@ -249,6 +271,13 @@ const styles = StyleSheet.create({
     },
     rowActive: {
         opacity: 0.85,
+    },
+    mergeTarget: {
+        transform: [{ scale: 1.04 }],
+        borderColor: Colors.dark.tint,
+        borderWidth: 2,
+        backgroundColor: "rgba(0,122,255,0.12)",
+        borderRadius: 12,
     },
     imageCol: {
         flexDirection: "row",

@@ -323,6 +323,10 @@ export function HomePrompt() {
                   </Pressable>
                 );
               })}
+              {recent.length < 3 &&
+                Array.from({ length: 3 - recent.length }).map((_, i) => (
+                  <YStack key={`pad-${i}`} flex={1} />
+                ))}
             </XStack>
           </YStack>
         )}

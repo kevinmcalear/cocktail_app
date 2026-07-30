@@ -19,11 +19,19 @@ import { Text, YStack, XStack, Button } from "tamagui";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
+import {
+    itemAllowedInSection,
+    normalizeAllowedTypes,
+    sectionCommandFilter,
+    sectionCommandFilters,
+} from "@/lib/sectionAllowedTypes";
 import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import { useAppStore } from "@/store/useAppStore";
-import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { creatorCreateHref, useCreatorNavStore } from "@/store/useCreatorNavStore";
+import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
+import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
 import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
 import { SearchItem } from "@/components/SearchList";
@@ -50,6 +58,8 @@ function toMenuItem(drink: SearchItem): MenuItem {
         price: drink.price || undefined,
         image: image || undefined,
         recipes: drink.recipes,
+        isDraft: drink.isDraft,
+        draftProgress: drink.draftProgress,
     };
 }
 
@@ -94,6 +104,7 @@ export default function CreateMenuWizard({
     const isDark = colorScheme === "dark";
     const router = useRouter();
     const navigation = useNavigation();
+    const requestCreate = useCreatorNavStore((s) => s.requestCreate);
     const { draftId, menuId, barId: barIdFromParams } = useLocalSearchParams<{ draftId?: string, menuId?: string, barId?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeMenuIdProp = menuIdProp !== undefined ? menuIdProp : menuId;
@@ -122,9 +133,9 @@ export default function CreateMenuWizard({
 
     const selectedBarId = useAppStore((s) => s.selectedBarId);
     const { data: userBars } = useBars();
-    const { data: cocktailsData } = useCocktails();
-    const { data: beersData } = useBeers();
-    const { data: winesData } = useWines();
+    const { data: cocktailsData } = useCocktails({ allContexts: true });
+    const { data: beersData } = useBeers({ allContexts: true });
+    const { data: winesData } = useWines({ allContexts: true });
 
     // Default venue when create isn't pre-bound to a bar
     useEffect(() => {
@@ -406,6 +417,7 @@ export default function CreateMenuWizard({
             activeSections.map((sec: any) => ({
                 id: sec.id,
                 title: sec.name,
+                allowedTypes: normalizeAllowedTypes(sec.allowed_types),
                 data: (selections[sec.id] || []).map((id) => {
                     const drink = drinkIndex.get(id);
                     return drink
@@ -415,6 +427,67 @@ export default function CreateMenuWizard({
             })),
         [activeSections, selections, drinkIndex]
     );
+
+    const pickingAllowedTypes = useMemo(() => {
+        if (!pickingSectionId) return normalizeAllowedTypes(null);
+        const sec = activeSections.find((s: any) => s.id === pickingSectionId);
+        return normalizeAllowedTypes(sec?.allowed_types);
+    }, [pickingSectionId, activeSections]);
+
+    // ponytail: ⌘K / picker long-press → drop on any compatible Add tile
+    const sectionsRef = useRef(activeSections);
+    const selectionsRef = useRef(selections);
+    sectionsRef.current = activeSections;
+    selectionsRef.current = selections;
+
+    useEffect(() => {
+        if (!selectedTemplateId || activeSections.length === 0) return;
+        const allowedBySection: Record<string, ReturnType<typeof normalizeAllowedTypes>> = {};
+        for (const sec of sectionsRef.current as any[]) {
+            allowedBySection[sec.id] = normalizeAllowedTypes(sec.allowed_types);
+        }
+        useMenuEditDropStore.getState().register({
+            allowedBySection,
+            tryAdd: (sectionId, item) => {
+                const types = allowedBySection[sectionId];
+                if (!types || !itemAllowedInSection(item, types)) return 'denied';
+                const current = selectionsRef.current[sectionId] || [];
+                if (current.includes(item.id)) {
+                    Alert.alert('Already Added', 'This drink is already in this section.');
+                    return 'duplicate';
+                }
+                setSelections((prev) => ({
+                    ...prev,
+                    [sectionId]: [...(prev[sectionId] || []), item.id],
+                }));
+                return 'ok';
+            },
+        });
+        return () => useMenuEditDropStore.getState().unregister();
+    }, [selectedTemplateId, activeSections]);
+
+    const menuContextId =
+        !barId || barId === PERSONAL_CONTEXT ? PERSONAL_CONTEXT : barId;
+
+    const pickerItems = useMemo(() => {
+        const ctx = [menuContextId];
+        const idx = buildMenuDrinkIndex({
+            drafts: drafts.filter((d: any) => inSelectedContext(d.bar_id, ctx)),
+            cocktails: (cocktailsData || []).filter((c: any) => inSelectedContext(c.bar_id, ctx)),
+            beers: (beersData || []).filter((b: any) => inSelectedContext(b.bar_id, ctx)),
+            wines: (winesData || []).filter((w: any) => inSelectedContext(w.bar_id, ctx)),
+        });
+        return Array.from(idx.values()).filter((d) =>
+            itemAllowedInSection(d, pickingAllowedTypes)
+        );
+    }, [
+        menuContextId,
+        drafts,
+        cocktailsData,
+        beersData,
+        winesData,
+        pickingAllowedTypes,
+    ]);
 
     const venueName = useMemo(() => {
         if (!barId) return null;
@@ -636,7 +709,7 @@ export default function CreateMenuWizard({
                 })
             );
 
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v3'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v4'] });
             isExitingRef.current = true;
             if (isInline) {
                 if (onSave) onSave();
@@ -733,10 +806,13 @@ export default function CreateMenuWizard({
             <SearchPopover
                 visible={!!pickingSectionId}
                 onClose={() => setPickingSectionId(null)}
-                initialFilter="Cocktails"
-                items={Array.from(drinkIndex.values())}
+                initialFilter={sectionCommandFilter(pickingAllowedTypes)}
+                filters={sectionCommandFilters(pickingAllowedTypes)}
+                lockedContextId={menuContextId}
+                items={pickerItems}
                 onItemSelect={(drink) => {
                     if (!pickingSectionId) return;
+                    if (!itemAllowedInSection(drink, pickingAllowedTypes)) return;
                     const current = selections[pickingSectionId] || [];
                     if (current.includes(drink.id)) {
                         Alert.alert('Already Added', 'This drink is already in this section.');
@@ -747,6 +823,11 @@ export default function CreateMenuWizard({
                         [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
                     }));
                     setPickingSectionId(null);
+                }}
+                onCreateNew={({ name, type }) => {
+                    setPickingSectionId(null);
+                    requestCreate(type, menuContextId);
+                    router.push(creatorCreateHref(type, menuContextId, name) as any);
                 }}
             />
 

@@ -32,15 +32,17 @@ interface AddWineProps {
     isInline?: boolean;
     draftIdProp?: string;
     barIdProp?: string;
+    initialNameProp?: string;
     onClose?: () => void;
     onSave?: () => void;
 }
 
-export default function AddWineScreen({ isInline, draftIdProp, barIdProp, onClose, onSave }: AddWineProps = {}) {
+export default function AddWineScreen({ isInline, draftIdProp, barIdProp, initialNameProp, onClose, onSave }: AddWineProps = {}) {
     const router = useRouter();
     const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+    const seedName = initialNameProp !== undefined ? initialNameProp : initialNameParam;
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -56,7 +58,7 @@ export default function AddWineScreen({ isInline, draftIdProp, barIdProp, onClos
     const isExitingRef = React.useRef(false);
 
     // Form State
-    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
+    const [name, setName] = useState(seedName ? capitalize(seedName) : "");
     const [description, setDescription] = useState("");
     const [vintner, setVintner] = useState("");
     const [abv, setAbv] = useState("");

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -13,11 +13,13 @@ import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { buildIngredientImageMap, CocktailIngredientList } from "@/components/cocktail/CocktailIngredientList";
 import { SpecBadgeRow } from "@/components/cocktail/SpecBadgeRow";
 import { SearchBar } from "@/components/SearchBar";
-import { SortableRecipeList } from "@/components/recipe/SortableRecipeList";
+import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { useCocktailDraftEditor } from "@/hooks/useCocktailDraftEditor";
 import type { useCocktailEditor } from "@/hooks/useCocktailEditor";
+import { useDrafts } from "@/hooks/useDrafts";
+import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { capitalize } from "@/lib/stringUtils";
 
 type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
@@ -43,6 +45,7 @@ export function CocktailDetailContent({
 }: CocktailDetailContentProps) {
     const router = useRouter();
     const theme = useTheme();
+    const { drafts, saveDraft } = useDrafts();
     const [notesExpanded, setNotesExpanded] = useState(false);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
@@ -58,6 +61,24 @@ export function CocktailDetailContent({
     const recipes = isEditing && editor ? editor.recipeItems : cocktail.recipes || [];
     const description = isEditing && editor ? editor.description : cocktail.description;
     const notes = isEditing && editor ? editor.notes : cocktail.notes;
+    const isDraftEditor = !!(editor && "persistDraft" in editor);
+
+    const setRecipeItems = useCallback(
+        (items: SortableRecipeItem[]) => {
+            editor?.setRecipeItems(items);
+        },
+        [editor]
+    );
+
+    const { onMerge } = useRecipeMergeHandler({
+        items: editor?.recipeItems ?? [],
+        setItems: setRecipeItems,
+        persistence: isDraftEditor ? "draft" : "published",
+        barId: editor?.barId,
+        drafts,
+        saveDraft,
+        enabled: isEditing && !!editor,
+    });
 
     const ingredientImageMap = useMemo(
         () => buildIngredientImageMap(cocktail.recipes, editor?.allIngredients),
@@ -70,7 +91,11 @@ export function CocktailDetailContent({
         } else if (onIngredientPress) {
             onIngredientPress(ingredientId);
         } else {
-            router.push(`/ingredient/${ingredientId}`);
+            router.push(
+                isEditing
+                    ? `/ingredient/${ingredientId}/edit`
+                    : `/ingredient/${ingredientId}`
+            );
         }
     };
 
@@ -195,10 +220,13 @@ export function CocktailDetailContent({
                                     onRemove={(index) =>
                                         editor.setRecipeItems(editor.recipeItems.filter((_, i) => i !== index))
                                     }
+                                    onMerge={onMerge}
                                     variant="card"
                                     allIngredients={editor.allIngredients}
                                     ingredientImageMap={ingredientImageMap}
                                     onNestedItemPress={onNestedItemPress}
+                                    drafts={drafts}
+                                    dropdowns={editor.dropdowns}
                                 />
                                 <TouchableOpacity onPress={() => setShowIngredientPicker(true)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
                                     <Text color={theme.color8?.get() as string} fontWeight="600" fontSize={14}>
@@ -221,6 +249,7 @@ export function CocktailDetailContent({
                                     onRemove={(index) =>
                                         editor.setRecipeItems(editor.recipeItems.filter((_, i) => i !== index))
                                     }
+                                    onMerge={onMerge}
                                     onIngredientPress={navigateIngredient}
                                 />
                                 <TouchableOpacity onPress={() => setShowIngredientPicker(true)} style={{ alignSelf: "flex-start", marginTop: 4 }}>

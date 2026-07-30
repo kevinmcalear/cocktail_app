@@ -1,4 +1,5 @@
 import type { SearchItem } from '../components/SearchList';
+import { calculateDraftProgress } from './draftProgress';
 import { capitalize } from './stringUtils';
 
 /** Build id → drink map for menu tiles/picker. Drafts first so menu draft selections resolve. */
@@ -12,6 +13,7 @@ export function buildMenuDrinkIndex(opts: {
     for (const d of opts.drafts) {
         const data = d.draft_data || {};
         const img = data.localImages?.[0]?.url ? { uri: data.localImages[0].url } : undefined;
+        const draftProgress = calculateDraftProgress(d, opts.drafts);
         if (d.entity_type === 'cocktail') {
             map.set(d.id, {
                 id: d.id,
@@ -19,6 +21,7 @@ export function buildMenuDrinkIndex(opts: {
                 description: data.description,
                 category: 'Cocktail',
                 isDraft: true,
+                draftProgress,
                 recipes: data.recipeItems?.map((ri: any) => ({
                     ingredient: { name: capitalize(ri.name || '') },
                 })),
@@ -32,6 +35,7 @@ export function buildMenuDrinkIndex(opts: {
                 description: data.description,
                 category: 'Beer',
                 isDraft: true,
+                draftProgress,
                 image: img,
                 price: data.price,
             });
@@ -42,6 +46,7 @@ export function buildMenuDrinkIndex(opts: {
                 description: data.description,
                 category: 'Wine',
                 isDraft: true,
+                draftProgress,
                 image: img,
                 price: data.price,
             });

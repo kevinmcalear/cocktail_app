@@ -13,13 +13,24 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useMenuEditor } from "@/hooks/useMenuEditor";
 import { useWines } from "@/hooks/useWines";
-import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
+import {
+    itemAllowedInSection,
+    normalizeAllowedTypes,
+    sectionCommandFilter,
+    sectionCommandFilters,
+} from "@/lib/sectionAllowedTypes";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
-import { creatorCreateHref, openDraftInCreator } from "@/store/useCreatorNavStore";
+import {
+    creatorCreateHref,
+    openDraftInCreator,
+    useCreatorNavStore,
+} from "@/store/useCreatorNavStore";
+import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -63,6 +74,8 @@ function toMenuItem(drink: SearchItem): MenuItem {
         price: drink.price || undefined,
         image: image || undefined,
         recipes: drink.recipes,
+        isDraft: drink.isDraft,
+        draftProgress: drink.draftProgress,
     };
 }
 
@@ -74,6 +87,7 @@ export default function MenusScreen() {
     const isWide = width >= 768;
     const selectedMenuId = useAppStore((s) => s.selectedMenuId);
     const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
+    const requestCreate = useCreatorNavStore((s) => s.requestCreate);
 
     const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
     const { data: userBars } = useBars();
@@ -89,9 +103,10 @@ export default function MenusScreen() {
 
     const editor = useMenuEditor(selectedMenuId, isEditing);
 
-    const { data: cocktailsData } = useCocktails();
-    const { data: beersData } = useBeers();
-    const { data: winesData } = useWines();
+    // ponytail: all contexts so menu venue drinks resolve even if global picker differs
+    const { data: cocktailsData } = useCocktails({ allContexts: true });
+    const { data: beersData } = useBeers({ allContexts: true });
+    const { data: winesData } = useWines({ allContexts: true });
 
     useFocusEffect(
         useCallback(() => {
@@ -149,6 +164,7 @@ export default function MenusScreen() {
         return editor.activeSections.map((sec: any) => ({
             id: sec.id,
             title: sec.name,
+            allowedTypes: normalizeAllowedTypes(sec.allowed_types),
             data: (editor.selections[sec.id] || []).map((id) => {
                 const fromView = viewItemsById.get(id);
                 if (fromView) return fromView;
@@ -165,6 +181,68 @@ export default function MenusScreen() {
         editor.selections,
         drinkIndex,
         viewItemsById,
+    ]);
+
+    const pickingAllowedTypes = useMemo(() => {
+        if (!pickingSectionId) return normalizeAllowedTypes(null);
+        const sec = editor.activeSections.find((s: any) => s.id === pickingSectionId);
+        return normalizeAllowedTypes(sec?.allowed_types);
+    }, [pickingSectionId, editor.activeSections]);
+
+    // ponytail: ⌘K / picker long-press → drop on any compatible Add tile
+    const sectionsRef = useRef(editor.activeSections);
+    const selectionsRef = useRef(editor.selections);
+    const setSelectionsRef = useRef(editor.setSelections);
+    sectionsRef.current = editor.activeSections;
+    selectionsRef.current = editor.selections;
+    setSelectionsRef.current = editor.setSelections;
+
+    useEffect(() => {
+        if (!isEditing || !editor.loaded) return;
+        const allowedBySection: Record<string, ReturnType<typeof normalizeAllowedTypes>> = {};
+        for (const sec of sectionsRef.current as any[]) {
+            allowedBySection[sec.id] = normalizeAllowedTypes(sec.allowed_types);
+        }
+        useMenuEditDropStore.getState().register({
+            allowedBySection,
+            tryAdd: (sectionId, item) => {
+                const types = allowedBySection[sectionId];
+                if (!types || !itemAllowedInSection(item, types)) return 'denied';
+                const current = selectionsRef.current[sectionId] || [];
+                if (current.includes(item.id)) {
+                    Alert.alert('Already Added', 'This drink is already in this section.');
+                    return 'duplicate';
+                }
+                setSelectionsRef.current((prev) => ({
+                    ...prev,
+                    [sectionId]: [...(prev[sectionId] || []), item.id],
+                }));
+                return 'ok';
+            },
+        });
+        return () => useMenuEditDropStore.getState().unregister();
+    }, [isEditing, editor.loaded, editor.activeSections]);
+
+    const menuContextId = selectedMenu?.bar_id || PERSONAL_CONTEXT;
+
+    const pickerItems = useMemo(() => {
+        const ctx = [menuContextId];
+        const idx = buildMenuDrinkIndex({
+            drafts: drafts.filter((d: any) => inSelectedContext(d.bar_id, ctx)),
+            cocktails: (cocktailsData || []).filter((c: any) => inSelectedContext(c.bar_id, ctx)),
+            beers: (beersData || []).filter((b: any) => inSelectedContext(b.bar_id, ctx)),
+            wines: (winesData || []).filter((w: any) => inSelectedContext(w.bar_id, ctx)),
+        });
+        return Array.from(idx.values()).filter((d) =>
+            itemAllowedInSection(d, pickingAllowedTypes)
+        );
+    }, [
+        menuContextId,
+        drafts,
+        cocktailsData,
+        beersData,
+        winesData,
+        pickingAllowedTypes,
     ]);
 
     const viewCoverUrl =
@@ -445,10 +523,13 @@ export default function MenusScreen() {
             <SearchPopover
                 visible={!!pickingSectionId}
                 onClose={() => setPickingSectionId(null)}
-                initialFilter="Cocktails"
-                items={Array.from(drinkIndex.values())}
+                initialFilter={sectionCommandFilter(pickingAllowedTypes)}
+                filters={sectionCommandFilters(pickingAllowedTypes)}
+                lockedContextId={menuContextId}
+                items={pickerItems}
                 onItemSelect={(drink) => {
                     if (!pickingSectionId) return;
+                    if (!itemAllowedInSection(drink, pickingAllowedTypes)) return;
                     const current = editor.selections[pickingSectionId] || [];
                     if (current.includes(drink.id)) {
                         Alert.alert("Already Added", "This drink is already in this section.");
@@ -459,6 +540,11 @@ export default function MenusScreen() {
                         [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
                     }));
                     setPickingSectionId(null);
+                }}
+                onCreateNew={({ name, type }) => {
+                    setPickingSectionId(null);
+                    requestCreate(type, menuContextId);
+                    router.push(creatorCreateHref(type, menuContextId, name) as any);
                 }}
             />
 

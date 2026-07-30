@@ -1,5 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { Image } from 'expo-image';
@@ -10,7 +12,6 @@ import DraggableFlatList, {
     RenderItemParams,
 } from 'react-native-draggable-flatlist';
 import { Input, Text, XStack, useTheme } from 'tamagui';
-import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 
 export interface SortableRecipeItem {
     id?: string;
@@ -33,6 +34,8 @@ interface SortableRecipeListProps {
     dropdowns?: any;
     allIngredients?: any[];
     ingredientImageMap?: Record<string, string>;
+    /** Hold over a row while dragging to combine into a complex ingredient. */
+    onMerge?: (fromIndex: number, targetIndex: number) => void;
 }
 
 interface DetailRecipeRowProps {
@@ -41,6 +44,7 @@ interface DetailRecipeRowProps {
     imageUrl?: string;
     drag: () => void;
     isActive: boolean;
+    isMergeTarget?: boolean;
     onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove: (index: number) => void;
     nameNode: React.ReactNode;
@@ -52,6 +56,7 @@ function DetailRecipeRow({
     imageUrl,
     drag,
     isActive,
+    isMergeTarget,
     onUpdateItem,
     onRemove,
     nameNode,
@@ -61,7 +66,7 @@ function DetailRecipeRow({
     const measurement = [item.amount, item.unit].filter(Boolean).join(' ');
 
     return (
-        <View style={[styles.detailRow, isActive && styles.activeItem]}>
+        <View style={[styles.detailRow, isActive && styles.activeItem, isMergeTarget && styles.mergeTarget]}>
             <View style={styles.detailImageWrap}>
                 <TouchableOpacity
                     onLongPress={Platform.OS === 'web' ? undefined : drag}
@@ -133,8 +138,10 @@ export function SortableRecipeList({
     dropdowns,
     allIngredients,
     ingredientImageMap,
+    onMerge,
 }: SortableRecipeListProps) {
     const theme = useTheme();
+    const dwell = useDragMergeDwell(!!onMerge);
 
     const renderDraftBadge = (ingredientId: string) => {
         if (!drafts || !dropdowns) return null;
@@ -222,6 +229,7 @@ export function SortableRecipeList({
                     imageUrl={imageUrl}
                     drag={drag}
                     isActive={isActive}
+                    isMergeTarget={dwell.mergeTargetIndex === index}
                     onUpdateItem={onUpdateItem}
                     onRemove={onRemove}
                     nameNode={renderName(item)}
@@ -263,6 +271,7 @@ export function SortableRecipeList({
                 style={[
                     variant === 'row' ? styles.recipeRow : styles.cardRow,
                     isActive && styles.activeItem,
+                    dwell.mergeTargetIndex === index && styles.mergeTarget,
                 ]}
             >
                 <TouchableOpacity
@@ -291,12 +300,27 @@ export function SortableRecipeList({
         <View style={styles.container}>
             {variant !== 'detail' && (
                 <Text style={styles.hint}>
-                    {Platform.OS === 'web' ? 'Drag handle to reorder' : 'Long press handle to reorder'}
+                    {onMerge
+                        ? Platform.OS === 'web'
+                            ? 'Drag handle to reorder · Hold over an ingredient to combine'
+                            : 'Long press handle to reorder · Hold over an ingredient to combine'
+                        : Platform.OS === 'web'
+                          ? 'Drag handle to reorder'
+                          : 'Long press handle to reorder'}
                 </Text>
             )}
             <ListComponent
                 data={items}
-                onDragEnd={({ data }) => onReorder(data)}
+                onDragBegin={dwell.onDragBegin}
+                onPlaceholderIndexChange={dwell.onPlaceholderIndexChange}
+                onDragEnd={({ data, from }) => {
+                    const merge = dwell.consumeMergeOnDragEnd(from);
+                    if (merge && onMerge) {
+                        onMerge(merge.from, merge.target);
+                        return;
+                    }
+                    onReorder(data);
+                }}
                 keyExtractor={(item, index) => item.id || `${item.ingredient_id}-${index}`}
                 renderItem={renderItem}
                 scrollEnabled={false}
@@ -348,6 +372,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.06)',
         borderColor: Colors.dark.tint,
         borderWidth: 1,
+    },
+    mergeTarget: {
+        transform: [{ scale: 1.04 }],
+        borderColor: Colors.dark.tint,
+        borderWidth: 2,
+        backgroundColor: 'rgba(0,122,255,0.12)',
+        borderRadius: 12,
     },
     dragHandle: {
         flexShrink: 0,

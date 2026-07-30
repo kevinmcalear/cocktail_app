@@ -51,6 +51,7 @@ export default function EditModeDashboard() {
         id?: string;
         create?: string;
         barId?: string;
+        name?: string;
     }>();
     const { drafts, isLoading: loadingDrafts, deleteDraft } = useDrafts();
     const { data: userBars, isLoading: loadingBars } = useBars();
@@ -298,10 +299,11 @@ export default function EditModeDashboard() {
     const openCreateWorkspace = React.useCallback((
         type: EditingState['type'],
         barId: string,
-        opts?: { syncUrl?: boolean }
+        opts?: { syncUrl?: boolean; initialName?: string }
     ) => {
         if (type === 'bar') return;
         const syncUrl = opts?.syncUrl !== false;
+        const initialName = opts?.initialName?.trim() || undefined;
         const nodeType = type === 'menu' ? 'menu_draft' : type === 'ingredient' ? 'ingredient_draft' : 'drink_draft';
         setSelectedNode(null);
         setStoreNode(null);
@@ -309,11 +311,11 @@ export default function EditModeDashboard() {
             node: {
                 type: nodeType,
                 id: '__new__',
-                name: `New ${capitalize(type)}`,
+                name: initialName ? capitalize(initialName) : `New ${capitalize(type)}`,
             },
-            editing: { mode: 'create', type, barId },
+            editing: { mode: 'create', type, barId, initialName },
         }]);
-        if (syncUrl) syncCreatorUrl(creatorCreateHref(type, barId));
+        if (syncUrl) syncCreatorUrl(creatorCreateHref(type, barId, initialName));
     }, [setStoreNode, syncCreatorUrl]);
 
     const handleEditorClose = () => {
@@ -398,6 +400,7 @@ export default function EditModeDashboard() {
         const barId = typeof params.barId === 'string' ? params.barId : undefined;
         const type = typeof params.type === 'string' ? params.type : undefined;
         const id = typeof params.id === 'string' ? params.id : undefined;
+        const name = typeof params.name === 'string' ? params.name : undefined;
 
         if (create && CREATE_TYPES.has(create) && barId !== undefined) {
             const resolvedBarId = barId || 'personal';
@@ -410,7 +413,10 @@ export default function EditModeDashboard() {
             ) {
                 return;
             }
-            openCreateWorkspace(create as EditingState['type'], resolvedBarId, { syncUrl: false });
+            openCreateWorkspace(create as EditingState['type'], resolvedBarId, {
+                syncUrl: false,
+                initialName: name,
+            });
             clearPendingCreate();
             return;
         }
