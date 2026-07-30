@@ -619,7 +619,15 @@ export default function CreateMenuWizard({
                     <Text fontSize="$5" fontWeight="bold" color={colors.text}>
                         {activeMenuIdProp ? 'Edit Menu' : 'New Menu'}
                     </Text>
-                    <View style={{ width: 40 }} />
+                    <TouchableOpacity
+                        onPress={handlePublish}
+                        disabled={!isFormComplete() || saving}
+                        style={[styles.headerBtn, { alignItems: 'flex-end', opacity: isFormComplete() && !saving ? 1 : 0.35, width: 'auto', minWidth: 40 }]}
+                    >
+                        <Text color={colors.tint} fontWeight="bold" fontSize={16}>
+                            {saving ? '…' : 'Publish'}
+                        </Text>
+                    </TouchableOpacity>
                 </XStack>
             )}
 
