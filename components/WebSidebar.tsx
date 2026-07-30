@@ -14,7 +14,7 @@ import { useWines } from '@/hooks/useWines';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import { trackCreatorNode, useCreatorNavStore } from '@/store/useCreatorNavStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
@@ -378,6 +378,15 @@ export function WebSidebar() {
           alwaysShowPersonal
           onNodeSelect={(node) => {
             setSelectedNode(node);
+            const draft = drafts.find((d: any) => d.id === node.id);
+            trackCreatorNode(node, {
+              entityType: draft?.entity_type,
+              barId: draft?.bar_id ?? null,
+              imageUrl:
+                draft?.draft_data?.localImages?.[0]?.url ||
+                draft?.draft_data?.coverUrl ||
+                null,
+            });
             goCreator();
           }}
           onCreateNode={(type, barId) => {

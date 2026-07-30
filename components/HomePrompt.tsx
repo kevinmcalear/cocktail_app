@@ -4,7 +4,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
-import { recentMatchesContext } from '@/hooks/useTrackRecent';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
@@ -86,19 +85,18 @@ export function HomePrompt() {
   const { drafts } = useDrafts();
   const { data: userBars } = useBars();
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
-  const selectedContextIds = useAppStore((s) => s.selectedContextIds);
   const recentItems = useRecentActivityStore((s) => s.items);
 
   const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
   const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
 
+  // ponytail: Jump Back In is last-touched, not search-context — venue filter hid Caretakers drafts on Home
   const recent = useMemo(() => {
     const draftIds = new Set(drafts.map((d: any) => d.id));
     return recentItems
-      .filter((r) => recentMatchesContext(r, selectedContextIds))
       .filter((r) => !r.isDraft || draftIds.has(r.id))
       .slice(0, 3);
-  }, [recentItems, selectedContextIds, drafts]);
+  }, [recentItems, drafts]);
 
   const venueGroups = useMemo((): VenueGroup[] => {
     const barMeta = new Map<string, { name: string; logoUrl: string | null }>();
