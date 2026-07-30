@@ -14,7 +14,12 @@ import { useWines } from '@/hooks/useWines';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
-import { trackCreatorNode, useCreatorNavStore } from '@/store/useCreatorNavStore';
+import {
+  creatorCreateHref,
+  creatorNodeHref,
+  trackCreatorNode,
+  useCreatorNavStore,
+} from '@/store/useCreatorNavStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
@@ -259,9 +264,11 @@ export function WebSidebar() {
 
   const items = NAV.filter((item) => !item.requiresTesting || isTestingEnabled);
 
-  const goCreator = () => {
-    if (!pathname.includes('edit-mode')) {
-      router.push('/edit-mode' as any);
+  const goCreatorHref = (href: string) => {
+    if (pathname.includes('edit-mode')) {
+      router.replace(href as any);
+    } else {
+      router.push(href as any);
     }
   };
 
@@ -387,11 +394,11 @@ export function WebSidebar() {
                 draft?.draft_data?.coverUrl ||
                 null,
             });
-            goCreator();
+            goCreatorHref(creatorNodeHref(node));
           }}
           onCreateNode={(type, barId) => {
             requestCreate(type, barId);
-            goCreator();
+            goCreatorHref(creatorCreateHref(type, barId));
           }}
         />
       </YStack>

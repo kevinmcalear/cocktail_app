@@ -53,10 +53,14 @@ const MAPPING = {
   'line.3.horizontal': 'drag-handle',
   'line.3.horizontal.decrease': 'sort',
   'camera.fill': 'photo-camera',
+  'photo': 'photo',
   'circle.lefthalf.filled': 'brightness-6',
   'rectangle.portrait.and.arrow.right': 'logout',
   'magnifyingglass': 'search',
   'arrow.up': 'arrow-upward',
+  'arrow.up.and.down': 'swap-vert',
+  'square.grid.2x2': 'grid-view',
+  'list.bullet': 'format-list-bulleted',
 } as Partial<IconMapping>;
 
 /**

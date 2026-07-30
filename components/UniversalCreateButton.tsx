@@ -1,5 +1,8 @@
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
+import { useAppStore } from '@/store/useAppStore';
+import { creatorCreateHref } from '@/store/useCreatorNavStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -18,6 +21,7 @@ type UniversalCreateButtonProps = {
 
 export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreateButtonProps) {
     const { isEditModeEnabled } = useSettingsStore();
+    const selectedBarId = useAppStore((s) => s.selectedBarId);
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -49,12 +53,15 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
         return null;
     }
 
+    const menuBarId =
+        selectedBarId && selectedBarId !== PERSONAL_CONTEXT ? selectedBarId : PERSONAL_CONTEXT;
     const options = [
         { label: 'Cocktail', icon: 'TabDrinks', route: '/add-cocktail' },
         { label: 'Ingredient', icon: 'TabIngredients', route: '/add-ingredient' },
         { label: 'Beer', icon: 'Beer', route: '/add-beer' }, 
         { label: 'Wine', icon: 'Wine', route: '/add-wine' }, 
-        { label: 'Menu', icon: 'TabMenus', route: '/menus/create' },
+        // ponytail: menus edit in Creator Hub, not the standalone /menus/create shell
+        { label: 'Menu', icon: 'TabMenus', route: creatorCreateHref('menu', menuBarId) },
     ];
 
     const openSheet = () => {

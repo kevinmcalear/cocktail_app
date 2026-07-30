@@ -307,7 +307,8 @@ export function ItemDetailLayout({
                 />
             );
         }
-        if (emptyPhotoPlaceholder) {
+        // ponytail: edit with no photos always gets a tappable add affordance
+        if (emptyPhotoPlaceholder || (isEditing && onManageImages)) {
             return <CocktailPhotoPlaceholder onPress={handleImagePress} />;
         }
         return null;

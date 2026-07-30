@@ -1,26 +1,55 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useBars } from "@/hooks/useBars";
+import { useBeers } from "@/hooks/useBeers";
+import { useCocktails } from "@/hooks/useCocktails";
 import { useDropdowns } from "@/hooks/useDropdowns";
+import { useDrafts } from "@/hooks/useDrafts";
+import { useWines } from "@/hooks/useWines";
 import { uriToBase64 } from "@/lib/imageBase64";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { decode } from "base64-arraybuffer";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useNavigation, useLocalSearchParams } from "expo-router";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, YStack, XStack, Button } from "tamagui";
-import { useDrafts } from "@/hooks/useDrafts";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveCocktailId, resolveBeerId, resolveWineId, updateMenuDraftsWithPublishedId } from "@/lib/drafts";
 import { capitalize } from "@/lib/stringUtils";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
-
-import { MenuEditorForm } from "@/components/menu/MenuEditorForm";
-import type { SearchItem } from "@/components/SearchList";
+import { useAppStore } from "@/store/useAppStore";
+import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
+import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
+import { SearchItem, SearchList } from "@/components/SearchList";
 import type { EditorChromeState } from "@/lib/editorChrome";
+
+function toMenuItem(drink: SearchItem): MenuItem {
+    const image =
+        drink.image?.uri ||
+        drink.item_images?.[0]?.images?.url ||
+        (typeof drink.image === 'string' ? drink.image : undefined);
+    const ingredients =
+        drink.recipes
+            ?.map((r) => (r.ingredient?.name ? capitalize(r.ingredient.name) : ''))
+            .filter(Boolean)
+            .join(', ') ||
+        drink.description ||
+        '';
+    return {
+        id: drink.id,
+        name: drink.name,
+        description: drink.description || '',
+        ingredients,
+        price: drink.price || undefined,
+        image: image || undefined,
+        recipes: drink.recipes,
+    };
+}
 
 async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
     const ext = (uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
@@ -89,10 +118,26 @@ export default function CreateMenuWizard({
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [menuName, setMenuName] = useState("");
     const [coverUrl, setCoverUrl] = useState<string | null>(null);
+    const [coverPosition, setCoverPosition] = useState(50);
     const [uploadingCover, setUploadingCover] = useState(false);
     const [selections, setSelections] = useState<Record<string, string[]>>({});
     const [saving, setSaving] = useState(false);
     const [barId, setBarId] = useState<string | null>(resolvedBarId);
+    const [pickingSectionId, setPickingSectionId] = useState<string | null>(null);
+
+    const selectedBarId = useAppStore((s) => s.selectedBarId);
+    const { data: userBars } = useBars();
+    const { data: cocktailsData } = useCocktails();
+    const { data: beersData } = useBeers();
+    const { data: winesData } = useWines();
+
+    // Default venue when create isn't pre-bound to a bar
+    useEffect(() => {
+        if (barId || activeMenuIdProp) return;
+        const first = userBars?.[0]?.bar_id;
+        const next = resolvedBarId || selectedBarId || first || null;
+        if (next && next !== PERSONAL_CONTEXT) setBarId(next);
+    }, [barId, activeMenuIdProp, resolvedBarId, selectedBarId, userBars]);
 
     const [showExitModal, setShowExitModal] = useState(false);
     const pendingNavigationActionRef = useRef<any>(null);
@@ -129,7 +174,14 @@ export default function CreateMenuWizard({
                 )
               : null
     );
-    const currentStateStr = JSON.stringify({ selectedTemplateId, menuName, selections, barId, coverUrl });
+    const currentStateStr = JSON.stringify({
+        selectedTemplateId,
+        menuName,
+        selections,
+        barId,
+        coverUrl,
+        coverPosition,
+    });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -148,6 +200,7 @@ export default function CreateMenuWizard({
                 setSelectedTemplateId(data.selectedTemplateId || null);
                 setMenuName(data.menuName || data.name || "");
                 setCoverUrl(data.coverUrl || null);
+                setCoverPosition(typeof data.coverPosition === 'number' ? data.coverPosition : 50);
                 setSelections(data.selections || {});
                 setBarId(data.barId || activeBarIdProp || null);
                 setDraftLoaded(true);
@@ -169,9 +222,10 @@ export default function CreateMenuWizard({
 
                 if (menuErr || !menuData) throw menuErr || new Error('Menu not found');
 
+                // ponytail: prod menu_drinks is item_id only
                 const { data: drinksData, error: drinksErr } = await supabase
                     .from('menu_drinks')
-                    .select('template_section_id, cocktail_id, beer_id, wine_id')
+                    .select('template_section_id, item_id, item:items!item_id ( id, item_type )')
                     .eq('menu_id', activeMenuIdProp);
 
                 if (drinksErr) throw drinksErr;
@@ -179,22 +233,23 @@ export default function CreateMenuWizard({
                 const loadedSelections: Record<string, string[]> = {};
                 for (const drink of drinksData || []) {
                     const sectionId = drink.template_section_id;
-                    if (!sectionId) continue;
+                    const item = Array.isArray((drink as any).item)
+                        ? (drink as any).item[0]
+                        : (drink as any).item;
+                    if (!sectionId || !item?.id) continue;
                     if (!loadedSelections[sectionId]) loadedSelections[sectionId] = [];
-
-                    if (drink.cocktail_id) {
-                        loadedSelections[sectionId].push(drink.cocktail_id);
-                    } else if (drink.beer_id) {
-                        loadedSelections[sectionId].push(`beer-${drink.beer_id}`);
-                    } else if (drink.wine_id) {
-                        loadedSelections[sectionId].push(`wine-${drink.wine_id}`);
-                    }
+                    if (item.item_type === 'beer') loadedSelections[sectionId].push(`beer-${item.id}`);
+                    else if (item.item_type === 'wine') loadedSelections[sectionId].push(`wine-${item.id}`);
+                    else loadedSelections[sectionId].push(item.id);
                 }
 
                 setMenuName(menuData.name || '');
                 setSelectedTemplateId(menuData.template_id || null);
                 setBarId(menuData.bar_id || null);
                 setCoverUrl(menuData.cover_url || null);
+                setCoverPosition(
+                    typeof menuData.cover_position === 'number' ? menuData.cover_position : 50
+                );
                 setSelections(loadedSelections);
                 setMenuLoaded(true);
                 setDraftLoaded(true);
@@ -224,6 +279,7 @@ export default function CreateMenuWizard({
                         selections,
                         barId,
                         coverUrl,
+                        coverPosition,
                         hasVenueStep: true,
                     };
                     const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
@@ -242,7 +298,7 @@ export default function CreateMenuWizard({
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, saveDraft, router, isInline]);
+    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, coverPosition, saveDraft, router, isInline]);
 
     const handleSaveDraft = async () => {
         try {
@@ -254,6 +310,7 @@ export default function CreateMenuWizard({
                 selections,
                 barId,
                 coverUrl,
+                coverPosition,
                 hasVenueStep: true,
             };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
@@ -334,6 +391,72 @@ export default function CreateMenuWizard({
         setSelectedTemplateId(id);
     };
 
+    useEffect(() => {
+        if (selectedTemplateId) initSectionsForTemplate();
+    }, [selectedTemplateId, activeSections.length]);
+
+    const drinkIndex = useMemo(() => {
+        const map = new Map<string, SearchItem>();
+        for (const c of cocktailsData || []) {
+            map.set(c.id, {
+                id: c.id,
+                name: capitalize(c.name),
+                description: c.description,
+                category: 'Cocktail',
+                recipes: c.recipes,
+                item_images: c.item_images,
+                price: c.price,
+            });
+        }
+        for (const b of beersData || []) {
+            map.set(`beer-${b.id}`, {
+                id: `beer-${b.id}`,
+                name: capitalize(b.name),
+                description: b.description,
+                category: 'Beer',
+                price: b.price,
+                image: b.item_images?.[0]?.images?.url
+                    ? { uri: b.item_images[0].images.url }
+                    : undefined,
+            });
+        }
+        for (const w of winesData || []) {
+            map.set(`wine-${w.id}`, {
+                id: `wine-${w.id}`,
+                name: capitalize(w.name),
+                description: w.description,
+                category: 'Wine',
+                price: w.price,
+                image: w.item_images?.[0]?.images?.url
+                    ? { uri: w.item_images[0].images.url }
+                    : undefined,
+            });
+        }
+        return map;
+    }, [cocktailsData, beersData, winesData]);
+
+    const displaySections: MenuSection[] = useMemo(
+        () =>
+            activeSections.map((sec: any) => ({
+                id: sec.id,
+                title: sec.name,
+                data: (selections[sec.id] || []).map((id) => {
+                    const drink = drinkIndex.get(id);
+                    return drink
+                        ? toMenuItem(drink)
+                        : { id, name: 'Unknown', description: '', ingredients: '' };
+                }),
+            })),
+        [activeSections, selections, drinkIndex]
+    );
+
+    const venueName = useMemo(() => {
+        if (!barId) return null;
+        const ub = userBars?.find((b) => b.bar_id === barId);
+        const bar = Array.isArray((ub as any)?.bars) ? (ub as any).bars[0] : (ub as any)?.bars;
+        return bar?.name || null;
+    }, [barId, userBars]);
+
     const pickCover = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
@@ -344,8 +467,8 @@ export default function CreateMenuWizard({
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
-            aspect: [16, 9],
-            quality: 0.8,
+            aspect: [5, 2],
+            quality: 0.85,
         });
         if (result.canceled || !result.assets?.length) return;
 
@@ -353,6 +476,7 @@ export default function CreateMenuWizard({
         try {
             const url = await uploadMenuCover(result.assets[0].uri, activeMenuIdProp || null);
             setCoverUrl(url);
+            setCoverPosition(50);
         } catch (error) {
             console.error('Menu cover upload error:', error);
             Alert.alert('Error', 'Failed to upload cover image.');
@@ -427,8 +551,9 @@ export default function CreateMenuWizard({
                 name: capitalize(menuName),
                 template_id: selectedTemplateId,
                 is_active: true,
-                bar_id: barId || null,
+                bar_id: !barId || barId === PERSONAL_CONTEXT ? null : barId,
                 cover_url: coverUrl || null,
+                cover_position: coverPosition,
             };
 
             let menuId = activeMenuIdProp || null;
@@ -441,19 +566,14 @@ export default function CreateMenuWizard({
                     .eq('id', activeMenuIdProp);
 
                 // ponytail: optional columns may not exist until migrations land
-                if (updateError?.code === '42703' && 'cover_url' in updatePayload) {
-                    delete updatePayload.cover_url;
-                    ({ error: updateError } = await supabase
-                        .from('menus')
-                        .update(updatePayload)
-                        .eq('id', activeMenuIdProp));
-                }
-                if (updateError?.code === '42703' && 'bar_id' in updatePayload) {
-                    delete updatePayload.bar_id;
-                    ({ error: updateError } = await supabase
-                        .from('menus')
-                        .update(updatePayload)
-                        .eq('id', activeMenuIdProp));
+                for (const col of ['cover_position', 'cover_url', 'bar_id'] as const) {
+                    if (updateError?.code === '42703' && col in updatePayload) {
+                        delete updatePayload[col];
+                        ({ error: updateError } = await supabase
+                            .from('menus')
+                            .update(updatePayload)
+                            .eq('id', activeMenuIdProp));
+                    }
                 }
 
                 if (updateError) throw updateError;
@@ -471,22 +591,15 @@ export default function CreateMenuWizard({
                     .select()
                     .single();
 
-                if (menuError?.code === '42703' && 'cover_url' in insertPayload) {
-                    delete insertPayload.cover_url;
-                    ({ data: newMenu, error: menuError } = await supabase
-                        .from('menus')
-                        .insert(insertPayload)
-                        .select()
-                        .single());
-                }
-                if (menuError?.code === '42703' && 'bar_id' in insertPayload) {
-                    console.warn("bar_id column not found in menus table, retrying insert without bar_id...");
-                    delete insertPayload.bar_id;
-                    ({ data: newMenu, error: menuError } = await supabase
-                        .from('menus')
-                        .insert(insertPayload)
-                        .select()
-                        .single());
+                for (const col of ['cover_position', 'cover_url', 'bar_id'] as const) {
+                    if (menuError?.code === '42703' && col in insertPayload) {
+                        delete insertPayload[col];
+                        ({ data: newMenu, error: menuError } = await supabase
+                            .from('menus')
+                            .insert(insertPayload)
+                            .select()
+                            .single());
+                    }
                 }
 
                 if (menuError || !newMenu) throw menuError;
@@ -495,16 +608,14 @@ export default function CreateMenuWizard({
 
             if (!menuId) throw new Error('Failed to resolve menu id');
 
-            // 2. Add Drinks
+            // 2. Add Drinks (item_id — matches prod schema)
             let globalSortOrder = 0;
             const drinksToInsert = [];
             
             for (const sec of activeSections) {
                 const drinksInSection = selections[sec.id] || [];
                 for (const drinkId of drinksInSection) {
-                    let cocktail_id = null;
-                    let beer_id = null;
-                    let wine_id = null;
+                    let item_id = drinkId.replace(/^(beer|wine)-/, '');
 
                     if (drinkId.startsWith('beer-')) {
                         const draftIdPart = drinkId.replace('beer-', '');
@@ -512,9 +623,7 @@ export default function CreateMenuWizard({
                         if (isDraftBeer) {
                             const resolvedId = await resolveBeerId(draftIdPart, drafts);
                             await updateMenuDraftsWithPublishedId('beer-' + draftIdPart, 'beer-' + resolvedId, drafts, saveDraft);
-                            beer_id = resolvedId;
-                        } else {
-                            beer_id = draftIdPart;
+                            item_id = resolvedId;
                         }
                     } else if (drinkId.startsWith('wine-')) {
                         const draftIdPart = drinkId.replace('wine-', '');
@@ -522,26 +631,20 @@ export default function CreateMenuWizard({
                         if (isDraftWine) {
                             const resolvedId = await resolveWineId(draftIdPart, drafts);
                             await updateMenuDraftsWithPublishedId('wine-' + draftIdPart, 'wine-' + resolvedId, drafts, saveDraft);
-                            wine_id = resolvedId;
-                        } else {
-                            wine_id = draftIdPart;
+                            item_id = resolvedId;
                         }
                     } else {
                         const isDraftCocktail = drafts.some(d => d.id === drinkId && d.entity_type === 'cocktail');
                         if (isDraftCocktail) {
                             const resolvedId = await resolveCocktailId(drinkId, drafts);
                             await updateMenuDraftsWithPublishedId(drinkId, resolvedId, drafts, saveDraft);
-                            cocktail_id = resolvedId;
-                        } else {
-                            cocktail_id = drinkId;
+                            item_id = resolvedId;
                         }
                     }
 
                     drinksToInsert.push({
                         menu_id: menuId,
-                        cocktail_id: cocktail_id || undefined,
-                        beer_id: beer_id || undefined,
-                        wine_id: wine_id || undefined,
+                        item_id,
                         template_section_id: sec.id,
                         sort_order: globalSortOrder++
                     });
@@ -567,7 +670,7 @@ export default function CreateMenuWizard({
                 })
             );
 
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v3'] });
             isExitingRef.current = true;
             if (isInline) {
                 if (onSave) onSave();
@@ -608,57 +711,91 @@ export default function CreateMenuWizard({
                 <XStack
                     paddingTop={Platform.OS === 'ios' ? 20 : insets.top + 20}
                     paddingHorizontal="$4"
-                    paddingBottom="$3"
+                    paddingBottom="$2"
                     alignItems="center"
-                    justifyContent="space-between"
                     backgroundColor={colors.background}
                 >
                     <TouchableOpacity onPress={requestClose} style={styles.headerBtn}>
                         <IconSymbol name="chevron.left" size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <Text fontSize="$5" fontWeight="bold" color={colors.text}>
-                        {activeMenuIdProp ? 'Edit Menu' : 'New Menu'}
-                    </Text>
-                    <TouchableOpacity
-                        onPress={handlePublish}
-                        disabled={!isFormComplete() || saving}
-                        style={[styles.headerBtn, { alignItems: 'flex-end', opacity: isFormComplete() && !saving ? 1 : 0.35, width: 'auto', minWidth: 40 }]}
-                    >
-                        <Text color={colors.tint} fontWeight="bold" fontSize={16}>
-                            {saving ? '…' : 'Publish'}
-                        </Text>
-                    </TouchableOpacity>
                 </XStack>
             )}
 
             <YStack flex={1} backgroundColor={isInline ? '$background' : colors.background}>
-                <MenuEditorForm
-                    embedded={!!isInline}
-                    skipVenueStep={skipVenueStep}
-                    barId={barId}
-                    onBarIdChange={setBarId}
+                <MenuNotionEditor
+                    menuName={menuName}
+                    onMenuNameChange={setMenuName}
+                    coverUrl={coverUrl}
+                    coverPosition={coverPosition}
+                    onCoverPositionChange={setCoverPosition}
+                    onPickCover={pickCover}
+                    uploadingCover={uploadingCover}
                     templates={templates}
                     selectedTemplateId={selectedTemplateId}
                     onTemplateSelect={handleTemplateSelect}
-                    menuName={menuName}
-                    onMenuNameChange={setMenuName}
-                    onMenuNameBlur={() => setMenuName(capitalize(menuName))}
-                    coverUrl={coverUrl}
-                    uploadingCover={uploadingCover}
-                    onPickCover={pickCover}
-                    onClearCover={() => setCoverUrl(null)}
-                    activeSections={activeSections}
-                    selections={selections}
-                    setSelections={setSelections}
-                    menuDraftId={currentDraftId}
-                    onInitSections={initSectionsForTemplate}
-                    canPublish={isFormComplete()}
-                    saving={saving}
-                    onPublish={handlePublish}
-                    onCreateDrinkPress={onCreateDrinkPress}
-                    onOpenDrink={onOpenDrink}
+                    sections={displaySections}
+                    venueName={venueName}
+                    headerRight={
+                        <TouchableOpacity
+                            onPress={handlePublish}
+                            disabled={!isFormComplete() || saving}
+                            style={{ padding: 8, opacity: isFormComplete() && !saving ? 1 : 0.35 }}
+                        >
+                            <Text color={colors.tint} fontWeight="bold" fontSize={16}>
+                                {saving ? '…' : 'Publish'}
+                            </Text>
+                        </TouchableOpacity>
+                    }
+                    onRemoveItem={(sectionId, itemId) => {
+                        setSelections((prev) => ({
+                            ...prev,
+                            [sectionId]: (prev[sectionId] || []).filter((id) => id !== itemId),
+                        }));
+                    }}
+                    onAddToSection={(sectionId) => setPickingSectionId(sectionId)}
                 />
             </YStack>
+
+            <Modal
+                visible={!!pickingSectionId}
+                animationType="slide"
+                onRequestClose={() => setPickingSectionId(null)}
+            >
+                <View style={{ flex: 1, backgroundColor: colors.background }}>
+                    <SearchList
+                        title="Add Drink"
+                        items={Array.from(drinkIndex.values())}
+                        isModal
+                        onBackPress={() => setPickingSectionId(null)}
+                        onDrinkPress={(drink) => {
+                            if (!pickingSectionId) return;
+                            const current = selections[pickingSectionId] || [];
+                            if (current.includes(drink.id)) {
+                                Alert.alert('Already Added', 'This drink is already in this section.');
+                                return;
+                            }
+                            setSelections((prev) => ({
+                                ...prev,
+                                [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
+                            }));
+                            setPickingSectionId(null);
+                        }}
+                        onCreateNewPress={
+                            onCreateDrinkPress
+                                ? (query) => {
+                                      onCreateDrinkPress({
+                                          query,
+                                          barId: barId || '',
+                                          menuDraftId: currentDraftId || undefined,
+                                          menuSectionId: pickingSectionId || undefined,
+                                      });
+                                      setPickingSectionId(null);
+                                  }
+                                : undefined
+                        }
+                    />
+                </View>
+            </Modal>
 
             <Modal
                 visible={showExitModal}

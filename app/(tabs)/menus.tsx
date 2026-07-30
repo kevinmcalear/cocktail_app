@@ -1,21 +1,30 @@
-import { CurrentMenuList } from "@/components/CurrentMenuList";
+import { CurrentMenuList, MenuItem, MenuSection } from "@/components/CurrentMenuList";
+import { SearchItem, SearchList } from "@/components/SearchList";
+import { NotionCover } from "@/components/menu/NotionCover";
+import { TemplatePicker } from "@/components/menu/TemplatePicker";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
-import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBars } from "@/hooks/useBars";
+import { useBeers } from "@/hooks/useBeers";
+import { useCocktails } from "@/hooks/useCocktails";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
+import { useMenuEditor } from "@/hooks/useMenuEditor";
+import { useWines } from "@/hooks/useWines";
+import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
-import { useRecentActivityStore } from "@/store/useRecentActivityStore";
-import { useSettingsStore } from "@/store/useSettingsStore";
-import { Image } from "expo-image";
+import { creatorCreateHref, openDraftInCreator } from "@/store/useCreatorNavStore";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    Modal,
     Pressable,
     StyleSheet,
+    TextInput,
     TouchableOpacity,
     useWindowDimensions,
     View,
@@ -23,24 +32,65 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, XStack, YStack, useTheme } from "tamagui";
 
+function firstDrinkImageUrl(sections: { data: { image?: any }[] }[] | undefined): string | null {
+    for (const section of sections || []) {
+        for (const item of section.data) {
+            if (typeof item.image === "string" && item.image) return item.image;
+            if (item.image?.uri) return item.image.uri as string;
+        }
+    }
+    return null;
+}
+
+function toMenuItem(drink: SearchItem): MenuItem {
+    const image =
+        drink.image?.uri ||
+        drink.item_images?.[0]?.images?.url ||
+        (typeof drink.image === "string" ? drink.image : undefined);
+    const ingredients =
+        drink.recipes
+            ?.map((r) => (r.ingredient?.name ? capitalize(r.ingredient.name) : ""))
+            .filter(Boolean)
+            .join(", ") ||
+        drink.description ||
+        "";
+    return {
+        id: drink.id,
+        name: drink.name,
+        description: drink.description || "",
+        ingredients,
+        price: drink.price || undefined,
+        image: image || undefined,
+        recipes: drink.recipes,
+    };
+}
+
 export default function MenusScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 768;
-    const { isEditModeEnabled } = useSettingsStore();
     const selectedMenuId = useAppStore((s) => s.selectedMenuId);
     const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
-    const pushRecent = useRecentActivityStore((s) => s.push);
 
     const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
     const { data: userBars } = useBars();
     const { drafts } = useDrafts();
     const menus = dropdowns?.menus || [];
+    const templates = dropdowns?.menuTemplates || [];
+    // Always show Edit for menus you can see — RLS enforces writes. (bar_id-null menus broke role lookup.)
+    const canEdit = !!selectedMenuId;
 
-    const [pickerOpen, setPickerOpen] = useState(false);
     const [actionsOpen, setActionsOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [pickingSectionId, setPickingSectionId] = useState<string | null>(null);
+
+    const editor = useMenuEditor(selectedMenuId, isEditing);
+
+    const { data: cocktailsData } = useCocktails();
+    const { data: beersData } = useBeers();
+    const { data: winesData } = useWines();
 
     useFocusEffect(
         useCallback(() => {
@@ -53,8 +103,14 @@ export default function MenusScreen() {
         const stillValid = selectedMenuId && menus.some((m) => m.id === selectedMenuId);
         if (!stillValid) {
             setSelectedMenuId(menus[menus.length - 1].id);
+            setIsEditing(false);
         }
     }, [menus, selectedMenuId, setSelectedMenuId]);
+
+    // Leaving a menu cancels edit
+    useEffect(() => {
+        setIsEditing(false);
+    }, [selectedMenuId]);
 
     const barNameById = useMemo(() => {
         const map = new Map<string, string>();
@@ -65,64 +121,240 @@ export default function MenusScreen() {
         return map;
     }, [userBars]);
 
-    const selectMenu = (menu: { id: string; name: string; bar_id?: string | null; cover_url?: string | null }) => {
-        setSelectedMenuId(menu.id);
-        setPickerOpen(false);
-        pushRecent({
-            id: menu.id,
-            kind: "menu",
-            title: menu.name,
-            subtitle: "Menu",
-            href: "/(tabs)/menus",
-            barId: menu.bar_id ?? null,
-            imageUrl: menu.cover_url ?? null,
-        });
-    };
-
     const { data: menuDetails, isLoading: loadingDetails } = useMenuDetails(selectedMenuId);
     const selectedMenu = menus.find((m) => m.id === selectedMenuId) ?? null;
-    const selectedCoverUrl = selectedMenu?.cover_url ?? null;
+
+    const drinkIndex = useMemo(() => {
+        const map = new Map<string, SearchItem>();
+        for (const c of cocktailsData || []) {
+            map.set(c.id, {
+                id: c.id,
+                name: capitalize(c.name),
+                description: c.description,
+                category: "Cocktail",
+                recipes: c.recipes,
+                item_images: c.item_images,
+                price: c.price,
+            });
+        }
+        for (const b of beersData || []) {
+            map.set(`beer-${b.id}`, {
+                id: `beer-${b.id}`,
+                name: capitalize(b.name),
+                description: b.description,
+                category: "Beer",
+                price: b.price,
+                image: b.item_images?.[0]?.images?.url
+                    ? { uri: b.item_images[0].images.url }
+                    : undefined,
+            });
+        }
+        for (const w of winesData || []) {
+            map.set(`wine-${w.id}`, {
+                id: `wine-${w.id}`,
+                name: capitalize(w.name),
+                description: w.description,
+                category: "Wine",
+                price: w.price,
+                image: w.item_images?.[0]?.images?.url
+                    ? { uri: w.item_images[0].images.url }
+                    : undefined,
+            });
+        }
+        return map;
+    }, [cocktailsData, beersData, winesData]);
+
+    const viewItemsById = useMemo(() => {
+        const map = new Map<string, MenuItem>();
+        for (const sec of menuDetails?.sections || []) {
+            for (const item of sec.data) map.set(item.id, item);
+        }
+        return map;
+    }, [menuDetails?.sections]);
+
+    const editSections: MenuSection[] = useMemo(() => {
+        if (!isEditing || !editor.loaded) return [];
+        return editor.activeSections.map((sec: any) => ({
+            id: sec.id,
+            title: sec.name,
+            data: (editor.selections[sec.id] || []).map((id) => {
+                const fromView = viewItemsById.get(id);
+                if (fromView) return fromView;
+                const drink = drinkIndex.get(id);
+                return drink
+                    ? toMenuItem(drink)
+                    : { id, name: "Unknown", description: "", ingredients: "" };
+            }),
+        }));
+    }, [
+        isEditing,
+        editor.loaded,
+        editor.activeSections,
+        editor.selections,
+        drinkIndex,
+        viewItemsById,
+    ]);
+
+    const viewCoverUrl =
+        selectedMenu?.cover_url || firstDrinkImageUrl(menuDetails?.sections) || null;
+    const coverUrl = isEditing ? editor.coverUrl || viewCoverUrl : viewCoverUrl;
+    const coverPosition = isEditing
+        ? editor.coverPosition
+        : typeof selectedMenu?.cover_position === "number"
+          ? selectedMenu.cover_position
+          : 50;
     const venueName = selectedMenu?.bar_id ? barNameById.get(selectedMenu.bar_id) : null;
+    // Keep view values until editor finishes loading — never flash empty
+    const displayName = isEditing
+        ? editor.menuName || selectedMenu?.name || ""
+        : selectedMenu?.name;
+    const sections =
+        isEditing && editor.loaded ? editSections : menuDetails?.sections || [];
+    const templateIdForPicker = isEditing
+        ? editor.selectedTemplateId || selectedMenu?.template_id || null
+        : null;
 
     const menuDrafts = useMemo(
         () => drafts.filter((d: any) => d.entity_type === "menu" && !d.isPublished),
         [drafts]
     );
 
-    const menusByVenue = useMemo(() => {
-        const groups = new Map<string, { label: string; menus: typeof menus }>();
-        for (const menu of menus) {
-            const key = menu.bar_id || "__none__";
-            const label = (menu.bar_id && barNameById.get(menu.bar_id)) || "Menus";
-            if (!groups.has(key)) groups.set(key, { label, menus: [] });
-            groups.get(key)!.menus.push(menu);
+    const startEdit = () => setIsEditing(true);
+
+    const cancelEdit = () => {
+        if (editor.isDirty) {
+            Alert.alert("Discard changes?", "Your edits will be lost.", [
+                { text: "Keep editing", style: "cancel" },
+                {
+                    text: "Discard",
+                    style: "destructive",
+                    onPress: () => {
+                        editor.discard();
+                        setIsEditing(false);
+                    },
+                },
+            ]);
+            return;
         }
-        return Array.from(groups.values());
-    }, [menus, barNameById]);
+        editor.discard();
+        setIsEditing(false);
+    };
 
-    const cover = (
-        <View
-            style={[
-                styles.coverFrame,
-                isWide ? styles.coverWide : styles.coverPhone,
-                { backgroundColor: theme.backgroundStrong?.get() as string },
-            ]}
-        >
-            {selectedCoverUrl ? (
-                <Image source={{ uri: selectedCoverUrl }} style={styles.coverImage} contentFit="cover" />
+    const saveEdit = async () => {
+        const ok = await editor.save();
+        if (ok) {
+            editor.discard();
+            setIsEditing(false);
+            refetch();
+        }
+    };
+
+    const headerActions = canEdit ? (
+        <XStack alignItems="center" gap="$2">
+            {isEditing ? (
+                <>
+                    <TemplatePicker
+                        templates={templates}
+                        selectedId={templateIdForPicker}
+                        onSelect={editor.setSelectedTemplateId}
+                    />
+                    <TouchableOpacity onPress={cancelEdit} style={{ padding: 8 }}>
+                        <Text color="$color11" fontWeight="600" fontSize={16}>
+                            Cancel
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={saveEdit}
+                        disabled={editor.saving || !editor.isDirty}
+                        style={{ padding: 8, opacity: editor.isDirty ? 1 : 0.4 }}
+                    >
+                        <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
+                            {editor.saving ? "Saving…" : "Save"}
+                        </Text>
+                    </TouchableOpacity>
+                </>
             ) : (
-                <View style={styles.coverEmpty}>
-                    <CustomIcon name="TabMenus" size={isWide ? 64 : 48} color={theme.color11?.get() as string} />
-                </View>
+                <>
+                    {selectedMenu ? (
+                        <TouchableOpacity onPress={startEdit} style={{ padding: 8 }}>
+                            <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
+                                Edit
+                            </Text>
+                        </TouchableOpacity>
+                    ) : null}
+                    <TouchableOpacity onPress={() => setActionsOpen(true)} style={{ padding: 8 }}>
+                        <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
+                    </TouchableOpacity>
+                </>
             )}
-        </View>
-    );
+        </XStack>
+    ) : null;
 
-    const titleBlock = (
-        <YStack flex={1} gap="$1" minWidth={0}>
-            {menus.length > 1 ? (
-                <TouchableOpacity onPress={() => setPickerOpen(true)} activeOpacity={0.7}>
-                    <XStack alignItems="center" gap="$2">
+    const padH = 15;
+
+    const header = (
+        <YStack>
+            {coverUrl ? (
+                <NotionCover
+                    uri={coverUrl}
+                    position={coverPosition}
+                    maxHeight={isWide ? 280 : 220}
+                    editing={isEditing}
+                    onPositionChange={
+                        isEditing
+                            ? (pos) => {
+                                  // promote drink-fallback cover into real cover_url on first reposition
+                                  if (!editor.coverUrl && viewCoverUrl) editor.setCoverUrl(viewCoverUrl);
+                                  editor.setCoverPosition(pos);
+                              }
+                            : undefined
+                    }
+                    onChangeCover={isEditing ? editor.pickCover : undefined}
+                />
+            ) : isEditing ? (
+                <Pressable
+                    onPress={editor.pickCover}
+                    style={[styles.addCover, { maxHeight: isWide ? 280 : 220 }]}
+                >
+                    {editor.uploadingCover ? (
+                        <ActivityIndicator color={theme.color8?.get() as string} />
+                    ) : (
+                        <Text color="$color11" fontWeight="600">
+                            Add cover
+                        </Text>
+                    )}
+                </Pressable>
+            ) : (
+                <View style={{ height: insets.top }} />
+            )}
+            <XStack
+                paddingHorizontal={padH}
+                paddingTop={coverUrl || isEditing ? 24 : insets.top + 24}
+                paddingBottom={4}
+                alignItems="flex-start"
+                justifyContent="space-between"
+                gap="$3"
+            >
+                <YStack flex={1} gap="$1" minWidth={0}>
+                    {isEditing ? (
+                        <TextInput
+                            value={editor.menuName}
+                            onChangeText={(val) =>
+                                handleCapitalizedChange(val, editor.menuName, editor.setMenuName)
+                            }
+                            onBlur={() => editor.setMenuName(capitalize(editor.menuName))}
+                            placeholder="Menu name"
+                            placeholderTextColor={theme.color11?.get() as string}
+                            style={{
+                                fontSize: isWide ? 40 : 28,
+                                lineHeight: isWide ? 46 : 34,
+                                fontFamily: "IBMPlexSansItalic",
+                                fontStyle: "italic",
+                                color: theme.color?.get() as string,
+                                padding: 0,
+                            }}
+                        />
+                    ) : (
                         <Text
                             fontSize={isWide ? 40 : 28}
                             lineHeight={isWide ? 46 : 34}
@@ -130,78 +362,22 @@ export default function MenusScreen() {
                             fontStyle="italic"
                             color="$color"
                             numberOfLines={2}
-                            flexShrink={1}
                         >
-                            {selectedMenu?.name || "Menus"}
+                            {displayName || (loadingMenus ? "Loading…" : "No menus yet")}
                         </Text>
-                        <IconSymbol name="chevron.down" size={18} color={theme.color11?.get() as string} />
-                    </XStack>
-                </TouchableOpacity>
-            ) : (
-                <Text
-                    fontSize={isWide ? 40 : 28}
-                    lineHeight={isWide ? 46 : 34}
-                    fontFamily="IBMPlexSansItalic"
-                    fontStyle="italic"
-                    color="$color"
-                    numberOfLines={2}
-                >
-                    {selectedMenu?.name || (loadingMenus ? "Loading…" : "No menus yet")}
-                </Text>
-            )}
-            {venueName ? (
-                <Text fontSize={14} color="$color11" numberOfLines={1}>
-                    {venueName}
-                </Text>
-            ) : null}
-            {loadingDetails ? (
-                <ActivityIndicator color={theme.color8?.get() as string} style={{ alignSelf: "flex-start", marginTop: 8 }} />
-            ) : null}
-        </YStack>
-    );
-
-    const headerActions = isEditModeEnabled ? (
-        <XStack alignItems="center" gap="$1">
-            {selectedMenu ? (
-                <TouchableOpacity
-                    onPress={() =>
-                        router.push({ pathname: "/menus/create", params: { menuId: selectedMenu.id } })
-                    }
-                    style={{ padding: 8 }}
-                >
-                    <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
-                        Edit
-                    </Text>
-                </TouchableOpacity>
-            ) : null}
-            <TouchableOpacity onPress={() => setActionsOpen(true)} style={{ padding: 8 }}>
-                <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
-            </TouchableOpacity>
-        </XStack>
-    ) : null;
-
-    const header = isWide ? (
-        <XStack paddingTop={insets.top + 24} paddingHorizontal={24} paddingBottom={8} gap={28} alignItems="flex-start">
-            {cover}
-            <YStack flex={1} paddingTop={12} gap="$3" minWidth={0}>
-                <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-                    {titleBlock}
-                    {headerActions}
-                </XStack>
-            </YStack>
-        </XStack>
-    ) : (
-        <YStack paddingTop={insets.top}>
-            {cover}
-            <XStack
-                paddingHorizontal={20}
-                paddingTop={20}
-                paddingBottom={4}
-                alignItems="flex-start"
-                justifyContent="space-between"
-                gap="$3"
-            >
-                {titleBlock}
+                    )}
+                    {venueName ? (
+                        <Text fontSize={14} color="$color11" numberOfLines={1}>
+                            {venueName}
+                        </Text>
+                    ) : null}
+                    {(loadingDetails || (isEditing && !editor.loaded)) ? (
+                        <ActivityIndicator
+                            color={theme.color8?.get() as string}
+                            style={{ alignSelf: "flex-start", marginTop: 8 }}
+                        />
+                    ) : null}
+                </YStack>
                 {headerActions}
             </XStack>
         </YStack>
@@ -209,40 +385,61 @@ export default function MenusScreen() {
 
     if (!loadingMenus && menus.length === 0) {
         return (
-            <YStack flex={1} backgroundColor="$background" paddingTop={insets.top + 40} paddingHorizontal={24} gap="$4">
-                <Text
-                    fontSize={32}
-                    fontFamily="IBMPlexSansItalic"
-                    fontStyle="italic"
-                    color="$color"
-                >
+            <YStack
+                flex={1}
+                backgroundColor="$background"
+                paddingTop={insets.top + 40}
+                paddingHorizontal={24}
+                gap="$4"
+            >
+                <Text fontSize={32} fontFamily="IBMPlexSansItalic" fontStyle="italic" color="$color">
                     Menus
                 </Text>
                 <Text color="$color11" fontSize={15}>
                     No menus yet. Create one to start building your list.
                 </Text>
-                {isEditModeEnabled ? (
+                {canEdit ? (
                     <TouchableOpacity
-                        onPress={() => router.push("/menus/create")}
+                        onPress={() =>
+                            router.push(
+                                creatorCreateHref(
+                                    'menu',
+                                    selectedMenu?.bar_id || PERSONAL_CONTEXT
+                                ) as any
+                            )
+                        }
                         style={[styles.primaryBtn, { backgroundColor: theme.color8?.get() as string }]}
                     >
-                        <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={16}>
+                        <Text
+                            color={theme.backgroundStrong?.get() as string}
+                            fontWeight="bold"
+                            fontSize={16}
+                        >
                             New Menu
                         </Text>
                     </TouchableOpacity>
                 ) : null}
                 {menuDrafts.length > 0 ? (
                     <YStack gap="$2" marginTop="$4">
-                        <Text fontSize={11} fontWeight="600" color="$color11" textTransform="uppercase" letterSpacing={0.8}>
+                        <Text
+                            fontSize={11}
+                            fontWeight="600"
+                            color="$color11"
+                            textTransform="uppercase"
+                            letterSpacing={0.8}
+                        >
                             Drafts
                         </Text>
                         {menuDrafts.map((d: any) => (
                             <Pressable
                                 key={d.id}
                                 onPress={() =>
-                                    router.push({ pathname: "/menus/create", params: { draftId: d.id } })
+                                    openDraftInCreator(d, (href) => router.push(href as any))
                                 }
-                                style={[styles.pickerRow, { borderBottomColor: theme.borderColor?.get() as string }]}
+                                style={[
+                                    styles.actionRow,
+                                    { borderBottomColor: theme.borderColor?.get() as string },
+                                ]}
                             >
                                 <Text color="$color" fontSize={16} fontWeight="500">
                                     {d.draft_data?.menuName || d.draft_data?.name || "Untitled Menu"}
@@ -261,98 +458,62 @@ export default function MenusScreen() {
     return (
         <YStack flex={1} backgroundColor="$background">
             <CurrentMenuList
-                sections={menuDetails?.sections || []}
+                sections={sections}
                 ListHeaderComponent={header}
+                isEditing={isEditing && editor.loaded}
+                onRemoveItem={(sectionId, itemId) => {
+                    editor.setSelections((prev) => ({
+                        ...prev,
+                        [sectionId]: (prev[sectionId] || []).filter((id) => id !== itemId),
+                    }));
+                }}
+                onAddToSection={(sectionId) => setPickingSectionId(sectionId)}
             />
 
-            <AdaptiveSheetModal visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Menus">
-                <YStack paddingHorizontal="$4" gap="$1">
-                    {menusByVenue.map((group) => (
-                        <YStack key={group.label} gap="$1" marginBottom="$3">
-                            {menusByVenue.length > 1 ? (
-                                <Text
-                                    fontSize={11}
-                                    fontWeight="600"
-                                    color="$color11"
-                                    textTransform="uppercase"
-                                    letterSpacing={0.8}
-                                    marginBottom="$1"
-                                >
-                                    {group.label}
-                                </Text>
-                            ) : null}
-                            {group.menus.map((menu) => {
-                                const selected = menu.id === selectedMenuId;
-                                return (
-                                    <Pressable
-                                        key={menu.id}
-                                        onPress={() => selectMenu(menu)}
-                                        style={[
-                                            styles.pickerRow,
-                                            {
-                                                borderBottomColor: theme.borderColor?.get() as string,
-                                                backgroundColor: selected ? "rgba(255,255,255,0.06)" : "transparent",
-                                            },
-                                        ]}
-                                    >
-                                        <Text color="$color" fontSize={16} fontWeight={selected ? "700" : "500"}>
-                                            {menu.name}
-                                        </Text>
-                                        {selected ? (
-                                            <IconSymbol
-                                                name="checkmark"
-                                                size={18}
-                                                color={theme.color8?.get() as string}
-                                            />
-                                        ) : null}
-                                    </Pressable>
-                                );
-                            })}
-                        </YStack>
-                    ))}
-
-                    {menuDrafts.length > 0 ? (
-                        <YStack gap="$1" marginTop="$2">
-                            <Text
-                                fontSize={11}
-                                fontWeight="600"
-                                color="$color11"
-                                textTransform="uppercase"
-                                letterSpacing={0.8}
-                                marginBottom="$1"
-                            >
-                                Drafts
-                            </Text>
-                            {menuDrafts.map((d: any) => (
-                                <Pressable
-                                    key={d.id}
-                                    onPress={() => {
-                                        setPickerOpen(false);
-                                        router.push({ pathname: "/menus/create", params: { draftId: d.id } });
-                                    }}
-                                    style={[styles.pickerRow, { borderBottomColor: theme.borderColor?.get() as string }]}
-                                >
-                                    <Text color="$color" fontSize={16} fontWeight="500">
-                                        {d.draft_data?.menuName || d.draft_data?.name || "Untitled Menu"}
-                                    </Text>
-                                    <Text color="$color11" fontSize={12}>
-                                        Resume
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </YStack>
-                    ) : null}
-                </YStack>
-            </AdaptiveSheetModal>
+            <Modal
+                visible={!!pickingSectionId}
+                animationType="slide"
+                onRequestClose={() => setPickingSectionId(null)}
+            >
+                <View style={{ flex: 1, backgroundColor: theme.background?.get() as string }}>
+                    <SearchList
+                        title="Add Drink"
+                        items={Array.from(drinkIndex.values())}
+                        isModal
+                        onBackPress={() => setPickingSectionId(null)}
+                        onDrinkPress={(drink) => {
+                            if (!pickingSectionId) return;
+                            const current = editor.selections[pickingSectionId] || [];
+                            if (current.includes(drink.id)) {
+                                Alert.alert("Already Added", "This drink is already in this section.");
+                                return;
+                            }
+                            editor.setSelections((prev) => ({
+                                ...prev,
+                                [pickingSectionId]: [...(prev[pickingSectionId] || []), drink.id],
+                            }));
+                            setPickingSectionId(null);
+                        }}
+                    />
+                </View>
+            </Modal>
 
             <AdaptiveSheetModal visible={actionsOpen} onClose={() => setActionsOpen(false)} title="Menu">
                 <YStack paddingHorizontal="$4">
                     <Pressable
                         onPress={() => {
                             setActionsOpen(false);
-                            router.push("/menus/create");
+                            router.push(
+                                creatorCreateHref(
+                                    'menu',
+                                    selectedMenu?.bar_id || PERSONAL_CONTEXT
+                                ) as any
+                            );
                         }}
-                        style={[styles.pickerRow, { borderBottomColor: theme.borderColor?.get() as string }]}
+                        style={[
+                            styles.actionRow,
+                            { borderBottomColor: theme.borderColor?.get() as string },
+                        ]}
                     >
                         <Text color="$color" fontSize={16} fontWeight="600">
                             New Menu
@@ -362,12 +523,12 @@ export default function MenusScreen() {
                         <Pressable
                             onPress={() => {
                                 setActionsOpen(false);
-                                router.push({
-                                    pathname: "/menus/create",
-                                    params: { menuId: selectedMenu.id },
-                                });
+                                startEdit();
                             }}
-                            style={[styles.pickerRow, { borderBottomColor: theme.borderColor?.get() as string }]}
+                            style={[
+                                styles.actionRow,
+                                { borderBottomColor: theme.borderColor?.get() as string },
+                            ]}
                         >
                             <Text color="$color" fontSize={16} fontWeight="600">
                                 Edit Menu
@@ -381,30 +542,16 @@ export default function MenusScreen() {
 }
 
 const styles = StyleSheet.create({
-    coverFrame: {
-        borderRadius: 24,
-        overflow: "hidden",
-    },
-    coverPhone: {
+    addCover: {
         width: "100%",
-        aspectRatio: 1,
-        borderRadius: 0,
+        aspectRatio: 5 / 2,
+        alignItems: "center",
+        justifyContent: "center",
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "rgba(127,127,127,0.3)",
+        backgroundColor: "rgba(127,127,127,0.08)",
     },
-    coverWide: {
-        width: "38%",
-        maxWidth: 360,
-        minWidth: 240,
-        aspectRatio: 1,
-    },
-    coverImage: {
-        width: "100%",
-        height: "100%",
-    },
-    coverEmpty: {
-        width: "100%",
-        height: "100%",
-    },
-    pickerRow: {
+    actionRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",

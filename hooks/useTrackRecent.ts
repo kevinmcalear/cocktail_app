@@ -7,7 +7,6 @@ const DRAFT_ROUTE: Partial<Record<RecentKind, string>> = {
   beer: '/add-beer',
   wine: '/add-wine',
   ingredient: '/add-ingredient',
-  menu: '/menus/create',
 };
 
 /** Push one recent entry when the entity becomes available. */
@@ -40,13 +39,15 @@ export function recentEntry(
   const draftRoute = opts?.isDraft ? DRAFT_ROUTE[kind] : undefined;
   const href =
     opts?.href ||
-    (draftRoute
-      ? `${draftRoute}?draftId=${id}`
-      : kind === 'menu'
-        ? '/(tabs)/menus'
-        : kind === 'quiz'
-          ? '/(tabs)/test'
-          : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
+    (opts?.isDraft && kind === 'menu'
+      ? `/edit-mode?type=menu_draft&id=${encodeURIComponent(id)}`
+      : draftRoute
+        ? `${draftRoute}?draftId=${id}`
+        : kind === 'menu'
+          ? '/(tabs)/menus'
+          : kind === 'quiz'
+            ? '/(tabs)/test'
+            : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
   return {
     id,
     kind,

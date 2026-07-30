@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, View, Alert, Platform, useWindowDimensions, PanResponder } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -14,7 +14,7 @@ import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
 import { CreatorWorkspace } from '@/components/CreatorWorkspace';
 import { CreatorWorkspaceEditor } from '@/components/CreatorWorkspaceEditor';
-import { DraftFolderTree, SelectedDraftNode } from '@/components/DraftFolderTree';
+import { DraftFolderTree, DraftNodeType, SelectedDraftNode } from '@/components/DraftFolderTree';
 import type { SearchItem } from '@/components/SearchList';
 import {
     WorkspaceFrame,
@@ -32,7 +32,13 @@ import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { EditorChromeState } from '@/lib/editorChrome';
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import {
+    creatorCreateHref,
+    creatorNodeHref,
+    useCreatorNavStore,
+} from '@/store/useCreatorNavStore';
+
+const CREATE_TYPES = new Set(['cocktail', 'beer', 'wine', 'ingredient', 'menu']);
 
 export default function EditModeDashboard() {
     const router = useRouter();
@@ -40,6 +46,12 @@ export default function EditModeDashboard() {
     const theme = useTheme();
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const params = useLocalSearchParams<{
+        type?: string;
+        id?: string;
+        create?: string;
+        barId?: string;
+    }>();
     const { drafts, isLoading: loadingDrafts, deleteDraft } = useDrafts();
     const { data: userBars, isLoading: loadingBars } = useBars();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
@@ -56,7 +68,7 @@ export default function EditModeDashboard() {
     // ponytail: on web the explorer lives in WebSidebar; this screen is workspace-only
     const isWebShell = Platform.OS === 'web';
 
-    const storeNode = useCreatorNavStore((s) => s.selectedNode);
+    const setStoreNode = useCreatorNavStore((s) => s.setSelectedNode);
     const pendingCreate = useCreatorNavStore((s) => s.pendingCreate);
     const clearPendingCreate = useCreatorNavStore((s) => s.clearPendingCreate);
 
@@ -181,10 +193,22 @@ export default function EditModeDashboard() {
         return acc;
     }, {});
 
+    // ponytail: stay on Creator Hub — bouncing to / made /edit-mode feel broken
+    const syncCreatorUrl = React.useCallback((href: string) => {
+        if (!isWebShell) return;
+        router.replace(href as any);
+    }, [isWebShell, router]);
+
+    const clearWorkspace = React.useCallback(() => {
+        setSelectedNode(null);
+        setStoreNode(null);
+        setNavigationStack([]);
+        syncCreatorUrl('/edit-mode');
+    }, [setStoreNode, syncCreatorUrl]);
+
     const clearWorkspaceIfContains = (id: string) => {
         if (selectedNode?.id === id || navigationStack.some((frame) => frame.node.id === id)) {
-            setSelectedNode(null);
-            setNavigationStack([]);
+            clearWorkspace();
         }
     };
 
@@ -251,24 +275,36 @@ export default function EditModeDashboard() {
         }
     };
 
-    const openWorkspace = React.useCallback((node: SelectedDraftNode) => {
+    const openWorkspace = React.useCallback((node: SelectedDraftNode, opts?: { syncUrl?: boolean }) => {
+        const syncUrl = opts?.syncUrl !== false;
         if (node.type === 'bar') {
             setSelectedNode(node);
+            setStoreNode(node);
             setNavigationStack([{
                 node,
                 editing: { mode: 'edit', type: 'bar', barId: node.id, publishedId: node.id },
             }]);
+            if (syncUrl) syncCreatorUrl(creatorNodeHref(node));
             return;
         }
         const frame = buildWorkspaceFrame(node, allItems);
         if (!frame) return;
         setSelectedNode(node);
+        setStoreNode(node);
         setNavigationStack([frame]);
-    }, [allItems]);
+        if (syncUrl) syncCreatorUrl(creatorNodeHref(node));
+    }, [allItems, setStoreNode, syncCreatorUrl]);
 
-    const openCreateWorkspace = (type: EditingState['type'], barId: string) => {
+    const openCreateWorkspace = React.useCallback((
+        type: EditingState['type'],
+        barId: string,
+        opts?: { syncUrl?: boolean }
+    ) => {
+        if (type === 'bar') return;
+        const syncUrl = opts?.syncUrl !== false;
         const nodeType = type === 'menu' ? 'menu_draft' : type === 'ingredient' ? 'ingredient_draft' : 'drink_draft';
         setSelectedNode(null);
+        setStoreNode(null);
         setNavigationStack([{
             node: {
                 type: nodeType,
@@ -277,7 +313,8 @@ export default function EditModeDashboard() {
             },
             editing: { mode: 'create', type, barId },
         }]);
-    };
+        if (syncUrl) syncCreatorUrl(creatorCreateHref(type, barId));
+    }, [setStoreNode, syncCreatorUrl]);
 
     const handleCreateDrinkPress = (params: {
         query: string;
@@ -306,27 +343,33 @@ export default function EditModeDashboard() {
     };
 
     const handleEditorClose = () => {
+        if (navigationStack.length <= 1) {
+            clearWorkspace();
+            return;
+        }
         setNavigationStack((prev) => {
-            if (prev.length > 1) {
-                const newStack = prev.slice(0, -1);
-                setSelectedNode(newStack[newStack.length - 1].node);
-                return newStack;
-            }
-            setSelectedNode(null);
-            return [];
+            const newStack = prev.slice(0, -1);
+            const node = newStack[newStack.length - 1].node;
+            setSelectedNode(node);
+            setStoreNode(node);
+            // ponytail: refresh restores top frame only, not breadcrumb stack
+            syncCreatorUrl(creatorNodeHref(node));
+            return newStack;
         });
     };
 
     const handleSaveComplete = () => {
-        setNavigationStack([]);
-        setSelectedNode(null);
         queryClient.invalidateQueries();
+        clearWorkspace();
     };
 
     const handleNavigateToFrame = (index: number) => {
         setNavigationStack((prev) => {
             const newStack = prev.slice(0, index + 1);
-            setSelectedNode(newStack[newStack.length - 1].node);
+            const node = newStack[newStack.length - 1].node;
+            setSelectedNode(node);
+            setStoreNode(node);
+            syncCreatorUrl(creatorNodeHref(node));
             return newStack;
         });
     };
@@ -339,6 +382,9 @@ export default function EditModeDashboard() {
         if (!frame) return;
         setNavigationStack((prev) => [...prev, frame]);
         setSelectedNode(node);
+        setStoreNode(node);
+        // ponytail: refresh restores top frame only, not breadcrumb stack
+        syncCreatorUrl(creatorNodeHref(node));
     };
 
     // ponytail: same stack push as nested ingredients — back returns to the menu
@@ -351,6 +397,9 @@ export default function EditModeDashboard() {
         if (!frame) return;
         setNavigationStack((prev) => [...prev, frame]);
         setSelectedNode(node);
+        setStoreNode(node);
+        // ponytail: refresh restores top frame only, not breadcrumb stack
+        syncCreatorUrl(creatorNodeHref(node));
     };
 
     const activeFrame = navigationStack.at(-1) ?? null;
@@ -367,18 +416,77 @@ export default function EditModeDashboard() {
         setEditorChrome(null);
     }, [activeFrame?.node.id, activeFrame?.editing.mode]);
 
-    // Web sidebar drives selection / create into this workspace
+    // Web: URL is source of truth — hydrate selection; bare /edit-mode = empty hub
     React.useEffect(() => {
-        if (!isWebShell || !storeNode || pendingCreate) return;
-        if (selectedNode?.id === storeNode.id && selectedNode?.type === storeNode.type) return;
-        openWorkspace(storeNode);
-    }, [isWebShell, storeNode, pendingCreate, selectedNode?.id, selectedNode?.type, openWorkspace]);
+        if (!isWebShell || isLoading) return;
 
-    React.useEffect(() => {
-        if (!isWebShell || !pendingCreate) return;
-        openCreateWorkspace(pendingCreate.type, pendingCreate.barId);
-        clearPendingCreate();
-    }, [isWebShell, pendingCreate, clearPendingCreate]);
+        const create = typeof params.create === 'string' ? params.create : undefined;
+        const barId = typeof params.barId === 'string' ? params.barId : undefined;
+        const type = typeof params.type === 'string' ? params.type : undefined;
+        const id = typeof params.id === 'string' ? params.id : undefined;
+
+        if (create && CREATE_TYPES.has(create) && barId !== undefined) {
+            const resolvedBarId = barId || 'personal';
+            const top = navigationStack.at(-1);
+            if (
+                top?.node.id === '__new__' &&
+                top.editing.mode === 'create' &&
+                top.editing.type === create &&
+                top.editing.barId === resolvedBarId
+            ) {
+                return;
+            }
+            openCreateWorkspace(create as EditingState['type'], resolvedBarId, { syncUrl: false });
+            clearPendingCreate();
+            return;
+        }
+
+        if (type && id) {
+            if (selectedNode?.id === id && selectedNode?.type === type) return;
+            const node: SelectedDraftNode = {
+                type: type as DraftNodeType,
+                id,
+                name: 'Untitled',
+            };
+            if (type === 'bar') {
+                const bar = userBars?.find((b: any) => b.bar_id === id);
+                const barsObj = bar?.bars;
+                const barName = Array.isArray(barsObj) ? barsObj[0]?.name : (barsObj as any)?.name;
+                openWorkspace({ ...node, name: barName || 'Bar' }, { syncUrl: false });
+                return;
+            }
+            const frame = buildWorkspaceFrame(node, allItems);
+            if (frame) {
+                openWorkspace({ ...node, name: frame.node.name }, { syncUrl: false });
+                return;
+            }
+            // stale deep-link — empty hub, keep URL until user picks something
+            return;
+        }
+
+        if (pendingCreate) {
+            openCreateWorkspace(pendingCreate.type, pendingCreate.barId || 'personal', { syncUrl: true });
+            clearPendingCreate();
+            return;
+        }
+        // ponytail: allItems identity churn ignored — isLoading gate is enough
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        isWebShell,
+        isLoading,
+        params.create,
+        params.barId,
+        params.type,
+        params.id,
+        selectedNode?.id,
+        selectedNode?.type,
+        navigationStack,
+        userBars,
+        pendingCreate,
+        clearPendingCreate,
+        openWorkspace,
+        openCreateWorkspace,
+    ]);
 
     // Auto-select first item on large screen when items load (native / non-shell only)
     React.useEffect(() => {
@@ -512,7 +620,7 @@ export default function EditModeDashboard() {
                             />
                         </React.Fragment>
                     </CreatorWorkspace>
-                ) : (
+                ) : isWebShell ? null : (
                     <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
                         <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
                         <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4" textAlign="center">
@@ -627,14 +735,20 @@ export default function EditModeDashboard() {
                         Object.keys(itemsByBar).map((barId) => {
                             const barItems = itemsByBar[barId] || [];
                             const menus = barItems.filter((d: any) => d.entity_type === 'menu');
-                            const items = barItems.filter((d: any) => d.entity_type === 'ingredient' || d.entity_type === 'beer' || d.entity_type === 'wine' || d.entity_type === 'cocktail');
+                            const beers = barItems.filter((d: any) => d.entity_type === 'beer');
+                            const wines = barItems.filter((d: any) => d.entity_type === 'wine');
+                            const cocktails = barItems.filter((d: any) => d.entity_type === 'cocktail');
+                            const ingredients = barItems.filter((d: any) => d.entity_type === 'ingredient');
 
                             const hasMenus = menus.length > 0;
-                            const hasItems = items.length > 0;
+                            const hasItems = beers.length + wines.length + cocktails.length + ingredients.length > 0;
 
                             const sections = [
                                 { key: 'menu', label: 'Menus', icon: 'TabMenus', items: menus },
-                                { key: 'item', label: 'Items', icon: 'TabIngredients', items: items }
+                                { key: 'beer', label: 'Beer', icon: 'Beer', items: beers },
+                                { key: 'wine', label: 'Wine', icon: 'Wine', items: wines },
+                                { key: 'cocktail', label: 'Cocktails', icon: 'TabDrinks', items: cocktails },
+                                { key: 'ingredient', label: 'Ingredients', icon: 'TabIngredients', items: ingredients },
                             ].filter(s => s.items.length > 0);
 
                             return (

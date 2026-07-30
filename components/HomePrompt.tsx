@@ -1,4 +1,3 @@
-import { HOME_CHROME_MAX } from '@/components/CommandSearch';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
@@ -7,14 +6,16 @@ import { useDrafts } from '@/hooks/useDrafts';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
-import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
+import { creatorCreateHref, openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 
+// ponytail: local copy — importing CommandSearch pulled recentMatchesContext into Home's graph
+const HOME_CHROME_MAX = 880;
 const DRAFT_AMBER = '#E5A93B';
 
 const ENTITY_SECTIONS = [
@@ -25,13 +26,13 @@ const ENTITY_SECTIONS = [
   { type: 'ingredient', label: 'Unfinished ingredients', kind: 'ingredient' as const },
 ] as const;
 
-// ponytail: same routes as UniversalCreateButton — direct links, no sheet
+// ponytail: menus open in Creator Hub (same as UniversalCreateButton)
 const QUICK_CREATE = [
   { label: 'Drink', icon: 'TabDrinks' as const, route: '/add-cocktail' },
   { label: 'Beer', icon: 'Beer' as const, route: '/add-beer' },
   { label: 'Wine', icon: 'Wine' as const, route: '/add-wine' },
   { label: 'Ingredient', icon: 'TabIngredients' as const, route: '/add-ingredient' },
-  { label: 'Menu', icon: 'TabMenus' as const, route: '/menus/create' },
+  { label: 'Menu', icon: 'TabMenus' as const, route: creatorCreateHref('menu', PERSONAL_CONTEXT) },
 ] as const;
 
 type VenueGroup = {
@@ -78,6 +79,17 @@ function draftTitle(d: { entity_type: string; draft_data?: any }) {
   return capitalize(raw);
 }
 
+function draftImageUrl(d: { draft_data?: any }) {
+  return d.draft_data?.localImages?.[0]?.url || d.draft_data?.coverUrl || null;
+}
+
+/** Pad last row so flex:1 squares keep Jump Back In column widths. */
+function chunkRows<T>(items: T[], size: number): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += size) rows.push(items.slice(i, i + size));
+  return rows;
+}
+
 export function HomePrompt() {
   const theme = useTheme();
   const router = useRouter();
@@ -86,6 +98,8 @@ export function HomePrompt() {
   const { data: userBars } = useBars();
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const recentItems = useRecentActivityStore((s) => s.items);
+  // ponytail: override only — default is grid when ≤6, list when >6
+  const [viewOverrides, setViewOverrides] = useState<Record<string, 'grid' | 'list'>>({});
 
   const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
   const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
@@ -149,8 +163,9 @@ export function HomePrompt() {
   const muted = theme.color11?.get() as string;
   const border = theme.borderColor?.get() as string;
   const cardSurface = theme.color4?.get() as string;
+  const fg = theme.color?.get() as string;
 
-  const pushCreator = (href: '/edit-mode') => router.push(href as any);
+  const pushCreator = (href: string) => router.push(href as any);
 
   const openRecent = (r: RecentActivity) => {
     if (r.isDraft) {
@@ -361,49 +376,179 @@ export function HomePrompt() {
                   {ENTITY_SECTIONS.map((section) => {
                     const items = group.drafts.filter((d) => d.entity_type === section.type);
                     if (items.length === 0) return null;
+                    const sectionKey = `${group.key}:${section.type}`;
+                    const mode =
+                      viewOverrides[sectionKey] ?? (items.length <= 6 ? 'grid' : 'list');
                     return (
                       <YStack key={section.type} gap={6}>
-                        <Text
-                          fontSize={12}
-                          fontWeight="600"
-                          color="$color11"
+                        <XStack
+                          alignItems="center"
+                          justifyContent="space-between"
                           paddingHorizontal={4}
+                          gap={8}
                         >
-                          {section.label}
-                        </Text>
-                        <YStack gap={4}>
-                          {items.map((d) => (
+                          <Text fontSize={12} fontWeight="600" color="$color11" flex={1}>
+                            {section.label}
+                          </Text>
+                          <XStack gap={2}>
                             <Pressable
-                              key={d.id}
-                              onPress={() => openDraft(d)}
-                              accessibilityRole="link"
-                              accessibilityLabel={`Continue ${draftTitle(d)}`}
-                              style={[
-                                styles.draftRow,
-                                {
-                                  borderColor: border,
-                                  backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
-                                },
-                              ]}
+                              onPress={() =>
+                                setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'grid' }))
+                              }
+                              accessibilityRole="button"
+                              accessibilityLabel="Grid view"
+                              accessibilityState={{ selected: mode === 'grid' }}
+                              hitSlop={6}
+                              style={styles.viewToggle}
                             >
-                              <XStack alignItems="center" gap={10} flex={1} minWidth={0}>
-                                <CustomIcon name={kindIcon(section.kind)} size={16} color={muted} />
-                                <Text
-                                  fontSize={14}
-                                  fontWeight="500"
-                                  color="$color"
-                                  flex={1}
-                                  numberOfLines={1}
-                                >
-                                  {draftTitle(d)}
-                                </Text>
-                              </XStack>
-                              <Text fontSize={12} fontWeight="600" color={DRAFT_AMBER}>
-                                Continue
-                              </Text>
+                              <IconSymbol
+                                name="square.grid.2x2"
+                                size={15}
+                                color={mode === 'grid' ? fg : muted}
+                              />
                             </Pressable>
-                          ))}
-                        </YStack>
+                            <Pressable
+                              onPress={() =>
+                                setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'list' }))
+                              }
+                              accessibilityRole="button"
+                              accessibilityLabel="List view"
+                              accessibilityState={{ selected: mode === 'list' }}
+                              hitSlop={6}
+                              style={styles.viewToggle}
+                            >
+                              <IconSymbol
+                                name="list.bullet"
+                                size={15}
+                                color={mode === 'list' ? fg : muted}
+                              />
+                            </Pressable>
+                          </XStack>
+                        </XStack>
+
+                        {mode === 'grid' ? (
+                          <YStack gap={8}>
+                            {chunkRows(items, 3).map((row) => (
+                              <XStack key={row.map((d) => d.id).join('-')} gap={8} width="100%">
+                                {row.map((d) => {
+                                  const title = draftTitle(d);
+                                  const imageUrl = draftImageUrl(d);
+                                  return (
+                                    <Pressable
+                                      key={d.id}
+                                      onPress={() => openDraft(d)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`Continue draft ${title}`}
+                                      style={[
+                                        styles.card,
+                                        {
+                                          borderColor: DRAFT_AMBER,
+                                          backgroundColor:
+                                            cardSurface || 'rgba(255,255,255,0.04)',
+                                        },
+                                      ]}
+                                    >
+                                      {imageUrl ? (
+                                        <Image
+                                          source={{ uri: imageUrl }}
+                                          style={styles.cardImage}
+                                          contentFit="cover"
+                                          transition={200}
+                                        />
+                                      ) : (
+                                        <YStack
+                                          width="100%"
+                                          aspectRatio={1}
+                                          alignItems="center"
+                                          justifyContent="center"
+                                          backgroundColor="$color5"
+                                          gap={4}
+                                          padding={4}
+                                        >
+                                          <CustomIcon
+                                            name={kindIcon(section.kind)}
+                                            size={18}
+                                            color={muted}
+                                          />
+                                          <Text
+                                            fontSize={10}
+                                            fontWeight="600"
+                                            color="$color"
+                                            numberOfLines={2}
+                                            textAlign="center"
+                                          >
+                                            {title}
+                                          </Text>
+                                        </YStack>
+                                      )}
+                                      {!!imageUrl && (
+                                        <YStack
+                                          paddingHorizontal={5}
+                                          paddingVertical={5}
+                                          gap={1}
+                                        >
+                                          <Text
+                                            fontSize={10}
+                                            fontWeight="600"
+                                            color="$color"
+                                            numberOfLines={2}
+                                          >
+                                            {title}
+                                          </Text>
+                                          <Text fontSize={9} color="$color11" numberOfLines={1}>
+                                            {timeAgo(new Date(d.updated_at).getTime())}
+                                          </Text>
+                                        </YStack>
+                                      )}
+                                    </Pressable>
+                                  );
+                                })}
+                                {row.length < 3 &&
+                                  Array.from({ length: 3 - row.length }).map((_, i) => (
+                                    <YStack key={`pad-${i}`} flex={1} />
+                                  ))}
+                              </XStack>
+                            ))}
+                          </YStack>
+                        ) : (
+                          <YStack gap={4}>
+                            {items.map((d) => (
+                              <Pressable
+                                key={d.id}
+                                onPress={() => openDraft(d)}
+                                accessibilityRole="link"
+                                accessibilityLabel={`Continue ${draftTitle(d)}`}
+                                style={[
+                                  styles.draftRow,
+                                  {
+                                    borderColor: border,
+                                    backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                                  },
+                                ]}
+                              >
+                                <XStack alignItems="center" gap={10} flex={1} minWidth={0}>
+                                  <CustomIcon
+                                    name={kindIcon(section.kind)}
+                                    size={16}
+                                    color={muted}
+                                  />
+                                  <Text
+                                    fontSize={14}
+                                    fontWeight="500"
+                                    color="$color"
+                                    flex={1}
+                                    numberOfLines={1}
+                                  >
+                                    {draftTitle(d)}
+                                  </Text>
+                                </XStack>
+                                <Text fontSize={12} fontWeight="600" color={DRAFT_AMBER}>
+                                  Continue
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </YStack>
+                        )}
                       </YStack>
                     );
                   })}
@@ -456,5 +601,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
+  },
+  viewToggle: {
+    padding: 4,
+    borderRadius: 6,
   },
 });

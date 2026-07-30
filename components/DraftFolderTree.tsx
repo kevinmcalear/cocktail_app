@@ -287,11 +287,11 @@ export function DraftFolderTree({
                 {groupBarsUnderVenues ? (
                     <>
                         {personalNode ? (
-                            <CollapsibleNavSection label="Personal" icon="person.circle.fill">
+                            <CollapsibleNavSection label="Personal" icon="person.circle.fill" defaultExpanded>
                                 {personalNode}
                             </CollapsibleNavSection>
                         ) : null}
-                        <CollapsibleNavSection label="Venues" icon="building.2.fill">
+                        <CollapsibleNavSection label="Venues" icon="building.2.fill" defaultExpanded>
                             {barNodes}
                         </CollapsibleNavSection>
                     </>
@@ -324,7 +324,7 @@ interface BarDraftNodeProps {
     onNodeSelect: (node: SelectedDraftNode) => void;
     onCreateNode?: (type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu', barId: string) => void;
     isPersonal?: boolean;
-    /** Skip the bar row — render Menus/Items only (used under a Personal section header). */
+    /** Skip the bar row — render Menus/type folders only (used under a Personal section header). */
     embedWithoutHeader?: boolean;
 }
 
@@ -333,39 +333,23 @@ interface CategoryFolderNodeProps {
     children: React.ReactNode;
     count: number;
     onAddPress?: () => void;
-    options?: { label: string; icon: string; onPress: () => void }[];
     customIcon?: string;
 }
 
-function CategoryFolderNode({ label, children, count, onAddPress, options, customIcon }: CategoryFolderNodeProps) {
+function CategoryFolderNode({ label, children, count, onAddPress, customIcon }: CategoryFolderNodeProps) {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
-
-    const handleAddClick = (e: any) => {
-        e?.stopPropagation();
-        if (options && options.length > 0) {
-            setShowDropdown(!showDropdown);
-        } else if (onAddPress) {
-            onAddPress();
-        }
-    };
 
     return (
         <YStack>
-            {/* Hover and dropdown container */}
             <YStack
-                position="relative"
                 onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => {
-                    setIsHovered(false);
-                    setShowDropdown(false);
-                }}
+                onMouseLeave={() => setIsHovered(false)}
             >
-                <XStack 
-                    alignItems="center" 
-                    paddingVertical="$1.5" 
+                <XStack
+                    alignItems="center"
+                    paddingVertical="$1.5"
                     paddingHorizontal="$2"
                     borderRadius={6}
                     gap="$2"
@@ -374,10 +358,10 @@ function CategoryFolderNode({ label, children, count, onAddPress, options, custo
                 >
                     <TouchableOpacity onPress={() => setExpanded(!expanded)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={styles.chevronTouch}>
-                            <IconSymbol 
-                                name={expanded ? "chevron.down" : "chevron.right"} 
-                                size={12} 
-                                color={theme.color11?.get() as string} 
+                            <IconSymbol
+                                name={expanded ? "chevron.down" : "chevron.right"}
+                                size={12}
+                                color={theme.color11?.get() as string}
                             />
                         </View>
 
@@ -401,64 +385,22 @@ function CategoryFolderNode({ label, children, count, onAddPress, options, custo
                         </XStack>
                     </TouchableOpacity>
 
-                    {isHovered && (onAddPress || (options && options.length > 0)) && (
-                        <TouchableOpacity 
-                            onPress={handleAddClick}
-                            style={{ padding: 4, borderRadius: 4, backgroundColor: showDropdown ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                    {isHovered && onAddPress && (
+                        <TouchableOpacity
+                            onPress={(e: any) => {
+                                e?.stopPropagation();
+                                onAddPress();
+                            }}
+                            style={{ padding: 4, borderRadius: 4 }}
                         >
-                            <IconSymbol 
-                                name="plus" 
-                                size={14} 
-                                color={theme.color8?.get() as string} 
+                            <IconSymbol
+                                name="plus"
+                                size={14}
+                                color={theme.color8?.get() as string}
                             />
                         </TouchableOpacity>
                     )}
                 </XStack>
-
-                {showDropdown && options && options.length > 0 && (
-                    <YStack
-                        position="absolute"
-                        top={30}
-                        right={10}
-                        backgroundColor="$backgroundStrong"
-                        borderRadius={6}
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        padding="$1.5"
-                        gap="$1.5"
-                        zIndex={9999}
-                        style={{
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.25,
-                            shadowRadius: 3.84,
-                            elevation: 5,
-                        }}
-                    >
-                        {options.map(opt => (
-                            <TouchableOpacity 
-                                key={opt.label} 
-                                onPress={(e) => {
-                                    e?.stopPropagation();
-                                    setShowDropdown(false);
-                                    opt.onPress();
-                                }}
-                            >
-                                <XStack 
-                                    paddingHorizontal="$2.5" 
-                                    paddingVertical="$1.5" 
-                                    gap="$2.5" 
-                                    alignItems="center" 
-                                    hoverStyle={{ backgroundColor: 'rgba(255,255,255,0.05)' }} 
-                                    borderRadius={4}
-                                >
-                                    <IconSymbol name={opt.icon as any} size={12} color={theme.color11?.get() as string} />
-                                    <Text fontSize={11} fontWeight="500" color="$color">{opt.label}</Text>
-                                </XStack>
-                            </TouchableOpacity>
-                        ))}
-                    </YStack>
-                )}
             </YStack>
 
             {expanded && (
@@ -492,7 +434,7 @@ function BarDraftNode({
 }: BarDraftNodeProps) {
     const theme = useTheme();
     const router = useRouter();
-    const [expanded, setExpanded] = useState(embedWithoutHeader);
+    const [expanded, setExpanded] = useState(true);
 
     const isSelected = !isPersonal && selectedNode?.type === "bar" && selectedNode?.id === id;
 
@@ -506,206 +448,204 @@ function BarDraftNode({
     const barPublishedMenus = (dropdowns?.menus || []).filter((m: any) => isMatchBar(m.bar_id));
     const menusCount = menuDrafts.length + barPublishedMenus.length;
 
-    // 2. Items (Cocktails, Beers, Wines, Ingredients)
-    const cocktailDrafts = drafts.filter((d: any) => 
+    const cocktailDrafts = drafts.filter((d: any) =>
         d.entity_type === "cocktail" && !referencedDrinks.has(d.id)
     );
-    const barPublishedCocktails = allDrinks.filter((d: any) => 
+    const barPublishedCocktails = allDrinks.filter((d: any) =>
         isMatchBar(d.bar_id) && d.type === "cocktail" && !referencedDrinks.has(d.id)
     );
+    const cocktailsCount = cocktailDrafts.length + barPublishedCocktails.length;
 
-    const beerDrafts = drafts.filter((d: any) => 
+    const beerDrafts = drafts.filter((d: any) =>
         d.entity_type === "beer" && !referencedDrinks.has(`beer-${d.id}`)
     );
-    const barPublishedBeers = allDrinks.filter((d: any) => 
+    const barPublishedBeers = allDrinks.filter((d: any) =>
         isMatchBar(d.bar_id) && d.type === "beer" && !referencedDrinks.has(d.id)
     );
+    const beersCount = beerDrafts.length + barPublishedBeers.length;
 
-    const wineDrafts = drafts.filter((d: any) => 
+    const wineDrafts = drafts.filter((d: any) =>
         d.entity_type === "wine" && !referencedDrinks.has(`wine-${d.id}`)
     );
-    const barPublishedWines = allDrinks.filter((d: any) => 
+    const barPublishedWines = allDrinks.filter((d: any) =>
         isMatchBar(d.bar_id) && d.type === "wine" && !referencedDrinks.has(d.id)
     );
+    const winesCount = wineDrafts.length + barPublishedWines.length;
 
-    const ingredientDrafts = drafts.filter((d: any) => 
+    const ingredientDrafts = drafts.filter((d: any) =>
         d.entity_type === "ingredient" && !referencedIngredients.has(d.id)
     );
-    const barPublishedIngredients = (publishedIngredients || []).filter((i: any) => 
+    const barPublishedIngredients = (publishedIngredients || []).filter((i: any) =>
         isMatchBar(i.bar_id) && !referencedIngredients.has(i.id)
     );
-    const itemsCount = cocktailDrafts.length + barPublishedCocktails.length +
-                       beerDrafts.length + barPublishedBeers.length +
-                       wineDrafts.length + barPublishedWines.length +
-                       ingredientDrafts.length + barPublishedIngredients.length;
+    const ingredientsCount = ingredientDrafts.length + barPublishedIngredients.length;
 
     const handleCreate = (type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu') => {
-        const barQueryId = id === 'personal' ? '' : id;
         if (onCreateNode) {
-            onCreateNode(type, barQueryId);
-        } else {
-            let route = '';
-            switch(type) {
-                case 'cocktail': route = `/add-cocktail?barId=${barQueryId}`; break;
-                case 'beer': route = `/add-beer?barId=${barQueryId}`; break;
-                case 'wine': route = `/add-wine?barId=${barQueryId}`; break;
-                case 'ingredient': route = `/add-ingredient?barId=${barQueryId}`; break;
-                case 'menu': route = `/menus/create?barId=${barQueryId}`; break;
-            }
-            router.push(route as any);
+            onCreateNode(type, id);
+            return;
         }
+        // Fallback when not hosted in Creator Hub (mobile list, etc.)
+        const barQuery = id === 'personal' ? '' : `?barId=${id}`;
+        const route =
+            type === 'cocktail' ? `/add-cocktail${barQuery}` :
+            type === 'beer' ? `/add-beer${barQuery}` :
+            type === 'wine' ? `/add-wine${barQuery}` :
+            type === 'ingredient' ? `/add-ingredient${barQuery}` :
+            `/menus/create${barQuery}`;
+        router.push(route as any);
     };
 
-    const itemOptions = [
-        { 
-            label: "Add Cocktail", 
-            icon: "wineglass" as const, 
-            onPress: () => handleCreate('cocktail')
-        },
-        { 
-            label: "Add Beer", 
-            icon: "mug.fill" as const, 
-            onPress: () => handleCreate('beer')
-        },
-        { 
-            label: "Add Wine", 
-            icon: "wineglass.fill" as const, 
-            onPress: () => handleCreate('wine')
-        },
-        { 
-            label: "Add Ingredient", 
-            icon: "flask" as const, 
-            onPress: () => handleCreate('ingredient')
-        },
-    ];
-
-    const showMenus = menusCount > 0 || embedWithoutHeader;
-    const showItems = itemsCount > 0 || embedWithoutHeader;
-
+    // Always show type folders — replaces the old Items bucket
     const folders = (
         <>
-            {showMenus && (
-                <CategoryFolderNode
-                    label="Menus"
-                    count={menusCount}
-                    customIcon="TabMenus"
-                    onAddPress={() => handleCreate('menu')}
-                >
-                    {menuDrafts.map((menuDraft) => (
-                        <MenuDraftTreeNode
-                            key={menuDraft.id}
-                            menuDraft={menuDraft}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedMenus.map((menu: any) => (
-                        <PublishedMenuTreeNode
-                            key={menu.id}
-                            menu={menu}
-                            allDrinks={allDrinks}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                </CategoryFolderNode>
-            )}
+            <CategoryFolderNode
+                label="Menus"
+                count={menusCount}
+                customIcon="TabMenus"
+                onAddPress={() => handleCreate('menu')}
+            >
+                {menuDrafts.map((menuDraft) => (
+                    <MenuDraftTreeNode
+                        key={menuDraft.id}
+                        menuDraft={menuDraft}
+                        allDrafts={allDrafts}
+                        allDrinks={allDrinks}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+                {barPublishedMenus.map((menu: any) => (
+                    <PublishedMenuTreeNode
+                        key={menu.id}
+                        menu={menu}
+                        allDrinks={allDrinks}
+                        allDrafts={allDrafts}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+            </CategoryFolderNode>
 
-            {showItems && (
-                <CategoryFolderNode label="Items" count={itemsCount} options={itemOptions}>
-                    {cocktailDrafts.map((drinkDraft) => (
-                        <DrinkDraftTreeNode
-                            key={drinkDraft.id}
-                            drinkDraft={drinkDraft}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedCocktails.map((drink: any) => (
-                        <PublishedDrinkTreeNode
-                            key={drink.id}
-                            id={drink.id}
-                            name={drink.name}
-                            recipes={drink.recipes || []}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {beerDrafts.map((drinkDraft) => (
-                        <DrinkDraftTreeNode
-                            key={drinkDraft.id}
-                            drinkDraft={drinkDraft}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedBeers.map((drink: any) => (
-                        <PublishedDrinkTreeNode
-                            key={drink.id}
-                            id={drink.id}
-                            name={drink.name}
-                            recipes={drink.recipes || []}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {wineDrafts.map((drinkDraft) => (
-                        <DrinkDraftTreeNode
-                            key={drinkDraft.id}
-                            drinkDraft={drinkDraft}
-                            allDrafts={allDrafts}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedWines.map((drink: any) => (
-                        <PublishedDrinkTreeNode
-                            key={drink.id}
-                            id={drink.id}
-                            name={drink.name}
-                            recipes={drink.recipes || []}
-                            allDrafts={allDrafts}
-                            allDrinks={allDrinks}
-                            dropdowns={dropdowns}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {ingredientDrafts.map((ingDraft) => (
-                        <IngredientDraftTreeNode
-                            key={ingDraft.id}
-                            ingredientDraft={ingDraft}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                    {barPublishedIngredients.map((ing: any) => (
-                        <PublishedIngredientTreeNode
-                            key={ing.id}
-                            id={ing.id}
-                            name={ing.name}
-                            selectedNode={selectedNode}
-                            onNodeSelect={onNodeSelect}
-                        />
-                    ))}
-                </CategoryFolderNode>
-            )}
+            <CategoryFolderNode
+                label="Beer"
+                count={beersCount}
+                customIcon="Beer"
+                onAddPress={() => handleCreate('beer')}
+            >
+                {beerDrafts.map((drinkDraft) => (
+                    <DrinkDraftTreeNode
+                        key={drinkDraft.id}
+                        drinkDraft={drinkDraft}
+                        allDrafts={allDrafts}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+                {barPublishedBeers.map((drink: any) => (
+                    <PublishedDrinkTreeNode
+                        key={drink.id}
+                        id={drink.id}
+                        name={drink.name}
+                        recipes={drink.recipes || []}
+                        allDrafts={allDrafts}
+                        allDrinks={allDrinks}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+            </CategoryFolderNode>
+
+            <CategoryFolderNode
+                label="Wine"
+                count={winesCount}
+                customIcon="Wine"
+                onAddPress={() => handleCreate('wine')}
+            >
+                {wineDrafts.map((drinkDraft) => (
+                    <DrinkDraftTreeNode
+                        key={drinkDraft.id}
+                        drinkDraft={drinkDraft}
+                        allDrafts={allDrafts}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+                {barPublishedWines.map((drink: any) => (
+                    <PublishedDrinkTreeNode
+                        key={drink.id}
+                        id={drink.id}
+                        name={drink.name}
+                        recipes={drink.recipes || []}
+                        allDrafts={allDrafts}
+                        allDrinks={allDrinks}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+            </CategoryFolderNode>
+
+            <CategoryFolderNode
+                label="Cocktails"
+                count={cocktailsCount}
+                customIcon="TabDrinks"
+                onAddPress={() => handleCreate('cocktail')}
+            >
+                {cocktailDrafts.map((drinkDraft) => (
+                    <DrinkDraftTreeNode
+                        key={drinkDraft.id}
+                        drinkDraft={drinkDraft}
+                        allDrafts={allDrafts}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+                {barPublishedCocktails.map((drink: any) => (
+                    <PublishedDrinkTreeNode
+                        key={drink.id}
+                        id={drink.id}
+                        name={drink.name}
+                        recipes={drink.recipes || []}
+                        allDrafts={allDrafts}
+                        allDrinks={allDrinks}
+                        dropdowns={dropdowns}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+            </CategoryFolderNode>
+
+            <CategoryFolderNode
+                label="Ingredients"
+                count={ingredientsCount}
+                customIcon="TabIngredients"
+                onAddPress={() => handleCreate('ingredient')}
+            >
+                {ingredientDrafts.map((ingDraft) => (
+                    <IngredientDraftTreeNode
+                        key={ingDraft.id}
+                        ingredientDraft={ingDraft}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+                {barPublishedIngredients.map((ing: any) => (
+                    <PublishedIngredientTreeNode
+                        key={ing.id}
+                        id={ing.id}
+                        name={ing.name}
+                        selectedNode={selectedNode}
+                        onNodeSelect={onNodeSelect}
+                    />
+                ))}
+            </CategoryFolderNode>
         </>
     );
 

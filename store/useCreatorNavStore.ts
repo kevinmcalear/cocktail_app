@@ -17,7 +17,7 @@ type CreatorNavState = {
   clearPendingCreate: () => void;
 };
 
-/** ponytail: web sidebar ↔ Creator Hub selection bridge; no URL sync until deep-links matter */
+/** ponytail: web sidebar ↔ Creator Hub; URL carries selection so refresh restores the editor */
 export const useCreatorNavStore = create<CreatorNavState>((set) => ({
   selectedNode: null,
   pendingCreate: null,
@@ -27,6 +27,14 @@ export const useCreatorNavStore = create<CreatorNavState>((set) => ({
   requestCreate: (type, barId) => set({ pendingCreate: { type, barId }, selectedNode: null }),
   clearPendingCreate: () => set({ pendingCreate: null }),
 }));
+
+export function creatorNodeHref(node: Pick<SelectedDraftNode, 'type' | 'id'>): string {
+  return `/edit-mode?type=${encodeURIComponent(node.type)}&id=${encodeURIComponent(node.id)}`;
+}
+
+export function creatorCreateHref(type: PendingCreate['type'], barId: string): string {
+  return `/edit-mode?create=${encodeURIComponent(type)}&barId=${encodeURIComponent(barId)}`;
+}
 
 /** Record a Creator tree/hub selection in Jump Back In. */
 export function trackCreatorNode(
@@ -59,17 +67,17 @@ export function trackCreatorNode(
 /** Same path as the sidebar tree: select node, then land on Creator Hub. */
 export function openInCreator(
   node: SelectedDraftNode,
-  push: (href: '/edit-mode') => void,
+  push: (href: string) => void,
   opts?: { entityType?: string; barId?: string | null; imageUrl?: string | null }
 ) {
   useCreatorNavStore.getState().setSelectedNode(node);
   trackCreatorNode(node, opts);
-  push('/edit-mode');
+  push(creatorNodeHref(node));
 }
 
 export function openDraftInCreator(
   draft: { id: string; entity_type: string; bar_id?: string | null; draft_data?: any },
-  push: (href: '/edit-mode') => void
+  push: (href: string) => void
 ) {
   openInCreator(buildNodeFromItem({ ...draft, isPublished: false }), push, {
     entityType: draft.entity_type,
