@@ -10,7 +10,8 @@ import {
     TouchableOpacity,
     Platform,
     KeyboardAvoidingView,
-    Modal
+    Modal,
+    Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,8 +28,9 @@ import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } 
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { useAppStore } from "@/store/useAppStore";
-import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
+import { renameIngredientEntity, resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import type { EditorChromeState } from "@/lib/editorChrome";
+import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
@@ -53,9 +55,15 @@ interface AddIngredientProps {
 
 export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress, onChromeState }: AddIngredientProps = {}) {
     const router = useRouter();
-    const { barId: initialBarId, draftId, name: initialNameParam } = useLocalSearchParams<{ barId?: string, draftId?: string, name?: string }>();
+    const { barId: initialBarId, draftId, name: initialNameParam, attachTo } = useLocalSearchParams<{
+        barId?: string;
+        draftId?: string;
+        name?: string;
+        attachTo?: string;
+    }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
+    const attachToParentId = typeof attachTo === 'string' && attachTo ? attachTo : null;
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -86,6 +94,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
     const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
     const [overridePrep, setOverridePrep] = useState<string | null>(null);
+    const [hideFromSearch, setHideFromSearch] = useState(false);
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
@@ -107,6 +116,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         barId,
         drafts,
         saveDraft,
+        parentName: name,
     });
 
     const mergedIngredients = useMemo(() => {
@@ -136,21 +146,15 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
 
     useEffect(() => {
-        if (recentlyCreatedItem?.type === 'ingredient') {
-            setRecipeItems(prev => {
-                if (prev.some(item => item.ingredient_id === recentlyCreatedItem.id)) {
-                    return prev;
-                }
-                return [...prev, { 
-                    ingredient_id: recentlyCreatedItem.id, 
-                    name: recentlyCreatedItem.name, 
-                    amount: "", 
-                    unit: "" 
-                }];
-            });
-            setRecentlyCreatedItem(null);
-        }
-    }, [recentlyCreatedItem, setRecentlyCreatedItem]);
+        if (recentlyCreatedItem?.type !== 'ingredient') return;
+        const handoff = recentlyCreatedItem;
+        // Only the parent that opened create may attach (prevents self-add + sibling theft)
+        if (!handoff.targetId || !currentDraftId || handoff.targetId !== currentDraftId) return;
+        setRecipeItems((prev) =>
+            applyIngredientHandoff(prev, handoff, currentDraftId, { amount: "", unit: "" }) ?? prev
+        );
+        setRecentlyCreatedItem(null);
+    }, [recentlyCreatedItem, setRecentlyCreatedItem, currentDraftId]);
 
     const handlePresentModalPress = useCallback(() => {
         setShowIngredientPicker(true);
@@ -161,7 +165,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     }, []);
 
     const draftLoadedRef = useRef<string | null>(null);
-    const currentStateStr = JSON.stringify({ name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep });
+    const currentStateStr = JSON.stringify({ name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -203,13 +207,14 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 setBrandMaker(data.brandMaker || "");
                 setAbv(data.abv || "");
                 setSelectedCategories(data.selectedCategories || []);
-                setRecipeItems(data.recipeItems || []);
+                setRecipeItems(withoutSelfRecipeRefs(data.recipeItems || [], currentDraftId));
                 setBarId(data.barId || initialBarId || null);
                 setOverrideVisibility(data.overrideVisibility || null);
                 setOverrideGeneric(data.overrideGeneric || null);
                 setOverrideSpecific(data.overrideSpecific || null);
                 setOverrideMeasurement(data.overrideMeasurement || null);
                 setOverridePrep(data.overridePrep || null);
+                setHideFromSearch(data.hideFromSearch === true);
                 setNeedsCleanMark(true);
             } else {
                 draftLoadedRef.current = currentDraftId;
@@ -220,7 +225,9 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const handleSaveDraft = async (silent = false) => {
         try {
             setSaving(true);
-            const draftData = { name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep };
+            const safeRecipeItems = withoutSelfRecipeRefs(recipeItems, currentDraftId);
+            if (safeRecipeItems.length !== recipeItems.length) setRecipeItems(safeRecipeItems);
+            const draftData = { name, description, brandMaker, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'ingredient', draftData });
             
             let updatedDraftId = currentDraftId;
@@ -232,15 +239,18 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 }
             }
 
-            // Set recentlyCreatedItem so the parent screen knows about this draft ingredient
             const draftIdToNotify = updatedDraftId || (result && result.id);
             if (draftIdToNotify) {
                 const displayName = capitalize(name.trim()) || "Untitled Ingredient Draft";
-                setRecentlyCreatedItem({
-                    type: 'ingredient',
-                    id: draftIdToNotify,
-                    name: displayName
-                });
+                // Only notify the parent that opened create — never broadcast to every mounted editor
+                if (attachToParentId) {
+                    setRecentlyCreatedItem({
+                        type: 'ingredient',
+                        id: draftIdToNotify,
+                        name: displayName,
+                        targetId: attachToParentId,
+                    });
+                }
                 // Keep parent cocktail/ingredient recipe lines in sync (merge-created "New batch")
                 await syncIngredientRefsInParentDrafts(
                     draftIdToNotify,
@@ -348,7 +358,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         try {
             // Resolve draft ingredients recursively before publishing this complex ingredient
             const resolvedRecipeItems = [];
-            for (const item of recipeItems) {
+            for (const item of withoutSelfRecipeRefs(recipeItems, currentDraftId)) {
                 const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
                 if (resolvedId !== item.ingredient_id) {
                     await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
@@ -374,6 +384,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
                     override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
                     override_prep_level: overridePrep ? parseInt(overridePrep) : null,
+                    hide_from_search: hideFromSearch,
                 })
                 .select()
                 .single();
@@ -425,7 +436,15 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 queryClient.invalidateQueries({ queryKey: ['bar', barId] });
             }
 
-            setRecentlyCreatedItem({ type: 'ingredient', id: ingredientId, name: name.trim() });
+            if (attachToParentId) {
+                setRecentlyCreatedItem({
+                    type: 'ingredient',
+                    id: ingredientId,
+                    name: name.trim(),
+                    targetId: attachToParentId,
+                    replacedId: currentDraftId,
+                });
+            }
 
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => {
@@ -654,10 +673,38 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             onMerge={onMerge}
                             variant="card"
                             onNestedItemPress={onNestedItemPress}
+                            onRenameIngredient={async (ingredientId, nextName) => {
+                                try {
+                                    await renameIngredientEntity(ingredientId, nextName, drafts, saveDraft);
+                                } catch (e: any) {
+                                    const msg = e?.message || "Failed to rename ingredient.";
+                                    if (Platform.OS === "web") window.alert(msg);
+                                    else Alert.alert("Error", msg);
+                                }
+                            }}
                             drafts={drafts}
                             dropdowns={dropdowns}
                         />
                     </YStack>
+
+                    <XStack alignItems="center" justifyContent="space-between" gap="$3" marginBottom="$4">
+                        <YStack flex={1} gap="$1">
+                            <Text fontSize={15} fontWeight="600" color="$color">
+                                Hide in Search
+                            </Text>
+                            <Text fontSize={12} color="$color11">
+                                Keep this ingredient out of ⌘K (still usable in recipes)
+                            </Text>
+                        </YStack>
+                        <Switch
+                            value={hideFromSearch}
+                            onValueChange={setHideFromSearch}
+                            trackColor={{
+                                false: theme.borderColor?.get() as string,
+                                true: theme.color8?.get() as string,
+                            }}
+                        />
+                    </XStack>
 
                     <BarAssignmentAccordion
                         barId={barId} setBarId={setBarId}
@@ -741,12 +788,13 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                                             pressStyle={{ scale: 0.97 }}
                                             onPress={async () => {
                                                 handleDismissModalPress();
-                                                await handleSaveDraft(true);
+                                                const parentId = await handleSaveDraft(true);
                                                 router.push({
                                                     pathname: "/add-ingredient",
                                                     params: { 
                                                         name: ingredientSearch,
-                                                        barId: barId || ""
+                                                        barId: barId || "",
+                                                        attachTo: parentId || currentDraftId || "",
                                                     }
                                                 });
                                             }}

@@ -1,13 +1,15 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    Alert,
     FlatList,
+    Platform,
     StyleSheet,
     TouchableOpacity,
     View,
 } from "react-native";
-import { Accordion, Card, Paragraph, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
+import { Accordion, Button, Card, Paragraph, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { buildIngredientImageMap, CocktailIngredientList } from "@/components/cocktail/CocktailIngredientList";
@@ -20,7 +22,10 @@ import type { useCocktailDraftEditor } from "@/hooks/useCocktailDraftEditor";
 import type { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
+import { renameIngredientEntity } from "@/lib/drafts";
+import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
 import { capitalize } from "@/lib/stringUtils";
+import { useAppStore } from "@/store/useAppStore";
 
 type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 
@@ -46,9 +51,30 @@ export function CocktailDetailContent({
     const router = useRouter();
     const theme = useTheme();
     const { drafts, saveDraft } = useDrafts();
+    const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
     const [notesExpanded, setNotesExpanded] = useState(false);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
     const [ingredientSearch, setIngredientSearch] = useState("");
+
+    // Targeted handoff: only the cocktail that opened create attaches the new ingredient.
+    const attachSelfId =
+        editor && "draftId" in editor && editor.draftId ? editor.draftId : cocktail?.id ?? null;
+
+    useEffect(() => {
+        if (!editor || recentlyCreatedItem?.type !== "ingredient") return;
+        const handoff = recentlyCreatedItem;
+        if (!handoff.targetId || !attachSelfId || handoff.targetId !== attachSelfId) return;
+        editor.setRecipeItems(
+            (prev) =>
+                applyIngredientHandoff(prev, handoff, attachSelfId, {
+                    amount: "",
+                    unit: "",
+                    preparation_notes: "",
+                    is_optional: false,
+                }) ?? prev
+        );
+        setRecentlyCreatedItem(null);
+    }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, attachSelfId]);
 
     const viewSpec = {
         method: cocktail.item_methods?.[0]?.method?.name,
@@ -78,6 +104,7 @@ export function CocktailDetailContent({
         drafts,
         saveDraft,
         enabled: isEditing && !!editor,
+        parentName: editor?.name,
     });
 
     const ingredientImageMap = useMemo(
@@ -98,6 +125,19 @@ export function CocktailDetailContent({
             );
         }
     };
+
+    const handleRenameIngredient = useCallback(
+        async (ingredientId: string, name: string) => {
+            try {
+                await renameIngredientEntity(ingredientId, name, drafts, saveDraft);
+            } catch (e: any) {
+                const msg = e?.message || "Failed to rename ingredient.";
+                if (Platform.OS === "web") window.alert(msg);
+                else Alert.alert("Error", msg);
+            }
+        },
+        [drafts, saveDraft]
+    );
 
     const renderViewIngredient = (recipe: any, index: number) => {
         const ingredientsData = recipe.ingredient || (isEditing ? { id: recipe.ingredient_id, name: recipe.name } : null);
@@ -225,6 +265,7 @@ export function CocktailDetailContent({
                                     allIngredients={editor.allIngredients}
                                     ingredientImageMap={ingredientImageMap}
                                     onNestedItemPress={onNestedItemPress}
+                                    onRenameIngredient={handleRenameIngredient}
                                     drafts={drafts}
                                     dropdowns={editor.dropdowns}
                                 />
@@ -251,6 +292,7 @@ export function CocktailDetailContent({
                                     }
                                     onMerge={onMerge}
                                     onIngredientPress={navigateIngredient}
+                                    onRenameIngredient={handleRenameIngredient}
                                 />
                                 <TouchableOpacity onPress={() => setShowIngredientPicker(true)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
                                     <Text color={theme.color8?.get() as string} fontWeight="600" fontSize={14}>
@@ -426,6 +468,7 @@ export function CocktailDetailContent({
                                     },
                                 ]);
                                 setShowIngredientPicker(false);
+                                setIngredientSearch("");
                             }}
                         >
                             <Text color={theme.color?.get() as string} fontSize={16}>
@@ -433,6 +476,40 @@ export function CocktailDetailContent({
                             </Text>
                         </TouchableOpacity>
                     )}
+                    ListEmptyComponent={
+                        <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
+                            <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
+                            <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">
+                                No results found
+                            </Text>
+                            <Button
+                                marginTop="$4"
+                                backgroundColor="$color5"
+                                pressStyle={{ scale: 0.97 }}
+                                onPress={async () => {
+                                    setShowIngredientPicker(false);
+                                    // ponytail: save cocktail draft before nested create so back doesn't lose the recipe
+                                    let parentId = attachSelfId;
+                                    if (isDraftEditor && editor && "persistDraft" in editor) {
+                                        parentId = (await editor.persistDraft(true)) || parentId;
+                                    }
+                                    router.push({
+                                        pathname: "/add-ingredient",
+                                        params: {
+                                            name: ingredientSearch,
+                                            barId: editor?.barId || "",
+                                            attachTo: parentId || "",
+                                        },
+                                    });
+                                    setIngredientSearch("");
+                                }}
+                            >
+                                <Text color="$color" fontWeight="600">
+                                    Create ingredient
+                                </Text>
+                            </Button>
+                        </YStack>
+                    }
                 />
             </AdaptiveSheetModal>
         </YStack>

@@ -7,16 +7,19 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
+import { useCurrentMenuDrinks } from '@/hooks/useCurrentMenuDrinks';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useWines } from '@/hooks/useWines';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
+import { currentCocktailsFromDrinks, currentMenus } from '@/lib/currentFromMenus';
 import { useAppStore } from '@/store/useAppStore';
 import {
   creatorCreateHref,
   creatorNodeHref,
+  openInCreator,
   trackCreatorNode,
   useCreatorNavStore,
 } from '@/store/useCreatorNavStore';
@@ -24,7 +27,7 @@ import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
 import { usePathname, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 
@@ -56,14 +59,16 @@ const NAV: NavItem[] = [
   },
 ];
 
-function CurrentMenusNav({
+function CurrentNav({
   activeBg,
   selectedMenuId,
   onSelectMenu,
+  onSelectCocktail,
 }: {
   activeBg: string;
   selectedMenuId: string | null;
   onSelectMenu: (menuId: string, menuName: string, barId?: string | null) => void;
+  onSelectCocktail: (id: string, name: string, barId?: string | null) => void;
 }) {
   const theme = useTheme();
   const { data: userBars } = useBars();
@@ -71,7 +76,14 @@ function CurrentMenusNav({
   const [sectionOpen, setSectionOpen] = useState(false);
   const [openVenues, setOpenVenues] = useState<Record<string, boolean>>({});
 
-  const menus = dropdowns?.menus || [];
+  const menus = useMemo(() => currentMenus(dropdowns?.menus || []), [dropdowns?.menus]);
+  const menuIds = useMemo(() => menus.map((m: any) => m.id as string), [menus]);
+  const { data: menuDrinks } = useCurrentMenuDrinks(menuIds);
+  const cocktails = useMemo(
+    () => currentCocktailsFromDrinks((menuDrinks as any) || [], menuIds),
+    [menuDrinks, menuIds]
+  );
+
   const menusByBar: Record<string, typeof menus> = {};
   const unassigned: typeof menus = [];
   menus.forEach((menu: any) => {
@@ -83,20 +95,44 @@ function CurrentMenusNav({
     }
   });
 
+  const cocktailsByBar: Record<string, typeof cocktails> = {};
+  const personalCocktails: typeof cocktails = [];
+  const menuBarById = new Map(menus.map((m: any) => [m.id, m.bar_id ?? null]));
+  cocktails.forEach((c) => {
+    const barId = menuBarById.get(c.menu_id) ?? null;
+    if (barId) {
+      if (!cocktailsByBar[barId]) cocktailsByBar[barId] = [];
+      cocktailsByBar[barId].push(c);
+    } else {
+      personalCocktails.push(c);
+    }
+  });
+
   const venues = (userBars || [])
     .map((barMapping: any) => {
       const bar = barMapping.bars;
       if (!bar) return null;
       const barId = barMapping.bar_id;
       const barMenus = menusByBar[barId] || [];
-      if (barMenus.length === 0) return null;
+      const barCocktails = cocktailsByBar[barId] || [];
+      if (barMenus.length === 0 && barCocktails.length === 0) return null;
       const name = (Array.isArray(bar) ? bar[0]?.name : bar?.name) || 'Unknown Bar';
-      return { id: barId, name, menus: barMenus };
+      return { id: barId, name, menus: barMenus, cocktails: barCocktails };
     })
-    .filter(Boolean) as { id: string; name: string; menus: any[] }[];
+    .filter(Boolean) as {
+    id: string;
+    name: string;
+    menus: any[];
+    cocktails: typeof cocktails;
+  }[];
 
-  if (unassigned.length > 0) {
-    venues.push({ id: PERSONAL_CONTEXT, name: 'Personal', menus: unassigned });
+  if (unassigned.length > 0 || personalCocktails.length > 0) {
+    venues.push({
+      id: PERSONAL_CONTEXT,
+      name: 'Personal',
+      menus: unassigned,
+      cocktails: personalCocktails,
+    });
   }
 
   const isVenueOpen = (id: string) => openVenues[id] ?? false;
@@ -108,7 +144,7 @@ function CurrentMenusNav({
       <TouchableOpacity
         onPress={() => setSectionOpen((v) => !v)}
         style={styles.sectionHeader}
-        accessibilityLabel="Current Menus"
+        accessibilityLabel="Current"
       >
         <IconSymbol
           name={sectionOpen ? 'chevron.down' : 'chevron.right'}
@@ -117,7 +153,7 @@ function CurrentMenusNav({
         />
         <CustomIcon name="TabMenus" size={16} color={theme.color11?.get() as string} />
         <Text fontSize={12} fontWeight="700" color="$color11" textTransform="uppercase" letterSpacing={0.6}>
-          Current Menus
+          Current
         </Text>
       </TouchableOpacity>
 
@@ -140,28 +176,77 @@ function CurrentMenusNav({
                     {venue.name}
                   </Text>
                 </TouchableOpacity>
-                {open &&
-                  venue.menus.map((menu: any) => {
-                    const selected = selectedMenuId === menu.id;
-                    return (
-                      <Pressable
-                        key={menu.id}
-                        onPress={() => onSelectMenu(menu.id, menu.name, menu.bar_id ?? null)}
-                        style={[styles.menuRow, selected && { backgroundColor: activeBg }]}
-                        accessibilityState={selected ? { selected: true } : {}}
-                        accessibilityLabel={menu.name}
+                {open && (
+                  <YStack>
+                    {venue.menus.length > 0 && (
+                      <Text
+                        fontSize={10}
+                        fontWeight="700"
+                        color="$color11"
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                        paddingLeft={28}
+                        paddingTop={4}
+                        paddingBottom={2}
                       >
-                        <Text
-                          fontSize={13}
-                          fontWeight={selected ? '600' : '500'}
-                          color={selected ? '$color' : '$color11'}
-                          numberOfLines={1}
+                        Menus
+                      </Text>
+                    )}
+                    {venue.menus.map((menu: any) => {
+                      const selected = selectedMenuId === menu.id;
+                      return (
+                        <Pressable
+                          key={menu.id}
+                          onPress={() => onSelectMenu(menu.id, menu.name, menu.bar_id ?? null)}
+                          style={[styles.menuRow, selected && { backgroundColor: activeBg }]}
+                          accessibilityState={selected ? { selected: true } : {}}
+                          accessibilityLabel={menu.name}
                         >
-                          {menu.name}
+                          <Text
+                            fontSize={13}
+                            fontWeight={selected ? '600' : '500'}
+                            color={selected ? '$color' : '$color11'}
+                            numberOfLines={1}
+                          >
+                            {menu.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                    {venue.cocktails.length > 0 && (
+                      <Text
+                        fontSize={10}
+                        fontWeight="700"
+                        color="$color11"
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                        paddingLeft={28}
+                        paddingTop={6}
+                        paddingBottom={2}
+                      >
+                        Cocktails
+                      </Text>
+                    )}
+                    {venue.cocktails.map((drink) => (
+                      <Pressable
+                        key={drink.id}
+                        onPress={() =>
+                          onSelectCocktail(
+                            drink.id,
+                            drink.name,
+                            venue.id === PERSONAL_CONTEXT ? null : venue.id
+                          )
+                        }
+                        style={styles.menuRow}
+                        accessibilityLabel={drink.name}
+                      >
+                        <Text fontSize={13} fontWeight="500" color="$color11" numberOfLines={1}>
+                          {drink.name}
                         </Text>
                       </Pressable>
-                    );
-                  })}
+                    ))}
+                  </YStack>
+                )}
               </YStack>
             );
           })}
@@ -287,6 +372,14 @@ export function WebSidebar() {
     }
   };
 
+  const onSelectCurrentCocktail = (id: string, name: string, barId?: string | null) => {
+    openInCreator(
+      { type: 'published_drink', id, name },
+      (href) => goCreatorHref(href),
+      { entityType: 'cocktail', barId: barId ?? null }
+    );
+  };
+
   return (
     <YStack
       width={sidebarWidth}
@@ -361,10 +454,11 @@ export function WebSidebar() {
           );
         })}
 
-        <CurrentMenusNav
+        <CurrentNav
           activeBg={activeBg}
           selectedMenuId={selectedMenuId}
           onSelectMenu={onSelectMenu}
+          onSelectCocktail={onSelectCurrentCocktail}
         />
       </YStack>
 

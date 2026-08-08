@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict';
 import {
     applyCreateToParent,
+    defaultBatchName,
+    isDefaultBatchName,
     NEW_BATCH_NAME,
     planMerge,
 } from './mergeRecipeItems';
+
+assert.equal(defaultBatchName('Negroni'), 'Negroni batch');
+assert.equal(defaultBatchName('  '), NEW_BATCH_NAME);
+assert.equal(defaultBatchName(null), NEW_BATCH_NAME);
+assert.equal(isDefaultBatchName('Negroni batch'), true);
+assert.equal(isDefaultBatchName(NEW_BATCH_NAME), true);
+assert.equal(isDefaultBatchName('Gin'), false);
 
 const gin = { ingredient_id: 'gin', name: 'Gin', amount: '1', unit: 'oz' };
 const campari = { ingredient_id: 'campari', name: 'Campari', amount: '1', unit: 'oz' };

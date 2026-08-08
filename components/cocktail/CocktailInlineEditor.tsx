@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
@@ -104,7 +104,12 @@ export function CocktailInlineEditor({
                     onChange: (val) => handleCapitalizedChange(val, editor.name, editor.setName),
                     onBlur: () => editor.setName(capitalize(editor.name)),
                 }}
-                onManageImages={() => setShowPhotoSheet(true)}
+                onManageImages={
+                    Platform.OS === "web" && images.length === 0
+                        ? () => { void editor.pickImage(); }
+                        : () => setShowPhotoSheet(true)
+                }
+                onDropImages={editor.addImages}
             >
                 <CocktailDetailContent
                     cocktail={cocktail}
@@ -127,6 +132,7 @@ export function CocktailInlineEditor({
                             editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))
                         }
                         onAdd={editor.pickImage}
+                        onAddUris={editor.addImages}
                         generateComponent={<GenerateImageButton type="cocktail" id={id} variant="tile" />}
                     />
                 </View>

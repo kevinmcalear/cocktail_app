@@ -4,28 +4,65 @@ import { buildNodeFromItem } from '@/lib/creatorWorkspaceUtils';
 import { RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { create } from 'zustand';
 
+export type MenuCreateAttach = {
+  menuDraftId?: string;
+  menuSectionId?: string;
+};
+
 type PendingCreate = {
   type: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu';
   barId: string;
+  name?: string;
+  menuDraftId?: string;
+  menuSectionId?: string;
 };
+
+type PendingMenuDrink = { sectionId: string; drinkId: string; replaceId?: string };
 
 type CreatorNavState = {
   selectedNode: SelectedDraftNode | null;
   pendingCreate: PendingCreate | null;
+  /** Drink created from a menu picker — host consumes into selections. */
+  pendingMenuDrink: PendingMenuDrink | null;
   setSelectedNode: (node: SelectedDraftNode | null) => void;
-  requestCreate: (type: PendingCreate['type'], barId: string) => void;
+  requestCreate: (
+    type: PendingCreate['type'],
+    barId: string,
+    name?: string,
+    attach?: MenuCreateAttach
+  ) => void;
   clearPendingCreate: () => void;
+  deliverMenuDrink: (sectionId: string, drinkId: string, replaceId?: string) => void;
+  consumeMenuDrink: () => PendingMenuDrink | null;
 };
 
 /** ponytail: web sidebar ↔ Creator Hub; URL carries selection so refresh restores the editor */
-export const useCreatorNavStore = create<CreatorNavState>((set) => ({
+export const useCreatorNavStore = create<CreatorNavState>((set, get) => ({
   selectedNode: null,
   pendingCreate: null,
+  pendingMenuDrink: null,
   // create vs select are mutually exclusive — leaving the other set lets edit-mode's
   // storeNode effect reopen the previous menu over a fresh Add Beer/Cocktail/etc.
   setSelectedNode: (node) => set({ selectedNode: node, pendingCreate: null }),
-  requestCreate: (type, barId) => set({ pendingCreate: { type, barId }, selectedNode: null }),
+  requestCreate: (type, barId, name, attach) =>
+    set({
+      pendingCreate: {
+        type,
+        barId,
+        name: name?.trim() || undefined,
+        menuDraftId: attach?.menuDraftId,
+        menuSectionId: attach?.menuSectionId,
+      },
+      selectedNode: null,
+    }),
   clearPendingCreate: () => set({ pendingCreate: null }),
+  deliverMenuDrink: (sectionId, drinkId, replaceId) =>
+    set({ pendingMenuDrink: { sectionId, drinkId, replaceId } }),
+  consumeMenuDrink: () => {
+    const pending = get().pendingMenuDrink;
+    if (pending) set({ pendingMenuDrink: null });
+    return pending;
+  },
 }));
 
 export function creatorNodeHref(node: Pick<SelectedDraftNode, 'type' | 'id'>): string {
@@ -35,11 +72,15 @@ export function creatorNodeHref(node: Pick<SelectedDraftNode, 'type' | 'id'>): s
 export function creatorCreateHref(
   type: PendingCreate['type'],
   barId: string,
-  name?: string
+  name?: string,
+  attach?: MenuCreateAttach
 ): string {
-  const base = `/edit-mode?create=${encodeURIComponent(type)}&barId=${encodeURIComponent(barId)}`;
+  let url = `/edit-mode?create=${encodeURIComponent(type)}&barId=${encodeURIComponent(barId)}`;
   const trimmed = name?.trim();
-  return trimmed ? `${base}&name=${encodeURIComponent(trimmed)}` : base;
+  if (trimmed) url += `&name=${encodeURIComponent(trimmed)}`;
+  if (attach?.menuDraftId) url += `&menuDraftId=${encodeURIComponent(attach.menuDraftId)}`;
+  if (attach?.menuSectionId) url += `&menuSectionId=${encodeURIComponent(attach.menuSectionId)}`;
+  return url;
 }
 
 /** Record a Creator tree/hub selection in Jump Back In. */

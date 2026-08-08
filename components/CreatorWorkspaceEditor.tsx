@@ -18,6 +18,13 @@ interface CreatorWorkspaceEditorProps {
     onClose: () => void;
     onSave: () => void;
     onNestedItemPress: (ingredientId: string) => void;
+    onCreateDrinkPress?: (params: {
+        query: string;
+        barId: string;
+        type?: EditingState['type'];
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => void;
     onOpenDrink?: (drink: SearchItem) => void;
     onChromeState?: (state: EditorChromeState | null) => void;
 }
@@ -27,6 +34,7 @@ export function CreatorWorkspaceEditor({
     onClose,
     onSave,
     onNestedItemPress,
+    onCreateDrinkPress,
     onOpenDrink,
     onChromeState,
 }: CreatorWorkspaceEditorProps) {
@@ -135,6 +143,7 @@ export function CreatorWorkspaceEditor({
                     onClose={onClose}
                     onSave={onSave}
                     onChromeState={onChromeState}
+                    onCreateDrinkPress={onCreateDrinkPress}
                     onOpenDrink={onOpenDrink}
                 />
             );

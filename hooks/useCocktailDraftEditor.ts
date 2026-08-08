@@ -1,6 +1,5 @@
 import { decode } from "base64-arraybuffer";
 import * as FilePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform } from "react-native";
@@ -8,7 +7,7 @@ import { Alert, Platform } from "react-native";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { useDrafts } from "@/hooks/useDrafts";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import {
     resolveIngredientId,
@@ -16,8 +15,11 @@ import {
     updateParentDraftsWithPublishedId,
 } from "@/lib/drafts";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
+import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import { capitalize } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
+import { useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import type { SpecCategory, SpecDbField } from "@/hooks/useCocktailEditor";
 
@@ -254,13 +256,15 @@ export function useCocktailDraftEditor({
                 setCurrentDraftId(result.id);
                 draftLoadedRef.current = result.id;
             }
-            if (menuDraftId && menuSectionId && result?.id) {
-                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
-                if (menuDraft) {
-                    const selections = { ...(menuDraft.draft_data?.selections || {}) };
-                    const sectionDrinks = selections[menuSectionId] || [];
-                    if (!sectionDrinks.includes(result.id)) {
-                        selections[menuSectionId] = [...sectionDrinks, result.id];
+            if (menuSectionId && result?.id) {
+                if (menuDraftId) {
+                    const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+                    if (menuDraft) {
+                        const selections = withDrinkInSection(
+                            menuDraft.draft_data?.selections || {},
+                            menuSectionId,
+                            result.id
+                        );
                         await saveDraft({
                             id: menuDraft.id,
                             entityType: "menu",
@@ -268,6 +272,8 @@ export function useCocktailDraftEditor({
                         });
                     }
                 }
+                // notify picker host so UI updates even if menu remounts without draftId
+                useCreatorNavStore.getState().deliverMenuDrink(menuSectionId, result.id);
             }
             cleanSnapshotRef.current = draftDataSnapshot;
             setIsDirty(false);
@@ -313,6 +319,15 @@ export function useCocktailDraftEditor({
         return () => clearTimeout(timer);
     }, [draftDataSnapshot, enabled, isDirty, persistDraft]);
 
+    const addImages = useCallback(
+        (uris: string[]) => {
+            if (!uris.length) return;
+            setLocalImages((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
+            markDirty();
+        },
+        [markDirty]
+    );
+
     const pickImage = async () => {
         const { status } = await FilePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -326,11 +341,7 @@ export function useCocktailDraftEditor({
             quality: 0.8,
         });
         if (!result.canceled) {
-            setLocalImages((prev) => [
-                ...prev,
-                ...result.assets.map((asset) => ({ url: asset.uri, isNew: true })),
-            ]);
-            markDirty();
+            addImages(result.assets.map((asset) => asset.uri));
         }
     };
 
@@ -354,13 +365,16 @@ export function useCocktailDraftEditor({
                 return null;
             }
 
-            const ext = uri.substring(uri.lastIndexOf(".") + 1) || "jpg";
+            const ext = imageExtFromUri(uri);
             const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
+            const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
             const { error: uploadError } = await supabase.storage
                 .from("drinks")
-                .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: false });
+                .upload(fileName, arrayBuffer, {
+                    contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
+                    upsert: false,
+                });
             if (uploadError) return null;
 
             const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
@@ -376,14 +390,26 @@ export function useCocktailDraftEditor({
         }
     };
 
-    const handleAddPill = async (type: SpecCategory, newItemName: string) => {
-        if (!newItemName.trim()) return;
-        const { error } = await supabase.from("items").insert({
-            name: capitalize(newItemName.trim()),
-            item_type: type,
-        });
-        if (error) throw error;
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+    const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
+        if (!newItemName.trim()) throw new Error("Name is required");
+        const { data, error } = await supabase
+            .from("items")
+            .insert({
+                name: capitalize(newItemName.trim()),
+                item_type: type,
+            })
+            .select("id")
+            .single();
+        if (error || !data) throw error || new Error(`Failed to create ${type}`);
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        ({
+            method: setMethodId,
+            glassware: setGlasswareId,
+            family: setFamilyId,
+            ice: setIceId,
+        })[type](data.id);
+        markDirty();
+        return data.id;
     };
 
     const identifyGlassware = identifyGlasswareFromPhoto;
@@ -404,7 +430,7 @@ export function useCocktailDraftEditor({
             .select("id")
             .single();
         if (error || !data) throw error || new Error("Failed to create glassware");
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
         setGlasswareId(data.id);
         markDirty();
         return data.id;
@@ -419,7 +445,7 @@ export function useCocktailDraftEditor({
         if (field === "family_id" && familyId === pillId) setFamilyId(null);
         if (field === "ice_id" && iceId === pillId) setIceId(null);
         markDirty();
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
     };
 
     const handleDeletePill = async (category: SpecCategory, item: { id: string; name: string }) => {
@@ -538,27 +564,29 @@ export function useCocktailDraftEditor({
             }
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
-            await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
 
             const activeDraftId = currentDraftId;
-            if (menuDraftId && menuSectionId) {
-                const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
-                if (menuDraft) {
-                    const selections = { ...(menuDraft.draft_data?.selections || {}) };
-                    let sectionDrinks = [...(selections[menuSectionId] || [])];
-                    if (activeDraftId) {
-                        sectionDrinks = sectionDrinks.filter((id) => id !== activeDraftId);
+            if (menuSectionId) {
+                if (menuDraftId) {
+                    const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
+                    if (menuDraft) {
+                        const selections = withDrinkInSection(
+                            menuDraft.draft_data?.selections || {},
+                            menuSectionId,
+                            cocktailId,
+                            activeDraftId
+                        );
+                        await saveDraft({
+                            id: menuDraft.id,
+                            entityType: "menu",
+                            draftData: { ...menuDraft.draft_data, selections },
+                        });
                     }
-                    if (!sectionDrinks.includes(cocktailId)) {
-                        sectionDrinks.push(cocktailId);
-                    }
-                    selections[menuSectionId] = sectionDrinks;
-                    await saveDraft({
-                        id: menuDraft.id,
-                        entityType: "menu",
-                        draftData: { ...menuDraft.draft_data, selections },
-                    });
                 }
+                useCreatorNavStore
+                    .getState()
+                    .deliverMenuDrink(menuSectionId, cocktailId, activeDraftId || undefined);
             }
 
             if (activeDraftId) {
@@ -587,7 +615,20 @@ export function useCocktailDraftEditor({
         }
     };
 
-    const handleSave = async (): Promise<boolean> => {
+    const handleSaveDraft = async (silent = false): Promise<string | null> => {
+        if (!name.trim()) {
+            Alert.alert("Missing Info", "Name is required.");
+            return null;
+        }
+        setSaving(true);
+        try {
+            return (await persistDraft(silent)) ?? null;
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handlePublish = async (): Promise<boolean> => {
         if (!name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return false;
@@ -606,6 +647,36 @@ export function useCocktailDraftEditor({
             Alert.alert("Publish Cocktail", "Are you sure you want to publish this cocktail?", [
                 { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
                 { text: "Publish", onPress: () => void proceed().then(resolve) },
+            ]);
+        });
+    };
+
+    // ponytail: handleSave kept as publish alias for older call sites
+    const handleSave = handlePublish;
+
+    const handleDelete = async (): Promise<boolean> => {
+        const proceed = async () => {
+            if (currentDraftId) {
+                await deleteDraft(currentDraftId);
+            }
+            return true;
+        };
+
+        if (!currentDraftId && !isDirty && !name.trim()) {
+            return true;
+        }
+
+        if (Platform.OS === "web") {
+            if (window.confirm("Delete this cocktail draft?")) {
+                return proceed();
+            }
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            Alert.alert("Delete Draft", "Are you sure you want to delete this draft?", [
+                { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+                { text: "Delete", style: "destructive", onPress: () => void proceed().then(resolve) },
             ]);
         });
     };
@@ -698,12 +769,16 @@ export function useCocktailDraftEditor({
             },
             [markDirty]
         ),
+        addImages,
         pickImage,
         handleAddPill,
         handleAddGlassware,
         identifyGlassware,
         handleDeletePill,
         handleSave,
+        handleSaveDraft,
+        handlePublish,
+        handleDelete,
         persistDraft,
         discardChanges,
     };

@@ -30,3 +30,10 @@ export async function uriToBase64(uri: string): Promise<string> {
 
     return FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
 }
+
+/** Storage path ext; blob/data URIs have no filename — default jpg. */
+export function imageExtFromUri(uri: string): string {
+    if (uri.startsWith('blob:') || uri.startsWith('data:')) return 'jpg';
+    const ext = (uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+}

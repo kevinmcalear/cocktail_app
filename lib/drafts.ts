@@ -41,6 +41,7 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
             override_specific_brand_level: data.overrideSpecific ? parseInt(data.overrideSpecific) : null,
             override_measurement_level: data.overrideMeasurement ? parseInt(data.overrideMeasurement) : null,
             override_prep_level: data.overridePrep ? parseInt(data.overridePrep) : null,
+            hide_from_search: data.hideFromSearch === true,
         })
         .select()
         .single();
@@ -83,6 +84,34 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
     await supabase.from('drafts').delete().eq('id', draft.id);
     
     return ingredientId;
+}
+
+/**
+ * Rename an ingredient entity in place (draft or published).
+ * Caller updates its own recipe line; skips parent sync so unsaved parent edits aren't clobbered.
+ */
+export async function renameIngredientEntity(
+    ingredientId: string,
+    name: string,
+    drafts: any[],
+    saveDraftFn: any
+): Promise<string> {
+    const displayName = capitalize(name.trim());
+    if (!displayName || !ingredientId) return displayName;
+
+    const draft = drafts.find((d) => d.id === ingredientId && d.entity_type === 'ingredient');
+    if (draft) {
+        await saveDraftFn({
+            id: ingredientId,
+            entityType: 'ingredient',
+            draftData: { ...draft.draft_data, name: displayName },
+        });
+        return displayName;
+    }
+
+    const { error } = await supabase.from('items').update({ name: displayName }).eq('id', ingredientId);
+    if (error) throw error;
+    return displayName;
 }
 
 /**

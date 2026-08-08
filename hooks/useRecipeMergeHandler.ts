@@ -26,8 +26,19 @@ export function useRecipeMergeHandler(opts: {
     drafts?: any[];
     saveDraft?: SaveDraftFn;
     enabled?: boolean;
+    /** Parent cocktail/ingredient name for default "{name} batch". */
+    parentName?: string | null;
 }) {
-    const { items, setItems, persistence, barId, drafts, saveDraft, enabled = true } = opts;
+    const {
+        items,
+        setItems,
+        persistence,
+        barId,
+        drafts,
+        saveDraft,
+        enabled = true,
+        parentName,
+    } = opts;
     const [knownBatchIds, setKnownBatchIds] = useState<Set<string>>(() => new Set());
     const [merging, setMerging] = useState(false);
 
@@ -61,8 +72,25 @@ export function useRecipeMergeHandler(opts: {
     );
 
     const onMerge = useCallback(
-        async (fromIndex: number, targetIndex: number) => {
-            if (!enabled || merging) return;
+        async (fromIndex: number, targetIndex: number): Promise<boolean> => {
+            if (!enabled || merging) return false;
+
+            // Accidental dwell while reordering is common — confirm before mutating.
+            const confirmed =
+                Platform.OS === 'web'
+                    ? window.confirm('Combine these ingredients into a batch?')
+                    : await new Promise<boolean>((resolve) => {
+                          Alert.alert(
+                              'Combine ingredients?',
+                              'This creates or adds to a batch. Choose Just reorder if you only meant to move them.',
+                              [
+                                  { text: 'Just reorder', style: 'cancel', onPress: () => resolve(false) },
+                                  { text: 'Combine', onPress: () => resolve(true) },
+                              ]
+                          );
+                      });
+            if (!confirmed) return false;
+
             setMerging(true);
             try {
                 const result = await executeRecipeMerge({
@@ -74,16 +102,19 @@ export function useRecipeMergeHandler(opts: {
                     barId,
                     drafts,
                     saveDraft,
+                    parentName,
                 });
-                if (!result) return;
+                if (!result) return false;
                 if (result.newBatchId) {
                     setKnownBatchIds((prev) => new Set(prev).add(result.newBatchId!));
                 }
                 setItems(result.nextItems);
+                return true;
             } catch (e: any) {
                 const msg = e?.message || 'Failed to combine ingredients.';
                 if (Platform.OS === 'web') window.alert(msg);
                 else Alert.alert('Error', msg);
+                return false;
             } finally {
                 setMerging(false);
             }
@@ -97,6 +128,7 @@ export function useRecipeMergeHandler(opts: {
             barId,
             drafts,
             saveDraft,
+            parentName,
             setItems,
         ]
     );

@@ -1,7 +1,7 @@
 import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
 import {
     applyCreateToParent,
-    NEW_BATCH_NAME,
+    defaultBatchName,
     planMerge,
 } from '@/lib/mergeRecipeItems';
 import { supabase } from '@/lib/supabase';
@@ -37,12 +37,13 @@ export function makeIsBatchIngredient(
 
 async function createPublishedBatch(
     childItems: SortableRecipeItem[],
-    barId: string | null
+    barId: string | null,
+    name: string
 ): Promise<{ id: string; name: string }> {
     const { data: ingredient, error } = await supabase
         .from('items')
         .insert({
-            name: NEW_BATCH_NAME,
+            name,
             item_type: 'ingredient',
             bar_id: barId,
         })
@@ -94,18 +95,19 @@ async function appendToPublishedBatch(
 async function createDraftBatch(
     childItems: SortableRecipeItem[],
     barId: string | null,
-    saveDraft: SaveDraftFn
+    saveDraft: SaveDraftFn,
+    name: string
 ): Promise<{ id: string; name: string }> {
     const result = await saveDraft({
         entityType: 'ingredient',
         draftData: {
-            name: NEW_BATCH_NAME,
+            name,
             recipeItems: childItems,
             barId,
         },
     });
     if (!result?.id) throw new Error('Failed to create batch draft');
-    return { id: result.id, name: NEW_BATCH_NAME };
+    return { id: result.id, name };
 }
 
 async function appendToDraftOrPublishedBatch(
@@ -136,6 +138,8 @@ export async function executeRecipeMerge(args: {
     barId?: string | null;
     drafts?: any[];
     saveDraft?: SaveDraftFn;
+    /** Parent cocktail/ingredient name → "{name} batch". */
+    parentName?: string | null;
 }): Promise<{ nextItems: SortableRecipeItem[]; newBatchId?: string } | null> {
     const plan = planMerge(args.items, args.fromIndex, args.targetIndex, args.isBatch);
     if (!plan) return null;
@@ -151,12 +155,18 @@ export async function executeRecipeMerge(args: {
     }
 
     // create
+    const batchName = defaultBatchName(args.parentName);
     let batch: { id: string; name: string };
     if (args.persistence === 'draft') {
         if (!args.saveDraft) throw new Error('saveDraft required for draft merge');
-        batch = await createDraftBatch(plan.childItems, args.barId ?? null, args.saveDraft);
+        batch = await createDraftBatch(
+            plan.childItems,
+            args.barId ?? null,
+            args.saveDraft,
+            batchName
+        );
     } else {
-        batch = await createPublishedBatch(plan.childItems, args.barId ?? null);
+        batch = await createPublishedBatch(plan.childItems, args.barId ?? null, batchName);
     }
 
     const batchLine: SortableRecipeItem = {

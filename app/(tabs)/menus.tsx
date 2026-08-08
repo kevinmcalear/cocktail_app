@@ -9,11 +9,13 @@ import { useBars } from "@/hooks/useBars";
 import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
 import { useDrafts } from "@/hooks/useDrafts";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useMenuEditor } from "@/hooks/useMenuEditor";
 import { useWines } from "@/hooks/useWines";
 import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { currentForLabel } from "@/lib/currentFromMenus";
+import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
 import {
     itemAllowedInSection,
@@ -22,6 +24,7 @@ import {
     sectionCommandFilters,
 } from "@/lib/sectionAllowedTypes";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 import {
     creatorCreateHref,
@@ -29,6 +32,7 @@ import {
     useCreatorNavStore,
 } from "@/store/useCreatorNavStore";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -83,11 +87,14 @@ export default function MenusScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
+    const queryClient = useQueryClient();
     const { width } = useWindowDimensions();
     const isWide = width >= 768;
     const selectedMenuId = useAppStore((s) => s.selectedMenuId);
     const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
     const requestCreate = useCreatorNavStore((s) => s.requestCreate);
+    const pendingMenuDrink = useCreatorNavStore((s) => s.pendingMenuDrink);
+    const consumeMenuDrink = useCreatorNavStore((s) => s.consumeMenuDrink);
 
     const { data: dropdowns, isLoading: loadingMenus, refetch } = useDropdowns();
     const { data: userBars } = useBars();
@@ -100,8 +107,25 @@ export default function MenusScreen() {
     const [actionsOpen, setActionsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [pickingSectionId, setPickingSectionId] = useState<string | null>(null);
+    const [togglingCurrent, setTogglingCurrent] = useState(false);
 
     const editor = useMenuEditor(selectedMenuId, isEditing);
+
+    // ponytail: create-from-picker returns via store (published menu has no draft to patch)
+    useEffect(() => {
+        if (!pendingMenuDrink || !isEditing || !editor.loaded) return;
+        const pending = consumeMenuDrink();
+        if (!pending) return;
+        editor.setSelections((prev) =>
+            withDrinkInSection(prev, pending.sectionId, pending.drinkId, pending.replaceId)
+        );
+    }, [
+        pendingMenuDrink,
+        isEditing,
+        editor.loaded,
+        editor.setSelections,
+        consumeMenuDrink,
+    ]);
 
     // ponytail: all contexts so menu venue drinks resolve even if global picker differs
     const { data: cocktailsData } = useCocktails({ allContexts: true });
@@ -254,6 +278,27 @@ export default function MenusScreen() {
           ? selectedMenu.cover_position
           : 50;
     const venueName = selectedMenu?.bar_id ? barNameById.get(selectedMenu.bar_id) : null;
+    const currentLabel = currentForLabel(selectedMenu?.bar_id, venueName);
+    const isCurrent = selectedMenu?.is_active === true;
+
+    const toggleCurrent = async () => {
+        if (!selectedMenu || togglingCurrent) return;
+        setTogglingCurrent(true);
+        try {
+            const { error } = await supabase
+                .from('menus')
+                .update({ is_active: !isCurrent })
+                .eq('id', selectedMenu.id);
+            if (error) throw error;
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            setActionsOpen(false);
+        } catch (e) {
+            console.error(e);
+            Alert.alert('Error', 'Could not update Current status.');
+        } finally {
+            setTogglingCurrent(false);
+        }
+    };
     // Keep view values until editor finishes loading — never flash empty
     const displayName = isEditing
         ? editor.menuName || selectedMenu?.name || ""
@@ -416,9 +461,9 @@ export default function MenusScreen() {
                             {displayName || (loadingMenus ? "Loading…" : "No menus yet")}
                         </Text>
                     )}
-                    {venueName ? (
+                    {isCurrent || venueName ? (
                         <Text fontSize={14} color="$color11" numberOfLines={1}>
-                            {venueName}
+                            {isCurrent ? `Current for ${currentLabel}` : venueName}
                         </Text>
                     ) : null}
                     {(loadingDetails || (isEditing && !editor.loaded)) ? (
@@ -542,9 +587,12 @@ export default function MenusScreen() {
                     setPickingSectionId(null);
                 }}
                 onCreateNew={({ name, type }) => {
+                    const sectionId = pickingSectionId;
                     setPickingSectionId(null);
-                    requestCreate(type, menuContextId);
-                    router.push(creatorCreateHref(type, menuContextId, name) as any);
+                    if (!sectionId) return;
+                    const attach = { menuSectionId: sectionId };
+                    requestCreate(type, menuContextId, name, attach);
+                    router.push(creatorCreateHref(type, menuContextId, name, attach) as any);
                 }}
             />
 
@@ -582,6 +630,24 @@ export default function MenusScreen() {
                         >
                             <Text color="$color" fontSize={16} fontWeight="600">
                                 Edit Menu
+                            </Text>
+                        </Pressable>
+                    ) : null}
+                    {selectedMenu ? (
+                        <Pressable
+                            onPress={toggleCurrent}
+                            disabled={togglingCurrent}
+                            style={[
+                                styles.actionRow,
+                                { borderBottomColor: theme.borderColor?.get() as string },
+                            ]}
+                        >
+                            <Text color="$color" fontSize={16} fontWeight="600">
+                                {togglingCurrent
+                                    ? 'Updating…'
+                                    : isCurrent
+                                      ? `Remove from Current (${currentLabel})`
+                                      : `Current for ${currentLabel}`}
                             </Text>
                         </Pressable>
                     ) : null}

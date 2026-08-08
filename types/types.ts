@@ -112,6 +112,7 @@ export interface DatabaseItem {
     bar_id: string | null;
     icon_key?: string | null;
     icon_url?: string | null;
+    hide_from_search?: boolean;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;

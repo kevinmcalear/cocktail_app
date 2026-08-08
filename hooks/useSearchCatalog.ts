@@ -6,6 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext } from '@/lib/barContextFilter';
+import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
 import { useMemo } from 'react';
@@ -98,7 +99,10 @@ export function useSearchCatalog() {
       }));
 
     const mappedIngredients: SearchItem[] = (ingredientsData || [])
-      .filter((i: any) => inSelectedContext(i.bar_id, selectedContextIds))
+      .filter(
+        (i: any) =>
+          !isHiddenFromSearch(i) && inSelectedContext(i.bar_id, selectedContextIds)
+      )
       .map((i: any) => ({
         id: i.id,
         name: i.name,
@@ -123,6 +127,7 @@ export function useSearchCatalog() {
       .filter(
         (d: any) =>
           DRAFT_CATEGORY[d.entity_type] &&
+          !isHiddenFromSearch(d) &&
           inSelectedContext(d.bar_id, selectedContextIds)
       )
       .map((d: any) => {

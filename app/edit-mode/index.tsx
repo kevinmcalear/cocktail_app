@@ -32,6 +32,7 @@ import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { EditorChromeState } from '@/lib/editorChrome';
+import { shouldKeepCreatorStack } from '@/lib/creatorStackHydration';
 import {
     creatorCreateHref,
     creatorNodeHref,
@@ -52,6 +53,8 @@ export default function EditModeDashboard() {
         create?: string;
         barId?: string;
         name?: string;
+        menuDraftId?: string;
+        menuSectionId?: string;
     }>();
     const { drafts, isLoading: loadingDrafts, deleteDraft } = useDrafts();
     const { data: userBars, isLoading: loadingBars } = useBars();
@@ -207,6 +210,18 @@ export default function EditModeDashboard() {
         syncCreatorUrl('/edit-mode');
     }, [setStoreNode, syncCreatorUrl]);
 
+    // ponytail: empty /edit-mode is a blank web shell — back to menus/home instead
+    const exitNewCreate = React.useCallback(() => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        setSelectedNode(null);
+        setStoreNode(null);
+        setNavigationStack([]);
+        router.replace('/(tabs)' as any);
+    }, [router, setStoreNode]);
+
     const clearWorkspaceIfContains = (id: string) => {
         if (selectedNode?.id === id || navigationStack.some((frame) => frame.node.id === id)) {
             clearWorkspace();
@@ -299,11 +314,18 @@ export default function EditModeDashboard() {
     const openCreateWorkspace = React.useCallback((
         type: EditingState['type'],
         barId: string,
-        opts?: { syncUrl?: boolean; initialName?: string }
+        opts?: {
+            syncUrl?: boolean;
+            initialName?: string;
+            menuDraftId?: string;
+            menuSectionId?: string;
+        }
     ) => {
         if (type === 'bar') return;
         const syncUrl = opts?.syncUrl !== false;
         const initialName = opts?.initialName?.trim() || undefined;
+        const menuDraftId = opts?.menuDraftId || undefined;
+        const menuSectionId = opts?.menuSectionId || undefined;
         const nodeType = type === 'menu' ? 'menu_draft' : type === 'ingredient' ? 'ingredient_draft' : 'drink_draft';
         setSelectedNode(null);
         setStoreNode(null);
@@ -313,29 +335,76 @@ export default function EditModeDashboard() {
                 id: '__new__',
                 name: initialName ? capitalize(initialName) : `New ${capitalize(type)}`,
             },
-            editing: { mode: 'create', type, barId, initialName },
+            editing: { mode: 'create', type, barId, initialName, menuDraftId, menuSectionId },
         }]);
-        if (syncUrl) syncCreatorUrl(creatorCreateHref(type, barId, initialName));
+        if (syncUrl) {
+            syncCreatorUrl(
+                creatorCreateHref(type, barId, initialName, { menuDraftId, menuSectionId })
+            );
+        }
     }, [setStoreNode, syncCreatorUrl]);
+
+    // ponytail: create-from-menu section keeps the menu frame underneath
+    const handleCreateDrinkPress = (params: {
+        query: string;
+        barId: string;
+        type?: EditingState['type'];
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => {
+        const type =
+            params.type === 'beer' || params.type === 'wine' || params.type === 'cocktail'
+                ? params.type
+                : 'cocktail';
+        setNavigationStack((prev) => [
+            ...prev,
+            {
+                node: {
+                    type: 'drink_draft',
+                    id: '__new__',
+                    name: params.query || `New ${capitalize(type)}`,
+                },
+                editing: {
+                    mode: 'create',
+                    type,
+                    barId: params.barId,
+                    menuDraftId: params.menuDraftId,
+                    menuSectionId: params.menuSectionId,
+                    initialName: params.query,
+                },
+            },
+        ]);
+    };
 
     const handleEditorClose = () => {
         if (navigationStack.length <= 1) {
+            if (navigationStack[0]?.node.id === '__new__') {
+                exitNewCreate();
+                return;
+            }
             clearWorkspace();
             return;
         }
+        // ponytail: in-app stack only — URL stays at sidebar root so hydration won't wipe nest
         setNavigationStack((prev) => {
             const newStack = prev.slice(0, -1);
             const node = newStack[newStack.length - 1].node;
             setSelectedNode(node);
             setStoreNode(node);
-            // ponytail: refresh restores top frame only, not breadcrumb stack
-            syncCreatorUrl(creatorNodeHref(node));
             return newStack;
         });
     };
 
     const handleSaveComplete = () => {
         queryClient.invalidateQueries();
+        if (navigationStack.length > 1) {
+            handleEditorClose();
+            return;
+        }
+        if (navigationStack[0]?.node.id === '__new__') {
+            exitNewCreate();
+            return;
+        }
         clearWorkspace();
     };
 
@@ -345,7 +414,6 @@ export default function EditModeDashboard() {
             const node = newStack[newStack.length - 1].node;
             setSelectedNode(node);
             setStoreNode(node);
-            syncCreatorUrl(creatorNodeHref(node));
             return newStack;
         });
     };
@@ -359,8 +427,6 @@ export default function EditModeDashboard() {
         setNavigationStack((prev) => [...prev, frame]);
         setSelectedNode(node);
         setStoreNode(node);
-        // ponytail: refresh restores top frame only, not breadcrumb stack
-        syncCreatorUrl(creatorNodeHref(node));
     };
 
     // ponytail: same stack push as nested ingredients — back returns to the menu
@@ -374,8 +440,6 @@ export default function EditModeDashboard() {
         setNavigationStack((prev) => [...prev, frame]);
         setSelectedNode(node);
         setStoreNode(node);
-        // ponytail: refresh restores top frame only, not breadcrumb stack
-        syncCreatorUrl(creatorNodeHref(node));
     };
 
     const activeFrame = navigationStack.at(-1) ?? null;
@@ -401,28 +465,47 @@ export default function EditModeDashboard() {
         const type = typeof params.type === 'string' ? params.type : undefined;
         const id = typeof params.id === 'string' ? params.id : undefined;
         const name = typeof params.name === 'string' ? params.name : undefined;
+        const menuDraftId =
+            typeof params.menuDraftId === 'string' ? params.menuDraftId : undefined;
+        const menuSectionId =
+            typeof params.menuSectionId === 'string' ? params.menuSectionId : undefined;
 
         if (create && CREATE_TYPES.has(create) && barId !== undefined) {
             const resolvedBarId = barId || 'personal';
+            const wantName = name?.trim() || undefined;
             const top = navigationStack.at(-1);
             if (
                 top?.node.id === '__new__' &&
                 top.editing.mode === 'create' &&
                 top.editing.type === create &&
-                top.editing.barId === resolvedBarId
+                top.editing.barId === resolvedBarId &&
+                (top.editing.initialName || undefined) === wantName &&
+                (top.editing.menuDraftId || undefined) === menuDraftId &&
+                (top.editing.menuSectionId || undefined) === menuSectionId
             ) {
                 return;
             }
             openCreateWorkspace(create as EditingState['type'], resolvedBarId, {
                 syncUrl: false,
-                initialName: name,
+                initialName: wantName,
+                menuDraftId,
+                menuSectionId,
             });
             clearPendingCreate();
             return;
         }
 
         if (type && id) {
-            if (selectedNode?.id === id && selectedNode?.type === type) return;
+            // ponytail: URL is sidebar root — keep nested frames under that root
+            if (
+                shouldKeepCreatorStack(
+                    type,
+                    id,
+                    navigationStack.map((f) => f.node)
+                )
+            ) {
+                return;
+            }
             const node: SelectedDraftNode = {
                 type: type as DraftNodeType,
                 id,
@@ -445,11 +528,16 @@ export default function EditModeDashboard() {
         }
 
         if (pendingCreate) {
-            openCreateWorkspace(pendingCreate.type, pendingCreate.barId || 'personal', { syncUrl: true });
+            openCreateWorkspace(pendingCreate.type, pendingCreate.barId || 'personal', {
+                syncUrl: true,
+                initialName: pendingCreate.name,
+                menuDraftId: pendingCreate.menuDraftId,
+                menuSectionId: pendingCreate.menuSectionId,
+            });
             clearPendingCreate();
             return;
         }
-        // ponytail: allItems identity churn ignored — isLoading gate is enough
+        // ponytail: params-only — stack/selection churn must not re-hydrate and wipe nests
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         isWebShell,
@@ -458,9 +546,9 @@ export default function EditModeDashboard() {
         params.barId,
         params.type,
         params.id,
-        selectedNode?.id,
-        selectedNode?.type,
-        navigationStack,
+        params.name,
+        params.menuDraftId,
+        params.menuSectionId,
         userBars,
         pendingCreate,
         clearPendingCreate,
@@ -578,22 +666,31 @@ export default function EditModeDashboard() {
                         drafts={drafts}
                         dropdowns={dropdowns}
                         onNavigateToFrame={handleNavigateToFrame}
-                        onDiscard={activeItem ? () => (
-                            activeItem.isPublished
-                                ? handleDeletePublished(activeItem.id, activeItem.entity_type)
-                                : handleDeleteDraft(activeItem.id)
-                        ) : undefined}
-                        onCancel={editorChrome?.cancel}
+                        onDiscard={
+                            activeItem
+                                ? () => (
+                                    activeItem.isPublished
+                                        ? handleDeletePublished(activeItem.id, activeItem.entity_type)
+                                        : handleDeleteDraft(activeItem.id)
+                                )
+                                : editorChrome?.discard
+                                    ? () => editorChrome.discard!()
+                                    : undefined
+                        }
+                        onCancel={editorChrome?.cancel ?? handleEditorClose}
                         onSave={editorChrome ? () => void editorChrome.save() : undefined}
+                        onPublish={editorChrome?.publish ? () => void editorChrome.publish!() : undefined}
                         saving={editorChrome?.saving}
                         isDirty={editorChrome?.isDirty}
+                        canPublish={editorChrome?.canPublish}
                     >
-                        <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}`}>
+                        <React.Fragment key={`${activeFrame.node.type}-${activeFrame.node.id}-${activeFrame.editing.mode}-${activeFrame.editing.initialName ?? ''}`}>
                             <CreatorWorkspaceEditor
                                 editing={activeFrame.editing}
                                 onClose={handleEditorClose}
                                 onSave={handleSaveComplete}
                                 onNestedItemPress={handleNestedItemPress}
+                                onCreateDrinkPress={handleCreateDrinkPress}
                                 onOpenDrink={handleOpenMenuDrink}
                                 onChromeState={setEditorChrome}
                             />

@@ -1,8 +1,9 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { webImageDropProps } from '@/lib/imageDrop';
 import { Image as ExpoImage } from 'expo-image';
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { Text } from "tamagui";
 
@@ -17,10 +18,13 @@ interface SortableImageListProps {
     onReorder: (images: ImageItem[]) => void;
     onRemove: (index: number) => void;
     onAdd: () => void;
+    onAddUris?: (uris: string[]) => void;
     generateComponent?: React.ReactNode;
 }
 
-export function SortableImageList({ images, onReorder, onRemove, onAdd, generateComponent }: SortableImageListProps) {
+export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUris, generateComponent }: SortableImageListProps) {
+    const [dragOver, setDragOver] = useState(false);
+    const isWeb = Platform.OS === 'web';
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<ImageItem>) => {
         const index = getIndex();
         return (
@@ -32,10 +36,12 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
                     ]}
                 >
                     <TouchableOpacity 
-                        onLongPress={drag}
+                        onLongPress={isWeb ? undefined : drag}
+                        onPressIn={isWeb ? drag : undefined}
                         disabled={isActive}
-                        style={{ width: '100%', height: '100%' }}
+                        style={[{ width: '100%', height: '100%' }, isWeb && styles.thumbWeb]}
                         activeOpacity={0.9}
+                        accessibilityLabel="Drag to reorder"
                     >
                         <ExpoImage 
                             source={{ uri: item.url }} 
@@ -67,10 +73,15 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.label}>Photos</Text>
-                <Text style={styles.hint}>Long press to reorder</Text>
+                <Text style={styles.hint}>
+                    {isWeb ? 'Drop images or drag to reorder' : 'Long press to reorder'}
+                </Text>
             </View>
             
-            <View style={styles.listContainer}>
+            <View
+                style={[styles.listContainer, dragOver && styles.listContainerDragOver]}
+                {...(isWeb ? (webImageDropProps(onAddUris, setDragOver) as any) : null)}
+            >
                 <DraggableFlatList
                     data={images}
                     style={{ flex: 1 }}
@@ -82,10 +93,10 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, generate
                     contentContainerStyle={styles.listContent}
                     activationDistance={10}
                     ListHeaderComponent={
-                        <View style={styles.actionCard}>
+                        <View style={[styles.actionCard, dragOver && styles.actionCardDragOver]}>
                             <TouchableOpacity onPress={onAdd} style={styles.actionCardTop}>
                                 <IconSymbol name="plus" size={18} color={Colors.dark.icon} />
-                                <Text style={styles.actionCardText}>Add</Text>
+                                <Text style={styles.actionCardText}>{dragOver ? 'Drop' : 'Add'}</Text>
                             </TouchableOpacity>
                             <View style={styles.actionCardDivider} />
                             <View style={styles.actionCardBottom}>
@@ -123,6 +134,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         height: 150, 
     },
+    listContainerDragOver: {
+        borderRadius: 12,
+        outlineWidth: 1,
+        outlineStyle: 'dashed',
+        outlineColor: Colors.dark.tint,
+    } as any,
     listContent: {
         gap: 12,
         paddingRight: 20
@@ -137,6 +154,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.02)',
         marginTop: 12.5,
         overflow: 'hidden',
+    },
+    actionCardDragOver: {
+        borderColor: Colors.dark.tint,
+        backgroundColor: 'rgba(255,255,255,0.06)',
     },
     actionCardTop: {
         flex: 1,
@@ -178,6 +199,9 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%'
     },
+    thumbWeb: {
+        cursor: 'grab',
+    } as object,
     newBadge: {
         position: 'absolute',
         top: 6,

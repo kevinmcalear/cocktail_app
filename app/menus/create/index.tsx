@@ -32,6 +32,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { creatorCreateHref, useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
+import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
 import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
 import { SearchItem } from "@/components/SearchList";
@@ -86,6 +87,13 @@ interface CreateMenuWizardProps {
     onClose?: () => void;
     onSave?: () => void;
     onChromeState?: (state: EditorChromeState | null) => void;
+    onCreateDrinkPress?: (params: {
+        query: string;
+        barId: string;
+        type?: 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu' | 'bar';
+        menuDraftId?: string;
+        menuSectionId?: string;
+    }) => void;
     onOpenDrink?: (drink: SearchItem) => void;
 }
 
@@ -97,6 +105,7 @@ export default function CreateMenuWizard({
     onClose,
     onSave,
     onChromeState,
+    onCreateDrinkPress,
     onOpenDrink,
 }: CreateMenuWizardProps = {}) {
     const colorScheme = useColorScheme();
@@ -105,6 +114,8 @@ export default function CreateMenuWizard({
     const router = useRouter();
     const navigation = useNavigation();
     const requestCreate = useCreatorNavStore((s) => s.requestCreate);
+    const pendingMenuDrink = useCreatorNavStore((s) => s.pendingMenuDrink);
+    const consumeMenuDrink = useCreatorNavStore((s) => s.consumeMenuDrink);
     const { draftId, menuId, barId: barIdFromParams } = useLocalSearchParams<{ draftId?: string, menuId?: string, barId?: string }>();
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeMenuIdProp = menuIdProp !== undefined ? menuIdProp : menuId;
@@ -191,12 +202,23 @@ export default function CreateMenuWizard({
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
+    // ponytail: only [needsCleanMark] — including currentStateStr re-marks edits as clean
     useEffect(() => {
-        if (needsCleanMark) {
-            cleanStateStrRef.current = currentStateStr;
-            setNeedsCleanMark(false);
-        }
-    }, [needsCleanMark, currentStateStr]);
+        if (!needsCleanMark) return;
+        cleanStateStrRef.current = currentStateStr;
+        setNeedsCleanMark(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [needsCleanMark]);
+
+    // After create-from-section, apply drink once the menu finished loading (survives remount)
+    useEffect(() => {
+        if (!draftLoaded || !pendingMenuDrink) return;
+        const pending = consumeMenuDrink();
+        if (!pending) return;
+        setSelections((prev) =>
+            withDrinkInSection(prev, pending.sectionId, pending.drinkId, pending.replaceId)
+        );
+    }, [draftLoaded, pendingMenuDrink, consumeMenuDrink]);
 
     useEffect(() => {
         if (currentDraftId && !draftLoaded && drafts.length > 0) {
@@ -306,34 +328,44 @@ export default function CreateMenuWizard({
         return () => clearTimeout(timer);
     }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, coverPosition, saveDraft, router, isInline]);
 
+    const persistMenuDraft = async (silent = false): Promise<string | null> => {
+        const draftData = {
+            selectedTemplateId,
+            menuName,
+            name: menuName,
+            selections,
+            barId,
+            coverUrl,
+            coverPosition,
+            hasVenueStep: true,
+        };
+        const result = await saveDraft({
+            id: currentDraftId || undefined,
+            entityType: 'menu',
+            draftData,
+        });
+        const id = result?.id || currentDraftId || null;
+        if (!currentDraftId && id) {
+            setCurrentDraftId(id);
+            if (!isInline) {
+                router.setParams({ draftId: id });
+            }
+        }
+        if (!silent) {
+            if (Platform.OS === 'web') {
+                window.alert('Draft saved successfully!');
+            } else {
+                Alert.alert('Success', 'Draft saved successfully!');
+            }
+        }
+        setNeedsCleanMark(true);
+        return id;
+    };
+
     const handleSaveDraft = async () => {
         try {
             setSaving(true);
-            const draftData = {
-                selectedTemplateId,
-                menuName,
-                name: menuName,
-                selections,
-                barId,
-                coverUrl,
-                coverPosition,
-                hasVenueStep: true,
-            };
-            const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'menu', draftData });
-            
-            if (!currentDraftId && result && result.id) {
-                setCurrentDraftId(result.id);
-                if (!isInline) {
-                    router.setParams({ draftId: result.id });
-                }
-            }
-            
-            if (Platform.OS === 'web') {
-                window.alert("Draft saved successfully!");
-            } else {
-                Alert.alert("Success", "Draft saved successfully!");
-            }
-            setNeedsCleanMark(true);
+            await persistMenuDraft(false);
         } catch (error) {
             console.error("Draft error:", error);
             if (Platform.OS === 'web') {
@@ -825,9 +857,38 @@ export default function CreateMenuWizard({
                     setPickingSectionId(null);
                 }}
                 onCreateNew={({ name, type }) => {
+                    const sectionId = pickingSectionId;
                     setPickingSectionId(null);
-                    requestCreate(type, menuContextId);
-                    router.push(creatorCreateHref(type, menuContextId, name) as any);
+                    if (!sectionId) return;
+                    void (async () => {
+                        let draftId = currentDraftId;
+                        if (!draftId) {
+                            try {
+                                draftId = await persistMenuDraft(true);
+                            } catch (e) {
+                                console.error(e);
+                                Alert.alert('Error', 'Could not save menu draft before creating drink.');
+                                return;
+                            }
+                        }
+                        const attach = {
+                            menuDraftId: draftId || undefined,
+                            menuSectionId: sectionId,
+                        };
+                        if (onCreateDrinkPress) {
+                            onCreateDrinkPress({
+                                query: name,
+                                type,
+                                barId: barId || menuContextId,
+                                ...attach,
+                            });
+                            return;
+                        }
+                        requestCreate(type, menuContextId, name, attach);
+                        router.push(
+                            creatorCreateHref(type, menuContextId, name, attach) as any
+                        );
+                    })();
                 }}
             />
 

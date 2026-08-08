@@ -2,11 +2,12 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-const DWELL_MS = 450;
+/** Must be long enough that pause-to-aim during reorder does not arm merge. */
+export const MERGE_DWELL_MS = 1200;
 
 /**
  * iOS-home-screen-style merge arming for react-native-draggable-flatlist:
- * hold a stable placeholder index ~450ms → arm merge; onDragEnd uses merge instead of reorder.
+ * hold a stable placeholder index → arm merge; onDragEnd uses merge instead of reorder.
  */
 export function useDragMergeDwell(enabled: boolean) {
     const fromRef = useRef<number | null>(null);
@@ -64,7 +65,7 @@ export function useDragMergeDwell(enabled: boolean) {
                 if (Platform.OS !== 'web') {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }
-            }, DWELL_MS);
+            }, MERGE_DWELL_MS);
         },
         [enabled, disarm]
     );

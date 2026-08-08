@@ -1,41 +1,38 @@
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
-/** Bump when template_sections shape changes so hour-long cache can't serve stale rows. */
-export const DROPDOWNS_QUERY_KEY = ['dropdowns_v4'] as const;
+/** Bump when menus shape / current filter changes so hour-long cache can't serve stale rows. */
+export const DROPDOWNS_QUERY_KEY = ['dropdowns_v5'] as const;
 
 export function useDropdowns() {
     return useQuery({
         queryKey: DROPDOWNS_QUERY_KEY,
         queryFn: async () => {
+            // ponytail: fetch all menus; Current sidebar filters is_active (inactive stay in creator tree)
             const menusQuery = async () => {
                 const res = await supabase
                     .from('menus')
-                    .select('id, name, template_id, bar_id, created_at, cover_url, cover_position')
-                    .eq('is_active', true)
+                    .select('id, name, template_id, bar_id, is_active, created_at, cover_url, cover_position')
                     .order('created_at');
                 if (res.error) {
                     console.warn("Failed to fetch menus with cover fields, attempting fallback:", res.error.message);
                     const withCover = await supabase
                         .from('menus')
-                        .select('id, name, template_id, bar_id, created_at, cover_url')
-                        .eq('is_active', true)
+                        .select('id, name, template_id, bar_id, is_active, created_at, cover_url')
                         .order('created_at');
                     if (!withCover.error) {
                         return (withCover.data || []).map((m) => ({ ...m, cover_position: 50 }));
                     }
                     const withBar = await supabase
                         .from('menus')
-                        .select('id, name, template_id, bar_id, created_at')
-                        .eq('is_active', true)
+                        .select('id, name, template_id, bar_id, is_active, created_at')
                         .order('created_at');
                     if (!withBar.error) {
                         return (withBar.data || []).map((m) => ({ ...m, cover_url: null, cover_position: 50 }));
                     }
                     const fallbackRes = await supabase
                         .from('menus')
-                        .select('id, name, template_id, created_at')
-                        .eq('is_active', true)
+                        .select('id, name, template_id, is_active, created_at')
                         .order('created_at');
                     if (fallbackRes.error) throw fallbackRes.error;
                     return (fallbackRes.data || []).map((m) => ({

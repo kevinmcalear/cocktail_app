@@ -2,6 +2,17 @@ import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList'
 
 export const NEW_BATCH_NAME = 'New batch';
 
+/** "{Cocktail} batch", or "New batch" when the parent has no name yet. */
+export function defaultBatchName(parentName?: string | null): string {
+    const base = parentName?.trim();
+    return base ? `${base} batch` : NEW_BATCH_NAME;
+}
+
+/** Fresh merge defaults: "New batch" or anything ending in " batch". */
+export function isDefaultBatchName(name: string): boolean {
+    return name === NEW_BATCH_NAME || (name.length > 6 && name.endsWith(' batch'));
+}
+
 export type MergePlan =
     | {
           mode: 'create';

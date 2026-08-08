@@ -10,7 +10,8 @@ import {
     TouchableOpacity,
     Platform,
     KeyboardAvoidingView,
-    Modal
+    Modal,
+    Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,11 +28,12 @@ import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { decode } from "base64-arraybuffer";
-import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { renameIngredientEntity } from "@/lib/drafts";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 import { sortRecipesByOrder, mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
@@ -78,6 +80,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
     const [overrideSpecific, setOverrideSpecific] = useState<string | null>(null);
     const [overrideMeasurement, setOverrideMeasurement] = useState<string | null>(null);
     const [overridePrep, setOverridePrep] = useState<string | null>(null);
+    const [hideFromSearch, setHideFromSearch] = useState(false);
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
@@ -99,6 +102,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
         barId,
         drafts,
         saveDraft,
+        parentName: name,
     });
 
     const renderBackdrop = useCallback(
@@ -141,6 +145,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             setOverrideSpecific(data.ingredient.override_specific_brand_level?.toString() || null);
             setOverrideMeasurement(data.ingredient.override_measurement_level?.toString() || null);
             setOverridePrep(data.ingredient.override_prep_level?.toString() || null);
+            setHideFromSearch(data.ingredient.hide_from_search === true);
 
             if (data.ingredient.item_categories) {
                 setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
@@ -162,6 +167,11 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
         }
     }, [data]);
 
+    const addImages = (uris: string[]) => {
+        if (!uris.length) return;
+        setLocalImages((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
+    };
+
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -177,28 +187,22 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
         });
 
         if (!result.canceled) {
-            const newImages = result.assets.map(asset => ({
-                url: asset.uri,
-                isNew: true
-            }));
-            setLocalImages(prev => [...prev, ...newImages]);
+            addImages(result.assets.map((asset) => asset.uri));
         }
     };
 
     const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
         try {
-            const ext = uri.substring(uri.lastIndexOf('.') + 1);
+            const ext = imageExtFromUri(uri);
             const fileName = `ingredients/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-            const base64 = await FileSystem.readAsStringAsync(uri, {
-                encoding: 'base64',
-            });
+            const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
 
             const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext}`,
+                    contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
                     upsert: false
                 });
 
@@ -277,6 +281,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                     override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
                     override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
                     override_prep_level: overridePrep ? parseInt(overridePrep) : null,
+                    hide_from_search: hideFromSearch,
                 })
                 .eq('id', id);
 
@@ -424,6 +429,7 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                             setLocalImages(newImages);
                         }}
                         onAdd={pickImage}
+                        onAddUris={addImages}
                         generateComponent={<GenerateImageButton type="ingredient" id={id} name={name} variant="tile" />}
                     />
 
@@ -538,9 +544,37 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                             onMerge={onMerge}
                             variant="card"
                             onNestedItemPress={onNestedItemPress}
+                            onRenameIngredient={async (ingredientId, nextName) => {
+                                try {
+                                    await renameIngredientEntity(ingredientId, nextName, drafts, saveDraft);
+                                } catch (e: any) {
+                                    const msg = e?.message || "Failed to rename ingredient.";
+                                    if (Platform.OS === "web") window.alert(msg);
+                                    else Alert.alert("Error", msg);
+                                }
+                            }}
                             drafts={drafts}
                         />
                     </YStack>
+
+                    <XStack alignItems="center" justifyContent="space-between" gap="$3" marginBottom="$4">
+                        <YStack flex={1} gap="$1">
+                            <Text fontSize={15} fontWeight="600" color="$color">
+                                Hide in Search
+                            </Text>
+                            <Text fontSize={12} color="$color11">
+                                Keep this ingredient out of ⌘K (still usable in recipes)
+                            </Text>
+                        </YStack>
+                        <Switch
+                            value={hideFromSearch}
+                            onValueChange={setHideFromSearch}
+                            trackColor={{
+                                false: theme.borderColor?.get() as string,
+                                true: theme.color8?.get() as string,
+                            }}
+                        />
+                    </XStack>
 
                     <BarAssignmentAccordion
                         barId={barId} setBarId={setBarId}

@@ -1,5 +1,4 @@
 import { decode } from "base64-arraybuffer";
-import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -17,6 +16,7 @@ import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useWine } from "@/hooks/useWines";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { supabase } from "@/lib/supabase";
 import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
@@ -98,6 +98,11 @@ export default function EditWineScreen({ isInline, idProp, onClose, onSave }: Ed
         }
     }, [wine]);
 
+    const addImages = (uris: string[]) => {
+        if (!uris.length) return;
+        setLocalImages((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
+    };
+
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -113,28 +118,22 @@ export default function EditWineScreen({ isInline, idProp, onClose, onSave }: Ed
         });
 
         if (!result.canceled) {
-            const newImages = result.assets.map(asset => ({
-                url: asset.uri,
-                isNew: true
-            }));
-            setLocalImages(prev => [...prev, ...newImages]);
+            addImages(result.assets.map((asset) => asset.uri));
         }
     };
 
     const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
         try {
-            const ext = uri.substring(uri.lastIndexOf('.') + 1);
+            const ext = imageExtFromUri(uri);
             const fileName = `wines/${safeId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-            const base64 = await FileSystem.readAsStringAsync(uri, {
-                encoding: 'base64',
-            });
+            const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
 
             const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext}`,
+                    contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
                     upsert: false
                 });
 
@@ -324,6 +323,7 @@ export default function EditWineScreen({ isInline, idProp, onClose, onSave }: Ed
                         setLocalImages(newImages);
                     }}
                     onAdd={pickImage}
+                    onAddUris={addImages}
                     generateComponent={<GenerateImageButton type="wine" id={safeId} variant="tile" />}
                 />
 

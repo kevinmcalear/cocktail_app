@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
@@ -47,11 +47,26 @@ export function CocktailDraftInlineEditor({
     });
     const [showPhotoSheet, setShowPhotoSheet] = useState(false);
 
-    const handleSave = async () => {
-        const ok = await editor.handleSave();
+    const handleSaveDraft = async () => {
+        const id = await editor.handleSaveDraft(false);
+        if (id) setShowPhotoSheet(false);
+        return id;
+    };
+
+    const handlePublish = async () => {
+        const ok = await editor.handlePublish();
         if (ok) {
             setShowPhotoSheet(false);
             onSave?.();
+        }
+        return ok;
+    };
+
+    const handleDelete = async () => {
+        const ok = await editor.handleDelete();
+        if (ok) {
+            setShowPhotoSheet(false);
+            onClose?.();
         }
         return ok;
     };
@@ -64,17 +79,23 @@ export function CocktailDraftInlineEditor({
 
     useEffect(() => {
         if (!onChromeState || editor.loading) return;
-        const canPublish = Boolean(editor.name.trim()) || editor.isDirty;
         onChromeState({
             save: async () => {
-                await handleSave();
+                await handleSaveDraft();
+            },
+            publish: async () => {
+                await handlePublish();
+            },
+            discard: () => {
+                void handleDelete();
             },
             cancel: handleClose,
             saving: editor.saving,
-            isDirty: canPublish,
+            isDirty: editor.isDirty,
+            canPublish: Boolean(editor.name.trim()),
         });
         return () => onChromeState(null);
-    }, [onChromeState, editor.loading, editor.saving, editor.isDirty, editor.name]);
+    }, [onChromeState, editor.loading, editor.saving, editor.isDirty, editor.name, editor.draftId]);
 
     const cocktailView = useMemo(
         () =>
@@ -122,16 +143,25 @@ export function CocktailDraftInlineEditor({
                 onToggleStudyPile={() => {}}
                 embedded={embedded}
                 isEditing
-                onSave={embedded ? undefined : () => { void handleSave(); }}
+                onBack={embedded ? undefined : handleClose}
                 onCancelEdit={embedded ? undefined : handleClose}
+                onSave={embedded ? undefined : () => { void handleSaveDraft(); }}
+                onPublish={embedded ? undefined : () => { void handlePublish(); }}
+                onDelete={embedded ? undefined : () => { void handleDelete(); }}
                 saving={editor.saving}
-                isDirty={Boolean(editor.name.trim()) || editor.isDirty}
+                isDirty={editor.isDirty}
+                canPublish={Boolean(editor.name.trim())}
                 editableTitle={{
                     value: editor.name,
                     onChange: (val) => handleCapitalizedChange(val, editor.name, editor.setName),
                     onBlur: () => editor.setName(capitalize(editor.name)),
                 }}
-                onManageImages={() => setShowPhotoSheet(true)}
+                onManageImages={
+                    Platform.OS === "web" && displayImages.length === 0
+                        ? () => { void editor.pickImage(); }
+                        : () => setShowPhotoSheet(true)
+                }
+                onDropImages={editor.addImages}
             >
                 <CocktailDetailContent
                     cocktail={cocktailView}
@@ -154,6 +184,7 @@ export function CocktailDraftInlineEditor({
                             editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))
                         }
                         onAdd={editor.pickImage}
+                        onAddUris={editor.addImages}
                     />
                 </View>
             </AdaptiveSheetModal>

@@ -194,10 +194,10 @@ export function useMenuEditor(menuId: string | null, enabled: boolean) {
         if (!menuId || !selectedTemplateId || !menuName.trim()) return false;
         setSaving(true);
         try {
+            // ponytail: don't stomp is_active — Current toggle owns that flag
             const updatePayload: any = {
                 name: capitalize(menuName),
                 template_id: selectedTemplateId,
-                is_active: true,
                 bar_id: barId || null,
                 cover_url: coverUrl || null,
                 cover_position: coverPosition,

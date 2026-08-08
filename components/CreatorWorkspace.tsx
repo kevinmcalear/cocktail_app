@@ -16,8 +16,10 @@ interface CreatorWorkspaceProps {
     onDiscard?: () => void;
     onCancel?: () => void;
     onSave?: () => void;
+    onPublish?: () => void;
     saving?: boolean;
     isDirty?: boolean;
+    canPublish?: boolean;
     children: React.ReactNode;
 }
 
@@ -31,12 +33,15 @@ export function CreatorWorkspace({
     onDiscard,
     onCancel,
     onSave,
+    onPublish,
     saving = false,
     isDirty = false,
+    canPublish = false,
     children,
 }: CreatorWorkspaceProps) {
     const theme = useTheme();
     const showBreadcrumbs = navigationStack.length > 1;
+    const draftPublishChrome = Boolean(onPublish);
 
     const progressInfo = activeItem && !activeItem.isPublished
         ? calculateDraftProgress(activeItem, drafts, dropdowns)
@@ -52,7 +57,7 @@ export function CreatorWorkspace({
         : null;
 
     const entityType = activeItem?.entity_type ?? workspaceMeta?.type;
-    const showHeader = showBreadcrumbs || activeItem || workspaceMeta;
+    const showHeader = showBreadcrumbs || activeItem || workspaceMeta || !!onCancel;
 
     return (
         <YStack flex={1} height="100%" backgroundColor="$background">
@@ -69,7 +74,7 @@ export function CreatorWorkspace({
                         />
                     )}
 
-                    {(activeItem || workspaceMeta) && (
+                    {(activeItem || workspaceMeta || onCancel) && (
                         <XStack
                             paddingHorizontal="$4"
                             paddingVertical="$2.5"
@@ -78,6 +83,19 @@ export function CreatorWorkspace({
                             gap="$3"
                         >
                             <XStack alignItems="center" gap="$2" flex={1} flexWrap="wrap">
+                                {onCancel && (
+                                    <TouchableOpacity
+                                        onPress={onCancel}
+                                        style={styles.backBtn}
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                        <IconSymbol
+                                            name="chevron.left"
+                                            size={20}
+                                            color={theme.color?.get() as string}
+                                        />
+                                    </TouchableOpacity>
+                                )}
                                 {activeItem?.isPublished ? (
                                     <View style={[styles.badge, { backgroundColor: 'rgba(52, 199, 89, 0.15)' }]}>
                                         <XStack alignItems="center" gap="$1">
@@ -122,11 +140,14 @@ export function CreatorWorkspace({
                             </XStack>
 
                             <XStack alignItems="center" gap="$2">
-                                {onCancel && (
-                                    <TouchableOpacity onPress={onCancel} style={styles.textBtn}>
-                                        <Text fontSize={12} fontWeight="600" color="$color11">
-                                            Cancel
-                                        </Text>
+                                {onDiscard && (
+                                    <TouchableOpacity onPress={onDiscard} style={styles.discardBtn}>
+                                        <XStack alignItems="center" gap="$1">
+                                            <IconSymbol name="trash" size={12} color="#ff4444" />
+                                            <Text fontSize={11} fontWeight="600" color="#ff4444">
+                                                {draftPublishChrome || activeItem?.isPublished ? "Delete" : "Discard"}
+                                            </Text>
+                                        </XStack>
                                     </TouchableOpacity>
                                 )}
                                 {onSave && (
@@ -136,18 +157,19 @@ export function CreatorWorkspace({
                                         style={[styles.saveBtn, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4 }]}
                                     >
                                         <Text fontSize={12} fontWeight="bold" color={theme.backgroundStrong?.get() as string}>
-                                            {saving ? "Saving…" : "Save"}
+                                            {saving ? "Saving…" : draftPublishChrome ? "Save Draft" : "Save"}
                                         </Text>
                                     </TouchableOpacity>
                                 )}
-                                {onDiscard && (
-                                    <TouchableOpacity onPress={onDiscard} style={styles.discardBtn}>
-                                        <XStack alignItems="center" gap="$1">
-                                            <IconSymbol name="trash" size={12} color="#ff4444" />
-                                            <Text fontSize={11} fontWeight="600" color="#ff4444">
-                                                {activeItem.isPublished ? "Delete" : "Discard"}
-                                            </Text>
-                                        </XStack>
+                                {onPublish && (
+                                    <TouchableOpacity
+                                        onPress={onPublish}
+                                        disabled={saving || !canPublish}
+                                        style={[styles.saveBtn, { backgroundColor: theme.color8?.get() as string, opacity: canPublish ? 1 : 0.4 }]}
+                                    >
+                                        <Text fontSize={12} fontWeight="bold" color={theme.backgroundStrong?.get() as string}>
+                                            {saving ? "…" : "Publish"}
+                                        </Text>
                                     </TouchableOpacity>
                                 )}
                             </XStack>
@@ -220,10 +242,10 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: 'rgba(255, 68, 68, 0.08)',
     },
-    textBtn: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 6,
+    backBtn: {
+        paddingHorizontal: 4,
+        paddingVertical: 4,
+        marginRight: 2,
     },
     saveBtn: {
         paddingHorizontal: 14,

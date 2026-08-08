@@ -21,9 +21,21 @@ interface AppState {
     setSelectedBarId: (id: string | null) => void;
     selectedMenuId: string | null;
     setSelectedMenuId: (id: string | null) => void;
-    recentlyCreatedItem: { type: 'cocktail' | 'ingredient'; id: string; name: string } | null;
+    recentlyCreatedItem: {
+        type: 'cocktail' | 'ingredient';
+        id: string;
+        name: string;
+        replacedId?: string | null;
+        targetId?: string | null;
+    } | null;
     setRecentlyCreatedItem: (
-        item: { type: 'cocktail' | 'ingredient'; id: string; name: string } | null
+        item: {
+            type: 'cocktail' | 'ingredient';
+            id: string;
+            name: string;
+            replacedId?: string | null;
+            targetId?: string | null;
+        } | null
     ) => void;
 }
 

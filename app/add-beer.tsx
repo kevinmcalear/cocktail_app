@@ -1,5 +1,4 @@
 import { decode } from "base64-arraybuffer";
-import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useState } from "react";
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDrafts } from "@/hooks/useDrafts";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { updateMenuDraftsWithPublishedId } from "@/lib/drafts";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
@@ -198,6 +198,51 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, initia
         }
     };
 
+    const addImages = async (uris: string[]) => {
+        if (!uris.length) return;
+        setSaving(true);
+        try {
+            const newImages: { id?: string; url: string; isNew?: boolean }[] = [];
+            for (const uri of uris) {
+                const ext = imageExtFromUri(uri);
+                const fileName = `drafts/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                const base64 = await uriToBase64(uri);
+                const arrayBuffer = decode(base64);
+
+                const { error: uploadError } = await supabase.storage
+                    .from('drinks')
+                    .upload(fileName, arrayBuffer, {
+                        contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+                        upsert: false,
+                    });
+
+                if (!uploadError) {
+                    const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
+
+                    const { data: imgData, error: imgError } = await supabase
+                        .from('images')
+                        .insert({ url: publicUrlData.publicUrl })
+                        .select()
+                        .single();
+
+                    if (!imgError && imgData) {
+                        newImages.push({
+                            id: imgData.id,
+                            url: publicUrlData.publicUrl,
+                            isNew: false,
+                        });
+                    }
+                }
+            }
+            setLocalImages((prev) => [...prev, ...newImages]);
+        } catch (error) {
+            console.error("Error uploading drafted image", error);
+            Alert.alert("Error", "Failed to upload image");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -213,44 +258,7 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, initia
         });
 
         if (!result.canceled) {
-            setSaving(true);
-            try {
-                const newImages: { id?: string, url: string, isNew?: boolean }[] = [];
-                for (const asset of result.assets) {
-                    const ext = asset.uri.substring(asset.uri.lastIndexOf('.') + 1) || 'jpg';
-                    const fileName = `drafts/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-                    const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
-                    const arrayBuffer = decode(base64);
-
-                    const { error: uploadError } = await supabase.storage
-                        .from('drinks')
-                        .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: false });
-
-                    if (!uploadError) {
-                        const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
-                        
-                        const { data: imgData, error: imgError } = await supabase
-                            .from('images')
-                            .insert({ url: publicUrlData.publicUrl })
-                            .select()
-                            .single();
-                            
-                        if (!imgError && imgData) {
-                            newImages.push({
-                                id: imgData.id,
-                                url: publicUrlData.publicUrl,
-                                isNew: false
-                            });
-                        }
-                    }
-                }
-                setLocalImages(prev => [...prev, ...newImages]);
-            } catch (error) {
-                console.error("Error uploading drafted image", error);
-                Alert.alert("Error", "Failed to upload image");
-            } finally {
-                setSaving(false);
-            }
+            await addImages(result.assets.map((asset) => asset.uri));
         }
     };
 
@@ -274,18 +282,16 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, initia
                 return null;
             }
 
-            const ext = uri.substring(uri.lastIndexOf('.') + 1) || 'jpg';
+            const ext = imageExtFromUri(uri);
             const fileName = `beers/${itemId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-            const base64 = await FileSystem.readAsStringAsync(uri, {
-                encoding: 'base64',
-            });
+            const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
 
             const { error: uploadError } = await supabase.storage
                 .from('drinks')
                 .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext}`,
+                    contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
                     upsert: false
                 });
 
@@ -483,6 +489,7 @@ export default function AddBeerScreen({ isInline, draftIdProp, barIdProp, initia
                             setLocalImages(newImages);
                         }}
                         onAdd={pickImage}
+                        onAddUris={(uris) => { void addImages(uris); }}
                     />
 
                     <YStack gap="$2" marginBottom="$4">

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { Text, YStack } from "tamagui";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
@@ -124,7 +124,14 @@ export default function CocktailDetailsScreen() {
                           }
                         : undefined
                 }
-                onManageImages={isEditing ? () => setShowPhotoSheet(true) : undefined}
+                onManageImages={
+                    isEditing
+                        ? Platform.OS === "web" && images.length === 0
+                            ? () => { void editor.pickImage(); }
+                            : () => setShowPhotoSheet(true)
+                        : undefined
+                }
+                onDropImages={isEditing ? editor.addImages : undefined}
             >
                 <CocktailDetailContent cocktail={cocktail} isEditing={isEditing} editor={isEditing ? editor : null} />
             </ItemDetailLayout>
@@ -142,6 +149,7 @@ export default function CocktailDetailsScreen() {
                             editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))
                         }
                         onAdd={editor.pickImage}
+                        onAddUris={editor.addImages}
                         generateComponent={
                             <GenerateImageButton type="cocktail" id={id as string} variant="tile" />
                         }

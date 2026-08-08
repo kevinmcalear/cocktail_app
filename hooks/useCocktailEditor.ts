@@ -1,13 +1,13 @@
 import { decode } from "base64-arraybuffer";
 import * as FilePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { capitalize } from "@/lib/stringUtils";
 import { mapPresentationRecipeToEditItem, sortRecipesByOrder } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
@@ -144,6 +144,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         resetLoaded();
     }, [resetLoaded]);
 
+    const addImages = useCallback((uris: string[]) => {
+        if (!uris.length) return;
+        setLocalImagesDirty((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
+    }, []);
+
     const pickImage = async () => {
         const { status } = await FilePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -157,23 +162,23 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             quality: 0.8,
         });
         if (!result.canceled) {
-            setLocalImagesDirty((prev) => [
-                ...prev,
-                ...result.assets.map((asset) => ({ url: asset.uri, isNew: true })),
-            ]);
+            addImages(result.assets.map((asset) => asset.uri));
         }
     };
 
     const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
         try {
-            const ext = uri.substring(uri.lastIndexOf(".") + 1);
+            const ext = imageExtFromUri(uri);
             const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
+            const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
 
             const { error: uploadError } = await supabase.storage
                 .from("drinks")
-                .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: false });
+                .upload(fileName, arrayBuffer, {
+                    contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
+                    upsert: false,
+                });
             if (uploadError) return null;
 
             const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
@@ -189,14 +194,25 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         }
     };
 
-    const handleAddPill = async (type: SpecCategory, newItemName: string) => {
-        if (!newItemName.trim()) return;
-        const { error } = await supabase.from("items").insert({
-            name: capitalize(newItemName.trim()),
-            item_type: type,
-        });
-        if (error) throw error;
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+    const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
+        if (!newItemName.trim()) throw new Error("Name is required");
+        const { data, error } = await supabase
+            .from("items")
+            .insert({
+                name: capitalize(newItemName.trim()),
+                item_type: type,
+            })
+            .select("id")
+            .single();
+        if (error || !data) throw error || new Error(`Failed to create ${type}`);
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        ({
+            method: setMethodIdDirty,
+            glassware: setGlasswareIdDirty,
+            family: setFamilyIdDirty,
+            ice: setIceIdDirty,
+        })[type](data.id);
+        return data.id;
     };
 
     const identifyGlassware = identifyGlasswareFromPhoto;
@@ -217,7 +233,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             .select("id")
             .single();
         if (error || !data) throw error || new Error("Failed to create glassware");
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
         setGlasswareIdDirty(data.id);
         return data.id;
     };
@@ -232,7 +248,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         if (field === "family_id" && familyId === pillId) setFamilyIdDirty(null);
         if (field === "ice_id" && iceId === pillId) setIceIdDirty(null);
 
-        await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
     };
 
     const handleDeletePill = async (category: SpecCategory, item: { id: string; name: string }) => {
@@ -419,6 +435,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setRecipeItems: setRecipeItemsDirty,
         localImages,
         setLocalImages: setLocalImagesDirty,
+        addImages,
         pickImage,
         handleAddPill,
         handleAddGlassware,

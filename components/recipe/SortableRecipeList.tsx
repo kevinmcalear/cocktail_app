@@ -3,10 +3,11 @@ import { Colors } from '@/constants/theme';
 import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { calculateDraftProgress } from '@/lib/draftProgress';
+import { isDefaultBatchName } from '@/lib/mergeRecipeItems';
 import { capitalize } from '@/lib/stringUtils';
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
-import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, {
     NestableDraggableFlatList,
     RenderItemParams,
@@ -30,12 +31,14 @@ interface SortableRecipeListProps {
     onRemove: (index: number) => void;
     variant?: 'row' | 'card' | 'detail';
     onNestedItemPress?: (ingredientId: string) => void;
+    /** Persist ingredient entity rename (draft or published). */
+    onRenameIngredient?: (ingredientId: string, name: string) => void;
     drafts?: any[];
     dropdowns?: any;
     allIngredients?: any[];
     ingredientImageMap?: Record<string, string>;
-    /** Hold over a row while dragging to combine into a complex ingredient. */
-    onMerge?: (fromIndex: number, targetIndex: number) => void;
+    /** Hold over a row while dragging to combine into a complex ingredient. Return false to fall back to reorder. */
+    onMerge?: (fromIndex: number, targetIndex: number) => boolean | void | Promise<boolean | void>;
 }
 
 interface DetailRecipeRowProps {
@@ -123,7 +126,104 @@ function DetailRecipeRow({
                 )}
                 {nameNode}
             </View>
+            {isMergeTarget ? <Text style={styles.mergeHint}>Release to combine</Text> : null}
         </View>
+    );
+}
+
+function EditableRecipeName({
+    item,
+    index,
+    variant,
+    autoFocusNameKey,
+    onUpdateItem,
+    onRenameIngredient,
+    onOpen,
+    draftBadge,
+}: {
+    item: SortableRecipeItem;
+    index: number;
+    variant: 'row' | 'card' | 'detail';
+    autoFocusNameKey?: number;
+    onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
+    onRenameIngredient?: (ingredientId: string, name: string) => void;
+    onOpen?: (ingredientId: string) => void;
+    draftBadge: React.ReactNode;
+}) {
+    const theme = useTheme();
+    const [editing, setEditing] = useState(!!autoFocusNameKey);
+    const nameRef = useRef<TextInput>(null);
+    const committedNameRef = useRef(item.name);
+
+    useEffect(() => {
+        if (!editing) committedNameRef.current = item.name;
+    }, [item.name, editing]);
+
+    useEffect(() => {
+        if (!autoFocusNameKey) return;
+        setEditing(true);
+        const t = setTimeout(() => nameRef.current?.focus(), 50);
+        return () => clearTimeout(t);
+    }, [autoFocusNameKey]);
+
+    const commitName = () => {
+        setEditing(false);
+        const next = capitalize(item.name.trim());
+        if (!next) {
+            onUpdateItem(index, { name: committedNameRef.current });
+            return;
+        }
+        if (next !== item.name) onUpdateItem(index, { name: next });
+        if (next !== committedNameRef.current) {
+            committedNameRef.current = next;
+            onRenameIngredient?.(item.ingredient_id, next);
+        }
+    };
+
+    const nameStyle = [
+        variant === 'row' ? styles.recipeName : undefined,
+        variant === 'card' ? { fontSize: 16 } : undefined,
+        variant === 'detail'
+            ? { fontSize: 18, fontWeight: '400' as const, color: theme.color?.get() as string }
+            : undefined,
+        variant === 'card' ? { color: theme.color?.get() as string } : undefined,
+    ];
+
+    if (editing) {
+        return (
+            <TextInput
+                ref={nameRef}
+                value={item.name}
+                onChangeText={(v) => onUpdateItem(index, { name: v })}
+                placeholder="Ingredient name"
+                placeholderTextColor={theme.color11?.get() as string}
+                style={[styles.nameInput, ...nameStyle]}
+                returnKeyType="done"
+                onSubmitEditing={commitName}
+                onBlur={commitName}
+                selectTextOnFocus={isDefaultBatchName(item.name)}
+            />
+        );
+    }
+
+    return (
+        <XStack gap="$2" alignItems="center" flex={1}>
+            <TouchableOpacity onPress={() => setEditing(true)} activeOpacity={0.7} style={{ flexShrink: 1, minWidth: 0 }}>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={nameStyle}>
+                    {capitalize(item.name)}
+                </Text>
+            </TouchableOpacity>
+            {draftBadge}
+            {onOpen ? (
+                <TouchableOpacity
+                    onPress={() => onOpen(item.ingredient_id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="Open ingredient"
+                >
+                    <IconSymbol name="chevron.right" size={14} color={theme.color8?.get() as string} />
+                </TouchableOpacity>
+            ) : null}
+        </XStack>
     );
 }
 
@@ -134,6 +234,7 @@ export function SortableRecipeList({
     onRemove,
     variant = 'row',
     onNestedItemPress,
+    onRenameIngredient,
     drafts,
     dropdowns,
     allIngredients,
@@ -142,6 +243,17 @@ export function SortableRecipeList({
 }: SortableRecipeListProps) {
     const theme = useTheme();
     const dwell = useDragMergeDwell(!!onMerge);
+    const prevIdsRef = useRef<Set<string>>(new Set(items.map((i) => i.ingredient_id)));
+    const [focusName, setFocusName] = useState<{ index: number; key: number } | null>(null);
+
+    useEffect(() => {
+        const prev = prevIdsRef.current;
+        const newBatchIndex = items.findIndex(
+            (i) => isDefaultBatchName(i.name) && !prev.has(i.ingredient_id)
+        );
+        prevIdsRef.current = new Set(items.map((i) => i.ingredient_id));
+        if (newBatchIndex >= 0) setFocusName({ index: newBatchIndex, key: Date.now() });
+    }, [items]);
 
     const renderDraftBadge = (ingredientId: string) => {
         if (!drafts || !dropdowns) return null;
@@ -168,47 +280,18 @@ export function SortableRecipeList({
         );
     };
 
-    const renderName = (item: SortableRecipeItem) => {
-        const nameText = (
-            <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                    variant === 'row' ? styles.recipeName : undefined,
-                    variant === 'card' ? { fontSize: 16 } : undefined,
-                    variant === 'detail' ? { fontSize: 18, fontWeight: '400', color: theme.color?.get() as string } : undefined,
-                    onNestedItemPress
-                        ? { color: theme.color8?.get() as string }
-                        : variant === 'card'
-                          ? { color: theme.color?.get() as string }
-                          : undefined,
-                ]}
-            >
-                {capitalize(item.name)}
-            </Text>
-        );
-
-        if (onNestedItemPress) {
-            return (
-                <TouchableOpacity
-                    onPress={() => onNestedItemPress(item.ingredient_id)}
-                    activeOpacity={0.7}
-                >
-                    <XStack gap="$2" alignItems="center" flex={1}>
-                        {nameText}
-                        {renderDraftBadge(item.ingredient_id)}
-                    </XStack>
-                </TouchableOpacity>
-            );
-        }
-
-        return (
-            <XStack gap="$2" alignItems="center" flex={1}>
-                {nameText}
-                {renderDraftBadge(item.ingredient_id)}
-            </XStack>
-        );
-    };
+    const renderName = (item: SortableRecipeItem, index: number) => (
+        <EditableRecipeName
+            item={item}
+            index={index}
+            variant={variant}
+            autoFocusNameKey={focusName?.index === index ? focusName.key : undefined}
+            onUpdateItem={onUpdateItem}
+            onRenameIngredient={onRenameIngredient}
+            onOpen={onNestedItemPress}
+            draftBadge={renderDraftBadge(item.ingredient_id)}
+        />
+    );
 
     const renderItem = ({
         item,
@@ -232,7 +315,7 @@ export function SortableRecipeList({
                     isMergeTarget={dwell.mergeTargetIndex === index}
                     onUpdateItem={onUpdateItem}
                     onRemove={onRemove}
-                    nameNode={renderName(item)}
+                    nameNode={renderName(item, index)}
                 />
             );
         }
@@ -266,12 +349,13 @@ export function SortableRecipeList({
             </XStack>
         );
 
+        const isMergeTarget = dwell.mergeTargetIndex === index;
         return (
             <View
                 style={[
                     variant === 'row' ? styles.recipeRow : styles.cardRow,
                     isActive && styles.activeItem,
-                    dwell.mergeTargetIndex === index && styles.mergeTarget,
+                    isMergeTarget && styles.mergeTarget,
                 ]}
             >
                 <TouchableOpacity
@@ -286,8 +370,9 @@ export function SortableRecipeList({
                     <IconSymbol name="line.3.horizontal" size={18} color="#aaa" />
                 </TouchableOpacity>
 
-                <View style={styles.nameContainer}>{renderName(item)}</View>
+                <View style={styles.nameContainer}>{renderName(item, index)}</View>
                 <View style={styles.recipeInputs}>{inputs}</View>
+                {isMergeTarget ? <Text style={styles.mergeHint}>Release to combine</Text> : null}
             </View>
         );
     };
@@ -302,8 +387,8 @@ export function SortableRecipeList({
                 <Text style={styles.hint}>
                     {onMerge
                         ? Platform.OS === 'web'
-                            ? 'Drag handle to reorder · Hold over an ingredient to combine'
-                            : 'Long press handle to reorder · Hold over an ingredient to combine'
+                            ? 'Drag handle to reorder · Hold ~1s on an ingredient to combine'
+                            : 'Long press handle to reorder · Hold ~1s on an ingredient to combine'
                         : Platform.OS === 'web'
                           ? 'Drag handle to reorder'
                           : 'Long press handle to reorder'}
@@ -316,7 +401,10 @@ export function SortableRecipeList({
                 onDragEnd={({ data, from }) => {
                     const merge = dwell.consumeMergeOnDragEnd(from);
                     if (merge && onMerge) {
-                        onMerge(merge.from, merge.target);
+                        // Cancelled combine → apply the reorder the user was aiming for
+                        void Promise.resolve(onMerge(merge.from, merge.target)).then((didMerge) => {
+                            if (didMerge === false) onReorder(data);
+                        });
                         return;
                     }
                     onReorder(data);
@@ -356,6 +444,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         gap: 8,
         overflow: 'hidden',
+        position: 'relative',
     },
     cardRow: {
         flexDirection: 'row',
@@ -367,6 +456,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         gap: 8,
         overflow: 'hidden',
+        position: 'relative',
     },
     activeItem: {
         backgroundColor: 'rgba(255,255,255,0.06)',
@@ -375,10 +465,24 @@ const styles = StyleSheet.create({
     },
     mergeTarget: {
         transform: [{ scale: 1.04 }],
-        borderColor: Colors.dark.tint,
+        borderColor: '#e6a23c',
         borderWidth: 2,
-        backgroundColor: 'rgba(0,122,255,0.12)',
+        backgroundColor: 'rgba(230,162,60,0.18)',
         borderRadius: 12,
+    },
+    mergeHint: {
+        position: 'absolute',
+        right: 10,
+        top: 6,
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#e6a23c',
+        backgroundColor: 'rgba(0,0,0,0.55)',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+        overflow: 'hidden',
+        zIndex: 2,
     },
     dragHandle: {
         flexShrink: 0,
@@ -403,6 +507,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         flexShrink: 1,
     },
+    nameInput: {
+        flex: 1,
+        padding: 0,
+        margin: 0,
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        minWidth: 0,
+    },
     recipeInputs: {
         flexDirection: 'row',
         flexWrap: 'nowrap',
@@ -425,6 +537,7 @@ const styles = StyleSheet.create({
         width: '100%',
         gap: 16,
         marginBottom: 16,
+        position: 'relative',
     },
     detailImageWrap: {
         flexDirection: 'row',

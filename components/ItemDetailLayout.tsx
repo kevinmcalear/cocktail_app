@@ -28,8 +28,11 @@ export interface ItemDetailLayoutProps {
     onCancelEdit?: () => void;
     isEditing?: boolean;
     onSave?: () => void;
+    onPublish?: () => void;
+    onDelete?: () => void;
     saving?: boolean;
     isDirty?: boolean;
+    canPublish?: boolean;
     editableTitle?: {
         value: string;
         onChange: (value: string) => void;
@@ -37,6 +40,8 @@ export interface ItemDetailLayoutProps {
         placeholder?: string;
     };
     onManageImages?: () => void;
+    /** Desktop: drop image files onto empty photo placeholder */
+    onDropImages?: (uris: string[]) => void;
     onBack?: () => void;
     /** Hides back, fav/study, cancel/save — for creator workspace inline edit */
     embedded?: boolean;
@@ -60,10 +65,14 @@ export function ItemDetailLayout({
     onCancelEdit,
     isEditing = false,
     onSave,
+    onPublish,
+    onDelete,
     saving = false,
     isDirty = false,
+    canPublish = false,
     editableTitle,
     onManageImages,
+    onDropImages,
     onBack,
     embedded = false,
     emptyPhotoPlaceholder = false,
@@ -214,6 +223,40 @@ export function ItemDetailLayout({
     const renderHeaderAction = () => {
         if (embedded) return null;
         if (isEditing && onSave) {
+            if (onPublish) {
+                return (
+                    <XStack alignItems="center" gap="$1">
+                        {onCancelEdit && (
+                            <TouchableOpacity onPress={onCancelEdit} style={{ padding: 8 }}>
+                                <Text color="$color11" fontWeight="600" fontSize={16}>Cancel</Text>
+                            </TouchableOpacity>
+                        )}
+                        {onDelete && (
+                            <TouchableOpacity onPress={onDelete} style={{ padding: 8 }}>
+                                <Text color="#ff4444" fontWeight="600" fontSize={16}>Delete</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            onPress={onSave}
+                            disabled={saving || !isDirty}
+                            style={{ padding: 8, opacity: isDirty ? 1 : 0.4 }}
+                        >
+                            <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
+                                {saving ? "Saving…" : "Save Draft"}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={onPublish}
+                            disabled={saving || !canPublish}
+                            style={{ padding: 8, opacity: canPublish ? 1 : 0.4 }}
+                        >
+                            <Text color={theme.color8?.get() as string} fontWeight="bold" fontSize={16}>
+                                {saving ? "…" : "Publish"}
+                            </Text>
+                        </TouchableOpacity>
+                    </XStack>
+                );
+            }
             return (
                 <XStack alignItems="center" gap="$1">
                     {onCancelEdit && (
@@ -253,6 +296,46 @@ export function ItemDetailLayout({
     const renderDesktopHeaderAction = () => {
         if (embedded) return null;
         if (isEditing && onSave) {
+            if (onPublish) {
+                return (
+                    <XStack alignItems="center" gap="$2">
+                        {onCancelEdit && (
+                            <TouchableOpacity
+                                onPress={onCancelEdit}
+                                style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string, width: 'auto', paddingHorizontal: 16 }]}
+                            >
+                                <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
+                            </TouchableOpacity>
+                        )}
+                        {onDelete && (
+                            <TouchableOpacity
+                                onPress={onDelete}
+                                style={[styles.actionButtonDesktop, { backgroundColor: 'rgba(255, 68, 68, 0.08)', width: 'auto', paddingHorizontal: 16 }]}
+                            >
+                                <Text color="#ff4444" fontWeight="600" fontSize={14}>Delete</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            onPress={onSave}
+                            disabled={saving || !isDirty}
+                            style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4, width: 'auto', paddingHorizontal: 16 }]}
+                        >
+                            <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
+                                {saving ? "…" : "Save Draft"}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={onPublish}
+                            disabled={saving || !canPublish}
+                            style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: canPublish ? 1 : 0.4, width: 'auto', paddingHorizontal: 20 }]}
+                        >
+                            <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
+                                {saving ? "…" : "Publish"}
+                            </Text>
+                        </TouchableOpacity>
+                    </XStack>
+                );
+            }
             return (
                 <XStack alignItems="center" gap="$2">
                     {onCancelEdit && (
@@ -309,7 +392,7 @@ export function ItemDetailLayout({
         }
         // ponytail: edit with no photos always gets a tappable add affordance
         if (emptyPhotoPlaceholder || (isEditing && onManageImages)) {
-            return <CocktailPhotoPlaceholder onPress={handleImagePress} />;
+            return <CocktailPhotoPlaceholder onPress={handleImagePress} onDropImages={onDropImages} />;
         }
         return null;
     };
@@ -442,8 +525,8 @@ export function ItemDetailLayout({
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="light-content" />
 
-            {/* Floating Back Button */}
-            {!embedded && !isEditing && (
+            {/* Floating Back — keep during edit only when onBack means leave (draft create) */}
+            {!embedded && (!isEditing || onBack) && (
             <TouchableOpacity
                 style={{
                     position: 'absolute',

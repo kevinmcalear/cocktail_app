@@ -28,7 +28,7 @@ interface SpecPickerSheetProps {
     onClose: () => void;
     allowDeselect?: boolean;
     onDelete?: (item: SpecOption) => void;
-    onAdd?: (name: string) => Promise<void>;
+    onAdd?: (name: string) => Promise<string | void>;
     onAddGlassware?: (payload: {
         name: string;
         iconKey: string | null;
@@ -85,9 +85,13 @@ export function SpecPickerSheet({
         if (!onAdd || !newName.trim()) return;
         setSaving(true);
         try {
-            await onAdd(newName.trim());
+            const newId = await onAdd(newName.trim());
             setNewName("");
             setAdding(false);
+            if (typeof newId === "string" && newId) onSelect(newId);
+            onClose();
+        } catch (err: any) {
+            showError("Error", err?.message || `Could not add ${title.toLowerCase()}.`);
         } finally {
             setSaving(false);
         }
@@ -280,6 +284,8 @@ export function SpecPickerSheet({
                                 backgroundColor="$backgroundStrong"
                                 borderColor="$borderColor"
                                 autoFocus
+                                returnKeyType="done"
+                                onSubmitEditing={handleAdd}
                             />
                             <XStack gap="$3" justifyContent="flex-end">
                                 <Button chromeless onPress={() => setAdding(false)}>
