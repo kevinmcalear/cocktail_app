@@ -5,6 +5,7 @@ import {
     planMerge,
 } from '@/lib/mergeRecipeItems';
 import { supabase } from '@/lib/supabase';
+import { getPreferredUnit } from '@/store/useSettingsStore';
 
 type SaveDraftFn = (args: {
     id?: string;
@@ -173,7 +174,7 @@ export async function executeRecipeMerge(args: {
         ingredient_id: batch.id,
         name: batch.name,
         amount: '',
-        unit: '',
+        unit: getPreferredUnit(),
     };
     return {
         nextItems: applyCreateToParent(

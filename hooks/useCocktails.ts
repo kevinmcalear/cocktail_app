@@ -1,3 +1,4 @@
+import { useViewAs } from '@/hooks/useViewAs';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
@@ -7,9 +8,10 @@ import { useAppStore } from '@/store/useAppStore';
 
 export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
+    const { viewAsRoleLevel } = useViewAs();
 
     return useQuery({
-        queryKey: ['cocktails', selectedContextIds, options],
+        queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -87,8 +89,9 @@ export function useCocktails(options?: { allContexts?: boolean }) {
 }
 
 export function useCocktail(id?: string | string[]) {
+    const { viewAsRoleLevel } = useViewAs();
     return useQuery({
-        queryKey: ['cocktail', id],
+        queryKey: ['cocktail', id, viewAsRoleLevel],
         queryFn: async () => {
             if (!id) return null;
             

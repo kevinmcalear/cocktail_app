@@ -33,6 +33,7 @@ interface SearchBarProps {
     suggestions?: SearchChip[];
     onSuggestionPress?: (suggestion: SearchChip) => void;
     isBottomSheet?: boolean;
+    autoFocus?: boolean;
 }
 
 export function SearchBar({ 
@@ -45,7 +46,8 @@ export function SearchBar({
     onRemoveChip,
     suggestions = [],
     onSuggestionPress,
-    isBottomSheet = false
+    isBottomSheet = false,
+    autoFocus = false,
 }: SearchBarProps) {
     const theme = useTheme();
     const [isFocused, setIsFocused] = useState(false);
@@ -72,6 +74,7 @@ export function SearchBar({
                             placeholderTextColor={theme.color11?.get() as string}
                             value={value}
                             onChangeText={onChangeText}
+                            autoFocus={autoFocus}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                         />
@@ -87,6 +90,7 @@ export function SearchBar({
                             fontSize={16}
                             value={value}
                             onChangeText={onChangeText}
+                            autoFocus={autoFocus}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                             fontFamily="$body"

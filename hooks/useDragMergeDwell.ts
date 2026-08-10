@@ -2,8 +2,8 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-/** Must be long enough that pause-to-aim during reorder does not arm merge. */
-export const MERGE_DWELL_MS = 1200;
+/** Confirm dialog is the accident net; dwell only needs to feel intentional. */
+export const MERGE_DWELL_MS = 700;
 
 /**
  * iOS-home-screen-style merge arming for react-native-draggable-flatlist:
@@ -12,9 +12,11 @@ export const MERGE_DWELL_MS = 1200;
 export function useDragMergeDwell(enabled: boolean) {
     const fromRef = useRef<number | null>(null);
     const hoverRef = useRef<number | null>(null);
+    const pendingRef = useRef<number | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const armedTargetRef = useRef<number | null>(null);
     const [mergeTargetIndex, setMergeTargetIndex] = useState<number | null>(null);
+    const [pendingTargetIndex, setPendingTargetIndex] = useState<number | null>(null);
 
     const clearTimer = () => {
         if (timerRef.current) {
@@ -26,7 +28,9 @@ export function useDragMergeDwell(enabled: boolean) {
     const disarm = useCallback(() => {
         clearTimer();
         armedTargetRef.current = null;
+        pendingRef.current = null;
         setMergeTargetIndex(null);
+        setPendingTargetIndex(null);
     }, []);
 
     const onDragBegin = useCallback(
@@ -42,21 +46,24 @@ export function useDragMergeDwell(enabled: boolean) {
     const onPlaceholderIndexChange = useCallback(
         (placeholderIndex: number) => {
             if (!enabled || fromRef.current === null) return;
+
+            // Live reorder flickers placeholder back to `from` at row edges —
+            // ignore those so the dwell can finish (and stay armed).
+            if (placeholderIndex === fromRef.current) return;
+
             hoverRef.current = placeholderIndex;
 
-            if (placeholderIndex === fromRef.current) {
-                disarm();
-                return;
-            }
-
             if (armedTargetRef.current === placeholderIndex) return;
+            // Same hover target — keep the in-flight timer.
+            if (pendingRef.current === placeholderIndex) return;
 
-            // moved to a new hover target — reset dwell
             if (armedTargetRef.current !== null) {
                 armedTargetRef.current = null;
                 setMergeTargetIndex(null);
             }
             clearTimer();
+            pendingRef.current = placeholderIndex;
+            setPendingTargetIndex(placeholderIndex);
             timerRef.current = setTimeout(() => {
                 if (hoverRef.current !== placeholderIndex) return;
                 if (fromRef.current === null || placeholderIndex === fromRef.current) return;
@@ -67,7 +74,7 @@ export function useDragMergeDwell(enabled: boolean) {
                 }
             }, MERGE_DWELL_MS);
         },
-        [enabled, disarm]
+        [enabled]
     );
 
     const consumeMergeOnDragEnd = useCallback(
@@ -89,6 +96,7 @@ export function useDragMergeDwell(enabled: boolean) {
 
     return {
         mergeTargetIndex,
+        pendingTargetIndex,
         onDragBegin,
         onPlaceholderIndexChange,
         consumeMergeOnDragEnd,

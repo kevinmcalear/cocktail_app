@@ -1,3 +1,4 @@
+import { useViewAs } from '@/hooks/useViewAs';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
@@ -5,9 +6,10 @@ import { useAppStore } from '@/store/useAppStore';
 
 export function useWines(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
+    const { viewAsRoleLevel } = useViewAs();
 
     return useQuery({
-        queryKey: ['wines', selectedContextIds, options],
+        queryKey: ['wines', selectedContextIds, options, viewAsRoleLevel],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -27,8 +29,9 @@ export function useWines(options?: { allContexts?: boolean }) {
 }
 
 export function useWine(id: string) {
+    const { viewAsRoleLevel } = useViewAs();
     return useQuery({
-        queryKey: ['wine', id],
+        queryKey: ['wine', id, viewAsRoleLevel],
         enabled: !!id,
         queryFn: async () => {
             const { data, error } = await supabase

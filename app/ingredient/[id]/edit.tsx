@@ -1,45 +1,48 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
     Platform,
-    KeyboardAvoidingView,
-    Modal,
     Switch,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
-import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
-import { SearchBar } from "@/components/SearchBar";
+import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
+import { ItemDetailLayout } from "@/components/ItemDetailLayout";
+import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
+import { useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
+import { renameIngredientEntity } from "@/lib/drafts";
+import type { EditorChromeState } from "@/lib/editorChrome";
+import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
+import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
+import {
+    buildIngredientImageMap,
+    mapPresentationRecipeToEditItem,
+    sortRecipesByOrder,
+} from "@/lib/recipeUtils";
+import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
+import { useAppStore } from "@/store/useAppStore";
+import { getPreferredUnit } from "@/store/useSettingsStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { decode } from "base64-arraybuffer";
 import * as ImagePicker from "expo-image-picker";
-import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
-import { CategoryPickerModal } from "@/components/CategoryPickerModal";
-import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { renameIngredientEntity } from "@/lib/drafts";
-import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
-import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
-import { sortRecipesByOrder, mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
-import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
+import { Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
-    id?: string; // ID if existing in recipes table
+    id?: string;
     ingredient_id: string;
     name: string;
     amount: string;
@@ -52,28 +55,34 @@ interface EditIngredientProps {
     onClose?: () => void;
     onSave?: () => void;
     onNestedItemPress?: (ingredientId: string) => void;
+    onChromeState?: (state: EditorChromeState | null) => void;
 }
 
-export default function EditIngredientScreen({ isInline, idProp, onClose, onSave, onNestedItemPress }: EditIngredientProps = {}) {
+export default function EditIngredientScreen({
+    isInline,
+    idProp,
+    onClose,
+    onSave,
+    onNestedItemPress,
+    onChromeState,
+}: EditIngredientProps = {}) {
     const { id: paramId } = useLocalSearchParams<{ id: string }>();
     const id = idProp !== undefined ? idProp : paramId;
     const router = useRouter();
-    const insets = useSafeAreaInsets();
     const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
+    const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
-    // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [localImages, setLocalImages] = useState<{ id?: string, url: string, isNew?: boolean }[]>([]);
-
+    const [localImages, setLocalImages] = useState<{ id?: string; url: string; isNew?: boolean }[]>([]);
     const [brandMaker, setBrandMaker] = useState("");
     const [abv, setAbv] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const categoryPickerRef = useRef<BottomSheetModal>(null);
 
-    // Bar Assignment and Overrides
     const [barId, setBarId] = useState<string | null>(null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
     const [overrideGeneric, setOverrideGeneric] = useState<string | null>(null);
@@ -82,56 +91,87 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
     const [overridePrep, setOverridePrep] = useState<string | null>(null);
     const [hideFromSearch, setHideFromSearch] = useState(false);
 
-    // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
-    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
-    const [ingredientSearch, setIngredientSearch] = useState("");
     const { drafts, saveDraft } = useDrafts();
-
-    const pickerSheetRef = useRef<BottomSheetModal>(null);
-    const snapPoints = useMemo(() => ['80%'], []);
+    const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
 
     const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
         setRecipeItems(items);
     }, []);
 
+    useEffect(() => {
+        if (recentlyCreatedItem?.type !== "ingredient") return;
+        const handoff = recentlyCreatedItem;
+        if (!handoff.targetId || !id || handoff.targetId !== id) return;
+        setRecipeItems(
+            (prev) =>
+                applyIngredientHandoff(prev, handoff, id, {
+                    amount: "",
+                    unit: getPreferredUnit(),
+                }) ?? prev
+        );
+        setRecentlyCreatedItem(null);
+    }, [recentlyCreatedItem, setRecentlyCreatedItem, id]);
+
     const { onMerge } = useRecipeMergeHandler({
         items: recipeItems,
         setItems: setMergeRecipeItems,
-        persistence: 'published',
+        persistence: "published",
         barId,
         drafts,
         saveDraft,
         parentName: name,
     });
 
-    const renderBackdrop = useCallback(
-        (props: any) => (
-            <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-                opacity={0.5}
-            />
-        ),
-        []
-    );
-
-    useEffect(() => {
-        if (showIngredientPicker) {
-            pickerSheetRef.current?.present();
-        } else {
-            pickerSheetRef.current?.dismiss();
-            setIngredientSearch("");
-        }
-    }, [showIngredientPicker]);
-
     const queryClient = useQueryClient();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
     const { data, isLoading: loadingIngredient } = useIngredient(id as string);
-    const allIngredients = dropdowns?.ingredients || [];
-    
     const loading = loadingDropdowns || loadingIngredient;
+
+    const cleanStateRef = useRef<string | null>(null);
+    const [needsCleanMark, setNeedsCleanMark] = useState(false);
+    const currentStateStr = JSON.stringify({
+        name,
+        description,
+        brandMaker,
+        abv,
+        selectedCategories,
+        recipeItems,
+        barId,
+        overrideVisibility,
+        overrideGeneric,
+        overrideSpecific,
+        overrideMeasurement,
+        overridePrep,
+        hideFromSearch,
+        localImages,
+    });
+    const isDirty = cleanStateRef.current !== null && currentStateStr !== cleanStateRef.current;
+
+    const pickerIngredients = useMemo(() => {
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({
+            id: i.id,
+            name: i.name,
+        }));
+        const draftIngredients = drafts
+            .filter((d: any) => d.entity_type === "ingredient")
+            .map((d: any) => ({
+                id: d.id,
+                name: d.draft_data?.name || "Untitled Ingredient Draft",
+            }));
+        const combined = [...draftIngredients, ...published];
+        const seen = new Set<string>();
+        return combined.filter((i) => {
+            if (seen.has(i.id)) return false;
+            seen.add(i.id);
+            return true;
+        });
+    }, [dropdowns?.ingredients, drafts]);
+
+    const ingredientImageMap = useMemo(
+        () => buildIngredientImageMap(undefined, dropdowns?.ingredients),
+        [dropdowns?.ingredients]
+    );
 
     useEffect(() => {
         if (data?.ingredient) {
@@ -151,21 +191,31 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                 setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
             }
 
-            // Populate existing images
             if (data.ingredient.item_images) {
-                const sortedImages = [...data.ingredient.item_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
-                const fetchedImages = sortedImages.map((ii: any) => ({
-                    id: ii.images?.id,
-                    url: ii.images?.url,
-                    isNew: false
-                })).filter((img: any) => img.url);
+                const sortedImages = [...data.ingredient.item_images].sort(
+                    (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+                );
+                const fetchedImages = sortedImages
+                    .map((ii: any) => ({
+                        id: ii.images?.id,
+                        url: ii.images?.url,
+                        isNew: false,
+                    }))
+                    .filter((img: any) => img.url);
                 setLocalImages(fetchedImages);
             }
         }
         if (data?.recipe) {
             setRecipeItems(sortRecipesByOrder(data.recipe).map((r) => mapPresentationRecipeToEditItem(r)));
         }
+        if (data?.ingredient) setNeedsCleanMark(true);
     }, [data]);
+
+    useEffect(() => {
+        if (!needsCleanMark) return;
+        cleanStateRef.current = currentStateStr;
+        setNeedsCleanMark(false);
+    }, [needsCleanMark, currentStateStr]);
 
     const addImages = (uris: string[]) => {
         if (!uris.length) return;
@@ -199,21 +249,17 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             const base64 = await uriToBase64(uri);
             const arrayBuffer = decode(base64);
 
-            const { error: uploadError } = await supabase.storage
-                .from('drinks')
-                .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
-                    upsert: false
-                });
+            const { error: uploadError } = await supabase.storage.from("drinks").upload(fileName, arrayBuffer, {
+                contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
+                upsert: false,
+            });
 
             if (uploadError) return null;
 
-            const { data: publicUrlData } = supabase.storage
-                .from('drinks')
-                .getPublicUrl(fileName);
+            const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
 
             const { data: imgData, error: imgError } = await supabase
-                .from('images')
+                .from("images")
                 .insert({ url: publicUrlData.publicUrl })
                 .select()
                 .single();
@@ -221,21 +267,25 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
             if (imgError || !imgData) return null;
 
             return imgData.id;
-
         } catch (error) {
             console.error("Image upload flow exception:", error);
             return null;
         }
     };
 
+    const handleClose = () => {
+        setShowPhotoSheet(false);
+        if (onClose) onClose();
+        else router.back();
+    };
+
     const handleSave = async () => {
         if (!name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
-            return;
+            return false;
         }
         setSaving(true);
         try {
-            // 0. Handle Images
             const finalImageIds: string[] = [];
             for (const img of localImages) {
                 if (img.isNew) {
@@ -247,29 +297,21 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                 }
             }
 
-            // Delete all existing image links to refresh sort order and prevent duplicate errors
-            const { error: deleteImagesError } = await supabase
-                .from('item_images')
-                .delete()
-                .eq('item_id', id);
-                
+            const { error: deleteImagesError } = await supabase.from("item_images").delete().eq("item_id", id);
             if (deleteImagesError) throw deleteImagesError;
 
             if (finalImageIds.length > 0) {
                 const imageInserts = finalImageIds.map((imgId, index) => ({
                     item_id: id,
                     image_id: imgId,
-                    sort_order: index
+                    sort_order: index,
                 }));
-                const { error: insertError } = await supabase
-                    .from('item_images')
-                    .insert(imageInserts);
+                const { error: insertError } = await supabase.from("item_images").insert(imageInserts);
                 if (insertError) throw insertError;
             }
 
-            // 1. Update Ingredient
             const { error: updateError } = await supabase
-                .from('items')
+                .from("items")
                 .update({
                     name: capitalize(name),
                     description: description.trim() || null,
@@ -283,93 +325,94 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                     override_prep_level: overridePrep ? parseInt(overridePrep) : null,
                     hide_from_search: hideFromSearch,
                 })
-                .eq('id', id);
+                .eq("id", id);
 
             if (updateError) throw updateError;
 
-            // Sync item_categories
             const { data: existingCatLinks } = await supabase
-                .from('item_categories')
-                .select('category_id')
-                .eq('item_id', id);
+                .from("item_categories")
+                .select("category_id")
+                .eq("item_id", id);
 
-            const existingCatIds = existingCatLinks?.map(l => l.category_id) || [];
-            const catIdsToDelete = existingCatIds.filter(eid => !selectedCategories.includes(eid));
-            const catIdsToAdd = selectedCategories.filter(eid => !existingCatIds.includes(eid));
+            const existingCatIds = existingCatLinks?.map((l) => l.category_id) || [];
+            const catIdsToDelete = existingCatIds.filter((eid) => !selectedCategories.includes(eid));
+            const catIdsToAdd = selectedCategories.filter((eid) => !existingCatIds.includes(eid));
 
             if (catIdsToDelete.length > 0) {
-                 await supabase
-                    .from('item_categories')
+                await supabase
+                    .from("item_categories")
                     .delete()
-                    .eq('item_id', id)
-                    .in('category_id', catIdsToDelete);
+                    .eq("item_id", id)
+                    .in("category_id", catIdsToDelete);
             }
 
             for (const catId of catIdsToAdd) {
-                await supabase
-                    .from('item_categories')
-                    .upsert({
+                await supabase.from("item_categories").upsert(
+                    {
                         item_id: id,
                         category_id: catId,
-                        is_primary: true
-                    }, { onConflict: 'item_id,category_id' });
+                        is_primary: true,
+                    },
+                    { onConflict: "item_id,category_id" }
+                );
             }
 
-            // 2. Update Recipes
-            // Strategy: Delete all existing recipe items for this parent and re-insert. 
-            // This is simple and effective for this scale. 
-            // Alternatively, we could diff, but re-insert is safer for consistency without complex logic.
-            
-            // Delete old
-            const { error: deleteError } = await supabase
-                .from('recipes')
-                .delete()
-                .eq('recipe_item_id', id);
-            
+            const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
             if (deleteError) throw deleteError;
 
-            // Insert new
             if (recipeItems.length > 0) {
                 const recipeInserts = recipeItems.map((item, index) => ({
-                    recipe_item_id: id, 
+                    recipe_item_id: id,
                     ingredient_item_id: item.ingredient_id,
                     amount: parseFloat(item.amount) || null,
                     unit: item.unit || null,
                     sort_order: index,
                 }));
 
-                const { error: insertError } = await supabase
-                    .from('recipes')
-                    .insert(recipeInserts);
-
+                const { error: insertError } = await supabase.from("recipes").insert(recipeInserts);
                 if (insertError) throw insertError;
             }
 
-            await queryClient.invalidateQueries({ queryKey: ['ingredient', id] });
-            await queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-            await queryClient.invalidateQueries({ queryKey: ['cocktail'] });
-            await queryClient.invalidateQueries({ queryKey: ['cocktails'] });
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            await queryClient.invalidateQueries({ queryKey: ["ingredient", id] });
+            await queryClient.invalidateQueries({ queryKey: ["ingredients"] });
+            await queryClient.invalidateQueries({ queryKey: ["cocktail"] });
+            await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
+            await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
 
-            Alert.alert("Success", "Ingredient updated!", [
-                { text: "OK", onPress: () => {
-                    if (isInline) {
-                        // ponytail: pop nested stack (onSave clears whole workspace)
-                        if (onClose) onClose();
-                        else if (onSave) onSave();
-                    } else {
-                        router.back();
-                    }
-                } }
-            ]);
+            cleanStateRef.current = currentStateStr;
+            setShowPhotoSheet(false);
 
+            if (isInline) {
+                if (onClose) onClose();
+                else if (onSave) onSave();
+            } else {
+                Alert.alert("Success", "Ingredient updated!", [
+                    { text: "OK", onPress: () => router.back() },
+                ]);
+            }
+            return true;
         } catch (error: any) {
             console.error("Update error:", error);
             Alert.alert("Error", error.message || "Failed to update ingredient.");
+            return false;
         } finally {
             setSaving(false);
         }
     };
+
+    useEffect(() => {
+        if (!isInline || !onChromeState || loading) return;
+        onChromeState({
+            save: async () => {
+                await handleSave();
+            },
+            cancel: handleClose,
+            saving,
+            isDirty,
+        });
+        return () => onChromeState(null);
+        // ponytail: chrome mirrors form fields; listing handleSave would churn every render
+    }, [isInline, onChromeState, loading, saving, isDirty, currentStateStr]);
 
     if (loading) {
         return (
@@ -379,170 +422,72 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
         );
     }
 
+    const images = localImages.map((img) => img.url);
+
     return (
         <BottomSheetModalProvider>
-        <YStack style={styles.container} backgroundColor="$background">
-            {!isInline && <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />}
-            
-            <XStack
-                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
-                paddingHorizontal="$4"
-                paddingBottom="$4"
-                alignItems="center"
-                justifyContent="space-between"
-                zIndex={10}
+            {!isInline && <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />}
+
+            <ItemDetailLayout
+                id={id as string}
+                title={name}
+                images={images}
+                emptyPhotoPlaceholder={images.length === 0}
+                isFavorite={false}
+                isInStudyPile={false}
+                onToggleFavorite={() => {}}
+                onToggleStudyPile={() => {}}
+                embedded={!!isInline}
+                isEditing
+                editableTitle={{
+                    value: name,
+                    onChange: (val) => handleCapitalizedChange(val, name, setName),
+                    onBlur: () => setName(capitalize(name)),
+                    placeholder: "Ingredient name",
+                }}
+                onManageImages={
+                    Platform.OS === "web" && images.length === 0
+                        ? () => {
+                              void pickImage();
+                          }
+                        : () => setShowPhotoSheet(true)
+                }
+                onDropImages={addImages}
+                onBack={isInline ? undefined : handleClose}
+                onCancelEdit={isInline ? undefined : handleClose}
+                onSave={
+                    isInline
+                        ? undefined
+                        : () => {
+                              void handleSave();
+                          }
+                }
+                saving={saving}
+                isDirty={isDirty}
             >
-                <TouchableOpacity 
-                    onPress={() => {
-                        if (isInline) {
-                            if (onClose) onClose();
-                        } else {
-                            router.back();
-                        }
-                    }} 
-                    style={styles.headerBtn}
-                >
-                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
-                </TouchableOpacity>
-                <Text fontSize="$5" fontWeight="bold">Edit Ingredient</Text>
-                <Button 
-                    onPress={handleSave} 
-                    disabled={saving}
-                    size="$3"
-                    chromeless
-                >
-                    {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
-                </Button>
-            </XStack>
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
-                <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-                    
-                    <SortableImageList 
-                        images={localImages}
-                        onReorder={setLocalImages}
-                        onRemove={(index) => {
-                            const newImages = localImages.filter((_, i) => i !== index);
-                            setLocalImages(newImages);
-                        }}
-                        onAdd={pickImage}
-                        onAddUris={addImages}
-                        generateComponent={<GenerateImageButton type="ingredient" id={id} name={name} variant="tile" />}
-                    />
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Name *</Label>
-                        <Input
-                            value={name}
-                            onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
-                            onBlur={() => setName(capitalize(name))}
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. Rich Simple Syrup"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Brand / Maker</Label>
-                        <Input
-                            value={brandMaker}
-                            onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
-                            onBlur={() => setBrandMaker(capitalize(brandMaker))}
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. Campari, Buffalo Trace"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">ABV (%)</Label>
-                        <Input
-                            value={abv}
-                            onChangeText={setAbv}
-                            keyboardType="numeric"
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. 40"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <XStack justifyContent="space-between" alignItems="center">
-                            <Label color="$color11">Spirit Tags</Label>
-                            <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
-                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
-                            </TouchableOpacity>
-                        </XStack>
-                        <XStack flexWrap="wrap" gap="$2">
-                            {selectedCategories.length === 0 ? (
-                                <Text color="$color11" fontStyle="italic">No tags selected</Text>
-                            ) : (
-                                selectedCategories.map(catId => {
-                                    const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
-                                    if (!cat) return null;
-                                    return (
-                                        <XStack key={catId} backgroundColor="$backgroundStrong" paddingHorizontal={12} paddingVertical={6} borderRadius={16}>
-                                            <Text color="$color">{cat.name}</Text>
-                                        </XStack>
-                                    );
-                                })
-                            )}
-                        </XStack>
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Description / Notes</Label>
-                        <TextArea
-                            value={description}
-                            onChangeText={setDescription}
-                            numberOfLines={4}
-                            placeholderTextColor="$color11"
-                            placeholder="Optional description..."
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    {/* Ingredients / Recipe */}
-                    <YStack gap="$2" marginBottom="$4">
-                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
-                            <Label color="$color11">Recipe (for Complex Ingredients)</Label>
-                            <TouchableOpacity onPress={() => setShowIngredientPicker(true)}>
-                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
-                            </TouchableOpacity>
-                        </XStack>
-
+                <YStack gap="$4" marginBottom="$6" paddingHorizontal={24}>
+                    <YStack gap="$2">
+                        <Text fontSize={18} fontWeight="bold" color="$color">
+                            Recipe
+                        </Text>
                         {recipeItems.length === 0 && (
-                            <Text color="$color11" fontSize={14} fontStyle="italic" marginBottom="$2">
-                                Add ingredients here if this is a pre-batched item.
+                            <Text color="$color11" fontSize={14} fontStyle="italic">
+                                Add ingredients if this is a pre-batched item. Leave empty for raw ingredients.
                             </Text>
                         )}
-
                         <SortableRecipeList
                             items={recipeItems}
                             onReorder={setRecipeItems}
                             onUpdateItem={(index, updates) => {
-                                const newItems = [...recipeItems];
-                                newItems[index] = { ...newItems[index], ...updates };
-                                setRecipeItems(newItems);
+                                const next = [...recipeItems];
+                                next[index] = { ...next[index], ...updates };
+                                setRecipeItems(next);
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
-                            variant="card"
+                            variant="detail"
+                            allIngredients={dropdowns?.ingredients}
+                            ingredientImageMap={ingredientImageMap}
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {
@@ -554,135 +499,201 @@ export default function EditIngredientScreen({ isInline, idProp, onClose, onSave
                                 }
                             }}
                             drafts={drafts}
+                            dropdowns={dropdowns}
                         />
+                        <TouchableOpacity
+                            onPress={() => setShowIngredientPicker(true)}
+                            style={{ alignSelf: "flex-start", marginTop: 4 }}
+                        >
+                            <Text color={theme.color8?.get() as string} fontWeight="600" fontSize={14}>
+                                + Add ingredient
+                            </Text>
+                        </TouchableOpacity>
                     </YStack>
 
-                    <XStack alignItems="center" justifyContent="space-between" gap="$3" marginBottom="$4">
-                        <YStack flex={1} gap="$1">
-                            <Text fontSize={15} fontWeight="600" color="$color">
-                                Hide in Search
-                            </Text>
-                            <Text fontSize={12} color="$color11">
-                                Keep this ingredient out of ⌘K (still usable in recipes)
-                            </Text>
-                        </YStack>
-                        <Switch
-                            value={hideFromSearch}
-                            onValueChange={setHideFromSearch}
-                            trackColor={{
-                                false: theme.borderColor?.get() as string,
-                                true: theme.color8?.get() as string,
-                            }}
-                        />
-                    </XStack>
-
-                    <BarAssignmentAccordion
-                        barId={barId} setBarId={setBarId}
-                        overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
-                        overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
-                        overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
-                        overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
-                        overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                    <TextArea
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Add a description..."
+                        placeholderTextColor="$color11"
+                        size="$4"
+                        backgroundColor="transparent"
+                        borderWidth={0}
+                        color="$color"
+                        fontSize={16}
+                        padding={0}
+                        numberOfLines={4}
                     />
 
-                </FormScrollContainer>
-            </KeyboardAvoidingView>
-
-            {/* Native Modal for adding ingredients avoiding gorhom issues */}
-            <Modal
-                visible={showIngredientPicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowIngredientPicker(false)}
-            >
-                <KeyboardAvoidingView 
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ flex: 1 }}
-                >
-                    <View style={styles.modalOverlay}>
-                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowIngredientPicker(false)} />
-                        <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
-                            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
-                                <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                                    <Text fontSize={20} fontWeight="bold" color="$color">Select Ingredient</Text>
-                                    <TouchableOpacity onPress={() => setShowIngredientPicker(false)}>
-                                        <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                                    </TouchableOpacity>
-                                </XStack>
-                                <SearchBar
-                                    placeholder="Search ingredients..."
-                                    value={ingredientSearch}
-                                    onChangeText={setIngredientSearch}
-                                    style={{ marginBottom: 16 }}
-                                />
-                            </View>
-                            <FlatList
-                                style={{ flex: 1 }}
-                                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                                data={allIngredients.filter((i: any) => {
-                                    if (i.id === id) return false;
-                                    return i.name.toLowerCase().includes(ingredientSearch.toLowerCase());
-                                })}
-                                keyExtractor={item => item.id}
-                                showsVerticalScrollIndicator={false}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                                        onPress={() => {
-                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: capitalize(item.name), amount: "", unit: "" }]);
-                                            setShowIngredientPicker(false);
-                                        }}
-                                    >
-                                        <Text color="$color11" fontSize={16}>{capitalize(item.name)}</Text>
-                                    </TouchableOpacity>
-                                )}
+                    <YStack gap="$3" marginTop="$2">
+                        <YStack gap="$2">
+                            <Label color="$color11">Brand / Maker</Label>
+                            <Input
+                                value={brandMaker}
+                                onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
+                                onBlur={() => setBrandMaker(capitalize(brandMaker))}
+                                placeholderTextColor="$color11"
+                                placeholder="e.g. Campari, Buffalo Trace"
+                                size="$4"
+                                backgroundColor="transparent"
+                                borderWidth={0}
+                                borderBottomWidth={1}
+                                borderColor="$borderColor"
+                                focusStyle={{ borderColor: "$color8" }}
+                                paddingHorizontal={0}
                             />
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+                        </YStack>
 
-            <CategoryPickerModal 
-                ref={categoryPickerRef}
-                domains={['spirit']}
-                selectedCategoryIds={selectedCategories}
-                onToggleCategory={(cat) => {
-                    if (selectedCategories.includes(cat.id)) {
-                        setSelectedCategories(prev => prev.filter(id => id !== cat.id));
-                    } else {
-                        setSelectedCategories(prev => [...prev, cat.id]);
-                    }
+                        <YStack gap="$2">
+                            <Label color="$color11">ABV (%)</Label>
+                            <Input
+                                value={abv}
+                                onChangeText={setAbv}
+                                keyboardType="numeric"
+                                placeholderTextColor="$color11"
+                                placeholder="e.g. 40"
+                                size="$4"
+                                backgroundColor="transparent"
+                                borderWidth={0}
+                                borderBottomWidth={1}
+                                borderColor="$borderColor"
+                                focusStyle={{ borderColor: "$color8" }}
+                                paddingHorizontal={0}
+                            />
+                        </YStack>
+
+                        <YStack gap="$2">
+                            <XStack justifyContent="space-between" alignItems="center">
+                                <Label color="$color11">Spirit Tags</Label>
+                                <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
+                                    <Text color={theme.color8?.get() as string} fontWeight="bold">
+                                        + Add
+                                    </Text>
+                                </TouchableOpacity>
+                            </XStack>
+                            <XStack flexWrap="wrap" gap="$2">
+                                {selectedCategories.length === 0 ? (
+                                    <Text color="$color11" fontStyle="italic">
+                                        No tags selected
+                                    </Text>
+                                ) : (
+                                    selectedCategories.map((catId) => {
+                                        const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
+                                        if (!cat) return null;
+                                        return (
+                                            <XStack
+                                                key={catId}
+                                                backgroundColor="$backgroundStrong"
+                                                paddingHorizontal={12}
+                                                paddingVertical={6}
+                                                borderRadius={16}
+                                            >
+                                                <Text color="$color">{cat.name}</Text>
+                                            </XStack>
+                                        );
+                                    })
+                                )}
+                            </XStack>
+                        </YStack>
+
+                        <XStack alignItems="center" justifyContent="space-between" gap="$3">
+                            <YStack flex={1} gap="$1">
+                                <Text fontSize={15} fontWeight="600" color="$color">
+                                    Hide in Search
+                                </Text>
+                                <Text fontSize={12} color="$color11">
+                                    Keep this ingredient out of ⌘K (still usable in recipes)
+                                </Text>
+                            </YStack>
+                            <Switch
+                                value={hideFromSearch}
+                                onValueChange={setHideFromSearch}
+                                trackColor={{
+                                    false: theme.borderColor?.get() as string,
+                                    true: theme.color8?.get() as string,
+                                }}
+                            />
+                        </XStack>
+
+                        <BarAssignmentAccordion
+                            barId={barId}
+                            setBarId={setBarId}
+                            overrideVisibility={overrideVisibility}
+                            setOverrideVisibility={setOverrideVisibility}
+                            overrideGeneric={overrideGeneric}
+                            setOverrideGeneric={setOverrideGeneric}
+                            overrideSpecific={overrideSpecific}
+                            setOverrideSpecific={setOverrideSpecific}
+                            overrideMeasurement={overrideMeasurement}
+                            setOverrideMeasurement={setOverrideMeasurement}
+                            overridePrep={overridePrep}
+                            setOverridePrep={setOverridePrep}
+                        />
+                    </YStack>
+                </YStack>
+            </ItemDetailLayout>
+
+            <AdaptiveSheetModal
+                visible={showPhotoSheet}
+                onClose={() => setShowPhotoSheet(false)}
+                title="Photos"
+            >
+                <View style={{ paddingHorizontal: 24 }}>
+                    <SortableImageList
+                        images={localImages}
+                        onReorder={setLocalImages}
+                        onRemove={(index) => {
+                            setLocalImages(localImages.filter((_, i) => i !== index));
+                        }}
+                        onAdd={pickImage}
+                        onAddUris={addImages}
+                        generateComponent={<GenerateImageButton type="ingredient" id={id} name={name} variant="tile" />}
+                    />
+                </View>
+            </AdaptiveSheetModal>
+
+            <IngredientPickerSheet
+                visible={showIngredientPicker}
+                onClose={() => setShowIngredientPicker(false)}
+                ingredients={pickerIngredients}
+                excludeId={id}
+                drafts={drafts}
+                dropdowns={dropdowns}
+                onSelect={(item) => {
+                    setRecipeItems([
+                        ...recipeItems,
+                        {
+                            ingredient_id: item.id,
+                            name: capitalize(item.name),
+                            amount: "",
+                            unit: getPreferredUnit(),
+                        },
+                    ]);
+                }}
+                onCreate={async (query) => {
+                    router.push({
+                        pathname: "/add-ingredient",
+                        params: {
+                            name: query,
+                            barId: barId || "",
+                            attachTo: id || "",
+                        },
+                    });
                 }}
             />
 
-        </YStack>
+            <CategoryPickerModal
+                ref={categoryPickerRef}
+                domains={["spirit"]}
+                selectedCategoryIds={selectedCategories}
+                onToggleCategory={(cat) => {
+                    if (selectedCategories.includes(cat.id)) {
+                        setSelectedCategories((prev) => prev.filter((cid) => cid !== cat.id));
+                    } else {
+                        setSelectedCategories((prev) => [...prev, cat.id]);
+                    }
+                }}
+            />
         </BottomSheetModalProvider>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    content: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-    },
-    headerBtn: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end'
-    },
-    fullSheetModalContent: {
-        borderTopLeftRadius: 48,
-        borderTopRightRadius: 48,
-        borderCurve: 'continuous',
-        height: '80%'
-    }
-});

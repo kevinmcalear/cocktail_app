@@ -9,8 +9,7 @@ import { useBeer } from "@/hooks/useBeers";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useBars } from "@/hooks/useBars";
-import { useAppStore } from "@/store/useAppStore";
+import { useEffectiveRole } from "@/hooks/useViewAs";
 
 export default function BeerDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -35,10 +34,7 @@ export default function BeerDetailsScreen() {
             : null
     );
     
-    const selectedBarId = useAppStore((state) => state.selectedBarId);
-    const { data: bars } = useBars();
-    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
-    const canEdit = currentBarRole > 30;
+    const canEdit = useEffectiveRole() > 30;
     
     const [notesExpanded, setNotesExpanded] = useState(false);
 

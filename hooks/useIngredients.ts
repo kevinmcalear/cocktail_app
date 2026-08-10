@@ -1,5 +1,6 @@
+import { useViewAs } from '@/hooks/useViewAs';
 import { supabase } from '@/lib/supabase';
-import { sortRecipesByOrder } from '@/lib/recipeUtils';
+import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
@@ -7,9 +8,10 @@ import { useAppStore } from '@/store/useAppStore';
 // Standard ingredient list query
 export function useIngredients(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
+    const { viewAsRoleLevel } = useViewAs();
 
     return useQuery({
-        queryKey: ['ingredients', selectedContextIds, options],
+        queryKey: ['ingredients', selectedContextIds, options, viewAsRoleLevel],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -40,8 +42,9 @@ export function useIngredients(options?: { allContexts?: boolean }) {
 
 // Single ingredient detail query, including where it's used
 export function useIngredient(id?: string | string[]) {
+    const { viewAsRoleLevel } = useViewAs();
     return useQuery({
-        queryKey: ['ingredient', id],
+        queryKey: ['ingredient', id, viewAsRoleLevel],
         queryFn: async () => {
             if (!id) return null;
             const ingredientId = Array.isArray(id) ? id[0] : id;
@@ -85,9 +88,7 @@ export function useIngredient(id?: string | string[]) {
 
             const recipe = sortRecipesByOrder(rawRecipe)?.map((r: any) => ({
                 ...r,
-                ingredient: r.display_ingredient_id === r.parent_ingredient_id 
-                    ? r.generic_ingredient 
-                    : r.specific_ingredient
+                ingredient: resolvePresentationIngredient(r),
             }));
 
             // 3. Fetch cocktails that use this ingredient

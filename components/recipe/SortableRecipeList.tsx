@@ -1,10 +1,12 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { UnitPicker } from '@/components/recipe/UnitPicker';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { isDefaultBatchName } from '@/lib/mergeRecipeItems';
 import { capitalize } from '@/lib/stringUtils';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
@@ -48,6 +50,8 @@ interface DetailRecipeRowProps {
     drag: () => void;
     isActive: boolean;
     isMergeTarget?: boolean;
+    isMergePending?: boolean;
+    autoFocusKey?: number;
     onUpdateItem: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove: (index: number) => void;
     nameNode: React.ReactNode;
@@ -60,16 +64,32 @@ function DetailRecipeRow({
     drag,
     isActive,
     isMergeTarget,
+    isMergePending,
+    autoFocusKey,
     onUpdateItem,
     onRemove,
     nameNode,
 }: DetailRecipeRowProps) {
     const theme = useTheme();
-    const [editingMeasure, setEditingMeasure] = useState(false);
-    const measurement = [item.amount, item.unit].filter(Boolean).join(' ');
+    const defaultUnit = useSettingsStore((s) => s.defaultUnit);
+    const [editingMeasure, setEditingMeasure] = useState(!!autoFocusKey);
+    const unitPickerOpenRef = useRef(false);
+    const measurement = [item.amount, item.unit || defaultUnit].filter(Boolean).join(' ');
+
+    useEffect(() => {
+        if (!autoFocusKey) return;
+        setEditingMeasure(true);
+    }, [autoFocusKey]);
 
     return (
-        <View style={[styles.detailRow, isActive && styles.activeItem, isMergeTarget && styles.mergeTarget]}>
+        <View
+            style={[
+                styles.detailRow,
+                isActive && styles.activeItem,
+                isMergePending && !isMergeTarget && styles.mergePending,
+                isMergeTarget && styles.mergeTarget,
+            ]}
+        >
             <View style={styles.detailImageWrap}>
                 <TouchableOpacity
                     onLongPress={Platform.OS === 'web' ? undefined : drag}
@@ -104,17 +124,19 @@ function DetailRecipeRow({
                             value={item.amount}
                             onChangeText={(v) => onUpdateItem(index, { amount: v })}
                             autoFocus
+                            onBlur={() => {
+                                requestAnimationFrame(() => {
+                                    if (unitPickerOpenRef.current) return;
+                                    setEditingMeasure(false);
+                                });
+                            }}
                         />
-                        <Input
-                            size="$2"
-                            width={56}
-                            placeholder="unit"
-                            placeholderTextColor="$color11"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            value={item.unit}
-                            onChangeText={(v) => onUpdateItem(index, { unit: v })}
-                            onBlur={() => setEditingMeasure(false)}
+                        <UnitPicker
+                            value={item.unit || defaultUnit}
+                            onChange={(unit) => onUpdateItem(index, { unit })}
+                            onOpenChange={(open) => {
+                                unitPickerOpenRef.current = open;
+                            }}
                         />
                     </XStack>
                 ) : (
@@ -126,7 +148,11 @@ function DetailRecipeRow({
                 )}
                 {nameNode}
             </View>
-            {isMergeTarget ? <Text style={styles.mergeHint}>Release to combine</Text> : null}
+            {isMergeTarget ? (
+                <Text style={styles.mergeHint}>Release to combine</Text>
+            ) : isMergePending ? (
+                <Text style={styles.mergeHint}>Hold to combine…</Text>
+            ) : null}
         </View>
     );
 }
@@ -242,9 +268,19 @@ export function SortableRecipeList({
     onMerge,
 }: SortableRecipeListProps) {
     const theme = useTheme();
+    const defaultUnit = useSettingsStore((s) => s.defaultUnit);
     const dwell = useDragMergeDwell(!!onMerge);
+    const prevLenRef = useRef(items.length);
     const prevIdsRef = useRef<Set<string>>(new Set(items.map((i) => i.ingredient_id)));
+    const [focusMeasure, setFocusMeasure] = useState<{ index: number; key: number } | null>(null);
     const [focusName, setFocusName] = useState<{ index: number; key: number } | null>(null);
+
+    useEffect(() => {
+        if (items.length > prevLenRef.current) {
+            setFocusMeasure({ index: items.length - 1, key: Date.now() });
+        }
+        prevLenRef.current = items.length;
+    }, [items.length]);
 
     useEffect(() => {
         const prev = prevIdsRef.current;
@@ -252,7 +288,10 @@ export function SortableRecipeList({
             (i) => isDefaultBatchName(i.name) && !prev.has(i.ingredient_id)
         );
         prevIdsRef.current = new Set(items.map((i) => i.ingredient_id));
-        if (newBatchIndex >= 0) setFocusName({ index: newBatchIndex, key: Date.now() });
+        if (newBatchIndex >= 0) {
+            setFocusName({ index: newBatchIndex, key: Date.now() });
+            setFocusMeasure(null);
+        }
     }, [items]);
 
     const renderDraftBadge = (ingredientId: string) => {
@@ -313,6 +352,8 @@ export function SortableRecipeList({
                     drag={drag}
                     isActive={isActive}
                     isMergeTarget={dwell.mergeTargetIndex === index}
+                    isMergePending={dwell.pendingTargetIndex === index}
+                    autoFocusKey={focusMeasure?.index === index ? focusMeasure.key : undefined}
                     onUpdateItem={onUpdateItem}
                     onRemove={onRemove}
                     nameNode={renderName(item, index)}
@@ -333,15 +374,10 @@ export function SortableRecipeList({
                     value={item.amount}
                     onChangeText={(v) => onUpdateItem(index, { amount: v })}
                 />
-                <Input
-                    size={variant === 'card' ? '$3' : '$2'}
-                    width={60}
-                    placeholder="oz"
-                    placeholderTextColor="$color11"
-                    backgroundColor="$backgroundStrong"
-                    borderColor="$borderColor"
-                    value={item.unit}
-                    onChangeText={(v) => onUpdateItem(index, { unit: v })}
+                <UnitPicker
+                    value={item.unit || defaultUnit}
+                    onChange={(unit) => onUpdateItem(index, { unit })}
+                    size={variant === 'card' ? 'md' : 'sm'}
                 />
                 <TouchableOpacity onPress={() => onRemove(index)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <IconSymbol name="trash" size={20} color="#ff4444" />
@@ -350,11 +386,13 @@ export function SortableRecipeList({
         );
 
         const isMergeTarget = dwell.mergeTargetIndex === index;
+        const isMergePending = dwell.pendingTargetIndex === index;
         return (
             <View
                 style={[
                     variant === 'row' ? styles.recipeRow : styles.cardRow,
                     isActive && styles.activeItem,
+                    isMergePending && !isMergeTarget && styles.mergePending,
                     isMergeTarget && styles.mergeTarget,
                 ]}
             >
@@ -372,7 +410,11 @@ export function SortableRecipeList({
 
                 <View style={styles.nameContainer}>{renderName(item, index)}</View>
                 <View style={styles.recipeInputs}>{inputs}</View>
-                {isMergeTarget ? <Text style={styles.mergeHint}>Release to combine</Text> : null}
+                {isMergeTarget ? (
+                    <Text style={styles.mergeHint}>Release to combine</Text>
+                ) : isMergePending ? (
+                    <Text style={styles.mergeHint}>Hold to combine…</Text>
+                ) : null}
             </View>
         );
     };
@@ -387,8 +429,8 @@ export function SortableRecipeList({
                 <Text style={styles.hint}>
                     {onMerge
                         ? Platform.OS === 'web'
-                            ? 'Drag handle to reorder · Hold ~1s on an ingredient to combine'
-                            : 'Long press handle to reorder · Hold ~1s on an ingredient to combine'
+                            ? 'Drag handle to reorder · Hold on an ingredient to combine'
+                            : 'Long press handle to reorder · Hold on an ingredient to combine'
                         : Platform.OS === 'web'
                           ? 'Drag handle to reorder'
                           : 'Long press handle to reorder'}
@@ -462,6 +504,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.06)',
         borderColor: Colors.dark.tint,
         borderWidth: 1,
+    },
+    mergePending: {
+        borderColor: 'rgba(230,162,60,0.55)',
+        borderWidth: 1.5,
+        backgroundColor: 'rgba(230,162,60,0.08)',
+        borderRadius: 12,
     },
     mergeTarget: {
         transform: [{ scale: 1.04 }],
