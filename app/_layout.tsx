@@ -20,6 +20,7 @@ import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { WebSidebar } from '@/components/WebSidebar';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -180,6 +181,7 @@ export default function RootLayout() {
             <BottomSheetModalProvider>
               <AuthProvider>
                 <OfflineBanner />
+                <ViewAsBanner />
                 <RootLayoutNav />
               </AuthProvider>
             </BottomSheetModalProvider>

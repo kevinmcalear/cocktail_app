@@ -8,14 +8,13 @@ import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailConte
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
-import { useBars } from "@/hooks/useBars";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
+import { useEffectiveRole } from "@/hooks/useViewAs";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
-import { useAppStore } from "@/store/useAppStore";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -35,10 +34,7 @@ export default function CocktailDetailsScreen() {
             : null
     );
 
-    const selectedBarId = useAppStore((state) => state.selectedBarId);
-    const { data: bars } = useBars();
-    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
-    const canEdit = currentBarRole > 30;
+    const canEdit = useEffectiveRole() > 30;
     const [isEditing, setIsEditing] = useState(false);
 
     const editor = useCocktailEditor(id as string, { enabled: isEditing });

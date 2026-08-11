@@ -4,14 +4,16 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
+import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import {
   DEFAULT_SEARCH_ALL,
   PERSONAL_CONTEXT,
   resolveDefaultContextIds,
 } from '@/lib/barContextFilter';
+import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
-import { THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
+import { DEFAULT_UNIT_OPTIONS, THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
 import { decode } from 'base64-arraybuffer';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -82,8 +84,13 @@ export function SettingsScreen() {
     setThemeMode,
     defaultSearchContext,
     setDefaultSearchContext,
+    defaultUnit,
+    setDefaultUnit,
   } = useSettingsStore();
   const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
+  const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
+  const maxRealRole = useMaxRealRole();
+  const viewAsChoices = viewAsOptions(maxRealRole);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -469,6 +476,40 @@ export function SettingsScreen() {
     </Section>
   );
 
+  const unitsPanel = (
+    <Section title="Default unit" minWidth={240}>
+      <Text fontSize={12} color="$color11">
+        Used for new recipe ingredients
+      </Text>
+      <XStack gap="$2">
+        {DEFAULT_UNIT_OPTIONS.map(({ id, label }) => {
+          const selected = defaultUnit === id;
+          return (
+            <Pressable key={id} onPress={() => setDefaultUnit(id)} style={{ flex: 1 }}>
+              <YStack
+                alignItems="center"
+                justifyContent="center"
+                paddingVertical="$3"
+                borderRadius={8}
+                backgroundColor={selected ? '$color8' : '$background'}
+                borderWidth={1}
+                borderColor={selected ? '$color8' : '$borderColor'}
+              >
+                <Text
+                  fontSize={13}
+                  fontWeight={selected ? '700' : '500'}
+                  color={selected ? '$backgroundStrong' : '$color'}
+                >
+                  {label}
+                </Text>
+              </YStack>
+            </Pressable>
+          );
+        })}
+      </XStack>
+    </Section>
+  );
+
   const pickDefaultSearch = (value: string) => {
     setDefaultSearchContext(value);
     const barIds = (userBars || []).map((ub: any) => ub.bar_id as string);
@@ -552,6 +593,73 @@ export function SettingsScreen() {
     </Section>
   );
 
+  const viewAsPanel =
+    viewAsChoices.length === 0 ? null : (
+      <Section title="View as" minWidth={280}>
+        <Text fontSize={12} color="$color11">
+          Preview menus and recipes as a lower permission level
+        </Text>
+        <YStack gap="$2">
+          <Pressable
+            disabled={viewAsSaving}
+            onPress={() => {
+              void setViewAsRoleLevel(null);
+            }}
+          >
+            <XStack
+              alignItems="center"
+              justifyContent="space-between"
+              paddingVertical="$2.5"
+              paddingHorizontal="$3"
+              borderRadius={8}
+              backgroundColor={viewAsRoleLevel == null ? '$color8' : '$background'}
+              borderWidth={1}
+              borderColor={viewAsRoleLevel == null ? '$color8' : '$borderColor'}
+            >
+              <Text
+                fontSize={14}
+                fontWeight={viewAsRoleLevel == null ? '700' : '500'}
+                color={viewAsRoleLevel == null ? '$backgroundStrong' : '$color'}
+              >
+                Off ({roleLabel(maxRealRole)})
+              </Text>
+            </XStack>
+          </Pressable>
+          {viewAsChoices.map(({ level, label }) => {
+            const selected = viewAsRoleLevel === level;
+            return (
+              <Pressable
+                key={level}
+                disabled={viewAsSaving}
+                onPress={() => {
+                  void setViewAsRoleLevel(level);
+                }}
+              >
+                <XStack
+                  alignItems="center"
+                  justifyContent="space-between"
+                  paddingVertical="$2.5"
+                  paddingHorizontal="$3"
+                  borderRadius={8}
+                  backgroundColor={selected ? '$color8' : '$background'}
+                  borderWidth={1}
+                  borderColor={selected ? '$color8' : '$borderColor'}
+                >
+                  <Text
+                    fontSize={14}
+                    fontWeight={selected ? '700' : '500'}
+                    color={selected ? '$backgroundStrong' : '$color'}
+                  >
+                    {label}
+                  </Text>
+                </XStack>
+              </Pressable>
+            );
+          })}
+        </YStack>
+      </Section>
+    );
+
   return (
     <ScrollView flex={1} backgroundColor="$background" showsVerticalScrollIndicator={false}>
       <YStack
@@ -580,7 +688,9 @@ export function SettingsScreen() {
 
         <XStack flexWrap="wrap" gap="$5" alignItems="flex-start">
           {appearancePanel}
+          {unitsPanel}
           {searchFilterPanel}
+          {viewAsPanel}
           {testingPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable onPress={() => signOut()}>

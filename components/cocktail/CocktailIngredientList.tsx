@@ -5,11 +5,13 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
 import { Text, XStack, YStack, useTheme } from "tamagui";
 
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import { UnitPicker } from "@/components/recipe/UnitPicker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDragMergeDwell } from "@/hooks/useDragMergeDwell";
 import { isDefaultBatchName } from "@/lib/mergeRecipeItems";
 import { buildIngredientImageMap } from "@/lib/recipeUtils";
 import { capitalize } from "@/lib/stringUtils";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 export { buildIngredientImageMap };
 
@@ -36,6 +38,7 @@ function EditIngredientRow({
     drag,
     isActive,
     isMergeTarget,
+    isMergePending,
     autoFocusKey,
     autoFocusNameKey,
     onUpdateItem,
@@ -49,6 +52,7 @@ function EditIngredientRow({
     drag: () => void;
     isActive: boolean;
     isMergeTarget?: boolean;
+    isMergePending?: boolean;
     /** Bumps when this row was just added — opens amount and autofocuses. */
     autoFocusKey?: number;
     /** Bumps when a merge created this batch — opens name and autofocuses. */
@@ -59,13 +63,14 @@ function EditIngredientRow({
     onRenameIngredient?: (ingredientId: string, name: string) => void;
 }) {
     const theme = useTheme();
+    const defaultUnit = useSettingsStore((s) => s.defaultUnit);
     const [editingMeasure, setEditingMeasure] = useState(!!autoFocusKey);
     const [editingName, setEditingName] = useState(!!autoFocusNameKey);
+    const unitPickerOpenRef = useRef(false);
     const amountRef = useRef<TextInput>(null);
-    const unitRef = useRef<TextInput>(null);
     const nameRef = useRef<TextInput>(null);
     const committedNameRef = useRef(item.name);
-    const measurement = [item.amount, item.unit].filter(Boolean).join(" ");
+    const measurement = [item.amount, item.unit || defaultUnit].filter(Boolean).join(" ");
     const muted = theme.color11?.get() as string;
 
     useEffect(() => {
@@ -103,7 +108,14 @@ function EditIngredientRow({
     };
 
     return (
-        <View style={[styles.row, isActive && styles.rowActive, isMergeTarget && styles.mergeTarget]}>
+        <View
+            style={[
+                styles.row,
+                isActive && styles.rowActive,
+                isMergePending && !isMergeTarget && styles.mergePending,
+                isMergeTarget && styles.mergeTarget,
+            ]}
+        >
             <XStack alignItems="center" gap="$4" width="100%">
                 <View style={styles.imageCol}>
                     <TouchableOpacity
@@ -143,25 +155,21 @@ function EditIngredientRow({
                                 style={[styles.measureInput, { color: theme.color?.get() as string }]}
                                 autoFocus
                                 keyboardType="numeric"
-                                returnKeyType="next"
-                                blurOnSubmit={false}
-                                onSubmitEditing={() => unitRef.current?.focus()}
-                            />
-                            <TextInput
-                                ref={unitRef}
-                                value={item.unit}
-                                onChangeText={(v) => onUpdateItem(index, { unit: v })}
-                                placeholder="Unit"
-                                placeholderTextColor={theme.color11?.get() as string}
-                                style={[styles.measureInput, { color: theme.color?.get() as string }]}
                                 returnKeyType="done"
                                 onSubmitEditing={() => setEditingMeasure(false)}
                                 onBlur={() => {
-                                    // Defer so amount↔unit focus moves don't collapse the fields.
+                                    // Defer so unit-sheet open / re-focus don't collapse the fields.
                                     requestAnimationFrame(() => {
-                                        if (amountRef.current?.isFocused() || unitRef.current?.isFocused()) return;
+                                        if (amountRef.current?.isFocused() || unitPickerOpenRef.current) return;
                                         setEditingMeasure(false);
                                     });
+                                }}
+                            />
+                            <UnitPicker
+                                value={item.unit || defaultUnit}
+                                onChange={(unit) => onUpdateItem(index, { unit })}
+                                onOpenChange={(open) => {
+                                    unitPickerOpenRef.current = open;
                                 }}
                             />
                         </XStack>
@@ -202,7 +210,11 @@ function EditIngredientRow({
                     <IconSymbol name="trash" size={20} color="#ff4444" />
                 </TouchableOpacity>
             </XStack>
-            {isMergeTarget ? <Text style={styles.mergeHint}>Release to combine</Text> : null}
+            {isMergeTarget ? (
+                <Text style={styles.mergeHint}>Release to combine</Text>
+            ) : isMergePending ? (
+                <Text style={styles.mergeHint}>Hold to combine…</Text>
+            ) : null}
         </View>
     );
 }
@@ -222,9 +234,11 @@ function ViewIngredientRow({
     if (recipe.amount) measurementParts.push(`${recipe.amount}`);
     if (recipe.unit) measurementParts.push(`${recipe.unit}`);
     const measurement = measurementParts.join(" ");
-    const ingredientId =
-        ingredientsData?.id || recipe.display_ingredient_id || recipe.ingredient_item_id;
-    const name = ingredientsData?.name || "Unknown Ingredient";
+    // Don't fall back to ingredient_item_id — that's the brand id even when role-masked.
+    const ingredientId = ingredientsData?.id || recipe.display_ingredient_id || undefined;
+    const name =
+        ingredientsData?.name ||
+        (recipe.display_ingredient_id ? "Unknown Ingredient" : "Hidden ingredient");
 
     return (
         <XStack alignItems="center" gap="$4">
@@ -311,6 +325,7 @@ export function CocktailIngredientList({
                     drag={drag}
                     isActive={isActive}
                     isMergeTarget={dwell.mergeTargetIndex === index}
+                    isMergePending={dwell.pendingTargetIndex === index}
                     autoFocusKey={focusMeasure?.index === index ? focusMeasure.key : undefined}
                     autoFocusNameKey={focusName?.index === index ? focusName.key : undefined}
                     onUpdateItem={onUpdateItem}
@@ -354,15 +369,16 @@ export function CocktailIngredientList({
     return (
         <YStack gap="$4">
             {viewRecipes?.map((recipe, index) => {
-                const id =
-                    recipe.ingredient?.id ||
-                    recipe.ingredient_item_id ||
-                    recipe.display_ingredient_id;
+                const id = recipe.ingredient?.id || recipe.display_ingredient_id;
+                const imageUrl =
+                    (id && ingredientImageMap[id]) ||
+                    recipe.ingredient?.item_images?.[0]?.images?.url ||
+                    undefined;
                 return (
                     <ViewIngredientRow
                         key={recipe.id || index}
                         recipe={recipe}
-                        imageUrl={id ? ingredientImageMap[id] : undefined}
+                        imageUrl={imageUrl}
                         onIngredientPress={onIngredientPress}
                     />
                 );
@@ -380,6 +396,12 @@ const styles = StyleSheet.create({
     },
     rowActive: {
         opacity: 0.85,
+    },
+    mergePending: {
+        borderColor: "rgba(230,162,60,0.55)",
+        borderWidth: 1.5,
+        backgroundColor: "rgba(230,162,60,0.08)",
+        borderRadius: 12,
     },
     mergeTarget: {
         transform: [{ scale: 1.04 }],

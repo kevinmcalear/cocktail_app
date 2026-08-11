@@ -1,39 +1,35 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import {
-    ActivityIndicator,
     Alert,
-    FlatList,
-    ScrollView,
     StyleSheet,
     TouchableOpacity,
     Platform,
-    KeyboardAvoidingView,
     Modal,
     Switch,
+    View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SearchBar } from "@/components/SearchBar";
+import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
+import { CategoryPickerModal } from "@/components/CategoryPickerModal";
+import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
+import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { supabase } from "@/lib/supabase";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme, View } from "tamagui";
-import { CategoryPickerModal } from "@/components/CategoryPickerModal";
-import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { useAppStore } from "@/store/useAppStore";
 import { renameIngredientEntity, resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
-import { capitalize, capitalizeAsYouType, handleCapitalizedChange } from "@/lib/stringUtils";
-import { calculateDraftProgress } from "@/lib/draftProgress";
-import { FormScrollContainer } from "@/components/recipe/FormScrollContainer";
+import { buildIngredientImageMap } from "@/lib/recipeUtils";
+import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { supabase } from "@/lib/supabase";
+import { useAppStore } from "@/store/useAppStore";
+import { getPreferredUnit } from "@/store/useSettingsStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button, Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
     id?: string;
@@ -65,7 +61,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
     const attachToParentId = typeof attachTo === 'string' && attachTo ? attachTo : null;
     const navigation = useNavigation();
-    const insets = useSafeAreaInsets();
     const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
@@ -98,12 +93,9 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
     // Recipe State
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
-    const [ingredientSearch, setIngredientSearch] = useState("");
-    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-    const snapPoints = useMemo(() => ['80%'], []);
+    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
     const { data: dropdowns } = useDropdowns();
-    const allIngredients = dropdowns?.ingredients || [];
 
     const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
         setRecipeItems(items);
@@ -141,8 +133,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         });
     }, [dropdowns?.ingredients, drafts]);
 
-    const [showIngredientPicker, setShowIngredientPicker] = useState(false);
-
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
 
     useEffect(() => {
@@ -151,18 +141,15 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         // Only the parent that opened create may attach (prevents self-add + sibling theft)
         if (!handoff.targetId || !currentDraftId || handoff.targetId !== currentDraftId) return;
         setRecipeItems((prev) =>
-            applyIngredientHandoff(prev, handoff, currentDraftId, { amount: "", unit: "" }) ?? prev
+            applyIngredientHandoff(prev, handoff, currentDraftId, { amount: "", unit: getPreferredUnit() }) ?? prev
         );
         setRecentlyCreatedItem(null);
     }, [recentlyCreatedItem, setRecentlyCreatedItem, currentDraftId]);
 
-    const handlePresentModalPress = useCallback(() => {
-        setShowIngredientPicker(true);
-    }, []);
-
-    const handleDismissModalPress = useCallback(() => {
-        setShowIngredientPicker(false);
-    }, []);
+    const ingredientImageMap = useMemo(
+        () => buildIngredientImageMap(undefined, dropdowns?.ingredients),
+        [dropdowns?.ingredients]
+    );
 
     const draftLoadedRef = useRef<string | null>(null);
     const currentStateStr = JSON.stringify({ name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
@@ -314,18 +301,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             navigation.dispatch(pendingNavigationActionRef.current);
         }
     };
-
-    const renderBackdrop = useCallback(
-        (props: any) => (
-            <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-                opacity={0.5}
-            />
-        ),
-        []
-    );
 
     const handleSave = () => {
         if (!name.trim()) {
@@ -506,172 +481,76 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         // ponytail: chrome rebinds when draft fields change so Save isn't stale
     }, [isInline, onChromeState, saving, currentStateStr, name, currentDraftId, recipeItems, description, brandMaker, abv, selectedCategories, barId]);
 
-    const isItemDraft = (ingredientId: string) => {
-        return drafts.some((d: any) => d.id === ingredientId && d.entity_type === 'ingredient');
+    const handleBack = () => {
+        if (isInline) {
+            const hasProgress =
+                name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+            if (hasProgress) setShowExitModal(true);
+            else onClose?.();
+        } else {
+            router.back();
+        }
     };
+
+    const dirty = currentStateStr !== cleanStateStrRef.current;
 
     return (
         <BottomSheetModalProvider>
-        <YStack style={styles.container} backgroundColor="$background">
-            {!isInline && <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />}
-            
-            <XStack
-                paddingTop={isInline ? 10 : (Platform.OS === 'ios' ? 20 : insets.top + 20)}
-                paddingHorizontal="$4"
-                paddingBottom="$4"
-                alignItems="center"
-                justifyContent="space-between"
-                zIndex={10}
+            {!isInline && <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />}
+
+            <ItemDetailLayout
+                id={currentDraftId || "new-ingredient"}
+                title={name}
+                images={[]}
+                emptyPhotoPlaceholder
+                isFavorite={false}
+                isInStudyPile={false}
+                onToggleFavorite={() => {}}
+                onToggleStudyPile={() => {}}
+                embedded={!!isInline}
+                isEditing
+                editableTitle={{
+                    value: name,
+                    onChange: (val) => handleCapitalizedChange(val, name, setName),
+                    onBlur: () => setName(capitalize(name)),
+                    placeholder: "e.g. Rich Simple Syrup",
+                }}
+                onBack={isInline ? undefined : handleBack}
+                onCancelEdit={isInline ? undefined : handleBack}
+                onSave={
+                    isInline
+                        ? undefined
+                        : () => {
+                              void handleHeaderSave();
+                          }
+                }
+                saving={saving}
+                isDirty={dirty || Boolean(name.trim()) || currentDraftId !== null}
             >
-                <TouchableOpacity 
-                    onPress={() => {
-                        if (isInline) {
-                            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
-                            if (hasProgress) {
-                                setShowExitModal(true);
-                            } else {
-                                if (onClose) onClose();
-                            }
-                        } else {
-                            router.back();
-                        }
-                    }} 
-                    style={styles.headerBtn}
-                >
-                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
-                </TouchableOpacity>
-                <Text fontSize="$5" fontWeight="bold">
-                    {currentDraftId ? 'Edit Ingredient' : 'New Ingredient'}
-                </Text>
-                <XStack gap="$2" alignItems="center">
-                    <Button 
-                        onPress={() => { void handleHeaderSave(); }}
-                        disabled={saving}
-                        size="$3"
-                        chromeless
-                    >
-                        {saving ? <ActivityIndicator size="small" color={theme.color8?.get() as string} /> : <Text color={theme.color8?.get() as string} fontWeight="bold">Save</Text>}
-                    </Button>
-                </XStack>
-            </XStack>
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
-                <FormScrollContainer contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-                    
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Name *</Label>
-                        <Input
-                            value={name}
-                            onChangeText={(val) => handleCapitalizedChange(val, name, setName)}
-                            onBlur={() => setName(capitalize(name))}
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. Rich Simple Syrup"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Brand / Maker</Label>
-                        <Input
-                            value={brandMaker}
-                            onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
-                            onBlur={() => setBrandMaker(capitalize(brandMaker))}
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. Campari, Buffalo Trace"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">ABV (%)</Label>
-                        <Input
-                            value={abv}
-                            onChangeText={setAbv}
-                            keyboardType="numeric"
-                            placeholderTextColor="$color11"
-                            placeholder="e.g. 40"
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <XStack justifyContent="space-between" alignItems="center">
-                            <Label color="$color11">Spirit Tags</Label>
-                            <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
-                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
-                            </TouchableOpacity>
-                        </XStack>
-                        <XStack flexWrap="wrap" gap="$2">
-                            {selectedCategories.length === 0 ? (
-                                <Text color="$color11" fontStyle="italic">No tags selected</Text>
-                            ) : (
-                                selectedCategories.map(catId => {
-                                    const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
-                                    if (!cat) return null;
-                                    return (
-                                        <XStack key={catId} backgroundColor="$backgroundStrong" paddingHorizontal={12} paddingVertical={6} borderRadius={16}>
-                                            <Text color="$color">{cat.name}</Text>
-                                        </XStack>
-                                    );
-                                })
-                            )}
-                        </XStack>
-                    </YStack>
-
-                    <YStack gap="$2" marginBottom="$4">
-                        <Label color="$color11">Description / Notes</Label>
-                        <TextArea
-                            value={description}
-                            onChangeText={setDescription}
-                            numberOfLines={4}
-                            placeholderTextColor="$color11"
-                            placeholder="Optional description..."
-                            size="$4"
-                            backgroundColor="$backgroundStrong"
-                            borderColor="$borderColor"
-                            focusStyle={{ borderColor: '$color8' }}
-                        />
-                    </YStack>
-
-                    {/* Ingredients / Recipe */}
-                    <YStack gap="$2" marginBottom="$4">
-                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
-                            <Label color="$color11">Recipe (for Complex Ingredients)</Label>
-                            <TouchableOpacity onPress={handlePresentModalPress}>
-                                <Text color={theme.color8?.get() as string} fontWeight="bold">+ Add</Text>
-                            </TouchableOpacity>
-                        </XStack>
-
+                <YStack gap="$4" marginBottom="$6" paddingHorizontal={24}>
+                    <YStack gap="$2">
+                        <Text fontSize={18} fontWeight="bold" color="$color">
+                            Recipe
+                        </Text>
                         {recipeItems.length === 0 && (
-                            <Text color="$color11" fontSize={14} fontStyle="italic" marginBottom="$2">
-                                Add ingredients here if this is a pre-batched item (e.g. syrups, infusions). 
-                                Leave empty for raw ingredients.
+                            <Text color="$color11" fontSize={14} fontStyle="italic">
+                                Add ingredients if this is a pre-batched item (e.g. syrups, infusions). Leave empty
+                                for raw ingredients.
                             </Text>
                         )}
-
                         <SortableRecipeList
                             items={recipeItems}
                             onReorder={setRecipeItems}
                             onUpdateItem={(index, updates) => {
-                                const newItems = [...recipeItems];
-                                newItems[index] = { ...newItems[index], ...updates };
-                                setRecipeItems(newItems);
+                                const next = [...recipeItems];
+                                next[index] = { ...next[index], ...updates };
+                                setRecipeItems(next);
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
-                            variant="card"
+                            variant="detail"
+                            allIngredients={dropdowns?.ingredients}
+                            ingredientImageMap={ingredientImageMap}
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {
@@ -685,223 +564,232 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             drafts={drafts}
                             dropdowns={dropdowns}
                         />
+                        <TouchableOpacity
+                            onPress={() => setShowIngredientPicker(true)}
+                            style={{ alignSelf: "flex-start", marginTop: 4 }}
+                        >
+                            <Text color={theme.color8?.get() as string} fontWeight="600" fontSize={14}>
+                                + Add ingredient
+                            </Text>
+                        </TouchableOpacity>
                     </YStack>
 
-                    <XStack alignItems="center" justifyContent="space-between" gap="$3" marginBottom="$4">
-                        <YStack flex={1} gap="$1">
-                            <Text fontSize={15} fontWeight="600" color="$color">
-                                Hide in Search
-                            </Text>
-                            <Text fontSize={12} color="$color11">
-                                Keep this ingredient out of ⌘K (still usable in recipes)
-                            </Text>
-                        </YStack>
-                        <Switch
-                            value={hideFromSearch}
-                            onValueChange={setHideFromSearch}
-                            trackColor={{
-                                false: theme.borderColor?.get() as string,
-                                true: theme.color8?.get() as string,
-                            }}
-                        />
-                    </XStack>
-
-                    <BarAssignmentAccordion
-                        barId={barId} setBarId={setBarId}
-                        overrideVisibility={overrideVisibility} setOverrideVisibility={setOverrideVisibility}
-                        overrideGeneric={overrideGeneric} setOverrideGeneric={setOverrideGeneric}
-                        overrideSpecific={overrideSpecific} setOverrideSpecific={setOverrideSpecific}
-                        overrideMeasurement={overrideMeasurement} setOverrideMeasurement={setOverrideMeasurement}
-                        overridePrep={overridePrep} setOverridePrep={setOverridePrep}
+                    <TextArea
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Add a description..."
+                        placeholderTextColor="$color11"
+                        size="$4"
+                        backgroundColor="transparent"
+                        borderWidth={0}
+                        color="$color"
+                        fontSize={16}
+                        padding={0}
+                        numberOfLines={4}
                     />
 
-                </FormScrollContainer>
-            </KeyboardAvoidingView>
-
-            {/* Native Modal for adding ingredients avoiding gorhom issues */}
-            <Modal
-                visible={showIngredientPicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={handleDismissModalPress}
-            >
-                <KeyboardAvoidingView 
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ flex: 1 }}
-                >
-                    <View style={styles.modalOverlay}>
-                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={handleDismissModalPress} />
-                        <View style={[styles.fullSheetModalContent, { backgroundColor: theme.background?.get() as string, paddingBottom: insets.bottom }]}>
-                            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
-                                <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                                    <Text fontSize={20} fontWeight="bold" color="$color">Select Ingredient</Text>
-                                    <TouchableOpacity onPress={handleDismissModalPress}>
-                                        <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                                    </TouchableOpacity>
-                                </XStack>
-                                <SearchBar
-                                    placeholder="Search ingredients..."
-                                    value={ingredientSearch}
-                                    onChangeText={setIngredientSearch}
-                                    style={{ marginBottom: 16 }}
-                                />
-                            </View>
-                            <FlatList
-                                style={{ flex: 1 }}
-                                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-                                data={mergedIngredients.filter((i: any) => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))}
-                                keyExtractor={item => item.id}
-                                showsVerticalScrollIndicator={false}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                                        onPress={() => {
-                                            setRecipeItems([...recipeItems, { ingredient_id: item.id, name: capitalize(item.name), amount: "", unit: "" }]);
-                                            handleDismissModalPress();
-                                            setIngredientSearch("");
-                                        }}
-                                    >
-                                        <XStack gap="$2" alignItems="center">
-                                            <Text color="$color" fontSize={16}>{capitalize(item.name)}</Text>
-                                            {(() => {
-                                                const childDraft = drafts.find((d: any) => d.id === item.id && d.entity_type === 'ingredient');
-                                                if (!childDraft) return null;
-                                                const childProgress = calculateDraftProgress(childDraft, drafts, dropdowns);
-                                                return (
-                                                    <View style={[styles.draftBadge, { backgroundColor: childProgress.badgeBg, borderColor: childProgress.color, borderWidth: 1 }]}>
-                                                        <Text style={[styles.draftBadgeText, { color: childProgress.badgeText }]}>
-                                                            {childProgress.label} ({childProgress.percentage}%)
-                                                        </Text>
-                                                    </View>
-                                                );
-                                            })()}
-                                        </XStack>
-                                    </TouchableOpacity>
-                                )}
-                                ListEmptyComponent={
-                                    <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
-                                        <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
-                                        <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">No results found</Text>
-                                        <Button 
-                                            marginTop="$4" 
-                                            backgroundColor="$color5" 
-                                            pressStyle={{ scale: 0.97 }}
-                                            onPress={async () => {
-                                                handleDismissModalPress();
-                                                const parentId = await handleSaveDraft(true);
-                                                router.push({
-                                                    pathname: "/add-ingredient",
-                                                    params: { 
-                                                        name: ingredientSearch,
-                                                        barId: barId || "",
-                                                        attachTo: parentId || currentDraftId || "",
-                                                    }
-                                                });
-                                            }}
-                                        >
-                                            <Text color="$color" fontWeight="600">
-                                                Create ingredient
-                                            </Text>
-                                        </Button>
-                                    </YStack>
-                                }
+                    <YStack gap="$3" marginTop="$2">
+                        <YStack gap="$2">
+                            <Label color="$color11">Brand / Maker</Label>
+                            <Input
+                                value={brandMaker}
+                                onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
+                                onBlur={() => setBrandMaker(capitalize(brandMaker))}
+                                placeholderTextColor="$color11"
+                                placeholder="e.g. Campari, Buffalo Trace"
+                                size="$4"
+                                backgroundColor="transparent"
+                                borderWidth={0}
+                                borderBottomWidth={1}
+                                borderColor="$borderColor"
+                                focusStyle={{ borderColor: "$color8" }}
+                                paddingHorizontal={0}
                             />
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+                        </YStack>
 
-            <CategoryPickerModal 
+                        <YStack gap="$2">
+                            <Label color="$color11">ABV (%)</Label>
+                            <Input
+                                value={abv}
+                                onChangeText={setAbv}
+                                keyboardType="numeric"
+                                placeholderTextColor="$color11"
+                                placeholder="e.g. 40"
+                                size="$4"
+                                backgroundColor="transparent"
+                                borderWidth={0}
+                                borderBottomWidth={1}
+                                borderColor="$borderColor"
+                                focusStyle={{ borderColor: "$color8" }}
+                                paddingHorizontal={0}
+                            />
+                        </YStack>
+
+                        <YStack gap="$2">
+                            <XStack justifyContent="space-between" alignItems="center">
+                                <Label color="$color11">Spirit Tags</Label>
+                                <TouchableOpacity onPress={() => categoryPickerRef.current?.present()}>
+                                    <Text color={theme.color8?.get() as string} fontWeight="bold">
+                                        + Add
+                                    </Text>
+                                </TouchableOpacity>
+                            </XStack>
+                            <XStack flexWrap="wrap" gap="$2">
+                                {selectedCategories.length === 0 ? (
+                                    <Text color="$color11" fontStyle="italic">
+                                        No tags selected
+                                    </Text>
+                                ) : (
+                                    selectedCategories.map((catId) => {
+                                        const cat = dropdowns?.categories?.find((c: any) => c.id === catId);
+                                        if (!cat) return null;
+                                        return (
+                                            <XStack
+                                                key={catId}
+                                                backgroundColor="$backgroundStrong"
+                                                paddingHorizontal={12}
+                                                paddingVertical={6}
+                                                borderRadius={16}
+                                            >
+                                                <Text color="$color">{cat.name}</Text>
+                                            </XStack>
+                                        );
+                                    })
+                                )}
+                            </XStack>
+                        </YStack>
+
+                        <XStack alignItems="center" justifyContent="space-between" gap="$3">
+                            <YStack flex={1} gap="$1">
+                                <Text fontSize={15} fontWeight="600" color="$color">
+                                    Hide in Search
+                                </Text>
+                                <Text fontSize={12} color="$color11">
+                                    Keep this ingredient out of ⌘K (still usable in recipes)
+                                </Text>
+                            </YStack>
+                            <Switch
+                                value={hideFromSearch}
+                                onValueChange={setHideFromSearch}
+                                trackColor={{
+                                    false: theme.borderColor?.get() as string,
+                                    true: theme.color8?.get() as string,
+                                }}
+                            />
+                        </XStack>
+
+                        <BarAssignmentAccordion
+                            barId={barId}
+                            setBarId={setBarId}
+                            overrideVisibility={overrideVisibility}
+                            setOverrideVisibility={setOverrideVisibility}
+                            overrideGeneric={overrideGeneric}
+                            setOverrideGeneric={setOverrideGeneric}
+                            overrideSpecific={overrideSpecific}
+                            setOverrideSpecific={setOverrideSpecific}
+                            overrideMeasurement={overrideMeasurement}
+                            setOverrideMeasurement={setOverrideMeasurement}
+                            overridePrep={overridePrep}
+                            setOverridePrep={setOverridePrep}
+                        />
+                    </YStack>
+                </YStack>
+            </ItemDetailLayout>
+
+            <IngredientPickerSheet
+                visible={showIngredientPicker}
+                onClose={() => setShowIngredientPicker(false)}
+                ingredients={mergedIngredients}
+                excludeId={currentDraftId}
+                drafts={drafts}
+                dropdowns={dropdowns}
+                onSelect={(item) => {
+                    setRecipeItems([
+                        ...recipeItems,
+                        {
+                            ingredient_id: item.id,
+                            name: capitalize(item.name),
+                            amount: "",
+                            unit: getPreferredUnit(),
+                        },
+                    ]);
+                }}
+                onCreate={async (query) => {
+                    const parentId = await handleSaveDraft(true);
+                    router.push({
+                        pathname: "/add-ingredient",
+                        params: {
+                            name: query,
+                            barId: barId || "",
+                            attachTo: parentId || currentDraftId || "",
+                        },
+                    });
+                }}
+            />
+
+            <CategoryPickerModal
                 ref={categoryPickerRef}
-                domains={['spirit']}
+                domains={["spirit"]}
                 selectedCategoryIds={selectedCategories}
                 onToggleCategory={(cat) => {
                     if (selectedCategories.includes(cat.id)) {
-                        setSelectedCategories(prev => prev.filter(id => id !== cat.id));
+                        setSelectedCategories((prev) => prev.filter((cid) => cid !== cat.id));
                     } else {
-                        setSelectedCategories(prev => [...prev, cat.id]);
+                        setSelectedCategories((prev) => [...prev, cat.id]);
                     }
                 }}
             />
 
-            {/* Custom Exit Modal for handling browser back and dirty states safely */}
             <Modal
                 visible={showExitModal}
-                transparent={true}
+                transparent
                 animationType="fade"
                 onRequestClose={() => setShowExitModal(false)}
             >
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' }]}>
-                    <YStack 
-                        backgroundColor="$backgroundStrong" 
-                        padding="$5" 
-                        borderRadius="$4" 
-                        width="85%" 
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        { backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" },
+                    ]}
+                >
+                    <YStack
+                        backgroundColor="$backgroundStrong"
+                        padding="$5"
+                        borderRadius="$4"
+                        width="85%"
                         maxWidth={400}
                         borderWidth={1}
                         borderColor="$borderColor"
                         gap="$4"
                     >
-                        <Text fontSize="$6" fontWeight="bold" color="$color">Unsaved Changes</Text>
-                        <Text fontSize="$4" color="$color11">You have unsaved changes. Do you want to save your draft before leaving?</Text>
-                        
+                        <Text fontSize="$6" fontWeight="bold" color="$color">
+                            Unsaved Changes
+                        </Text>
+                        <Text fontSize="$4" color="$color11">
+                            You have unsaved changes. Do you want to save your draft before leaving?
+                        </Text>
                         <XStack justifyContent="flex-end" gap="$3" marginTop="$2">
                             <Button size="$3" chromeless onPress={() => setShowExitModal(false)}>
                                 <Text color="$color11">Cancel</Text>
                             </Button>
                             <Button size="$3" backgroundColor="#ff4444" onPress={() => confirmExit(false)}>
-                                <Text color="white" fontWeight="bold">Discard</Text>
+                                <Text color="white" fontWeight="bold">
+                                    Discard
+                                </Text>
                             </Button>
-                            <Button size="$3" backgroundColor={theme.color8?.get() as string} onPress={() => confirmExit(true)}>
-                                <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold">Save</Text>
+                            <Button
+                                size="$3"
+                                backgroundColor={theme.color8?.get() as string}
+                                onPress={() => confirmExit(true)}
+                            >
+                                <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold">
+                                    Save
+                                </Text>
                             </Button>
                         </XStack>
                     </YStack>
                 </View>
             </Modal>
-
-        </YStack>
         </BottomSheetModalProvider>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    content: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-    },
-    headerBtn: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end'
-    },
-    fullSheetModalContent: {
-        borderTopLeftRadius: 48,
-        borderTopRightRadius: 48,
-        borderCurve: 'continuous',
-        height: '80%'
-    },
-    draftBadge: {
-        backgroundColor: 'rgba(255, 165, 0, 0.15)',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 165, 0, 0.4)',
-    },
-    draftBadgeText: {
-        color: '#ffa500',
-        fontSize: 10,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-    }
-});

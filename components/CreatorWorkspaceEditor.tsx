@@ -118,6 +118,7 @@ export function CreatorWorkspaceEditor({
                         idProp={editing.publishedId}
                         onClose={onClose}
                         onSave={onSave}
+                        onChromeState={onChromeState}
                         {...nestedProps}
                     />
                 );

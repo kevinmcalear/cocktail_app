@@ -7,12 +7,11 @@ import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } fr
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useBars } from "@/hooks/useBars";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useAppStore } from "@/store/useAppStore";
+import { useEffectiveRole } from "@/hooks/useViewAs";
 
 interface IngredientDetail {
     id: string;
@@ -53,10 +52,7 @@ export default function IngredientDetailScreen() {
             : null
     );
 
-    const selectedBarId = useAppStore((state) => state.selectedBarId);
-    const { data: bars } = useBars();
-    const currentBarRole = bars?.find((b) => b.bar_id === selectedBarId)?.role_level || 10;
-    const canViewDetails = currentBarRole > 30; // Admin (40) can see complex ingredient details.
+    const canViewDetails = useEffectiveRole() > 30;
 
     if (loading || !ingredient) {
         return (

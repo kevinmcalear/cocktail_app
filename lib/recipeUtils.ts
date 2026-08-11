@@ -14,13 +14,10 @@ export function sortRecipesByOrder<T extends { sort_order?: number | null; creat
 
 /** Resolve the ingredient join row from an app_recipe_presentation payload. */
 export function resolvePresentationIngredient(recipe: any) {
-    const fromDisplay = !recipe.display_ingredient_id
-        ? null
-        : recipe.display_ingredient_id === recipe.parent_ingredient_id
-          ? recipe.generic_ingredient
-          : recipe.specific_ingredient;
-    // ponytail: display_ingredient_id can be null when role-masked; joins still carry the row
-    const ingredient = fromDisplay || recipe.specific_ingredient || recipe.generic_ingredient;
+    // Role-masked rows null display_ingredient_id; joins still carry brand — do not fall back.
+    if (!recipe.display_ingredient_id) return null;
+    const preferGeneric = recipe.display_ingredient_id === recipe.parent_ingredient_id;
+    const ingredient = preferGeneric ? recipe.generic_ingredient : recipe.specific_ingredient;
     if (!ingredient) return null;
     return {
         ...ingredient,
@@ -41,16 +38,20 @@ export function buildIngredientImageMap(
 ): Record<string, string> {
     const map: Record<string, string> = {};
     recipes?.forEach((recipe) => {
+        const resolved = recipe.ingredient || resolvePresentationIngredient(recipe);
+        // Edit rows key by ingredient_id; keep that in the chain so thumbs aren't blank grey squircles.
         const id =
-            recipe.ingredient?.id ||
-            recipe.ingredient_item_id ||
+            resolved?.id ||
             recipe.display_ingredient_id ||
+            recipe.ingredient_item_id ||
             recipe.ingredient_id;
+        if (!id) return;
+        // ponytail: names stay masked via resolve*; images still use joins so photos don't go blank
         const url =
-            firstImageUrl(recipe.ingredient) ||
+            firstImageUrl(resolved) ||
             firstImageUrl(recipe.specific_ingredient) ||
             firstImageUrl(recipe.generic_ingredient);
-        if (id && url) map[id] = url;
+        if (url) map[id] = url;
     });
     extras?.forEach((ing) => {
         if (!ing?.id || map[ing.id]) return;
