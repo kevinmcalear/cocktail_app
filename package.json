@@ -9,6 +9,7 @@
     "ios": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --ios",
     "web": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --web",
     "lint": "expo lint",
+    "test:security": "node --test supabase/tests/security.test.mjs",
     "postinstall": "patch-package"
   },
   "dependencies": {

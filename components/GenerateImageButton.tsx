@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
@@ -55,14 +55,7 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
                     break;
             }
 
-            const { data, error } = await supabase.functions.invoke(functionName, { body });
-
-            if (error) {
-                 throw new Error(error.message || "Failed to generate image.");
-            }
-            if (data && data.error) {
-                 throw new Error(data.error);
-            }
+            await invokeFunction(functionName, body);
 
             // Success, vibrate
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
