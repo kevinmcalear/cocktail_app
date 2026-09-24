@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from 
 import { Image } from 'expo-image';
 import { Button, Card, Input, Label, ScrollView, Text, XStack, YStack, useTheme } from 'tamagui';
 
+import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { GlassView } from '@/components/ui/GlassView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useBarEditor } from '@/hooks/useBarEditor';
@@ -233,6 +234,8 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                     )}
                 </YStack>
             </Card>
+
+            {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
 
             <GlassView style={styles.card} intensity={10}>
                 <XStack alignItems="center" gap="$3">

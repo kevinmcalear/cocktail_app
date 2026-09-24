@@ -43,6 +43,10 @@
     {
       "source": "/settings/bar/:id/assign-items",
       "destination": "/settings/bar/[id]/assign-items"
+    },
+    {
+      "source": "/v/:slug",
+      "destination": "/v/[slug]"
     }
   ]
 }

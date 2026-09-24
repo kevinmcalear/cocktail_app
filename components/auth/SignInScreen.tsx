@@ -1,4 +1,4 @@
-import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
+import { AuthField, AuthMessage, AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { useAuth } from '@/ctx/AuthContext';
 import { Link } from 'expo-router';
@@ -6,7 +6,11 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable } from 'react-native';
 import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
 
-export default function Login() {
+/**
+ * Email and password sign-in. With a `brand`, it wears the venue's name and
+ * logo (the venue staff link, /v/<slug>).
+ */
+export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?: string } = {}) {
   const theme = useTheme();
   const { signIn, resendConfirmation } = useAuth();
   const [email, setEmail] = useState('');
@@ -47,7 +51,8 @@ export default function Login() {
   return (
     <AuthShell
       title="Sign in"
-      subtitle="Access your bars, menus, and recipes."
+      subtitle={subtitle ?? 'Access your bars, menus, and recipes.'}
+      brand={brand}
       footer={
         <XStack alignItems="center" gap="$1">
           <Text color="$color11" fontSize={14}>

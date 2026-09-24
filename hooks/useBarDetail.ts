@@ -14,6 +14,7 @@ export function useBarDetail(barId: string) {
                     .select(`
                         id,
                         name,
+                        slug,
                         logo_url,
                         primary_color,
                         secondary_color,

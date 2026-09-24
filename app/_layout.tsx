@@ -63,8 +63,9 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    // Privacy, terms and account-deletion pages must open without signing in.
-    if (segments[0] === 'legal') return;
+    // Privacy, terms and account-deletion pages must open without signing in,
+    // and venue staff links (/v/<slug>) have their own branded sign-in.
+    if (segments[0] === 'legal' || segments[0] === 'v') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
@@ -87,7 +88,7 @@ function RootLayoutNav() {
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
-  const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth';
+  const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v';
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -112,6 +113,7 @@ function RootLayoutNav() {
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="auth" options={{ headerShown: false }} />
+            <Stack.Screen name="v/[slug]" options={{ headerShown: false }} />
             <Stack.Screen
               name="menus/create/index"
               options={{ presentation: "modal", headerShown: false }}

@@ -1,17 +1,28 @@
+import { Image } from 'expo-image';
 import { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Text, YStack } from 'tamagui';
+
+import { BRAND } from '@/constants/brand';
+
+/** A venue's own name and logo, shown in place of the product name on its staff link. */
+export interface AuthBrand {
+  name: string;
+  logoUrl: string | null;
+}
 
 export function AuthShell({
   title,
   subtitle,
   children,
   footer,
+  brand,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
+  brand?: AuthBrand;
 }) {
   return (
     <YStack flex={1} backgroundColor="$background">
@@ -29,16 +40,25 @@ export function AuthShell({
         >
           <YStack width="100%" maxWidth={400} alignSelf="center" gap="$5">
             <YStack gap="$2" alignItems="center">
+              {brand?.logoUrl ? (
+                <Image
+                  source={{ uri: brand.logoUrl }}
+                  style={{ width: 96, height: 96, marginBottom: 8, borderRadius: 22 }}
+                  contentFit="contain"
+                  accessibilityLabel={`${brand.name} logo`}
+                />
+              ) : null}
               <Text
                 fontSize={13}
                 fontWeight="700"
                 color="$color11"
                 textTransform="uppercase"
                 letterSpacing={1.2}
+                textAlign="center"
               >
-                Cocktail
+                {brand?.name ?? BRAND.productName}
               </Text>
-              <Text fontSize={28} fontWeight="700" color="$color" textAlign="center">
+              <Text fontSize={28} lineHeight={34} fontWeight="700" color="$color" textAlign="center">
                 {title}
               </Text>
               {subtitle ? (

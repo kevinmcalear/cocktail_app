@@ -1,17 +1,11 @@
+import { useAuth } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 
 export function useBars() {
-    const [userId, setUserId] = useState<string | null>(null);
-
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user?.id) {
-                setUserId(session.user.id);
-            }
-        });
-    }, []);
+    // Follows sign-in and sign-out, so a screen that stays mounted across
+    // them (the venue staff link) sees the new user's bars.
+    const userId = useAuth().user?.id ?? null;
 
     return useQuery({
         queryKey: ['bars', userId],
