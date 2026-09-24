@@ -5,7 +5,7 @@ import * as Linking from 'expo-linking';
 export type AuthLinkState = {
   url: string | null;
   error: string | null;
-  /** code / tokens / token_hash present — needs a user gesture to exchange */
+  /** code / token_hash present — needs a user gesture to exchange */
   hasCredential: boolean;
 };
 
@@ -23,11 +23,7 @@ export function inspectAuthUrl(url: string | null | undefined): AuthLinkState {
   if (!url) return { url: null, error: null, hasCredential: false };
   const params = parseAuthParams(url);
   const error = humanizeAuthError(params);
-  const hasCredential = !!(
-    params.code ||
-    params.token_hash ||
-    (params.access_token && params.refresh_token)
-  );
+  const hasCredential = !!(params.code || params.token_hash);
   return { url, error, hasCredential };
 }
 

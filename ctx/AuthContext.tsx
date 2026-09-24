@@ -1,10 +1,7 @@
-import { createSessionFromUrl } from '@/lib/createSessionFromUrl';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
-import * as Linking from 'expo-linking';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 
 type AuthContextType = {
   session: Session | null;
@@ -69,26 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  // Native deep links only — web exchanges via EmailLinkGate on Continue tap
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-
-    const handleUrl = async (url: string | null) => {
-      if (!url) return;
-      try {
-        await createSessionFromUrl(url);
-      } catch (e) {
-        console.warn('Auth deep link failed', e);
-      }
-    };
-
-    Linking.getInitialURL().then(handleUrl);
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      handleUrl(url);
-    });
-    return () => sub.remove();
   }, []);
 
   const signIn = async (email: string, password: string) => {
