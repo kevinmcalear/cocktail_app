@@ -416,3 +416,7 @@ enabled = true
 # Checks the caller's session and bar role itself, so the gateway JWT check is off.
 [functions.upload-bar-logo]
 verify_jwt = false
+
+# Public: phones fetch a venue's install manifest and icons before anyone signs in.
+[functions.venue-app]
+verify_jwt = false
