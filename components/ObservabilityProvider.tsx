@@ -1,8 +1,10 @@
 import { useSegments } from 'expo-router';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import { type ReactNode, useEffect } from 'react';
+import { Platform } from 'react-native';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { appVariant } from '@/lib/appVariant';
 import { setMonitoringUser } from '@/lib/monitoring';
 
 const POSTHOG_KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
@@ -27,6 +29,15 @@ function AnalyticsIdentity() {
     if (userId) posthog.identify(userId);
     else posthog.reset();
   }, [posthog, userId]);
+  return null;
+}
+
+/** Tags every event with the platform and build, so test builds filter out. */
+function SuperProperties() {
+  const posthog = usePostHog();
+  useEffect(() => {
+    posthog.register({ app_surface: Platform.OS, app_variant: appVariant });
+  }, [posthog]);
   return null;
 }
 
@@ -62,6 +73,7 @@ export function ObservabilityProvider({ children }: { children: ReactNode }) {
       autocapture={{ captureScreens: false, captureTouches: false }}
     >
       <MonitoringIdentity />
+      <SuperProperties />
       <AnalyticsIdentity />
       <ScreenTracker />
       {children}

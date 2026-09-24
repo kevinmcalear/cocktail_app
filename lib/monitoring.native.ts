@@ -1,12 +1,14 @@
 import * as Sentry from '@sentry/react-native';
 
+import { appVariant } from '@/lib/appVariant';
+
 const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
 export function initMonitoring(): void {
   if (!dsn) return;
   Sentry.init({
     dsn,
-    environment: __DEV__ ? 'development' : 'production',
+    environment: appVariant,
     sendDefaultPii: false,
   });
 }

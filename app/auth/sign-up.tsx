@@ -162,6 +162,22 @@ export default function SignUp() {
             </Text>
           )}
         </Button>
+
+        <Text fontSize={12} color="$color11" textAlign="center">
+          By creating an account you agree to the{' '}
+          <Link href="/legal/terms">
+            <Text fontSize={12} color="$color8">
+              Terms of use
+            </Text>
+          </Link>{' '}
+          and{' '}
+          <Link href="/legal/privacy">
+            <Text fontSize={12} color="$color8">
+              Privacy policy
+            </Text>
+          </Link>
+          .
+        </Text>
       </YStack>
     </AuthShell>
   );

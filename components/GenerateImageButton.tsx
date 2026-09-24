@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { ensureAiConsent } from '@/lib/aiConsent';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -31,6 +32,7 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
 
     const handlePress = async () => {
         if (isGenerating) return;
+        if (!(await ensureAiConsent())) return;
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setIsGenerating(true);
