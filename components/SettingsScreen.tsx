@@ -10,18 +10,20 @@ import {
   PERSONAL_CONTEXT,
   resolveDefaultContextIds,
 } from '@/lib/barContextFilter';
+import { confirmAsync, showMessage } from '@/lib/dialogs';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 import { DEFAULT_UNIT_OPTIONS, THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
 import { decode } from 'base64-arraybuffer';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   Switch,
@@ -31,11 +33,6 @@ import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } 
 
 const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
-
-function alertMsg(title: string, message: string) {
-  if (Platform.OS === 'web') window.alert(message);
-  else Alert.alert(title, message);
-}
 
 function Section({
   title,
@@ -76,6 +73,30 @@ export function SettingsScreen() {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
+  const router = useRouter();
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const deleteAccount = async () => {
+    const confirmed = await confirmAsync({
+      title: 'Delete your account?',
+      message:
+        'This permanently deletes your account, profile, drafts and venue memberships. Drinks and menus you made in a venue stay with that venue. This cannot be undone.',
+      confirmText: 'Delete account',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    setDeletingAccount(true);
+    try {
+      await invokeFunction('delete-account', {});
+      // The account is gone; drop the local session. The root layout then
+      // clears this device's cached data and returns to sign-in.
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (e) {
+      showMessage('Could not delete your account', e instanceof Error ? e.message : 'Please try again.');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
   const { data: userBars, isLoading: barsLoading } = useBars();
   const {
     isTestingEnabled,
@@ -130,11 +151,11 @@ export function SettingsScreen() {
   const saveProfile = async () => {
     if (password || confirmPassword) {
       if (password !== confirmPassword) {
-        alertMsg('Error', 'Passwords do not match');
+        showMessage('Error', 'Passwords do not match');
         return;
       }
       if (password.length < 6) {
-        alertMsg('Error', 'Password must be at least 6 characters');
+        showMessage('Error', 'Password must be at least 6 characters');
         return;
       }
     }
@@ -161,7 +182,7 @@ export function SettingsScreen() {
         setLocalImageUri(null);
         setLocalImageBase64(null);
       } catch (e: any) {
-        alertMsg('Error', e.message || 'Failed to upload image');
+        showMessage('Error', e.message || 'Failed to upload image');
         setSavingProfile(false);
         return;
       }
@@ -177,13 +198,13 @@ export function SettingsScreen() {
     setPassword('');
     setConfirmPassword('');
 
-    if (error) alertMsg('Error', error.message);
-    else alertMsg('Saved', 'Profile updated');
+    if (error) showMessage('Error', error.message);
+    else showMessage('Saved', 'Profile updated');
   };
 
   const createBar = async () => {
     if (!newBarName.trim()) {
-      alertMsg('Required', 'Enter a venue name');
+      showMessage('Required', 'Enter a venue name');
       return;
     }
     setCreatingBar(true);
@@ -200,9 +221,9 @@ export function SettingsScreen() {
       queryClient.invalidateQueries({ queryKey: ['bars'] });
       setNewBarName('');
       setShowCreateBar(false);
-      alertMsg('Created', `${newBarName.trim()} is ready`);
+      showMessage('Created', `${newBarName.trim()} is ready`);
     } catch (e: any) {
-      alertMsg('Error', e.message || 'Failed to create venue');
+      showMessage('Error', e.message || 'Failed to create venue');
     } finally {
       setCreatingBar(false);
     }
@@ -593,6 +614,38 @@ export function SettingsScreen() {
     </Section>
   );
 
+  const linkRow = (label: string, onPress: () => void) => (
+    <Pressable accessibilityRole="link" onPress={onPress}>
+      <XStack alignItems="center" justifyContent="space-between">
+        <Text fontSize={15} color="$color">
+          {label}
+        </Text>
+        <IconSymbol name="chevron.right" size={16} color={color} />
+      </XStack>
+    </Pressable>
+  );
+
+  const accountPanel = (
+    <Section title="Account" minWidth={240}>
+      {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
+      {linkRow('Terms of use', () => router.push('/legal/terms'))}
+      <Separator />
+      <Pressable accessibilityRole="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
+        <XStack alignItems="center" justifyContent="space-between">
+          <YStack flex={1}>
+            <Text fontSize={15} fontWeight="600" color="#FF6B6B">
+              Delete account
+            </Text>
+            <Text fontSize={12} color="$color11">
+              Permanently remove your account and personal data
+            </Text>
+          </YStack>
+          {deletingAccount ? <ActivityIndicator color="#FF6B6B" /> : null}
+        </XStack>
+      </Pressable>
+    </Section>
+  );
+
   const viewAsPanel =
     viewAsChoices.length === 0 ? null : (
       <Section title="View as" minWidth={280}>
@@ -669,7 +722,7 @@ export function SettingsScreen() {
         paddingHorizontal="$6"
         paddingVertical="$6"
         gap="$5"
-        paddingBottom={80}
+        paddingBottom={Platform.OS === 'web' ? 80 : 160}
       >
         <YStack gap="$1">
           <Text fontSize={28} fontWeight="700" color="$color">
@@ -692,6 +745,7 @@ export function SettingsScreen() {
           {searchFilterPanel}
           {viewAsPanel}
           {testingPanel}
+          {accountPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable onPress={() => signOut()}>
               <XStack
