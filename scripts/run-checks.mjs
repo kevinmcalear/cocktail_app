@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { globSync } from 'node:fs';
 
-const files = globSync('{app,components,hooks,lib,store,ctx}/**/*.{check,selfcheck}.ts').sort();
+const files = globSync('{app,components,hooks,lib,store,ctx,scripts}/**/*.{check,selfcheck}.ts').sort();
 if (files.length === 0) {
   console.error('No check scripts found.');
   process.exit(1);

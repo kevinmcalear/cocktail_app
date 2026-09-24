@@ -2,5 +2,47 @@
   "buildCommand": "npm run build:web",
   "outputDirectory": "dist",
   "framework": null,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/beer/:id",
+      "destination": "/beer/[id]"
+    },
+    {
+      "source": "/beer/:id/edit",
+      "destination": "/beer/[id]/edit"
+    },
+    {
+      "source": "/cocktail/:id",
+      "destination": "/cocktail/[id]"
+    },
+    {
+      "source": "/cocktail/:id/edit",
+      "destination": "/cocktail/[id]/edit"
+    },
+    {
+      "source": "/ingredient/:id",
+      "destination": "/ingredient/[id]"
+    },
+    {
+      "source": "/ingredient/:id/edit",
+      "destination": "/ingredient/[id]/edit"
+    },
+    {
+      "source": "/wine/:id",
+      "destination": "/wine/[id]"
+    },
+    {
+      "source": "/wine/:id/edit",
+      "destination": "/wine/[id]/edit"
+    },
+    {
+      "source": "/settings/bar/:id",
+      "destination": "/settings/bar/[id]"
+    },
+    {
+      "source": "/settings/bar/:id/assign-items",
+      "destination": "/settings/bar/[id]/assign-items"
+    }
+  ]
 }
