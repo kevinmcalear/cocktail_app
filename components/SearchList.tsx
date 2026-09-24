@@ -16,6 +16,7 @@ import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedb
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
+import { STATUS } from '@/constants/palette';
 
 // ponytail: columns from the panel width (not the window — sidebar steals space)
 const DESKTOP_BREAKPOINT = 768;
@@ -200,14 +201,14 @@ const SearchItemCard = memo(function SearchItemCard({
     const renderRightActions = () => (
         <View style={styles.rightActionsContainer}>
             <RectButton
-                style={[styles.actionButton, { backgroundColor: '#FF4B4B' }]}
+                style={[styles.actionButton, { backgroundColor: STATUS.danger }]}
                 onPress={() => onToggleFavorite(drink.id, swipeableRef!)}
             >
                 <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
                 <Text style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</Text>
             </RectButton>
             <RectButton
-                style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
+                style={[styles.actionButton, { backgroundColor: STATUS.info }]}
                 onPress={() => onToggleStudyPile(drink.id, swipeableRef!)}
             >
                 <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
@@ -229,7 +230,7 @@ const SearchItemCard = memo(function SearchItemCard({
             alignSelf: "flex-start",
         }}>
             <Text style={{
-                color: drink.draftProgress?.badgeText || "#ffa500",
+                color: drink.draftProgress?.badgeText || STATUS.warning,
                 fontSize: 10,
                 fontWeight: "bold",
             }} textTransform="uppercase">

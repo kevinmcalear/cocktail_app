@@ -1,12 +1,35 @@
+import { palette } from "@/constants/palette";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { BottomTabBarProps } from "expo-router/js-tabs";
 import { PlatformPressable, useLinkBuilder } from "expo-router/react-navigation";
 import { BlurView } from "expo-blur";
+import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { XStack } from "tamagui";
 import { UniversalCreateButton } from "./UniversalCreateButton";
+
+// iOS 26 draws real Liquid Glass; elsewhere a blur with the palette's glass tint.
+const LIQUID_GLASS = isLiquidGlassAvailable();
+
+function TabBarSurface({ scheme, children }: { scheme: "light" | "dark"; children: ReactNode }) {
+    if (LIQUID_GLASS) {
+        return (
+            <GlassView glassEffectStyle="regular" isInteractive colorScheme={scheme} style={styles.surface}>
+                {children}
+            </GlassView>
+        );
+    }
+    return (
+        <View style={[styles.surface, styles.blurWrapper, { borderColor: palette[scheme].glassBorder }]}>
+            <BlurView intensity={80} tint={scheme} style={{ backgroundColor: palette[scheme].glass }}>
+                {children}
+            </BlurView>
+        </View>
+    );
+}
 
 export function LiquidTabBar({
     state,
@@ -17,9 +40,8 @@ export function LiquidTabBar({
     const colorScheme = useColorScheme();
     const insets = useSafeAreaInsets();
     const { isTestingEnabled } = useSettingsStore();
-    
-    const activeColor = "#FFFFFF";
-    const inactiveColor = "rgba(255, 255, 255, 0.4)";
+    const activeColor = palette[colorScheme].ink;
+    const inactiveColor = palette[colorScheme].tabIconInactive;
 
     const currentRouteKey = state.routes[state.index].key;
     const currentOptions = descriptors[currentRouteKey].options as any;
@@ -47,62 +69,60 @@ export function LiquidTabBar({
 
     return (
         <View style={[styles.container, { bottom: Math.max(insets.bottom, 20) }]}>
-            <View style={styles.blurWrapper}>
-                <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-                    <XStack
-                        justifyContent="center"
-                        alignItems="center"
-                        paddingHorizontal={24}
-                        gap={12}
-                        height={65}
-                    >
-                        {validRoutes.map((route) => {
-                            const { options } = descriptors[route.key];
-                            const originalIndex = state.routes.findIndex(r => r.key === route.key);
-                            const isFocused = state.index === originalIndex;
+            <TabBarSurface scheme={colorScheme}>
+                <XStack
+                    justifyContent="center"
+                    alignItems="center"
+                    paddingHorizontal={24}
+                    gap={12}
+                    height={65}
+                >
+                    {validRoutes.map((route) => {
+                        const { options } = descriptors[route.key];
+                        const originalIndex = state.routes.findIndex(r => r.key === route.key);
+                        const isFocused = state.index === originalIndex;
 
-                            const onPress = () => {
-                                const event = navigation.emit({
-                                    type: "tabPress",
-                                    target: route.key,
-                                    canPreventDefault: true,
-                                });
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: "tabPress",
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
 
-                                if (!isFocused && !event.defaultPrevented) {
-                                    navigation.navigate(route.name, route.params);
-                                }
-                            };
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name, route.params);
+                            }
+                        };
 
-                            const onLongPress = () => {
-                                navigation.emit({
-                                    type: "tabLongPress",
-                                    target: route.key,
-                                });
-                            };
+                        const onLongPress = () => {
+                            navigation.emit({
+                                type: "tabLongPress",
+                                target: route.key,
+                            });
+                        };
 
-                            return (
-                                <PlatformPressable
-                                    key={route.key}
-                                    href={buildHref(route.name, route.params)}
-                                    accessibilityState={isFocused ? { selected: true } : {}}
-                                    accessibilityLabel={options.tabBarAccessibilityLabel}
-                                    testID={options.tabBarButtonTestID}
-                                    onPress={onPress}
-                                    onLongPress={onLongPress}
-                                    style={styles.tabItem}
-                                >
-                                    {options.tabBarIcon && options.tabBarIcon({
-                                        focused: isFocused,
-                                        color: isFocused ? activeColor : inactiveColor,
-                                        size: 28,
-                                    })}
-                                </PlatformPressable>
-                            );
-                        })}
-                        <UniversalCreateButton />
-                    </XStack>
-                </BlurView>
-            </View>
+                        return (
+                            <PlatformPressable
+                                key={route.key}
+                                href={buildHref(route.name, route.params)}
+                                accessibilityState={isFocused ? { selected: true } : {}}
+                                accessibilityLabel={options.tabBarAccessibilityLabel}
+                                testID={options.tabBarButtonTestID}
+                                onPress={onPress}
+                                onLongPress={onLongPress}
+                                style={styles.tabItem}
+                            >
+                                {options.tabBarIcon && options.tabBarIcon({
+                                    focused: isFocused,
+                                    color: isFocused ? activeColor : inactiveColor,
+                                    size: 28,
+                                })}
+                            </PlatformPressable>
+                        );
+                    })}
+                    <UniversalCreateButton />
+                </XStack>
+            </TabBarSurface>
         </View>
     );
 }
@@ -115,14 +135,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         zIndex: 100,
     },
-    blurWrapper: {
+    surface: {
         borderRadius: 35,
         overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
     },
-    blurContainer: {
-        backgroundColor: "rgba(0,0,0,0.5)",
+    blurWrapper: {
+        borderWidth: 1,
     },
     tabItem: {
         alignItems: "center",

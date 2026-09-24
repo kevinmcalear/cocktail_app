@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { WorkspaceFrame } from '@/lib/creatorWorkspaceUtils';
+import { STATUS } from '@/constants/palette';
 
 interface CreatorWorkspaceProps {
     navigationStack: WorkspaceFrame[];
@@ -99,8 +100,8 @@ export function CreatorWorkspace({
                                 {activeItem?.isPublished ? (
                                     <View style={[styles.badge, { backgroundColor: 'rgba(52, 199, 89, 0.15)' }]}>
                                         <XStack alignItems="center" gap="$1">
-                                            <IconSymbol name="checkmark" size={10} color="#34C759" />
-                                            <Text fontSize={10} fontWeight="bold" color="#34C759" textTransform="uppercase">
+                                            <IconSymbol name="checkmark" size={10} color={STATUS.success} />
+                                            <Text fontSize={10} fontWeight="bold" color="$green10" textTransform="uppercase">
                                                 Published
                                             </Text>
                                         </XStack>
@@ -143,8 +144,8 @@ export function CreatorWorkspace({
                                 {onDiscard && (
                                     <TouchableOpacity onPress={onDiscard} style={styles.discardBtn}>
                                         <XStack alignItems="center" gap="$1">
-                                            <IconSymbol name="trash" size={12} color="#ff4444" />
-                                            <Text fontSize={11} fontWeight="600" color="#ff4444">
+                                            <IconSymbol name="trash" size={12} color={STATUS.danger} />
+                                            <Text fontSize={11} fontWeight="600" color="$red10">
                                                 {draftPublishChrome || activeItem?.isPublished ? "Delete" : "Discard"}
                                             </Text>
                                         </XStack>

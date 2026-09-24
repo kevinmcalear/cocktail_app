@@ -9,14 +9,14 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { AnimatePresence, MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { FadeInDown, FadeInUp, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInRight, FadeInUp, FadeOutLeft, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text, YStack } from "tamagui";
 import { CocktailCategory, CocktailGlass, FlashcardItem, height, sharedStyles, Subject, width } from "./_shared";
+import { STATUS } from '@/constants/palette';
 
 export default function QuizScreen() {
     const router = useRouter();
@@ -278,15 +278,15 @@ export default function QuizScreen() {
                             <View style={[styles.statsContainer, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 }]}>
                                 <View style={{ gap: 10 }}>
                                     <View style={styles.statRow}>
-                                        <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
+                                        <View style={[styles.statDot, { backgroundColor: STATUS.success }]} />
                                         <Text style={styles.statLabel}>PERFECT: {counts.perfect}</Text>
                                     </View>
                                     <View style={styles.statRow}>
-                                        <View style={[styles.statDot, { backgroundColor: '#FFA500' }]} />
+                                        <View style={[styles.statDot, { backgroundColor: STATUS.warning }]} />
                                         <Text style={styles.statLabel}>ACCEPTABLE: {counts.acceptable}</Text>
                                     </View>
                                     <View style={styles.statRow}>
-                                        <View style={[styles.statDot, { backgroundColor: '#FF4B4B' }]} />
+                                        <View style={[styles.statDot, { backgroundColor: STATUS.danger }]} />
                                         <Text style={styles.statLabel}>POOR: {counts.poor}</Text>
                                     </View>
                                 </View>
@@ -343,13 +343,10 @@ export default function QuizScreen() {
                     </View>
 
                     <View style={styles.quizContent}>
-                        <AnimatePresence exitBeforeEnter>
-                            <MotiView
+                            <Animated.View
                                 key={currentIndex}
-                                from={{ opacity: 0, scale: 0.9, translateX: 100 }}
-                                animate={{ opacity: 1, scale: 1, translateX: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, translateX: -100 }}
-                                transition={{ type: 'timing', duration: 150 }}
+                                entering={FadeInRight.duration(150)}
+                                exiting={FadeOutLeft.duration(150)}
                                 style={styles.cardWrapper}
                             >
                                 <TouchableOpacity activeOpacity={1} onPress={handleFlip} style={styles.flipContainer}>
@@ -383,26 +380,25 @@ export default function QuizScreen() {
                                         </GlassView>
                                     </Animated.View>
                                 </TouchableOpacity>
-                            </MotiView>
-                        </AnimatePresence>
+                            </Animated.View>
 
                         <View style={styles.controls}>
                             {isRevealed ? (
                                 <View style={styles.scoreButtons}>
                                     <TouchableOpacity
-                                        style={[styles.scoreButton, { backgroundColor: '#FF4B4B' }]}
+                                        style={[styles.scoreButton, { backgroundColor: STATUS.danger }]}
                                         onPress={() => handleScore('poor')}
                                     >
                                         <Text style={styles.scoreText}>POOR</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        style={[styles.scoreButton, { backgroundColor: '#FFA500' }]}
+                                        style={[styles.scoreButton, { backgroundColor: STATUS.warning }]}
                                         onPress={() => handleScore('acceptable')}
                                     >
                                         <Text style={styles.scoreText}>ACCEPTABLE</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        style={[styles.scoreButton, { backgroundColor: '#4CAF50' }]}
+                                        style={[styles.scoreButton, { backgroundColor: STATUS.success }]}
                                         onPress={() => handleScore('perfect')}
                                     >
                                         <Text style={styles.scoreText}>PERFECT</Text>
@@ -444,9 +440,9 @@ function PieGraph({ counts, size = 120 }: { counts: any, size?: number }) {
     const segments = [];
     for (let i = 0; i < numSegments; i++) {
         const ratio = i / numSegments;
-        let color = '#FF4B4B'; // Poor (default/remainder)
-        if (ratio < perfectRatio) color = '#4CAF50';
-        else if (ratio < acceptableRatio) color = '#FFA500';
+        let color: string = STATUS.danger; // Poor (default/remainder)
+        if (ratio < perfectRatio) color = STATUS.success;
+        else if (ratio < acceptableRatio) color = STATUS.warning;
 
         const angle = (ratio * 360);
 

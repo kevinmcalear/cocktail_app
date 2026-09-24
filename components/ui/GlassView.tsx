@@ -1,4 +1,4 @@
-import { Colors } from "@/constants/theme";
+import { palette } from "@/constants/palette";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { BlurView } from "expo-blur";
 import React from "react";
@@ -27,15 +27,10 @@ export function GlassView({
             tint={blurTint as any}
             style={[
                 styles.container,
-                isDark
-                    ? {
-                          backgroundColor: Colors.dark.glass.background,
-                          borderColor: Colors.dark.glass.border,
-                      }
-                    : {
-                          backgroundColor: "rgba(255, 255, 255, 0.72)",
-                          borderColor: "rgba(0, 0, 0, 0.08)",
-                      },
+                {
+                    backgroundColor: palette[colorScheme].glass,
+                    borderColor: palette[colorScheme].glassBorder,
+                },
                 style,
             ]}
         >

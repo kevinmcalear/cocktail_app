@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { AnimatePresence, MotiView } from "moti";
 import { useState } from "react";
+import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 import { ScrollView, TouchableOpacity, View, ViewStyle } from "react-native";
 import { Button, Input, Text, useTheme, XStack, YStack, styled } from "tamagui";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
@@ -115,17 +115,14 @@ export function SearchBar({
                         paddingHorizontal="$4" 
                         overflow="hidden"
                     >
-                        <AnimatePresence>
                             {chips.map(chip => (
-                                <MotiView
+                                <Animated.View
                                     key={`chip-${chip.id}`}
-                                    from={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    transition={{ type: "timing", duration: 250 }}
+                                    entering={ZoomIn.duration(250)}
+                                    exiting={ZoomOut.duration(250)}
                                 >
                                     <XStack 
-                                        backgroundColor="rgba(255,255,255,0.08)"
+                                        backgroundColor="$color4"
                                         borderRadius="$8"
                                         alignItems="center"
                                         paddingVertical="$1.5"
@@ -145,9 +142,8 @@ export function SearchBar({
                                             <IconSymbol name="xmark" size={11} color={theme.color?.get() as string} weight="bold" />
                                         </TouchableOpacity>
                                     </XStack>
-                                </MotiView>
+                                </Animated.View>
                             ))}
-                        </AnimatePresence>
                     </XStack>
             </YStack>
 

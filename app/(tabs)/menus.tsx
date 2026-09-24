@@ -47,6 +47,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, XStack, YStack, useTheme } from "tamagui";
+import { CardRowSkeleton, Skeleton } from "@/components/ui/Skeleton";
 
 function firstDrinkImageUrl(sections: { data: { image?: any }[] }[] | undefined): string | null {
     for (const section of sections || []) {
@@ -477,6 +478,19 @@ export default function MenusScreen() {
             </XStack>
         </YStack>
     );
+
+    if (loadingMenus || (loadingDetails && sections.length === 0)) {
+        // Card width matches the menu list's three-across layout on phones.
+        const cardWidth = isWide ? 160 : Math.floor((width - 16 * 2 - 12 * 2) / 3);
+        return (
+            <YStack flex={1} backgroundColor="$background" paddingTop={insets.top + 24} paddingHorizontal={16} gap="$5">
+                <Skeleton height={isWide ? 280 : 180} radius={16} />
+                <Skeleton height={32} width="45%" radius={6} />
+                <CardRowSkeleton cards={3} cardWidth={cardWidth} />
+                <CardRowSkeleton cards={3} cardWidth={cardWidth} />
+            </YStack>
+        );
+    }
 
     if (!loadingMenus && menus.length === 0) {
         return (

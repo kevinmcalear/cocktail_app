@@ -13,6 +13,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, Platform, Modal, TouchableWithoutFeedback, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
+import { palette } from '@/constants/palette';
 
 type UniversalCreateButtonProps = {
     variant?: 'tab' | 'button';
@@ -127,7 +128,7 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
                     activeOpacity={0.8}
                     onPress={openSheet}
                 >
-                    <IconSymbol name="plus.circle.fill" size={28} color="rgba(255, 255, 255, 0.4)" />
+                    <IconSymbol name="plus.circle.fill" size={28} color={palette[colorScheme].tabIconInactive} />
                 </TouchableOpacity>
             )}
 

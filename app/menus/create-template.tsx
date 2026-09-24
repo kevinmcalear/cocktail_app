@@ -23,6 +23,7 @@ import {
     type SectionDrinkType,
 } from "@/lib/sectionAllowedTypes";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { STATUS } from '@/constants/palette';
 
 interface SectionInput {
     id: string; // temporary for UI key mapping
@@ -397,7 +398,7 @@ export default function CreateTemplateScreen() {
                         <View style={styles.sectionBlockHeader}>
                             <Text style={styles.sectionBlockTitle}>Section {index + 1}</Text>
                             <TouchableOpacity onPress={() => handleRemoveSection(sec.id)}>
-                                <IconSymbol name="trash" size={20} color="#ff4444" />
+                                <IconSymbol name="trash" size={20} color={STATUS.danger} />
                             </TouchableOpacity>
                         </View>
                         

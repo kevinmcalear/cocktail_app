@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text, YStack, useTheme } from "tamagui";
+import { STATUS } from '@/constants/palette';
 
 export interface MenuItem {
     id: string;
@@ -135,7 +136,7 @@ function AddDropTile({
                     styles.addCard,
                     {
                         width: cellW,
-                        borderColor: isHover ? "#6CB6FF" : border,
+                        borderColor: isHover ? STATUS.info : border,
                         opacity: dragging && !allowed ? 0.28 : 1,
                         backgroundColor: isHover ? "rgba(108,182,255,0.12)" : "transparent",
                         transform: isHover ? [{ scale: 1.04 }] : undefined,
@@ -149,8 +150,8 @@ function AddDropTile({
                     justifyContent="center"
                     gap={6}
                 >
-                    <IconSymbol name="plus" size={22} color={isHover ? "#6CB6FF" : muted} />
-                    <Text fontSize={11} fontWeight="600" color={isHover ? "#6CB6FF" : "$color11"}>
+                    <IconSymbol name="plus" size={22} color={isHover ? STATUS.info : muted} />
+                    <Text fontSize={11} fontWeight="600" color={isHover ? STATUS.info : "$color11"}>
                         Add
                     </Text>
                 </YStack>
@@ -406,7 +407,7 @@ export function CurrentMenuList({
                             left: drag.x - GHOST_W / 2,
                             top: drag.y - GHOST_W / 2,
                             width: GHOST_W,
-                            borderColor: drag.hoverSectionId ? "#6CB6FF" : border,
+                            borderColor: drag.hoverSectionId ? STATUS.info : border,
                             backgroundColor: surface || "rgba(30,30,30,0.95)",
                         },
                     ]}

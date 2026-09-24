@@ -772,7 +772,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             <Button size="$3" chromeless onPress={() => setShowExitModal(false)}>
                                 <Text color="$color11">Cancel</Text>
                             </Button>
-                            <Button size="$3" backgroundColor="#ff4444" onPress={() => confirmExit(false)}>
+                            <Button size="$3" backgroundColor="$red10" onPress={() => confirmExit(false)}>
                                 <Text color="white" fontWeight="bold">
                                     Discard
                                 </Text>

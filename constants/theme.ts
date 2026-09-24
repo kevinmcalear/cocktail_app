@@ -1,42 +1,41 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from "react-native";
 
-// Modern IOS Dark Palette
-const pureBlack = "#161618"; // Deep warm charcoal background
-const systemGray6 = "#232326"; // Elevated dark gray surface
-const systemBlue = "#0A84FF"; // iOS System Blue (Dark Mode)
-const white = "#F2F2F7"; // Soft off-white
-const glassBorder = "rgba(255, 255, 255, 0.1)";
+import { palette } from "./palette";
 
+/**
+ * Colours for plain React Native styles and navigation, from the app palette
+ * (constants/palette.ts). Tamagui components use the matching theme tokens.
+ */
 export const Colors = {
   light: {
-    // Keeping light mode somewhat consistent but mapped to new logic if needed later
-    // prioritizing dark mode as requested.
-    text: "#2C2C2E", // Dark charcoal instead of pure black
-    background: "#F9F9FB", // Warm, airy off-white
-    tint: "#007AFF", // System Blue Light
-    icon: "#8E8E93",
-    tabIconDefault: "#8E8E93",
-    tabIconSelected: "#007AFF",
+    text: palette.light.text,
+    background: palette.light.background,
+    surface: palette.light.surface,
+    tint: palette.light.ink,
+    icon: palette.light.muted,
+    tabIconDefault: palette.light.muted,
+    tabIconSelected: palette.light.ink,
+    glass: {
+      background: palette.light.glass,
+      border: palette.light.glassBorder,
+      text: palette.light.text,
+      blurIntensity: 80,
+    },
   },
   dark: {
-    text: white,
-    background: pureBlack,
-    surface: systemGray6,
-    tint: white, // Changed from systemBlue to white as requested
-    icon: "#A1A1AA", // zinc-400 for better readability
-    tabIconDefault: "#A1A1AA",
-    tabIconSelected: white, // Changed from systemBlue to white
+    text: palette.dark.text,
+    background: palette.dark.background,
+    surface: palette.dark.surface,
+    tint: palette.dark.ink,
+    icon: palette.dark.muted,
+    tabIconDefault: palette.dark.muted,
+    tabIconSelected: palette.dark.ink,
     glass: {
-      background: "rgba(35, 35, 38, 0.65)", // Softer glassmorphism
-      border: glassBorder,
-      text: white,
+      background: palette.dark.glass,
+      border: palette.dark.glassBorder,
+      text: palette.dark.text,
       blurIntensity: 80,
-    }
+    },
   },
 };
 

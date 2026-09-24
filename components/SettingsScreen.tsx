@@ -30,9 +30,9 @@ import {
   View,
 } from 'react-native';
 import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
-
-const DEFAULT_AVATAR =
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
+import { STATUS } from '@/constants/palette';
+import { ListRowsSkeleton } from '@/components/ui/Skeleton';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 function Section({
   title,
@@ -118,7 +118,7 @@ export function SettingsScreen() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [localImageBase64, setLocalImageBase64] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -132,7 +132,7 @@ export function SettingsScreen() {
     if (!user?.user_metadata) return;
     setFirstName(user.user_metadata.first_name || '');
     setLastName(user.user_metadata.last_name || '');
-    setAvatarUrl(user.user_metadata.avatar_url || DEFAULT_AVATAR);
+    setAvatarUrl(user.user_metadata.avatar_url || null);
   }, [user]);
 
   const pickImage = async () => {
@@ -193,7 +193,7 @@ export function SettingsScreen() {
       firstName: firstName.trim() || undefined,
       lastName: lastName.trim() || undefined,
       password: password || undefined,
-      avatarUrl: newAvatarUrl !== DEFAULT_AVATAR ? newAvatarUrl : undefined,
+      avatarUrl: newAvatarUrl ?? undefined,
     });
     setSavingProfile(false);
     setPassword('');
@@ -237,15 +237,13 @@ export function SettingsScreen() {
       <XStack alignItems="center" gap="$4">
         <Pressable onPress={pickImage}>
           <View>
-            <Image
-              source={{ uri: localImageUri || avatarUrl }}
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: 36,
-                borderWidth: 1,
-                borderColor: theme.borderColor?.get() as string,
-              }}
+            <UserAvatar
+              uri={localImageUri || avatarUrl}
+              name={[firstName, lastName].filter(Boolean).join(' ')}
+              email={user?.email}
+              size={72}
+              borderWidth={1}
+              borderColor={theme.borderColor?.get() as string}
             />
           </View>
         </Pressable>
@@ -338,7 +336,7 @@ export function SettingsScreen() {
   const venuesPanel = (
     <Section title="Venues">
       {barsLoading ? (
-        <Text color="$color11">Loading venues…</Text>
+        <ListRowsSkeleton rows={3} />
       ) : userBars?.length === 0 && !showCreateBar ? (
         <Text color="$color11">You are not a member of any venues yet.</Text>
       ) : (
@@ -634,14 +632,14 @@ export function SettingsScreen() {
       <Pressable accessibilityRole="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">
           <YStack flex={1}>
-            <Text fontSize={15} fontWeight="600" color="#FF6B6B">
+            <Text fontSize={15} fontWeight="600" color="$red10">
               Delete account
             </Text>
             <Text fontSize={12} color="$color11">
               Permanently remove your account and personal data
             </Text>
           </YStack>
-          {deletingAccount ? <ActivityIndicator color="#FF6B6B" /> : null}
+          {deletingAccount ? <ActivityIndicator color={STATUS.danger} /> : null}
         </XStack>
       </Pressable>
     </Section>
@@ -757,15 +755,15 @@ export function SettingsScreen() {
                 paddingVertical="$4"
                 borderRadius={12}
                 borderWidth={1}
-                borderColor="rgba(255,107,107,0.35)"
-                backgroundColor="rgba(255,107,107,0.08)"
+                borderColor="$red7"
+                backgroundColor="$red2"
               >
                 <IconSymbol
                   name="rectangle.portrait.and.arrow.right"
                   size={18}
-                  color="#FF6B6B"
+                  color={STATUS.danger}
                 />
-                <Text fontSize={15} fontWeight="700" color="#FF6B6B">
+                <Text fontSize={15} fontWeight="700" color="$red10">
                   Log out
                 </Text>
               </XStack>
