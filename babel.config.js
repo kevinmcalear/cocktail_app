@@ -1,13 +1,11 @@
 module.exports = function (api) {
   api.cache(true);
   return {
+    // babel-preset-expo adds the worklets plugin and transforms import.meta
+    // (used by zustand's middleware on web) on its own.
     presets: ['babel-preset-expo'],
-    // 'unambiguous' is critical: it tells Babel to guess the module type
-    // which helps the plugin catch import.meta in both CJS and ESM files.
-    sourceType: 'unambiguous', 
-    plugins: [
-      'babel-plugin-transform-import-meta',
-      'react-native-reanimated/plugin',
-    ],
+    // 'unambiguous' lets Babel detect CJS vs ESM per file, so mixed-format
+    // dependencies still get import.meta transformed.
+    sourceType: 'unambiguous',
   };
 };
