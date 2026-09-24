@@ -1,14 +1,27 @@
-import { Alert, Platform } from 'react-native';
+import { Alert, type AlertButton, type AlertOptions, Platform } from 'react-native';
 
-// React Native's Alert.alert does nothing in a browser, so every dialog the
-// app shows goes through these, which fall back to the browser's own dialogs.
+import { useDialogStore } from '@/store/useDialogStore';
+
+/**
+ * React Native Web's Alert.alert does nothing, which silently broke every
+ * confirmation and error message on the web app. On web, route it to the
+ * in-app DialogHost instead, so existing Alert.alert calls (with any number of
+ * buttons) work unchanged. Call once at startup.
+ */
+export function installWebAlert(): void {
+  if (Platform.OS !== 'web') return;
+  Alert.alert = (title: string, message?: string, buttons?: AlertButton[], options?: AlertOptions) => {
+    useDialogStore.getState().show({
+      title,
+      message,
+      buttons: buttons?.length ? buttons : [{ text: 'OK' }],
+      onDismiss: options?.onDismiss,
+    });
+  };
+}
 
 /** Shows a message with a single OK button. */
 export function showMessage(title: string, message: string): void {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined') window.alert(`${title}\n\n${message}`);
-    return;
-  }
   Alert.alert(title, message);
 }
 
@@ -24,9 +37,6 @@ export function confirmAsync({
   confirmText?: string;
   destructive?: boolean;
 }): Promise<boolean> {
-  if (Platform.OS === 'web') {
-    return Promise.resolve(typeof window !== 'undefined' && window.confirm(`${title}\n\n${message}`));
-  }
   return new Promise((resolve) => {
     Alert.alert(
       title,

@@ -4,6 +4,7 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import {
   DEFAULT_SEARCH_ALL,
@@ -24,7 +25,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   Switch,
   View,
@@ -74,6 +74,7 @@ export function SettingsScreen() {
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
+  const isWideWeb = useIsWideWeb();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -722,7 +723,8 @@ export function SettingsScreen() {
         paddingHorizontal="$6"
         paddingVertical="$6"
         gap="$5"
-        paddingBottom={Platform.OS === 'web' ? 80 : 160}
+        // Room for the floating tab bar on phones and narrow web.
+        paddingBottom={isWideWeb ? 80 : 160}
       >
         <YStack gap="$1">
           <Text fontSize={28} fontWeight="700" color="$color">

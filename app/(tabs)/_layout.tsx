@@ -2,17 +2,17 @@ import { CustomIcon } from "@/components/ui/CustomIcons";
 import { useAuth } from "@/ctx/AuthContext";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
 
 import { LiquidTabBar } from "@/components/LiquidTabBar";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-
-const isWeb = Platform.OS === "web";
+import { useIsWideWeb } from "@/hooks/useIsWideWeb";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { user } = useAuth();
+  // Wide web uses the sidebar in the root layout; phones and narrow web use the tab bar.
+  const isWideWeb = useIsWideWeb();
 
   const avatarUrl =
     user?.user_metadata?.avatar_url ||
@@ -20,8 +20,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      // ponytail: web sidebar lives in root shell so it survives stack pushes
-      tabBar={isWeb ? () => null : (props) => <LiquidTabBar {...props} />}
+      tabBar={isWideWeb ? () => null : (props) => <LiquidTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
@@ -61,7 +60,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          href: isWeb ? null : undefined,
+          href: isWideWeb ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <Image
               source={{ uri: avatarUrl }}

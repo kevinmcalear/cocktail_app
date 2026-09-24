@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import Head from 'expo-router/head';
 import type { ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { ScrollView, Text, YStack } from 'tamagui';
@@ -10,6 +11,9 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
   return (
     <ScrollView flex={1} backgroundColor="$background">
       <Stack.Screen options={{ title }} />
+      <Head>
+        <title>{`${title} · ${BRAND.productName}`}</title>
+      </Head>
       <YStack width="100%" maxWidth={720} alignSelf="center" paddingHorizontal="$5" paddingVertical="$7" gap="$5">
         <YStack gap="$2">
           <Text fontSize={32} fontWeight="700" color="$color" accessibilityRole="header">
