@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import type { AlertButton } from 'react-native';
+import type { AlertButton, PressableStateCallbackType } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { type Dialog, useDialogStore } from '@/store/useDialogStore';
@@ -106,7 +106,8 @@ function DialogButton({
   const filled = destructive || (isPrimary && button.style !== 'cancel');
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={stacked ? styles.stackedButton : undefined}>
-      {({ hovered }: { hovered?: boolean }) => (
+      {/* `hovered` exists on web only; React Native's own types leave it out. */}
+      {({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
         <XStack
           justifyContent="center"
           paddingHorizontal="$4"
