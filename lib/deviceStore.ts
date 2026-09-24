@@ -20,4 +20,12 @@ export const deviceStore = {
     }
     await SecureStore.setItemAsync(key, value);
   },
+
+  async removeItem(key: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+      return;
+    }
+    await SecureStore.deleteItemAsync(key);
+  },
 };

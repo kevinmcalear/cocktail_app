@@ -1,7 +1,7 @@
 import { deviceStore } from '@/lib/deviceStore';
 import { useCallback, useEffect, useState } from 'react';
 
-const FAVORITES_KEY = 'cocktail_favorites';
+export const FAVORITES_KEY = 'cocktail_favorites';
 
 export function useFavorites() {
     const [favorites, setFavorites] = useState<string[]>([]);

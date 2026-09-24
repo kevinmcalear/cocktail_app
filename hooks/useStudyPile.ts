@@ -1,7 +1,7 @@
 import { deviceStore } from '@/lib/deviceStore';
 import { useCallback, useEffect, useState } from 'react';
 
-const STUDY_PILE_KEY = 'cocktail_study_pile';
+export const STUDY_PILE_KEY = 'cocktail_study_pile';
 
 export function useStudyPile() {
     const [studyPile, setStudyPile] = useState<string[]>([]);

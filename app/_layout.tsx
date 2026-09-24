@@ -19,13 +19,20 @@ import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
+import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { WebSidebar } from '@/components/WebSidebar';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { clearUserData } from '@/lib/clearUserData';
+import { initMonitoring } from '@/lib/monitoring';
 import { asyncStoragePersister, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
+
+export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
+
+initMonitoring();
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -36,6 +43,13 @@ function RootLayoutNav() {
   const { session, loading, passwordRecovery } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Signed out (button, expiry or another tab), or opened signed out: forget
+  // the previous user's cached data. Bar iPads are shared.
+  useEffect(() => {
+    if (loading || session) return;
+    clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
+  }, [loading, session]);
 
   useEffect(() => {
     if (loading) return;
@@ -176,9 +190,11 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
               <AuthProvider>
-                <OfflineBanner />
-                <ViewAsBanner />
-                <RootLayoutNav />
+                <ObservabilityProvider>
+                  <OfflineBanner />
+                  <ViewAsBanner />
+                  <RootLayoutNav />
+                </ObservabilityProvider>
               </AuthProvider>
             </BottomSheetModalProvider>
           </GestureHandlerRootView>

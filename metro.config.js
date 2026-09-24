@@ -1,7 +1,9 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 const path = require('path');
 
-const config = getDefaultConfig(__dirname);
+// Sentry's wrapper around Expo's default config adds debug IDs, so reported
+// stack traces can be matched to uploaded source maps.
+const config = getSentryExpoConfig(__dirname);
 
 // Define the alias for tslib
 const ALIASES = {
