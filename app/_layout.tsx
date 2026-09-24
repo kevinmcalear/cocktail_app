@@ -14,7 +14,7 @@ import {
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Toaster } from 'burnt/web';
 import { Stack, useRouter, useSegments } from "expo-router";
-import Head from "expo-router/head";
+import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
@@ -91,9 +91,9 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Head>
+      <WebHead>
         <title>{BRAND.productName}</title>
-      </Head>
+      </WebHead>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{__html: `
           html, body, #root {

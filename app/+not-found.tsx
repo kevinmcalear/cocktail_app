@@ -1,5 +1,5 @@
 import { Link, Stack } from 'expo-router';
-import Head from 'expo-router/head';
+import { WebHead } from '@/components/WebHead';
 import { Text, YStack } from 'tamagui';
 
 import { BRAND } from '@/constants/brand';
@@ -8,9 +8,9 @@ export default function NotFound() {
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" padding="$6" gap="$3" backgroundColor="$background">
       <Stack.Screen options={{ title: 'Not found' }} />
-      <Head>
+      <WebHead>
         <title>{`Page not found · ${BRAND.productName}`}</title>
-      </Head>
+      </WebHead>
       <Text fontSize={28} fontWeight="700" color="$color" accessibilityRole="header">
         Page not found
       </Text>
