@@ -58,4 +58,6 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno check supabase/functions/*/index.ts
+      # Resolve npm: imports from Deno's cache like the edge runtime does,
+      # rather than the app's node_modules (which this job doesn't install).
+      - run: deno check --node-modules-dir=none supabase/functions/*/index.ts

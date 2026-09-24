@@ -55,7 +55,7 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    const authScreen = segments[1];
+    const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
       authScreen === 'reset-password' ||
