@@ -13,10 +13,11 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
+import { STATUS } from '@/constants/palette';
 
 // ponytail: local copy — importing CommandSearch pulled recentMatchesContext into Home's graph
 const HOME_CHROME_MAX = 880;
-const DRAFT_AMBER = '#E5A93B';
+const DRAFT_AMBER = STATUS.warning;
 
 const ENTITY_SECTIONS = [
   { type: 'cocktail', label: 'Unfinished drinks', kind: 'cocktail' as const },

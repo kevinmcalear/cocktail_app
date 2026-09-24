@@ -12,6 +12,8 @@ import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { Text, useTheme, XStack } from "tamagui";
+import { STATUS } from '@/constants/palette';
+import { DetailSkeleton } from '@/components/ui/Skeleton';
 
 export interface ItemDetailLayoutProps {
     id: string;
@@ -132,8 +134,8 @@ export function ItemDetailLayout({
 
     if (isLoading) {
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text>Loading...</Text>
+            <View style={[styles.container, { backgroundColor: theme.background?.get() as string }]}>
+                <DetailSkeleton imageHeight={windowWidth >= 768 ? 360 : windowWidth} />
             </View>
         );
     }
@@ -142,7 +144,7 @@ export function ItemDetailLayout({
         return (
             <View style={styles.rightActionsContainer}>
                 <RectButton
-                    style={[styles.actionButton, { backgroundColor: '#FF4B4B' }]}
+                    style={[styles.actionButton, { backgroundColor: STATUS.danger }]}
                     onPress={() => {
                         onToggleFavorite(id);
                         swipeable.close();
@@ -153,7 +155,7 @@ export function ItemDetailLayout({
                     <Text style={[styles.actionText, { color: '#FFF' }]}>{isFavorite ? "Unfav" : "Fav"}</Text>
                 </RectButton>
                 <RectButton
-                    style={[styles.actionButton, { backgroundColor: '#4A90E2' }]}
+                    style={[styles.actionButton, { backgroundColor: STATUS.info }]}
                     onPress={() => {
                         onToggleStudyPile(id);
                         swipeable.close();
@@ -233,7 +235,7 @@ export function ItemDetailLayout({
                         )}
                         {onDelete && (
                             <TouchableOpacity onPress={onDelete} style={{ padding: 8 }}>
-                                <Text color="#ff4444" fontWeight="600" fontSize={16}>Delete</Text>
+                                <Text color="$red10" fontWeight="600" fontSize={16}>Delete</Text>
                             </TouchableOpacity>
                         )}
                         <TouchableOpacity
@@ -312,7 +314,7 @@ export function ItemDetailLayout({
                                 onPress={onDelete}
                                 style={[styles.actionButtonDesktop, { backgroundColor: 'rgba(255, 68, 68, 0.08)', width: 'auto', paddingHorizontal: 16 }]}
                             >
-                                <Text color="#ff4444" fontWeight="600" fontSize={14}>Delete</Text>
+                                <Text color="$red10" fontWeight="600" fontSize={14}>Delete</Text>
                             </TouchableOpacity>
                         )}
                         <TouchableOpacity
@@ -421,13 +423,13 @@ export function ItemDetailLayout({
                                     onToggleFavorite(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                 }} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
-                                    <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? '#FF4B4B' : theme.color?.get() as string} />
+                                    <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? STATUS.danger : theme.color?.get() as string} />
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => {
                                     onToggleStudyPile(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                 }} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
-                                    <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? '#4A90E2' : theme.color?.get() as string} />
+                                    <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? STATUS.info : theme.color?.get() as string} />
                                 </TouchableOpacity>
                             </>
                         )}
@@ -492,11 +494,16 @@ export function ItemDetailLayout({
                 nestedScrollEnabled={true}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                    <View style={{ flex: 1 }}>
-                        {isEditing ? (
-                            renderTitle(32, 36)
-                        ) : (
+                {isEditing ? (
+                    // Editing has up to four actions, which leave no room for the
+                    // title on a phone: give them their own row above it.
+                    <View style={styles.header}>
+                        <View style={styles.editActionsRow}>{renderHeaderAction()}</View>
+                        {renderTitle(32, 36)}
+                    </View>
+                ) : (
+                    <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                        <View style={{ flex: 1 }}>
                             <Swipeable
                                 ref={(ref) => { swipeableRef = ref; }}
                                 renderRightActions={() => renderRightActions(id, swipeableRef!)}
@@ -506,10 +513,10 @@ export function ItemDetailLayout({
                             >
                                 {renderTitle(32, 36)}
                             </Swipeable>
-                        )}
+                        </View>
+                        {renderHeaderAction()}
                     </View>
-                    {renderHeaderAction()}
-                </View>
+                )}
 
                 {/* Inject Specific Content Here */}
                 {children}
@@ -588,6 +595,14 @@ export function ItemDetailLayout({
 }
 
 const styles = StyleSheet.create({
+    editActionsRow: {
+        alignSelf: 'stretch',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+        marginRight: -8, // the actions' own padding lines their text up with the page edge
+        marginBottom: 4,
+    },
     container: {
         flex: 1,
     },

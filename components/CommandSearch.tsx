@@ -39,6 +39,7 @@ import {
   View,
 } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
+import { STATUS } from '@/constants/palette';
 
 type AttrOption = {
   id: string;
@@ -90,7 +91,7 @@ const SECTION_ORDER: SearchItem['category'][] = [
   'Ingredient',
 ];
 
-const DRAFT_AMBER = '#E5A93B';
+const DRAFT_AMBER = STATUS.warning;
 
 const SECTION_LABEL: Record<string, string> = {
   Menu: 'Menu',

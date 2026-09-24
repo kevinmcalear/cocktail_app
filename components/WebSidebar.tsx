@@ -25,11 +25,11 @@ import {
 } from '@/store/useCreatorNavStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { Image } from 'expo-image';
 import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 export const WEB_SIDEBAR_WIDTH = 240;
 const SIDEBAR_MIN = 180;
@@ -337,9 +337,6 @@ export function WebSidebar() {
     [windowWidth]
   );
 
-  const avatarUrl =
-    user?.user_metadata?.avatar_url ||
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
   const displayName =
     user?.user_metadata?.full_name ||
     [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(' ') ||
@@ -515,7 +512,7 @@ export function WebSidebar() {
           ]}
         >
           <XStack alignItems="center" gap="$2.5" flex={1}>
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            <UserAvatar uri={user?.user_metadata?.avatar_url} name={displayName} email={email} size={28} />
             <YStack flex={1} minWidth={0}>
               <Text fontSize={13} fontWeight="600" color="$color" numberOfLines={1}>
                 {displayName}
@@ -584,11 +581,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
   },
   resizeHandle: {
     position: 'absolute',

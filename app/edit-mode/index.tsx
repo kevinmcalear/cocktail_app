@@ -38,6 +38,8 @@ import {
     creatorNodeHref,
     useCreatorNavStore,
 } from '@/store/useCreatorNavStore';
+import { STATUS } from '@/constants/palette';
+import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 
 const CREATE_TYPES = new Set(['cocktail', 'beer', 'wine', 'ingredient', 'menu']);
 
@@ -804,7 +806,7 @@ export default function EditModeDashboard() {
                         Workspace Items
                     </Text>
                     {isLoading ? (
-                        <Text color="$color11">Loading workspace items...</Text>
+                        <ListRowsSkeleton rows={6} />
                     ) : allItems.length === 0 ? (
                         <Text color="$color11">No items in workspace.</Text>
                     ) : (
@@ -829,10 +831,10 @@ export default function EditModeDashboard() {
 
                             return (
                                 <YStack key={barId} gap="$3" width="100%" marginBottom="$4">
-                                    <Text fontSize={12} color="$color11" fontWeight="bold">
+                                    <Text fontSize={12} color="$color11" fontWeight="600" textTransform="uppercase" letterSpacing={0.6}>
                                         {getBarName(barId)}
                                     </Text>
-                                    <YStack gap="$2.5" width="100%">
+                                    <YStack gap="$1" width="100%">
                                         {sections.map((section) => {
                                             const expanded = isSectionExpanded(barId, section.key, hasMenus, hasItems);
                                             return (
@@ -842,13 +844,15 @@ export default function EditModeDashboard() {
                                                         activeOpacity={0.7}
                                                     >
                                                         <XStack
+                                                            minHeight={44}
                                                             paddingVertical="$2"
                                                             alignItems="center"
                                                             gap="$2.5"
                                                         >
                                                             <CustomIcon name={section.icon} size={20} color={theme.color?.get() as string} />
-                                                            <Text fontSize={14} fontWeight="600" color="$color">
-                                                                {section.label} ({section.items.length})
+                                                            <Text flex={1} fontSize={15} fontWeight="600" color="$color">
+                                                                {section.label}
+                                                                <Text fontWeight="500" color="$color11">{`  ${section.items.length}`}</Text>
                                                             </Text>
                                                             <IconSymbol
                                                                 name={expanded ? "chevron.down" : "chevron.right"}
@@ -902,7 +906,7 @@ export default function EditModeDashboard() {
                                                                                             {draft.draft_data?.name || draft.draft_data?.menuName || `Untitled ${draft.entity_type}`}
                                                                                         </Text>
                                                                                         {draft.isPublished ? (
-                                                                                            <IconSymbol name="checkmark" size={14} color="#34C759" />
+                                                                                            <IconSymbol name="checkmark" size={14} color={STATUS.success} />
                                                                                         ) : (
                                                                                             <View style={[styles.statusBadge, { backgroundColor: progressInfo.badgeBg, borderColor: progressInfo.color, borderWidth: 1 }]}>
                                                                                                 <Text style={[styles.statusBadgeText, { color: progressInfo.badgeText }]}>
@@ -917,7 +921,7 @@ export default function EditModeDashboard() {
                                                                                 onPress={() => draft.isPublished ? handleDeletePublished(draft.id, draft.entity_type) : handleDeleteDraft(draft.id)} 
                                                                                 style={{ padding: 8 }}
                                                                             >
-                                                                                <IconSymbol name="trash" size={20} color="#ff4444" />
+                                                                                <IconSymbol name="trash" size={20} color={STATUS.danger} />
                                                                             </TouchableOpacity>
                                                                         </XStack>
 
@@ -928,7 +932,7 @@ export default function EditModeDashboard() {
                                                                             </View>
                                                                             <XStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
                                                                                 {draft.isPublished ? (
-                                                                                    <IconSymbol name="checkmark" size={12} color="#34C759" />
+                                                                                    <IconSymbol name="checkmark" size={12} color={STATUS.success} />
                                                                                 ) : (
                                                                                     <Text fontSize={10} color="$color11" fontWeight="600">
                                                                                         {`${progressInfo.percentage}% complete`}

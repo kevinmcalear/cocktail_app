@@ -15,6 +15,7 @@ import DraggableFlatList, {
     RenderItemParams,
 } from 'react-native-draggable-flatlist';
 import { Input, Text, XStack, useTheme } from 'tamagui';
+import { STATUS } from '@/constants/palette';
 
 export interface SortableRecipeItem {
     id?: string;
@@ -380,7 +381,7 @@ export function SortableRecipeList({
                     size={variant === 'card' ? 'md' : 'sm'}
                 />
                 <TouchableOpacity onPress={() => onRemove(index)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                    <IconSymbol name="trash" size={20} color={STATUS.danger} />
                 </TouchableOpacity>
             </XStack>
         );
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     },
     mergeTarget: {
         transform: [{ scale: 1.04 }],
-        borderColor: '#e6a23c',
+        borderColor: STATUS.warning,
         borderWidth: 2,
         backgroundColor: 'rgba(230,162,60,0.18)',
         borderRadius: 12,
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
         top: 6,
         fontSize: 11,
         fontWeight: '700',
-        color: '#e6a23c',
+        color: STATUS.warning,
         backgroundColor: 'rgba(0,0,0,0.55)',
         paddingHorizontal: 8,
         paddingVertical: 3,

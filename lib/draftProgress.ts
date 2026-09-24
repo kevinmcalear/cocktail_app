@@ -1,3 +1,5 @@
+import { STATUS } from '@/constants/palette';
+
 export interface ProgressInfo {
     percentage: number;
     color: string;
@@ -30,10 +32,10 @@ export function calculateDraftProgress(
     if (draft && draft.isPublished) {
         return {
             percentage: 100,
-            color: '#34C759', // Green
+            color: STATUS.success, // Green
             label: 'Published',
             badgeBg: 'rgba(52, 199, 89, 0.1)',
-            badgeText: '#34C759',
+            badgeText: STATUS.success,
             innerDrafts: []
         };
     }

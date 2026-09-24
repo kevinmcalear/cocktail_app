@@ -12,6 +12,7 @@ import { isDefaultBatchName } from "@/lib/mergeRecipeItems";
 import { buildIngredientImageMap } from "@/lib/recipeUtils";
 import { capitalize } from "@/lib/stringUtils";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { STATUS } from '@/constants/palette';
 
 export { buildIngredientImageMap };
 
@@ -207,7 +208,7 @@ function EditIngredientRow({
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityLabel="Remove ingredient"
                 >
-                    <IconSymbol name="trash" size={20} color="#ff4444" />
+                    <IconSymbol name="trash" size={20} color={STATUS.danger} />
                 </TouchableOpacity>
             </XStack>
             {isMergeTarget ? (
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
     },
     mergeTarget: {
         transform: [{ scale: 1.04 }],
-        borderColor: "#e6a23c",
+        borderColor: STATUS.warning,
         borderWidth: 2,
         backgroundColor: "rgba(230,162,60,0.18)",
         borderRadius: 12,
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
         top: 6,
         fontSize: 11,
         fontWeight: "700",
-        color: "#e6a23c",
+        color: STATUS.warning,
         backgroundColor: "rgba(0,0,0,0.55)",
         paddingHorizontal: 8,
         paddingVertical: 3,

@@ -1,6 +1,8 @@
 import { config } from '@tamagui/config/v3'
 import { createFont, createTamagui } from 'tamagui'
 
+import { palette } from './constants/palette'
+
 // ponytail: Inter for system UI; cocktail/menu presentation opts into IBMPlexSansItalic explicitly
 const bodyFont = createFont({
   ...config.fonts.body,
@@ -29,32 +31,22 @@ const headingFont = createFont({
   }
 })
 
-// Custom Cocktail App Themes based on existing constants/theme.ts
+// Light and dark themes from the app palette (constants/palette.ts).
+const themeFrom = (p: (typeof palette)['light' | 'dark']) => ({
+  color: p.text,
+  background: p.background,
+  backgroundStrong: p.surface,
+  borderColor: p.border,
+  color1: p.background,
+  color8: p.ink, // primary: buttons, links, selection
+  color9: p.ink,
+  color11: p.muted, // secondary text
+})
+
 const customThemes = {
   ...config.themes,
-  light: {
-    ...config.themes.light,
-    color: '#2C2C2E',
-    background: '#F9F9FB', // Warm, airy off-white
-    backgroundStrong: '#ffffff',
-    borderColor: 'rgba(0,0,0,0.1)',
-    color1: '#F9F9FB',
-    color8: '#007AFF',    // System Blue Primary
-    color9: '#007AFF',    
-    color11: '#8E8E93',   // Icon gray
-  },
-  dark: {
-    ...config.themes.dark,
-    color: '#F2F2F7',
-    background: '#161618', // Deep warm charcoal
-    backgroundStrong: '#232326', // Elevated dark gray
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    color1: '#161618',
-    color2: '#232326', // standard surface
-    color8: '#F2F2F7', // High-contrast primary
-    color9: '#F2F2F7', 
-    color11: '#A1A1AA', // zinc-400
-  },
+  light: { ...config.themes.light, ...themeFrom(palette.light) },
+  dark: { ...config.themes.dark, ...themeFrom(palette.dark), color2: palette.dark.surface },
 }
 
 const tamaguiConfig = createTamagui({

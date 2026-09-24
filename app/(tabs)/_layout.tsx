@@ -1,6 +1,5 @@
 import { CustomIcon } from "@/components/ui/CustomIcons";
-import { useAuth } from "@/ctx/AuthContext";
-import { Image } from "expo-image";
+import { CurrentUserAvatar } from "@/components/ui/UserAvatar";
 import { Tabs } from "expo-router";
 
 import { LiquidTabBar } from "@/components/LiquidTabBar";
@@ -10,13 +9,8 @@ import { useIsWideWeb } from "@/hooks/useIsWideWeb";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { user } = useAuth();
   // Wide web uses the sidebar in the root layout; phones and narrow web use the tab bar.
   const isWideWeb = useIsWideWeb();
-
-  const avatarUrl =
-    user?.user_metadata?.avatar_url ||
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80";
 
   return (
     <Tabs
@@ -62,16 +56,7 @@ export default function TabLayout() {
           title: "Profile",
           href: isWideWeb ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
-            <Image
-              source={{ uri: avatarUrl }}
-              style={{
-                width: size + 2,
-                height: size + 2,
-                borderRadius: (size + 2) / 2,
-                borderWidth: focused ? 1 : 0,
-                borderColor: "#FFFFFF",
-              }}
-            />
+            <CurrentUserAvatar size={size + 2} borderWidth={focused ? 1.5 : 0} borderColor={color} />
           ),
         }}
       />

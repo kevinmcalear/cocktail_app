@@ -116,7 +116,7 @@ export function AuthMessage({
   children: string;
 }) {
   return (
-    <Text fontSize={13} color={tone === 'error' ? '#FF6B6B' : '$color11'} lineHeight={18}>
+    <Text fontSize={13} color={tone === 'error' ? '$red10' : '$color11'} lineHeight={18}>
       {children}
     </Text>
   );

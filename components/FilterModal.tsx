@@ -144,9 +144,9 @@ export function FilterModal({
                             onPress={handleFavesToggle}
                             size="$3"
                             borderRadius="$6"
-                            backgroundColor={showFavesOnly ? "#FF4B4B" : "transparent"}
+                            backgroundColor={showFavesOnly ? "$red10" : "transparent"}
                             borderWidth={1}
-                            borderColor={showFavesOnly ? "#FF4B4B" : "$borderColor"}
+                            borderColor={showFavesOnly ? "$red10" : "$borderColor"}
                             icon={<IconSymbol name="heart.fill" size={16} color={showFavesOnly ? theme.backgroundStrong?.get() as string : theme.color?.get() as string} />}
                         >
                             <Text color={showFavesOnly ? "$backgroundStrong" : "$color"} fontWeight="600">Favourites</Text>

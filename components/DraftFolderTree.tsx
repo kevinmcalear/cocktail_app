@@ -10,8 +10,9 @@ import { calculateDraftProgress } from "@/lib/draftProgress";
 import { capitalize } from "@/lib/stringUtils";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useRouter } from "expo-router";
+import { STATUS } from '@/constants/palette';
 
-const DRAFT_AMBER = "#E5A93B";
+const DRAFT_AMBER = STATUS.warning;
 
 function DraftProgressBadge({ percentage }: { percentage: number }) {
     return (
