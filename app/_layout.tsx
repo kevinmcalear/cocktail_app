@@ -55,6 +55,8 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    // Privacy, terms and account-deletion pages must open without signing in.
+    if (segments[0] === 'legal') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
