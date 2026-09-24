@@ -1,8 +1,7 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSettingsStore } from "@/store/useSettingsStore";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { PlatformPressable } from "@react-navigation/elements";
-import { useLinkBuilder } from "@react-navigation/native";
+import { BottomTabBarProps } from "expo-router/js-tabs";
+import { PlatformPressable, useLinkBuilder } from "expo-router/react-navigation";
 import { BlurView } from "expo-blur";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

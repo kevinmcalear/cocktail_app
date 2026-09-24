@@ -10,7 +10,7 @@ import {
     DarkTheme,
     DefaultTheme,
     ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";

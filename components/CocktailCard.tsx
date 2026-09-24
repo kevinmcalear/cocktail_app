@@ -1,7 +1,7 @@
 import { GlassView } from "@/components/ui/GlassView";
 import { Colors } from "@/constants/theme";
 import { Cocktail } from "@/data/cocktails";
-import { PlatformPressable } from "@react-navigation/elements";
+import { PlatformPressable } from "expo-router/react-navigation";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import React from "react";

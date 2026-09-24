@@ -281,7 +281,7 @@ export const sharedStyles = StyleSheet.create({
         // Let's put it behind for now so it doesn't overlap liquid weirdly if not clipped.
         opacity: 0.9
     },
-    pourOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', zIndex: 40 },
+    pourOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', zIndex: 40 },
     pourBubble: { width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.4)', position: 'absolute', top: -15 },
     pourStream: { width: 4, position: 'absolute', top: -120, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
     glassBase: { width: 60, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)', marginTop: 2 },
