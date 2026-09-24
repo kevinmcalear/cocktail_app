@@ -72,3 +72,5 @@ export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerMo
         );
     }
 );
+
+CategoryPickerModal.displayName = 'CategoryPickerModal';

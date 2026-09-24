@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'black',
     },
     modalCloseArea: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         zIndex: 0
     },
     modalContent: {

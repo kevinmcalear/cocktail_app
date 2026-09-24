@@ -33,7 +33,9 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: Platform.OS === 'web' ? WebStorageAdapter : ExpoSecureStoreAdapter,
-    autoRefreshToken: true,
+    // Static web rendering runs this module in Node, where auth-js would start a
+    // permanent refresh timer and keep `expo export` from exiting.
+    autoRefreshToken: Platform.OS !== 'web' || typeof window !== 'undefined',
     persistSession: true,
     // ponytail: never auto-exchange on load — mail scanners burn one-time links.
     // EmailLinkGate exchanges on an explicit Continue tap instead.

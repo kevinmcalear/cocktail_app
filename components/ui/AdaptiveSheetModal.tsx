@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.35,
         shadowRadius: 24,
-        // @ts-expect-error web
         boxShadow: "0 16px 48px rgba(0,0,0,0.45)",
     },
     grabber: {

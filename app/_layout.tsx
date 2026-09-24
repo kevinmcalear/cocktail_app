@@ -10,7 +10,7 @@ import {
     DarkTheme,
     DefaultTheme,
     ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -19,13 +19,20 @@ import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
+import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { WebSidebar } from '@/components/WebSidebar';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { clearUserData } from '@/lib/clearUserData';
+import { initMonitoring } from '@/lib/monitoring';
 import { asyncStoragePersister, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
+
+export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
+
+initMonitoring();
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -37,11 +44,18 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Signed out (button, expiry or another tab), or opened signed out: forget
+  // the previous user's cached data. Bar iPads are shared.
+  useEffect(() => {
+    if (loading || session) return;
+    clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
+  }, [loading, session]);
+
   useEffect(() => {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    const authScreen = segments[1];
+    const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
       authScreen === 'reset-password' ||
@@ -84,10 +98,6 @@ function RootLayoutNav() {
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="auth" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
-            />
             <Stack.Screen
               name="menus/create/index"
               options={{ presentation: "modal", headerShown: false }}
@@ -180,9 +190,11 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
               <AuthProvider>
-                <OfflineBanner />
-                <ViewAsBanner />
-                <RootLayoutNav />
+                <ObservabilityProvider>
+                  <OfflineBanner />
+                  <ViewAsBanner />
+                  <RootLayoutNav />
+                </ObservabilityProvider>
               </AuthProvider>
             </BottomSheetModalProvider>
           </GestureHandlerRootView>

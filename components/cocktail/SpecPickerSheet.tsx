@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
         minHeight: 120,
     },
     scanOverlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         backgroundColor: "rgba(0,0,0,0.72)",
         justifyContent: "center",
         alignItems: "center",

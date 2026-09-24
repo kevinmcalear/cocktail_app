@@ -1,7 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
+import { deviceStore } from '@/lib/deviceStore';
 import { useCallback, useEffect, useState } from 'react';
 
-const FAVORITES_KEY = 'cocktail_favorites';
+export const FAVORITES_KEY = 'cocktail_favorites';
 
 export function useFavorites() {
     const [favorites, setFavorites] = useState<string[]>([]);
@@ -9,7 +9,7 @@ export function useFavorites() {
     useEffect(() => {
         const loadFavorites = async () => {
             try {
-                const stored = await SecureStore.getItemAsync(FAVORITES_KEY);
+                const stored = await deviceStore.getItem(FAVORITES_KEY);
                 if (stored) {
                     setFavorites(JSON.parse(stored));
                 }
@@ -27,7 +27,7 @@ export function useFavorites() {
                 : [...favorites, id];
 
             setFavorites(newFavorites);
-            await SecureStore.setItemAsync(FAVORITES_KEY, JSON.stringify(newFavorites));
+            await deviceStore.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
         } catch (error) {
             console.error('Error toggling favorite:', error);
         }

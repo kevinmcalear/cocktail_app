@@ -128,7 +128,7 @@ export default function CreateBarScreen() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
                     
-                    <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4" marginBottom="$4">
+                    <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4" marginBottom="$4">
                         <YStack gap="$2">
                             <Label color="$color11">Bar Name *</Label>
                             <Input
@@ -148,7 +148,7 @@ export default function CreateBarScreen() {
                         Configure the default progressive disclosure rules for all cocktails assigned to this bar. You can always override these on a per-cocktail basis.
                     </Text>
 
-                    <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                    <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                         <YStack gap="$0" paddingTop="$2">
                             {renderPills("General Visibility", visibilityLevel, setVisibilityLevel)}
                             {renderPills("Generic Ingredients", genericLevel, setGenericLevel)}

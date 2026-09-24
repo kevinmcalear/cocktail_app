@@ -5,6 +5,20 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    // Edge functions are Deno code with URL and npm: imports; they are type
+    // checked with `deno check`, not this config.
+    ignores: ['dist/*', 'supabase/functions/**'],
+  },
+  {
+    // React Compiler rules that eslint-plugin-react-hooks 7 (Expo SDK 57) turns
+    // on as errors. The compiler skips components that break them rather than
+    // miscompiling, so they are warnings until the existing violations are
+    // fixed; new code should not add more.
+    rules: {
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
   },
 ]);

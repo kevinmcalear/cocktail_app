@@ -171,7 +171,7 @@ export default function BarDetailScreen() {
                         <ActivityIndicator />
                     ) : tab === 'settings' ? (
                         <YStack>
-                            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4" marginBottom="$4">
+                            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4" marginBottom="$4">
                                 <YStack gap="$2">
                                     <Label color="$color11">Bar Name *</Label>
                                     <Input
@@ -186,7 +186,7 @@ export default function BarDetailScreen() {
                                 </YStack>
                             </Card>
 
-                            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                                 <YStack gap="$0" paddingTop="$2">
                                     {renderPills("General Visibility", visibilityLevel, setVisibilityLevel)}
                                     {renderPills("Generic Ingredients", genericLevel, setGenericLevel)}
@@ -209,7 +209,7 @@ export default function BarDetailScreen() {
                         </YStack>
                     ) : tab === 'members' ? (
                         <YStack gap="$4">
-                            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                                 <Text fontWeight="bold" fontSize={16} marginBottom="$4">Add Member</Text>
                                 <YStack gap="$2">
                                     <Input
@@ -229,7 +229,7 @@ export default function BarDetailScreen() {
 
                             <Text fontWeight="bold" fontSize={16} marginTop="$4">Current Members</Text>
                             {detailData?.members?.map((m: any) => (
-                                <Card key={m.user_id} bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                                <Card key={m.user_id} borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                                     <YStack gap="$2">
                                         <Text fontWeight="bold">{m.email}</Text>
                                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 0 }}>
@@ -268,7 +268,7 @@ export default function BarDetailScreen() {
                                 <Text color="$color11" textAlign="center" marginTop="$4">No items assigned to this bar yet.</Text>
                             ) : (
                                 detailData?.items?.map((item: any) => (
-                                    <Card key={item.id} bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+                                    <Card key={item.id} borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                                         <YStack>
                                             <Text fontWeight="bold">{item.name}</Text>
                                             <Text color="$color11" fontSize={12} textTransform="capitalize">{item.item_type}</Text>

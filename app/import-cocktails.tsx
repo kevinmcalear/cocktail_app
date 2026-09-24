@@ -267,7 +267,7 @@ Prep Time: 4 minutes`;
             🎉 Demo: Club Bauhaus Cocktails
           </Text>
           <Text style={styles.sectionDescription}>
-            I've already added 6 Club Bauhaus inspired cocktails to your
+            I&apos;ve already added 6 Club Bauhaus inspired cocktails to your
             collection! They include:
           </Text>
           <View style={styles.demoList}>

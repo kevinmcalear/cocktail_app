@@ -1,7 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
+import { deviceStore } from '@/lib/deviceStore';
 import { useCallback, useEffect, useState } from 'react';
 
-const STUDY_PILE_KEY = 'cocktail_study_pile';
+export const STUDY_PILE_KEY = 'cocktail_study_pile';
 
 export function useStudyPile() {
     const [studyPile, setStudyPile] = useState<string[]>([]);
@@ -9,7 +9,7 @@ export function useStudyPile() {
     useEffect(() => {
         const loadStudyPile = async () => {
             try {
-                const stored = await SecureStore.getItemAsync(STUDY_PILE_KEY);
+                const stored = await deviceStore.getItem(STUDY_PILE_KEY);
                 if (stored) {
                     setStudyPile(JSON.parse(stored));
                 }
@@ -27,7 +27,7 @@ export function useStudyPile() {
                 : [...studyPile, id];
 
             setStudyPile(newStudyPile);
-            await SecureStore.setItemAsync(STUDY_PILE_KEY, JSON.stringify(newStudyPile));
+            await deviceStore.setItem(STUDY_PILE_KEY, JSON.stringify(newStudyPile));
         } catch (error) {
             console.error('Error toggling study pile:', error);
         }

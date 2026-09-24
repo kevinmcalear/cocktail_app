@@ -97,7 +97,7 @@ export function BarAssignmentAccordion({
         <Accordion overflow="hidden" width="100%" type="multiple" backgroundColor="transparent" marginBottom={marginBottom}>
             <Accordion.Item value="a1" borderRadius="$4" borderColor="$borderColor" borderWidth={1} backgroundColor="$backgroundStrong">
                 <Accordion.Trigger flexDirection="row" justifyContent="space-between" padding="$3" backgroundColor="$backgroundStrong">
-                    {({ open }) => (
+                    {({ open }: { open: boolean }) => (
                         <>
                             <XStack gap="$2" alignItems="center">
                                 <IconSymbol name="lock.shield.fill" size={18} color={theme.color11?.get() as string} />
@@ -107,8 +107,8 @@ export function BarAssignmentAccordion({
                         </>
                     )}
                 </Accordion.Trigger>
-                <Accordion.HeightAnimator animation="medium">
-                    <Accordion.Content animation="medium" exitStyle={{ opacity: 0 }} padding="$3" borderTopWidth={1} borderColor="$borderColor">
+                <Accordion.HeightAnimator transition="medium">
+                    <Accordion.Content transition="medium" exitStyle={{ opacity: 0 }} padding="$3" borderTopWidth={1} borderColor="$borderColor">
                         <YStack gap="$3">
                             <YStack gap="$1">
                                 <Label color="$color11">Assign to Bar (Personal if empty)</Label>

@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: Typecheck, lint, unit tests, web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run build:web
+
+  database:
+    name: Migrations and security tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: supabase/setup-cli@v3
+        with:
+          version: latest
+      - run: npm ci
+      # Applies every migration to a fresh database, so a migration that
+      # cannot rebuild the schema fails here.
+      - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta,edge-runtime
+      - run: supabase db lint --level warning --fail-on error
+      - run: npm run test:security
+
+  edge-functions:
+    name: Edge functions typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      # Resolve npm: imports from Deno's cache like the edge runtime does,
+      # rather than the app's node_modules (which this job doesn't install).
+      - run: deno check --node-modules-dir=none supabase/functions/*/index.ts

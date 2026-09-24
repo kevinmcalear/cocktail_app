@@ -14,7 +14,7 @@ const StyledBottomSheetTextInput = styled(BottomSheetTextInput, {
     backgroundColor: 'transparent',
     borderWidth: 0,
     outlineWidth: 0,
-});
+}, { isInput: true });
 
 export interface SearchChip {
     id: string;

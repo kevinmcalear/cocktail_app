@@ -6,9 +6,10 @@ import {
   type AuthLinkState,
 } from '@/lib/authLink';
 import { createSessionFromUrl } from '@/lib/createSessionFromUrl';
+import * as Linking from 'expo-linking';
 import { Link } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
+import { ActivityIndicator, Platform, Pressable } from 'react-native';
 import { Button, Text, YStack, useTheme } from 'tamagui';
 
 type Props = {
@@ -42,9 +43,17 @@ export function EmailLinkGate({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Native: the latest deep link, including ones that arrive while the app is
+  // already open (getInitialURL only ever returns the launch URL).
+  const nativeUrl = Linking.useLinkingURL();
+
   useEffect(() => {
-    getIncomingAuthUrl().then((url) => setLink(inspectAuthUrl(url)));
-  }, []);
+    if (Platform.OS === 'web') {
+      getIncomingAuthUrl().then((url) => setLink(inspectAuthUrl(url)));
+    } else {
+      setLink(inspectAuthUrl(nativeUrl));
+    }
+  }, [nativeUrl]);
 
   if (ready) return <>{children}</>;
 

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
         cursor: 'grab',
     } as any,
     image: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
