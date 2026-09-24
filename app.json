@@ -1,11 +1,8 @@
 {
   "expo": {
-    "name": "cocktail_app",
-    "slug": "cocktail_app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "cocktailapp",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -17,7 +14,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,7 +43,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you set your profile picture."
+          "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ],
       "expo-web-browser",
@@ -53,6 +58,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1d3d8eeb-0e87-4f06-ba38-2db32b8d4d02"
+      }
+    },
+    "owner": "kevinmcalear"
   }
 }

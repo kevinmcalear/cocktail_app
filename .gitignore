@@ -52,3 +52,6 @@ supabase/.gitignore
 
 # local Cursor agent tooling
 .cursor/
+
+# deno check output
+deno.lock

@@ -6,8 +6,9 @@ module.exports = defineConfig([
   expoConfig,
   {
     // Edge functions are Deno code with URL and npm: imports; they are type
-    // checked with `deno check`, not this config.
-    ignores: ['dist/*', 'supabase/functions/**'],
+    // checked with `deno check`, not this config. ios/, android/ and
+    // supabase/.temp are generated.
+    ignores: ['dist/*', 'ios/**', 'android/**', 'supabase/functions/**', 'supabase/.temp/**'],
   },
   {
     // React Compiler rules that eslint-plugin-react-hooks 7 (Expo SDK 57) turns

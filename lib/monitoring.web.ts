@@ -4,6 +4,8 @@
 // platforms.
 import * as Sentry from '@sentry/react';
 
+import { appVariant } from '@/lib/appVariant';
+
 const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
 // Static rendering evaluates this module in Node; only report from browsers.
@@ -13,7 +15,7 @@ export function initMonitoring(): void {
   if (!enabled) return;
   Sentry.init({
     dsn,
-    environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+    environment: appVariant,
     sendDefaultPii: false,
   });
 }
