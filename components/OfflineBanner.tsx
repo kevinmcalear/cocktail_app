@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { MotiView } from 'moti';
 import React from 'react';
+import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 
@@ -15,11 +15,9 @@ export function OfflineBanner() {
     if (!isOffline) return null;
 
     return (
-        <MotiView
-            from={{ translateY: -100, opacity: 0 }}
-            animate={{ translateY: 0, opacity: 1 }}
-            exit={{ translateY: -100, opacity: 0 }}
-            transition={{ type: 'timing', duration: 400 }}
+        <Animated.View
+            entering={SlideInUp.duration(400)}
+            exiting={SlideOutUp.duration(400)}
             style={{
                 position: 'absolute',
                 top: insets.top - 8, // Shifted slightly above flush with the inset
@@ -43,6 +41,6 @@ export function OfflineBanner() {
                     Offline Mode
                 </Text>
             </View>
-        </MotiView>
+        </Animated.View>
     );
 }
