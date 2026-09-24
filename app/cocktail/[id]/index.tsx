@@ -89,7 +89,7 @@ export default function CocktailDetailsScreen() {
         ? displayImages
         : isEditing
             ? []
-            : [require("@/assets/images/cocktails/house_martini.png")];
+            : [require("@/assets/images/cocktails/house_martini.jpg")];
 
     const displayTitle = isEditing ? editor.name : cocktail.name;
 

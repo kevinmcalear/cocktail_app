@@ -12,7 +12,7 @@ import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 
-const PLACEHOLDER_IMAGE = require('@/assets/images/cocktails/house_martini.png');
+const PLACEHOLDER_IMAGE = require('@/assets/images/cocktails/house_martini.jpg');
 
 function Pill({ icon, children }: { icon?: ComponentProps<typeof IconSymbol>['name']; children: string }) {
   const theme = useTheme();
