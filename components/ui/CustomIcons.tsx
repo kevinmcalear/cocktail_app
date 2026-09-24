@@ -1,14 +1,15 @@
 import React from 'react';
+import type { ColorValue } from 'react-native';
 import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
 interface CustomIconProps {
   name: string;
   size?: number;
-  color?: string;
+  color?: ColorValue;
 }
 
 // A helper dictionary that maps our names to functions returning SVG content
-const ICON_MAP: Record<string, (color: string) => React.ReactNode> = {
+const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
   // --- GLASSWARE ---
   Coupette: (c) => (
     <Path

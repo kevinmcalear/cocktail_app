@@ -160,7 +160,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
 
     const body = (
         <YStack gap="$4">
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$4" alignItems="center">
                     <TouchableOpacity
                         onPress={editor.pickLogo}
@@ -170,8 +170,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                         <View style={[styles.logoBox, { borderColor: theme.borderColor?.get() as string }]}>
                             {logoPreview ? (
                                 <Image
-                                    source={{ uri: logoPreview }}
-                                    cacheKey={logoPreview ?? 'no-logo'}
+                                    source={{ uri: logoPreview, cacheKey: logoPreview }}
                                     style={styles.logoImage}
                                     contentFit="cover"
                                 />
@@ -191,7 +190,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                 </YStack>
             </Card>
 
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$3">
                     <Label color="$color11">Venue Name</Label>
                     <Input
@@ -205,7 +204,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                 </YStack>
             </Card>
 
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$4">
                     <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
                         Brand Colors
@@ -254,7 +253,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                 </XStack>
             </GlassView>
 
-            <Card bordered padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
+            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$0" paddingTop="$2">
                     <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5} marginBottom="$3">
                         Progressive Disclosure Defaults

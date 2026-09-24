@@ -17,6 +17,7 @@ interface IngredientDetail {
     id: string;
     name: string;
     description: string | null;
+    bar_id: string | null;
     item_images?: { images: { url: string } }[];
 }
 

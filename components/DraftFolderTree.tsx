@@ -683,7 +683,7 @@ function BarDraftNode({
                 >
                     <XStack alignItems="center" gap="$2">
                         {logoUrl ? (
-                            <Image source={{ uri: logoUrl }} cacheKey={logoUrl} style={styles.barLogo} contentFit="cover" />
+                            <Image source={{ uri: logoUrl, cacheKey: logoUrl }} style={styles.barLogo} contentFit="cover" />
                         ) : (
                             <IconSymbol
                                 name={isPersonal ? 'person.circle.fill' : 'building.2.fill'}
