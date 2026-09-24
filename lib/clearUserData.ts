@@ -11,7 +11,10 @@ import { useRecentActivityStore } from '@/store/useRecentActivityStore';
  * pile, and AI consent. Bar iPads are shared, so the next person must not see any of it.
  */
 export async function clearUserData(): Promise<void> {
-  queryClient.clear();
+  // Queries marked public (a venue's staff-link branding) aren't the user's,
+  // and a signed-out page may be fetching one right now: removing a query
+  // mid-fetch leaves that page loading forever.
+  queryClient.removeQueries({ predicate: (query) => query.meta?.public !== true });
   useRecentActivityStore.setState({ items: [] });
   await Promise.all([
     asyncStoragePersister.removeClient(),

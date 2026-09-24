@@ -14,6 +14,8 @@ export interface DatabaseCategory {
 export interface DatabaseBar {
     id: string;
     name: string;
+    /** URL-safe name for the staff link, /v/<slug>. Kept when the bar is renamed. */
+    slug: string;
     default_visibility_level: number;
     default_generic_ingredient_level: number;
     default_specific_brand_level: number;

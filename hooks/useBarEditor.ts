@@ -379,6 +379,7 @@ export function useBarEditor(barId: string) {
         canEdit,
         roleLevel,
         roleOptions: ROLE_OPTIONS,
+        slug: detailData?.bar?.slug ?? null,
         members: detailData?.members ?? [],
         items: detailData?.items ?? [],
         name,
