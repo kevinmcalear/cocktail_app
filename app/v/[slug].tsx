@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import Head from 'expo-router/head';
+import { WebHead } from '@/components/WebHead';
 import { useCallback, useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
@@ -31,9 +31,9 @@ export default function VenueStaffLink() {
   const head = (
     <>
       <Stack.Screen options={{ headerShown: false, title }} />
-      <Head>
+      <WebHead>
         <title>{title}</title>
-      </Head>
+      </WebHead>
     </>
   );
 
