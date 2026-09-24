@@ -8,7 +8,7 @@
     "ios": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --ios",
     "web": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --web",
     "lint": "expo lint",
-    "build:web": "APP_VARIANT=production TAMAGUI_DISABLE_SLIDER_INTERVAL=1 expo export -p web",
+    "build:web": "APP_VARIANT=production TAMAGUI_DISABLE_SLIDER_INTERVAL=1 expo export -p web && node scripts/write-web-manifest.mjs && cp dist/+not-found.html dist/404.html",
     "typecheck": "tsc --noEmit",
     "test:unit": "node scripts/run-checks.mjs",
     "test:security": "node --test \"supabase/tests/*.test.mjs\"",
