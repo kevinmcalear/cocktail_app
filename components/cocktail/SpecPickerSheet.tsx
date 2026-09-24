@@ -10,6 +10,7 @@ import type { SpecCategory } from "@/hooks/useCocktailEditor";
 import { uriToBase64 } from "@/lib/imageBase64";
 import type { GlasswareIdentifyResult } from "@/lib/identifyGlassware";
 import { Button, Input, Text, useTheme, XStack, YStack } from "tamagui";
+import { ensureAiConsent } from '@/lib/aiConsent';
 
 export interface SpecOption {
     id: string;
@@ -99,6 +100,7 @@ export function SpecPickerSheet({
 
     const handleScanPhoto = async () => {
         if (!onIdentifyGlassware) return;
+        if (!(await ensureAiConsent())) return;
 
         const { status } = await FilePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
