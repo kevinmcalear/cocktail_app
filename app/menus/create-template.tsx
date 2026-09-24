@@ -52,7 +52,7 @@ export default function CreateTemplateScreen() {
     const [templateDescription, setTemplateDescription] = useState("");
     
     // Start with one blank section by default
-    const [sections, setSections] = useState<SectionInput[]>([
+    const [sections, setSections] = useState<SectionInput[]>(() => [
         { id: `sec-${Date.now()}`, name: '', minItems: '1', maxItems: '', allowedTypes: [...ALL_SECTION_DRINK_TYPES] }
     ]);
     const [saving, setSaving] = useState(false);
