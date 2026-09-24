@@ -46,7 +46,7 @@ export function useMenuDetails(menuId: string | null) {
             if (drinksErr) throw drinksErr;
 
             // 4. Format into sections
-            const defaultImage = require('@/assets/images/cocktails/house_martini.png');
+            const defaultImage = require('@/assets/images/cocktails/house_martini.jpg');
 
             const formattedSections: MenuSection[] = (sections || []).map((sec: any) => {
                 const secDrinks = (drinksData || [])

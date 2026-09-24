@@ -77,7 +77,7 @@ export default function IngredientDetailScreen() {
 
     const images = ingredient.item_images?.map(img => img.images.url).filter(Boolean) as string[] || [];
     if (images.length === 0) {
-        images.push(require('@/assets/images/cocktails/house_martini.png'));
+        images.push(require('@/assets/images/cocktails/house_martini.jpg'));
     }
 
     return (
@@ -157,7 +157,7 @@ export default function IngredientDetailScreen() {
                                     >
                                         <View style={styles.horizontalCardImageContainer}>
                                             <Image 
-                                                source={imageUrl ? { uri: imageUrl } : require('@/assets/images/cocktails/house_martini.png')}
+                                                source={imageUrl ? { uri: imageUrl } : require('@/assets/images/cocktails/house_martini.jpg')}
                                                 style={styles.horizontalCardImage}
                                                 contentFit="cover"
                                             />

@@ -144,7 +144,7 @@ const getImage = (item: SearchItem) => {
         return { uri: item.item_images[0].images.url };
     }
     // Fallback to a single reliable image since specific placeholders don't exist yet
-    return require("@/assets/images/cocktails/house_martini.png");
+    return require("@/assets/images/cocktails/house_martini.jpg");
 };
 
 const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }) {
