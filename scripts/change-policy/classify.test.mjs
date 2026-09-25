@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { approvalStatus, classify, COMMENT_MARKER, lastLabeler, loadPolicy, toMarkdown } from './classify.mjs';
+import { approvalStatus, classify, COMMENT_MARKER, lastLabeled, loadPolicy, toMarkdown } from './classify.mjs';
 
 const policy = loadPolicy();
 const classOf = (...files) => classify(files, policy).class;
@@ -75,8 +75,25 @@ test('the labeler is whoever applied the label most recently', () => {
     { label: 'human-approved', actor: 'kevinmcalear', at: '2026-09-01T00:00:00Z' },
     { label: 'bug', actor: 'kevinmcalear', at: '2026-09-03T00:00:00Z' },
   ];
-  assert.equal(lastLabeler(events, 'human-approved'), 'someone-else');
-  assert.equal(lastLabeler([], 'human-approved'), '');
+  assert.deepEqual(lastLabeled(events, 'human-approved'), { actor: 'someone-else', at: '2026-09-02T00:00:00Z' });
+  assert.deepEqual(lastLabeled([], 'human-approved'), { actor: '', at: '' });
+});
+
+test('a push after the label resets approval; a label after the push stands', () => {
+  const r = classify(['lib/roles.ts'], policy);
+  const approved = { labels: ['human-approved'], labeler: 'kevinmcalear', labeledAt: '2026-09-01T10:00:00Z' };
+
+  const stale = approvalStatus(r, policy, { ...approved, pushedAt: '2026-09-01T11:00:00Z' });
+  assert.equal(stale.approved, false);
+  assert.equal(stale.stale, true);
+  assert.equal(stale.label, 'human-approved');
+
+  // Kevin re-labels after reviewing the push (or the labeled run races the push run).
+  assert.equal(approvalStatus(r, policy, { ...approved, pushedAt: '2026-09-01T09:00:00Z' }).approved, true);
+  // No push in this run (labeled/opened events): the label stands.
+  assert.equal(approvalStatus(r, policy, approved).approved, true);
+  // A push with no record of when the label was applied fails safe.
+  assert.equal(approvalStatus(r, policy, { ...approved, labeledAt: '', pushedAt: '2026-09-01T11:00:00Z' }).stale, true);
 });
 
 test('non-blast-radius classes need no approval', () => {

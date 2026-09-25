@@ -12,6 +12,8 @@
 //   ...--labeler <login>       who last applied the approval label, or
 //   ...--label-events file     GitHub `labeled` events as JSON lines of
 //                              {label, actor, at}; the labeler is read from it
+//   ...--pushed-at <iso>       when new commits were pushed; an approval label
+//                              applied before this is stale
 //   ...--json                  machine output (includes the markdown comment)
 
 import { readFileSync } from 'node:fs';
@@ -48,12 +50,22 @@ export function classify(files, policy) {
 
 // Approved only when the label is on the PR AND the last person to apply it is
 // a listed approver. Anyone with triage access can add a label; that alone
-// must not open the gate.
-export function approvalStatus(result, policy, { labels = [], labeler = '' } = {}) {
+// must not open the gate. A label applied before the latest push approved
+// commits that are no longer the whole PR, so it is stale (CI removes it).
+export function approvalStatus(result, policy, { labels = [], labeler = '', labeledAt = '', pushedAt = '' } = {}) {
   const { label, approvers = [] } = policy.approval ?? {};
   if (!result.humanApproval) return { required: false, approved: true, reason: 'No human approval needed.' };
   if (!label || !labels.includes(label)) {
     return { required: true, approved: false, reason: `Waiting for the \`${label}\` label from ${who(approvers)}.` };
+  }
+  if (pushedAt && !(Date.parse(labeledAt) >= Date.parse(pushedAt))) {
+    return {
+      required: true,
+      approved: false,
+      stale: true,
+      label,
+      reason: `New commits were pushed after \`${label}\` was applied, so the approval was reset. ${who(approvers)} re-applies it after reviewing them.`,
+    };
   }
   if (!approvers.includes(labeler)) {
     return {
@@ -65,10 +77,10 @@ export function approvalStatus(result, policy, { labels = [], labeler = '' } = {
   return { required: true, approved: true, reason: `Approved: \`${label}\` applied by \`${labeler}\`.` };
 }
 
-// The actor of the most recent `labeled` event for `label` ('' if none).
-export function lastLabeler(events, label) {
+// The most recent `labeled` event for `label`, as { actor, at } (empty if none).
+export function lastLabeled(events, label) {
   const hits = events.filter((e) => e.label === label).sort((a, b) => String(a.at).localeCompare(String(b.at)));
-  return hits.at(-1)?.actor ?? '';
+  return { actor: hits.at(-1)?.actor ?? '', at: hits.at(-1)?.at ?? '' };
 }
 
 const who = (logins) => logins.map((l) => `\`${l}\``).join(' or ') || 'an approver';
@@ -92,7 +104,7 @@ export function toMarkdown(result, approval) {
 const splitLines = (s) => s.split('\n').map((x) => x.trim()).filter(Boolean);
 
 function parseArgs(argv) {
-  const flags = new Set(['--files-from', '--policy', '--labels', '--labeler', '--label-events']);
+  const flags = new Set(['--files-from', '--policy', '--labels', '--labeler', '--label-events', '--pushed-at']);
   const opts = { files: [], json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -111,14 +123,16 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
 
   const policy = loadPolicy(opts.policy || DEFAULT_POLICY);
   const result = classify(files, policy);
-  let labeler = opts.labeler ?? '';
+  let labeled = { actor: opts.labeler ?? '', at: '' };
   if (opts['label-events'] !== undefined) {
     const events = splitLines(readFileSync(opts['label-events'], 'utf8')).map((l) => JSON.parse(l));
-    labeler = lastLabeler(events, policy.approval?.label);
+    labeled = lastLabeled(events, policy.approval?.label);
   }
   const approval = approvalStatus(result, policy, {
     labels: opts.labels ? JSON.parse(opts.labels) : [],
-    labeler,
+    labeler: labeled.actor,
+    labeledAt: labeled.at,
+    pushedAt: opts['pushed-at'] ?? '',
   });
   const markdown = toMarkdown(result, approval);
   process.stdout.write((opts.json ? JSON.stringify({ ...result, approval, markdown }) : markdown) + '\n');

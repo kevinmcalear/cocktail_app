@@ -35,6 +35,11 @@ A blast-radius PR's `change-policy` check passes only when both hold:
 The check re-runs when labels change, so adding the label turns it green without
 a new push. Removing it turns it red again.
 
+Pushing new commits resets approval: the gate removes a `human-approved` label
+that was applied before the push, and the check stays red until it is applied
+again. A label applied after the push is kept, so re-labeling while that push's
+check is still running doesn't get undone.
+
 Agents must never apply `human-approved`, even when their GitHub session is
 Kevin's. The check cannot tell the two apart, so the rule is the only guard.
 
