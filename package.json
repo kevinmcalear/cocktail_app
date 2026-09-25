@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "node scripts/run-checks.mjs",
     "test:security": "node --test \"supabase/tests/*.test.mjs\"",
+    "test:policy": "node --test \"scripts/change-policy/*.test.mjs\"",
     "postinstall": "patch-package"
   },
   "dependencies": {
