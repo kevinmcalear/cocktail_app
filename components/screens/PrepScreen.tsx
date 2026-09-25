@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Display, Headline, Surface, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 
 const COMING = [
@@ -18,24 +19,30 @@ const COMING = [
 export function PrepScreen() {
   const ds = useDs();
   const gutter = useGutter();
+  const bottom = useTabBarInset();
   return (
-    <ScrollView style={{ backgroundColor: ds.c.ground }} contentContainerStyle={{ paddingBottom: space.xxxl }}>
-      <ScreenHeader />
-      <View style={[styles.body, { paddingHorizontal: gutter }]}>
-        <Display>Prep</Display>
-        <Body tone="muted">Your prep list is on its way. Here’s what it will hold.</Body>
-        {COMING.map((c) => (
-          <Surface key={c.title} style={styles.card}>
-            <Headline>{c.title}</Headline>
-            <Body tone="muted">{c.body}</Body>
-          </Surface>
-        ))}
-      </View>
-    </ScrollView>
+    // Wrapped so NativeTabs doesn't also inset the ScrollView: ScreenHeader
+    // handles the top safe area itself, the same as on Tonight and Library.
+    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
+        <ScreenHeader />
+        <View style={[styles.body, { paddingHorizontal: gutter }]}>
+          <Display>Prep</Display>
+          <Body tone="muted">Your prep list is on its way. Here’s what it will hold.</Body>
+          {COMING.map((c) => (
+            <Surface key={c.title} style={styles.card}>
+              <Headline>{c.title}</Headline>
+              <Body tone="muted">{c.body}</Body>
+            </Surface>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   body: { gap: space.md, maxWidth: 760 },
   card: { gap: space.xs },
 });

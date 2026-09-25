@@ -17,14 +17,19 @@ export const WEB_TABS: { name: string; label: string; icon: IconName }[] = [
 const BAR_HEIGHT = 56;
 
 /**
- * Space to leave under scrolling content so the floating web tab bar doesn't
- * cover it. Zero on native (NativeTabs insets content itself) and wide web.
+ * Space to leave under scrolling content so the floating tab bar (the web one,
+ * or the system one on iOS and Android) doesn't cover the last row.
  */
 export function useTabBarInset() {
   const bottom = useSafeAreaInsets().bottom;
   const wide = useIsWideWeb();
-  return Platform.OS === 'web' && !wide ? bottom + BAR_HEIGHT + space.xl : space.xl;
+  if (Platform.OS === 'web') return wide ? space.xl : bottom + BAR_HEIGHT + space.xl;
+  return bottom + NATIVE_BAR_HEIGHT + space.lg;
 }
+
+// ponytail: the system tab bar's height can't be measured (a NativeTabs
+// limitation), so this is iOS 26's floating bar plus a little air.
+const NATIVE_BAR_HEIGHT = 64;
 
 /**
  * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,

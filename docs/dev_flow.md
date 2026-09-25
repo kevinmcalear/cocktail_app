@@ -28,7 +28,9 @@ Recipes:
 
 - **Local Supabase:** Docker running, then `supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta`, `supabase db reset`, `npm run test:security`. Seed data with only the `public.*` inserts from a dump (never auth tables), loaded with `session_replication_role=replica`.
 - **Web against local Supabase:** `EXPO_NO_DOTENV=1` plus the env values from `supabase status`, then `expo start --web --no-dev --port 8090`. Dev mode bundles `.env` as a module and would point at production. `--no-dev` doesn't rebuild on edits, so restart after changes. Port 8081 is often taken.
-- **Signing in locally without a password:** create a local-only user with the admin API, sign in from Node, and put the session JSON in localStorage under `sb-127-auth-token` (web), or open a magic-link `cocktailapp://auth/callback?token_hash=…&type=magiclink` in the simulator and tap Continue.
+- **Demo data:** `docker exec -i supabase_db_cocktail_app psql -U postgres < supabase/seed_demo.sql` loads two made-up venues (Little Rye and Pale Moth), glassware, drinks and a current menu at each.
+- **Signing in locally without a password:** `node scripts/dev-user.mjs` creates `demo@example.test` (Admin at Little Rye, Bartender at Pale Moth) on the local stack only and writes a session to `.expo/dev-session.json`. On web, put its `session` in localStorage under its `storageKey` and reload. On the simulator, generate a magic link with the admin API and open `cocktailapp://auth/callback?token_hash=…&type=magiclink`, then tap Continue.
+- **Redesigned screens locally:** add `EXPO_PUBLIC_REDESIGN=1` to the web or native server's environment (with `--clear` if another checkout's server ran recently, since Metro can reuse a bundle built with other env values).
 - **iOS release build:** `npx expo run:ios --configuration Release`. Cancel the dev-client URL prompt and launch from the icon.
 - **Production web build:** `npm run build:web`, then serve `dist/` with the `vercel.json` rewrites applied.
 - **CI typecheck differs from local:** CI has no `expo-env.d.ts` or `.expo/types` (generated, ignored). Move both aside and run `tsc` to reproduce it.
