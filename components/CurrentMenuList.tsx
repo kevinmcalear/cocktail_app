@@ -246,22 +246,24 @@ export function CurrentMenuList({
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item: row }) => {
                     if (row.type === "header") {
-                        const typesLabel = row.allowedTypes?.length
+                        // Which drink types a section accepts only matters while editing it.
+                        const typesLabel = isEditing && row.allowedTypes?.length
                             ? allowedTypesLabel(row.allowedTypes)
                             : null;
                         return (
                             <YStack paddingHorizontal={padH} paddingTop={18} paddingBottom={10} gap={2}>
                                 <Text
-                                    fontSize={10}
+                                    fontSize={12}
                                     fontWeight="600"
                                     color="$color11"
                                     letterSpacing={0.8}
                                     textTransform="uppercase"
+                                    accessibilityRole="header"
                                 >
                                     {row.label}
                                 </Text>
                                 {typesLabel ? (
-                                    <Text fontSize={11} color="$color10">
+                                    <Text fontSize={12} color="$color11">
                                         {typesLabel}
                                     </Text>
                                 ) : null}

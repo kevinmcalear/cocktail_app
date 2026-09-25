@@ -229,7 +229,7 @@ function ViewIngredientRow({
     imageUrl?: string;
     onIngredientPress?: (id: string) => void;
 }) {
-    const theme = useTheme();
+    const typeScale = useSettingsStore((s) => (s.serviceMode ? 1.25 : 1));
     const ingredientsData = recipe.ingredient;
     const measurementParts = [];
     if (recipe.amount) measurementParts.push(`${recipe.amount}`);
@@ -241,36 +241,45 @@ function ViewIngredientRow({
         ingredientsData?.name ||
         (recipe.display_ingredient_id ? "Unknown Ingredient" : "Hidden ingredient");
 
+    // The amount is what gets read mid-shake: large, tabular, in its own
+    // column so the ingredient names line up. Service mode scales it up.
     return (
-        <XStack alignItems="center" gap="$4">
-            <TouchableOpacity
-                onPress={() => ingredientId && onIngredientPress?.(ingredientId)}
-                activeOpacity={0.7}
-            >
+        <TouchableOpacity
+            onPress={() => ingredientId && onIngredientPress?.(ingredientId)}
+            activeOpacity={0.7}
+            disabled={!ingredientId}
+            accessibilityRole={ingredientId ? "button" : undefined}
+            accessibilityLabel={measurement ? `${measurement} ${name}` : name}
+        >
+            <XStack alignItems="center" gap="$3" minHeight={56 * typeScale}>
+                <XStack width={76 * typeScale} justifyContent="flex-end" alignItems="baseline" gap={3}>
+                    {recipe.amount ? (
+                        <Text
+                            color="$color"
+                            fontSize={24 * typeScale}
+                            lineHeight={28 * typeScale}
+                            fontWeight="700"
+                            fontVariant={["tabular-nums"]}
+                        >
+                            {recipe.amount}
+                        </Text>
+                    ) : null}
+                    {recipe.unit ? (
+                        <Text color="$color11" fontSize={13 * typeScale} fontWeight="600">
+                            {recipe.unit}
+                        </Text>
+                    ) : null}
+                </XStack>
+                <Text flex={1} minWidth={0} textAlign="left" color="$color" fontSize={18 * typeScale} lineHeight={24 * typeScale} fontWeight="500">
+                    {name}
+                </Text>
                 {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
+                    <Image source={{ uri: imageUrl }} style={styles.viewThumb} contentFit="cover" />
                 ) : (
-                    <View style={[styles.imagePlaceholder, { borderColor: theme.color11?.get() as string }]}>
-                        <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
-                    </View>
+                    <View style={styles.viewThumbSpacer} />
                 )}
-            </TouchableOpacity>
-            <YStack flex={1} gap="$0.5" minWidth={0}>
-                {measurement ? (
-                    <Text color="$color" fontSize={13} opacity={0.5} fontWeight="600" textTransform="uppercase" letterSpacing={0.5}>
-                        {measurement}
-                    </Text>
-                ) : null}
-                <TouchableOpacity
-                    onPress={() => ingredientId && onIngredientPress?.(ingredientId)}
-                    activeOpacity={0.7}
-                >
-                    <Text color="$color" fontSize={18} fontWeight="400">
-                        {name}
-                    </Text>
-                </TouchableOpacity>
-            </YStack>
-        </XStack>
+            </XStack>
+        </TouchableOpacity>
     );
 }
 
@@ -389,6 +398,16 @@ export function CocktailIngredientList({
 }
 
 const styles = StyleSheet.create({
+    viewThumb: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: "rgba(127,127,127,0.1)",
+    },
+    viewThumbSpacer: {
+        width: 44,
+        height: 44,
+    },
     row: {
         width: "100%",
         height: EDIT_ROW_HEIGHT,

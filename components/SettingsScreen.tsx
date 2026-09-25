@@ -477,6 +477,7 @@ export function SettingsScreen() {
               style={{ flex: 1 }}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
+              aria-checked={selected}
               accessibilityLabel={`${label} appearance`}
             >
               <YStack
@@ -518,6 +519,7 @@ export function SettingsScreen() {
               style={{ flex: 1 }}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
+              aria-checked={selected}
             >
               <YStack
                 alignItems="center"
@@ -572,6 +574,7 @@ export function SettingsScreen() {
               onPress={() => pickDefaultSearch(id)}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
+              aria-checked={selected}
             >
               <XStack
                 alignItems="center"

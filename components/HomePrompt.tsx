@@ -4,6 +4,10 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
+import { useDropdowns } from '@/hooks/useDropdowns';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { isApplePlatform } from '@/lib/platformKeys';
+import { SearchPopover } from '@/components/SearchPopover';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
@@ -101,6 +105,10 @@ export function HomePrompt() {
   const { data: userBars } = useBars();
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const recentItems = useRecentActivityStore((s) => s.items);
+  const { data: dropdowns } = useDropdowns();
+  const isWideWeb = useIsWideWeb();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const shortcutLabel = isApplePlatform() ? '⌘K' : 'Ctrl K';
   // ponytail: override only — default is grid when ≤6, list when >6
   const [viewOverrides, setViewOverrides] = useState<Record<string, 'grid' | 'list'>>({});
 
@@ -163,6 +171,28 @@ export function HomePrompt() {
     return groups;
   }, [drafts, userBars]);
 
+  // Active menus, one card per venue menu, for "what are we pouring tonight".
+  const currentMenus = useMemo(() => {
+    const barNames = new Map<string, string>();
+    for (const ub of userBars || []) {
+      const bar = Array.isArray(ub.bars) ? ub.bars[0] : ub.bars;
+      if (ub.bar_id) barNames.set(ub.bar_id, bar?.name || 'Venue');
+    }
+    return ((dropdowns?.menus || []) as any[])
+      .filter((m) => m.is_active)
+      .map((m) => ({ ...m, venue: m.bar_id ? barNames.get(m.bar_id) ?? null : null }));
+  }, [dropdowns?.menus, userBars]);
+
+  const openSearch = () => {
+    if (isWideWeb) setSearchOpen(true);
+    else router.push('/search' as any);
+  };
+
+  const openMenu = (menuId: string) => {
+    setSelectedMenuId(menuId);
+    router.push('/menus' as any);
+  };
+
   const muted = theme.color11?.get() as string;
   const border = theme.borderColor?.get() as string;
   const cardSurface = theme.color4?.get() as string;
@@ -222,49 +252,77 @@ export function HomePrompt() {
               {hello}
             </Text>
             <Text fontSize={15} color="$color11" lineHeight={21}>
-              {venueGroups.length > 0
-                ? 'Pick up where you left off — your drafts are waiting.'
-                : 'Your bar is clear. Start something below.'}
+              {currentMenus.length > 0
+                ? "Tonight's menus, your recent specs and anything unfinished."
+                : 'Find a spec, or start something new below.'}
             </Text>
           </YStack>
 
-          <XStack flexWrap="wrap" gap={8}>
-            {QUICK_CREATE.map((item) => (
-              <Pressable
-                key={item.route}
-                onPress={() => router.push(item.route as any)}
-                accessibilityRole="button"
-                accessibilityLabel={`Create ${item.label}`}
-                style={[
-                  styles.quickCreate,
-                  {
-                    borderColor: border,
-                    backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
-                  },
-                ]}
-              >
-                <CustomIcon name={item.icon} size={16} color={muted} />
-                <Text fontSize={13} fontWeight="600" color="$color">
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </XStack>
+          <Pressable
+            onPress={openSearch}
+            accessibilityRole="search"
+            accessibilityLabel="Search specs, menus and ingredients"
+            style={[styles.searchField, { borderColor: border, backgroundColor: cardSurface }]}
+          >
+            <IconSymbol name="magnifyingglass" size={18} color={muted} />
+            <Text fontSize={16} color="$color11" flex={1} numberOfLines={1}>
+              Find a spec…
+            </Text>
+            {isWideWeb ? (
+              <Text fontSize={12} color="$color11" fontWeight="600">
+                {shortcutLabel}
+              </Text>
+            ) : null}
+          </Pressable>
+
         </YStack>
+
+        {currentMenus.length > 0 && (
+          <YStack width="100%" gap={8}>
+            <SectionLabel>Current menus</SectionLabel>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 10, paddingRight: 4 }}
+            >
+              {currentMenus.map((m) => (
+                <Pressable
+                  key={m.id}
+                  onPress={() => openMenu(m.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${m.name}${m.venue ? `, ${m.venue}` : ''}`}
+                  style={[styles.menuCard, { borderColor: border, backgroundColor: cardSurface }]}
+                >
+                  {m.cover_url ? (
+                    <Image
+                      source={{ uri: m.cover_url }}
+                      style={styles.menuCover}
+                      contentFit="cover"
+                      contentPosition={{ top: `${m.cover_position ?? 50}%` as any }}
+                      transition={200}
+                    />
+                  ) : (
+                    <YStack style={styles.menuCover} alignItems="center" justifyContent="center" backgroundColor="$color5">
+                      <CustomIcon name="TabMenus" size={22} color={muted} />
+                    </YStack>
+                  )}
+                  <YStack padding={10} gap={2}>
+                    <Text fontSize={15} fontWeight="700" color="$color" numberOfLines={1}>
+                      {m.name}
+                    </Text>
+                    <Text fontSize={12} color="$color11" numberOfLines={1}>
+                      {m.venue ?? 'Personal'}
+                    </Text>
+                  </YStack>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </YStack>
+        )}
 
         {recent.length > 0 && (
           <YStack width="100%" gap={8}>
-            <Text
-              fontSize={11}
-              fontWeight="600"
-              color="$color11"
-              letterSpacing={0.7}
-              textTransform="uppercase"
-              paddingHorizontal={4}
-              opacity={0.75}
-            >
-              Jump back in
-            </Text>
+            <SectionLabel>Jump back in</SectionLabel>
             <XStack gap={8} width="100%">
               {recent.map((r) => {
                 const imageUrl = r.imageUrl || null;
@@ -336,17 +394,7 @@ export function HomePrompt() {
 
         {venueGroups.length > 0 && (
           <YStack width="100%" gap={20}>
-            <Text
-              fontSize={11}
-              fontWeight="600"
-              color="$color11"
-              letterSpacing={0.7}
-              textTransform="uppercase"
-              paddingHorizontal={4}
-              opacity={0.75}
-            >
-              Unfinished
-            </Text>
+            <SectionLabel>Unfinished</SectionLabel>
 
             {venueGroups.map((group) => (
               <YStack key={group.key} gap={12}>
@@ -564,8 +612,51 @@ export function HomePrompt() {
             ))}
           </YStack>
         )}
+
+        <YStack width="100%" gap={8}>
+          <SectionLabel>Create</SectionLabel>
+          <XStack flexWrap="wrap" gap={8}>
+            {QUICK_CREATE.map((item) => (
+              <Pressable
+                key={item.route}
+                onPress={() => router.push(item.route as any)}
+                accessibilityRole="button"
+                accessibilityLabel={`Create ${item.label}`}
+                style={[
+                  styles.quickCreate,
+                  {
+                    borderColor: border,
+                    backgroundColor: cardSurface || 'rgba(255,255,255,0.04)',
+                  },
+                ]}
+              >
+                <CustomIcon name={item.icon} size={16} color={muted} />
+                <Text fontSize={13} fontWeight="600" color="$color">
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </XStack>
+        </YStack>
       </YStack>
+      {isWideWeb ? <SearchPopover visible={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </ScrollView>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text
+      fontSize={12}
+      fontWeight="600"
+      color="$color11"
+      letterSpacing={0.7}
+      textTransform="uppercase"
+      paddingHorizontal={4}
+      accessibilityRole="header"
+    >
+      {children}
+    </Text>
   );
 }
 
@@ -573,12 +664,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  searchField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  menuCard: {
+    width: 220,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  menuCover: {
+    width: '100%',
+    height: 120,
+  },
   quickCreate: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    minHeight: 44,
     borderRadius: 10,
     borderWidth: 1,
   },

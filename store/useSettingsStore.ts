@@ -28,6 +28,9 @@ interface SettingsState {
     themeMode: ThemeMode;
     defaultSearchContext: DefaultSearchContext;
     defaultUnit: string;
+    /** Behind the bar: keep the screen awake on specs and use larger spec type. */
+    serviceMode: boolean;
+    toggleServiceMode: () => void;
     toggleEditMode: () => void;
     toggleTesting: () => void;
     setEditMode: (enabled: boolean) => void;
@@ -45,6 +48,8 @@ export const useSettingsStore = create<SettingsState>()(
             themeMode: 'system',
             defaultSearchContext: DEFAULT_SEARCH_ALL,
             defaultUnit: DEFAULT_UNIT,
+            serviceMode: false,
+            toggleServiceMode: () => set((state) => ({ serviceMode: !state.serviceMode })),
             toggleEditMode: () => set((state) => ({ isEditModeEnabled: !state.isEditModeEnabled })),
             toggleTesting: () => set((state) => ({ isTestingEnabled: !state.isTestingEnabled })),
             setEditMode: (enabled) => set({ isEditModeEnabled: enabled }),

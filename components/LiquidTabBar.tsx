@@ -9,7 +9,7 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { XStack } from "tamagui";
+import { Text, XStack } from "tamagui";
 import { UniversalCreateButton } from "./UniversalCreateButton";
 
 // iOS 26 draws real Liquid Glass; elsewhere a blur with the palette's glass tint.
@@ -88,8 +88,8 @@ export function LiquidTabBar({
                     accessibilityRole="tablist"
                     justifyContent="center"
                     alignItems="center"
-                    paddingHorizontal={24}
-                    gap={12}
+                    paddingHorizontal={14}
+                    gap={4}
                     height={TAB_BAR_HEIGHT}
                 >
                     {validRoutes.map((route) => {
@@ -122,6 +122,7 @@ export function LiquidTabBar({
                                 href={buildHref(route.name, route.params)}
                                 accessibilityRole="tab"
                                 accessibilityState={isFocused ? { selected: true } : {}}
+                                aria-selected={isFocused}
                                 accessibilityLabel={options.tabBarAccessibilityLabel ?? options.title ?? route.name}
                                 testID={options.tabBarButtonTestID}
                                 onPress={onPress}
@@ -131,8 +132,18 @@ export function LiquidTabBar({
                                 {options.tabBarIcon && options.tabBarIcon({
                                     focused: isFocused,
                                     color: isFocused ? activeColor : inactiveColor,
-                                    size: 28,
+                                    size: 24,
                                 })}
+                                <Text
+                                    fontSize={10}
+                                    lineHeight={12}
+                                    fontWeight={isFocused ? "700" : "500"}
+                                    color={isFocused ? activeColor : inactiveColor}
+                                    numberOfLines={1}
+                                    maxFontSizeMultiplier={1.3}
+                                >
+                                    {options.title ?? route.name}
+                                </Text>
                             </PlatformPressable>
                         );
                     })}
@@ -161,7 +172,9 @@ const styles = StyleSheet.create({
     tabItem: {
         alignItems: "center",
         justifyContent: "center",
-        height: 50,
-        width: 44,
+        gap: 3,
+        height: 54,
+        minWidth: 58,
+        paddingHorizontal: 4,
     },
 });

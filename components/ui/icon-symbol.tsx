@@ -79,6 +79,7 @@ const MAPPING = {
   'doc.text': 'description',
   'doc.plaintext': 'article',
   'circle.fill': 'circle',
+  'sun.max.fill': 'wb-sunny',
 } satisfies IconMapping;
 
 /**

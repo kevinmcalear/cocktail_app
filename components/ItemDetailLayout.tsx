@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Modal, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Modal, Platform, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView, RectButton, Swipeable } from "react-native-gesture-handler";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -138,7 +138,7 @@ export function ItemDetailLayout({
     if (isLoading) {
         return (
             <View style={[styles.container, { backgroundColor: theme.background?.get() as string }]}>
-                <DetailSkeleton imageHeight={windowWidth >= 768 ? 360 : windowWidth} />
+                <DetailSkeleton imageHeight={windowWidth >= 768 ? 360 : Math.round(Math.min(windowWidth, windowHeight * 0.42))} />
             </View>
         );
     }
@@ -174,6 +174,10 @@ export function ItemDetailLayout({
 
     let swipeableRef: Swipeable | null = null;
     const isLargeScreen = windowWidth >= 768;
+    // Phone hero: tall enough to set the mood, short enough that the spec starts above the fold.
+    const heroHeight = Math.round(Math.min(windowWidth, windowHeight * 0.42));
+    // Native detail screens are presented as sheets: dismiss with Close, not Back (HIG).
+    const dismissIsClose = Platform.OS !== 'web' && !isLargeScreen && !onBack;
 
     const renderTitle = (fontSize: number, lineHeight?: number, numberOfLines?: number) => {
         const color = theme.color?.get() as string;
@@ -455,7 +459,7 @@ export function ItemDetailLayout({
         >
             {/* Parallax Image & Grabber */}
             <Animated.View style={[
-                { position: 'absolute', top: 0, left: 0, right: 0, height: windowWidth, zIndex: 0 },
+                { position: 'absolute', top: 0, left: 0, right: 0, height: heroHeight, zIndex: 0 },
                 parallaxStyle
             ]}>
                 {renderHeroImage(true)}
@@ -489,7 +493,7 @@ export function ItemDetailLayout({
             </Animated.View>
 
             {/* Transparent Spacer so touches pass through to the Parallax Header */}
-            <View style={{ height: windowWidth, backgroundColor: 'transparent' }} pointerEvents="none" />
+            <View style={{ height: heroHeight, backgroundColor: 'transparent' }} pointerEvents="none" />
 
             {/* Inner ScrollView mapped dynamically to stop exactly below the grabber */}
             <ScrollView 
@@ -561,10 +565,10 @@ export function ItemDetailLayout({
                 onPress={() => (onBack ? onBack() : router.back())}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel="Back"
+                accessibilityLabel={dismissIsClose ? "Close" : "Back"}
             >
                 <GlassView intensity={50} style={styles.buttonGlass}>
-                    <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
+                    <IconSymbol name={dismissIsClose ? "xmark" : "chevron.left"} size={dismissIsClose ? 20 : 24} color={theme.color?.get() as string} />
                 </GlassView>
             </TouchableOpacity>
             )}
