@@ -1,0 +1,61 @@
+# Change routing: how a PR ships, derived from the paths it changes.
+#
+# CI (.github/workflows/change-policy.yml) runs scripts/change-policy/classify.mjs
+# on every PR. Classes are checked top to bottom and the FIRST class with ANY
+# matching changed file wins, so one risky file is enough to route the whole PR
+# to the stricter lane. Human view: docs/change_policy.md.
+#
+# CI reads this file from the PR's BASE branch, so a PR cannot relax the rules
+# that judge it. Editing this file is itself a blast-radius change.
+version: 1
+
+# A blast-radius PR's check fails until this label is on the PR and the last
+# person to apply it is listed here.
+approval:
+  label: human-approved
+  approvers:
+    - kevinmcalear
+
+classes:
+  - id: blast-radius
+    label: Auth / RLS / migrations / account deletion
+    requires: >
+      Human approval. Kevin reviews the diff and applies the `human-approved`
+      label; the check stays red until then. Never auto-merged.
+    human_approval: true
+    match:
+      - "supabase/migrations/**"
+      # RLS policies are defined in SQL. Any .sql outside migrations (seed
+      # files, a future declarative schema) could define or drop one too.
+      - "**/*.sql"
+      # Auth settings: signup, redirect URLs, JWT expiry.
+      - "supabase/config.toml"
+      - "supabase/functions/_shared/auth.ts"
+      - "supabase/functions/delete-account/**"
+      - "lib/roles.ts"
+      # Sign-in, session and redirect handling.
+      - "app/auth/**"
+      - "components/auth/**"
+      - "ctx/AuthContext.tsx"
+      - "lib/*[aA]uth*"
+      - "lib/createSessionFromUrl.ts"
+      # The gate itself. Without these a PR could weaken the rules that judge
+      # it once it merges.
+      - "change-policy.yml"
+      - "scripts/change-policy/**"
+      - ".github/workflows/change-policy.yml"
+
+  - id: backend
+    label: Edge functions
+    requires: >
+      CI's edge function typecheck, plus deploying the changed function(s)
+      after merge (`supabase functions deploy <name>`); they do not ship with
+      the app.
+    match:
+      - "supabase/functions/**"
+
+  - id: app
+    label: App (default)
+    requires: Green CI (typecheck, lint, unit tests, web build). Auto-eligible.
+    match:
+      - "**"
