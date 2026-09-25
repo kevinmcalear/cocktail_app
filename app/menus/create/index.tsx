@@ -1,3 +1,4 @@
+import { toastDone } from '@/lib/toast';
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBars } from "@/hooks/useBars";
@@ -352,11 +353,7 @@ export default function CreateMenuWizard({
             }
         }
         if (!silent) {
-            if (Platform.OS === 'web') {
-                window.alert('Draft saved successfully!');
-            } else {
-                Alert.alert('Success', 'Draft saved successfully!');
-            }
+            toastDone('Draft saved');
         }
         setNeedsCleanMark(true);
         return id;
@@ -368,11 +365,7 @@ export default function CreateMenuWizard({
             await persistMenuDraft(false);
         } catch (error) {
             console.error("Draft error:", error);
-            if (Platform.OS === 'web') {
-                window.alert("Failed to save draft.");
-            } else {
-                Alert.alert("Error", "Failed to save draft.");
-            }
+            Alert.alert("Error", "Failed to save draft.");
         } finally {
             setSaving(false);
         }
@@ -599,20 +592,14 @@ export default function CreateMenuWizard({
             performPublish();
         };
 
-        if (Platform.OS === 'web') {
-            if (window.confirm("Are you sure you want to publish this menu?")) {
-                proceed();
-            }
-        } else {
-            Alert.alert(
-                "Publish Menu",
-                "Are you sure you want to publish this menu?",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Publish", onPress: proceed }
-                ]
-            );
-        }
+        Alert.alert(
+            "Publish Menu",
+            "Are you sure you want to publish this menu?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Publish", onPress: proceed }
+            ]
+        );
     };
 
     const performPublish = async () => {

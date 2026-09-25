@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 
 const ROLE_OPTIONS = [
     { name: 'Guest (10)', value: '10' },
@@ -27,11 +27,8 @@ function isValidHex(value: string): boolean {
     return /^#[0-9A-Fa-f]{6}$/.test(value);
 }
 
+// Alert.alert shows the in-app dialog on web (lib/dialogs installWebAlert).
 function showAlert(title: string, message: string) {
-    if (Platform.OS === 'web') {
-        window.alert(message);
-        return;
-    }
     Alert.alert(title, message);
 }
 

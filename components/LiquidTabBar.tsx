@@ -7,7 +7,7 @@ import { PlatformPressable, useLinkBuilder } from "expo-router/react-navigation"
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, XStack } from "tamagui";
 import { UniversalCreateButton } from "./UniversalCreateButton";
@@ -34,6 +34,22 @@ function TabBarSurface({ scheme, children }: { scheme: "light" | "dark"; childre
             <GlassView glassEffectStyle="regular" isInteractive colorScheme={scheme} style={styles.surface}>
                 {children}
             </GlassView>
+        );
+    }
+    if (Platform.OS === "android") {
+        // expo-blur can't blur here without wrapping every screen in a
+        // BlurTargetView, and an unblurred translucent fill reads muddy. A solid,
+        // raised surface is also closer to Material's navigation bar.
+        return (
+            <View
+                style={[
+                    styles.surface,
+                    styles.blurWrapper,
+                    { backgroundColor: palette[scheme].surface, borderColor: palette[scheme].glassBorder, elevation: 6 },
+                ]}
+            >
+                {children}
+            </View>
         );
     }
     return (

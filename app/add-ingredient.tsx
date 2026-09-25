@@ -1,3 +1,4 @@
+import { toastDone } from '@/lib/toast';
 import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
@@ -5,7 +6,6 @@ import {
     Alert,
     StyleSheet,
     TouchableOpacity,
-    Platform,
     Modal,
     Switch,
     View,
@@ -248,22 +248,14 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             }
             
             if (!silent) {
-                if (Platform.OS === 'web') {
-                    window.alert("Draft saved successfully!");
-                } else {
-                    Alert.alert("Success", "Draft saved successfully!");
-                }
+                toastDone('Draft saved');
             }
             setNeedsCleanMark(true);
             return draftIdToNotify;
         } catch (error) {
             console.error("Draft error:", error);
             if (!silent) {
-                if (Platform.OS === 'web') {
-                    window.alert("Failed to save draft.");
-                } else {
-                    Alert.alert("Error", "Failed to save draft.");
-                }
+                Alert.alert("Error", "Failed to save draft.");
             }
             return null;
         } finally {
@@ -312,20 +304,14 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             performSave();
         };
 
-        if (Platform.OS === 'web') {
-            if (window.confirm("Are you sure you want to publish this ingredient?")) {
-                proceed();
-            }
-        } else {
-            Alert.alert(
-                "Publish Ingredient",
-                "Are you sure you want to publish this ingredient?",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Publish", onPress: proceed }
-                ]
-            );
-        }
+        Alert.alert(
+            "Publish Ingredient",
+            "Are you sure you want to publish this ingredient?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Publish", onPress: proceed }
+            ]
+        );
     };
 
     const performSave = async () => {
@@ -453,10 +439,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             if (!savedId) return;
             if (isInline) {
                 onClose?.();
-            } else if (Platform.OS === 'web') {
-                window.alert("Draft saved successfully!");
             } else {
-                Alert.alert("Success", "Draft saved successfully!");
+                toastDone('Draft saved');
             }
             return;
         }
@@ -557,8 +541,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                                     await renameIngredientEntity(ingredientId, nextName, drafts, saveDraft);
                                 } catch (e: any) {
                                     const msg = e?.message || "Failed to rename ingredient.";
-                                    if (Platform.OS === "web") window.alert(msg);
-                                    else Alert.alert("Error", msg);
+                                    Alert.alert("Error", msg);
                                 }
                             }}
                             drafts={drafts}

@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, Alert, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import * as FilePicker from "expo-image-picker";
 
 import { SpecPillButton } from "@/components/SpecPillButton";
@@ -38,11 +38,8 @@ interface SpecPickerSheetProps {
     onIdentifyGlassware?: (imageBase64: string, mimeType: string) => Promise<GlasswareIdentifyResult>;
 }
 
+// Alert.alert shows the in-app dialog on web (lib/dialogs installWebAlert).
 function showError(title: string, message: string) {
-    if (Platform.OS === "web") {
-        window.alert(`${title}\n\n${message}`);
-        return;
-    }
     Alert.alert(title, message);
 }
 

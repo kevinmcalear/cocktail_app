@@ -18,6 +18,7 @@ import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
+import { palette } from "@/constants/palette";
 import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
@@ -184,8 +185,26 @@ function RootLayoutNav() {
 }
 
 
+/**
+ * On web, make the browser chrome follow the in-app Light/Dark choice, not just
+ * the OS: theme-color (address bar / installed-app title bar), color-scheme
+ * (scrollbars, form controls) and the page background behind the app.
+ */
+function useWebThemeChrome(scheme: 'light' | 'dark') {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const background = palette[scheme].background;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+      m.setAttribute('content', background);
+    });
+    document.documentElement.style.colorScheme = scheme;
+    document.body.style.backgroundColor = background;
+  }, [scheme]);
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useWebThemeChrome(colorScheme);
   const [fontsLoaded] = useFonts({
     Inter: Inter_400Regular,
     InterMedium: Inter_500Medium,
