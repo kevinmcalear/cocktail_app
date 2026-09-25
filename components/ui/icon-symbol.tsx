@@ -73,6 +73,7 @@ const MAPPING = {
   'doc.on.doc': 'content-copy',
   'map.fill': 'map',
   'lock.shield.fill': 'security',
+  'lock.fill': 'lock',
   'info.circle': 'info-outline',
   'hand.tap': 'touch-app',
   'exclamationmark.triangle': 'warning-amber',

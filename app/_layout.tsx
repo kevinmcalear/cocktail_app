@@ -65,8 +65,9 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === 'auth';
     // Privacy, terms and account-deletion pages must open without signing in,
-    // and venue staff links (/v/<slug>) have their own branded sign-in.
-    if (segments[0] === 'legal' || segments[0] === 'v') return;
+    // and venue staff links (/v/<slug>) have their own branded sign-in. The
+    // design gallery (/dev/gallery) shows no data and gates itself.
+    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
