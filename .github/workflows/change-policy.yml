@@ -1,0 +1,138 @@
+name: change-policy
+
+# Classifies every PR from its changed paths (change-policy.yml), posts the
+# class as one PR comment, and fails the `change-policy` check on blast-radius
+# PRs until an approver applies the approval label. See docs/change_policy.md.
+
+on:
+  pull_request:
+    # labeled/unlabeled re-run the gate when approval changes. Do not add a
+    # job-level `if:` to skip unrelated label events: a skipped run counts as
+    # passing for a required check and would clear an earlier failure.
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+concurrency:
+  group: change-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  classifier-tests:
+    name: change-policy classifier tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund
+      - run: npm run test:policy
+
+  gate:
+    name: change-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      # Judge the PR with the policy and classifier from its base branch, so a
+      # PR cannot relax the rules applied to itself. The PR's own copy is used
+      # only while the base has none (the PR that introduces this workflow).
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - id: rules
+        run: |
+          if [ -f change-policy.yml ] && [ -f scripts/change-policy/classify.mjs ]; then
+            echo "source=base" >> "$GITHUB_OUTPUT"
+          else
+            echo "source=head" >> "$GITHUB_OUTPUT"
+            echo "::warning::Base branch has no change policy yet; using this PR's copy."
+          fi
+      - if: steps.rules.outputs.source == 'head'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund
+
+      - name: Classify
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: |
+          # Old and new names, so moving a file out of a guarded path still counts.
+          gh api --paginate "repos/$REPO/pulls/$PR/files" \
+            --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/files.txt"
+          # Who applied each label: a label alone is not approval, the policy
+          # also requires the last person to apply it to be an approver.
+          gh api --paginate "repos/$REPO/issues/$PR/events" \
+            --jq '.[] | select(.event == "labeled") | {label: .label.name, actor: .actor.login, at: .created_at} | tojson' \
+            > "$RUNNER_TEMP/label-events.jsonl"
+          # On a push, an approval label applied before it is stale. This run is
+          # created just after the push, so its creation time never predates it;
+          # at worst a label added in those few seconds is reset too.
+          pushed_at=""
+          if [ "$EVENT_ACTION" = "synchronize" ]; then
+            pushed_at=$(gh api "repos/$REPO/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
+          fi
+          node scripts/change-policy/classify.mjs --json \
+            --files-from "$RUNNER_TEMP/files.txt" \
+            --labels "$LABELS" \
+            --label-events "$RUNNER_TEMP/label-events.jsonl" \
+            --pushed-at "$pushed_at" > "$RUNNER_TEMP/result.json"
+          jq -r .markdown "$RUNNER_TEMP/result.json" > "$RUNNER_TEMP/comment.md"
+          cat "$RUNNER_TEMP/comment.md" >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/comment.md"
+
+      # New commits since approval: take the label off so the reset is visible
+      # on the PR and re-applying it re-runs this check. Fork PRs get a
+      # read-only token, so there the check just stays red until re-labeled.
+      - name: Remove stale approval label
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if [ "$(jq -r '.approval.stale == true' "$RUNNER_TEMP/result.json")" = "true" ]; then
+            label=$(jq -r '.approval.label | @uri' "$RUNNER_TEMP/result.json")
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/$label" > /dev/null
+            echo "Removed stale approval label."
+          fi
+
+      # Fork PRs get a read-only token, so they only get the job summary.
+      - name: Post or update the routing comment
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          ids=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- change-policy -->"))) | .id')
+          id=${ids%%$'\n'*}
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@"$RUNNER_TEMP/comment.md" > /dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body-file "$RUNNER_TEMP/comment.md"
+          fi
+
+      - name: Enforce approval
+        run: |
+          jq -r .approval.reason "$RUNNER_TEMP/result.json"
+          if [ "$(jq -r '.approval.required and (.approval.approved | not)' "$RUNNER_TEMP/result.json")" = "true" ]; then
+            echo "::error::Blast-radius change: $(jq -r .approval.reason "$RUNNER_TEMP/result.json")"
+            exit 1
+          fi

@@ -4,7 +4,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 import { creatorCreateHref } from '@/store/useCreatorNavStore';
-import { useSettingsStore } from '@/store/useSettingsStore';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -22,7 +21,6 @@ type UniversalCreateButtonProps = {
 };
 
 export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreateButtonProps) {
-    const { isEditModeEnabled } = useSettingsStore();
     const selectedBarId = useAppStore((s) => s.selectedBarId);
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -51,10 +49,6 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
         ),
         []
     );
-
-    if (variant === 'tab' && !isEditModeEnabled) {
-        return null;
-    }
 
     const menuBarId =
         selectedBarId && selectedBarId !== PERSONAL_CONTEXT ? selectedBarId : PERSONAL_CONTEXT;
