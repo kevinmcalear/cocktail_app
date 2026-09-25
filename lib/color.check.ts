@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 
 import { backbar, DEFAULT_ACCENT, SAMPLE_BRANDS } from '../constants/tokens';
-import { accentFill, contrast, parseHex, readableAccent, withAlpha } from './color';
+import { accentFill, contrast, isHexColor, parseHex, readableAccent, withAlpha } from './color';
 
 assert.deepEqual(parseHex('#fff'), [255, 255, 255]);
 assert.equal(Math.round(contrast('#000000', '#FFFFFF')), 21);
@@ -36,5 +36,8 @@ assert.equal(readableAccent('#E4B062', backbar.dark.ground), '#E4B062');
 assert.equal(accentFill('#E4B062', backbar.dark.ground, backbar.light.surface).fill, '#E4B062');
 
 assert.equal(withAlpha('#D0643B', 0.2), 'rgba(208, 100, 59, 0.2)');
+
+assert.ok(isHexColor('#D0643B') && isHexColor('#fff'));
+assert.ok(!isHexColor('red') && !isHexColor(null) && !isHexColor('#12345'));
 
 console.log('color: ok');
