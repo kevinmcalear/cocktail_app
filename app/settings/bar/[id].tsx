@@ -231,7 +231,8 @@ export default function BarDetailScreen() {
                             {detailData?.members?.map((m: any) => (
                                 <Card key={m.user_id} borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                                     <YStack gap="$2">
-                                        <Text fontWeight="bold">{m.email}</Text>
+                                        {/* Emails are only returned to bar admins (and your own row). */}
+                                        <Text fontWeight="bold">{m.email ?? 'Team member'}</Text>
                                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 0 }}>
                                             <XStack gap="$2">
                                                 {ROLE_OPTIONS.map((opt) => (
