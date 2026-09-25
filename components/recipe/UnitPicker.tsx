@@ -43,8 +43,8 @@ export function UnitPicker({ value, onChange, size = 'sm', onOpenChange }: UnitP
             borderColor: theme.borderColor?.get() as string,
           },
         ]}
-        accessibilityRole="button"
-        accessibilityLabel={`Unit: ${unitLabel(current)}`}
+        role="button"
+        aria-label={`Unit: ${unitLabel(current)}`}
       >
         <Text color="$color" fontSize={size === 'md' ? 15 : 13} fontWeight="600">
           {unitLabel(current)}

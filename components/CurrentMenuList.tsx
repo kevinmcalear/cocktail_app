@@ -129,8 +129,8 @@ function AddDropTile({
         >
             <Pressable
                 onPress={onPress}
-                accessibilityRole="button"
-                accessibilityLabel="Add drink"
+                role="button"
+                aria-label="Add drink"
                 style={[
                     styles.card,
                     styles.addCard,
@@ -258,7 +258,7 @@ export function CurrentMenuList({
                                     color="$color11"
                                     letterSpacing={0.8}
                                     textTransform="uppercase"
-                                    accessibilityRole="header"
+                                    role="heading"
                                 >
                                     {row.label}
                                 </Text>
@@ -304,8 +304,8 @@ export function CurrentMenuList({
                                     <Pressable
                                         key={item.id}
                                         onPress={() => openItem(item)}
-                                        accessibilityRole="button"
-                                        accessibilityLabel={title}
+                                        role="button"
+                                        aria-label={title}
                                         style={[
                                             styles.card,
                                             {

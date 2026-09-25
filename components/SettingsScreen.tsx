@@ -235,7 +235,7 @@ export function SettingsScreen() {
   const profilePanel = (
     <Section title="Profile">
       <XStack alignItems="center" gap="$4">
-        <Pressable onPress={pickImage} accessibilityRole="button" accessibilityLabel="Change profile photo">
+        <Pressable onPress={pickImage} role="button" aria-label="Change profile photo">
           <View>
             <UserAvatar
               uri={localImageUri || avatarUrl}
@@ -475,10 +475,9 @@ export function SettingsScreen() {
               key={id}
               onPress={() => setThemeMode(id)}
               style={{ flex: 1 }}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
+              role="radio"
               aria-checked={selected}
-              accessibilityLabel={`${label} appearance`}
+              aria-label={`${label} appearance`}
             >
               <YStack
                 alignItems="center"
@@ -517,8 +516,7 @@ export function SettingsScreen() {
               key={id}
               onPress={() => setDefaultUnit(id)}
               style={{ flex: 1 }}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
+              role="radio"
               aria-checked={selected}
             >
               <YStack
@@ -572,8 +570,7 @@ export function SettingsScreen() {
             <Pressable
               key={id}
               onPress={() => pickDefaultSearch(id)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
+              role="radio"
               aria-checked={selected}
             >
               <XStack
@@ -635,7 +632,7 @@ export function SettingsScreen() {
   );
 
   const linkRow = (label: string, onPress: () => void) => (
-    <Pressable accessibilityRole="link" onPress={onPress}>
+    <Pressable role="link" onPress={onPress}>
       <XStack alignItems="center" justifyContent="space-between">
         <Text fontSize={15} color="$color">
           {label}
@@ -650,7 +647,7 @@ export function SettingsScreen() {
       {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
       {linkRow('Terms of use', () => router.push('/legal/terms'))}
       <Separator />
-      <Pressable accessibilityRole="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
+      <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">
           <YStack flex={1}>
             <Text fontSize={15} fontWeight="600" color="$red10">
@@ -769,7 +766,7 @@ export function SettingsScreen() {
           {accountPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable
-              accessibilityRole="button"
+              role="button"
               onPress={async () => {
                 const ok = await confirmAsync({
                   title: 'Log out?',
