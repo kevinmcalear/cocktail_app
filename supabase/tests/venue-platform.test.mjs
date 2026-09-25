@@ -305,6 +305,13 @@ describe('venue roles', () => {
     assert.deepEqual((await client.rpc('get_my_bars')).data, []);
     // The recipe view runs as its owner and reads user_bars itself.
     assert.equal((await visible(client, 'app_recipe_presentation', 'id', [ids.penicillinRecipe])).size, 0);
+    // So does the member list, which also no longer lists them.
+    assert.ok((await client.rpc('get_bar_members', { p_bar_id: ids.barOne })).error);
+    const { data: roster, error: rosterError } = await users.admin.client.rpc('get_bar_members', { p_bar_id: ids.barOne });
+    assert.ifError(rosterError);
+    const listed = new Set(roster.map((m) => m.user_id));
+    assert.ok(!listed.has(users.expiredGuest.id), 'ended guest is not listed');
+    assert.ok(listed.has(users.guestBartender.id), 'current guest is listed');
 
     await client.from('items').update({ name: 'vandalised' }).eq('id', ids.penicillin);
     const { rows } = await db.query('SELECT name FROM public.items WHERE id = $1', [ids.penicillin]);

@@ -21,9 +21,9 @@
 --     grant or revoke these.
 --
 -- The one change to existing helpers: a membership whose role has ended stops
--- counting in my_bar_ids(), can_write(), get_my_bars() and
--- app_recipe_presentation straight away, and a pg_cron job removes it within
--- 15 minutes.
+-- counting in my_bar_ids(), can_write(), get_my_bars(),
+-- app_recipe_presentation and get_bar_members() straight away, and a pg_cron
+-- job removes it within 15 minutes.
 
 CREATE TYPE "public"."venue_capability" AS ENUM (
     -- Seeing
@@ -247,6 +247,43 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
         AND ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_visibility_level", "b"."default_visibility_level")))));
 
 ALTER VIEW "public"."app_recipe_presentation" SET ("security_invoker" = false);
+
+-- get_bar_members (also from 20260925000000) runs as its owner too: an ended
+-- membership can't call it, and isn't listed. Otherwise unchanged.
+CREATE OR REPLACE FUNCTION "public"."get_bar_members"("p_bar_id" "uuid") RETURNS TABLE("user_id" "uuid", "email" "text", "role_level" integer)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+    v_user_role INT;
+BEGIN
+    SELECT ub.role_level INTO v_user_role
+    FROM public.user_bars ub
+    WHERE ub.bar_id = p_bar_id AND ub.user_id = auth.uid()
+      AND NOT EXISTS (
+          SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
+      );
+
+    IF v_user_role IS NULL THEN
+        RAISE EXCEPTION 'You do not have access to view this bar members.';
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        ub.user_id,
+        CASE
+            WHEN v_user_role >= 40 OR ub.user_id = auth.uid() THEN au.email::TEXT
+            ELSE NULL::TEXT
+        END,
+        ub.role_level
+    FROM public.user_bars ub
+    JOIN auth.users au ON ub.user_id = au.id
+    WHERE ub.bar_id = p_bar_id
+      AND NOT EXISTS (
+          SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
+      );
+END;
+$$;
 
 CREATE FUNCTION "private"."sweep_expired_memberships"() RETURNS integer
     LANGUAGE "sql"
