@@ -1,10 +1,10 @@
+import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import {
   DEFAULT_SEARCH_ALL,
@@ -74,7 +74,7 @@ export function SettingsScreen() {
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
-  const isWideWeb = useIsWideWeb();
+  const tabBarInset = useFloatingTabBarInset();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -235,7 +235,7 @@ export function SettingsScreen() {
   const profilePanel = (
     <Section title="Profile">
       <XStack alignItems="center" gap="$4">
-        <Pressable onPress={pickImage}>
+        <Pressable onPress={pickImage} accessibilityRole="button" accessibilityLabel="Change profile photo">
           <View>
             <UserAvatar
               uri={localImageUri || avatarUrl}
@@ -471,7 +471,14 @@ export function SettingsScreen() {
         {THEME_MODES.map(({ id, label }) => {
           const selected = themeMode === id;
           return (
-            <Pressable key={id} onPress={() => setThemeMode(id)} style={{ flex: 1 }}>
+            <Pressable
+              key={id}
+              onPress={() => setThemeMode(id)}
+              style={{ flex: 1 }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              accessibilityLabel={`${label} appearance`}
+            >
               <YStack
                 alignItems="center"
                 justifyContent="center"
@@ -505,7 +512,13 @@ export function SettingsScreen() {
         {DEFAULT_UNIT_OPTIONS.map(({ id, label }) => {
           const selected = defaultUnit === id;
           return (
-            <Pressable key={id} onPress={() => setDefaultUnit(id)} style={{ flex: 1 }}>
+            <Pressable
+              key={id}
+              onPress={() => setDefaultUnit(id)}
+              style={{ flex: 1 }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+            >
               <YStack
                 alignItems="center"
                 justifyContent="center"
@@ -554,7 +567,12 @@ export function SettingsScreen() {
         {searchDefaultOptions.map(({ id, label }) => {
           const selected = defaultSearchContext === id;
           return (
-            <Pressable key={id} onPress={() => pickDefaultSearch(id)}>
+            <Pressable
+              key={id}
+              onPress={() => pickDefaultSearch(id)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+            >
               <XStack
                 alignItems="center"
                 justifyContent="space-between"
@@ -722,7 +740,7 @@ export function SettingsScreen() {
         paddingVertical="$6"
         gap="$5"
         // Room for the floating tab bar on phones and narrow web.
-        paddingBottom={isWideWeb ? 80 : 160}
+        paddingBottom={Math.max(80, tabBarInset)}
       >
         <YStack gap="$1">
           <Text fontSize={28} fontWeight="700" color="$color">
@@ -747,7 +765,18 @@ export function SettingsScreen() {
           {testingPanel}
           {accountPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
-            <Pressable onPress={() => signOut()}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={async () => {
+                const ok = await confirmAsync({
+                  title: 'Log out?',
+                  message: 'Saved offline data on this device will be cleared.',
+                  confirmText: 'Log out',
+                  destructive: true,
+                });
+                if (ok) signOut();
+              }}
+            >
               <XStack
                 alignItems="center"
                 justifyContent="center"

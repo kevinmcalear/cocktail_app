@@ -10,13 +10,11 @@ import { calculateDraftProgress } from "@/lib/draftProgress";
 import { capitalize } from "@/lib/stringUtils";
 import { useMenuDetails } from "@/hooks/useMenuDetails";
 import { useRouter } from "expo-router";
-import { STATUS } from '@/constants/palette';
 
-const DRAFT_AMBER = STATUS.warning;
 
 function DraftProgressBadge({ percentage }: { percentage: number }) {
     return (
-        <Text fontSize={10} color={DRAFT_AMBER} fontWeight="bold" marginLeft="$1">
+        <Text fontSize={10} color="$warningText" fontWeight="bold" marginLeft="$1">
             {percentage}%
         </Text>
     );
@@ -26,7 +24,7 @@ type TreeTheme = ReturnType<typeof useTheme>;
 
 function treeItemIconColor(isSelected: boolean, theme: TreeTheme, isUnpublished: boolean) {
     if (isSelected) return theme.color8?.get() as string;
-    return isUnpublished ? DRAFT_AMBER : (theme.color11?.get() as string);
+    return isUnpublished ? (theme.warningText?.get() as string) : (theme.color11?.get() as string);
 }
 
 function getGlasswareIconName(glasswareId: string | null | undefined, dropdowns: any): string | null {

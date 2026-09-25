@@ -21,7 +21,9 @@ export const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
-      retry: 3,
+      // Writes aren't idempotent (a retried create can insert twice), so fail
+      // fast and let the user retry. Offline writes still pause and resume.
+      retry: 0,
       // Global error handler for all mutations using Burnt
       onError: (error) => {
         let message = 'An unexpected error occurred.';

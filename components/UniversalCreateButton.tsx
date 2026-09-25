@@ -1,3 +1,4 @@
+import { useSheetBackHandler } from '@/hooks/useSheetBackHandler';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
@@ -33,6 +34,7 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
     const buttonRef = useRef<any>(null);
     const snapPoints = useMemo(() => ['40%'], []);
     const [isOpen, setIsOpen] = useState(false);
+    const trackSheetForBack = useSheetBackHandler(() => sheetRef.current?.dismiss());
     
     // Web popover states
     const [showWebPopover, setShowWebPopover] = useState(false);
@@ -127,6 +129,9 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
                     style={styles.tabItem}
                     activeOpacity={0.8}
                     onPress={openSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel="Create new"
+                    accessibilityHint="Add a cocktail, ingredient, beer, wine or menu"
                 >
                     <IconSymbol name="plus.circle.fill" size={28} color={palette[colorScheme].tabIconInactive} />
                 </TouchableOpacity>
@@ -203,6 +208,7 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
                     }}
                     handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
                     onDismiss={() => setIsOpen(false)}
+                    onChange={trackSheetForBack}
                 >
                     <BottomSheetView style={styles.sheetContent}>
                         <YStack gap="$2" marginBottom="$5">

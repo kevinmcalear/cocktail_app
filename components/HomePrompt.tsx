@@ -1,3 +1,4 @@
+import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
@@ -93,6 +94,7 @@ function chunkRows<T>(items: T[], size: number): T[][] {
 
 export function HomePrompt() {
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarInset();
   const router = useRouter();
   const { user } = useAuth();
   const { drafts } = useDrafts();
@@ -206,7 +208,7 @@ export function HomePrompt() {
         gap={28}
         paddingHorizontal={24}
         paddingTop={28}
-        paddingBottom={40}
+        paddingBottom={Math.max(40, tabBarInset)}
       >
         <YStack gap={14}>
           <YStack gap={6}>
@@ -547,7 +549,7 @@ export function HomePrompt() {
                                     {draftTitle(d)}
                                   </Text>
                                 </XStack>
-                                <Text fontSize={12} fontWeight="600" color={DRAFT_AMBER}>
+                                <Text fontSize={12} fontWeight="600" color="$warningText">
                                   Continue
                                 </Text>
                               </Pressable>

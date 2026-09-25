@@ -22,7 +22,7 @@ export function PasswordField({
   value,
   onChangeText,
   placeholder = 'Password',
-  autoComplete = 'password',
+  autoComplete = 'current-password',
   textContentType = 'password',
   onSubmitEditing,
 }: Props) {
@@ -84,8 +84,10 @@ export function PasswordField({
             autoCorrect={false}
             autoComplete={autoComplete}
             textContentType={textContentType}
-            // real secureTextEntry uses platform bullets — we paint glassware instead
-            secureTextEntry={false}
+            // Keep real secure entry (screen readers, keyboards and password managers
+            // depend on it); the platform bullets are painted transparent and the
+            // glassware mask is drawn on top instead.
+            secureTextEntry={!visible}
             onSubmitEditing={onSubmitEditing}
             style={{
               flex: 1,

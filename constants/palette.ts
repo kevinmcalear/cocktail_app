@@ -22,6 +22,7 @@ export const palette = {
     glass: 'rgba(255, 255, 255, 0.72)',
     glassBorder: 'rgba(0, 0, 0, 0.08)',
     tabIconInactive: 'rgba(28, 28, 30, 0.55)', // on the glass tab bar, 3:1 or better
+    warningText: '#9A6700', // drafts / in progress as text or small icons: 4.6:1 on page
   },
   dark: {
     background: '#161618',
@@ -33,12 +34,17 @@ export const palette = {
     glass: 'rgba(35, 35, 38, 0.65)',
     glassBorder: 'rgba(255, 255, 255, 0.1)',
     tabIconInactive: 'rgba(242, 242, 247, 0.5)',
+    warningText: '#E5A93B', // 8.7:1 on page
   },
 } as const;
 
 export type ColorSchemeName = keyof typeof palette;
 
-/** Status colours for icons, dots and borders (3:1 or better on both backgrounds). For text, use the Tamagui tokens above. */
+/**
+ * Status colours for fills, dots and borders. `warning` is only 2:1 on the light
+ * page, so amber text and small icons use `palette[scheme].warningText` instead.
+ * Text on a status fill should be black (`#000`), not white.
+ */
 export const STATUS = {
   danger: '#E5484D',
   success: '#30A46C',

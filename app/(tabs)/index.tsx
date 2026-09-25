@@ -13,7 +13,6 @@ export default function HomeScreen() {
         flex={1}
         backgroundColor="$background"
         paddingTop={insets.top}
-        paddingBottom={insets.bottom}
         minHeight={0}
       >
         <HomePrompt />

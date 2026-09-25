@@ -32,6 +32,7 @@ import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { EditorChromeState } from '@/lib/editorChrome';
+import { confirmDiscardChanges } from '@/lib/dialogs';
 import { shouldKeepCreatorStack } from '@/lib/creatorStackHydration';
 import {
     creatorCreateHref,
@@ -679,7 +680,15 @@ export default function EditModeDashboard() {
                                     ? () => editorChrome.discard!()
                                     : undefined
                         }
-                        onCancel={editorChrome?.cancel ?? handleEditorClose}
+                        onCancel={
+                            editorChrome
+                                ? () => {
+                                    void confirmDiscardChanges(editorChrome.isDirty).then((ok) => {
+                                        if (ok) editorChrome.cancel();
+                                    });
+                                }
+                                : handleEditorClose
+                        }
                         onSave={editorChrome ? () => void editorChrome.save() : undefined}
                         onPublish={editorChrome?.publish ? () => void editorChrome.publish!() : undefined}
                         saving={editorChrome?.saving}
