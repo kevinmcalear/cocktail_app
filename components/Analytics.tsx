@@ -1,10 +1,21 @@
 import { useSegments } from 'expo-router';
-import { PostHogProvider, usePostHog } from 'posthog-react-native';
+import { PostHogProvider, useFeatureFlag, usePostHog } from 'posthog-react-native';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { appVariant } from '@/lib/appVariant';
+import { useFlagStore } from '@/lib/flags';
+
+/** Hands PostHog's `redesign` flag to lib/flags, which the rest of the app reads. */
+function FeatureFlags() {
+  const redesign = useFeatureFlag('redesign');
+  const setRedesignRemote = useFlagStore((s) => s.setRedesignRemote);
+  useEffect(() => {
+    setRedesignRemote(redesign === undefined ? null : redesign === true);
+  }, [redesign, setRedesignRemote]);
+  return null;
+}
 
 /** Identifies the signed-in user in PostHog by id, and forgets them on sign-out. */
 function AnalyticsIdentity() {
@@ -53,6 +64,7 @@ export default function Analytics({ apiKey, host }: { apiKey: string; host: stri
       <SuperProperties />
       <AnalyticsIdentity />
       <ScreenTracker />
+      <FeatureFlags />
     </PostHogProvider>
   );
 }
