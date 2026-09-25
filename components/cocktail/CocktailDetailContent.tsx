@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Alert,
-    Platform,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -133,8 +132,7 @@ export function CocktailDetailContent({
                 await renameIngredientEntity(ingredientId, name, drafts, saveDraft);
             } catch (e: any) {
                 const msg = e?.message || "Failed to rename ingredient.";
-                if (Platform.OS === "web") window.alert(msg);
-                else Alert.alert("Error", msg);
+                Alert.alert("Error", msg);
             }
         },
         [drafts, saveDraft]

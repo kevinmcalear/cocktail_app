@@ -1,3 +1,4 @@
+import { isApplePlatform } from '@/lib/platformKeys';
 import { DraftFolderTree } from '@/components/DraftFolderTree';
 import { SearchPopover } from '@/components/SearchPopover';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
@@ -27,7 +28,7 @@ import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Pressable, type PressableStateCallbackType, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 
@@ -300,6 +301,22 @@ export function WebSidebar() {
   const activeBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const hoverBorder = theme.borderColor?.get() as string;
   const onSettings = pathname.includes('settings');
+  const onResizeKey = useCallback(
+    (e: any) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault?.();
+      const maxWidth = Math.min(SIDEBAR_MAX, Math.floor(windowWidth * 0.45));
+      const step = e.shiftKey ? 48 : 16;
+      const next = Math.min(
+        maxWidth,
+        Math.max(SIDEBAR_MIN, widthRef.current + (e.key === 'ArrowRight' ? step : -step))
+      );
+      widthRef.current = next;
+      setSidebarWidth(next);
+    },
+    [windowWidth]
+  );
+
   const onResizeDown = useCallback(
     (e: any) => {
       e.preventDefault?.();
@@ -392,7 +409,7 @@ export function WebSidebar() {
       <YStack gap="$1" flexShrink={0}>
         <Pressable
           accessibilityLabel="Search"
-          accessibilityHint="Opens search. Shortcut Command K"
+          accessibilityHint={isApplePlatform() ? 'Opens search. Shortcut Command K' : 'Opens search. Shortcut Control K'}
           onPress={() => setSearchOpen(true)}
           onHoverIn={() => setSearchHovered(true)}
           onHoverOut={() => setSearchHovered(false)}
@@ -418,7 +435,7 @@ export function WebSidebar() {
             color="$color11"
             style={{ opacity: searchHovered ? 1 : 0 }}
           >
-            ⌘K
+            {isApplePlatform() ? '⌘K' : 'Ctrl K'}
           </Text>
         </Pressable>
 
@@ -434,7 +451,10 @@ export function WebSidebar() {
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={item.label}
               onPress={() => router.push(item.href as any)}
-              style={[styles.navItem, isFocused && { backgroundColor: activeBg }]}
+              style={({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => [
+                styles.navItem,
+                (isFocused || hovered) && { backgroundColor: activeBg },
+              ]}
             >
               <XStack alignItems="center" gap="$2.5" flex={1}>
                 <CustomIcon name={item.icon} size={20} color={color} />
@@ -530,6 +550,14 @@ export function WebSidebar() {
       <View
         // @ts-expect-error web mouse handler
         onMouseDown={onResizeDown}
+        // Keyboard alternative to dragging (WCAG 2.5.7): focus, then ← / →.
+        tabIndex={0}
+        onKeyDown={onResizeKey}
+        role="separator"
+        aria-orientation="vertical"
+        aria-valuenow={sidebarWidth}
+        aria-valuemin={SIDEBAR_MIN}
+        aria-valuemax={SIDEBAR_MAX}
         style={[styles.resizeHandle, dragging && styles.resizeHandleActive]}
         accessibilityLabel="Resize sidebar"
       />

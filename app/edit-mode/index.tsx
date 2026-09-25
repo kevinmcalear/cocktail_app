@@ -255,21 +255,14 @@ export default function EditModeDashboard() {
         };
 
         const itemName = entityType.toUpperCase();
-        if (Platform.OS === 'web') {
-            const confirmed = window.confirm(`Are you sure you want to permanently delete this published ${itemName}? This action cannot be undone.`);
-            if (confirmed) {
-                await afterDelete();
-            }
-        } else {
-            Alert.alert(
-                `Delete Published ${entityType}`,
-                `Are you sure you want to permanently delete this published ${itemName}? This action cannot be undone.`,
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: afterDelete }
-                ]
-            );
-        }
+        Alert.alert(
+            `Delete Published ${entityType}`,
+            `Are you sure you want to permanently delete this published ${itemName}? This action cannot be undone.`,
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", style: "destructive", onPress: afterDelete }
+            ]
+        );
     };
 
     const handleEditPublished = (item: any) => {
@@ -611,21 +604,14 @@ export default function EditModeDashboard() {
             clearWorkspaceIfContains(id);
         };
 
-        if (Platform.OS === 'web') {
-            const confirmed = window.confirm("Are you sure you want to discard this draft?");
-            if (confirmed) {
-                afterDelete();
-            }
-        } else {
-            Alert.alert(
-                "Delete Draft",
-                "Are you sure you want to discard this draft?",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: afterDelete }
-                ]
-            );
-        }
+        Alert.alert(
+            "Delete Draft",
+            "Are you sure you want to discard this draft?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", style: "destructive", onPress: afterDelete }
+            ]
+        );
     };
 
     const handleResumeDraft = (draft: any) => {

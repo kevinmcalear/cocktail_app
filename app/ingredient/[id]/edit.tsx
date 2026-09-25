@@ -494,8 +494,7 @@ export default function EditIngredientScreen({
                                     await renameIngredientEntity(ingredientId, nextName, drafts, saveDraft);
                                 } catch (e: any) {
                                     const msg = e?.message || "Failed to rename ingredient.";
-                                    if (Platform.OS === "web") window.alert(msg);
-                                    else Alert.alert("Error", msg);
+                                    Alert.alert("Error", msg);
                                 }
                             }}
                             drafts={drafts}

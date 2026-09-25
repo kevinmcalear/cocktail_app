@@ -1,3 +1,4 @@
+import { toastDone } from '@/lib/toast';
 import { decode } from "base64-arraybuffer";
 import * as FilePicker from "expo-image-picker";
 import { useQueryClient } from "@tanstack/react-query";
@@ -277,11 +278,7 @@ export function useCocktailDraftEditor({
             }
             cleanSnapshotRef.current = draftDataSnapshot;
             setIsDirty(false);
-            if (!silent && Platform.OS === "web") {
-                window.alert("Draft saved.");
-            } else if (!silent) {
-                Alert.alert("Success", "Draft saved.");
-            }
+            if (!silent) toastDone('Draft saved');
             return result?.id ?? currentDraftId;
         },
         [
@@ -636,18 +633,11 @@ export function useCocktailDraftEditor({
 
         const proceed = async () => performPublish();
 
-        if (Platform.OS === "web") {
-            if (window.confirm("Publish this cocktail?")) {
-                return proceed();
-            }
-            return false;
-        }
-
         return new Promise((resolve) => {
             Alert.alert("Publish Cocktail", "Are you sure you want to publish this cocktail?", [
                 { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
                 { text: "Publish", onPress: () => void proceed().then(resolve) },
-            ]);
+            ], { cancelable: true, onDismiss: () => resolve(false) });
         });
     };
 
@@ -666,18 +656,11 @@ export function useCocktailDraftEditor({
             return true;
         }
 
-        if (Platform.OS === "web") {
-            if (window.confirm("Delete this cocktail draft?")) {
-                return proceed();
-            }
-            return false;
-        }
-
         return new Promise((resolve) => {
             Alert.alert("Delete Draft", "Are you sure you want to delete this draft?", [
                 { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
                 { text: "Delete", style: "destructive", onPress: () => void proceed().then(resolve) },
-            ]);
+            ], { cancelable: true, onDismiss: () => resolve(false) });
         });
     };
 

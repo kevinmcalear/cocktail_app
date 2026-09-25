@@ -40,6 +40,7 @@ import {
 } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
+import { isApplePlatform } from '@/lib/platformKeys';
 
 type AttrOption = {
   id: string;
@@ -62,6 +63,16 @@ function toTree(cats: { id: string; name: string; parent_id: string | null }[]):
 
 function toggleId(list: string[], id: string) {
   return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+}
+
+/** True when a left/right arrow would move the caret inside a non-empty text field. */
+function caretCanMove(e: KeyboardEvent) {
+  const t = e.target as HTMLInputElement | null;
+  if (!t || t.tagName !== 'INPUT' || !t.value) return false;
+  const start = t.selectionStart ?? 0;
+  const end = t.selectionEnd ?? 0;
+  if (start !== end) return true;
+  return e.key === 'ArrowLeft' ? start > 0 : end < t.value.length;
 }
 
 export const COMMAND_FILTERS = ['All', 'Menus', 'Cocktails', 'Beer', 'Wine', 'Ingredients'] as const;
@@ -232,6 +243,7 @@ export function CommandSearch({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [panelWidth, setPanelWidth] = useState(0);
+  const [inputFocused, setInputFocused] = useState(false);
   const recent = useRecentActivityStore((s) => s.items);
   const storeContextIds = useAppStore((s) => s.selectedContextIds);
   const selectedContextIds = lockedContextId ? [lockedContextId] : storeContextIds;
@@ -590,6 +602,10 @@ export function CommandSearch({
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveIndex((i) => Math.max(i - c, 0));
+      } else if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && caretCanMove(e)) {
+        // Typing: let left/right move the text cursor; they only move the grid
+        // selection once the caret is at the edge of the query.
+        return;
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         setActiveIndex((i) => Math.min(i + 1, Math.max(0, cells.length - 1)));
@@ -614,7 +630,7 @@ export function CommandSearch({
     return () => document.removeEventListener('keydown', onKey, true);
   }, []);
 
-  const mod = Platform.OS === 'ios' || Platform.OS === 'web' ? '⌘' : 'Ctrl';
+  const mod = isApplePlatform() ? '⌘' : 'Ctrl';
 
   const drinkFromCell = (cell: Selectable): SearchItem | null => {
     if (cell.kind === 'item') return isSectionDrinkItem(cell.item) ? cell.item : null;
@@ -866,7 +882,8 @@ export function CommandSearch({
             <YStack
               borderRadius={16}
               borderWidth={1}
-              borderColor={border}
+              // Visible focus (WCAG 2.4.7): the input's own outline is off.
+              borderColor={inputFocused ? (theme.color8?.get() as string) : border}
               backgroundColor={searchSurface}
               overflow="hidden"
             >
@@ -874,6 +891,9 @@ export function CommandSearch({
                 ref={inputRef}
                 value={query}
                 onChangeText={setQuery}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                accessibilityLabel="Search"
                 placeholder={resolvedPlaceholder}
                 placeholderTextColor={muted}
                 autoFocus={autoFocus}

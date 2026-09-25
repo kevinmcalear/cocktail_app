@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 
 import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
 import {
@@ -76,19 +76,17 @@ export function useRecipeMergeHandler(opts: {
             if (!enabled || merging) return false;
 
             // Accidental dwell while reordering is common — confirm before mutating.
-            const confirmed =
-                Platform.OS === 'web'
-                    ? window.confirm('Combine these ingredients into a batch?')
-                    : await new Promise<boolean>((resolve) => {
-                          Alert.alert(
-                              'Combine ingredients?',
-                              'This creates or adds to a batch. Choose Just reorder if you only meant to move them.',
-                              [
-                                  { text: 'Just reorder', style: 'cancel', onPress: () => resolve(false) },
-                                  { text: 'Combine', onPress: () => resolve(true) },
-                              ]
-                          );
-                      });
+            const confirmed = await new Promise<boolean>((resolve) => {
+                Alert.alert(
+                    'Combine ingredients?',
+                    'This creates or adds to a batch. Choose Just reorder if you only meant to move them.',
+                    [
+                        { text: 'Just reorder', style: 'cancel', onPress: () => resolve(false) },
+                        { text: 'Combine', onPress: () => resolve(true) },
+                    ],
+                    { cancelable: true, onDismiss: () => resolve(false) }
+                );
+            });
             if (!confirmed) return false;
 
             setMerging(true);
@@ -112,8 +110,7 @@ export function useRecipeMergeHandler(opts: {
                 return true;
             } catch (e: any) {
                 const msg = e?.message || 'Failed to combine ingredients.';
-                if (Platform.OS === 'web') window.alert(msg);
-                else Alert.alert('Error', msg);
+                Alert.alert('Error', msg);
                 return false;
             } finally {
                 setMerging(false);
