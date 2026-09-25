@@ -20,9 +20,18 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
     const isEmpty = !value;
     const interactive = isEditing && onPress;
     const labelUsesAccent = isEmpty || interactive;
+    // The visible text is only the value, so name the category for screen readers.
+    const a11yLabel = value ? `${label}: ${value}` : `${label}, not set`;
 
     const content = (
-        <YStack alignItems="center" gap="$1" justifyContent="flex-start" minWidth={52}>
+        <YStack
+            alignItems="center"
+            gap="$1"
+            justifyContent="flex-start"
+            minWidth={52}
+            accessible={!interactive}
+            aria-label={interactive ? undefined : a11yLabel}
+        >
             <YStack
                 height={26}
                 justifyContent="flex-end"
@@ -63,7 +72,13 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
     if (!interactive) return content;
 
     return (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={a11yLabel}
+            accessibilityHint={`Choose ${label.toLowerCase()}`}
+        >
             {content}
         </TouchableOpacity>
     );
