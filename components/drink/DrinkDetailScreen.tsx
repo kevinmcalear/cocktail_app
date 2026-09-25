@@ -9,7 +9,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useStudyPile } from '@/hooks/useStudyPile';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
-import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useCanEditItem } from '@/hooks/useViewAs';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 
 const PLACEHOLDER_IMAGE = require('@/assets/images/cocktails/house_martini.jpg');
@@ -47,7 +47,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
   const { toggleStudyPile, isInStudyPile } = useStudyPile();
   const { data: dropdowns } = useDropdowns();
   const { data: item, isLoading } = kind.useItem(safeId);
-  const canEdit = useEffectiveRole() > 30;
+  const canEdit = useCanEditItem(item);
   const [notesExpanded, setNotesExpanded] = useState(false);
 
   useTrackRecent(
