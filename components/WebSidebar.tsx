@@ -28,7 +28,7 @@ import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Pressable, type PressableStateCallbackType, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 
@@ -451,7 +451,7 @@ export function WebSidebar() {
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={item.label}
               onPress={() => router.push(item.href as any)}
-              style={({ hovered }: { hovered?: boolean }) => [
+              style={({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => [
                 styles.navItem,
                 (isFocused || hovered) && { backgroundColor: activeBg },
               ]}
