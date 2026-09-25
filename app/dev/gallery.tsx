@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { GallerySections } from '@/components/ds/gallery/GallerySections';
-import { layout, radius, SAMPLE_BRANDS, space, type BackbarScheme } from '@/constants/tokens';
+import { backbar, layout, radius, SAMPLE_BRANDS, space, type BackbarScheme } from '@/constants/tokens';
 import { useFlagStore, useRedesign } from '@/lib/flags';
 
 type BrandKey = 'none' | keyof typeof SAMPLE_BRANDS;
@@ -75,7 +75,7 @@ export default function Gallery() {
           redesign={redesign}
           setRedesign={(on) => setOverride(on)}
         />
-        <ScrollView contentContainerStyle={[styles.columns, { paddingHorizontal: wide ? gutter : 0, paddingBottom: insets.bottom + space.xxxl }]}>
+        <ScrollView style={{ backgroundColor: backbar[scheme].ground }} contentContainerStyle={[styles.columns, { paddingHorizontal: wide ? gutter : 0, paddingBottom: insets.bottom + space.xxxl }]}>
           {wide ? (
             <>
               <Column scheme="dark" />

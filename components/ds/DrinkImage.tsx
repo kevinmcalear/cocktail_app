@@ -39,7 +39,7 @@ export function DrinkImage({ source, generated, glass, accessibilityLabel, aspec
       style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: ds.c.paper }, style]}
     >
       {uri ? (
-        <Image source={typeof uri === 'string' ? { uri } : uri} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+        <Image source={typeof uri === 'string' ? { uri } : uri} style={styles.fill} contentFit="cover" transition={200} />
       ) : (
         <View style={styles.empty}>
           <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
@@ -52,6 +52,9 @@ export function DrinkImage({ source, generated, glass, accessibilityLabel, aspec
 
 const styles = StyleSheet.create({
   frame: { overflow: 'hidden', borderCurve: 'continuous', width: '100%' },
+  // Explicit rather than StyleSheet.absoluteFill: expo-image on native didn't
+  // size itself from it under RN 0.86 (blank images in the gallery).
+  fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   empty: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', opacity: 0.8 },
   tag: { position: 'absolute', right: space.sm, bottom: space.sm },
 });
