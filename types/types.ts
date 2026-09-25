@@ -146,7 +146,8 @@ export interface AppRecipePresentation {
     unit: string | null; // Redacted to null if insufficient role
     preparation_notes: string | null; // Redacted to null if insufficient role
     is_optional: boolean | null;
-    parent_ingredient_id: string | null;
-    ingredient_item_id: string; // The original specific ingredient
+    parent_ingredient_id: string | null; // Redacted to null if insufficient role
+    ingredient_item_id: string | null; // The specific ingredient; redacted to null if insufficient role
+    display_ingredient?: DatabaseItem | null; // Computed relationship: the item behind display_ingredient_id
     ingredient?: DatabaseItem; // The joined Display Ingredient
 }

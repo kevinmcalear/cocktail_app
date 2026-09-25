@@ -1,7 +1,10 @@
 // Recipe details and member emails follow the caller's role in the bar.
 // Recipes are read through app_recipe_presentation, which masks ingredients,
 // measurements and prep notes per the bar's levels and each drink's overrides;
-// raw recipe rows are for editors only. get_bar_members shows emails to admins.
+// raw recipe rows are for editors only. The ingredient a row shows is embedded
+// through the display_ingredient computed relationship, never through the raw
+// ingredient columns. Raw bar items follow each item's visibility level, except
+// for editors. get_bar_members shows emails to admins.
 // Runs through the real API against the local stack.
 //
 //   supabase start && supabase db reset
@@ -111,14 +114,24 @@ before(async () => {
   ).id;
   await addRecipe(ids.hidden, `hidden prep ${run}`);
 
+  // Readable only by admins, or by anyone who may edit the bar's items.
+  ids.adminOnly = (
+    await serviceInsert('items', {
+      name: `Admin only tonic ${run}`, item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40,
+    })
+  ).id;
+  ids.image = (await serviceInsert('images', { url: `https://example.test/${run}.jpg` })).id;
+  await serviceInsert('item_images', { item_id: ids.hidden, image_id: ids.image, sort_order: 0 });
+
   // Shared catalog drink with no bar: full detail for anyone signed in.
   ids.shared = (await serviceInsert('items', { name: `Shared daiquiri ${run}`, item_type: 'cocktail' })).id;
   await addRecipe(ids.shared, `shared prep ${run}`);
 });
 
 after(async () => {
-  const allItems = [ids.standard, ids.open, ids.hidden, ids.shared, ids.generic, ids.brand].filter(Boolean);
+  const allItems = [ids.standard, ids.open, ids.hidden, ids.adminOnly, ids.shared, ids.generic, ids.brand].filter(Boolean);
   if (allItems.length) await service.from('items').delete().in('id', allItems);
+  if (ids.image) await service.from('images').delete().eq('id', ids.image);
   if (ids.bar) await service.from('bars').delete().eq('id', ids.bar);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
 });
@@ -175,6 +188,88 @@ describe('app_recipe_presentation with the bar defaults', () => {
       .single();
     assert.ifError(error);
     assert.deepEqual(data.recipes, [{ amount: null, preparation_notes: null, display_ingredient_id: ids.generic }]);
+  });
+});
+
+describe('ingredient columns and the display_ingredient relationship', () => {
+  async function ingredientColumns(label, drinkId = ids.standard) {
+    const { data, error } = await users[label].client
+      .from('app_recipe_presentation')
+      .select('display_ingredient_id, ingredient_item_id, parent_ingredient_id, ingredient:display_ingredient(id, name)')
+      .eq('recipe_item_id', drinkId)
+      .single();
+    assert.ifError(error);
+    return data;
+  }
+
+  // [role, shown ingredient, ingredient_item_id, parent_ingredient_id]
+  const expected = {
+    guest: [null, null, null],
+    employee: ['generic', null, 'generic'],
+    bartender: ['brand', 'brand', 'generic'],
+    admin: ['brand', 'brand', 'generic'],
+  };
+
+  for (const [label, [shown, specific, parent]] of Object.entries(expected)) {
+    test(`${label} (${ROLES[label]}) gets raw ingredient ids and the embedded ingredient only at their level`, async () => {
+      const row = await ingredientColumns(label);
+      assert.equal(row.ingredient_item_id, specific && ids[specific]);
+      assert.equal(row.parent_ingredient_id, parent && ids[parent]);
+      assert.equal(row.display_ingredient_id, shown && ids[shown]);
+      if (shown) {
+        assert.equal(row.ingredient.id, ids[shown]);
+        assert.equal(row.ingredient.name, `${shown === 'brand' ? 'House gin' : 'Gin'} ${run}`);
+      } else {
+        assert.equal(row.ingredient, null);
+      }
+    });
+  }
+
+  test('the raw ingredient columns cannot be used to embed items', async () => {
+    for (const hint of ['ingredient_item_id', 'parent_ingredient_id']) {
+      const { data, error } = await users.employee.client
+        .from('app_recipe_presentation')
+        .select(`id, item:items!${hint}(name)`)
+        .eq('recipe_item_id', ids.standard);
+      assert.ok(error, `embedding through ${hint} should be rejected`);
+      assert.equal(data, null);
+    }
+  });
+
+  test('view-as masks the embedded ingredient too', async () => {
+    const admin = users.admin;
+    await service.from('user_prefs').upsert({ user_id: admin.id, view_as_role_level: 20 });
+    try {
+      const row = await ingredientColumns('admin');
+      assert.equal(row.ingredient_item_id, null);
+      assert.equal(row.ingredient.id, ids.generic);
+    } finally {
+      await service.from('user_prefs').delete().eq('user_id', admin.id);
+    }
+  });
+
+  test('a shared drink shows its specific ingredient to anyone signed in', async () => {
+    const row = await ingredientColumns('outsider', ids.shared);
+    assert.equal(row.ingredient_item_id, ids.brand);
+    assert.equal(row.ingredient.id, ids.brand);
+  });
+
+  test('the embed nests under both presentation views and under items', async () => {
+    const { data: viaView, error: viewError } = await users.employee.client
+      .from('app_item_presentation')
+      .select('id, recipes:app_recipe_presentation!recipe_item_id(ingredient:display_ingredient(id, item_images(image_id)))')
+      .eq('id', ids.standard)
+      .single();
+    assert.ifError(viewError);
+    assert.deepEqual(viaView.recipes, [{ ingredient: { id: ids.generic, item_images: [] } }]);
+
+    const { data: viaItems, error: itemsError } = await users.employee.client
+      .from('items')
+      .select('id, recipes:app_recipe_presentation!recipe_item_id(amount, ingredient:display_ingredient(name))')
+      .eq('id', ids.standard)
+      .single();
+    assert.ifError(itemsError);
+    assert.deepEqual(viaItems.recipes, [{ amount: null, ingredient: { name: `Gin ${run}` } }]);
   });
 });
 
@@ -242,6 +337,63 @@ describe('the raw recipes table', () => {
     assert.deepEqual(data, []);
     const { data: row } = await service.from('recipes').select('unit').eq('id', ids.standardRecipe).single();
     assert.equal(row.unit, 'oz');
+  });
+});
+
+describe('the raw items table', () => {
+  async function readable(label, itemId) {
+    const { data, error } = await users[label].client.from('items').select('id').eq('id', itemId);
+    assert.ifError(error);
+    return data.length === 1;
+  }
+
+  // [role, can read ids.hidden (visibility 30), can read ids.adminOnly (visibility 40)]
+  const expected = {
+    guest: [false, false],
+    employee: [false, false],
+    bartender: [true, false],
+    creator: [true, true],
+    admin: [true, true],
+    outsider: [false, false],
+  };
+
+  for (const [label, [hidden, adminOnly]] of Object.entries(expected)) {
+    test(`${label} reads bar items only at or above their visibility level, unless they edit them`, async () => {
+      assert.equal(await readable(label, ids.hidden), hidden);
+      assert.equal(await readable(label, ids.adminOnly), adminOnly);
+      assert.equal(await readable(label, ids.standard), label !== 'outsider');
+      assert.equal(await readable(label, ids.shared), true);
+    });
+  }
+
+  test('child rows of a hidden item are hidden with it', async () => {
+    for (const [label, visible] of [['employee', false], ['bartender', true]]) {
+      const { data, error } = await users[label].client.from('item_images').select('image_id').eq('item_id', ids.hidden);
+      assert.ifError(error);
+      assert.equal(data.length, visible ? 1 : 0, label);
+    }
+  });
+
+  test('an editor can still update an item above their own visibility level', async () => {
+    const { data, error } = await users.creator.client
+      .from('items')
+      .update({ notes: `edited ${run}` })
+      .eq('id', ids.adminOnly)
+      .select('id');
+    assert.ifError(error);
+    assert.deepEqual(data, [{ id: ids.adminOnly }]);
+  });
+
+  test('app_item_presentation still applies view-as on top of the table policy', async () => {
+    const admin = users.admin;
+    await service.from('user_prefs').upsert({ user_id: admin.id, view_as_role_level: 10 });
+    try {
+      const { data, error } = await admin.client.from('app_item_presentation').select('id').eq('id', ids.hidden);
+      assert.ifError(error);
+      assert.deepEqual(data, []);
+    } finally {
+      await service.from('user_prefs').delete().eq('user_id', admin.id);
+    }
   });
 });
 
