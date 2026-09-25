@@ -24,7 +24,8 @@ import { renameIngredientEntity } from "@/lib/drafts";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
 import { capitalize } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
-import { getPreferredUnit } from "@/store/useSettingsStore";
+import { getPreferredUnit, useSettingsStore } from "@/store/useSettingsStore";
+import { useKeepAwake } from "expo-keep-awake";
 
 type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 
@@ -49,6 +50,8 @@ export function CocktailDetailContent({
 }: CocktailDetailContentProps) {
     const router = useRouter();
     const theme = useTheme();
+    const serviceMode = useSettingsStore((s) => s.serviceMode);
+    const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
     const { drafts, saveDraft } = useDrafts();
     const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
     const [notesExpanded, setNotesExpanded] = useState(false);
@@ -235,6 +238,35 @@ export function CocktailDetailContent({
     return (
         <YStack>
             <SpecBadgeRow isEditing={isEditing} viewSpec={viewSpec} editor={editor} />
+
+            {!isEditing && variant === "default" && recipes.length > 0 ? (
+                <XStack justifyContent="space-between" alignItems="center" paddingHorizontal={24} marginBottom="$2">
+                    <Text fontSize={12} fontWeight="600" color="$color11" letterSpacing={0.7} textTransform="uppercase" accessibilityRole="header">
+                        Spec
+                    </Text>
+                    <TouchableOpacity
+                        onPress={toggleServiceMode}
+                        accessibilityRole="switch"
+                        accessibilityState={{ checked: serviceMode }}
+              aria-checked={serviceMode}
+                        accessibilityLabel="Service mode"
+                        accessibilityHint="Keeps the screen on and makes the spec larger"
+                        style={[
+                            styles.serviceChip,
+                            {
+                                backgroundColor: serviceMode ? (theme.color8?.get() as string) : "transparent",
+                                borderColor: serviceMode ? (theme.color8?.get() as string) : (theme.borderColor?.get() as string),
+                            },
+                        ]}
+                    >
+                        <IconSymbol name="sun.max.fill" size={14} color={serviceMode ? (theme.background?.get() as string) : (theme.color11?.get() as string)} />
+                        <Text fontSize={13} fontWeight="600" color={serviceMode ? "$background" : "$color11"}>
+                            Service mode
+                        </Text>
+                    </TouchableOpacity>
+                </XStack>
+            ) : null}
+            {!isEditing && serviceMode ? <ServiceKeepAwake /> : null}
 
             {recipes.length > 0 || isEditing ? (
                 <YStack gap={variant === "panel" ? "$2" : "$4"} marginBottom="$6" paddingHorizontal={24}>
@@ -477,7 +509,22 @@ export function CocktailDetailContent({
     );
 }
 
+/** Mounted only while service mode is on: keeps the screen awake on a spec. */
+function ServiceKeepAwake() {
+    useKeepAwake("service-mode");
+    return null;
+}
+
 const styles = StyleSheet.create({
+    serviceChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        minHeight: 36,
+        paddingHorizontal: 12,
+        borderRadius: 999,
+        borderWidth: 1,
+    },
     ingImage: {
         width: 64,
         height: 64,

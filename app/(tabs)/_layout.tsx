@@ -1,4 +1,5 @@
 import { CustomIcon } from "@/components/ui/CustomIcons";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CurrentUserAvatar } from "@/components/ui/UserAvatar";
 import { Tabs } from "expo-router";
 
@@ -57,6 +58,17 @@ export default function TabLayout() {
           href: isWideWeb ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <CurrentUserAvatar size={size + 2} borderWidth={focused ? 1.5 : 0} borderColor={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+          // Wide web searches from the sidebar and ⌘K instead.
+          href: isWideWeb ? null : undefined,
+          tabBarIcon: ({ color, size }) => (
+            <IconSymbol name="magnifyingglass" size={size} color={color} />
           ),
         }}
       />

@@ -133,7 +133,10 @@ export function UniversalCreateButton({ variant = 'tab', width }: UniversalCreat
                     accessibilityLabel="Create new"
                     accessibilityHint="Add a cocktail, ingredient, beer, wine or menu"
                 >
-                    <IconSymbol name="plus.circle.fill" size={28} color={palette[colorScheme].tabIconInactive} />
+                    <IconSymbol name="plus.circle.fill" size={24} color={palette[colorScheme].tabIconInactive} />
+                    <Text fontSize={10} lineHeight={12} fontWeight="500" color={palette[colorScheme].tabIconInactive} maxFontSizeMultiplier={1.3}>
+                        New
+                    </Text>
                 </TouchableOpacity>
             )}
 
@@ -248,8 +251,10 @@ const styles = StyleSheet.create({
     tabItem: {
         alignItems: "center",
         justifyContent: "center",
-        height: 50,
-        width: 44,
+        gap: 3,
+        height: 54,
+        minWidth: 58,
+        paddingHorizontal: 4,
     },
     sheetContent: {
         flex: 1,
