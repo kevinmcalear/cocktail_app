@@ -21,8 +21,9 @@
 --     grant or revoke these.
 --
 -- The one change to existing helpers: a membership whose role has ended stops
--- counting in my_bar_ids(), can_write() and get_my_bars() straight away, and
--- a pg_cron job removes it within 15 minutes.
+-- counting in my_bar_ids(), can_write(), get_my_bars() and
+-- app_recipe_presentation straight away, and a pg_cron job removes it within
+-- 15 minutes.
 
 CREATE TYPE "public"."venue_capability" AS ENUM (
     -- Seeing
@@ -199,6 +200,53 @@ CREATE OR REPLACE FUNCTION "public"."get_my_bars"() RETURNS SETOF "uuid"
     AS $$
   SELECT private.my_bar_ids(0);
 $$;
+
+-- app_recipe_presentation runs as its owner (20260925000000_role_scoped_reads)
+-- and reads the caller's role straight from user_bars, so it needs the same
+-- rule. An ended membership doesn't join, which the view already treats as
+-- "not a member". Unchanged apart from the join condition.
+CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
+ SELECT "r"."id",
+    "r"."created_at",
+    "r"."recipe_item_id",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."ingredient_item_id"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN "r"."ingredient_item_id"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN COALESCE("r"."parent_ingredient_id", "r"."ingredient_item_id")
+            ELSE NULL::"uuid"
+        END AS "display_ingredient_id",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."amount"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_measurement_level", "b"."default_measurement_level")) THEN "r"."amount"
+            ELSE NULL::numeric
+        END AS "amount",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."unit"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_measurement_level", "b"."default_measurement_level")) THEN "r"."unit"
+            ELSE NULL::"text"
+        END AS "unit",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."preparation_notes"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_prep_level", "b"."default_prep_level")) THEN "r"."preparation_notes"
+            ELSE NULL::"text"
+        END AS "preparation_notes",
+    "r"."is_optional",
+    "r"."parent_ingredient_id",
+    "r"."ingredient_item_id",
+    "r"."sort_order"
+   FROM ((("public"."recipes" "r"
+     JOIN "public"."items" "c" ON (("r"."recipe_item_id" = "c"."id")))
+     LEFT JOIN "public"."bars" "b" ON (("c"."bar_id" = "b"."id")))
+     LEFT JOIN "public"."user_bars" "ub" ON ((("ub"."bar_id" = "c"."bar_id") AND ("ub"."user_id" = "auth"."uid"())
+        AND NOT EXISTS (
+            SELECT 1 FROM "public"."venue_roles" "vr" WHERE "vr"."id" = "ub"."venue_role_id" AND "vr"."ends_at" <= "now"()
+        ))))
+  WHERE (("auth"."uid"() IS NOT NULL)
+    AND (("c"."bar_id" IS NULL)
+      OR (("ub"."user_id" IS NOT NULL)
+        AND ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_visibility_level", "b"."default_visibility_level")))));
+
+ALTER VIEW "public"."app_recipe_presentation" SET ("security_invoker" = false);
 
 CREATE FUNCTION "private"."sweep_expired_memberships"() RETURNS integer
     LANGUAGE "sql"
