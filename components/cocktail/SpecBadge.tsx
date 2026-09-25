@@ -30,6 +30,8 @@ export function SpecBadge({ label, value, emptyLabel, isEditing, onPress, iconKe
             justifyContent="flex-start"
             minWidth={52}
             accessible={!interactive}
+            // role makes the label count on web; screen readers ignore aria-label on a plain div.
+            role={interactive ? undefined : "group"}
             aria-label={interactive ? undefined : a11yLabel}
         >
             <YStack
