@@ -12,6 +12,7 @@ import { capitalize } from "@/lib/stringUtils";
 import { mapPresentationRecipeToEditItem, sortRecipesByOrder } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
+import { setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 export type SpecDbField = "method_id" | "glassware_id" | "family_id" | "ice_id";
@@ -317,17 +318,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 }
             }
 
-            await supabase.from("item_images").delete().eq("item_id", id);
-            if (finalImageIds.length > 0) {
-                const { error: insertError } = await supabase.from("item_images").insert(
-                    finalImageIds.map((imgId, index) => ({
-                        item_id: id,
-                        image_id: imgId,
-                        sort_order: index,
-                    }))
-                );
-                if (insertError) throw insertError;
-            }
+            await setItemImages(id, finalImageIds, { replace: true });
 
             const { error } = await supabase
                 .from("items")

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { CocktailPhotoPlaceholder } from "@/components/cocktail/CocktailPhotoPlaceholder";
+import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useSettingsStore } from "@/store/useSettingsStore";
@@ -21,6 +22,8 @@ export interface ItemDetailLayoutProps {
     id: string;
     title: string;
     images: string[];
+    /** A label per image ("Sketch", "May be out of date"), or null. */
+    imageTags?: (string | null)[];
     isLoading?: boolean;
     isFavorite: boolean;
     isInStudyPile: boolean;
@@ -58,6 +61,7 @@ export function ItemDetailLayout({
     id,
     title,
     images,
+    imageTags,
     isLoading = false,
     isFavorite,
     isInStudyPile,
@@ -393,6 +397,7 @@ export function ItemDetailLayout({
             return (
                 <ImageCarousel
                     images={images}
+                    tags={imageTags}
                     initialIndex={currentImageIndex}
                     onIndexChange={setCurrentImageIndex}
                     onImagePress={handleImagePress}
@@ -404,7 +409,7 @@ export function ItemDetailLayout({
         if (emptyPhotoPlaceholder || (isEditing && onManageImages)) {
             return <CocktailPhotoPlaceholder onPress={handleImagePress} onDropImages={onDropImages} />;
         }
-        return null;
+        return isLoading ? null : <PicturePlaceholder />;
     };
 
     const mainContent = isLargeScreen ? (
@@ -593,6 +598,7 @@ export function ItemDetailLayout({
                         <View style={styles.modalContent}>
                             <ImageCarousel
                                 images={images}
+                                tags={imageTags}
                                 initialIndex={currentImageIndex}
                                 onIndexChange={setCurrentImageIndex}
                                 onImagePress={() => setModalVisible(false)}

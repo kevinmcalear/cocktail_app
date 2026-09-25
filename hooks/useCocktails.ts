@@ -53,6 +53,8 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     item_images (
                         sort_order,
                         image_id,
+                        is_generated,
+                        outdated_since,
                         images (
                             id,
                             url
@@ -102,6 +104,9 @@ export function useCocktail(id?: string | string[]) {
                 .select(`
                     *,
                     item_images (
+                        sort_order,
+                        is_generated,
+                        outdated_since,
                         images (
                             url,
                             id

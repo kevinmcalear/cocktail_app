@@ -39,19 +39,27 @@ const users = {};
 const ids = {};
 
 // 'mock' when the worker is served with the mocked model, 'imagen' when it
-// would call the real one, null when it isn't served at all.
-async function probeWorker() {
-  try {
-    const res = await fetch(WORKER_URL, { headers: { 'x-image-worker-secret': WORKER_SECRET } });
-    if (!res.ok) return null;
-    return (await res.json()).model ?? null;
-  } catch {
-    return null;
+// would call the real one, null when it isn't served at all. In CI the edge
+// runtime is cold on the first request, so keep asking for a minute.
+async function probeWorker(attempts) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(WORKER_URL, { headers: { 'x-image-worker-secret': WORKER_SECRET } });
+      if (res.ok) return (await res.json()).model ?? null;
+      await res.body?.cancel();
+    } catch {
+      // not up yet
+    }
+    if (i < attempts - 1) await new Promise((resolve) => setTimeout(resolve, 3000));
   }
+  return null;
 }
-const workerModel = await probeWorker();
+const workerModel = await probeWorker(process.env.CI ? 20 : 1);
 if (workerModel === 'imagen') {
   throw new Error('image-worker is using the real image model; set IMAGE_MODEL=mock before running tests.');
+}
+if (!workerModel && process.env.CI) {
+  throw new Error('image-worker is not being served; CI starts the stack with edge-runtime for these tests.');
 }
 const workerSkip = workerModel === 'mock' ? false : 'image-worker is not served (start the stack with edge-runtime)';
 
@@ -117,10 +125,24 @@ async function links(itemId) {
   return rows;
 }
 
-async function work() {
+/**
+ * Runs the worker, then waits for these items' jobs to leave the worker's
+ * hands. The cron tick may have woken another worker that claimed them first
+ * (when Vault holds the worker URL), so the call itself proves nothing.
+ */
+async function work(...itemIds) {
   const res = await fetch(WORKER_URL, { method: 'POST', headers: { 'x-image-worker-secret': WORKER_SECRET } });
   assert.equal(res.status, 200, `worker answered ${res.status}`);
-  return res.json();
+  await res.json();
+  for (let i = 0; i < 100; i++) {
+    const { rows } = await db.query(
+      "SELECT 1 FROM private.item_image_jobs WHERE item_id = ANY($1) AND status IN ('ready', 'running')",
+      [itemIds]
+    );
+    if (rows.length === 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  assert.fail('image jobs did not finish');
 }
 
 async function usage(column, id) {
@@ -329,7 +351,7 @@ describe('image worker', { skip: workerSkip }, () => {
     await addRecipe(ids.sketched, ids.gin, 'ml', 0);
     await addRecipe(ids.sketched, ids.lemon, 'twist', 1);
     await settle(ids.sketched);
-    await work();
+    await work(ids.sketched);
 
     const rows = await links(ids.sketched);
     assert.equal(rows.length, 1);
@@ -345,7 +367,7 @@ describe('image worker', { skip: workerSkip }, () => {
     const [before] = await links(ids.sketched);
     await db.query('UPDATE public.items SET glassware_id = $2 WHERE id = $1', [ids.sketched, ids.rocks]);
     await settle(ids.sketched);
-    await work();
+    await work(ids.sketched);
 
     const rows = await links(ids.sketched);
     assert.equal(rows.length, 1);
@@ -359,7 +381,7 @@ describe('image worker', { skip: workerSkip }, () => {
     await db.query('UPDATE public.items SET glassware_id = $2 WHERE id = $1', [ids.sketched, ids.coupe]);
     await settle(ids.sketched);
     assert.equal(await jobFor(ids.sketched), null);
-    await work();
+    await work(ids.sketched);
 
     const rows = await links(ids.sketched);
     assert.equal(rows.length, 2);
@@ -375,7 +397,7 @@ describe('image worker', { skip: workerSkip }, () => {
     );
     const drink = await newItem({ name: 'Waiting', item_type: 'cocktail', bar_id: bar, glassware_id: ids.coupe });
     await settle(drink);
-    await work();
+    await work(drink);
 
     assert.equal((await links(drink)).length, 0);
     const job = await jobFor(drink);
@@ -389,7 +411,7 @@ describe('image worker', { skip: workerSkip }, () => {
     const legacy = await newItem({ name: 'Legacy bitters', item_type: 'ingredient', created_by: null });
     await settle(personal);
     await settle(legacy);
-    await work();
+    await work(personal, legacy);
 
     assert.equal((await links(personal)).length, 1);
     assert.equal(await usage('user_id', users.homeUser.id), 1);

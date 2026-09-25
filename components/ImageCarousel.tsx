@@ -10,6 +10,7 @@ import {
     View,
     ViewStyle
 } from 'react-native';
+import { PictureTag } from '@/components/ui/PictureTag';
 import { ZoomableImage } from './ZoomableImage';
 
 interface ImageCarouselProps {
@@ -20,6 +21,8 @@ interface ImageCarouselProps {
     onIndexChange?: (index: number) => void;
     scrollEnabled?: boolean;
     zoomEnabled?: boolean;
+    /** A label per image ("Sketch", "May be out of date"), or null. */
+    tags?: (string | null)[];
 }
 
 export function ImageCarousel({
@@ -30,6 +33,7 @@ export function ImageCarousel({
     onIndexChange,
     scrollEnabled = true,
     zoomEnabled = false,
+    tags,
     paginationBelow = false,
 }: ImageCarouselProps & { paginationBelow?: boolean }) {
     const { width: windowWidth } = useWindowDimensions();
@@ -132,6 +136,7 @@ export function ImageCarousel({
                                     resizeMode="cover"
                                 />
                             )}
+                            <PictureTag label={tags?.[index] ?? null} style={paginationBelow ? undefined : { bottom: 36 }} />
                         </Pressable>
                     );
                 })}
