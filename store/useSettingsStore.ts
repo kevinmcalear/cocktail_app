@@ -23,7 +23,6 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
 ];
 
 interface SettingsState {
-    isEditModeEnabled: boolean;
     isTestingEnabled: boolean;
     themeMode: ThemeMode;
     defaultSearchContext: DefaultSearchContext;
@@ -31,9 +30,7 @@ interface SettingsState {
     /** Behind the bar: keep the screen awake on specs and use larger spec type. */
     serviceMode: boolean;
     toggleServiceMode: () => void;
-    toggleEditMode: () => void;
     toggleTesting: () => void;
-    setEditMode: (enabled: boolean) => void;
     setTesting: (enabled: boolean) => void;
     setThemeMode: (mode: ThemeMode) => void;
     setDefaultSearchContext: (value: DefaultSearchContext) => void;
@@ -43,16 +40,13 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
-            isEditModeEnabled: false,
             isTestingEnabled: false,
             themeMode: 'system',
             defaultSearchContext: DEFAULT_SEARCH_ALL,
             defaultUnit: DEFAULT_UNIT,
             serviceMode: false,
             toggleServiceMode: () => set((state) => ({ serviceMode: !state.serviceMode })),
-            toggleEditMode: () => set((state) => ({ isEditModeEnabled: !state.isEditModeEnabled })),
             toggleTesting: () => set((state) => ({ isTestingEnabled: !state.isTestingEnabled })),
-            setEditMode: (enabled) => set({ isEditModeEnabled: enabled }),
             setTesting: (enabled) => set({ isTestingEnabled: enabled }),
             setThemeMode: (mode) => set({ themeMode: mode }),
             setDefaultSearchContext: (value) => set({ defaultSearchContext: value }),
