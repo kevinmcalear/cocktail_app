@@ -90,7 +90,7 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
           value={password}
           onChangeText={setPassword}
           placeholder="Your password"
-          autoComplete="password"
+          autoComplete="current-password"
           textContentType="password"
           onSubmitEditing={handleSignIn}
         />

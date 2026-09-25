@@ -1,3 +1,4 @@
+import { useSheetBackHandler } from '@/hooks/useSheetBackHandler';
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
@@ -36,11 +37,14 @@ export function FilterModal({
         }
     }, [visible]);
 
+    const trackSheetForBack = useSheetBackHandler(() => bottomSheetModalRef.current?.dismiss());
+
     const handleSheetChanges = useCallback((index: number) => {
+        trackSheetForBack(index);
         if (index === -1) {
             onClose();
         }
-    }, [onClose]);
+    }, [onClose, trackSheetForBack]);
 
     const renderBackdrop = useCallback(
         (props: any) => (

@@ -41,6 +41,7 @@ const themeFrom = (p: (typeof palette)['light' | 'dark']) => ({
   color8: p.ink, // primary: buttons, links, selection
   color9: p.ink,
   color11: p.muted, // secondary text
+  warningText: p.warningText, // drafts / in progress, as text or small icons
 })
 
 const customThemes = {

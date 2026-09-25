@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
@@ -38,7 +39,7 @@ export default function IngredientDetailScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const { data, isLoading: loading, error } = useIngredient(id as string);
+    const { data, isLoading: loading, error, refetch } = useIngredient(id as string);
     const ingredient = data?.ingredient as IngredientDetail | null;
     const recipe = data?.recipe as unknown as RecipeItem[] || [];
     const usedIn = data?.usedIn || [];
@@ -68,8 +69,11 @@ export default function IngredientDetailScreen() {
                 onToggleStudyPile={() => {}}
             >
                 <YStack style={styles.container} justifyContent="center" alignItems="center">
-                    <Text color="$color">{loading ? "Loading Ingredient..." : "Ingredient not found."}</Text>
-                    {error && <Text color="$red10">Error: {error.message || JSON.stringify(error)}</Text>}
+                    {error ? (
+                        <ErrorState title="Couldn't load this ingredient" onRetry={() => void refetch()} />
+                    ) : (
+                        <Text color="$color">{loading ? "Loading Ingredient..." : "Ingredient not found."}</Text>
+                    )}
                 </YStack>
             </ItemDetailLayout>
         );

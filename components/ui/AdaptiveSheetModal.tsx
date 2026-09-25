@@ -56,8 +56,8 @@ export function AdaptiveSheetModal({
                             },
                         ]}
                     >
-                        {!isWeb && <View style={styles.grabber} />}
-                        {(title || isWeb) && (
+                        {/* No grabber: this Modal doesn't drag, so the X is the affordance. */}
+                        {(
                             <View style={styles.header}>
                                 {title ? (
                                     <Text
@@ -72,7 +72,7 @@ export function AdaptiveSheetModal({
                                 ) : (
                                     <View />
                                 )}
-                                <TouchableOpacity onPress={onClose} hitSlop={12}>
+                                <TouchableOpacity onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
                                     <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
                                 </TouchableOpacity>
                             </View>

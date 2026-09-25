@@ -14,6 +14,8 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { Text, useTheme, XStack } from "tamagui";
 import { STATUS } from '@/constants/palette';
 import { DetailSkeleton } from '@/components/ui/Skeleton';
+import { confirmDiscardChanges } from '@/lib/dialogs';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export interface ItemDetailLayoutProps {
     id: string;
@@ -84,6 +86,7 @@ export function ItemDetailLayout({
     const insets = useSafeAreaInsets();
     const { height: windowHeight, width: windowWidth } = useWindowDimensions();
     const theme = useTheme();
+    const colorScheme = useColorScheme();
     const { isEditModeEnabled } = useSettingsStore();
 
     const [modalVisible, setModalVisible] = useState(false);
@@ -222,6 +225,12 @@ export function ItemDetailLayout({
         return titleText;
     };
 
+    const handleCancelEdit = onCancelEdit
+        ? async () => {
+            if (await confirmDiscardChanges(isDirty)) onCancelEdit();
+        }
+        : undefined;
+
     const renderHeaderAction = () => {
         if (embedded) return null;
         if (isEditing && onSave) {
@@ -229,13 +238,8 @@ export function ItemDetailLayout({
                 return (
                     <XStack alignItems="center" gap="$1">
                         {onCancelEdit && (
-                            <TouchableOpacity onPress={onCancelEdit} style={{ padding: 8 }}>
+                            <TouchableOpacity onPress={handleCancelEdit} style={{ padding: 8 }}>
                                 <Text color="$color11" fontWeight="600" fontSize={16}>Cancel</Text>
-                            </TouchableOpacity>
-                        )}
-                        {onDelete && (
-                            <TouchableOpacity onPress={onDelete} style={{ padding: 8 }}>
-                                <Text color="$red10" fontWeight="600" fontSize={16}>Delete</Text>
                             </TouchableOpacity>
                         )}
                         <TouchableOpacity
@@ -262,7 +266,7 @@ export function ItemDetailLayout({
             return (
                 <XStack alignItems="center" gap="$1">
                     {onCancelEdit && (
-                        <TouchableOpacity onPress={onCancelEdit} style={{ padding: 8 }}>
+                        <TouchableOpacity onPress={handleCancelEdit} style={{ padding: 8 }}>
                             <Text color="$color11" fontWeight="600" fontSize={16}>Cancel</Text>
                         </TouchableOpacity>
                     )}
@@ -287,7 +291,7 @@ export function ItemDetailLayout({
         }
         if (onEditPress && isEditModeEnabled) {
             return (
-                <TouchableOpacity onPress={onEditPress} style={{ padding: 8 }}>
+                <TouchableOpacity onPress={onEditPress} style={{ padding: 10 }} accessibilityRole="button" accessibilityLabel="More actions">
                     <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
                 </TouchableOpacity>
             );
@@ -303,7 +307,7 @@ export function ItemDetailLayout({
                     <XStack alignItems="center" gap="$2">
                         {onCancelEdit && (
                             <TouchableOpacity
-                                onPress={onCancelEdit}
+                                onPress={handleCancelEdit}
                                 style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string, width: 'auto', paddingHorizontal: 16 }]}
                             >
                                 <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
@@ -342,7 +346,7 @@ export function ItemDetailLayout({
                 <XStack alignItems="center" gap="$2">
                     {onCancelEdit && (
                         <TouchableOpacity
-                            onPress={onCancelEdit}
+                            onPress={handleCancelEdit}
                             style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string, width: 'auto', paddingHorizontal: 16 }]}
                         >
                             <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
@@ -372,7 +376,7 @@ export function ItemDetailLayout({
         }
         if (onEditPress && isEditModeEnabled) {
             return (
-                <TouchableOpacity onPress={onEditPress} style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
+                <TouchableOpacity onPress={onEditPress} accessibilityRole="button" accessibilityLabel="More actions" style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
                     <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
                 </TouchableOpacity>
             );
@@ -422,13 +426,13 @@ export function ItemDetailLayout({
                                 <TouchableOpacity onPress={() => {
                                     onToggleFavorite(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                }} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                                }} accessibilityRole="button" accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? STATUS.danger : theme.color?.get() as string} />
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => {
                                     onToggleStudyPile(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                }} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
+                                }} accessibilityRole="button" accessibilityLabel={isInStudyPile ? "Remove from study pile" : "Add to study pile"} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? STATUS.info : theme.color?.get() as string} />
                                 </TouchableOpacity>
                             </>
@@ -521,6 +525,17 @@ export function ItemDetailLayout({
                 {/* Inject Specific Content Here */}
                 {children}
 
+                {/* Destructive action lives at the end of the form, away from Save/Publish */}
+                {isEditing && onDelete && !embedded ? (
+                    <TouchableOpacity
+                        onPress={onDelete}
+                        accessibilityRole="button"
+                        style={styles.phoneDeleteButton}
+                    >
+                        <Text color="$red10" fontWeight="600" fontSize={16}>Delete</Text>
+                    </TouchableOpacity>
+                ) : null}
+
                 {/* Bottom Spacing */}
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -530,7 +545,8 @@ export function ItemDetailLayout({
     return (
         <GestureHandlerRootView style={[styles.container, { paddingBottom: isLargeScreen ? 0 : insets.bottom, backgroundColor: theme.background?.get() as string }]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <StatusBar barStyle="light-content" />
+            {/* Light icons only when a phone hero photo sits under the status bar */}
+            <StatusBar barStyle={!isLargeScreen && images.length > 0 ? "light-content" : colorScheme === "dark" ? "light-content" : "dark-content"} />
 
             {/* Floating Back — keep during edit only when onBack means leave (draft create) */}
             {!embedded && (!isEditing || onBack) && (
@@ -544,6 +560,8 @@ export function ItemDetailLayout({
                 }}
                 onPress={() => (onBack ? onBack() : router.back())}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
             >
                 <GlassView intensity={50} style={styles.buttonGlass}>
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
@@ -582,6 +600,8 @@ export function ItemDetailLayout({
                         <TouchableOpacity
                             style={[styles.closeButton, { top: insets.top + 10 }]}
                             onPress={() => setModalVisible(false)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Close photo"
                         >
                             <GlassView intensity={50} style={styles.buttonGlass}>
                                 <IconSymbol name="xmark" size={24} color={theme.color?.get() as string} />
@@ -595,6 +615,13 @@ export function ItemDetailLayout({
 }
 
 const styles = StyleSheet.create({
+    phoneDeleteButton: {
+        alignSelf: 'center',
+        marginTop: 32,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        minHeight: 44,
+    },
     editActionsRow: {
         alignSelf: 'stretch',
         flexDirection: 'row',

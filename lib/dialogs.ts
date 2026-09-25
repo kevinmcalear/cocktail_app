@@ -49,3 +49,14 @@ export function confirmAsync({
     );
   });
 }
+
+/** Resolves true when there is nothing to lose, or the user agrees to discard unsaved edits. */
+export function confirmDiscardChanges(isDirty: boolean | undefined): Promise<boolean> {
+  if (!isDirty) return Promise.resolve(true);
+  return confirmAsync({
+    title: 'Discard changes?',
+    message: 'Your unsaved edits will be lost.',
+    confirmText: 'Discard',
+    destructive: true,
+  });
+}

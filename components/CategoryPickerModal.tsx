@@ -1,3 +1,4 @@
+import { useSheetBackHandler } from "@/hooks/useSheetBackHandler";
 import { CategoryTree } from "@/components/CategoryTree";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
@@ -36,11 +37,15 @@ export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerMo
         );
 
         const snapPoints = useMemo(() => ['80%'], []);
+        const trackSheetForBack = useSheetBackHandler(() => {
+            if (ref && typeof ref === 'object') ref.current?.dismiss();
+        });
 
         return (
             <BottomSheetModal
                 ref={ref}
                 index={0}
+                onChange={trackSheetForBack}
                 snapPoints={snapPoints}
                 backdropComponent={renderBackdrop}
                 backgroundStyle={{

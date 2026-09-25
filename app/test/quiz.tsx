@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     controls: { paddingHorizontal: 20, paddingBottom: 40 },
     scoreButtons: { flexDirection: "row", gap: 12, width: '100%', height: 70 },
     scoreButton: { flex: 1, borderRadius: 15, justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 5 },
-    scoreText: { fontSize: 13, fontWeight: "900", color: "#FFF", letterSpacing: 1 },
+    scoreText: { fontSize: 13, fontWeight: "900", color: "#000", letterSpacing: 1 },
     actionPrompt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 70 },
     promptText: { fontSize: 16, fontWeight: '700', color: Colors.dark.icon, letterSpacing: 1.5 },
     resultsWrapper: { flex: 1, paddingHorizontal: 30, paddingTop: 40, paddingBottom: 40, justifyContent: 'center', alignItems: 'center' },

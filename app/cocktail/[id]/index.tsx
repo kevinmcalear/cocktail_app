@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
@@ -22,7 +23,7 @@ export default function CocktailDetailsScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const { data: cocktail, isLoading, error } = useCocktail(id as string);
+    const { data: cocktail, isLoading, error, refetch } = useCocktail(id as string);
 
     useTrackRecent(
         !!cocktail,
@@ -65,14 +66,7 @@ export default function CocktailDetailsScreen() {
             >
                 <YStack style={styles.container}>
                     {error ? (
-                        <>
-                            <Text color="$red10" fontSize={18} fontWeight="bold" marginBottom="$2">
-                                Error Loading Cocktail
-                            </Text>
-                            <Text color="$red9" fontSize={14}>
-                                {error instanceof Error ? error.message : JSON.stringify(error)}
-                            </Text>
-                        </>
+                        <ErrorState title="Couldn't load this cocktail" onRetry={() => void refetch()} />
                     ) : (
                         <Text>{isLoading ? "Loading..." : "Cocktail not found."}</Text>
                     )}

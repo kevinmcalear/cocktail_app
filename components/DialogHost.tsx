@@ -5,7 +5,8 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { type Dialog, useDialogStore } from '@/store/useDialogStore';
 
-const DESTRUCTIVE = '#E5484D';
+// Darker than STATUS.danger so white button text reaches 5.2:1.
+const DESTRUCTIVE = '#CE2C31';
 
 /**
  * Web-only renderer for Alert.alert (see installWebAlert). Shows the first

@@ -1,5 +1,6 @@
 import { palette } from "@/constants/palette";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useIsWideWeb } from "@/hooks/useIsWideWeb";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { BottomTabBarProps } from "expo-router/js-tabs";
 import { PlatformPressable, useLinkBuilder } from "expo-router/react-navigation";
@@ -13,6 +14,19 @@ import { UniversalCreateButton } from "./UniversalCreateButton";
 
 // iOS 26 draws real Liquid Glass; elsewhere a blur with the palette's glass tint.
 const LIQUID_GLASS = isLiquidGlassAvailable();
+
+const TAB_BAR_HEIGHT = 65;
+const tabBarBottom = (safeBottom: number) => Math.max(safeBottom, 20);
+
+/**
+ * Bottom padding a tab screen's scroll content needs so its last row clears the
+ * floating tab bar (0 on wide web, which uses the sidebar instead).
+ */
+export function useFloatingTabBarInset() {
+    const insets = useSafeAreaInsets();
+    const isWideWeb = useIsWideWeb();
+    return isWideWeb ? 0 : tabBarBottom(insets.bottom) + TAB_BAR_HEIGHT + 24;
+}
 
 function TabBarSurface({ scheme, children }: { scheme: "light" | "dark"; children: ReactNode }) {
     if (LIQUID_GLASS) {
@@ -68,14 +82,15 @@ export function LiquidTabBar({
     });
 
     return (
-        <View style={[styles.container, { bottom: Math.max(insets.bottom, 20) }]}>
+        <View style={[styles.container, { bottom: tabBarBottom(insets.bottom) }]}>
             <TabBarSurface scheme={colorScheme}>
                 <XStack
+                    accessibilityRole="tablist"
                     justifyContent="center"
                     alignItems="center"
                     paddingHorizontal={24}
                     gap={12}
-                    height={65}
+                    height={TAB_BAR_HEIGHT}
                 >
                     {validRoutes.map((route) => {
                         const { options } = descriptors[route.key];
@@ -105,8 +120,9 @@ export function LiquidTabBar({
                             <PlatformPressable
                                 key={route.key}
                                 href={buildHref(route.name, route.params)}
+                                accessibilityRole="tab"
                                 accessibilityState={isFocused ? { selected: true } : {}}
-                                accessibilityLabel={options.tabBarAccessibilityLabel}
+                                accessibilityLabel={options.tabBarAccessibilityLabel ?? options.title ?? route.name}
                                 testID={options.tabBarButtonTestID}
                                 onPress={onPress}
                                 onLongPress={onLongPress}
