@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: read
       contents: read
       issues: read
       pull-requests: write
@@ -77,8 +78,7 @@ jobs:
       - name: Classify
         env:
           LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-          # Set only for pushes: an approval label applied before this is stale.
-          PUSHED_AT: ${{ github.event.action == 'synchronize' && github.event.pull_request.updated_at || '' }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           # Old and new names, so moving a file out of a guarded path still counts.
           gh api --paginate "repos/$REPO/pulls/$PR/files" \
@@ -88,11 +88,18 @@ jobs:
           gh api --paginate "repos/$REPO/issues/$PR/events" \
             --jq '.[] | select(.event == "labeled") | {label: .label.name, actor: .actor.login, at: .created_at} | tojson' \
             > "$RUNNER_TEMP/label-events.jsonl"
+          # On a push, an approval label applied before it is stale. This run is
+          # created just after the push, so its creation time never predates it;
+          # at worst a label added in those few seconds is reset too.
+          pushed_at=""
+          if [ "$EVENT_ACTION" = "synchronize" ]; then
+            pushed_at=$(gh api "repos/$REPO/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
+          fi
           node scripts/change-policy/classify.mjs --json \
             --files-from "$RUNNER_TEMP/files.txt" \
             --labels "$LABELS" \
             --label-events "$RUNNER_TEMP/label-events.jsonl" \
-            --pushed-at "$PUSHED_AT" > "$RUNNER_TEMP/result.json"
+            --pushed-at "$pushed_at" > "$RUNNER_TEMP/result.json"
           jq -r .markdown "$RUNNER_TEMP/result.json" > "$RUNNER_TEMP/comment.md"
           cat "$RUNNER_TEMP/comment.md" >> "$GITHUB_STEP_SUMMARY"
           cat "$RUNNER_TEMP/comment.md"
