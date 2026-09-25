@@ -113,7 +113,10 @@ before(async () => {
 
   ids.syrup = (await serviceInsert('items', { name: `Honey-ginger syrup ${run}`, item_type: 'ingredient', bar_id: ids.barOne })).id;
   ids.penicillin = (await serviceInsert('items', { name: `Penicillin ${run}`, item_type: 'cocktail', bar_id: ids.barOne })).id;
-  ids.barTwoDrink = (await serviceInsert('items', { name: `Moth Colada ${run}`, item_type: 'cocktail', bar_id: ids.barTwo })).id;
+  ids.penicillinRecipe = (
+    await serviceInsert('recipes', { recipe_item_id: ids.penicillin, ingredient_item_id: ids.syrup, amount: 22.5, unit: 'ml', sort_order: 0 })
+  ).id;
+  ids.barTwoDrink =(await serviceInsert('items', { name: `Moth Colada ${run}`, item_type: 'cocktail', bar_id: ids.barTwo })).id;
   ids.scotch = (await serviceInsert('items', { name: `Blended Scotch ${run}`, item_type: 'ingredient', created_by: null })).id;
   ids.martini = (await serviceInsert('items', { name: `Martini ${run}`, item_type: 'cocktail', created_by: null })).id;
 
@@ -300,13 +303,20 @@ describe('venue roles', () => {
     assert.equal((await visible(client, 'items', 'id', [ids.penicillin])).size, 0);
     assert.deepEqual((await client.rpc('my_capabilities', { p_bar_id: ids.barOne })).data, []);
     assert.deepEqual((await client.rpc('get_my_bars')).data, []);
+    // The recipe view runs as its owner and reads user_bars itself.
+    assert.equal((await visible(client, 'app_recipe_presentation', 'id', [ids.penicillinRecipe])).size, 0);
 
     await client.from('items').update({ name: 'vandalised' }).eq('id', ids.penicillin);
     const { rows } = await db.query('SELECT name FROM public.items WHERE id = $1', [ids.penicillin]);
     assert.equal(rows[0].name, `Penicillin ${run}`);
 
-    // Guest staff whose role hasn't ended still get in.
+    // Guest staff whose role hasn't ended still get in, specs included.
     assert.equal((await visible(users.guestBartender.client, 'items', 'id', [ids.penicillin])).size, 1);
+    const { data: spec } = await users.guestBartender.client
+      .from('app_recipe_presentation')
+      .select('amount')
+      .eq('id', ids.penicillinRecipe);
+    assert.deepEqual(spec.map((r) => Number(r.amount)), [22.5]);
   });
 
   test('the sweep removes ended memberships and leaves current ones', async () => {
