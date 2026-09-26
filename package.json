@@ -14,7 +14,7 @@
     "check:design": "node --no-warnings=ExperimentalWarning scripts/design-ratchet.mjs",
     "test:jest": "jest",
     "test:security": "node --test \"supabase/tests/*.test.mjs\"",
-    "test:policy": "node --test \"scripts/change-policy/*.test.mjs\"",
+    "test:policy": "npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund --silent && node --test \"scripts/change-policy/*.test.mjs\"",
     "postinstall": "patch-package"
   },
   "dependencies": {
