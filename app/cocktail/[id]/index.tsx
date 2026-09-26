@@ -17,6 +17,8 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { useRedesign } from "@/lib/flags";
+import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -52,6 +54,24 @@ export default function CocktailDetailsScreen() {
         setIsEditing(false);
         setShowPhotoSheet(false);
     };
+
+    const redesign = useRedesign();
+    // The redesign replaces the read view; editing still uses the editor below.
+    if (redesign && !isEditing && !error) {
+        return cocktail ? (
+            <DrinkScreen
+                item={cocktail}
+                isFavorite={isFavorite(cocktail.id)}
+                onToggleFavorite={() => toggleFavorite(cocktail.id)}
+                inStudyPile={isInStudyPile(cocktail.id)}
+                onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
+                canEdit={canEdit}
+                onEdit={() => setIsEditing(true)}
+            />
+        ) : (
+            <DrinkLoading />
+        );
+    }
 
     if (isLoading || error || !cocktail) {
         return (
