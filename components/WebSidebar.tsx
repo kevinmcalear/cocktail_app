@@ -1,3 +1,4 @@
+import { currentProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { DraftFolderTree } from '@/components/DraftFolderTree';
 import { SearchPopover } from '@/components/SearchPopover';
@@ -200,7 +201,8 @@ function CurrentNav({
                           key={menu.id}
                           onPress={() => onSelectMenu(menu.id, menu.name, menu.bar_id ?? null)}
                           style={[styles.menuRow, selected && { backgroundColor: activeBg }]}
-                          aria-selected={selected}
+                          role="link"
+                          {...currentProps(selected, 'true')}
                           aria-label={menu.name}
                         >
                           <Text
@@ -448,7 +450,8 @@ export function WebSidebar() {
           return (
             <Pressable
               key={item.href}
-              aria-selected={isFocused}
+              role="link"
+              {...currentProps(isFocused)}
               aria-label={item.label}
               onPress={() => router.push(item.href as any)}
               style={({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => [
@@ -521,8 +524,9 @@ export function WebSidebar() {
 
         <Pressable
           onPress={() => router.push('/settings' as any)}
+          role="link"
           aria-label="Settings"
-          aria-selected={onSettings}
+          {...currentProps(onSettings)}
           style={[
             styles.accountChip,
             { borderColor: hoverBorder },

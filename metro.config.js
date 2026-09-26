@@ -30,4 +30,11 @@ config.resolver.resolveRequest = (context, moduleName, platform, ...args) => {
   return context.resolveRequest(context, moduleName, platform, ...args);
 };
 
+// The Tauri desktop shell (desktop/) isn't part of the bundle. Keep Metro out of
+// its Rust build output and its own node_modules.
+config.resolver.blockList = [
+  ...[].concat(config.resolver.blockList ?? []),
+  /[\\/]desktop[\\/](node_modules|src-tauri)[\\/].*/,
+];
+
 module.exports = config;

@@ -1,0 +1,13 @@
+{
+  "name": "cocktail-desktop",
+  "private": true,
+  "description": "Tauri 2 desktop shell around the Expo web export. Kept out of the root install so it can't affect web or mobile builds.",
+  "scripts": {
+    "tauri": "node scripts/tauri.mjs",
+    "dev": "node scripts/tauri.mjs dev",
+    "build": "node scripts/tauri.mjs build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}
