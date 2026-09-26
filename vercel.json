@@ -37,6 +37,10 @@
       "destination": "/wine/[id]/edit"
     },
     {
+      "source": "/p/:id",
+      "destination": "/p/[id]"
+    },
+    {
       "source": "/settings/bar/:id",
       "destination": "/settings/bar/[id]"
     },

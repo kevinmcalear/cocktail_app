@@ -13,6 +13,7 @@ import type { DatabaseItem } from '@/types/types';
 
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import { FamilyTree } from './FamilyTree';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -137,6 +138,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      {preview ? null : <FamilyTree itemId={item.id} />}
     </View>
   );
 
