@@ -228,8 +228,8 @@ export function VenueContextPicker({ lockedContextId }: { lockedContextId?: stri
         <Pressable
           onPress={openMenu}
           disabled={!!lockedContextId}
-          accessibilityRole="button"
-          accessibilityLabel={
+          role="button"
+          aria-label={
             lockedContextId
               ? `Venue: ${label}`
               : `Contexts: ${label}. Opens multi-select.`
@@ -271,8 +271,8 @@ export function VenueContextPicker({ lockedContextId }: { lockedContextId?: stri
                     setSelectedContextIds(allSelected ? [PERSONAL_CONTEXT] : allIds);
                   }}
                   style={styles.row}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: allSelected }}
+                  role="checkbox"
+                  aria-checked={allSelected}
                 >
                   <Text fontSize={14} fontWeight="600" color="$color" flex={1}>
                     Select all
@@ -291,9 +291,9 @@ export function VenueContextPicker({ lockedContextId }: { lockedContextId?: stri
                       key={opt.id}
                       onPress={() => toggleContextId(opt.id)}
                       style={styles.row}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked }}
-                      accessibilityLabel={opt.label}
+                      role="checkbox"
+                      aria-checked={checked}
+                      aria-label={opt.label}
                     >
                       <XStack alignItems="center" gap={10} flex={1}>
                         <ContextIcon option={opt} size={18} color={muted} />

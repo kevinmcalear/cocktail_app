@@ -1,3 +1,4 @@
+import { currentProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { DraftFolderTree } from '@/components/DraftFolderTree';
 import { SearchPopover } from '@/components/SearchPopover';
@@ -203,8 +204,9 @@ function CurrentNav({
                           key={menu.id}
                           onPress={() => onSelectMenu(menu.id, menu.name, menu.bar_id ?? null)}
                           style={[styles.menuRow, selected && { backgroundColor: activeBg }]}
-                          accessibilityState={selected ? { selected: true } : {}}
-                          accessibilityLabel={menu.name}
+                          role="link"
+                          {...currentProps(selected, 'true')}
+                          aria-label={menu.name}
                         >
                           <Text
                             fontSize={13}
@@ -452,8 +454,9 @@ export function WebSidebar() {
           return (
             <Pressable
               key={item.href}
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={item.label}
+              role="link"
+              {...currentProps(isFocused)}
+              aria-label={item.label}
               onPress={() => router.push(item.href as any)}
               style={({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => [
                 styles.navItem,
@@ -525,8 +528,9 @@ export function WebSidebar() {
 
         <Pressable
           onPress={() => router.push('/settings' as any)}
-          accessibilityLabel="Settings"
-          accessibilityState={onSettings ? { selected: true } : {}}
+          role="link"
+          aria-label="Settings"
+          {...currentProps(onSettings)}
           style={[
             styles.accountChip,
             { borderColor: hoverBorder },

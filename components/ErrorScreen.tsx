@@ -22,7 +22,7 @@ export function ErrorScreen({ error, retry }: ErrorBoundaryProps) {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
+      <Text role="heading" style={[styles.title, { color: colors.text }]}>
         Something went wrong
       </Text>
       <Text style={[styles.body, { color: colors.muted }]}>
@@ -30,7 +30,7 @@ export function ErrorScreen({ error, retry }: ErrorBoundaryProps) {
         app.
       </Text>
       <Pressable
-        accessibilityRole="button"
+        role="button"
         onPress={retry}
         style={({ pressed }) => [styles.button, { backgroundColor: colors.button, opacity: pressed ? 0.8 : 1 }]}
       >

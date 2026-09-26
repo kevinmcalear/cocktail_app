@@ -3,6 +3,7 @@ import { FilterModal } from "@/components/FilterModal";
 import { SearchBar, SearchChip } from "@/components/SearchBar";
 import { WEB_SIDEBAR_WIDTH } from "@/components/WebSidebar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { PictureTag } from "@/components/ui/PictureTag";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
@@ -11,6 +12,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { heroPicture, type ItemImageLink } from "@/lib/itemImages";
 import { capitalize } from "@/lib/stringUtils";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken, useWindowDimensions } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
@@ -49,11 +51,9 @@ export interface SearchItem {
             }[];
         } | null;
     }[];
-    item_images?: {
-        images?: {
-            url: string;
-        };
-    }[];
+    item_images?: ItemImageLink[];
+    /** Set with `image` when that picture is a generated sketch. */
+    imageIsSketch?: boolean;
     item_categories?: {
         category_id: string;
     }[];
@@ -137,15 +137,13 @@ const styles = StyleSheet.create({
     }
 });
 
-const getImage = (item: SearchItem) => {
+/** The card's picture and its tag; no picture leaves the tile's plain background showing. */
+const getImage = (item: SearchItem): { source: any; tag: string | null } => {
     if (item.image) {
-        return item.image;
+        return { source: item.image, tag: item.imageIsSketch ? "Sketch" : null };
     }
-    if (item.item_images && item.item_images.length > 0 && item.item_images[0].images) {
-        return { uri: item.item_images[0].images.url };
-    }
-    // Fallback to a single reliable image since specific placeholders don't exist yet
-    return require("@/assets/images/cocktails/house_martini.jpg");
+    const hero = heroPicture(item.item_images);
+    return { source: hero ? { uri: hero.url } : null, tag: hero?.isSketch ? "Sketch" : null };
 };
 
 const SectionHeader = memo(function SectionHeader({ letter }: { letter: string }) {
@@ -187,6 +185,7 @@ const SearchItemCard = memo(function SearchItemCard({
 }) {
     let swipeableRef: Swipeable | null = null;
     const isGrid = layout === "grid";
+    const picture = getImage(drink);
 
     let subText = drink.recipes?.map(r => r.ingredient?.name ? capitalize(r.ingredient.name) : "").filter(Boolean).join(", ") || drink.description || "No description";
 
@@ -260,12 +259,15 @@ const SearchItemCard = memo(function SearchItemCard({
                     </View>
                 </YStack>
             ) : (
-                <Image
-                    source={getImage(drink)}
-                    style={{ width: "100%", aspectRatio: 1, backgroundColor: theme.color5?.get() as string }}
-                    contentFit="cover"
-                    transition={400}
-                />
+                <View>
+                    <Image
+                        source={picture.source}
+                        style={{ width: "100%", aspectRatio: 1, backgroundColor: theme.color5?.get() as string }}
+                        contentFit="cover"
+                        transition={400}
+                    />
+                    <PictureTag label={picture.tag} />
+                </View>
             )}
             <YStack paddingHorizontal="$3" paddingTop="$3" paddingBottom="$4" gap="$1.5">
                 <H4
@@ -320,7 +322,7 @@ const SearchItemCard = memo(function SearchItemCard({
                 </YStack>
                 {drink.category !== "Category" && drink.category !== "Menu" && (
                     <Image
-                        source={getImage(drink)}
+                        source={picture.source}
                         style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: theme.color5?.get() as string }}
                         contentFit="cover"
                         transition={500}
