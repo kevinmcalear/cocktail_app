@@ -32,7 +32,8 @@ Tests: `supabase/tests/venue-platform.test.mjs` (36 tests), plus one updated ass
 | `private.my_bar_ids(min_role)` | Existing. Now also skips memberships whose venue role has ended. |
 | `private.can_write(bar, creator)` | Existing. Same rule, now built on `my_bar_ids(35)` so it skips ended memberships too. |
 | `public.get_my_bars()` | Existing. Same change. |
-| `public.app_recipe_presentation` | From #39, where it runs as its owner and reads `user_bars` itself. Same change: an ended membership doesn't join, so it reads as "not a member". |
+| `private.can_view_bar_item(bar, override)` | From #46, behind the `items` read policy; reads `user_bars` itself. Same change. |
+| `public.app_recipe_presentation` | From #39 and #46, where it runs as its owner and reads `user_bars` itself. Same change: an ended membership doesn't join, so it reads as "not a member". |
 | `public.get_bar_members(bar)` | From #39, also owner-run. Same change: an ended guest can't call it and isn't listed. |
 | `private.capabilities(bar)` | The caller's capabilities at a bar (empty if not a member or expired). |
 | `private.bars_with_capability(cap)` | Bars where the caller has a capability. The policy building block. |
@@ -70,7 +71,7 @@ Columns on `bars`, next to the logo and colours it already has. A separate `bar_
 - Assigning a role sets `role_level` to its base level (trigger). Changing a role's base level moves everyone who holds it.
 - Changing a member's `role_level` by hand (an admin edit, or the existing `add_user_to_bar_by_email`) drops them back to a plain base role, so the level you set is the level they get.
 - An admin role (40) can't have an end date, so a bar can't lose its last admin on a timer.
-- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
+- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()`, `can_view_bar_item()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
 
 ### Capabilities
 
@@ -277,7 +278,7 @@ Screens from the brief. Bold tables are new in this proposal.
 
 ## Rollout
 
-- **Stacked on #39.** The roles migration redefines `app_recipe_presentation` and `get_bar_members()` as #39 leaves them (owner-run, role-scoped) plus the expiry rule, so #39 must be applied first.
+- **Stacked on #39 (which now includes #46).** The roles migration redefines `app_recipe_presentation` (as #46 leaves it), `get_bar_members()` and `can_view_bar_item()` with only the expiry rule added, so those migrations must be applied first. If either changes these again, this migration must be regenerated from the new text.
 - **Order:** the migrations are independent enough to ship with the roadmap steps: identity with step 2 (navigation and venue theming), roles with step 3, back bar, prep, purchasing and events with step 4, profiles, credit, home bar and rankings with step 7. They can also land together; each only adds.
 - **Nothing is dropped or renamed.** Existing rows are untouched except the `accent_light_color` backfill. `get_venue_branding` gains columns; callers reading the old ones keep working.
 - **Production prerequisite:** the roles migration runs `CREATE EXTENSION IF NOT EXISTS pg_cron` and schedules two jobs. Confirm pg_cron is allowed on the project before applying.
