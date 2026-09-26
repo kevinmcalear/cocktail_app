@@ -69,7 +69,7 @@ async function computePalette(imageId, retry = true) {
   return body.palette;
 }
 
-const counts = { coloured: 0, noColour: 0, failed: 0 };
+const counts = { coloured: 0, noColour: 0, changed: 0, failed: 0 };
 const failures = [];
 let lastId = '00000000-0000-0000-0000-000000000000';
 let seen = 0;
@@ -91,7 +91,9 @@ while (seen < limit) {
   for (const [index, row] of rows.entries()) {
     try {
       const palette = await computePalette(row.id);
-      if (palette.length) counts.coloured++;
+      // null: the picture changed meanwhile, and the trigger has it.
+      if (palette === null) counts.changed++;
+      else if (palette.length) counts.coloured++;
       else counts.noColour++;
     } catch (err) {
       counts.failed++;
@@ -106,7 +108,8 @@ if (args['dry-run']) {
   process.exit(0);
 }
 console.log(
-  `\n${seen} pictures: ${counts.coloured} with a palette, ${counts.noColour} with no colour, ${counts.failed} failed.`
+  `\n${seen} pictures: ${counts.coloured} with a palette, ${counts.noColour} with no colour, ` +
+    `${counts.changed} changed meanwhile, ${counts.failed} failed.`
 );
 if (failures.length) {
   console.log(failures.join('\n'));

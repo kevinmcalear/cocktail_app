@@ -10,7 +10,9 @@
 --     button, the automatic sketch worker) gets a palette without app changes;
 --   * when palette is set back to NULL, so `UPDATE images SET palette = NULL`
 --     recomputes it. The function always writes a non-NULL value, so this
---     can't loop.
+--     can't loop;
+--   * when url changes: a BEFORE trigger clears the old picture's palette
+--     first, so a palette always belongs to the row's current picture.
 -- The trigger needs two Vault secrets; until they exist it does nothing, and
 -- scripts/backfill-palettes.mjs fills the gaps.
 
@@ -27,7 +29,7 @@ ALTER TABLE "public"."images"
     );
 
 COMMENT ON COLUMN "public"."images"."palette" IS
-    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set by the image-palette edge function; set it to NULL to recompute.';
+    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set by the image-palette edge function; cleared when url changes; set it to NULL to recompute.';
 
 -- Pokes image-palette for a picture with no palette. Never blocks the write: a
 -- failed request just leaves the palette NULL for the backfill script.
@@ -60,8 +62,29 @@ $$;
 
 REVOKE ALL ON FUNCTION "private"."request_image_palette"() FROM PUBLIC;
 
+-- A new picture means a new palette. The AFTER trigger below then asks for it
+-- (it lists url too: column triggers follow the UPDATE's SET list, not columns
+-- a BEFORE trigger changed).
+CREATE FUNCTION "private"."clear_image_palette"() RETURNS trigger
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+    NEW.palette := NULL;
+    RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION "private"."clear_image_palette"() FROM PUBLIC;
+
+CREATE TRIGGER "images_clear_palette_on_new_url"
+    BEFORE UPDATE OF "url" ON "public"."images"
+    FOR EACH ROW
+    WHEN (NEW."url" IS DISTINCT FROM OLD."url")
+    EXECUTE FUNCTION "private"."clear_image_palette"();
+
 CREATE TRIGGER "images_request_palette"
-    AFTER INSERT OR UPDATE OF "palette" ON "public"."images"
+    AFTER INSERT OR UPDATE OF "palette", "url" ON "public"."images"
     FOR EACH ROW
     WHEN (NEW."palette" IS NULL)
     EXECUTE FUNCTION "private"."request_image_palette"();

@@ -49,8 +49,17 @@ serveJson("image-palette", async (req) => {
   const frame = decoded instanceof GIF ? decoded[0] : decoded;
   const palette = pickPalette(frame.bitmap, frame.width);
 
-  const { error: updateError } = await admin.from("images").update({ palette }).eq("id", imageId);
+  // Only if the row still shows this picture. When url changed meanwhile, the
+  // database has already asked for the new picture's palette; don't overwrite
+  // it with this stale one.
+  const { data: saved, error: updateError } = await admin
+    .from("images")
+    .update({ palette })
+    .eq("id", imageId)
+    .eq("url", image.url)
+    .select("id");
   if (updateError) throw updateError;
+  if (saved.length === 0) return { palette: null, stale: true };
   return { palette };
 });
 

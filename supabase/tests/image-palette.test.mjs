@@ -1,7 +1,7 @@
 // Drink-field palettes (images.palette): the column only holds hex colours, the
 // image-palette function only answers the database and the backfill script,
-// and the trigger fills the palette for a new picture, or when it's reset to
-// null, on its own.
+// and the trigger fills the palette for a new picture, a new url, or when it's
+// reset to null, on its own.
 //
 // The function tests need the edge runtime (don't exclude edge-runtime when
 // starting the stack) and the Vault secrets from supabase/seed.sql:
@@ -16,6 +16,7 @@ import { after, describe, test } from 'node:test';
 import { crc32, deflateSync } from 'node:zlib';
 
 import { createClient } from '@supabase/supabase-js';
+import pg from 'pg';
 
 const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
@@ -171,6 +172,51 @@ describe('image-palette function', { skip: functionSkip }, () => {
     const palette = await waitForPalette(id);
     assert.ok(palette, 'the trigger should have refilled the palette within 20 seconds');
     assert.equal(palette[0], '#3cc83c');
+  });
+
+  test('a new url clears the old palette and computes the new one', async () => {
+    const url = await uploadPicture('before', png([176, 40, 40], [20, 18, 16], 0.4));
+    const id = await insertImage({ url, palette: ['#b02828', '#3a0c0c', '#f5dcdc'] });
+    const newUrl = await uploadPicture('after', png([40, 90, 200], [20, 18, 16], 0.4));
+
+    const { data, error } = await service.from('images').update({ url: newUrl }).eq('id', id).select('palette').single();
+    assert.equal(error, null);
+    assert.equal(data.palette, null, 'the old palette is cleared in the same write');
+    const palette = await waitForPalette(id);
+    assert.ok(palette, 'the trigger should have filled the new palette within 20 seconds');
+    assert.equal(palette[0], '#285ac8');
+  });
+
+  test("a palette for a picture that was replaced meanwhile isn't saved", async () => {
+    const url = await uploadPicture('old', png([176, 40, 40], [20, 18, 16], 0.4));
+    const id = await insertImage({ url, palette: ['#b02828', '#3a0c0c', '#f5dcdc'] });
+    const newUrl = await uploadPicture('new', png([40, 90, 200], [20, 18, 16], 0.4));
+
+    // Swap the picture in a transaction that holds the row: the function reads
+    // the old url, draws the old palette, then waits on the row lock.
+    const db = new pg.Client({ connectionString: status.DB_URL });
+    await db.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('UPDATE public.images SET url = $1 WHERE id = $2', [newUrl, id]);
+      const pending = callFunction({ image_id: id, force: true });
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await db.query('COMMIT');
+      assert.deepEqual(await (await pending).json(), { palette: null, stale: true });
+    } finally {
+      await db.end();
+    }
+    const palette = await waitForPalette(id);
+    assert.equal(palette?.[0], '#285ac8', "the new picture's palette wins");
+  });
+
+  test('an update that keeps the url keeps the palette', async () => {
+    const url = await uploadPicture('same', png([176, 40, 40], [20, 18, 16], 0.4));
+    const palette = ['#b02828', '#3a0c0c', '#f5dcdc'];
+    const id = await insertImage({ url, palette });
+    const { error } = await service.from('images').update({ url }).eq('id', id);
+    assert.equal(error, null);
+    assert.deepEqual(await paletteOf(id), palette);
   });
 
   test('a greyscale picture gets [] so it is not retried', async () => {
