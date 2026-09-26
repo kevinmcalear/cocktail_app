@@ -7,10 +7,12 @@ import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useB
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import type { PresentationRecipe, SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
+import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import { SpecSection } from './SpecSection';
@@ -121,13 +123,14 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkTags tags={tags} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
-      <View style={styles.hug}>
+      <View style={styles.actions}>
         <GlassButton
           accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
           label={serviceMode ? 'Service mode on' : 'Service mode'}
           icon="sun.max.fill"
           onPress={toggleServiceMode}
         />
+        {preview ? null : <RankActions item={item} picture={heroPicture(item.item_images as ItemImageLink[] | undefined)} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
   readable: { maxWidth: 720, width: '100%' },
   body: { gap: space.lg },
   notes: { gap: space.sm },
-  hug: { alignSelf: 'flex-start' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   controlsRight: { flexDirection: 'row', gap: space.sm },
 });

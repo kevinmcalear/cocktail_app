@@ -45,6 +45,10 @@
       "destination": "/settings/bar/[id]/assign-items"
     },
     {
+      "source": "/rankings/:itemId",
+      "destination": "/rankings/[itemId]"
+    },
+    {
       "source": "/v/:slug",
       "destination": "/v/[slug]"
     }

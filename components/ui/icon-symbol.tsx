@@ -83,6 +83,8 @@ const MAPPING = {
   'doc.plaintext': 'article',
   'circle.fill': 'circle',
   'sun.max.fill': 'wb-sunny',
+  'list.number': 'format-list-numbered',
+  'trophy': 'emoji-events',
 } satisfies IconMapping;
 
 /**
