@@ -19,7 +19,7 @@ const BASELINE = 'scripts/design-ratchet.baseline.json';
 const MAX_LINES = 300;
 const SOURCES = '{app,components,hooks,lib,store,ctx}/**/*.{ts,tsx}';
 // Where raw values are allowed: the token sources themselves, and scripts.
-const TOKEN_FILES = ['constants/**', 'tamagui.config.ts', '**/*.check.ts', '**/*.selfcheck.ts', '**/*.test.*'];
+const TOKEN_FILES = ['constants/**', 'tamagui.config.ts', 'lib/color.ts', '**/*.check.ts', '**/*.selfcheck.ts', '**/*.test.*'];
 
 const RAW_NUMBER = '/^(?!0$)[0-9.]/';
 const RULES = [

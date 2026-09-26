@@ -43,7 +43,7 @@ Lazy means efficient, not careless. Before writing code, stop at the first rung 
 ## Code conventions
 
 - **Data:** Supabase queries live in TanStack Query hooks in `hooks/`, never in screens or components. Use the generated types in `types/`. Cursor pagination for long lists.
-- **UI:** Tamagui primitives and theme tokens. Reuse existing components before making new ones. Colours come from `constants/palette.ts` and the theme until the token file lands (see the design system doc).
+- **UI:** redesigned screens build from `components/ds` (tokens in `constants/tokens.ts`, gallery at `/dev/gallery`); existing screens use Tamagui with `constants/palette.ts` until they're replaced. Reuse before making new components. Use `role`/`aria-*` for accessibility, not the legacy `accessibilityRole`/`accessibilityState` (they don't reach the DOM on web).
 - **Platform differences:** small ones use `Platform.OS` / `Platform.select`; structural ones use `.web.tsx` / `.native.tsx` files.
 - **Native projects:** `ios/` and `android/` are generated (Expo prebuild) and ignored. Native config goes in `app.config.ts` and config plugins.
 - **Web head:** never import `expo-router/head`; use `components/WebHead`, which renders nothing on native.
