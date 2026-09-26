@@ -4,6 +4,8 @@ import { CurrentUserAvatar } from "@/components/ui/UserAvatar";
 import { Tabs } from "expo-router";
 
 import { LiquidTabBar } from "@/components/LiquidTabBar";
+import { AppTabs } from "@/components/nav/AppTabs";
+import { useRedesign } from "@/lib/flags";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from "@/hooks/useIsWideWeb";
@@ -12,6 +14,10 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   // Wide web uses the sidebar in the root layout; phones and narrow web use the tab bar.
   const isWideWeb = useIsWideWeb();
+  // The redesign swaps the whole tab layout. Flipping the flag remounts the
+  // navigator, which is fine for a preview switch.
+  const redesign = useRedesign();
+  if (redesign) return <AppTabs />;
 
   return (
     <Tabs
@@ -61,6 +67,9 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Redesign-only tabs, hidden in the current layout. */}
+      <Tabs.Screen name="library" options={{ href: null }} />
+      <Tabs.Screen name="prep" options={{ href: null }} />
       <Tabs.Screen
         name="search"
         options={{
