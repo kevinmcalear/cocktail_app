@@ -34,6 +34,7 @@ export function ServesRuler({ value, min, max, onChange }: ServesRulerProps) {
   // How far the ruler has moved: 0 puts `min` under the needle.
   const offset = useSharedValue((value - min) * TICK);
   const start = useSharedValue(0);
+  const startX = useSharedValue(0);
   const last = useSharedValue(value);
   const dragging = useSharedValue(false);
 
@@ -52,12 +53,15 @@ export function ServesRuler({ value, min, max, onChange }: ServesRulerProps) {
   const pan = Gesture.Pan()
     .activeOffsetX([-4, 4])
     .failOffsetY([-14, 14])
-    .onBegin(() => {
+    .onBegin((e) => {
       dragging.set(true);
       start.set(offset.get());
+      startX.set(e.absoluteX);
     })
     .onUpdate((e) => {
-      const raw = Math.min(span, Math.max(0, start.get() - e.translationX));
+      // From the press, not from activation: on web, translationX starts
+      // where the pan activates, which loses the first few pixels of a drag.
+      const raw = Math.min(span, Math.max(0, start.get() - (e.absoluteX - startX.get())));
       offset.set(raw);
       const next = min + Math.round(raw / TICK);
       if (next !== last.get()) {
@@ -90,7 +94,7 @@ export function ServesRuler({ value, min, max, onChange }: ServesRulerProps) {
     ticks.push(
       <View key={n} style={[styles.tickSlot, { left: (n - min) * TICK - TICK / 2 }]}>
         <View style={[styles.tick, { height: major ? 22 : 12, backgroundColor: major ? ds.c.muted : ds.c.faint }]} />
-        {n % 10 === 0 || n === min ? <Caption tone="muted" numberOfLines={1} style={styles.tickLabel}>{n}</Caption> : null}
+        {n % 10 === 0 || n === min ? <Caption tone="muted" style={styles.tickLabel}>{n}</Caption> : null}
       </View>
     );
   }

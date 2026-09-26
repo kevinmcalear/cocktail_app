@@ -28,7 +28,7 @@ export default function BatchRoute() {
 
   const methods = (dropdowns?.methods ?? []) as { id: string; name: string }[];
   const methodNames = (cocktail.item_methods ?? [])
-    .map((m) => methods.find((x) => x.id === m.method_item_id)?.name)
+    .map((m) => m.method?.name ?? methods.find((x) => x.id === m.method_item_id)?.name)
     .filter((n): n is string => !!n);
   return (
     <BatchScreen

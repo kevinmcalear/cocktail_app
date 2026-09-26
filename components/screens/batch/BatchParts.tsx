@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     fontSize: BIG,
     lineHeight: BIG,
     letterSpacing: -2,
-    minWidth: BIG * 1.2,
+    width: BIG * 1.25,
     padding: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
