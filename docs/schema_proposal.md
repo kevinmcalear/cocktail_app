@@ -292,13 +292,13 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Par is per location only** (Kevin, 2026-09-26). `item_locations.par_amount` is the only par; a bar's par for an item, house-made or bought, is the sum over its locations, and prep and order lists work from that. `item_prep` has no par.
 - **Guest staff expiry is per role only** (Kevin, 2026-09-26). `venue_roles.ends_at` ends access for everyone holding the role, which fits takeovers; there's no per-member end date. A one-off trial shift gets its own role.
 - **Bar profiles are public by default** (Kevin, 2026-09-26). A bar can opt out; person profiles stay private until published. So a guest venue can be credited on an event, and ranked, without a separate publish step.
+- **Person profiles stay private by default** (Kevin, 2026-09-26). A person's profile is private until they publish it; their rankings and home bar shelf are visible only to them. Only the area aggregates are public. Sharing rankings or shelves can be added later as an explicit opt-in.
 
 ## Open questions for Kevin
 
-1. **Person profiles and rankings private by default.** Public profiles show originals; rankings and shelves stay private until we decide what's shareable.
-2. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
-3. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
-4. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
-5. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-6. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-7. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
+2. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
+3. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
+4. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
+5. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+6. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
