@@ -426,3 +426,8 @@ verify_jwt = false
 # Called by the database (pg_net) with a shared secret, not a user session.
 [functions.image-worker]
 verify_jwt = false
+
+# Called by the database (pg_net) and the backfill script with a shared secret,
+# not a user session.
+[functions.image-palette]
+verify_jwt = false
