@@ -6,6 +6,7 @@ import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { SearchPopover } from '@/components/SearchPopover';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
@@ -452,7 +453,7 @@ export function HomePrompt() {
                               }
                               role="button"
                               aria-label="Grid view"
-                              aria-selected={mode === 'grid'}
+                              {...pressedProps(mode === 'grid')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -468,7 +469,7 @@ export function HomePrompt() {
                               }
                               role="button"
                               aria-label="List view"
-                              aria-selected={mode === 'list'}
+                              {...pressedProps(mode === 'list')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
