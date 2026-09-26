@@ -1,50 +1,27 @@
-# Welcome to your Expo app 👋
+# Cocktail
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A platform for the life of a drink. Bars create, prep, teach and pour their drinks; home bartenders collect and remake them; everyone ranks drinks and credits who made them. One Expo app for iOS, Android, web (babyvom.it) and desktop, on Supabase.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env   # fill in the Supabase URL and anon key
+npm run web            # or: npm run ios / npm run android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+To work against a local database instead of production, see [docs/dev_flow.md](docs/dev_flow.md#verify).
 
-## Learn more
+## Checks
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm run typecheck
+npm run lint
+npm run check:design   # no new raw colours/sizes/radii, `any`, or Supabase calls in UI
+npm run test:unit
+npm run test:security  # needs the local Supabase stack
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Contributing
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Read [AGENTS.md](AGENTS.md) first (it applies to people too), then [docs/dev_flow.md](docs/dev_flow.md) and [docs/design_system.md](docs/design_system.md). Work on a branch, open a PR, and Kevin merges when CI is green.

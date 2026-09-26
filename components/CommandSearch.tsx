@@ -1,4 +1,5 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
+import { itemHref } from '@/lib/itemRoutes';
 import { SearchItem } from '@/components/SearchList';
 import { SpecPillButton } from '@/components/SpecPillButton';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
@@ -41,6 +42,7 @@ import {
 } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 
 type AttrOption = {
@@ -521,14 +523,8 @@ export function CommandSearch({
       if (item.category === 'Menu') {
         setSelectedMenuId(item.id.replace('menu-', ''));
         router.push('/(tabs)/menus' as any);
-      } else if (item.category === 'Beer') {
-        router.push(`/beer/${item.id}` as any);
-      } else if (item.category === 'Wine') {
-        router.push(`/wine/${item.id}` as any);
-      } else if (item.category === 'Ingredient') {
-        router.push(`/ingredient/${item.id}` as any);
       } else {
-        router.push(`/cocktail/${item.id}` as any);
+        router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
       }
       onSelect?.();
     },
@@ -764,7 +760,7 @@ export function CommandSearch({
                   key={f}
                   onPress={() => setFilter(f)}
                   role="button"
-                  aria-selected={selected}
+                  {...pressedProps(selected)}
                   aria-label={f}
                   style={[
                     styles.pill,

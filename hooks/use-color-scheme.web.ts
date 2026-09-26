@@ -1,5 +1,5 @@
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { useEffect, useState } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
 function resolveSystemScheme(systemScheme: ReturnType<typeof useRNColorScheme>): 'light' | 'dark' {
@@ -11,17 +11,13 @@ function resolveSystemScheme(systemScheme: ReturnType<typeof useRNColorScheme>):
 }
 
 export function useColorScheme(): 'light' | 'dark' {
-    const [hasHydrated, setHasHydrated] = useState(false);
+    const isHydrated = useIsHydrated();
     const systemScheme = useRNColorScheme();
     const themeMode = useSettingsStore((state) => state.themeMode);
 
-    useEffect(() => {
-        setHasHydrated(true);
-    }, []);
-
-    if (typeof window === 'undefined' && !hasHydrated) {
-        return 'light';
-    }
+    // Matches what the static export baked into the HTML. Returning the device
+    // scheme during hydration left the export's t_light classes on a dark device.
+    if (!isHydrated) return 'light';
 
     if (themeMode !== 'system') return themeMode;
     return resolveSystemScheme(systemScheme);

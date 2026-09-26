@@ -1,11 +1,12 @@
 import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useHomeGreeting } from '@/hooks/useHomeGreeting';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { SearchPopover } from '@/components/SearchPopover';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
@@ -47,12 +48,6 @@ type VenueGroup = {
   logoUrl: string | null;
   drafts: any[];
 };
-
-function timeGreeting(hour = new Date().getHours()) {
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
 
 function timeAgo(at: number) {
   const s = Math.max(0, Math.floor((Date.now() - at) / 1000));
@@ -100,7 +95,6 @@ export function HomePrompt() {
   const theme = useTheme();
   const tabBarInset = useFloatingTabBarInset();
   const router = useRouter();
-  const { user } = useAuth();
   const { drafts } = useDrafts();
   const { data: userBars } = useBars();
   const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
@@ -112,8 +106,7 @@ export function HomePrompt() {
   // ponytail: override only — default is grid when ≤6, list when >6
   const [viewOverrides, setViewOverrides] = useState<Record<string, 'grid' | 'list'>>({});
 
-  const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
-  const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
+  const hello = useHomeGreeting();
 
   // ponytail: Jump Back In is last-touched, not search-context — venue filter hid Caretakers drafts on Home
   const recent = useMemo(() => {
@@ -452,7 +445,7 @@ export function HomePrompt() {
                               }
                               role="button"
                               aria-label="Grid view"
-                              aria-selected={mode === 'grid'}
+                              {...pressedProps(mode === 'grid')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -468,7 +461,7 @@ export function HomePrompt() {
                               }
                               role="button"
                               aria-label="List view"
-                              aria-selected={mode === 'list'}
+                              {...pressedProps(mode === 'list')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >

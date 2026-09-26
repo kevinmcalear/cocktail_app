@@ -1,0 +1,20 @@
+# Cocktail
+
+> A platform for the life of a drink: bars create, prep, teach and pour their drinks; home bartenders collect and remake them; everyone ranks drinks and credits who made them. One Expo app (iOS, Android, web, desktop) on Supabase.
+
+## Start here
+
+- [AGENTS.md](AGENTS.md): stack, how we work, enforced rules, coding conventions
+- [docs/dev_flow.md](docs/dev_flow.md): the cycle from issue to merge, local verification recipes, the redesign roadmap
+- [docs/design_system.md](docs/design_system.md): the Back Bar design rules (colour, type, motion, glass, images, layout, accessibility)
+- [Back Bar brief](https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf): research, mockups and data needs for the redesign
+
+## Reference
+
+- [docs/store-submission.md](docs/store-submission.md): App Store and Play submission notes
+- [lib/roles.ts](lib/roles.ts): role levels and what each can see
+- [lib/flags.ts](lib/flags.ts): the redesign flag
+- [constants/palette.ts](constants/palette.ts): colours until the token file lands
+- [supabase/migrations](supabase/migrations): schema and RLS
+- [supabase/functions](supabase/functions): edge functions (AI images, glassware ID, account deletion, venue web app)
+- [scripts/design-ratchet.mjs](scripts/design-ratchet.mjs): the design and code-quality ratchet

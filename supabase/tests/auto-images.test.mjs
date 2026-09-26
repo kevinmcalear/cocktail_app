@@ -1,6 +1,6 @@
 // Automatic item images: picture metadata, the job queue, settling jobs in
 // SQL, and the image-worker function. Runs through the real API against the
-// local stack, with the image model mocked (IMAGE_MODEL=mock in config.toml).
+// local stack, where the image model is always mocked (see _shared/localStack.ts).
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -56,7 +56,7 @@ async function probeWorker(attempts) {
 }
 const workerModel = await probeWorker(process.env.CI ? 20 : 1);
 if (workerModel === 'imagen') {
-  throw new Error('image-worker is using the real image model; set IMAGE_MODEL=mock before running tests.');
+  throw new Error('image-worker is using the real image model; unset IMAGE_MODEL=imagen in supabase/functions/.env before running tests.');
 }
 if (!workerModel && process.env.CI) {
   throw new Error('image-worker is not being served; CI starts the stack with edge-runtime for these tests.');

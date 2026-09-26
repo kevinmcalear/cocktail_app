@@ -10,5 +10,9 @@ module.exports = {
   ],
   // Jest's default also matches `test.tsx`, which is a route in app/(tabs).
   testMatch: ['**/*.test.[jt]s?(x)'],
+  // Agent worktrees live under .claude/worktrees inside the repo; their copies
+  // of the tests (and modules) aren't this checkout's.
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.claude/'],
+  modulePathIgnorePatterns: ['<rootDir>/.claude/'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.tsx'],
 };
