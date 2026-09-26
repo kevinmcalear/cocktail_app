@@ -33,6 +33,9 @@ export interface SpecLine {
   optional: boolean;
   /** Amount in ml, for the ratio bar; null when it can't be converted. */
   ml: number | null;
+  /** The raw number and unit (for scaling a batch); null when locked or missing. */
+  value: number | null;
+  unit: string | null;
 }
 
 // ponytail: approximate volumes for proportions only, never shown as numbers.
@@ -65,6 +68,8 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       note: r.preparation_notes?.trim() || null,
       optional: !!r.is_optional,
       ml: n === null || Number.isNaN(n) ? null : toMl(n, r.unit),
+      value: n === null || Number.isNaN(n) ? null : n,
+      unit: r.unit?.trim() || null,
     };
   });
 }
