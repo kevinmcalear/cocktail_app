@@ -14,7 +14,7 @@ The spec is the "What the data needs" table in the Back Bar brief (https://claud
 | 5 | Events | `20260926000500_events.sql` (after 6, since it credits a profile) |
 | 7 | Home bar and rankings | `20260926000600_home_bar_and_rankings.sql` |
 
-Tests: `supabase/tests/venue-platform.test.mjs` (36 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
+Tests: `supabase/tests/venue-platform.test.mjs` (38 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
 
 **Not in this proposal:** photo angles, generated images and anything touching `images` or `item_images` (another task owns them); publishing (the level below Guest, per-drink publish mode, bar releases and collections); moderation (reports, blocks, filtering); stock counts and prep batches ("on hand", "made Tue"); the "can make" function itself (the approach is written up in section 7).
 
@@ -115,7 +115,7 @@ Two cells of the matrix differ from what today's policies already allow, and tha
 
 `bar_zones`: `bar_id`, `name` (unique per bar), `kind` (`shelf`, `fridge`, `freezer`, `speed_rail`, `well`, `garnish`, `glass_rack`, `sink`, `bar_top`, `storeroom`, `other`), `description` ("Under the back bar, second from the left. 4 °C."), `photo_url`, and a position on the plan as fractions of its width and height (`plan_x`, `plan_y`, `plan_w`, `plan_h`, all or none, kept inside the plan), `sort_order`.
 
-`item_locations`: `bar_id`, `item_id`, `zone_id` (composite FK to the same bar's zone), `shelf` ("Top shelf · left"), `container` ("1 L squeeze bottle, blue tape, date on the cap"), `photo_url`, `par_amount` + `par_unit`, `sort_order`. An item can live in several places. Items the bar's menus use with no location are the ones "waiting for a spot"; that's a query, not a column.
+`item_locations`: `bar_id`, `item_id`, `zone_id` (composite FK to the same bar's zone), `shelf` ("Top shelf · left"), `container` ("1 L squeeze bottle, blue tape, date on the cap"), `photo_url`, `par_amount` + `par_unit`, `sort_order`. An item can live in several places. This is the only par in the schema: a bar's par for an item, house-made or bought, is the sum over its locations (see Decisions). Items the bar's menus use with no location are the ones "waiting for a spot"; that's a query, not a column.
 
 Positions are fractions, not pixels, so the phone card, the web map and printed labels draw the same plan at any size.
 
@@ -128,7 +128,7 @@ Positions are fractions, not pixels, so the phone card, the web map and printed 
 
 ## 4. Prep and purchasing
 
-`item_prep` (one row per house-made item): `yield_amount` + `yield_unit` (4 L), `shelf_life_hours`, `lead_time_minutes` (hands-off time: drip, infuse, freeze), `lead_time_note` ("24 h drip"), `par_amount` + `par_unit`. Keyed by item because house-made items belong to one bar (`items.bar_id`).
+`item_prep` (one row per house-made item): `yield_amount` + `yield_unit` (4 L), `shelf_life_hours`, `lead_time_minutes` (hands-off time: drip, infuse, freeze), `lead_time_note` ("24 h drip"). No par here; it comes from the item's locations. Keyed by item because house-made items belong to one bar (`items.bar_id`).
 
 `suppliers`: per bar, `name`, `website`, `order_notes`.
 
@@ -138,8 +138,8 @@ Positions are fractions, not pixels, so the phone card, the web map and printed 
 
 Derived, not stored:
 
-- **Prep list:** an event's or menu's drinks, walked down `recipes` (`parent_ingredient_id` already nests sub-recipes) to house-made items, scaled by covers, with "start by" = event start minus `lead_time_minutes`, and batches = needed / `yield`.
-- **Order list:** the same walk ending at bought items, grouped by supplier, rounded up to whole packs.
+- **Prep list:** for service, each house-made item's par (the sum of its `item_locations` pars); for an event, its drinks walked down `recipes` (`parent_ingredient_id` already nests sub-recipes) to house-made items and scaled by covers. "Start by" = event start minus `lead_time_minutes`, and batches = needed / `yield`. Subtracting what's on hand needs stock counts, which are out of scope.
+- **Order list:** the same, ending at bought items (par again from their locations), grouped by supplier, rounded up to whole packs.
 - **Pour cost:** `item_costs` per pack ÷ `pack_size`, times the amount in the spec; for house-made items, their own recipe's cost ÷ `yield`.
 
 **RLS:**
@@ -171,7 +171,7 @@ How a takeover works end to end:
 
 - `kind` (`person`, `bar`), `handle` (unique, `a-z 0-9 . _`, 3 to 30), `display_name`, `bio`, `avatar_url`, `website`.
 - Owner: `user_id` (person) or `bar_id` (bar). Neither set means **unclaimed**: a historic creator (Sam Ross) or a venue that isn't on the platform (Milk & Honey).
-- `is_public`, default false.
+- `is_public`: bar profiles are public unless they opt out; person profiles are private until the owner publishes. A trigger fills it by kind when an insert leaves it out, and an explicit value is kept.
 - Where: `locality` for everyone ("Brunswick"); `address_line`, `postcode`, `city`, `region`, `country_code`, `latitude`, `longitude` for bars only. A CHECK stops a person's profile holding an address.
 
 Location lives on the bar's profile, not `bars`, because it's public information and rankings need it for venues that aren't on the platform.
@@ -259,11 +259,11 @@ Screens from the brief. Bold tables are new in this proposal.
 | Tonight | active `menus`, `menu_drinks`, `app_item_presentation`; `bars` identity (**accent_light_color**, **display_face**, logo); **`events`** this week for the nudge; **`item_prep`** lead times for "prep starts today"; `my_capabilities` | none |
 | Drink (all role views) | `app_item_presentation`, `app_recipe_presentation`; `my_capabilities` and `get_venue_role_matrix` for locked sections and which role opens them; credit columns on `items` and **`profiles`**; **`item_locations`** per ingredient; **`item_costs`** + **`item_purchasing`** for pour cost; **`item_prep`** for house-made ingredients | drink edits (existing) |
 | Service view, photo slots | photo task's tables; `my_capabilities` (`photos`) | photo task |
-| Where it lives (phone) | **`item_locations`**, **`bar_zones`**, **`item_prep`** (par, shelf life) | **`item_locations`** (prep crew) |
+| Where it lives (phone) | **`item_locations`** (container, par), **`bar_zones`**, **`item_prep`** (shelf life) | **`item_locations`** (prep crew) |
 | Back bar map (web) | **`bar_zones`**, **`item_locations`**; "waiting for a spot" = items in active menus' recipes (recursive) with no location | **`bar_zones`**, **`item_locations`** |
 | Brand settings (web) | `bars` identity columns | `bars` (admins); the trigger fills the light-mode accent |
 | Roles and access (web) | `get_venue_role_matrix`, **`venue_roles`**, `user_bars` | **`venue_roles`**, `user_bars.venue_role_id` |
-| Prep | **`events`**, `menus`, `menu_drinks`, `recipes` (recursive), **`item_prep`**, **`item_purchasing`**, **`suppliers`** | **`item_prep`** par |
+| Prep | **`events`**, `menus`, `menu_drinks`, `recipes` (recursive), **`item_prep`**, **`item_locations`** (par), **`item_purchasing`**, **`suppliers`** | **`item_locations`** par, **`item_prep`** |
 | Batch | `recipes`, **`item_prep`** yield, **`item_purchasing`** pack size | none |
 | Study | `menus`, presentation views, `my_capabilities` | none (quiz state is out of scope) |
 | Library | `items`, presentation views; "needs photo" from the photo task | none |
@@ -289,16 +289,16 @@ Screens from the brief. Bold tables are new in this proposal.
 
 - **Two matrix cells follow today's policies, not the brief** (Kevin, 2026-09-26). Level 35 can already write menus, so Drink Creators get "Build menus and events" by default, and a guest bartender at base 35 can build menus. `can_write()` keeps its meaning; revisit only if a venue asks for a role that edits drinks but not menus.
 - **Base level names stay Employee (20) and Drink Creator (35)**, as in `lib/roles.ts`, not the brief's Floor and Maker (Kevin, 2026-09-26). Venues can still name their own roles anything.
+- **Par is per location only** (Kevin, 2026-09-26). `item_locations.par_amount` is the only par; a bar's par for an item, house-made or bought, is the sum over its locations, and prep and order lists work from that. `item_prep` has no par.
+- **Guest staff expiry is per role only** (Kevin, 2026-09-26). `venue_roles.ends_at` ends access for everyone holding the role, which fits takeovers; there's no per-member end date. A one-off trial shift gets its own role.
+- **Bar profiles are public by default** (Kevin, 2026-09-26). A bar can opt out; person profiles stay private until published. So a guest venue can be credited on an event, and ranked, without a separate publish step.
 
 ## Open questions for Kevin
 
-1. **Par in two places.** Per location (`item_locations`, "restock this spot to 2") and per house-made item (`item_prep`, "keep 2 L made"). Bought items' order par is the sum of their location pars. OK?
-2. **Expiry per role or per person?** The brief puts the end date on the role, which fits takeovers. A per-member end date would also cover a one-off trial shift.
-3. **Bar profiles private by default.** A guest venue has to be visible to be credited on an event, so Pale Moth needs a public profile first. Default bar profiles to public?
-4. **Person profiles and rankings private by default.** Public profiles show originals; rankings and shelves stay private until we decide what's shareable.
-5. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
-6. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
-7. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
-8. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-9. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-10. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Person profiles and rankings private by default.** Public profiles show originals; rankings and shelves stay private until we decide what's shareable.
+2. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
+3. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
+4. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
+5. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
+6. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+7. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.

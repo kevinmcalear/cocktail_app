@@ -5,7 +5,10 @@
 -- from a menu or event with these; the order list groups bought ingredients by
 -- supplier.
 --
---   item_prep         yield, shelf life, lead time and par. One row per item,
+-- Par lives only on item_locations, per place ("restock this spot to 2"). A
+-- bar's par for an item, house-made or bought, is the sum over its locations.
+--
+--   item_prep         yield, shelf life and lead time. One row per item,
 --                     since house-made items belong to one bar (items.bar_id).
 --   suppliers         a bar's suppliers.
 --   item_purchasing   per bar and item: supplier, bottle or pack size, order code.
@@ -24,13 +27,9 @@ CREATE TABLE "public"."item_prep" (
     "lead_time_minutes" integer CHECK ("lead_time_minutes" >= 0),
     -- "24 h drip", "12 h freeze"
     "lead_time_note" "text" CHECK (char_length("lead_time_note") <= 60),
-    -- How much the bar keeps made.
-    "par_amount" numeric CHECK ("par_amount" > 0),
-    "par_unit" "text",
     "updated_by" "uuid" DEFAULT "auth"."uid"() REFERENCES "auth"."users"("id") ON DELETE SET NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "item_prep_yield_check" CHECK (("yield_amount" IS NULL) = ("yield_unit" IS NULL)),
-    CONSTRAINT "item_prep_par_check" CHECK (("par_amount" IS NULL) = ("par_unit" IS NULL))
+    CONSTRAINT "item_prep_yield_check" CHECK (("yield_amount" IS NULL) = ("yield_unit" IS NULL))
 );
 
 CREATE TABLE "public"."suppliers" (
@@ -83,7 +82,7 @@ ALTER TABLE "public"."item_costs" ENABLE ROW LEVEL SECURITY;
 
 -- item_prep: readable with the item when it's personal or shared; for a bar's
 -- item, by members who see house-made recipes or run prep. Writable by the
--- bar's prep crew (they set par and shelf life), and by whoever can edit the
+-- bar's prep crew (they keep yield and shelf life current), and by whoever can edit the
 -- item if they can also see house-made recipes. (FOR ALL also grants reads,
 -- so the write rule must never be wider than the read rule.)
 CREATE POLICY "item_prep_select" ON "public"."item_prep" FOR SELECT TO "authenticated"

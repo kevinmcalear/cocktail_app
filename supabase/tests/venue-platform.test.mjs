@@ -127,7 +127,7 @@ before(async () => {
       bar_id: ids.barOne, item_id: ids.syrup, zone_id: ids.fridge, shelf: 'Top', container: '1 L squeeze bottle',
     })
   ).id;
-  await serviceInsert('item_prep', { item_id: ids.syrup, yield_amount: 1.2, yield_unit: 'L', shelf_life_hours: 168, par_amount: 2, par_unit: 'L' });
+  await serviceInsert('item_prep', { item_id: ids.syrup, yield_amount: 1.2, yield_unit: 'L', shelf_life_hours: 168 });
   ids.supplier = (await serviceInsert('suppliers', { bar_id: ids.barOne, name: `Bottle-O ${run}` })).id;
   await serviceInsert('item_purchasing', { bar_id: ids.barOne, item_id: ids.scotch, supplier_id: ids.supplier, pack_size_amount: 700, pack_size_unit: 'ml' });
   await serviceInsert('item_costs', { bar_id: ids.barOne, item_id: ids.scotch, pack_cost_minor: 4500, currency: 'AUD' });
@@ -142,7 +142,9 @@ before(async () => {
     await serviceInsert('profiles', { kind: 'bar', handle: `moth${run}`, display_name: `Pale Moth ${run}`, bar_id: ids.barTwo, is_public: true })
   ).id;
   ids.barThreeProfile = (
-    await serviceInsert('profiles', { kind: 'bar', handle: `backroom${run}`, display_name: `Back Room ${run}`, bar_id: ids.barThree })
+    await serviceInsert('profiles', {
+      kind: 'bar', handle: `backroom${run}`, display_name: `Back Room ${run}`, bar_id: ids.barThree, is_public: false,
+    })
   ).id;
   ids.samProfile = (
     await serviceInsert('profiles', { kind: 'person', handle: `sam${run}`, display_name: 'Sam', is_public: true })
@@ -398,16 +400,42 @@ describe('prep and purchasing', () => {
     }
   });
 
-  test('the prep crew can set par; the floor cannot', async () => {
+  test('the prep crew can set shelf life; the floor cannot', async () => {
     const { data } = await users.barback.client
       .from('item_prep')
-      .update({ par_amount: 3 })
+      .update({ shelf_life_hours: 120 })
       .eq('item_id', ids.syrup)
-      .select('par_amount');
-    assert.equal(Number(data[0].par_amount), 3);
+      .select('shelf_life_hours');
+    assert.equal(data[0].shelf_life_hours, 120);
 
-    const { data: floor } = await users.floor.client.from('item_prep').update({ par_amount: 99 }).eq('item_id', ids.syrup).select('item_id');
+    const { data: floor } = await users.floor.client
+      .from('item_prep')
+      .update({ shelf_life_hours: 1 })
+      .eq('item_id', ids.syrup)
+      .select('item_id');
     assert.deepEqual(floor, []);
+  });
+
+  test('par lives on locations only, and the prep crew sets it', async () => {
+    const { data, error } = await users.barback.client
+      .from('item_locations')
+      .update({ par_amount: 2, par_unit: 'L' })
+      .eq('id', ids.location)
+      .select('par_amount, par_unit');
+    assert.ifError(error);
+    assert.deepEqual(data.map((r) => [Number(r.par_amount), r.par_unit]), [[2, 'L']]);
+
+    const { data: floor } = await users.floor.client
+      .from('item_locations')
+      .update({ par_amount: 99, par_unit: 'L' })
+      .eq('id', ids.location)
+      .select('id');
+    assert.deepEqual(floor, []);
+
+    const { rows } = await db.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'item_prep' AND column_name LIKE 'par%'"
+    );
+    assert.deepEqual(rows, []);
   });
 
   test('suppliers and pack sizes are for the prep crew and cost handlers', async () => {
@@ -439,6 +467,32 @@ describe('profiles and credit', () => {
   test('signed-out visitors read public profiles and nothing else', async () => {
     const { data } = await anon.from('profiles').select('id').in('id', [ids.samProfile, ids.privateProfile, ids.barThreeProfile]);
     assert.deepEqual(data.map((r) => r.id), [ids.samProfile]);
+  });
+
+  test('bar profiles are public unless they opt out; people are private until they publish', async () => {
+    const unclaimedBar = await serviceInsert('profiles', { kind: 'bar', handle: `unclaimed${run}`, display_name: 'Milk & Honey' });
+    const person = await serviceInsert('profiles', { kind: 'person', handle: `newbie${run}`, display_name: 'New' });
+    assert.equal(unclaimedBar.is_public, true);
+    assert.equal(person.is_public, false);
+
+    // A bar admin creating their bar's profile through the API, without saying.
+    const barFour = (await serviceInsert('bars', { name: `Corner Bar ${run}` })).id;
+    await serviceInsert('user_bars', { user_id: users.otherAdmin.id, bar_id: barFour, role_level: 40 });
+    const client = users.otherAdmin.client;
+    const { data: created, error } = await client
+      .from('profiles')
+      .insert({ kind: 'bar', handle: `corner${run}`, display_name: 'Corner Bar', bar_id: barFour })
+      .select('id, is_public')
+      .single();
+    assert.ifError(error);
+    assert.equal(created.is_public, true);
+
+    // It can opt out.
+    const { data: hidden } = await client.from('profiles').update({ is_public: false }).eq('id', created.id).select('is_public');
+    assert.deepEqual(hidden, [{ is_public: false }]);
+
+    const shown = await visible(anon, 'profiles', 'id', [unclaimedBar.id, person.id, created.id, ids.barThreeProfile]);
+    assert.deepEqual([...shown], [unclaimedBar.id]);
   });
 
   test('owners and bar members see their own private profile', async () => {
