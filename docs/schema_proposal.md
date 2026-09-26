@@ -298,9 +298,9 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Ranking defaults stay** (Kevin, 2026-09-26): a drink at a bar needs at least 20 rankers before it's shown (`private.ranking_min_rankers()`), scores are pulled toward the drink's average with a prior of 10 rankers, and the rankings refresh hourly (pg_cron, minute 7). Each is one constant or schedule to change later.
 - **Only catalog admins create unclaimed profiles** (Kevin, 2026-09-26): historic creators and venues that aren't on the platform. Users can't suggest them yet; that would need a moderation queue.
 - **One currency per bar** (Kevin, 2026-09-26). `bars.currency` replaces a currency on every cost row; costs need it set first.
+- **A deleted account takes its profile with it** (Kevin, 2026-09-26). The person's profile, shelf, rankings and claims are deleted; drinks credited to them keep their other credit (origin bar, year) but lose the creator link. No anonymised credit is kept.
 
 ## Open questions for Kevin
 
-1. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-2. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-3. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+2. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
