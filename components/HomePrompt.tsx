@@ -260,8 +260,8 @@ export function HomePrompt() {
 
           <Pressable
             onPress={openSearch}
-            accessibilityRole="search"
-            accessibilityLabel="Search specs, menus and ingredients"
+            accessibilityRole="search" // `role` has no "search" on native; react-native-web maps this to role="search"
+            aria-label="Search specs, menus and ingredients"
             style={[styles.searchField, { borderColor: border, backgroundColor: cardSurface }]}
           >
             <IconSymbol name="magnifyingglass" size={18} color={muted} />
@@ -289,8 +289,8 @@ export function HomePrompt() {
                 <Pressable
                   key={m.id}
                   onPress={() => openMenu(m.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open ${m.name}${m.venue ? `, ${m.venue}` : ''}`}
+                  role="button"
+                  aria-label={`Open ${m.name}${m.venue ? `, ${m.venue}` : ''}`}
                   style={[styles.menuCard, { borderColor: border, backgroundColor: cardSurface }]}
                 >
                   {m.cover_url ? (
@@ -330,8 +330,8 @@ export function HomePrompt() {
                   <Pressable
                     key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
                     onPress={() => openRecent(r)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
+                    role="button"
+                    aria-label={
                       r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`
                     }
                     style={[
@@ -450,9 +450,9 @@ export function HomePrompt() {
                               onPress={() =>
                                 setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'grid' }))
                               }
-                              accessibilityRole="button"
-                              accessibilityLabel="Grid view"
-                              accessibilityState={{ selected: mode === 'grid' }}
+                              role="button"
+                              aria-label="Grid view"
+                              aria-selected={mode === 'grid'}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -466,9 +466,9 @@ export function HomePrompt() {
                               onPress={() =>
                                 setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'list' }))
                               }
-                              accessibilityRole="button"
-                              accessibilityLabel="List view"
-                              accessibilityState={{ selected: mode === 'list' }}
+                              role="button"
+                              aria-label="List view"
+                              aria-selected={mode === 'list'}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -492,8 +492,8 @@ export function HomePrompt() {
                                     <Pressable
                                       key={d.id}
                                       onPress={() => openDraft(d)}
-                                      accessibilityRole="button"
-                                      accessibilityLabel={`Continue draft ${title}`}
+                                      role="button"
+                                      aria-label={`Continue draft ${title}`}
                                       style={[
                                         styles.card,
                                         {
@@ -571,8 +571,8 @@ export function HomePrompt() {
                               <Pressable
                                 key={d.id}
                                 onPress={() => openDraft(d)}
-                                accessibilityRole="link"
-                                accessibilityLabel={`Continue ${draftTitle(d)}`}
+                                role="link"
+                                aria-label={`Continue ${draftTitle(d)}`}
                                 style={[
                                   styles.draftRow,
                                   {
@@ -620,8 +620,8 @@ export function HomePrompt() {
               <Pressable
                 key={item.route}
                 onPress={() => router.push(item.route as any)}
-                accessibilityRole="button"
-                accessibilityLabel={`Create ${item.label}`}
+                role="button"
+                aria-label={`Create ${item.label}`}
                 style={[
                   styles.quickCreate,
                   {
@@ -653,7 +653,7 @@ function SectionLabel({ children }: { children: string }) {
       letterSpacing={0.7}
       textTransform="uppercase"
       paddingHorizontal={4}
-      accessibilityRole="header"
+      role="heading"
     >
       {children}
     </Text>

@@ -20,6 +20,8 @@ export function useIngredients(options?: { allContexts?: boolean }) {
                     item_images (
                         sort_order,
                         image_id,
+                        is_generated,
+                        outdated_since,
                         images ( id, url )
                     ),
                     item_categories (
@@ -57,6 +59,8 @@ export function useIngredient(id?: string | string[]) {
                     item_images (
                         sort_order,
                         image_id,
+                        is_generated,
+                        outdated_since,
                         images ( id, url )
                     )
                 `)
@@ -97,6 +101,8 @@ export function useIngredient(id?: string | string[]) {
                         id, 
                         name,
                         item_images (
+                            sort_order,
+                            is_generated,
                             images ( url )
                         )
                     )
