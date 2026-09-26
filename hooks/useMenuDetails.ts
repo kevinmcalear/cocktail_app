@@ -1,4 +1,5 @@
 import { MenuItem, MenuSection } from '@/components/CurrentMenuList';
+import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -35,9 +36,9 @@ export function useMenuDetails(menuId: string | null) {
                     item:items!item_id (
                         id, name, description, item_type, brand_maker, origin, price,
                         item_images ( images ( url ) ),
-                        recipes!recipe_item_id (
-                            amount, unit,
-                            ingredient:items!ingredient_item_id ( id, name )
+                        recipes:app_recipe_presentation!recipe_item_id (
+                            amount, unit, sort_order, created_at, display_ingredient_id,
+                            display_ingredient ( id, name )
                         )
                     )
                 `)
@@ -66,10 +67,12 @@ export function useMenuDetails(menuId: string | null) {
 
                         if (i.item_type === 'cocktail') {
                             const rList = Array.isArray(i.recipes) ? i.recipes : [i.recipes];
-                            const ingList = rList.filter(Boolean).map((r: any) => {
+                            const ingList = sortRecipesByOrder(rList.filter(Boolean)).map((r: any) => {
+                                const ingredient = resolvePresentationIngredient(r);
+                                if (!ingredient) return '';
                                 const amt = r.amount ? `${r.amount} ` : '';
                                 const u = r.unit ? `${r.unit} ` : '';
-                                return `${amt}${u}${r.ingredient?.name || ''}`.trim();
+                                return `${amt}${u}${ingredient.name || ''}`.trim();
                             }).filter(Boolean).join(', ');
                             
                             return {

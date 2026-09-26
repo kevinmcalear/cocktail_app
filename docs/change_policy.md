@@ -57,14 +57,16 @@ Edit `change-policy.yml`, update `scripts/change-policy/classify.test.mjs` to
 pin the new behaviour, and run:
 
 ```bash
-npm ci --prefix scripts/change-policy && npm run test:policy
-```
-
-To see how a set of paths would route:
-
-```bash
-git diff --name-only origin/main...HEAD | node scripts/change-policy/classify.mjs
+npm run test:policy
 ```
 
 The classifier has its own `package.json` so CI can run it without installing
-the app.
+the app. `npm run test:policy` installs those dependencies first; without them
+Node falls back to the app's older `minimatch` and the classifier fails to load.
+Install them once before running the classifier directly to see how a set of
+paths would route:
+
+```bash
+npm ci --prefix scripts/change-policy
+git diff --name-only origin/main...HEAD | node scripts/change-policy/classify.mjs
+```
