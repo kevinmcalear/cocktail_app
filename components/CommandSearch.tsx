@@ -42,6 +42,7 @@ import {
 } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 
 type AttrOption = {
@@ -759,7 +760,7 @@ export function CommandSearch({
                   key={f}
                   onPress={() => setFilter(f)}
                   role="button"
-                  aria-selected={selected}
+                  {...pressedProps(selected)}
                   aria-label={f}
                   style={[
                     styles.pill,
