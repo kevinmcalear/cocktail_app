@@ -62,6 +62,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 - iOS 26+: Expo Router `NativeTabs` for the tab bar, `GlassView` (expo-glass-effect) for floating controls, `BlurView` fallback where glass isn't available.
 - Android: solid raised surfaces (expo-blur can't blur the tab bar cleanly there).
 - Web: `backdrop-filter` blur with a solid fallback.
+- Glass controls sitting on a photo use `onMedia` (dark glass, light ink) in both themes; otherwise dark ink on a dark photo disappears.
 
 ## Images
 
@@ -104,4 +105,4 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 
 ## The gallery
 
-`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden, and only opens in development or when the redesign flag is on. Add new ds components to it in the same PR; agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden (not linked anywhere) and opens in every build: its switch is how you turn the redesign on for yourself in production. Add new ds components to it in the same PR; agents verify against it and against the brief.

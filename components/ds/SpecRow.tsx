@@ -1,6 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
-import { space } from '@/constants/tokens';
+import { space, type } from '@/constants/tokens';
+
+import { PressableScale } from './PressableScale';
 
 import { Tag } from './Tag';
 import { Body, Caption, Spec } from './Text';
@@ -14,22 +16,34 @@ export interface SpecRowProps {
   houseMade?: boolean;
   optional?: boolean;
   note?: string;
+  /** Service mode reads bigger (1.25). */
+  scale?: number;
+  onPress?: () => void;
 }
 
 /**
  * One line of a spec, readable across the bar: the amount in its own aligned
  * column in the accent, then the ingredient.
  */
-export function SpecRow({ amount, ingredient, houseMade, optional, note }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, houseMade, optional, note, scale = 1, onPress }: SpecRowProps) {
   const ds = useDs();
   const spoken = [amount, ingredient, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
+  const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
+  const Row = onPress ? PressableScale : View;
   return (
-    <View accessible accessibilityLabel={spoken} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <Spec tone="accent" style={styles.amount}>
+    <Row
+      accessible
+      accessibilityLabel={spoken}
+      role={onPress ? 'button' : undefined}
+      onPress={onPress}
+      haptic={onPress ? false : undefined}
+      style={[styles.row, { borderBottomColor: ds.c.line }]}
+    >
+      <Spec tone="accent" style={[styles.amount, { width: 96 * scale }, big(type.spec)]}>
         {amount}
       </Spec>
       <View style={styles.name}>
-        <Body>{ingredient}</Body>
+        <Body style={big(type.body)}>{ingredient}</Body>
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {houseMade || optional ? (
           <View style={styles.tags}>
@@ -38,7 +52,7 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note }: SpecR
           </View>
         ) : null}
       </View>
-    </View>
+    </Row>
   );
 }
 
