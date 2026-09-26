@@ -14,6 +14,7 @@
 --   item_purchasing   per bar and item: supplier, bottle or pack size, order code.
 --   item_costs        per bar and item: what a pack costs. Its own table so
 --                     costs stay hidden from everyone without 'costs'.
+--   bars.currency     the one currency a bar's costs are in.
 
 CREATE TABLE "public"."item_prep" (
     "item_id" "uuid" PRIMARY KEY REFERENCES "public"."items"("id") ON DELETE CASCADE,
@@ -62,12 +63,18 @@ CREATE TABLE "public"."item_purchasing" (
 CREATE INDEX "item_purchasing_item_id_idx" ON "public"."item_purchasing" ("item_id");
 CREATE INDEX "item_purchasing_supplier_id_idx" ON "public"."item_purchasing" ("supplier_id");
 
+-- One currency per bar (ISO 4217). Set by the bar's admins through the
+-- existing bars policies. Empty until set, and costs can't be entered until it
+-- is, so no cost is ever stored without a known currency. Changing it later
+-- doesn't convert existing costs.
+ALTER TABLE "public"."bars" ADD COLUMN "currency" "text" CHECK ("currency" ~ '^[A-Z]{3}$');
+
 CREATE TABLE "public"."item_costs" (
     "bar_id" "uuid" NOT NULL REFERENCES "public"."bars"("id") ON DELETE CASCADE,
     "item_id" "uuid" NOT NULL REFERENCES "public"."items"("id") ON DELETE CASCADE,
-    -- Price of one pack (item_purchasing.pack_size), in minor units.
+    -- Price of one pack (item_purchasing.pack_size), in minor units of the
+    -- bar's currency.
     "pack_cost_minor" integer NOT NULL CHECK ("pack_cost_minor" >= 0),
-    "currency" "text" NOT NULL CHECK ("currency" ~ '^[A-Z]{3}$'),
     "updated_by" "uuid" DEFAULT "auth"."uid"() REFERENCES "auth"."users"("id") ON DELETE SET NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     PRIMARY KEY ("bar_id", "item_id")
@@ -129,7 +136,9 @@ CREATE POLICY "item_purchasing_write" ON "public"."item_purchasing" FOR ALL TO "
         AND "private"."item_usable_at_bar"("item_id", "bar_id")
     );
 
+-- Costs only once the bar has a currency.
 CREATE POLICY "item_costs_all" ON "public"."item_costs" FOR ALL TO "authenticated"
     USING ("bar_id" IN (SELECT "private"."bars_with_capability"('costs')))
     WITH CHECK ("bar_id" IN (SELECT "private"."bars_with_capability"('costs'))
-                AND "private"."item_usable_at_bar"("item_id", "bar_id"));
+                AND "private"."item_usable_at_bar"("item_id", "bar_id")
+                AND EXISTS (SELECT 1 FROM "public"."bars" "b" WHERE "b"."id" = "bar_id" AND "b"."currency" IS NOT NULL));

@@ -14,7 +14,7 @@ The spec is the "What the data needs" table in the Back Bar brief (https://claud
 | 5 | Events | `20260926000500_events.sql` (after 6, since it credits a profile) |
 | 7 | Home bar and rankings | `20260926000600_home_bar_and_rankings.sql` |
 
-Tests: `supabase/tests/venue-platform.test.mjs` (38 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
+Tests: `supabase/tests/venue-platform.test.mjs` (39 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
 
 **Not in this proposal:** photo angles, generated images and anything touching `images` or `item_images` (another task owns them); publishing (the level below Guest, per-drink publish mode, bar releases and collections); moderation (reports, blocks, filtering); stock counts and prep batches ("on hand", "made Tue"); the "can make" function itself (the approach is written up in section 7).
 
@@ -134,7 +134,9 @@ Positions are fractions, not pixels, so the phone card, the web map and printed 
 
 `item_purchasing` (per bar and item): `supplier_id` (composite FK to the same bar), `pack_size_amount` + `pack_size_unit` (700 ml), `order_code`.
 
-`item_costs` (per bar and item): `pack_cost_minor`, `currency`. A separate table because costs are a capability of their own: the prep crew builds orders from suppliers and pack sizes but shouldn't see what things cost.
+`bars.currency`: one ISO 4217 code per bar, set by its admins through the existing `bars` policies. It starts empty, and costs can't be entered until it's set, so no cost is stored without a known currency. Changing it later doesn't convert existing costs.
+
+`item_costs` (per bar and item): `pack_cost_minor`, in the bar's currency. A separate table because costs are a capability of their own: the prep crew builds orders from suppliers and pack sizes but shouldn't see what things cost.
 
 Derived, not stored:
 
@@ -149,7 +151,7 @@ Derived, not stored:
 | `item_prep` | shared/personal items with the item; bar items with `house_made` or `prep` | `prep`, or edit rights on the item plus `house_made` |
 | `suppliers` | `prep` or `costs` | `prep` or `costs` |
 | `item_purchasing` | `prep` or `costs` | `prep` or `costs`; item must be usable at the bar |
-| `item_costs` | `costs` | `costs` |
+| `item_costs` | `costs` | `costs`, once the bar has a currency |
 
 ## 5. Events
 
@@ -242,7 +244,7 @@ At today's scale this is cheap: the views are small and a full refresh takes mil
 | `item_locations` | `locations` | level 35+ or `prep` |
 | `item_prep` | `house_made` or `prep` (bar items) | `prep`, or item editor with `house_made` |
 | `suppliers`, `item_purchasing` | `prep` or `costs` | `prep` or `costs` |
-| `item_costs` | `costs` | `costs` |
+| `item_costs` | `costs` | `costs`, once the bar has a currency |
 | `events` | host members, guest venue members | `menus` |
 | `profiles` | public: everyone; private: owner, bar members | owner, bar `publish`, catalog admins |
 | `profile_claims` | claimant, catalog admins | claimant (pending), catalog admins |
@@ -295,10 +297,10 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Person profiles stay private by default** (Kevin, 2026-09-26). A person's profile is private until they publish it; their rankings and home bar shelf are visible only to them. Only the area aggregates are public. Sharing rankings or shelves can be added later as an explicit opt-in.
 - **Ranking defaults stay** (Kevin, 2026-09-26): a drink at a bar needs at least 20 rankers before it's shown (`private.ranking_min_rankers()`), scores are pulled toward the drink's average with a prior of 10 rankers, and the rankings refresh hourly (pg_cron, minute 7). Each is one constant or schedule to change later.
 - **Only catalog admins create unclaimed profiles** (Kevin, 2026-09-26): historic creators and venues that aren't on the platform. Users can't suggest them yet; that would need a moderation queue.
+- **One currency per bar** (Kevin, 2026-09-26). `bars.currency` replaces a currency on every cost row; costs need it set first.
 
 ## Open questions for Kevin
 
-1. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
-2. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-3. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-4. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
+2. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+3. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.

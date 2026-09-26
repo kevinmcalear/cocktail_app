@@ -130,7 +130,8 @@ before(async () => {
   await serviceInsert('item_prep', { item_id: ids.syrup, yield_amount: 1.2, yield_unit: 'L', shelf_life_hours: 168 });
   ids.supplier = (await serviceInsert('suppliers', { bar_id: ids.barOne, name: `Bottle-O ${run}` })).id;
   await serviceInsert('item_purchasing', { bar_id: ids.barOne, item_id: ids.scotch, supplier_id: ids.supplier, pack_size_amount: 700, pack_size_unit: 'ml' });
-  await serviceInsert('item_costs', { bar_id: ids.barOne, item_id: ids.scotch, pack_cost_minor: 4500, currency: 'AUD' });
+  await service.from('bars').update({ currency: 'AUD' }).eq('id', ids.barOne);
+  await serviceInsert('item_costs', { bar_id: ids.barOne, item_id: ids.scotch, pack_cost_minor: 4500 });
 
   ids.barOneProfile = (
     await serviceInsert('profiles', {
@@ -458,8 +459,30 @@ describe('prep and purchasing', () => {
     }
     const { error } = await users.maker.client
       .from('item_costs')
-      .insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1, currency: 'AUD' });
+      .insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1 });
     assert.ok(error);
+  });
+
+  test('costs use the bar\'s currency, which only admins set, and need one first', async () => {
+    const admin = users.admin.client;
+    const head = users.headBartender.client;
+
+    const { data: maker } = await users.maker.client.from('bars').update({ currency: 'USD' }).eq('id', ids.barOne).select('id');
+    assert.deepEqual(maker, []);
+    assert.ok((await admin.from('bars').update({ currency: 'aud' }).eq('id', ids.barOne)).error, 'lowercase codes are refused');
+
+    await admin.from('bars').update({ currency: null }).eq('id', ids.barOne);
+    const none = await head.from('item_costs').insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1500 });
+    assert.ok(none.error, 'no costs until the bar has a currency');
+
+    assert.ifError((await admin.from('bars').update({ currency: 'AUD' }).eq('id', ids.barOne)).error);
+    const { data, error } = await head
+      .from('item_costs')
+      .insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1500 })
+      .select('pack_cost_minor, bar:bars(currency)')
+      .single();
+    assert.ifError(error);
+    assert.deepEqual(data, { pack_cost_minor: 1500, bar: { currency: 'AUD' } });
   });
 });
 
