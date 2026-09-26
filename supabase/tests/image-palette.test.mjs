@@ -1,6 +1,7 @@
 // Drink-field palettes (images.palette): the column only holds hex colours, the
 // image-palette function only answers the database and the backfill script,
-// and a new picture gets its palette from the insert trigger on its own.
+// and the trigger fills the palette for a new picture, or when it's reset to
+// null, on its own.
 //
 // The function tests need the edge runtime (don't exclude edge-runtime when
 // starting the stack) and the Vault secrets from supabase/seed.sql:
@@ -100,6 +101,16 @@ async function paletteOf(id) {
   return data.palette;
 }
 
+/** Polls for up to 20 seconds while the trigger's request runs. */
+async function waitForPalette(id) {
+  for (let i = 0; i < 40; i++) {
+    const palette = await paletteOf(id);
+    if (palette !== null) return palette;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  return null;
+}
+
 describe('images.palette', () => {
   test('holds up to three lowercase #rrggbb colours, [] or null', async () => {
     const id = await insertImage({ url: `https://example.test/${run}.png`, palette: [] });
@@ -141,11 +152,7 @@ describe('image-palette function', { skip: functionSkip }, () => {
     const url = await uploadPicture('negroni', png([176, 40, 40], [20, 18, 16], 0.4));
     const id = await insertImage({ url });
 
-    let palette = null;
-    for (let i = 0; i < 40 && palette === null; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      palette = await paletteOf(id);
-    }
+    const palette = await waitForPalette(id);
     assert.ok(palette, 'the trigger should have filled the palette within 20 seconds');
     assert.equal(palette.length, 3);
     assert.equal(palette[0], '#b02828');
@@ -153,6 +160,17 @@ describe('image-palette function', { skip: functionSkip }, () => {
     // Asking again without force leaves it alone.
     const res = await callFunction({ image_id: id });
     assert.deepEqual(await res.json(), { palette, skipped: true });
+  });
+
+  test('setting the palette back to null recomputes it', async () => {
+    const url = await uploadPicture('midori', png([60, 200, 60], [20, 18, 16], 0.4));
+    const id = await insertImage({ url, palette: ['#000000'] });
+
+    const { error } = await service.from('images').update({ palette: null }).eq('id', id);
+    assert.equal(error, null);
+    const palette = await waitForPalette(id);
+    assert.ok(palette, 'the trigger should have refilled the palette within 20 seconds');
+    assert.equal(palette[0], '#3cc83c');
   });
 
   test('a greyscale picture gets [] so it is not retried', async () => {

@@ -4,11 +4,15 @@
 -- images.palette is [dominant, deep, light] as lowercase "#rrggbb" strings:
 --   NULL = not computed yet, [] = computed, but the picture has no colour.
 --
--- The image-palette edge function computes it. A trigger on insert wakes the
--- function through pg_net, so every way a picture arrives (app uploads, the
--- Generate button, the automatic sketch worker) gets a palette without the app
--- changing. The trigger needs two Vault secrets; until they exist it does
--- nothing, and scripts/backfill-palettes.mjs fills the gaps.
+-- The image-palette edge function computes it. A trigger wakes the function
+-- through pg_net whenever a row has no palette:
+--   * on insert, so every way a picture arrives (app uploads, the Generate
+--     button, the automatic sketch worker) gets a palette without app changes;
+--   * when palette is set back to NULL, so `UPDATE images SET palette = NULL`
+--     recomputes it. The function always writes a non-NULL value, so this
+--     can't loop.
+-- The trigger needs two Vault secrets; until they exist it does nothing, and
+-- scripts/backfill-palettes.mjs fills the gaps.
 
 CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
 
@@ -23,10 +27,10 @@ ALTER TABLE "public"."images"
     );
 
 COMMENT ON COLUMN "public"."images"."palette" IS
-    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set by the image-palette edge function.';
+    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set by the image-palette edge function; set it to NULL to recompute.';
 
--- Pokes image-palette for a new picture. Never blocks the insert: a failed
--- request just leaves the palette NULL for the backfill script.
+-- Pokes image-palette for a picture with no palette. Never blocks the write: a
+-- failed request just leaves the palette NULL for the backfill script.
 CREATE FUNCTION "private"."request_image_palette"() RETURNS trigger
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -57,7 +61,7 @@ $$;
 REVOKE ALL ON FUNCTION "private"."request_image_palette"() FROM PUBLIC;
 
 CREATE TRIGGER "images_request_palette"
-    AFTER INSERT ON "public"."images"
+    AFTER INSERT OR UPDATE OF "palette" ON "public"."images"
     FOR EACH ROW
     WHEN (NEW."palette" IS NULL)
     EXECUTE FUNCTION "private"."request_image_palette"();
