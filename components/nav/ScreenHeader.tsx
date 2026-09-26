@@ -30,3 +30,16 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   avatar: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });
+
+/**
+ * The header inside a list: ScreenHeader handles its own safe-area padding and
+ * gutter, so this cancels the list's horizontal padding around it.
+ */
+export function ScreenHeaderSpacer() {
+  const gutter = useGutter();
+  return (
+    <View style={{ marginHorizontal: -gutter }}>
+      <ScreenHeader />
+    </View>
+  );
+}

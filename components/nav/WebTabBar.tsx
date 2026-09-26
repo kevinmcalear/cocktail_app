@@ -6,12 +6,22 @@ import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useMode } from '@/hooks/useMode';
 
-export const WEB_TABS: { name: string; label: string; icon: IconName }[] = [
+type WebTab = { name: string; label: string; icon: IconName };
+
+const VENUE_TABS: WebTab[] = [
   { name: 'index', label: 'Tonight', icon: 'house.fill' },
   { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
   { name: 'prep', label: 'Prep', icon: 'flask' },
   { name: 'test', label: 'Study', icon: 'book' },
+];
+
+const HOME_TABS: WebTab[] = [
+  { name: 'index', label: 'Discover', icon: 'safari' },
+  { name: 'bar', label: 'My Bar', icon: 'wineglass' },
+  { name: 'collection', label: 'Collection', icon: 'bookmark' },
+  { name: 'profile', label: 'You', icon: 'person.crop.circle' },
 ];
 
 const BAR_HEIGHT = 56;
@@ -38,6 +48,7 @@ const NATIVE_BAR_HEIGHT = 64;
 export function WebTabBar({ state, navigation }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
+  const { mode } = useMode();
   const current = state.routes[state.index]?.name;
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
@@ -49,7 +60,7 @@ export function WebTabBar({ state, navigation }: BottomTabBarProps) {
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
         <View role="tablist" style={styles.row}>
-          {WEB_TABS.map((t) => {
+          {(mode === 'home' ? HOME_TABS : VENUE_TABS).map((t) => {
             const selected = current === t.name;
             const color = selected ? ds.accentText : ds.c.muted;
             return (
