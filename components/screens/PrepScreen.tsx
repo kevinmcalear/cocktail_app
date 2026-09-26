@@ -45,8 +45,10 @@ export function PrepScreen() {
   const { active } = useActiveVenue();
   const barId = active?.id ?? null;
   const caps = useCapabilities(barId);
+  // Guard against a stale persisted cache entry that isn't an array.
+  const capabilities = Array.isArray(caps.data) ? caps.data : null;
   const { data: prepOpensAt } = useCapabilityOpensAt(barId, 'prep');
-  const canPrep = !!caps.data?.includes('prep');
+  const canPrep = !!capabilities?.includes('prep');
   const { data: events = [] } = useEvents(canPrep ? barId : null);
   const { data: dropdowns } = useDropdowns();
   const venueMenus = ((dropdowns?.menus ?? []) as MenuRow[]).filter((m) => m.bar_id === barId);
@@ -84,7 +86,7 @@ export function PrepScreen() {
   let content: React.ReactNode;
   if (!barId) content = <Body tone="muted">Once a venue adds you to its team, its prep list shows here.</Body>;
   else if (caps.error) content = <Body tone="muted">Prep isn’t set up for this venue yet.</Body>;
-  else if (caps.data && !canPrep)
+  else if (capabilities && !canPrep)
     content = (
       <LockedSection title="Prep list and orders" unlocked={false} opensAt={prepOpensAt ? roleLabel(prepOpensAt) : 'a higher role'}>
         {null}
@@ -114,7 +116,7 @@ export function PrepScreen() {
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <Display>Prep</Display>
           {canPrep ? (
-            <PrepSources events={events} source={source} onSource={pick} canCreate={!!caps.data?.includes('menus')} onNewEvent={() => setCreating(true)} />
+            <PrepSources events={events} source={source} onSource={pick} canCreate={!!capabilities?.includes('menus')} onNewEvent={() => setCreating(true)} />
           ) : null}
           {content}
         </View>
