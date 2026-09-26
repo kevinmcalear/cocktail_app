@@ -1,7 +1,9 @@
-// Drink-field palettes (images.palette): the column only holds hex colours, the
-// image-palette function only answers the database and the backfill script,
-// and the trigger fills the palette for a new picture, a new url, or when it's
-// reset to null, on its own.
+// Drink-field palettes (images.palette):
+//   * the column only holds hex colours, and only the service role sets it;
+//   * the image-palette function only answers the database and the backfill
+//     script;
+//   * the trigger fills the palette on its own for a new picture, a new url,
+//     or a palette reset to null.
 //
 // The function tests need the edge runtime (don't exclude edge-runtime when
 // starting the stack) and the Vault secrets from supabase/seed.sql:
@@ -34,11 +36,26 @@ const SECRET = 'local-image-palette-secret';
 
 const imageIds = [];
 const paths = [];
+const userIds = [];
 
 after(async () => {
   if (imageIds.length) await service.from('images').delete().in('id', imageIds);
   if (paths.length) await service.storage.from('drinks').remove(paths);
+  for (const id of userIds) await service.auth.admin.deleteUser(id);
 });
+
+/** A signed-in client for a throwaway local user. */
+async function signedIn() {
+  const email = `palette-${run}-${userIds.length}@security-test.local`;
+  const password = `pw-${randomUUID()}`;
+  const { data, error } = await service.auth.admin.createUser({ email, password, email_confirm: true });
+  if (error) throw error;
+  userIds.push(data.user.id);
+  const client = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  if (signInError) throw signInError;
+  return client;
+}
 
 function callFunction(body, headers = { 'x-image-palette-secret': SECRET }) {
   return fetch(FUNCTION_URL, {
@@ -137,6 +154,59 @@ describe('images.palette', () => {
       assert.ok(error, `${JSON.stringify(palette)} should be rejected`);
       assert.match(error.message, /images_palette_hex_colours/);
     }
+  });
+});
+
+describe('who sets images.palette', () => {
+  test('signed-in users can add pictures, but not with a palette', async () => {
+    const user = await signedIn();
+
+    const { data, error } = await user.from('images').insert({ url: `https://example.test/${run}-user.png` }).select('id, palette').single();
+    assert.equal(error, null);
+    imageIds.push(data.id);
+    assert.equal(data.palette, null);
+
+    const forged = await user.from('images').insert({ url: `https://example.test/${run}-forged.png`, palette: ['#ff00ff'] });
+    assert.equal(forged.error?.code, '42501');
+    assert.match(forged.error.message, /Only the server sets images\.palette/);
+  });
+
+  test("signed-in users can't change a palette", async () => {
+    const user = await signedIn();
+    const palette = ['#b02828', '#3a0c0c', '#f5dcdc'];
+    const id = await insertImage({ url: `https://example.test/${run}-keep.png`, palette });
+    await user.from('images').update({ palette: ['#ff00ff'] }).eq('id', id);
+    await user.from('images').update({ palette: null }).eq('id', id);
+    assert.deepEqual(await paletteOf(id), palette);
+  });
+
+  test('the guard holds even if a future policy lets users update images', async () => {
+    // Today no UPDATE policy exists, so RLS stops users first. Add one inside a
+    // transaction that is rolled back, to check the trigger on its own.
+    const palette = ['#b02828', '#3a0c0c', '#f5dcdc'];
+    const id = await insertImage({ url: `https://example.test/${run}-policy.png`, palette });
+    const db = new pg.Client({ connectionString: status.DB_URL });
+    await db.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query(`CREATE POLICY "palette_test_update" ON public.images FOR UPDATE TO authenticated USING (true)`);
+      await db.query('SET LOCAL ROLE authenticated');
+      await assert.rejects(db.query(`UPDATE public.images SET palette = '["#ff00ff"]' WHERE id = $1`, [id]), {
+        code: '42501',
+        message: /Only the server sets images\.palette/,
+      });
+    } finally {
+      await db.query('ROLLBACK').catch(() => {});
+      await db.end();
+    }
+    assert.deepEqual(await paletteOf(id), palette);
+  });
+
+  test('the service role can', async () => {
+    const id = await insertImage({ url: `https://example.test/${run}-service.png`, palette: ['#123abc'] });
+    const { error } = await service.from('images').update({ palette: ['#abc123'] }).eq('id', id);
+    assert.equal(error, null);
+    assert.deepEqual(await paletteOf(id), ['#abc123']);
   });
 });
 

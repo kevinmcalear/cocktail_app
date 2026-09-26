@@ -15,6 +15,9 @@
 --     first, so a palette always belongs to the row's current picture.
 -- The trigger needs two Vault secrets; until they exist it does nothing, and
 -- scripts/backfill-palettes.mjs fills the gaps.
+--
+-- Only the service role (the function) and database owners set palette.
+-- Signed-in users can still insert images rows, but not with a palette.
 
 CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
 
@@ -29,7 +32,7 @@ ALTER TABLE "public"."images"
     );
 
 COMMENT ON COLUMN "public"."images"."palette" IS
-    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set by the image-palette edge function; cleared when url changes; set it to NULL to recompute.';
+    'Drink field colours [dominant, deep, light] as "#rrggbb"; NULL = not computed, [] = no colour. Set only by the service role (the image-palette edge function); cleared when url changes; set it to NULL to recompute.';
 
 -- Pokes image-palette for a picture with no palette. Never blocks the write: a
 -- failed request just leaves the palette NULL for the backfill script.
@@ -62,26 +65,40 @@ $$;
 
 REVOKE ALL ON FUNCTION "private"."request_image_palette"() FROM PUBLIC;
 
--- A new picture means a new palette. The AFTER trigger below then asks for it
--- (it lists url too: column triggers follow the UPDATE's SET list, not columns
--- a BEFORE trigger changed).
-CREATE FUNCTION "private"."clear_image_palette"() RETURNS trigger
+-- Before every write:
+--   1. Only the service role and database owners may set palette. A trigger,
+--      not column grants: the table is granted to authenticated as a whole,
+--      and a column REVOKE doesn't override that.
+--   2. A new url means a new picture, so its old palette is cleared. The AFTER
+--      trigger below then asks for a new one (it lists url too: column
+--      triggers follow the UPDATE's SET list, not columns a BEFORE trigger
+--      changed).
+-- SECURITY INVOKER on purpose, so current_user is the caller's role.
+CREATE FUNCTION "private"."guard_image_palette"() RETURNS trigger
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
 BEGIN
-    NEW.palette := NULL;
+    IF current_user NOT IN ('service_role', 'postgres', 'supabase_admin') AND (
+        (TG_OP = 'INSERT' AND NEW.palette IS NOT NULL)
+        OR (TG_OP = 'UPDATE' AND NEW.palette IS DISTINCT FROM OLD.palette)
+    ) THEN
+        RAISE EXCEPTION 'Only the server sets images.palette.' USING ERRCODE = '42501';
+    END IF;
+
+    IF TG_OP = 'UPDATE' AND NEW.url IS DISTINCT FROM OLD.url THEN
+        NEW.palette := NULL;
+    END IF;
     RETURN NEW;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION "private"."clear_image_palette"() FROM PUBLIC;
+REVOKE ALL ON FUNCTION "private"."guard_image_palette"() FROM PUBLIC;
 
-CREATE TRIGGER "images_clear_palette_on_new_url"
-    BEFORE UPDATE OF "url" ON "public"."images"
+CREATE TRIGGER "images_guard_palette"
+    BEFORE INSERT OR UPDATE ON "public"."images"
     FOR EACH ROW
-    WHEN (NEW."url" IS DISTINCT FROM OLD."url")
-    EXECUTE FUNCTION "private"."clear_image_palette"();
+    EXECUTE FUNCTION "private"."guard_image_palette"();
 
 CREATE TRIGGER "images_request_palette"
     AFTER INSERT OR UPDATE OF "palette", "url" ON "public"."images"
