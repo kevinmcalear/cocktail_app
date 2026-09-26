@@ -52,3 +52,9 @@ export async function consumeAiQuota(caller: Caller, fn: string): Promise<void> 
     throw new HttpError(429, "You've reached today's AI limit. Try again tomorrow.");
   }
 }
+
+/** Hands back a unit taken by consumeAiQuota when the call it paid for failed. */
+export async function refundAiQuota(caller: Caller, fn: string): Promise<void> {
+  const { error } = await caller.admin.rpc("refund_ai_quota", { p_user_id: caller.user.id, p_bar_id: null, p_fn: fn });
+  if (error) console.error(`${fn}: quota refund failed:`, error);
+}

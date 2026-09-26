@@ -11,3 +11,6 @@ export function isLocalStack(): boolean {
 
 /** The image-worker secret on a local stack (Vault holds the same value in tests). */
 export const LOCAL_IMAGE_WORKER_SECRET = "local-image-worker-secret";
+
+/** The image-palette secret on a local stack (supabase/seed.sql puts the same value in Vault). */
+export const LOCAL_IMAGE_PALETTE_SECRET = "local-image-palette-secret";
