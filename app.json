@@ -55,14 +55,7 @@
       "expo-secure-store",
       "expo-status-bar",
       "expo-localization",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "enableSceneSupport": true
-          }
-        }
-      ]
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true,

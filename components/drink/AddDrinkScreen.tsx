@@ -1,6 +1,6 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, usePreventRemove } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,7 +47,6 @@ export function AddDrinkScreen({
   const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
   const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
   const seedName = initialNameProp !== undefined ? initialNameProp : initialNameParam;
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
 
@@ -58,8 +57,8 @@ export function AddDrinkScreen({
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
 
   const [showExitModal, setShowExitModal] = useState(false);
-  const pendingNavigationActionRef = React.useRef<any>(null);
-  const isExitingRef = React.useRef(false);
+  const pendingExitRef = React.useRef<(() => void) | null>(null);
+  const [exiting, setExiting] = React.useState(false);
 
   const form = useDrinkFormState(seedName ? capitalize(seedName) : '', activeBarIdProp || null);
   const { name, localImages, setLocalImages, selectedCategories, barId } = form;
@@ -83,9 +82,9 @@ export function AddDrinkScreen({
 
   const draftLoadedRef = React.useRef<string | null>(null);
   const currentStateStr = JSON.stringify(draftData);
-  const cleanStateStrRef = React.useRef<string>(currentStateStr);
+  const [cleanStateStr, setCleanStateStr] = React.useState(currentStateStr);
   const [needsCleanMark, setNeedsCleanMark] = useState(false);
-  const hasProgress = () => name.trim() !== '' || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+  const hasProgress = () => name.trim() !== '' || currentDraftId !== null || currentStateStr !== cleanStateStr;
 
   const trackedDraft = currentDraftId ? drafts.find((d: any) => d.id === currentDraftId) : null;
   useTrackRecent(
@@ -101,7 +100,7 @@ export function AddDrinkScreen({
 
   React.useEffect(() => {
     if (needsCleanMark) {
-      cleanStateStrRef.current = currentStateStr;
+      setCleanStateStr(currentStateStr);
       setNeedsCleanMark(false);
     }
   }, [needsCleanMark, currentStateStr]);
@@ -147,26 +146,20 @@ export function AddDrinkScreen({
     }
   };
 
-  React.useEffect(() => {
-    if (isInline) return;
-    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      if (isExitingRef.current || !hasProgress()) return;
-      e.preventDefault();
-      pendingNavigationActionRef.current = e.data.action;
-      setShowExitModal(true);
-    });
-    return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigation, currentStateStr, name, currentDraftId, isInline]);
+  // Ask before leaving with unsaved work (on web this also guards closing the tab).
+  const allowExit = usePreventRemove(!isInline && !exiting && hasProgress(), ({ repeat }) => {
+    pendingExitRef.current = repeat;
+    setShowExitModal(true);
+  });
 
   const confirmExit = async (shouldSave: boolean) => {
     setShowExitModal(false);
     if (shouldSave) await handleSaveDraft();
     if (isInline) {
       onClose?.();
-    } else if (pendingNavigationActionRef.current) {
-      isExitingRef.current = true;
-      navigation.dispatch(pendingNavigationActionRef.current);
+    } else if (pendingExitRef.current) {
+      setExiting(true);
+      pendingExitRef.current();
     }
   };
 
@@ -243,7 +236,8 @@ export function AddDrinkScreen({
         {
           text: 'OK',
           onPress: () => {
-            isExitingRef.current = true;
+            setExiting(true);
+            allowExit();
             if (isInline) onSave?.();
             else router.back();
           },

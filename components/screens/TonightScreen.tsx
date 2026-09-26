@@ -72,7 +72,7 @@ export function TonightScreen() {
                   : 'Once a venue adds you to its team, tonight’s menu shows here.'}
               </Body>
             </View>
-          ) : null
+          ) : undefined
         }
       />
     </View>

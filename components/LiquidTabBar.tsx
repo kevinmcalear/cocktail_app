@@ -64,7 +64,8 @@ function TabBarSurface({ scheme, children }: { scheme: "light" | "dark"; childre
 export function LiquidTabBar({
     state,
     descriptors,
-    navigation,
+    emitter,
+    navigateToTab,
 }: BottomTabBarProps) {
     const { buildHref } = useLinkBuilder();
     const colorScheme = useColorScheme();
@@ -114,19 +115,19 @@ export function LiquidTabBar({
                         const isFocused = state.index === originalIndex;
 
                         const onPress = () => {
-                            const event = navigation.emit({
+                            const event = emitter.emit({
                                 type: "tabPress",
                                 target: route.key,
                                 canPreventDefault: true,
                             });
 
                             if (!isFocused && !event.defaultPrevented) {
-                                navigation.navigate(route.name, route.params);
+                                navigateToTab(route.key);
                             }
                         };
 
                         const onLongPress = () => {
-                            navigation.emit({
+                            emitter.emit({
                                 type: "tabLongPress",
                                 target: route.key,
                             });

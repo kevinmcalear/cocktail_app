@@ -106,7 +106,7 @@ export function LibraryScreen() {
             </PressableScale>
           );
         }}
-        ListEmptyComponent={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>}
+        ListEmptyComponent={venuesLoading || isLoading ? undefined : <Body tone="muted">Nothing here yet.</Body>}
       />
     </View>
   );

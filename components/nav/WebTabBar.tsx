@@ -35,15 +35,15 @@ const NATIVE_BAR_HEIGHT = 64;
  * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,
  * with search as its own circle, like the system bar on iOS 26.
  */
-export function WebTabBar({ state, navigation }: BottomTabBarProps) {
+export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
-    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (current !== name && !event.defaultPrevented) navigation.navigate(name);
+    const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (current !== name && !event.defaultPrevented) navigateToTab(route.key);
   };
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
