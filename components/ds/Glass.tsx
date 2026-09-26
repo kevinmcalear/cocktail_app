@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, fontFamilies, layout, radius, space, type BackbarScheme } from '@/constants/tokens';
 
 import type { IconName } from './Button';
 import { PressableScale } from './PressableScale';
@@ -18,20 +18,22 @@ const LIQUID_GLASS = isLiquidGlassAvailable();
  * content in glass. Real Liquid Glass on iOS 26+, a blur on web and older iOS,
  * and a solid raised surface on Android (expo-blur can't blur it cleanly there).
  */
-export function GlassSurface({ children, style, interactive }: { children: ReactNode; style?: StyleProp<ViewStyle>; interactive?: boolean }) {
+export function GlassSurface({ children, style, interactive, scheme }: { children: ReactNode; style?: StyleProp<ViewStyle>; interactive?: boolean; scheme?: BackbarScheme }) {
   const ds = useDs();
+  const s = scheme ?? ds.scheme;
+  const c = backbar[s];
   if (LIQUID_GLASS) {
     return (
-      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme={ds.scheme} style={[styles.clip, style]}>
+      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme={s} style={[styles.clip, style]}>
         {children}
       </GlassView>
     );
   }
   if (Platform.OS === 'android') {
-    return <View style={[styles.clip, { backgroundColor: ds.c.raised, borderColor: ds.c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
+    return <View style={[styles.clip, { backgroundColor: c.raised, borderColor: c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
   }
   return (
-    <BlurView intensity={60} tint={ds.scheme} style={[styles.clip, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder, borderWidth: 1 }, style]}>
+    <BlurView intensity={60} tint={s} style={[styles.clip, { backgroundColor: c.glass, borderColor: c.glassBorder, borderWidth: 1 }, style]}>
       {children}
     </BlurView>
   );
@@ -45,15 +47,17 @@ interface GlassButtonProps {
   onPress?: () => void;
   /** Ink colour on a light photo (a sketch), where the default light ink would vanish. */
   color?: string;
+  /** Sitting on a photo: dark glass and light ink in either theme, so it stays readable. */
+  onMedia?: boolean;
 }
 
 /** A floating circle (icon only) or pill (with a label) over content. */
-export function GlassButton({ accessibilityLabel, icon, label, onPress, color }: GlassButtonProps) {
+export function GlassButton({ accessibilityLabel, icon, label, onPress, color, onMedia }: GlassButtonProps) {
   const ds = useDs();
-  const ink = color ?? ds.c.ink;
+  const ink = color ?? (onMedia ? backbar.dark.ink : ds.c.ink);
   return (
     <PressableScale onPress={onPress} accessibilityLabel={accessibilityLabel} hitSlop={4}>
-      <GlassSurface interactive style={label ? styles.pill : styles.circle}>
+      <GlassSurface interactive scheme={onMedia ? 'dark' : undefined} style={label ? styles.pill : styles.circle}>
         <View style={styles.row}>
           {icon ? <IconSymbol name={icon} size={18} color={ink} /> : null}
           {label ? (

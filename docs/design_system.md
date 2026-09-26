@@ -62,6 +62,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 - iOS 26+: Expo Router `NativeTabs` for the tab bar, `GlassView` (expo-glass-effect) for floating controls, `BlurView` fallback where glass isn't available.
 - Android: solid raised surfaces (expo-blur can't blur the tab bar cleanly there).
 - Web: `backdrop-filter` blur with a solid fallback.
+- Glass controls sitting on a photo use `onMedia` (dark glass, light ink) in both themes; otherwise dark ink on a dark photo disappears.
 
 ## Images
 
