@@ -30,7 +30,7 @@ export function ErrorState({
           borderRadius={12}
           minHeight={44}
           paddingHorizontal="$5"
-          accessibilityRole="button"
+          role="button"
         >
           <Text color="$background" fontWeight="700" fontSize={15}>
             Try again

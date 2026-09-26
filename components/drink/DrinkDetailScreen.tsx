@@ -123,7 +123,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
               onPress={() => setNotesExpanded(!notesExpanded)}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityState={{ expanded: notesExpanded }}
+              aria-expanded={notesExpanded}
             >
               <XStack alignItems="center" gap="$2">
                 <IconSymbol name="note.text" size={16} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
