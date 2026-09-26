@@ -13,7 +13,7 @@ export function useBeers(options?: { allContexts?: boolean }) {
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
-                .select('*, item_images(sort_order,image_id,images(id,url)), item_categories(category_id)')
+                .select('*, item_images(sort_order,image_id,images(id,url,palette)), item_categories(category_id)')
                 .eq('item_type', 'beer');
 
             if (!options?.allContexts) {
@@ -36,7 +36,7 @@ export function useBeer(id: string) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('app_item_presentation')
-                .select('*, item_images(sort_order,image_id,images(id,url)), item_categories(category_id)')
+                .select('*, item_images(sort_order,image_id,images(id,url,palette)), item_categories(category_id)')
                 .eq('id', id)
                 .single();
 
