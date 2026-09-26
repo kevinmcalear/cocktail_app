@@ -3,17 +3,21 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
-/** What the person can do at a venue (prep, menus, locations, ...), from the server's role matrix. */
+/**
+ * What the person can do at a venue (prep, menus, locations, ...), from the
+ * server's role matrix. An array, not a Set: the query cache is persisted to
+ * storage, and a Set comes back from JSON as a plain object.
+ */
 export function useCapabilities(barId: string | null | undefined) {
   const userId = useAuth().user?.id ?? null;
   return useQuery({
     queryKey: ['capabilities', barId, userId],
     enabled: !!barId && !!userId,
     staleTime: 60_000,
-    queryFn: async (): Promise<Set<string>> => {
+    queryFn: async (): Promise<string[]> => {
       const { data, error } = await supabase.rpc('my_capabilities', { p_bar_id: barId! });
       if (error) throw error;
-      return new Set((data as string[] | null) ?? []);
+      return (data as string[] | null) ?? [];
     },
   });
 }

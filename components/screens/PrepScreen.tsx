@@ -46,7 +46,7 @@ export function PrepScreen() {
   const barId = active?.id ?? null;
   const caps = useCapabilities(barId);
   const { data: prepOpensAt } = useCapabilityOpensAt(barId, 'prep');
-  const canPrep = !!caps.data?.has('prep');
+  const canPrep = !!caps.data?.includes('prep');
   const { data: events = [] } = useEvents(canPrep ? barId : null);
   const { data: dropdowns } = useDropdowns();
   const venueMenus = ((dropdowns?.menus ?? []) as MenuRow[]).filter((m) => m.bar_id === barId);
@@ -114,7 +114,7 @@ export function PrepScreen() {
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <Display>Prep</Display>
           {canPrep ? (
-            <PrepSources events={events} source={source} onSource={pick} canCreate={!!caps.data?.has('menus')} onNewEvent={() => setCreating(true)} />
+            <PrepSources events={events} source={source} onSource={pick} canCreate={!!caps.data?.includes('menus')} onNewEvent={() => setCreating(true)} />
           ) : null}
           {content}
         </View>
