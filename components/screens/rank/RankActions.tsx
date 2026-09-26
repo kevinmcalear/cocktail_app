@@ -22,7 +22,7 @@ export function RankActions({ item, picture }: RankActionsProps) {
   const { data: target } = useRankTarget(item.id);
   const { data: ownBar } = useBarProfile(item.bar_id);
   const rankedAs = target ? rankedAsOf(target) : null;
-  const { data: list } = useMyRankList(open ? rankedAs?.id : null);
+  const { data: list, isError: listFailed } = useMyRankList(open ? rankedAs?.id : null);
   const toRankings = () => router.push(`/rankings/${item.id}`);
 
   return (
@@ -35,6 +35,7 @@ export function RankActions({ item, picture }: RankActionsProps) {
           rankedAs={rankedAs}
           ownBar={ownBar ?? null}
           list={list}
+          listFailed={listFailed}
           onClose={() => setOpen(false)}
           onSeeRankings={() => {
             setOpen(false);

@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ export interface RankSheetProps {
   ownBar: RankVenue | null;
   /** My list for rankedAs, best first. Undefined while it loads. */
   list: RankEntry[] | undefined;
+  listFailed?: boolean;
 }
 
 const MONTH = new Intl.DateTimeFormat(undefined, { month: 'long' });
@@ -34,7 +35,7 @@ function whereLabel(venue: { display_name: string } | null): string {
  * my others in the same band until it's placed, then its score. Saves once, at
  * the end, so closing half way leaves nothing behind.
  */
-export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, list }: RankSheetProps) {
+export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, list, listFailed }: RankSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const wide = useBreakpoint() !== 'phone';
@@ -49,6 +50,8 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   const [result, setResult] = useState<{ score: number; position: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const saving = addEntry.isPending || record.isPending;
+  // A quick double tap on the last answer must not save twice.
+  const busy = useRef(false);
 
   // Ranked here before: this replaces it, so it isn't compared with itself.
   const existing = list?.find((e) => e.item_id === drink.id && e.venue_profile_id === (venue?.id ?? null));
@@ -58,7 +61,8 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   const save = async (s: Sentiment, given: Answer[]) => {
     const band = bandOf(s);
     const placed = nextPlacement(band.length, given);
-    if (!placed.done) return;
+    if (!placed.done || busy.current) return;
+    busy.current = true;
     setError(null);
     try {
       let id = savedId;
@@ -87,6 +91,8 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
       setResult({ score: rankScore(s, placed.index, band.length + 1), position: better + placed.index + 1, total: others.length + 1 });
     } catch (e) {
       setError(e instanceof Error ? `Couldn't save your ranking: ${e.message}` : "Couldn't save your ranking.");
+    } finally {
+      busy.current = false;
     }
   };
 
@@ -171,7 +177,11 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
         <WherePicker ownBar={ownBar} value={venue} onChange={setChosenVenue} />
         {existing ? <Caption tone="muted">{`You ranked this ${formatScore(existing.score)} before. Ranking it again replaces that.`}</Caption> : null}
         <Title>How was it?</Title>
-        {list ? <SentimentPicker onPick={pick} /> : <Body tone="muted">Loading your list…</Body>}
+        {list ? (
+          <SentimentPicker onPick={pick} />
+        ) : (
+          <Body tone="muted">{listFailed ? "Couldn't load your list, so there's nothing to compare with yet. Close this and try again." : 'Loading your list…'}</Body>
+        )}
       </>
     );
   }
