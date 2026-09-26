@@ -8,6 +8,8 @@ module.exports = defineConfig([
     // Edge functions are Deno code with URL and npm: imports; they are type
     // checked with `deno check`, not this config. ios/, android/ and
     // supabase/.temp are generated, and desktop/src-tauri holds Rust build output.
+    // .claude/ holds agent worktrees (full copies of the repo) that aren't this
+    // checkout's code.
     ignores: [
       'dist/*',
       'ios/**',
@@ -15,6 +17,7 @@ module.exports = defineConfig([
       'supabase/functions/**',
       'supabase/.temp/**',
       'desktop/src-tauri/**',
+      '.claude/**',
     ],
   },
   {

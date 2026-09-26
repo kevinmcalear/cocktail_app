@@ -1,0 +1,39 @@
+name: Feature
+description: Something new or better. Design it here, then build it.
+labels: [feature]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's hard or missing today, and for whom (guest, floor, bartender, maker, admin, home bartender)?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What "worked" looks like
+      description: The PostHog event or funnel that should move, and roughly by how much.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkable statements. Include phone and desktop behaviour, roles, and empty or error states.
+      placeholder: |
+        - [ ] A bartender sees …
+        - [ ] On desktop, …
+    validations:
+      required: true
+  - type: input
+    id: mockup
+    attributes:
+      label: Mockup
+      description: The screen in the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) or another design it must match.
+  - type: checkboxes
+    id: gated
+    attributes:
+      label: Needs Kevin's approval before production
+      options:
+        - label: Touches migrations, RLS, auth, roles or edge function deploys
