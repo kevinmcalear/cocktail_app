@@ -15,7 +15,9 @@
     "test:jest": "jest",
     "test:security": "node --test \"supabase/tests/*.test.mjs\"",
     "test:policy": "npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund --silent && node --test \"scripts/change-policy/*.test.mjs\"",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "desktop:dev": "npm --prefix desktop run dev",
+    "desktop:build": "npm --prefix desktop run build"
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
