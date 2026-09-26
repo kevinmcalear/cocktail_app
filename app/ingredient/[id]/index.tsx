@@ -12,7 +12,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useEffectiveRole } from "@/hooks/useViewAs";
+import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
 
 interface IngredientDetail {
     id: string;
@@ -54,7 +54,11 @@ export default function IngredientDetailScreen() {
             : null
     );
 
-    const canViewDetails = useEffectiveRole() > 30;
+    const canEdit = useCanEditItem(ingredient);
+    // Batch recipes are for Drink Creators and up at the ingredient's venue.
+    // Shared ingredients have no venue, and the recipe view returns them in full.
+    const venueRole = useEffectiveRole(ingredient?.bar_id ?? null);
+    const canViewDetails = !ingredient?.bar_id || venueRole > 30;
 
     if (loading || !ingredient) {
         return (
@@ -93,7 +97,7 @@ export default function IngredientDetailScreen() {
             isInStudyPile={isInStudyPile(`ingredient-${ingredient.id}`)}
             onToggleFavorite={toggleFavorite}
             onToggleStudyPile={toggleStudyPile}
-            onEditPress={canViewDetails ? () => router.push(`/ingredient/${id}/edit`) : undefined}
+            onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
 
