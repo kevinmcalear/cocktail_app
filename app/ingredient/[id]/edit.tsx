@@ -13,6 +13,7 @@ import {
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { setItemImages } from "@/components/drink/drinkImages";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
@@ -24,13 +25,13 @@ import { useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { renameIngredientEntity } from "@/lib/drafts";
+import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
 import {
     buildIngredientImageMap,
     mapPresentationRecipeToEditItem,
-    sortRecipesByOrder,
 } from "@/lib/recipeUtils";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
@@ -126,7 +127,8 @@ export default function EditIngredientScreen({
     const queryClient = useQueryClient();
     const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
     const { data, isLoading: loadingIngredient } = useIngredient(id as string);
-    const loading = loadingDropdowns || loadingIngredient;
+    const [rawLoaded, setRawLoaded] = useState(false);
+    const loading = loadingDropdowns || loadingIngredient || (!!data?.ingredient && !rawLoaded);
 
     const cleanStateRef = useRef<string | null>(null);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
@@ -174,42 +176,66 @@ export default function EditIngredientScreen({
     );
 
     useEffect(() => {
-        if (data?.ingredient) {
-            setName(data.ingredient.name || "");
-            setDescription(data.ingredient.description || "");
-            setBrandMaker(data.ingredient.brand_maker || "");
-            setAbv(data.ingredient.abv?.toString() || "");
-            setBarId(data.ingredient.bar_id || null);
-            setOverrideVisibility(data.ingredient.override_visibility_level?.toString() || null);
-            setOverrideGeneric(data.ingredient.override_generic_ingredient_level?.toString() || null);
-            setOverrideSpecific(data.ingredient.override_specific_brand_level?.toString() || null);
-            setOverrideMeasurement(data.ingredient.override_measurement_level?.toString() || null);
-            setOverridePrep(data.ingredient.override_prep_level?.toString() || null);
-            setHideFromSearch(data.ingredient.hide_from_search === true);
+        if (!data?.ingredient) return;
 
-            if (data.ingredient.item_categories) {
-                setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
-            }
+        setName(data.ingredient.name || "");
+        setDescription(data.ingredient.description || "");
+        setBrandMaker(data.ingredient.brand_maker || "");
+        setAbv(data.ingredient.abv?.toString() || "");
+        setBarId(data.ingredient.bar_id || null);
+        setHideFromSearch(data.ingredient.hide_from_search === true);
 
-            if (data.ingredient.item_images) {
-                const sortedImages = [...data.ingredient.item_images].sort(
-                    (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
-                );
-                const fetchedImages = sortedImages
-                    .map((ii: any) => ({
-                        id: ii.images?.id,
-                        url: ii.images?.url,
-                        isNew: false,
-                    }))
-                    .filter((img: any) => img.url);
-                setLocalImages(fetchedImages);
-            }
+        if (data.ingredient.item_categories) {
+            setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
         }
-        if (data?.recipe) {
-            setRecipeItems(sortRecipesByOrder(data.recipe).map((r) => mapPresentationRecipeToEditItem(r)));
+
+        if (data.ingredient.item_images) {
+            const sortedImages = [...data.ingredient.item_images].sort(
+                (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+            );
+            const fetchedImages = sortedImages
+                .map((ii: any) => ({
+                    id: ii.images?.id,
+                    url: ii.images?.url,
+                    isNew: false,
+                }))
+                .filter((img: any) => img.url);
+            setLocalImages(fetchedImages);
         }
-        if (data?.ingredient) setNeedsCleanMark(true);
-    }, [data]);
+
+        // Recipe rows and visibility overrides come from the raw tables: the
+        // presentation views mask or omit them, and a save writes them all back.
+        let cancelled = false;
+        setRawLoaded(false);
+        Promise.all([
+            fetchEditableRecipes(id as string),
+            supabase
+                .from("items")
+                .select(
+                    "override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
+                )
+                .eq("id", id as string)
+                .single(),
+        ])
+            .then(([recipes, { data: raw, error }]) => {
+                if (cancelled) return;
+                if (error || !raw) throw error ?? new Error("Ingredient not found");
+                setRecipeItems(recipes.map((r) => mapPresentationRecipeToEditItem(r)));
+                setOverrideVisibility(raw.override_visibility_level?.toString() || null);
+                setOverrideGeneric(raw.override_generic_ingredient_level?.toString() || null);
+                setOverrideSpecific(raw.override_specific_brand_level?.toString() || null);
+                setOverrideMeasurement(raw.override_measurement_level?.toString() || null);
+                setOverridePrep(raw.override_prep_level?.toString() || null);
+                setRawLoaded(true);
+                setNeedsCleanMark(true);
+            })
+            .catch(() => {
+                if (!cancelled) Alert.alert("Error", "Could not load this ingredient for editing.");
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [data, id]);
 
     useEffect(() => {
         if (!needsCleanMark) return;
@@ -280,6 +306,7 @@ export default function EditIngredientScreen({
     };
 
     const handleSave = async () => {
+        if (!rawLoaded) return false;
         if (!name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return false;
@@ -297,18 +324,7 @@ export default function EditIngredientScreen({
                 }
             }
 
-            const { error: deleteImagesError } = await supabase.from("item_images").delete().eq("item_id", id);
-            if (deleteImagesError) throw deleteImagesError;
-
-            if (finalImageIds.length > 0) {
-                const imageInserts = finalImageIds.map((imgId, index) => ({
-                    item_id: id,
-                    image_id: imgId,
-                    sort_order: index,
-                }));
-                const { error: insertError } = await supabase.from("item_images").insert(imageInserts);
-                if (insertError) throw insertError;
-            }
+            await setItemImages(id, finalImageIds, { replace: true });
 
             const { error: updateError } = await supabase
                 .from("items")

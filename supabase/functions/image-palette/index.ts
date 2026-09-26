@@ -2,7 +2,8 @@
 //
 // Called by the database (a trigger on `images` insert, through pg_net) and by
 // scripts/backfill-palettes.mjs, never by the app. Both send the shared
-// IMAGE_PALETTE_SECRET instead of a user session.
+// IMAGE_PALETTE_SECRET instead of a user session; a local stack falls back to
+// a fixed local secret.
 //
 // POST { image_id, force? } -> { palette }  ([] when the picture has no colour)
 import { decode, GIF } from "jsr:@matmen/imagescript@1.3.1";
@@ -10,6 +11,7 @@ import decodeWebp, { init as initWebp } from "npm:@jsquash/webp@1.5.0/decode.js"
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
+import { isLocalStack, LOCAL_IMAGE_PALETTE_SECRET } from "../_shared/localStack.ts";
 import { pickPalette } from "../_shared/palette.ts";
 
 /** Photos from the app are a few hundred KB; anything this big is not a drink photo. */
@@ -18,7 +20,7 @@ const MAX_BYTES = 12 * 1024 * 1024;
 const STORAGE_PATH = /\/storage\/v1\/object\/public\/drinks\/(.+)$/;
 
 serveJson("image-palette", async (req) => {
-  const secret = Deno.env.get("IMAGE_PALETTE_SECRET");
+  const secret = Deno.env.get("IMAGE_PALETTE_SECRET") || (isLocalStack() ? LOCAL_IMAGE_PALETTE_SECRET : "");
   if (!secret || !timingSafeEqual(req.headers.get("x-image-palette-secret") ?? "", secret)) {
     throw new HttpError(401, "Not allowed.");
   }

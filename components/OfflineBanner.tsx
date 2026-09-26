@@ -31,8 +31,8 @@ export function OfflineBanner() {
             }}
         >
             <View
-                accessibilityRole="alert"
-                accessibilityLiveRegion="polite"
+                role="alert"
+                aria-live="polite"
                 backgroundColor="$backgroundStrong"
                 borderColor="$borderColor"
                 borderWidth={1}

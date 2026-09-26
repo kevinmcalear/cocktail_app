@@ -20,6 +20,8 @@ export function useIngredients(options?: { allContexts?: boolean }) {
                     item_images (
                         sort_order,
                         image_id,
+                        is_generated,
+                        outdated_since,
                         images ( id, url, palette )
                     ),
                     item_categories (
@@ -57,6 +59,8 @@ export function useIngredient(id?: string | string[]) {
                     item_images (
                         sort_order,
                         image_id,
+                        is_generated,
+                        outdated_since,
                         images ( id, url, palette )
                     )
                 `)
@@ -73,14 +77,11 @@ export function useIngredient(id?: string | string[]) {
                     sort_order,
                     created_at,
                     display_ingredient_id,
-                    ingredient_item_id,
-                    parent_ingredient_id,
                     amount,
                     unit,
                     preparation_notes,
                     is_optional,
-                    specific_ingredient:items!ingredient_item_id(id, name),
-                    generic_ingredient:items!parent_ingredient_id(id, name)
+                    display_ingredient(id, name)
                 `)
                 .eq('recipe_item_id', ingredientId);
 
@@ -100,6 +101,8 @@ export function useIngredient(id?: string | string[]) {
                         id, 
                         name,
                         item_images (
+                            sort_order,
+                            is_generated,
                             images ( url )
                         )
                     )

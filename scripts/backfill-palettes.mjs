@@ -46,7 +46,7 @@ function target() {
   return {
     url: status.API_URL,
     key: status.SERVICE_ROLE_KEY,
-    // Matches [edge_runtime.secrets] in supabase/config.toml.
+    // Matches LOCAL_IMAGE_PALETTE_SECRET in supabase/functions/_shared/localStack.ts.
     secret: process.env.IMAGE_PALETTE_SECRET ?? 'local-image-palette-secret',
   };
 }

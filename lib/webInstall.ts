@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 
+import { isDesktopShell } from '@/lib/desktopShell';
+
 /** Chrome's install event (not in the DOM typings). */
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -42,6 +44,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 export function isRunningInstalled(): boolean {
   if (Platform.OS !== 'web') return true;
   if (typeof window === 'undefined') return false;
+  if (isDesktopShell()) return true;
   return (
     window.matchMedia?.('(display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true

@@ -30,4 +30,16 @@ config.resolver.resolveRequest = (context, moduleName, platform, ...args) => {
   return context.resolveRequest(context, moduleName, platform, ...args);
 };
 
+// Agent worktrees (.claude/worktrees) are full copies of the repo, each with its
+// own node_modules. Watching them ran Metro out of memory, and their files
+// shadowed this checkout's. The Tauri desktop shell (desktop/) isn't part of the
+// bundle either: keep Metro out of its Rust build output and node_modules.
+// blockList is also the file crawler's ignore list.
+const claudeDir = new RegExp(`^${path.resolve(__dirname, '.claude').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[/\\\\].*`);
+config.resolver.blockList = [
+  ...[].concat(config.resolver.blockList ?? []),
+  claudeDir,
+  /[\\/]desktop[\\/](node_modules|src-tauri)[\\/].*/,
+];
+
 module.exports = config;

@@ -5,7 +5,9 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { SearchPopover } from '@/components/SearchPopover';
 import { PERSONAL_CONTEXT } from '@/lib/barContextFilter';
@@ -47,6 +49,10 @@ type VenueGroup = {
   logoUrl: string | null;
   drafts: any[];
 };
+
+// The static export renders Home at build time, so the build machine's hour
+// would be baked into the HTML and clash with the device's during hydration.
+const HYDRATION_GREETING = 'Hello';
 
 function timeGreeting(hour = new Date().getHours()) {
   if (hour < 12) return 'Good morning';
@@ -107,13 +113,15 @@ export function HomePrompt() {
   const recentItems = useRecentActivityStore((s) => s.items);
   const { data: dropdowns } = useDropdowns();
   const isWideWeb = useIsWideWeb();
+  const isHydrated = useIsHydrated();
   const [searchOpen, setSearchOpen] = useState(false);
   const shortcutLabel = isApplePlatform() ? '⌘K' : 'Ctrl K';
   // ponytail: override only — default is grid when ≤6, list when >6
   const [viewOverrides, setViewOverrides] = useState<Record<string, 'grid' | 'list'>>({});
 
   const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
-  const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
+  const greeting = isHydrated ? timeGreeting() : HYDRATION_GREETING;
+  const hello = firstName ? `${greeting}, ${firstName}` : greeting;
 
   // ponytail: Jump Back In is last-touched, not search-context — venue filter hid Caretakers drafts on Home
   const recent = useMemo(() => {
@@ -260,8 +268,8 @@ export function HomePrompt() {
 
           <Pressable
             onPress={openSearch}
-            accessibilityRole="search"
-            accessibilityLabel="Search specs, menus and ingredients"
+            accessibilityRole="search" // `role` has no "search" on native; react-native-web maps this to role="search"
+            aria-label="Search specs, menus and ingredients"
             style={[styles.searchField, { borderColor: border, backgroundColor: cardSurface }]}
           >
             <IconSymbol name="magnifyingglass" size={18} color={muted} />
@@ -289,8 +297,8 @@ export function HomePrompt() {
                 <Pressable
                   key={m.id}
                   onPress={() => openMenu(m.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open ${m.name}${m.venue ? `, ${m.venue}` : ''}`}
+                  role="button"
+                  aria-label={`Open ${m.name}${m.venue ? `, ${m.venue}` : ''}`}
                   style={[styles.menuCard, { borderColor: border, backgroundColor: cardSurface }]}
                 >
                   {m.cover_url ? (
@@ -330,8 +338,8 @@ export function HomePrompt() {
                   <Pressable
                     key={`${r.kind}-${r.id}${r.isDraft ? '-draft' : ''}`}
                     onPress={() => openRecent(r)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
+                    role="button"
+                    aria-label={
                       r.isDraft ? `Continue draft ${r.title}` : `Continue ${r.title}`
                     }
                     style={[
@@ -450,9 +458,9 @@ export function HomePrompt() {
                               onPress={() =>
                                 setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'grid' }))
                               }
-                              accessibilityRole="button"
-                              accessibilityLabel="Grid view"
-                              accessibilityState={{ selected: mode === 'grid' }}
+                              role="button"
+                              aria-label="Grid view"
+                              {...pressedProps(mode === 'grid')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -466,9 +474,9 @@ export function HomePrompt() {
                               onPress={() =>
                                 setViewOverrides((prev) => ({ ...prev, [sectionKey]: 'list' }))
                               }
-                              accessibilityRole="button"
-                              accessibilityLabel="List view"
-                              accessibilityState={{ selected: mode === 'list' }}
+                              role="button"
+                              aria-label="List view"
+                              {...pressedProps(mode === 'list')}
                               hitSlop={6}
                               style={styles.viewToggle}
                             >
@@ -492,8 +500,8 @@ export function HomePrompt() {
                                     <Pressable
                                       key={d.id}
                                       onPress={() => openDraft(d)}
-                                      accessibilityRole="button"
-                                      accessibilityLabel={`Continue draft ${title}`}
+                                      role="button"
+                                      aria-label={`Continue draft ${title}`}
                                       style={[
                                         styles.card,
                                         {
@@ -571,8 +579,8 @@ export function HomePrompt() {
                               <Pressable
                                 key={d.id}
                                 onPress={() => openDraft(d)}
-                                accessibilityRole="link"
-                                accessibilityLabel={`Continue ${draftTitle(d)}`}
+                                role="link"
+                                aria-label={`Continue ${draftTitle(d)}`}
                                 style={[
                                   styles.draftRow,
                                   {
@@ -620,8 +628,8 @@ export function HomePrompt() {
               <Pressable
                 key={item.route}
                 onPress={() => router.push(item.route as any)}
-                accessibilityRole="button"
-                accessibilityLabel={`Create ${item.label}`}
+                role="button"
+                aria-label={`Create ${item.label}`}
                 style={[
                   styles.quickCreate,
                   {
@@ -653,7 +661,7 @@ function SectionLabel({ children }: { children: string }) {
       letterSpacing={0.7}
       textTransform="uppercase"
       paddingHorizontal={4}
-      accessibilityRole="header"
+      role="heading"
     >
       {children}
     </Text>

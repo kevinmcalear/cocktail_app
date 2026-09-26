@@ -62,16 +62,41 @@ export async function imageIdFor(uri: string, folder: string): Promise<string | 
   }
 }
 
-/** Replaces an item's photo links with `imageIds`, in order. */
+/**
+ * Sets an item's picture links to `imageIds`, in order. With `replace`, links
+ * not in the list are removed. Links that stay are updated in place rather
+ * than deleted and re-created, so what the server knows about each one (its
+ * angle, and whether a photo may be out of date) survives the save.
+ */
 export async function setItemImages(itemId: string, imageIds: string[], { replace }: { replace: boolean }) {
-  if (replace) {
-    // Remove the old links first, so the new order applies and nothing duplicates.
-    const { error } = await supabase.from('item_images').delete().eq('item_id', itemId);
-    if (error) throw error;
-  }
-  if (imageIds.length === 0) return;
-  const { error } = await supabase
+  const { data: existing, error } = await supabase
     .from('item_images')
-    .insert(imageIds.map((imageId, index) => ({ item_id: itemId, image_id: imageId, sort_order: index })));
+    .select('id, image_id, sort_order')
+    .eq('item_id', itemId);
   if (error) throw error;
+  const linkByImage = new Map((existing ?? []).map((link) => [link.image_id, link]));
+
+  if (replace) {
+    const keep = new Set(imageIds);
+    const removed = (existing ?? []).filter((link) => !keep.has(link.image_id)).map((link) => link.id);
+    if (removed.length) {
+      const { error: deleteError } = await supabase.from('item_images').delete().in('id', removed);
+      if (deleteError) throw deleteError;
+    }
+  }
+
+  const added: { item_id: string; image_id: string; sort_order: number }[] = [];
+  for (const [index, imageId] of imageIds.entries()) {
+    const link = linkByImage.get(imageId);
+    if (!link) {
+      added.push({ item_id: itemId, image_id: imageId, sort_order: index });
+    } else if (Number(link.sort_order) !== index) {
+      const { error: updateError } = await supabase.from('item_images').update({ sort_order: index }).eq('id', link.id);
+      if (updateError) throw updateError;
+    }
+  }
+  if (added.length) {
+    const { error: insertError } = await supabase.from('item_images').insert(added);
+    if (insertError) throw insertError;
+  }
 }

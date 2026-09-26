@@ -65,8 +65,8 @@ export function TemplatePicker({
             <View ref={triggerRef} collapsable={false}>
                 <Pressable
                     onPress={openMenu}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Template: ${label}`}
+                    role="button"
+                    aria-label={`Template: ${label}`}
                     style={styles.trigger}
                 >
                     <XStack alignItems="center" gap={6}>
@@ -97,7 +97,7 @@ export function TemplatePicker({
                                                 closeMenu();
                                             }}
                                             style={styles.row}
-                                            accessibilityRole="menuitem"
+                                            role="menuitem"
                                         >
                                             <YStack flex={1} gap={2}>
                                                 <Text fontSize={14} color="$color" fontWeight={checked ? '600' : '400'}>
@@ -116,8 +116,8 @@ export function TemplatePicker({
                                                     router.push(`/menus/create-template?id=${t.id}` as any);
                                                 }}
                                                 hitSlop={8}
-                                                accessibilityRole="button"
-                                                accessibilityLabel={`Edit ${t.name}`}
+                                                role="button"
+                                                aria-label={`Edit ${t.name}`}
                                                 style={styles.editBtn}
                                             >
                                                 <IconSymbol name="pencil" size={14} color={muted} />

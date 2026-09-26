@@ -1,4 +1,6 @@
 import { MenuItem, MenuSection } from '@/components/CurrentMenuList';
+import { heroPicture } from '@/lib/itemImages';
+import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -34,10 +36,10 @@ export function useMenuDetails(menuId: string | null) {
                     sort_order,
                     item:items!item_id (
                         id, name, description, item_type, brand_maker, origin, price,
-                        item_images ( images ( url ) ),
-                        recipes!recipe_item_id (
-                            amount, unit,
-                            ingredient:items!ingredient_item_id ( id, name )
+                        item_images ( sort_order, is_generated, images ( url ) ),
+                        recipes:app_recipe_presentation!recipe_item_id (
+                            amount, unit, sort_order, created_at, display_ingredient_id,
+                            display_ingredient ( id, name )
                         )
                     )
                 `)
@@ -46,8 +48,6 @@ export function useMenuDetails(menuId: string | null) {
             if (drinksErr) throw drinksErr;
 
             // 4. Format into sections
-            const defaultImage = require('@/assets/images/cocktails/house_martini.jpg');
-
             const formattedSections: MenuSection[] = (sections || []).map((sec: any) => {
                 const secDrinks = (drinksData || [])
                     .filter(d => d.template_section_id === sec.id)
@@ -56,20 +56,19 @@ export function useMenuDetails(menuId: string | null) {
                         const i: any = d.item;
                         if (!i) return null;
 
-                        let imageUrl = defaultImage;
-                        if (i.item_images && i.item_images.length > 0) {
-                            const imgArr = Array.isArray(i.item_images) ? i.item_images : [i.item_images];
-                            if (imgArr[0]?.images?.url) {
-                                imageUrl = imgArr[0].images.url;
-                            }
-                        }
+                        // No picture yet: the menu card shows its own placeholder.
+                        const imageUrl = heroPicture(
+                            Array.isArray(i.item_images) ? i.item_images : [i.item_images].filter(Boolean)
+                        )?.url;
 
                         if (i.item_type === 'cocktail') {
                             const rList = Array.isArray(i.recipes) ? i.recipes : [i.recipes];
-                            const ingList = rList.filter(Boolean).map((r: any) => {
+                            const ingList = sortRecipesByOrder(rList.filter(Boolean)).map((r: any) => {
+                                const ingredient = resolvePresentationIngredient(r);
+                                if (!ingredient) return '';
                                 const amt = r.amount ? `${r.amount} ` : '';
                                 const u = r.unit ? `${r.unit} ` : '';
-                                return `${amt}${u}${r.ingredient?.name || ''}`.trim();
+                                return `${amt}${u}${ingredient.name || ''}`.trim();
                             }).filter(Boolean).join(', ');
                             
                             return {
