@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "node scripts/run-checks.mjs",
     "test:jest": "jest",
-    "test:security": "node --test \"supabase/tests/*.test.mjs\"",
+    "db:check": "node scripts/check-local-migrations.mjs",
+    "test:security": "node scripts/check-local-migrations.mjs && node --test \"supabase/tests/*.test.mjs\"",
     "test:policy": "npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund --silent && node --test \"scripts/change-policy/*.test.mjs\"",
     "postinstall": "patch-package"
   },
