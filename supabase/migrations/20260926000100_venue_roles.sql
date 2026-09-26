@@ -21,7 +21,7 @@
 --     grant or revoke these.
 --
 -- The one change to existing helpers: a membership whose role has ended stops
--- counting in my_bar_ids(), can_write(), get_my_bars(),
+-- counting in my_bar_ids(), can_write(), get_my_bars(), can_view_bar_item(),
 -- app_recipe_presentation and get_bar_members() straight away, and a pg_cron
 -- job removes it within 15 minutes.
 
@@ -201,10 +201,11 @@ CREATE OR REPLACE FUNCTION "public"."get_my_bars"() RETURNS SETOF "uuid"
   SELECT private.my_bar_ids(0);
 $$;
 
--- app_recipe_presentation runs as its owner (20260925000000_role_scoped_reads)
--- and reads the caller's role straight from user_bars, so it needs the same
--- rule. An ended membership doesn't join, which the view already treats as
--- "not a member". Unchanged apart from the join condition.
+-- app_recipe_presentation runs as its owner (20260925000000_role_scoped_reads,
+-- masked further by 20260925100000) and reads the caller's role straight from
+-- user_bars, so it needs the same rule. An ended membership doesn't join,
+-- which the view already treats as "not a member". Identical to the
+-- 20260925100000 definition apart from the join condition.
 CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
  SELECT "r"."id",
     "r"."created_at",
@@ -231,8 +232,17 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
             ELSE NULL::"text"
         END AS "preparation_notes",
     "r"."is_optional",
-    "r"."parent_ingredient_id",
-    "r"."ingredient_item_id",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."parent_ingredient_id"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN "r"."parent_ingredient_id"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN "r"."parent_ingredient_id"
+            ELSE NULL::"uuid"
+        END AS "parent_ingredient_id",
+        CASE
+            WHEN ("c"."bar_id" IS NULL) THEN "r"."ingredient_item_id"
+            WHEN ("public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN "r"."ingredient_item_id"
+            ELSE NULL::"uuid"
+        END AS "ingredient_item_id",
     "r"."sort_order"
    FROM ((("public"."recipes" "r"
      JOIN "public"."items" "c" ON (("r"."recipe_item_id" = "c"."id")))
@@ -283,6 +293,28 @@ BEGIN
           SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
       );
 END;
+$$;
+
+-- items_select (20260925100000) checks bar items with can_view_bar_item(),
+-- which also reads user_bars itself. Same rule; otherwise unchanged.
+CREATE OR REPLACE FUNCTION "private"."can_view_bar_item"("p_bar_id" "uuid", "p_override_visibility_level" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.user_bars ub
+    JOIN public.bars b ON b.id = ub.bar_id
+    WHERE ub.bar_id = p_bar_id
+      AND ub.user_id = auth.uid()
+      AND (
+        ub.role_level >= 35
+        OR ub.role_level >= COALESCE(p_override_visibility_level, b.default_visibility_level)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
+      )
+  );
 $$;
 
 CREATE FUNCTION "private"."sweep_expired_memberships"() RETURNS integer
