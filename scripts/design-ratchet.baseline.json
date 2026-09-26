@@ -113,7 +113,7 @@
     "components/CommandSearch.tsx": 1134,
     "components/CurrentMenuList.tsx": 517,
     "components/DraftFolderTree.tsx": 1324,
-    "components/HomePrompt.tsx": 728,
+    "components/HomePrompt.tsx": 735,
     "components/ItemDetailLayout.tsx": 746,
     "components/SearchList.tsx": 874,
     "components/SettingsScreen.tsx": 806,
