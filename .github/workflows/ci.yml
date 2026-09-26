@@ -45,7 +45,8 @@ jobs:
       - run: npm ci
       # Applies every migration to a fresh database, so a migration that
       # cannot rebuild the schema fails here.
-      - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta,edge-runtime
+      # The edge runtime serves image-palette for supabase/tests/image-palette.test.mjs.
+      - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
 

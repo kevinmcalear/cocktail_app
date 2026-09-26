@@ -55,7 +55,8 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         image_id,
                         images (
                             id,
-                            url
+                            url,
+                            palette
                         )
                     ),
                     item_categories (
@@ -104,7 +105,8 @@ export function useCocktail(id?: string | string[]) {
                     item_images (
                         images (
                             url,
-                            id
+                            id,
+                            palette
                         )
                     ),
                     recipes:app_recipe_presentation!recipe_item_id (
