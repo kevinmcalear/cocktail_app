@@ -11,8 +11,7 @@ import { useStudyPile } from '@/hooks/useStudyPile';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem } from '@/hooks/useViewAs';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
-
-const PLACEHOLDER_IMAGE = require('@/assets/images/cocktails/house_martini.jpg');
+import { heroPicture, orderedPictures, pictureTag } from '@/lib/itemImages';
 
 function Pill({ icon, children }: { icon?: ComponentProps<typeof IconSymbol>['name']; children: string }) {
   const theme = useTheme();
@@ -54,7 +53,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
     !!item,
     item
       ? recentEntry(kind.kind, item.id, item.name, {
-          imageUrl: item.item_images?.[0]?.images?.url,
+          imageUrl: heroPicture(item.item_images)?.url,
           barId: item.bar_id ?? null,
         })
       : null
@@ -79,8 +78,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
     );
   }
 
-  const images = (item.item_images?.map((img: any) => img.images?.url).filter(Boolean) as string[]) || [];
-  if (images.length === 0) images.push(PLACEHOLDER_IMAGE);
+  const pictures = orderedPictures(item.item_images);
 
   // Style and region are stored as tags.
   const tagNames: string[] = (item.item_categories ?? [])
@@ -92,7 +90,8 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
     <ItemDetailLayout
       id={prefixedId}
       title={item.name}
-      images={images}
+      images={pictures.map((p) => p.url)}
+      imageTags={pictures.map(pictureTag)}
       isFavorite={isFavorite(prefixedId)}
       isInStudyPile={isInStudyPile(prefixedId)}
       onToggleFavorite={toggleFavorite}
@@ -124,7 +123,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
               onPress={() => setNotesExpanded(!notesExpanded)}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityState={{ expanded: notesExpanded }}
+              aria-expanded={notesExpanded}
             >
               <XStack alignItems="center" gap="$2">
                 <IconSymbol name="note.text" size={16} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />

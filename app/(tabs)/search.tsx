@@ -32,7 +32,7 @@ export default function SearchScreen() {
           color="$color"
           letterSpacing={-0.4}
           paddingHorizontal={8}
-          accessibilityRole="header"
+          role="heading"
         >
           Search
         </Text>

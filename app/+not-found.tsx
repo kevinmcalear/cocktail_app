@@ -11,7 +11,7 @@ export default function NotFound() {
       <WebHead>
         <title>{`Page not found · ${BRAND.productName}`}</title>
       </WebHead>
-      <Text fontSize={28} fontWeight="700" color="$color" accessibilityRole="header">
+      <Text fontSize={28} fontWeight="700" color="$color" role="heading">
         Page not found
       </Text>
       <Text fontSize={16} color="$color11" textAlign="center" maxWidth={360}>

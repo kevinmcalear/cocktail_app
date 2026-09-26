@@ -10,6 +10,10 @@ jest.mock('react-native-reanimated', () => jest.requireActual('react-native-rean
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+// Gives useSafeAreaInsets() zero insets without a SafeAreaProvider (expo-router adds one in the app).
+jest.mock('react-native-safe-area-context', () =>
+  jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default
+);
 
 // Same provider app/_layout.tsx wraps the app in, so $tokens and themes resolve.
 function TamaguiWrapper({ children }: { children: ReactNode }) {

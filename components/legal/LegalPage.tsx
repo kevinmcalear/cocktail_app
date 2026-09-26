@@ -16,7 +16,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
       </WebHead>
       <YStack width="100%" maxWidth={720} alignSelf="center" paddingHorizontal="$5" paddingVertical="$7" gap="$5">
         <YStack gap="$2">
-          <Text fontSize={32} fontWeight="700" color="$color" accessibilityRole="header">
+          <Text fontSize={32} fontWeight="700" color="$color" role="heading">
             {title}
           </Text>
           <Text fontSize={14} color="$color11">
@@ -32,7 +32,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
 export function LegalSection({ heading, children }: { heading: string; children: ReactNode }) {
   return (
     <YStack gap="$2.5">
-      <Text fontSize={19} fontWeight="700" color="$color" accessibilityRole="header">
+      <Text fontSize={19} fontWeight="700" color="$color" role="heading">
         {heading}
       </Text>
       {children}
@@ -67,7 +67,7 @@ export function SupportEmail() {
       fontSize={16}
       color="$color8"
       textDecorationLine="underline"
-      accessibilityRole="link"
+      role="link"
       onPress={() => void Linking.openURL(`mailto:${BRAND.supportEmail}`)}
     >
       {BRAND.supportEmail}

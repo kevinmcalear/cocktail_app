@@ -200,8 +200,8 @@ function CurrentNav({
                           key={menu.id}
                           onPress={() => onSelectMenu(menu.id, menu.name, menu.bar_id ?? null)}
                           style={[styles.menuRow, selected && { backgroundColor: activeBg }]}
-                          accessibilityState={selected ? { selected: true } : {}}
-                          accessibilityLabel={menu.name}
+                          aria-selected={selected}
+                          aria-label={menu.name}
                         >
                           <Text
                             fontSize={13}
@@ -448,8 +448,8 @@ export function WebSidebar() {
           return (
             <Pressable
               key={item.href}
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={item.label}
+              aria-selected={isFocused}
+              aria-label={item.label}
               onPress={() => router.push(item.href as any)}
               style={({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => [
                 styles.navItem,
@@ -521,8 +521,8 @@ export function WebSidebar() {
 
         <Pressable
           onPress={() => router.push('/settings' as any)}
-          accessibilityLabel="Settings"
-          accessibilityState={onSettings ? { selected: true } : {}}
+          aria-label="Settings"
+          aria-selected={onSettings}
           style={[
             styles.accountChip,
             { borderColor: hoverBorder },

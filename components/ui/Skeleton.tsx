@@ -37,8 +37,7 @@ export function Skeleton({
 
   return (
     <Animated.View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      aria-hidden
       style={[{ width, height, borderRadius: radius, backgroundColor: theme.color4?.get() as string }, pulse, style]}
     />
   );
@@ -58,7 +57,7 @@ export function SkeletonLines({ lines = 3, lineHeight = 14, gap = 10 }: { lines?
 /** A drink, beer, wine or ingredient page still loading: photo, title, then details. */
 export function DetailSkeleton({ imageHeight }: { imageHeight: number }) {
   return (
-    <View accessibilityLabel="Loading" accessibilityRole="progressbar" style={styles.detail}>
+    <View aria-label="Loading" role="progressbar" style={styles.detail}>
       <Skeleton height={imageHeight} radius={0} />
       <View style={styles.detailBody}>
         <Skeleton height={34} width="70%" radius={6} />
@@ -77,7 +76,7 @@ export function DetailSkeleton({ imageHeight }: { imageHeight: number }) {
 /** A grid of item cards (image over a caption) still loading. */
 export function CardRowSkeleton({ cards = 3, cardWidth = 120 }: { cards?: number; cardWidth?: number }) {
   return (
-    <View accessibilityLabel="Loading" accessibilityRole="progressbar" style={styles.cardRow}>
+    <View aria-label="Loading" role="progressbar" style={styles.cardRow}>
       {Array.from({ length: cards }, (_, i) => (
         <View key={i} style={{ width: cardWidth, gap: 8 }}>
           <Skeleton height={cardWidth} radius={12} />
@@ -91,7 +90,7 @@ export function CardRowSkeleton({ cards = 3, cardWidth = 120 }: { cards?: number
 /** Rows in a list still loading: an icon and a label each. */
 export function ListRowsSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <View accessibilityLabel="Loading" accessibilityRole="progressbar" style={{ gap: 14 }}>
+    <View aria-label="Loading" role="progressbar" style={{ gap: 14 }}>
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.listRow}>
           <Skeleton height={24} width={24} radius={6} />
