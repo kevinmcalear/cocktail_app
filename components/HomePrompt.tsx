@@ -5,6 +5,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { SearchPopover } from '@/components/SearchPopover';
@@ -47,6 +48,10 @@ type VenueGroup = {
   logoUrl: string | null;
   drafts: any[];
 };
+
+// The static export renders Home at build time, so the build machine's hour
+// would be baked into the HTML and clash with the device's during hydration.
+const HYDRATION_GREETING = 'Hello';
 
 function timeGreeting(hour = new Date().getHours()) {
   if (hour < 12) return 'Good morning';
@@ -107,13 +112,15 @@ export function HomePrompt() {
   const recentItems = useRecentActivityStore((s) => s.items);
   const { data: dropdowns } = useDropdowns();
   const isWideWeb = useIsWideWeb();
+  const isHydrated = useIsHydrated();
   const [searchOpen, setSearchOpen] = useState(false);
   const shortcutLabel = isApplePlatform() ? '⌘K' : 'Ctrl K';
   // ponytail: override only — default is grid when ≤6, list when >6
   const [viewOverrides, setViewOverrides] = useState<Record<string, 'grid' | 'list'>>({});
 
   const firstName = (user?.user_metadata?.first_name as string | undefined)?.trim();
-  const hello = firstName ? `${timeGreeting()}, ${firstName}` : timeGreeting();
+  const greeting = isHydrated ? timeGreeting() : HYDRATION_GREETING;
+  const hello = firstName ? `${greeting}, ${firstName}` : greeting;
 
   // ponytail: Jump Back In is last-touched, not search-context — venue filter hid Caretakers drafts on Home
   const recent = useMemo(() => {
