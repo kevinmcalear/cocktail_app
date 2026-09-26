@@ -2,6 +2,7 @@ import { config } from '@tamagui/config/v3'
 import { createFont, createTamagui } from 'tamagui'
 
 import { palette } from './constants/palette'
+import { backbar } from './constants/tokens'
 
 // ponytail: Inter for system UI; cocktail/menu presentation opts into IBMPlexSansItalic explicitly
 const bodyFont = createFont({
@@ -44,10 +45,30 @@ const themeFrom = (p: (typeof palette)['light' | 'dark']) => ({
   warningText: p.warningText, // drafts / in progress, as text or small icons
 })
 
+// The redesign's colours (constants/tokens.ts), as sub-themes that redesigned
+// screens opt into with components/ds BackbarTheme. Existing screens keep the
+// themes above until they're replaced.
+const backbarThemeFrom = (b: (typeof backbar)['light' | 'dark']) => ({
+  color: b.ink,
+  background: b.ground,
+  backgroundStrong: b.surface,
+  borderColor: b.line,
+  color1: b.ground,
+  color2: b.surface,
+  color8: b.ink,
+  color9: b.ink,
+  color11: b.muted,
+})
+
+const light = { ...config.themes.light, ...themeFrom(palette.light) }
+const dark = { ...config.themes.dark, ...themeFrom(palette.dark), color2: palette.dark.surface }
+
 const customThemes = {
   ...config.themes,
-  light: { ...config.themes.light, ...themeFrom(palette.light) },
-  dark: { ...config.themes.dark, ...themeFrom(palette.dark), color2: palette.dark.surface },
+  light,
+  dark,
+  light_backbar: { ...light, ...backbarThemeFrom(backbar.light) },
+  dark_backbar: { ...dark, ...backbarThemeFrom(backbar.dark) },
 }
 
 const tamaguiConfig = createTamagui({
