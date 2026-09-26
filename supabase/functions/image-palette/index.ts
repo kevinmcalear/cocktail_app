@@ -6,6 +6,7 @@
 //
 // POST { image_id, force? } -> { palette }  ([] when the picture has no colour)
 import { decode, GIF } from "jsr:@matmen/imagescript@1.3.1";
+import decodeWebp, { init as initWebp } from "npm:@jsquash/webp@1.5.0/decode.js";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
@@ -42,12 +43,9 @@ serveJson("image-palette", async (req) => {
   if (downloadError) throw downloadError;
   if (blob.size > MAX_BYTES) throw new HttpError(422, "The image is too large.");
 
-  const decoded = await decode(new Uint8Array(await blob.arrayBuffer()), true).catch(() => null);
-  if (!decoded) throw new HttpError(422, "The image could not be decoded.");
-  // ponytail: imagescript reads PNG, JPEG, GIF and TIFF. WebP and HEIC fail
-  // above and keep a null palette; the app only uploads JPEG and PNG today.
-  const frame = decoded instanceof GIF ? decoded[0] : decoded;
-  const palette = pickPalette(frame.bitmap, frame.width);
+  const pixels = await decodePixels(await blob.arrayBuffer());
+  if (!pixels) throw new HttpError(422, "The image could not be decoded.");
+  const palette = pickPalette(pixels.rgba, pixels.width);
 
   // Only if the row still shows this picture. When url changed meanwhile, the
   // database has already asked for the new picture's palette; don't overwrite
@@ -62,6 +60,49 @@ serveJson("image-palette", async (req) => {
   if (saved.length === 0) return { palette: null, stale: true };
   return { palette };
 });
+
+/**
+ * RGBA pixels of a PNG, JPEG, GIF (first frame), TIFF or WebP, or null when
+ * the bytes aren't one of those.
+ * ponytail: HEIC and AVIF still fail and keep a null palette; the app uploads
+ * JPEG and PNG, and WebP only arrives from elsewhere.
+ */
+async function decodePixels(buffer: ArrayBuffer): Promise<{ rgba: ArrayLike<number>; width: number } | null> {
+  const bytes = new Uint8Array(buffer);
+  if (isWebp(bytes)) {
+    await loadWebpDecoder();
+    const image = await decodeWebp(buffer).catch(() => null);
+    return image && { rgba: image.data, width: image.width };
+  }
+  const decoded = await decode(bytes, true).catch(() => null);
+  if (!decoded) return null;
+  const frame = decoded instanceof GIF ? decoded[0] : decoded;
+  return { rgba: frame.bitmap, width: frame.width };
+}
+
+/** "RIFF" <size> "WEBP": the WebP container, lossy or lossless. */
+function isWebp(bytes: Uint8Array): boolean {
+  const tag = (from: number) => String.fromCharCode(...bytes.subarray(from, from + 4));
+  return bytes.length >= 12 && tag(0) === "RIFF" && tag(8) === "WEBP";
+}
+
+let webpDecoder: Promise<void> | null = null;
+
+/**
+ * Loads libwebp (jSquash's WASM build) on the first WebP only, so PNG and JPEG
+ * requests never pay for it. The .wasm is read from inside the npm package, as
+ * Supabase's magick-wasm example does, so deploys bundle it with the function.
+ */
+function loadWebpDecoder(): Promise<void> {
+  webpDecoder ??= Deno.readFile(new URL("codec/dec/webp_dec.wasm", import.meta.resolve("npm:@jsquash/webp@1.5.0")))
+    .then((wasm) => WebAssembly.compile(wasm))
+    .then((module) => initWebp(module))
+    .catch((err) => {
+      webpDecoder = null; // try again on the next request
+      throw err;
+    });
+  return webpDecoder;
+}
 
 function timingSafeEqual(a: string, b: string): boolean {
   const left = new TextEncoder().encode(a);

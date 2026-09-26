@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { after, describe, test } from 'node:test';
 import { crc32, deflateSync } from 'node:zlib';
 
@@ -98,9 +99,9 @@ function png(fg, bg, share) {
   ]);
 }
 
-async function uploadPicture(name, bytes) {
-  const path = `palette-tests/${run}/${name}.png`;
-  const { error } = await service.storage.from('drinks').upload(path, bytes, { contentType: 'image/png' });
+async function uploadPicture(name, bytes, type = 'png') {
+  const path = `palette-tests/${run}/${name}.${type}`;
+  const { error } = await service.storage.from('drinks').upload(path, bytes, { contentType: `image/${type}` });
   if (error) throw new Error(`upload failed: ${error.message}`);
   paths.push(path);
   return service.storage.from('drinks').getPublicUrl(path).data.publicUrl;
@@ -287,6 +288,16 @@ describe('image-palette function', { skip: functionSkip }, () => {
     const { error } = await service.from('images').update({ url }).eq('id', id);
     assert.equal(error, null);
     assert.deepEqual(await paletteOf(id), palette);
+  });
+
+  test('WebP pictures are decoded too', async () => {
+    // 64x64 lossless WebP: the same green drink on a dark bar as the PNG tests.
+    const bytes = readFileSync(new URL('./fixtures/green-drink.webp', import.meta.url));
+    const url = await uploadPicture('green', bytes, 'webp');
+    const id = await insertImage({ url });
+    const palette = await waitForPalette(id);
+    assert.ok(palette, 'the trigger should have filled the palette within 20 seconds');
+    assert.equal(palette[0], '#3cc83c');
   });
 
   test('a greyscale picture gets [] so it is not retried', async () => {
