@@ -1,3 +1,5 @@
+import { isLocalStack } from "./localStack.ts";
+
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 function apiKey(): string {
@@ -13,8 +15,30 @@ export function decodeBase64(base64: string): Uint8Array {
   return bytes;
 }
 
+// A 16x16 sheet of sketch paper, returned instead of calling Imagen on a
+// local stack, so local runs and tests never spend real AI quota.
+const MOCK_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR42mN4//IuSYhhVMOohuGrAQB7O7UfT213LwAAAABJRU5ErkJggg==";
+
+/**
+ * Whether image generation is mocked: always on a local stack unless
+ * IMAGE_MODEL=imagen (in supabase/functions/.env), never in production.
+ */
+export function mockImages(): boolean {
+  const model = Deno.env.get("IMAGE_MODEL");
+  if (model === "imagen") return false;
+  if (isLocalStack()) return true;
+  if (model === "mock") throw new Error("IMAGE_MODEL=mock is only allowed on a local stack");
+  return false;
+}
+
 /** Generates one square PNG with Imagen 4. */
 export async function generateImagenPng(prompt: string): Promise<Uint8Array> {
+  if (mockImages()) {
+    console.log(`[mock imagen] ${prompt.slice(0, 160)}`);
+    return decodeBase64(MOCK_PNG_BASE64);
+  }
+
   const res = await fetch(`${API_BASE}/imagen-4.0-generate-001:predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },

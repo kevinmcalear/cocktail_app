@@ -13,6 +13,7 @@ import {
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
+import { setItemImages } from "@/components/drink/drinkImages";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
@@ -323,18 +324,7 @@ export default function EditIngredientScreen({
                 }
             }
 
-            const { error: deleteImagesError } = await supabase.from("item_images").delete().eq("item_id", id);
-            if (deleteImagesError) throw deleteImagesError;
-
-            if (finalImageIds.length > 0) {
-                const imageInserts = finalImageIds.map((imgId, index) => ({
-                    item_id: id,
-                    image_id: imgId,
-                    sort_order: index,
-                }));
-                const { error: insertError } = await supabase.from("item_images").insert(imageInserts);
-                if (insertError) throw insertError;
-            }
+            await setItemImages(id, finalImageIds, { replace: true });
 
             const { error: updateError } = await supabase
                 .from("items")
