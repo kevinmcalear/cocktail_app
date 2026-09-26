@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Display, Headline, Surface, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { BackBarLink } from '@/components/backbar/BackBarLink';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 
@@ -27,6 +28,7 @@ export function PrepScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
+          <BackBarLink />
           <Display>Prep</Display>
           <Body tone="muted">Your prep list is on its way. Here’s what it will hold.</Body>
           {COMING.map((c) => (
