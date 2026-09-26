@@ -1,0 +1,82 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "version": "../../package.json",
+  "identifier": "com.kevinmcalear.cocktail.desktop",
+  "build": {
+    "frontendDist": "../../dist",
+    "devUrl": "http://localhost:8090",
+    "beforeDevCommand": {
+      "script": "npm run web -- --port 8090",
+      "cwd": "../.."
+    },
+    "beforeBuildCommand": {
+      "script": "npm run build:web",
+      "cwd": "../.."
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "create": false,
+        "width": 1280,
+        "height": 860,
+        "minWidth": 420,
+        "minHeight": 560,
+        "center": true,
+        "backgroundColor": "#F9F9FB"
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "connect-src": "'self' ipc: http://ipc.localhost blob: data: https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://us.i.posthog.com https://eu.i.posthog.com",
+        "img-src": "'self' data: blob: https:",
+        "media-src": "'self' data: blob: https:",
+        "font-src": "'self' data:",
+        "worker-src": "'self' blob:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "frame-src": "'none'"
+      },
+      "devCsp": {
+        "default-src": "'self'",
+        "script-src": "'self' 'unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "connect-src": "'self' ipc: http://ipc.localhost blob: data: http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://us.i.posthog.com https://eu.i.posthog.com",
+        "img-src": "'self' data: blob: http://localhost:* http://127.0.0.1:* https:",
+        "media-src": "'self' data: blob: http://localhost:* http://127.0.0.1:* https:",
+        "font-src": "'self' data: http://localhost:*",
+        "worker-src": "'self' blob:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "frame-src": "'none'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "nsis", "deb", "appimage"],
+    "category": "Lifestyle",
+    "shortDescription": "Recipes, menus and staff training for bars.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["cocktailapp"]
+      }
+    }
+  }
+}

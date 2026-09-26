@@ -41,7 +41,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 
 ## Shape and space
 
-- **Radius:** 12 (controls), 22 (cards), 36 (sheets), full (pills), all with continuous corners (`borderCurve: 'continuous'`).
+- **Radius:** 4 (marks drawn inside a card, like zones on the back bar plan), 12 (controls), 22 (cards), 36 (sheets), full (pills), all with continuous corners (`borderCurve: 'continuous'`).
 - **Space:** 4-point grid: 4, 8, 12, 16, 24, 32, 48. Screen side gutter 16 on phones, 24 on tablet, 32 on desktop.
 - **Tap targets:** at least 44 by 44.
 
@@ -105,4 +105,4 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 
 ## The gallery
 
-`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden, and only opens in development or when the redesign flag is on. Add new ds components to it in the same PR; agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden (not linked anywhere) and opens in every build: its switch is how you turn the redesign on for yourself in production. Add new ds components to it in the same PR; agents verify against it and against the brief.

@@ -3,6 +3,7 @@ import { isApplePlatform } from '@/lib/platformKeys';
 import { DraftFolderTree } from '@/components/DraftFolderTree';
 import { SearchPopover } from '@/components/SearchPopover';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
+import { useRedesign } from '@/lib/flags';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
@@ -40,9 +41,10 @@ const SIDEBAR_MAX = 400;
 type NavItem = {
   href: string;
   label: string;
-  icon: 'TabHome' | 'TabTest';
+  icon: 'TabHome' | 'TabTest' | 'map.fill';
   match: (pathname: string) => boolean;
   requiresTesting?: boolean;
+  requiresRedesign?: boolean;
 };
 
 const NAV: NavItem[] = [
@@ -52,6 +54,7 @@ const NAV: NavItem[] = [
     icon: 'TabHome',
     match: (p) => p === '/' || p === '' || p === '/(tabs)' || p.endsWith('/index'),
   },
+  { href: '/back-bar', label: 'Back bar', icon: 'map.fill', match: (p) => p.startsWith('/back-bar'), requiresRedesign: true },
   {
     href: '/(tabs)/test',
     label: 'Quiz',
@@ -363,7 +366,8 @@ export function WebSidebar() {
     'Account';
   const email = user?.email || '';
 
-  const items = NAV.filter((item) => !item.requiresTesting || isTestingEnabled);
+  const redesign = useRedesign();
+  const items = NAV.filter((item) => (!item.requiresTesting || isTestingEnabled) && (!item.requiresRedesign || redesign));
 
   const goCreatorHref = (href: string) => {
     if (pathname.includes('edit-mode')) {
@@ -460,7 +464,7 @@ export function WebSidebar() {
               ]}
             >
               <XStack alignItems="center" gap="$2.5" flex={1}>
-                <CustomIcon name={item.icon} size={20} color={color} />
+                {item.icon === 'map.fill' ? <IconSymbol name={item.icon} size={20} color={color} /> : <CustomIcon name={item.icon} size={20} color={color} />}
                 <Text
                   fontSize={14}
                   fontWeight={isFocused ? '600' : '500'}
@@ -575,10 +579,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  searchTrigger: {
-    marginBottom: 4,
-    justifyContent: 'space-between',
-  },
+  searchTrigger: { marginBottom: 4, justifyContent: 'space-between' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -600,10 +601,7 @@ const styles = StyleSheet.create({
     paddingLeft: 28,
     borderRadius: 6,
   },
-  createSlot: {
-    alignItems: 'flex-start',
-    paddingHorizontal: 4,
-  },
+  createSlot: { alignItems: 'flex-start', paddingHorizontal: 4 },
   accountChip: {
     flexDirection: 'row',
     alignItems: 'center',

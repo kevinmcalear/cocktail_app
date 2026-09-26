@@ -6,8 +6,15 @@ import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { YStack } from "tamagui";
 import { CardCountSlider, sharedStyles, Subject, SubjectCard } from "../test/_shared";
+import { StudyScreen } from "@/components/screens/StudyScreen";
+import { useRedesign } from "@/lib/flags";
 
-export default function SubjectSelection() {
+export default function StudyTab() {
+    // The redesign's Study replaces the old quiz; the quiz stays until then.
+    return useRedesign() ? <StudyScreen /> : <SubjectSelection />;
+}
+
+function SubjectSelection() {
     const router = useRouter();
     const [cardCount, setCardCount] = useState(10);
     const sliderPos = useSharedValue((10 - 5) / 15);
