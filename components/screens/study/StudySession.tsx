@@ -92,8 +92,9 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
             {card.glass ? (
               <GlassQuestion options={glassOptions(card.glass, glasses, card.id)} correctId={card.glass.id} picked={picked} onPick={setPicked} />
             ) : null}
-            {/* The picture shows the glass, so it waits for the answer. */}
-            {!card.glass || picked !== null || revealed ? (
+            {/* The picture shows the glass, so it waits for the answer. Without a photo the
+                placeholder would only repeat the glass and push the ratings off screen. */}
+            {card.imageUrl && (!card.glass || picked !== null || revealed) ? (
               <DrinkImage source={card.imageUrl} glass={card.glass?.icon ?? null} accessibilityLabel={card.name} aspectRatio={4 / 3} />
             ) : null}
             {revealed ? (
@@ -106,25 +107,28 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
                 style={styles.reveal}
               />
             )}
-            {revealed ? (
-              <View style={styles.rates} role="group" accessibilityLabel="How well did you know it?">
-                {RATINGS.map((r) => (
-                  <Button
-                    key={r.rating}
-                    label={r.label}
-                    accessibilityHint={r.hint}
-                    variant={r.rating === 'nailed' ? 'primary' : 'secondary'}
-                    onPress={() => onRate(r.rating)}
-                    style={styles.rate}
-                  />
-                ))}
-              </View>
-            ) : null}
           </View>
         ) : (
           <Body tone="muted">Nothing to study in this deck yet.</Body>
         )}
       </ScrollView>
+      {/* Pinned so rating never needs a scroll, however long the spec. */}
+      {card && !done && revealed ? (
+        <View style={[styles.footer, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.md, borderTopColor: ds.c.line }]}>
+          <View style={styles.rates} role="group" accessibilityLabel="How well did you know it?">
+            {RATINGS.map((r) => (
+              <Button
+                key={r.rating}
+                label={r.label}
+                accessibilityHint={r.hint}
+                variant={r.rating === 'nailed' ? 'primary' : 'secondary'}
+                onPress={() => onRate(r.rating)}
+                style={styles.rate}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -137,7 +141,8 @@ const styles = StyleSheet.create({
   body: { paddingTop: space.lg, maxWidth: 640, width: '100%', alignSelf: 'center' },
   card: { gap: space.lg },
   reveal: { alignSelf: 'flex-start' },
-  rates: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  footer: { paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
+  rates: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, maxWidth: 640, width: '100%', alignSelf: 'center' },
   rate: { flexGrow: 1 },
   summary: { gap: space.md },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
