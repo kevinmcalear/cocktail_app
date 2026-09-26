@@ -106,7 +106,7 @@ The brief's example roles as data:
 | Head bartender | 35 | grant `costs` |
 | Guest bartender | 35 | revoke `house_made`, `prep`; `ends_at` Sun 5 Oct |
 
-Two cells of the matrix differ from what today's policies already allow; see open question 1.
+Two cells of the matrix differ from what today's policies already allow, and that difference is accepted (see Decisions): Drink Creators can build menus and events by default, so the Head bartender's override there does nothing, and a guest bartender at base 35 can build menus too.
 
 **RLS:** `venue_roles` readable by the bar's members, written by its admins (`my_bar_ids(40)`), like the roster.
 
@@ -284,17 +284,20 @@ Screens from the brief. Bold tables are new in this proposal.
 - **App follow-ups:** mirror `venue_capability` in `lib/roles.ts` (human-gated) or read `get_venue_role_matrix`; add the new tables to `types/`; the storage policy needs a folder for zone and container photos (coordinate with the photo task).
 - **Account deletion:** new user-owned rows (profile, shelf, rankings, claims) cascade with the auth user. A deleted person's credits on drinks lose their creator link. A deleted bar's profile stays behind unclaimed, so credits to it survive.
 
+## Decisions
+
+- **Two matrix cells follow today's policies, not the brief** (Kevin, 2026-09-26). Level 35 can already write menus, so Drink Creators get "Build menus and events" by default, and a guest bartender at base 35 can build menus. `can_write()` keeps its meaning; revisit only if a venue asks for a role that edits drinks but not menus.
+
 ## Open questions for Kevin
 
-1. **Two matrix cells vs today's policies.** Existing RLS already lets level 35 write menus, so Drink Creators get "Build menus and events" by default (the brief's Head bartender override is a no-op), and a guest bartender at base 35 can build menus. Matching the brief exactly means letting `can_write()` consult capabilities for custom roles, which changes an existing helper's meaning. Recommendation: accept the difference now, revisit if a venue asks.
-2. **Level names.** The brief says Floor and Maker; `lib/roles.ts` says Employee and Drink Creator. Rename the labels?
-3. **Par in two places.** Per location (`item_locations`, "restock this spot to 2") and per house-made item (`item_prep`, "keep 2 L made"). Bought items' order par is the sum of their location pars. OK?
-4. **Expiry per role or per person?** The brief puts the end date on the role, which fits takeovers. A per-member end date would also cover a one-off trial shift.
-5. **Bar profiles private by default.** A guest venue has to be visible to be credited on an event, so Pale Moth needs a public profile first. Default bar profiles to public?
-6. **Person profiles and rankings private by default.** Public profiles show originals; rankings and shelves stay private until we decide what's shareable.
-7. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
-8. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
-9. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
-10. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-11. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-12. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Level names.** The brief says Floor and Maker; `lib/roles.ts` says Employee and Drink Creator. Rename the labels?
+2. **Par in two places.** Per location (`item_locations`, "restock this spot to 2") and per house-made item (`item_prep`, "keep 2 L made"). Bought items' order par is the sum of their location pars. OK?
+3. **Expiry per role or per person?** The brief puts the end date on the role, which fits takeovers. A per-member end date would also cover a one-off trial shift.
+4. **Bar profiles private by default.** A guest venue has to be visible to be credited on an event, so Pale Moth needs a public profile first. Default bar profiles to public?
+5. **Person profiles and rankings private by default.** Public profiles show originals; rankings and shelves stay private until we decide what's shareable.
+6. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
+7. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
+8. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
+9. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
+10. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+11. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
