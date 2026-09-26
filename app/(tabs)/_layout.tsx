@@ -70,6 +70,8 @@ export default function TabLayout() {
       {/* Redesign-only tabs, hidden in the current layout. */}
       <Tabs.Screen name="library" options={{ href: null }} />
       <Tabs.Screen name="prep" options={{ href: null }} />
+      <Tabs.Screen name="bar" options={{ href: null }} />
+      <Tabs.Screen name="collection" options={{ href: null }} />
       <Tabs.Screen
         name="search"
         options={{
