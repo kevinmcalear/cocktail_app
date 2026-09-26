@@ -6,10 +6,11 @@ name: change-policy
 
 on:
   pull_request:
-    # labeled/unlabeled re-run the gate when approval changes. Do not add a
-    # job-level `if:` to skip unrelated label events: a skipped run counts as
-    # passing for a required check and would clear an earlier failure.
-    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+    # labeled/unlabeled re-run the gate when approval changes, and edited when
+    # the base branch changes (a retarget changes the diff). Do not add a
+    # job-level `if:` to skip unrelated label or title edits: a skipped run
+    # counts as passing for a required check and would clear an earlier failure.
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled, edited]
 
 concurrency:
   group: change-policy-${{ github.event.pull_request.number }}
@@ -79,6 +80,7 @@ jobs:
         env:
           LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           EVENT_ACTION: ${{ github.event.action }}
+          BASE_CHANGED: ${{ github.event.changes.base != null }}
         run: |
           # Old and new names, so moving a file out of a guarded path still counts.
           gh api --paginate "repos/$REPO/pulls/$PR/files" \
@@ -88,11 +90,12 @@ jobs:
           gh api --paginate "repos/$REPO/issues/$PR/events" \
             --jq '.[] | select(.event == "labeled") | {label: .label.name, actor: .actor.login, at: .created_at} | tojson' \
             > "$RUNNER_TEMP/label-events.jsonl"
-          # On a push, an approval label applied before it is stale. This run is
-          # created just after the push, so its creation time never predates it;
-          # at worst a label added in those few seconds is reset too.
+          # A push or a retarget changes the diff, so an approval label applied
+          # before it is stale. This run is created just after that change, so
+          # its creation time never predates it; at worst a label added in
+          # those few seconds is reset too.
           pushed_at=""
-          if [ "$EVENT_ACTION" = "synchronize" ]; then
+          if [ "$EVENT_ACTION" = "synchronize" ] || [ "$BASE_CHANGED" = "true" ]; then
             pushed_at=$(gh api "repos/$REPO/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
           fi
           node scripts/change-policy/classify.mjs --json \
