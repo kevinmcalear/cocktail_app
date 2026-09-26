@@ -299,8 +299,8 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Only catalog admins create unclaimed profiles** (Kevin, 2026-09-26): historic creators and venues that aren't on the platform. Users can't suggest them yet; that would need a moderation queue.
 - **One currency per bar** (Kevin, 2026-09-26). `bars.currency` replaces a currency on every cost row; costs need it set first.
 - **A deleted account takes its profile with it** (Kevin, 2026-09-26). The person's profile, shelf, rankings and claims are deleted; drinks credited to them keep their other credit (origin bar, year) but lose the creator link. No anonymised credit is kept.
+- **Guest drinks are copied into the host bar** (Kevin, 2026-09-26), credited to their creator and origin bar. A bar's drinks stay visible only to its members; `items` policies don't change.
 
 ## Open questions for Kevin
 
-1. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-2. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
