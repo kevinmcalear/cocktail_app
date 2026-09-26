@@ -5,6 +5,7 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
+import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -13,6 +14,7 @@ import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
+import { useRedesign } from "@/lib/flags";
 
 interface IngredientDetail {
     id: string;
@@ -59,6 +61,7 @@ export default function IngredientDetailScreen() {
     // Shared ingredients have no venue, and the recipe view returns them in full.
     const venueRole = useEffectiveRole(ingredient?.bar_id ?? null);
     const canViewDetails = !ingredient?.bar_id || venueRole > 30;
+    const redesign = useRedesign();
 
     if (loading || !ingredient) {
         return (
@@ -118,6 +121,8 @@ export default function IngredientDetailScreen() {
                         </Paragraph>
                     </GlassView>
                 )}
+
+                {redesign ? <WhereItLives itemId={ingredient.id} itemName={ingredient.name} /> : null}
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
                 {canViewDetails && recipe.length > 0 && (
