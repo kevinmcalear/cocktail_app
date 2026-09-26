@@ -73,3 +73,8 @@ export function withAlpha(hex: string, alpha: number): string {
   const [r, g, b] = parseHex(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+/** True for #RGB or #RRGGBB, the formats venues store their colours in. */
+export function isHexColor(value: unknown): value is string {
+  return typeof value === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
+}
