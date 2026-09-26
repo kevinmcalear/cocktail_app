@@ -2,6 +2,7 @@
 // docs/design_system.md and the gallery at /dev/gallery.
 export { Button, type ButtonProps, type IconName } from './Button';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
+export { Field } from './Field';
 export { GlassButton, GlassSurface } from './Glass';
 export { LockedSection } from './LockedSection';
 export { PressableScale } from './PressableScale';
