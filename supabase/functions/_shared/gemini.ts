@@ -13,8 +13,28 @@ export function decodeBase64(base64: string): Uint8Array {
   return bytes;
 }
 
+// A 16x16 sheet of sketch paper, returned instead of calling Imagen when
+// IMAGE_MODEL=mock (set for the local stack in config.toml).
+const MOCK_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR42mN4//IuSYhhVMOohuGrAQB7O7UfT213LwAAAABJRU5ErkJggg==";
+
+/** Whether image generation is mocked. Only honoured against a local stack. */
+function mockImages(): boolean {
+  if (Deno.env.get("IMAGE_MODEL") !== "mock") return false;
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  if (!/^http:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)[:/]/.test(url)) {
+    throw new Error("IMAGE_MODEL=mock is only allowed on a local stack");
+  }
+  return true;
+}
+
 /** Generates one square PNG with Imagen 4. */
 export async function generateImagenPng(prompt: string): Promise<Uint8Array> {
+  if (mockImages()) {
+    console.log(`[mock imagen] ${prompt.slice(0, 160)}`);
+    return decodeBase64(MOCK_PNG_BASE64);
+  }
+
   const res = await fetch(`${API_BASE}/imagen-4.0-generate-001:predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },

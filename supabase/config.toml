@@ -382,8 +382,13 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Local stack only; production secrets are set with `supabase secrets set`.
+[edge_runtime.secrets]
+# Draw a blank paper PNG instead of calling Imagen, so local runs and tests
+# never spend real AI quota. Refused unless SUPABASE_URL is local.
+IMAGE_MODEL = "mock"
+# Shared with the database's image_worker_secret in Vault.
+IMAGE_WORKER_SECRET = "local-image-worker-secret"
 
 [analytics]
 enabled = true
@@ -419,4 +424,8 @@ verify_jwt = false
 
 # Public: phones fetch a venue's install manifest and icons before anyone signs in.
 [functions.venue-app]
+verify_jwt = false
+
+# Called by the database (pg_net) with a shared secret, not a user session.
+[functions.image-worker]
 verify_jwt = false

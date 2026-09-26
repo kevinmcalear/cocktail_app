@@ -101,7 +101,7 @@ export function LiquidTabBar({
         <View style={[styles.container, { bottom: tabBarBottom(insets.bottom) }]}>
             <TabBarSurface scheme={colorScheme}>
                 <XStack
-                    accessibilityRole="tablist"
+                    role="tablist"
                     justifyContent="center"
                     alignItems="center"
                     paddingHorizontal={14}
@@ -136,10 +136,9 @@ export function LiquidTabBar({
                             <PlatformPressable
                                 key={route.key}
                                 href={buildHref(route.name, route.params)}
-                                accessibilityRole="tab"
-                                accessibilityState={isFocused ? { selected: true } : {}}
+                                role="tab"
                                 aria-selected={isFocused}
-                                accessibilityLabel={options.tabBarAccessibilityLabel ?? options.title ?? route.name}
+                                aria-label={options.tabBarAccessibilityLabel ?? options.title ?? route.name}
                                 testID={options.tabBarButtonTestID}
                                 onPress={onPress}
                                 onLongPress={onLongPress}

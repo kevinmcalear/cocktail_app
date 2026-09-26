@@ -106,7 +106,7 @@ function DialogButton({
   const destructive = button.style === 'destructive';
   const filled = destructive || (isPrimary && button.style !== 'cancel');
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={stacked ? styles.stackedButton : undefined}>
+    <Pressable role="button" onPress={onPress} style={stacked ? styles.stackedButton : undefined}>
       {/* `hovered` exists on web only; React Native's own types leave it out. */}
       {({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
         <XStack

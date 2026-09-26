@@ -15,6 +15,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
+import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 
 export default function CocktailDetailsScreen() {
@@ -29,7 +30,7 @@ export default function CocktailDetailsScreen() {
         !!cocktail,
         cocktail
             ? recentEntry('cocktail', cocktail.id, cocktail.name, {
-                imageUrl: cocktail.item_images?.[0]?.images?.url,
+                imageUrl: heroPicture(cocktail.item_images)?.url,
                 barId: cocktail.bar_id ?? null,
               })
             : null
@@ -75,15 +76,10 @@ export default function CocktailDetailsScreen() {
         );
     }
 
-    const displayImages = isEditing && editor.localImages.length > 0
-        ? editor.localImages.map((img) => img.url)
-        : cocktail.item_images?.map((img) => img.images?.url).filter(Boolean) as string[] || [];
-
-    const images = displayImages.length > 0
-        ? displayImages
-        : isEditing
-            ? []
-            : [require("@/assets/images/cocktails/house_martini.jpg")];
+    const pictures = orderedPictures(cocktail.item_images);
+    const editingImages = isEditing && editor.localImages.length > 0;
+    const images = editingImages ? editor.localImages.map((img) => img.url) : pictures.map((p) => p.url);
+    const imageTags = editingImages ? undefined : pictures.map(pictureTag);
 
     const displayTitle = isEditing ? editor.name : cocktail.name;
 
@@ -93,6 +89,7 @@ export default function CocktailDetailsScreen() {
                 id={cocktail.id}
                 title={displayTitle}
                 images={images}
+                imageTags={imageTags}
                 emptyPhotoPlaceholder={isEditing && images.length === 0}
                 isFavorite={isFavorite(cocktail.id)}
                 isInStudyPile={isInStudyPile(cocktail.id)}
