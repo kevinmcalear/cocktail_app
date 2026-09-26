@@ -38,7 +38,7 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 const users = {};
 const ids = {};
 
-// 'mock' when the worker is served with the mocked model, 'imagen' when it
+// 'mock' when the worker is served with the mocked model, 'live' when it
 // would call the real one, null when it isn't served at all. In CI the edge
 // runtime is cold on the first request, so keep asking for a minute.
 async function probeWorker(attempts) {
@@ -55,8 +55,8 @@ async function probeWorker(attempts) {
   return null;
 }
 const workerModel = await probeWorker(process.env.CI ? 20 : 1);
-if (workerModel === 'imagen') {
-  throw new Error('image-worker is using the real image model; unset IMAGE_MODEL=imagen in supabase/functions/.env before running tests.');
+if (workerModel === 'live') {
+  throw new Error('image-worker is using the real image model; unset IMAGE_MODEL=live in supabase/functions/.env before running tests.');
 }
 if (!workerModel && process.env.CI) {
   throw new Error('image-worker is not being served; CI starts the stack with edge-runtime for these tests.');
@@ -219,6 +219,8 @@ describe('picture metadata', () => {
       ['release_item_image_job', { p_item_id: ids.gin, p_revision: 1, p_outcome: 'failed' }],
       ['attach_generated_item_image', { p_item_id: ids.gin, p_url: 'http://127.0.0.1/x.png' }],
       ['consume_item_ai_quota', { p_item_id: ids.gin, p_fn: 'x', p_venue_daily_limit: 1, p_user_daily_limit: 1 }],
+      ['refund_ai_quota', { p_user_id: users.creator.id, p_bar_id: null, p_fn: 'x' }],
+      ['refund_item_ai_quota', { p_item_id: ids.gin, p_fn: 'x' }],
     ];
     for (const client of [anon, users.creator.client]) {
       for (const [fn, args] of calls) {
@@ -226,6 +228,35 @@ describe('picture metadata', () => {
         assert.ok(error, `${fn} should be refused`);
       }
     }
+  });
+});
+
+describe('refunds for failed AI calls', () => {
+  test('hand back one unit to the item\'s payer, and nobody else', async () => {
+    const bar = await newBar('Refund Bar');
+    const otherBar = await newBar('Other Refund Bar');
+    const venueDrink = await newItem({ name: 'Refunded sour', item_type: 'cocktail', bar_id: bar });
+    const personal = await newItem({ name: 'Refunded shrub', item_type: 'ingredient', created_by: users.homeUser.id });
+    await db.query(
+      `INSERT INTO private.ai_usage (bar_id, user_id, fn)
+       VALUES ($1, NULL, 'image-worker'), ($1, NULL, 'image-worker'), ($2, NULL, 'image-worker'),
+              (NULL, $3, 'image-worker'), (NULL, $3, 'generate-cocktail-image')`,
+      [bar, otherBar, users.homeUser.id]
+    );
+
+    for (const [item] of [[venueDrink], [personal]]) {
+      const { error } = await service.rpc('refund_item_ai_quota', { p_item_id: item, p_fn: 'image-worker' });
+      assert.ifError(error);
+    }
+    assert.equal(await usage('bar_id', bar), 1, 'one of the venue\'s two units handed back');
+    assert.equal(await usage('bar_id', otherBar), 1, 'other venue untouched');
+    const { rows } = await db.query('SELECT fn FROM private.ai_usage WHERE user_id = $1', [users.homeUser.id]);
+    assert.deepEqual(rows.map((r) => r.fn), ['generate-cocktail-image'], 'only the matching function is refunded');
+
+    // Nothing left to refund: a no-op, not an error.
+    const { error } = await service.rpc('refund_ai_quota', { p_user_id: users.homeUser.id, p_bar_id: null, p_fn: 'image-worker' });
+    assert.ifError(error);
+    await db.query('DELETE FROM private.ai_usage WHERE user_id = $1', [users.homeUser.id]);
   });
 });
 

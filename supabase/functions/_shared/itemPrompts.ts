@@ -27,12 +27,24 @@ export const ITEM_SELECT = `
   recipes!new_recipes_recipe_item_id_fkey(amount, unit, sort_order, ingredient:items!new_recipes_ingredient_item_id_fkey(name))
 `;
 
+/**
+ * Every picture shows its subject and nothing else: the frame is for the drink
+ * or ingredient itself, never props someone might mistake for part of it.
+ */
+export const ONLY_THE_SUBJECT =
+  "Draw ONLY the subject described, alone and centred, and no other objects of any kind: no bar tools (spoons, " +
+  "jiggers, strainers, tongs), no ice cubes, no additional glasses or bottles, no loose fruit, herbs or garnish " +
+  "beyond what is described, no napkins, coasters, boards, table or bar top, no scenery and no people. At most a " +
+  "faint soft shadow beneath it.";
+
 /** Shared tail of every prompt: the house illustration style. */
 export const HOUSE_STYLE =
   "The style is inspired by premium minimalist bars like Caretaker's Cottage: understated elegance. " +
-  "Visible messy sketch lines, overlapping pencil strokes. " +
-  "The background MUST be a perfectly clean, uniform, flat light paper texture with absolutely no sketchbook edges, " +
-  "no binder rings, and no borders. NO TEXT ANYWHERE. No words. Extremely sophisticated but intentionally rough and unfinished.";
+  "Visible messy sketch lines, overlapping pencil strokes, with only very subtle, muted watercolor washes for a hint " +
+  "of true-to-life colour. The background MUST be a perfectly clean, uniform, flat light paper texture with no marks, " +
+  "smudges or washes behind the subject, no sketchbook edges, no binder rings, and no borders. NO TEXT ANYWHERE: no " +
+  "words, no letters, no labels with writing. Extremely sophisticated but intentionally rough and unfinished. " +
+  ONLY_THE_SUBJECT;
 
 // Recipe units that describe something set on or in the glass rather than
 // poured (see lib/units.ts), so the sketch draws them as the garnish.
@@ -40,12 +52,6 @@ const GARNISH_UNITS = new Set(["peel", "twist", "wheel", "slice", "sprig", "leaf
 
 function sortedRecipes(item: ItemForPrompt) {
   return [...item.recipes].sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function ingredientNames(item: ItemForPrompt): string[] {
-  return sortedRecipes(item)
-    .map((r) => r.ingredient?.name)
-    .filter((name): name is string => !!name);
 }
 
 function cocktailPrompt(cocktail: ItemForPrompt): string {
@@ -74,25 +80,27 @@ function cocktailPrompt(cocktail: ItemForPrompt): string {
   return (
     `A very rough, sketchy, unfinished hand-drawn pencil illustration of a high-end minimalist ${cocktail.name} cocktail. ` +
     `${details} PERFECT professional wash line, filled just a finger-width below the rim. ` +
-    `The liquid must look very clean, light, and refreshing. ${HOUSE_STYLE}`
+    `The liquid must look very clean, light, and refreshing. Only the glass, the drink and any garnish listed. ` +
+    `${HOUSE_STYLE}`
   );
 }
 
 function ingredientPrompt(ingredient: ItemForPrompt): string {
-  // House-made ingredients (syrups, infusions) have their own recipe; hint at it.
-  const parts = ingredientNames(ingredient).slice(0, 3);
-  const accent = parts.length
-    ? `Incorporate very subtle, faint visual hints of ${parts.join(", ")} nearby as sub-ingredients`
-    : "Incorporate a very delicate, elegant bar tool (like a small silver measuring spoon, picking tongs, or a single pristine ice cube) nearby as a subtle accent";
+  // An ingredient is drawn as the thing itself, in the form it arrives at the
+  // bar. One with its own recipe is house-made, so it lives in a plain bottle.
+  const houseMade = ingredient.recipes.length > 0;
+  const maker = ingredient.brand_maker ? ` by ${ingredient.brand_maker}` : "";
+  const form = houseMade
+    ? `It is a house-made preparation, so draw it as the liquid (or mixture) in a single plain, unlabelled glass ` +
+      `bottle with a simple stopper, showing its true colour.`
+    : `Decide what ${ingredient.name} physically is and draw exactly that: a bottled product (a spirit, liqueur, ` +
+      `vermouth, wine, sherry, champagne, beer or cider) is drawn as its own bottle, in the shape that product ` +
+      `really comes in; fresh produce, herbs, spices, tea or coffee are drawn as the item itself; a pantry item or ` +
+      `prepared liquid (a syrup, cordial, juice, saline, bitters) is drawn in the container it is usually kept in.`;
 
   return (
-    `A very rough, sketchy, unfinished hand-drawn pencil illustration of ${ingredient.name}. ` +
-    "The style is inspired by premium minimalist bars like Caretaker's Cottage: understated elegance. " +
-    "Visible messy sketch lines everywhere, overlapping pencil strokes, very rough and unfinished sketch-wise. " +
-    `${accent}, and ONLY very subtle, muted, toned-down watercolor washes (use colors appropriate for ${ingredient.name}) ` +
-    "for a slight hint of color, not fully colored in. The background MUST be a perfectly clean, uniform, flat light " +
-    "paper texture with absolutely no sketchbook edges, no binder rings, and no borders. NO TEXT ANYWHERE. No words. " +
-    "Extremely sophisticated, elegant, but intentionally rough and sketchy."
+    `A very rough, sketchy, unfinished hand-drawn pencil illustration of one ingredient: ${ingredient.name}${maker}. ` +
+    `${form} Show only that one ingredient, not a drink made from it, not served in a glass. ${HOUSE_STYLE}`
   );
 }
 

@@ -88,7 +88,8 @@ export const type = {
 
 export type TypeStyle = keyof typeof type;
 
-export const radius = { control: 12, card: 22, sheet: 36, pill: 999 } as const;
+/** `mark`: shapes drawn inside a card that can be only a few points tall, like zones on the back bar plan. */
+export const radius = { mark: 4, control: 12, card: 22, sheet: 36, pill: 999 } as const;
 
 /** 4-point grid. */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
