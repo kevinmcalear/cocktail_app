@@ -73,9 +73,11 @@ export function ServesField({ value, onChange }: { value: number; onChange: (v: 
         maxLength={2}
         accessibilityLabel="Serves"
         accessibilityHint="Type a number of serves"
-        style={[styles.bigInput, { fontFamily: face, color: ds.c.ink, borderBottomColor: ds.c.line }]}
+        style={[styles.bigInput, { fontFamily: face, color: ds.c.ink }]}
       />
-      <Caption tone="muted">{value === 1 ? 'serve' : 'serves'}</Caption>
+      <Caption tone="muted" style={styles.unit}>
+        {value === 1 ? 'serve' : 'serves'}
+      </Caption>
     </View>
   );
 }
@@ -94,13 +96,9 @@ const styles = StyleSheet.create({
   name: { flex: 1, gap: space.xs },
   choice: { flexDirection: 'row', borderWidth: 1, borderRadius: radius.pill, padding: 2 },
   option: { minHeight: layout.minTapTarget, minWidth: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  big: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
-  bigInput: {
-    fontSize: BIG,
-    lineHeight: BIG,
-    letterSpacing: -2,
-    width: BIG * 1.25,
-    padding: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  // flex-end, not baseline: iOS doesn't baseline-align a TextInput.
+  big: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+  // Room above the glyphs: a serif this size overshoots a lineHeight of 1.
+  bigInput: { fontSize: BIG, lineHeight: BIG * 1.15, letterSpacing: -2, width: BIG, padding: 0 },
+  unit: { paddingBottom: space.xl },
 });

@@ -64,9 +64,10 @@ export function ServesRuler({ value, min, max, onChange }: ServesRulerProps) {
       const raw = Math.min(span, Math.max(0, start.get() - (e.absoluteX - startX.get())));
       offset.set(raw);
       const next = min + Math.round(raw / TICK);
-      if (next !== last.get()) {
-        last.set(next);
-        scheduleOnRN(commit, next);
+      // One tick per serve passed, even when a fast drag skips some in a frame.
+      while (last.get() !== next) {
+        last.set(last.get() + (next > last.get() ? 1 : -1));
+        scheduleOnRN(commit, last.get());
       }
     })
     .onFinalize(() => {
