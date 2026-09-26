@@ -63,7 +63,8 @@ export async function generateImage(prompt: string): Promise<GeneratedImage> {
     body: JSON.stringify({
       model: IMAGE_MODEL_ID,
       input: [{ type: "text", text: prompt }],
-      response_format: { type: "image", mime_type: "image/png", aspect_ratio: "1:1", image_size: "1K" },
+      // Nano Banana 2 Lite only returns JPEG.
+      response_format: { type: "image", mime_type: "image/jpeg", aspect_ratio: "1:1", image_size: "1K" },
       // Nothing to keep on Google's side: each drawing is one-off.
       store: false,
     }),
