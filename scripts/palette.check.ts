@@ -75,6 +75,18 @@ const layered = palette(picture([[[190, 50, 50], 0.5], [[90, 15, 20], 0.3], [[24
 assertShape(layered);
 near(hue(layered[1]), 356, 15, 'layered deep');
 
+// A dark wine: the plum is the drink, not the bright rust rim where the light
+// comes through, even though the rim is more vivid.
+const shiraz = palette(picture([[[60, 20, 45], 0.5], [[140, 45, 12], 0.1], [[248, 246, 244], 0.4]]));
+assertShape(shiraz);
+near(hue(shiraz[0]), 322, 15, 'shiraz dominant');
+assert.ok(lightness(shiraz[0]) < 0.3, `shiraz dominant is dark: ${shiraz[0]}`);
+
+// A lighter red with some dark shading keeps its red body.
+const houseRed = palette(picture([[[130, 35, 45], 0.4], [[70, 10, 15], 0.1], [[248, 246, 244], 0.5]]));
+assertShape(houseRed);
+assert.ok(lightness(houseRed[0]) > 0.3, `house red keeps its body: ${houseRed[0]}`);
+
 // Transparent pixels are ignored, even when they're colourful.
 const cutout = palette(picture([[[0, 200, 0], 0.7, 0], [[40, 90, 200], 0.3]]));
 assertShape(cutout);

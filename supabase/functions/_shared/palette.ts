@@ -8,7 +8,10 @@
 //   2. the rest are weighted towards the middle of the frame, where hero shots
 //      put the drink;
 //   3. a small median cut splits them into boxes, and the box that is both
-//      common and a saturated mid-tone wins.
+//      common and a saturated mid-tone wins;
+//   4. except for a dark wine: when dark red-to-purple boxes make up most of
+//      the colour, their plum is the drink, not the bright rim where the light
+//      comes through. Dark bars and wood are brown, so they never count.
 
 type Rgb = [number, number, number];
 /** A sampled pixel and how much it counts (more near the middle). */
@@ -35,6 +38,12 @@ const PASSES = [
 ];
 /** A companion taken from the picture must sit this close to the dominant hue. */
 const MAX_HUE_DISTANCE = 45;
+/**
+ * A dark wine: boxes this dark, this saturated and in this hue band (red round
+ * to purple, through 0°) that together make up at least `minShare` of the
+ * colour. Shiraz is about 60%; the dark shading in a lighter red is about 20%.
+ */
+const DARK_WINE = { maxL: 0.35, minS: 0.2, fromHue: 290, toHue: 10, minShare: 0.4 };
 
 /**
  * Returns [dominant, deep, light], or [] when the picture is all background
@@ -69,18 +78,19 @@ export function pickPalette(rgba: ArrayLike<number>, width: number): string[] {
   if (colourful.length === 0) return [];
 
   const boxes = medianCut(colourful, MAX_BOXES).map((pixels) => {
-    const hsl = toHsl(average(pixels));
-    return { hsl, share: totalWeight(pixels) / colourWeight };
+    const rgb = average(pixels);
+    return { rgb, hsl: toHsl(rgb), share: totalWeight(pixels) / colourWeight };
   });
 
   let dominant = boxes[0];
   for (const box of boxes) {
     if (score(box.hsl, box.share) > score(dominant.hsl, dominant.share)) dominant = box;
   }
-  const d = dominant.hsl;
+  const d = darkWine(boxes) ?? dominant.hsl;
 
   const nearDominant = boxes.filter((b) => b !== dominant && hueDistance(b.hsl.h, d.h) <= MAX_HUE_DISTANCE);
-  const deepFromPicture = mostCommon(nearDominant.filter((b) => b.hsl.l <= 0.35));
+  // Deeper than the dominant, even when the dominant is itself dark (a wine).
+  const deepFromPicture = mostCommon(nearDominant.filter((b) => b.hsl.l <= Math.min(0.35, d.l - 0.05)));
   const lightFromPicture = mostCommon(nearDominant.filter((b) => b.hsl.l >= 0.7));
 
   const deepL = Math.max(0.08, Math.min(0.22, d.l - 0.15));
@@ -94,6 +104,23 @@ export function pickPalette(rgba: ArrayLike<number>, width: number): string[] {
     : { h: d.h, s: Math.min(d.s, 0.5), l: lightL };
 
   return [toHex(fromHsl(d)), toHex(fromHsl(deep)), toHex(fromHsl(light))];
+}
+
+/** The plum of a dark wine (its dark boxes, averaged by share), or null. */
+function darkWine(boxes: { rgb: Rgb; hsl: Hsl; share: number }[]): Hsl | null {
+  const wine = boxes.filter(
+    ({ hsl }) =>
+      hsl.l <= DARK_WINE.maxL && hsl.s >= DARK_WINE.minS && (hsl.h >= DARK_WINE.fromHue || hsl.h <= DARK_WINE.toHue)
+  );
+  const share = wine.reduce((sum, box) => sum + box.share, 0);
+  if (share < DARK_WINE.minShare) return null;
+  const sum: Rgb = [0, 0, 0];
+  for (const { rgb, share: w } of wine) {
+    sum[0] += rgb[0] * w;
+    sum[1] += rgb[1] * w;
+    sum[2] += rgb[2] * w;
+  }
+  return toHsl([sum[0] / share, sum[1] / share, sum[2] / share]);
 }
 
 /** Near-black, near-white or grey: the bar, the paper, the glass. */
