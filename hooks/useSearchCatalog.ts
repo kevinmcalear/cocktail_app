@@ -6,6 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext } from '@/lib/barContextFilter';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,6 +19,12 @@ const DRAFT_CATEGORY: Record<string, SearchItem['category']> = {
   ingredient: 'Ingredient',
   menu: 'Menu',
 };
+
+/** A search card's picture: photos before sketches, tagged when it's a sketch. */
+function searchImage(links: ItemImageLink[] | null | undefined): Pick<SearchItem, 'image' | 'imageIsSketch'> {
+  const hero = heroPicture(links);
+  return hero ? { image: { uri: hero.url }, imageIsSketch: hero.isSketch } : {};
+}
 
 function draftSearchId(entityType: string, id: string) {
   if (entityType === 'beer') return `beer-${id}`;
@@ -63,6 +70,7 @@ export function useSearchCatalog() {
         category: 'Cocktail' as const,
         recipes: c.recipes,
         item_images: c.item_images,
+        ...searchImage(c.item_images),
         item_categories: c.item_categories,
         method_id: c.item_methods?.[0]?.method_item_id ?? null,
         glassware_id: c.glassware_id,
@@ -79,9 +87,7 @@ export function useSearchCatalog() {
         category: 'Beer' as const,
         price: b.price,
         item_categories: b.item_categories,
-        image: b.item_images?.[0]?.images?.url
-          ? { uri: b.item_images[0].images.url }
-          : undefined,
+        ...searchImage(b.item_images),
       }));
 
     const mappedWines: SearchItem[] = (winesData || [])
@@ -93,9 +99,7 @@ export function useSearchCatalog() {
         category: 'Wine' as const,
         price: w.price,
         item_categories: w.item_categories,
-        image: w.item_images?.[0]?.images?.url
-          ? { uri: w.item_images[0].images.url }
-          : undefined,
+        ...searchImage(w.item_images),
       }));
 
     const mappedIngredients: SearchItem[] = (ingredientsData || [])
@@ -109,9 +113,7 @@ export function useSearchCatalog() {
         description: i.description,
         category: 'Ingredient' as const,
         item_categories: i.item_categories,
-        image: i.item_images?.[0]?.images?.url
-          ? { uri: i.item_images[0].images.url }
-          : undefined,
+        ...searchImage(i.item_images),
       }));
 
     const mappedMenus: SearchItem[] = (dropdowns?.menus || [])

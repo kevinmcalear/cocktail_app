@@ -13,13 +13,16 @@ import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
+import { PictureTag } from "@/components/ui/PictureTag";
+import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
+import { heroPicture, orderedPictures, pictureTag, type ItemImageLink } from "@/lib/itemImages";
 
 interface IngredientDetail {
     id: string;
     name: string;
     description: string | null;
     bar_id: string | null;
-    item_images?: { images: { url: string } }[];
+    item_images?: ItemImageLink[];
 }
 
 interface RecipeItem {
@@ -48,7 +51,7 @@ export default function IngredientDetailScreen() {
         !!ingredient,
         ingredient
             ? recentEntry('ingredient', ingredient.id, ingredient.name, {
-                imageUrl: ingredient.item_images?.[0]?.images?.url,
+                imageUrl: heroPicture(ingredient.item_images)?.url,
                 barId: ingredient.bar_id ?? null,
               })
             : null
@@ -83,16 +86,14 @@ export default function IngredientDetailScreen() {
         );
     }
 
-    const images = ingredient.item_images?.map(img => img.images.url).filter(Boolean) as string[] || [];
-    if (images.length === 0) {
-        images.push(require('@/assets/images/cocktails/house_martini.jpg'));
-    }
+    const pictures = orderedPictures(ingredient.item_images);
 
     return (
         <ItemDetailLayout
             id={`ingredient-${ingredient.id}`}
             title={ingredient.name}
-            images={images}
+            images={pictures.map((p) => p.url)}
+            imageTags={pictures.map(pictureTag)}
             isFavorite={isFavorite(`ingredient-${ingredient.id}`)}
             isInStudyPile={isInStudyPile(`ingredient-${ingredient.id}`)}
             onToggleFavorite={toggleFavorite}
@@ -154,7 +155,7 @@ export default function IngredientDetailScreen() {
                             contentContainerStyle={styles.horizontalScrollContent}
                         >
                             {usedIn.map((item: any) => {
-                                const imageUrl = item.cocktail.item_images?.[0]?.images?.url;
+                                const hero = heroPicture(item.cocktail.item_images);
                                 
                                 return (
                                     <TouchableOpacity 
@@ -164,11 +165,16 @@ export default function IngredientDetailScreen() {
                                         activeOpacity={0.8}
                                     >
                                         <View style={styles.horizontalCardImageContainer}>
-                                            <Image 
-                                                source={imageUrl ? { uri: imageUrl } : require('@/assets/images/cocktails/house_martini.jpg')}
-                                                style={styles.horizontalCardImage}
-                                                contentFit="cover"
-                                            />
+                                            {hero ? (
+                                                <Image
+                                                    source={{ uri: hero.url }}
+                                                    style={styles.horizontalCardImage}
+                                                    contentFit="cover"
+                                                />
+                                            ) : (
+                                                <PicturePlaceholder iconSize={40} />
+                                            )}
+                                            <PictureTag label={pictureTag(hero)} style={{ right: 6, bottom: 6 }} />
                                         </View>
                                         <Text style={[styles.horizontalCardTitle, { color: theme.color?.get() as string }]} numberOfLines={2}>
                                             {item.cocktail.name}

@@ -6,6 +6,7 @@ import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { PictureTag } from '@/components/ui/PictureTag';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
@@ -41,6 +42,7 @@ import {
 } from 'react-native';
 import { Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
+import { pressedProps } from '@/lib/a11yState';
 import { isApplePlatform } from '@/lib/platformKeys';
 
 type AttrOption = {
@@ -680,8 +682,8 @@ export function CommandSearch({
         {...(Platform.OS === 'web'
           ? { onHoverIn: () => setActiveIndex(selIndex) }
           : {})}
-        accessibilityRole="button"
-        accessibilityLabel={isDraft ? `${title} (draft)` : title}
+        role="button"
+        aria-label={isDraft ? `${title} (draft)` : title}
         style={[
           styles.card,
           {
@@ -692,12 +694,18 @@ export function CommandSearch({
         ]}
       >
         {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.cardImage}
-            contentFit="cover"
-            transition={200}
-          />
+          <View>
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.cardImage}
+              contentFit="cover"
+              transition={200}
+            />
+            <PictureTag
+              label={cell.kind === 'item' && cell.item.imageIsSketch ? 'Sketch' : null}
+              style={{ right: 4, bottom: 4, paddingHorizontal: 4, paddingVertical: 2 }}
+            />
+          </View>
         ) : (
           <YStack
             width="100%"
@@ -751,9 +759,9 @@ export function CommandSearch({
                 <Pressable
                   key={f}
                   onPress={() => setFilter(f)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={f}
+                  role="button"
+                  {...pressedProps(selected)}
+                  aria-label={f}
                   style={[
                     styles.pill,
                     {
@@ -776,8 +784,8 @@ export function CommandSearch({
             {attrRows.length > 0 && (
               <Pressable
                 onPress={openFilters}
-                accessibilityRole="button"
-                accessibilityLabel="Additional filters"
+                role="button"
+                aria-label="Additional filters"
                 style={[
                   styles.pill,
                   {
@@ -816,8 +824,8 @@ export function CommandSearch({
               <Pressable
                 key={`${p.key}-${p.id}`}
                 onPress={() => removeAttr(p.key, p.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${p.label} filter`}
+                role="button"
+                aria-label={`Remove ${p.label} filter`}
                 style={[
                   styles.pill,
                   {
@@ -855,8 +863,8 @@ export function CommandSearch({
       {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. */}
       <Pressable
         onPress={onDismiss}
-        accessibilityRole={onDismiss ? 'button' : undefined}
-        accessibilityLabel={onDismiss ? 'Dismiss search' : undefined}
+        role={onDismiss ? 'button' : undefined}
+        aria-label={onDismiss ? 'Dismiss search' : undefined}
         style={{
           width: '100%',
           alignItems: chromeCentered ? 'center' : 'stretch',
@@ -997,8 +1005,8 @@ export function CommandSearch({
               return (
                 <Pressable
                   onPress={() => onCreateNew({ name, type })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Create ${label} ${name}`}
+                  role="button"
+                  aria-label={`Create ${label} ${name}`}
                   style={[
                     styles.pill,
                     {
