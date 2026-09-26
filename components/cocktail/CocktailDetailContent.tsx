@@ -239,15 +239,14 @@ export function CocktailDetailContent({
 
             {!isEditing && variant === "default" && recipes.length > 0 ? (
                 <XStack justifyContent="space-between" alignItems="center" paddingHorizontal={24} marginBottom="$2">
-                    <Text fontSize={12} fontWeight="600" color="$color11" letterSpacing={0.7} textTransform="uppercase" accessibilityRole="header">
+                    <Text fontSize={12} fontWeight="600" color="$color11" letterSpacing={0.7} textTransform="uppercase" role="heading">
                         Spec
                     </Text>
                     <TouchableOpacity
                         onPress={toggleServiceMode}
                         accessibilityRole="switch"
-                        accessibilityState={{ checked: serviceMode }}
-              aria-checked={serviceMode}
-                        accessibilityLabel="Service mode"
+                        aria-checked={serviceMode}
+                        aria-label="Service mode"
                         accessibilityHint="Keeps the screen on and makes the spec larger"
                         style={[
                             styles.serviceChip,
