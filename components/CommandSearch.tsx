@@ -5,6 +5,7 @@ import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { PictureTag } from '@/components/ui/PictureTag';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
@@ -697,12 +698,18 @@ export function CommandSearch({
         ]}
       >
         {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.cardImage}
-            contentFit="cover"
-            transition={200}
-          />
+          <View>
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.cardImage}
+              contentFit="cover"
+              transition={200}
+            />
+            <PictureTag
+              label={cell.kind === 'item' && cell.item.imageIsSketch ? 'Sketch' : null}
+              style={{ right: 4, bottom: 4, paddingHorizontal: 4, paddingVertical: 2 }}
+            />
+          </View>
         ) : (
           <YStack
             width="100%"
