@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { decode } from "base64-arraybuffer";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter, useNavigation, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, usePreventRemove } from "expo-router";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -113,7 +113,6 @@ export default function CreateMenuWizard({
     const colors = Colors[colorScheme];
     const isDark = colorScheme === "dark";
     const router = useRouter();
-    const navigation = useNavigation();
     const requestCreate = useCreatorNavStore((s) => s.requestCreate);
     const pendingMenuDrink = useCreatorNavStore((s) => s.pendingMenuDrink);
     const consumeMenuDrink = useCreatorNavStore((s) => s.consumeMenuDrink);
@@ -158,8 +157,8 @@ export default function CreateMenuWizard({
     }, [barId, activeMenuIdProp, resolvedBarId, selectedBarId, userBars]);
 
     const [showExitModal, setShowExitModal] = useState(false);
-    const pendingNavigationActionRef = useRef<any>(null);
-    const isExitingRef = useRef(false);
+    const pendingExitRef = useRef<(() => void) | null>(null);
+    const [exiting, setExiting] = useState(false);
 
     const [draftLoaded, setDraftLoaded] = useState(!activeDraftIdProp && !activeMenuIdProp);
     const [menuLoaded, setMenuLoaded] = useState(!activeMenuIdProp);
@@ -200,13 +199,13 @@ export default function CreateMenuWizard({
         coverUrl,
         coverPosition,
     });
-    const cleanStateStrRef = useRef<string>(currentStateStr);
+    const [cleanStateStr, setCleanStateStr] = useState(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
     // ponytail: only [needsCleanMark] — including currentStateStr re-marks edits as clean
     useEffect(() => {
         if (!needsCleanMark) return;
-        cleanStateStrRef.current = currentStateStr;
+        setCleanStateStr(currentStateStr);
         setNeedsCleanMark(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [needsCleanMark]);
@@ -295,7 +294,7 @@ export default function CreateMenuWizard({
 
     useEffect(() => {
         if (!draftLoaded) return;
-        const isDirty = currentStateStr !== cleanStateStrRef.current;
+        const isDirty = currentStateStr !== cleanStateStr;
         if (!isDirty) return;
 
         const timer = setTimeout(() => {
@@ -318,7 +317,7 @@ export default function CreateMenuWizard({
                             router.setParams({ draftId: result.id });
                         }
                     }
-                    cleanStateStrRef.current = currentStateStr;
+                    setCleanStateStr(currentStateStr);
                 } catch (error) {
                     console.error("Auto-save menu draft error:", error);
                 }
@@ -327,7 +326,7 @@ export default function CreateMenuWizard({
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [currentStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, coverPosition, saveDraft, router, isInline]);
+    }, [currentStateStr, cleanStateStr, currentDraftId, draftLoaded, selectedTemplateId, menuName, selections, barId, coverUrl, coverPosition, saveDraft, router, isInline]);
 
     const persistMenuDraft = async (silent = false): Promise<string | null> => {
         const draftData = {
@@ -371,23 +370,11 @@ export default function CreateMenuWizard({
         }
     };
 
-    useEffect(() => {
-        if (isInline) return;
-        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            if (isExitingRef.current) {
-                return;
-            }
-            const hasProgress = menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStrRef.current;
-            if (!hasProgress) {
-                return;
-            }
-            e.preventDefault();
-            pendingNavigationActionRef.current = e.data.action;
-            setShowExitModal(true);
-        });
-
-        return unsubscribe;
-    }, [navigation, currentStateStr, menuName, selectedTemplateId, barId, isInline]);
+    // Ask before leaving with unsaved work (on web this also guards closing the tab).
+    const allowExit = usePreventRemove(!isInline && !exiting && (menuName.trim() !== "" || selectedTemplateId !== null || barId !== null || currentStateStr !== cleanStateStr), ({ repeat }) => {
+      pendingExitRef.current = repeat;
+      setShowExitModal(true);
+    });
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -396,9 +383,9 @@ export default function CreateMenuWizard({
         }
         if (isInline) {
             onClose?.();
-        } else if (pendingNavigationActionRef.current) {
-            isExitingRef.current = true;
-            navigation.dispatch(pendingNavigationActionRef.current);
+        } else if (pendingExitRef.current) {
+            setExiting(true);
+            pendingExitRef.current();
         }
     };
 
@@ -559,7 +546,7 @@ export default function CreateMenuWizard({
         });
     };
 
-    const isDirty = currentStateStr !== cleanStateStrRef.current;
+    const isDirty = currentStateStr !== cleanStateStr;
 
     const requestClose = () => {
         const hasProgress =
@@ -729,7 +716,8 @@ export default function CreateMenuWizard({
             );
 
             await queryClient.invalidateQueries({ queryKey: ['dropdowns_v4'] });
-            isExitingRef.current = true;
+            setExiting(true);
+            allowExit();
             if (isInline) {
                 if (onSave) onSave();
             } else {

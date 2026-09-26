@@ -14,8 +14,9 @@ import { Link, useRouter } from "expo-router";
 import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { heroPicture, type ItemImageLink } from "@/lib/itemImages";
 import { capitalize } from "@/lib/stringUtils";
-import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken, useWindowDimensions } from "react-native";
-import { RectButton, Swipeable } from "react-native-gesture-handler";
+import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, type ListViewToken, useWindowDimensions } from "react-native";
+import { RectButton } from "react-native-gesture-handler";
+import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, H1, H4, Paragraph, Text, useTheme, XStack, YStack } from "tamagui";
 import { STATUS } from '@/constants/palette';
@@ -177,13 +178,12 @@ const SearchItemCard = memo(function SearchItemCard({
     drink: SearchItem;
     isFav: boolean;
     inStudy: boolean;
-    onToggleFavorite: (id: string, swipeable: Swipeable) => void;
-    onToggleStudyPile: (id: string, swipeable: Swipeable) => void;
+    onToggleFavorite: (id: string, swipeable: SwipeableMethods) => void;
+    onToggleStudyPile: (id: string, swipeable: SwipeableMethods) => void;
     onPress?: (drink: SearchItem) => void;
     onCategoryPress?: (id: string, name: string) => void;
     layout?: "list" | "grid";
 }) {
-    let swipeableRef: Swipeable | null = null;
     const isGrid = layout === "grid";
     const picture = getImage(drink);
 
@@ -198,18 +198,18 @@ const SearchItemCard = memo(function SearchItemCard({
             : `${drink.category.toUpperCase()} • ${subText}`;
     }
 
-    const renderRightActions = () => (
+    const renderRightActions = (_progress: unknown, _translation: unknown, swipeable: SwipeableMethods) => (
         <View style={styles.rightActionsContainer}>
             <RectButton
                 style={[styles.actionButton, { backgroundColor: STATUS.danger }]}
-                onPress={() => onToggleFavorite(drink.id, swipeableRef!)}
+                onPress={() => onToggleFavorite(drink.id, swipeable)}
             >
                 <IconSymbol name={isFav ? "heart.fill" : "heart"} size={24} color="#FFF" />
                 <Text style={[styles.actionText, { color: '#FFF' }]}>{isFav ? "Unfav" : "Fav"}</Text>
             </RectButton>
             <RectButton
                 style={[styles.actionButton, { backgroundColor: STATUS.info }]}
-                onPress={() => onToggleStudyPile(drink.id, swipeableRef!)}
+                onPress={() => onToggleStudyPile(drink.id, swipeable)}
             >
                 <IconSymbol name={inStudy ? "book.fill" : "book"} size={24} color="#FFF" />
                 <Text style={[styles.actionText, { color: '#FFF' }]}>{inStudy ? "Remove" : "Study"}</Text>
@@ -373,7 +373,6 @@ const SearchItemCard = memo(function SearchItemCard({
 
     return (
         <Swipeable
-            ref={(ref) => { swipeableRef = ref; }}
             renderRightActions={renderRightActions}
             friction={2}
             rightThreshold={40}
@@ -666,7 +665,7 @@ export function SearchList({
         }
     }, [listData]);
 
-    const onViewableItemsChanged = useRef(({ changed }: { viewableItems: ViewToken[]; changed: ViewToken[] }) => {
+    const onViewableItemsChanged = useRef(({ changed }: { viewableItems: ListViewToken[]; changed: ListViewToken[] }) => {
         const headerBecameVisible = changed.some((token) => {
             return token.isViewable && 'type' in token.item && token.item.type === 'header';
         });
@@ -720,13 +719,13 @@ export function SearchList({
             </TouchableWithoutFeedback>
         );
     }, [hideHeader, isModal, insets.top, onBackPress, router, theme.color, title, headerButtons, searchQuery, setSearchQuery, setIsFilterModalVisible, activeChips, suggestions]);
-    const handleToggleFavorite = useCallback((id: string, swipeable: Swipeable) => {
+    const handleToggleFavorite = useCallback((id: string, swipeable: SwipeableMethods) => {
         toggleFavorite(id);
         swipeable.close();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, [toggleFavorite]);
 
-    const handleToggleStudyPile = useCallback((id: string, swipeable: Swipeable) => {
+    const handleToggleStudyPile = useCallback((id: string, swipeable: SwipeableMethods) => {
         toggleStudyPile(id);
         swipeable.close();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

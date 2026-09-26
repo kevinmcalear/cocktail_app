@@ -1,6 +1,6 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 
@@ -25,7 +25,7 @@ export function TemplatePicker({
     const theme = useTheme();
     const router = useRouter();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-    const triggerRef = useRef<View>(null);
+    const triggerRef = useRef<ComponentRef<typeof View>>(null);
     const [open, setOpen] = useState(false);
     const [anchor, setAnchor] = useState<Anchor | null>(null);
 

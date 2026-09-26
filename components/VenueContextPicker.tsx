@@ -9,7 +9,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 
@@ -118,7 +118,7 @@ export function VenueContextPicker({ lockedContextId }: { lockedContextId?: stri
   const [settingsReady, setSettingsReady] = useState(
     () => useSettingsStore.persist.hasHydrated()
   );
-  const triggerRef = useRef<View>(null);
+  const triggerRef = useRef<ComponentRef<typeof View>>(null);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
 

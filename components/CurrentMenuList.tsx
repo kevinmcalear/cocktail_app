@@ -10,7 +10,7 @@ import { capitalize } from "@/lib/stringUtils";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text, YStack, useTheme } from "tamagui";
 import { STATUS } from '@/constants/palette';
@@ -43,7 +43,7 @@ export interface MenuSection {
 interface CurrentMenuListProps {
     sections: MenuSection[];
     scrollEnabled?: boolean;
-    ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+    ListHeaderComponent?: React.ComponentType<any> | React.ReactElement;
     onItemPress?: (item: MenuItem) => void;
     selectedItemId?: string | null;
     isEditing?: boolean;
@@ -104,7 +104,7 @@ function AddDropTile({
     isHover: boolean;
     onPress: () => void;
 }) {
-    const ref = useRef<View>(null);
+    const ref = useRef<ComponentRef<typeof View>>(null);
     const setDropRect = useMenuEditDropStore((s) => s.setDropRect);
     const clearDropRect = useMenuEditDropStore((s) => s.clearDropRect);
 

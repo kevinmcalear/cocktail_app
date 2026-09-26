@@ -8,7 +8,7 @@ import { isDefaultBatchName } from '@/lib/mergeRecipeItems';
 import { capitalize } from '@/lib/stringUtils';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, {
     NestableDraggableFlatList,
@@ -179,7 +179,7 @@ function EditableRecipeName({
 }) {
     const theme = useTheme();
     const [editing, setEditing] = useState(!!autoFocusNameKey);
-    const nameRef = useRef<TextInput>(null);
+    const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
     const committedNameRef = useRef(item.name);
 
     useEffect(() => {

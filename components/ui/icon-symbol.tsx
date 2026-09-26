@@ -3,7 +3,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { SFSymbol, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle, Platform } from 'react-native';
+import { type ColorValue, type StyleProp, type TextStyle, Platform } from 'react-native';
 
 type IconMapping = Partial<Record<SFSymbol, ComponentProps<typeof MaterialIcons>['name']>>;
 type IconSymbolName = keyof typeof MAPPING;
@@ -96,12 +96,12 @@ export function IconSymbol({
 }: {
   name: IconSymbolName;
   size?: number;
-  color: string | OpaqueColorValue;
+  color: ColorValue;
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
   // Android's back affordance is an arrow, not the iOS chevron (every
   // chevron.left in the app is a back button).
   const glyph = name === 'chevron.left' && Platform.OS === 'android' ? 'arrow-back' : MAPPING[name];
-  return <MaterialIcons color={color} size={size} name={glyph} style={style} />;
+  return <MaterialIcons color={color as ComponentProps<typeof MaterialIcons>['color']} size={size} name={glyph} style={style} />;
 }
