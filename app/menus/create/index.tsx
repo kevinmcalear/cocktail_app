@@ -549,18 +549,18 @@ export default function CreateMenuWizard({
     const isDirty = currentStateStr !== cleanStateStr;
 
     const requestClose = () => {
+        // Full screen: navigate, and usePreventRemove asks about unsaved work.
+        if (!isInline) {
+            router.back();
+            return;
+        }
         const hasProgress =
             menuName.trim() !== "" ||
             selectedTemplateId !== null ||
             barId !== null ||
             isDirty;
-        if (hasProgress) {
-            setShowExitModal(true);
-        } else if (isInline) {
-            onClose?.();
-        } else {
-            router.back();
-        }
+        if (hasProgress) setShowExitModal(true);
+        else onClose?.();
     };
 
     useEffect(() => {
