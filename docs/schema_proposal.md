@@ -1,6 +1,6 @@
 # Schema proposal: Back Bar redesign
 
-Status: **draft for review.** The migrations below are tested against the local Supabase stack only. None of them has been applied to production, and none should be until Kevin approves it.
+Status: **applied to production on 2026-09-26** with Kevin's approval, after testing against the local Supabase stack. All open questions are decided (see Decisions).
 
 The spec is the "What the data needs" table in the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf). This proposal covers seven of its rows:
 
@@ -280,10 +280,10 @@ Screens from the brief. Bold tables are new in this proposal.
 
 ## Rollout
 
-- **Stacked on #39 (which now includes #46).** The roles migration redefines `app_recipe_presentation` (as #46 leaves it), `get_bar_members()` and `can_view_bar_item()` with only the expiry rule added, so those migrations must be applied first. If either changes these again, this migration must be regenerated from the new text.
-- **Order:** the migrations are independent enough to ship with the roadmap steps: identity with step 2 (navigation and venue theming), roles with step 3, back bar, prep, purchasing and events with step 4, profiles, credit, home bar and rankings with step 7. They can also land together; each only adds.
+- **Copies of earlier objects.** The roles migration redefines `app_recipe_presentation` (as #46 left it), `get_bar_members()` (#39) and `can_view_bar_item()` (#46), each with only the guest-expiry rule added. A later change to any of these must start from the `20260926150100_venue_roles.sql` version, or it will drop that rule.
+- **Shipped together** on 2026-09-26, after production's `20260926130000` (#67). Each migration only adds, and they apply in timestamp order.
 - **Nothing is dropped or renamed.** Existing rows are untouched except the `accent_light_color` backfill. `get_venue_branding` gains columns; callers reading the old ones keep working.
-- **Production prerequisite:** the roles migration runs `CREATE EXTENSION IF NOT EXISTS pg_cron` and schedules two jobs. Confirm pg_cron is allowed on the project before applying.
+- **pg_cron** was already enabled by #48. The roles and rankings migrations add two jobs: `sweep-expired-memberships` (every 15 minutes) and `refresh-rankings` (hourly, minute 7).
 - **App follow-ups:** mirror `venue_capability` in `lib/roles.ts` (human-gated) or read `get_venue_role_matrix`; add the new tables to `types/`; the storage policy needs a folder for zone and container photos (coordinate with the photo task).
 - **Account deletion:** new user-owned rows (profile, shelf, rankings, claims) cascade with the auth user. A deleted person's credits on drinks lose their creator link. A deleted bar's profile stays behind unclaimed, so credits to it survive.
 
@@ -300,7 +300,4 @@ Screens from the brief. Bold tables are new in this proposal.
 - **One currency per bar** (Kevin, 2026-09-26). `bars.currency` replaces a currency on every cost row; costs need it set first.
 - **A deleted account takes its profile with it** (Kevin, 2026-09-26). The person's profile, shelf, rankings and claims are deleted; drinks credited to them keep their other credit (origin bar, year) but lose the creator link. No anonymised credit is kept.
 - **Guest drinks are copied into the host bar** (Kevin, 2026-09-26), credited to their creator and origin bar. A bar's drinks stay visible only to its members; `items` policies don't change.
-
-## Open questions for Kevin
-
-1. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+- **Applied to production, all seven at once** (Kevin, 2026-09-26). pg_cron was already enabled by #48; these add the `sweep-expired-memberships` and `refresh-rankings` jobs.
