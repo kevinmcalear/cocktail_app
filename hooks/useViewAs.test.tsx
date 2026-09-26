@@ -1,9 +1,10 @@
 import { renderHook } from '@testing-library/react-native';
 
-import { useEffectiveRole, useMaxRealRole } from '@/hooks/useViewAs';
+import { useCanEditItem, useEffectiveRole, useMaxRealRole } from '@/hooks/useViewAs';
 import { useAppStore } from '@/store/useAppStore';
 
-// Query results by the first queryKey segment: 'bars' (useBars) and 'viewAs'.
+// Query results by the first queryKey segment: 'bars' (useBars), 'viewAs' and
+// 'canEditItem' (the can_edit_item RPC).
 let mockQueryData: Record<string, unknown> = {};
 
 jest.mock('@tanstack/react-query', () => ({
@@ -45,6 +46,43 @@ describe('useEffectiveRole', () => {
   test('is Guest for an unknown venue or while bars are loading', async () => {
     expect(await renderValue(() => useEffectiveRole(), { bars }, 'other-bar')).toBe(10);
     expect(await renderValue(() => useEffectiveRole(), { bars: undefined }, 'admin-bar')).toBe(10);
+  });
+});
+
+describe('useCanEditItem', () => {
+  const adminBarItem = { id: 'sour', bar_id: 'admin-bar' };
+  const staffBarItem = { id: 'fizz', bar_id: 'staff-bar' };
+  const sharedItem = { id: 'gin', bar_id: null };
+
+  test('uses the role at the item\'s venue, not the selected one', async () => {
+    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars }, null)).toBe(true);
+    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars }, 'staff-bar')).toBe(true);
+    expect(await renderValue(() => useCanEditItem(staffBarItem), { bars }, 'admin-bar')).toBe(false);
+  });
+
+  test('view-as caps the venue role', async () => {
+    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars, viewAs: 35 })).toBe(true);
+    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars, viewAs: 30 })).toBe(false);
+  });
+
+  test('a venue item ignores the shared-item answer', async () => {
+    expect(await renderValue(() => useCanEditItem(staffBarItem), { bars, canEditItem: true })).toBe(false);
+  });
+
+  test('a shared item follows the server: its creator or a catalog admin', async () => {
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars, canEditItem: true })).toBe(true);
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars, canEditItem: false })).toBe(false);
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars })).toBe(false);
+  });
+
+  test('view-as below Drink Creator hides editing on shared items too', async () => {
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars, canEditItem: true, viewAs: 35 })).toBe(true);
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars, canEditItem: true, viewAs: 30 })).toBe(false);
+    expect(await renderValue(() => useCanEditItem(sharedItem), { bars, canEditItem: true, viewAs: 10 })).toBe(false);
+  });
+
+  test('is false while the item is loading', async () => {
+    expect(await renderValue(() => useCanEditItem(undefined), { bars, canEditItem: true }, 'admin-bar')).toBe(false);
   });
 });
 
