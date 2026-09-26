@@ -1,10 +1,11 @@
 import { AuthField } from '@/components/auth/AuthShell';
 import { CustomIcon } from '@/components/ui/CustomIcons';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import type { GlasswareIconKey } from '@/lib/glasswareIcons';
 import { syncGlassMask } from '@/lib/syncGlassMask';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { XStack, useTheme } from 'tamagui';
 
 type Props = {
@@ -29,6 +30,7 @@ export function PasswordField({
   const theme = useTheme();
   const [visible, setVisible] = useState(false);
   const [mask, setMask] = useState<GlasswareIconKey[]>([]);
+  const isHydrated = useIsHydrated();
 
   const color = theme.color?.get() as string;
   const muted = theme.color11?.get() as string;
@@ -106,11 +108,17 @@ export function PasswordField({
           accessibilityLabel={visible ? 'Hide password' : 'Show password'}
           style={{ padding: 8 }}
         >
-          <MaterialIcons
-            name={visible ? 'visibility-off' : 'visibility'}
-            size={20}
-            color={muted}
-          />
+          {/* Same empty Text MaterialIcons renders on the server, where its font
+              is never loaded; see IconSymbol. */}
+          {isHydrated ? (
+            <MaterialIcons
+              name={visible ? 'visibility-off' : 'visibility'}
+              size={20}
+              color={muted}
+            />
+          ) : (
+            <Text />
+          )}
         </Pressable>
       </XStack>
     </AuthField>
