@@ -3,7 +3,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { SFSymbol, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle, Platform } from 'react-native';
+import { OpaqueColorValue, type StyleProp, type TextStyle, Platform, Text } from 'react-native';
+
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 
 type IconMapping = Partial<Record<SFSymbol, ComponentProps<typeof MaterialIcons>['name']>>;
 type IconSymbolName = keyof typeof MAPPING;
@@ -104,5 +106,11 @@ export function IconSymbol({
   // Android's back affordance is an arrow, not the iOS chevron (every
   // chevron.left in the app is a back button).
   const glyph = name === 'chevron.left' && Platform.OS === 'android' ? 'arrow-back' : MAPPING[name];
+  // Web static render: the icon font is never loaded on the server, so
+  // MaterialIcons renders an empty <Text />. On the client it may already be
+  // loaded and draw the glyph, which breaks hydration. Render the same empty
+  // Text until hydration is done.
+  const isHydrated = useIsHydrated();
+  if (!isHydrated) return <Text />;
   return <MaterialIcons color={color} size={size} name={glyph} style={style} />;
 }
