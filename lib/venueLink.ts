@@ -1,11 +1,15 @@
 import { Platform } from 'react-native';
 
+import { isDesktopShell } from '@/lib/desktopShell';
+
 const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL || 'https://babyvom.it').replace(/\/$/, '');
 const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
 
-/** The site staff links point at: the current origin on web, the public site on native. */
+/** The site staff links point at: the current origin on web, the public site on native and desktop. */
 export function siteOrigin(): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && !isDesktopShell()) {
+    return window.location.origin;
+  }
   return SITE_URL;
 }
 
