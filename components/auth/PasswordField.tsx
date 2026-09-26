@@ -102,8 +102,8 @@ export function PasswordField({
         <Pressable
           onPress={() => setVisible((v) => !v)}
           hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={visible ? 'Hide password' : 'Show password'}
+          role="button"
+          aria-label={visible ? 'Hide password' : 'Show password'}
           style={{ padding: 8 }}
         >
           <MaterialIcons
