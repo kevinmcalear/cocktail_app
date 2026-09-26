@@ -6,13 +6,13 @@ The spec is the "What the data needs" table in the Back Bar brief (https://claud
 
 | # | Piece | Migration |
 |---|---|---|
-| 1 | Venue identity | `20260926000000_venue_identity.sql` |
-| 2 | Venue roles | `20260926000100_venue_roles.sql` |
-| 3 | Back bar | `20260926000200_back_bar.sql` |
-| 4 | Prep and purchasing | `20260926000300_prep_and_purchasing.sql` |
-| 6 | Lineage, credit and profiles | `20260926000400_profiles_and_credit.sql` |
-| 5 | Events | `20260926000500_events.sql` (after 6, since it credits a profile) |
-| 7 | Home bar and rankings | `20260926000600_home_bar_and_rankings.sql` |
+| 1 | Venue identity | `20260926150000_venue_identity.sql` |
+| 2 | Venue roles | `20260926150100_venue_roles.sql` |
+| 3 | Back bar | `20260926150200_back_bar.sql` |
+| 4 | Prep and purchasing | `20260926150300_prep_and_purchasing.sql` |
+| 6 | Lineage, credit and profiles | `20260926150400_profiles_and_credit.sql` |
+| 5 | Events | `20260926150500_events.sql` (after 6, since it credits a profile) |
+| 7 | Home bar and rankings | `20260926150600_home_bar_and_rankings.sql` |
 
 Tests: `supabase/tests/venue-platform.test.mjs` (39 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
 
