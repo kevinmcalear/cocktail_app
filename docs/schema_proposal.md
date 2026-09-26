@@ -293,12 +293,12 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Guest staff expiry is per role only** (Kevin, 2026-09-26). `venue_roles.ends_at` ends access for everyone holding the role, which fits takeovers; there's no per-member end date. A one-off trial shift gets its own role.
 - **Bar profiles are public by default** (Kevin, 2026-09-26). A bar can opt out; person profiles stay private until published. So a guest venue can be credited on an event, and ranked, without a separate publish step.
 - **Person profiles stay private by default** (Kevin, 2026-09-26). A person's profile is private until they publish it; their rankings and home bar shelf are visible only to them. Only the area aggregates are public. Sharing rankings or shelves can be added later as an explicit opt-in.
+- **Ranking defaults stay** (Kevin, 2026-09-26): a drink at a bar needs at least 20 rankers before it's shown (`private.ranking_min_rankers()`), scores are pulled toward the drink's average with a prior of 10 rankers, and the rankings refresh hourly (pg_cron, minute 7). Each is one constant or schedule to change later.
 
 ## Open questions for Kevin
 
-1. **Ranking numbers:** minimum 20 rankers, prior of 10, hourly refresh. Pick the real numbers (the brief's mockups show 88 to 402).
-2. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
-3. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
-4. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
-5. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
-6. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
+1. **Who creates unclaimed profiles** (historic creators, off-platform venues)? Catalog admins only for now. Letting anyone suggest one needs moderation.
+2. **Currency.** `item_costs` stores a currency per row. Add a bar-level currency instead?
+3. **Account deletion and credit.** Deleting an account removes the person's profile, so drinks lose the creator link. Alternative: keep an anonymised "former member" credit.
+4. **Event guest drinks are copied** into the host bar with credit, rather than shared across bars. OK, or do we want cross-bar sharing (which would change `items` policies)?
+5. **Applying to production.** Which migrations, when, and whether pg_cron can be enabled.
