@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
-import { consumeAiQuota, requireItemEditor, requireUser } from "./auth.ts";
-import { generateImagenPng } from "./gemini.ts";
+import { consumeAiQuota, refundAiQuota, requireItemEditor, requireUser } from "./auth.ts";
+import { generateImage } from "./gemini.ts";
 import { HttpError, requireUuid, serveJson } from "./http.ts";
 import { ITEM_IMAGE_KINDS, ITEM_SELECT, type ImageItemType, type ItemForPrompt } from "./itemPrompts.ts";
 
@@ -17,11 +17,15 @@ export async function loadItemForPrompt(admin: SupabaseClient, itemId: string): 
  */
 export async function drawItemSketch(admin: SupabaseClient, item: ItemForPrompt, type: ImageItemType): Promise<string> {
   const kind = ITEM_IMAGE_KINDS[type];
-  const png = await generateImagenPng(kind.buildPrompt(item));
+  const image = await generateImage(kind.buildPrompt(item));
 
-  const path = `${kind.folder}/${item.id}/${Date.now()}.png`;
+  const path = `${kind.folder}/${item.id}/${Date.now()}.${image.ext}`;
   const bucket = admin.storage.from("drinks");
-  const { error } = await bucket.upload(path, png, { contentType: "image/png", cacheControl: "3600", upsert: false });
+  const { error } = await bucket.upload(path, image.bytes, {
+    contentType: image.mimeType,
+    cacheControl: "3600",
+    upsert: false,
+  });
   if (error) throw error;
   return bucket.getPublicUrl(path).data.publicUrl;
 }
@@ -37,7 +41,7 @@ interface GeneratorOptions {
 /**
  * Serves the Generate button: draws a sketch for one item right away and saves
  * it as a hero sketch. Only someone allowed to edit the item may call it, and
- * each call spends one unit of the caller's daily AI quota. (Automatic sketches
+ * each sketch saved spends one unit of the caller's daily AI quota. (Automatic sketches
  * come from the image-worker function, billed to the venue.)
  */
 export function serveItemImageGenerator(options: GeneratorOptions): void {
@@ -54,11 +58,15 @@ export function serveItemImageGenerator(options: GeneratorOptions): void {
     }
 
     await consumeAiQuota(caller, options.name);
-    const imageUrl = await drawItemSketch(caller.admin, item, options.itemType);
-
-    const { error } = await caller.admin.rpc("attach_generated_item_image", { p_item_id: itemId, p_url: imageUrl });
-    if (error) throw error;
-
-    return { success: true, imageUrl };
+    try {
+      const imageUrl = await drawItemSketch(caller.admin, item, options.itemType);
+      const { error } = await caller.admin.rpc("attach_generated_item_image", { p_item_id: itemId, p_url: imageUrl });
+      if (error) throw error;
+      return { success: true, imageUrl };
+    } catch (err) {
+      // Nothing was saved, so it shouldn't count against the caller's allowance.
+      await refundAiQuota(caller, options.name);
+      throw err;
+    }
   });
 }

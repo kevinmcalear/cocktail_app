@@ -22,7 +22,7 @@ export function useIngredients(options?: { allContexts?: boolean }) {
                         image_id,
                         is_generated,
                         outdated_since,
-                        images ( id, url )
+                        images ( id, url, palette )
                     ),
                     item_categories (
                         category_id
@@ -61,7 +61,7 @@ export function useIngredient(id?: string | string[]) {
                         image_id,
                         is_generated,
                         outdated_since,
-                        images ( id, url )
+                        images ( id, url, palette )
                     )
                 `)
                 .eq('id', ingredientId)

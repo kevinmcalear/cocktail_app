@@ -5,12 +5,16 @@
 -- from a menu or event with these; the order list groups bought ingredients by
 -- supplier.
 --
---   item_prep         yield, shelf life, lead time and par. One row per item,
+-- Par lives only on item_locations, per place ("restock this spot to 2"). A
+-- bar's par for an item, house-made or bought, is the sum over its locations.
+--
+--   item_prep         yield, shelf life and lead time. One row per item,
 --                     since house-made items belong to one bar (items.bar_id).
 --   suppliers         a bar's suppliers.
 --   item_purchasing   per bar and item: supplier, bottle or pack size, order code.
 --   item_costs        per bar and item: what a pack costs. Its own table so
 --                     costs stay hidden from everyone without 'costs'.
+--   bars.currency     the one currency a bar's costs are in.
 
 CREATE TABLE "public"."item_prep" (
     "item_id" "uuid" PRIMARY KEY REFERENCES "public"."items"("id") ON DELETE CASCADE,
@@ -24,13 +28,9 @@ CREATE TABLE "public"."item_prep" (
     "lead_time_minutes" integer CHECK ("lead_time_minutes" >= 0),
     -- "24 h drip", "12 h freeze"
     "lead_time_note" "text" CHECK (char_length("lead_time_note") <= 60),
-    -- How much the bar keeps made.
-    "par_amount" numeric CHECK ("par_amount" > 0),
-    "par_unit" "text",
     "updated_by" "uuid" DEFAULT "auth"."uid"() REFERENCES "auth"."users"("id") ON DELETE SET NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "item_prep_yield_check" CHECK (("yield_amount" IS NULL) = ("yield_unit" IS NULL)),
-    CONSTRAINT "item_prep_par_check" CHECK (("par_amount" IS NULL) = ("par_unit" IS NULL))
+    CONSTRAINT "item_prep_yield_check" CHECK (("yield_amount" IS NULL) = ("yield_unit" IS NULL))
 );
 
 CREATE TABLE "public"."suppliers" (
@@ -63,12 +63,18 @@ CREATE TABLE "public"."item_purchasing" (
 CREATE INDEX "item_purchasing_item_id_idx" ON "public"."item_purchasing" ("item_id");
 CREATE INDEX "item_purchasing_supplier_id_idx" ON "public"."item_purchasing" ("supplier_id");
 
+-- One currency per bar (ISO 4217). Set by the bar's admins through the
+-- existing bars policies. Empty until set, and costs can't be entered until it
+-- is, so no cost is ever stored without a known currency. Changing it later
+-- doesn't convert existing costs.
+ALTER TABLE "public"."bars" ADD COLUMN "currency" "text" CHECK ("currency" ~ '^[A-Z]{3}$');
+
 CREATE TABLE "public"."item_costs" (
     "bar_id" "uuid" NOT NULL REFERENCES "public"."bars"("id") ON DELETE CASCADE,
     "item_id" "uuid" NOT NULL REFERENCES "public"."items"("id") ON DELETE CASCADE,
-    -- Price of one pack (item_purchasing.pack_size), in minor units.
+    -- Price of one pack (item_purchasing.pack_size), in minor units of the
+    -- bar's currency.
     "pack_cost_minor" integer NOT NULL CHECK ("pack_cost_minor" >= 0),
-    "currency" "text" NOT NULL CHECK ("currency" ~ '^[A-Z]{3}$'),
     "updated_by" "uuid" DEFAULT "auth"."uid"() REFERENCES "auth"."users"("id") ON DELETE SET NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     PRIMARY KEY ("bar_id", "item_id")
@@ -83,7 +89,7 @@ ALTER TABLE "public"."item_costs" ENABLE ROW LEVEL SECURITY;
 
 -- item_prep: readable with the item when it's personal or shared; for a bar's
 -- item, by members who see house-made recipes or run prep. Writable by the
--- bar's prep crew (they set par and shelf life), and by whoever can edit the
+-- bar's prep crew (they keep yield and shelf life current), and by whoever can edit the
 -- item if they can also see house-made recipes. (FOR ALL also grants reads,
 -- so the write rule must never be wider than the read rule.)
 CREATE POLICY "item_prep_select" ON "public"."item_prep" FOR SELECT TO "authenticated"
@@ -130,7 +136,9 @@ CREATE POLICY "item_purchasing_write" ON "public"."item_purchasing" FOR ALL TO "
         AND "private"."item_usable_at_bar"("item_id", "bar_id")
     );
 
+-- Costs only once the bar has a currency.
 CREATE POLICY "item_costs_all" ON "public"."item_costs" FOR ALL TO "authenticated"
     USING ("bar_id" IN (SELECT "private"."bars_with_capability"('costs')))
     WITH CHECK ("bar_id" IN (SELECT "private"."bars_with_capability"('costs'))
-                AND "private"."item_usable_at_bar"("item_id", "bar_id"));
+                AND "private"."item_usable_at_bar"("item_id", "bar_id")
+                AND EXISTS (SELECT 1 FROM "public"."bars" "b" WHERE "b"."id" = "bar_id" AND "b"."currency" IS NOT NULL));

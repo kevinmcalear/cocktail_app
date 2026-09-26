@@ -40,9 +40,9 @@ insert into public.recipes (id, recipe_item_id, ingredient_item_id, amount, unit
   ('00000000-0000-4000-9000-000000000032', '00000000-0000-4000-f000-000000000102', '00000000-0000-4000-f000-000000000008', 100, 'ml', 2)
 on conflict (id) do nothing;
 
-insert into public.item_prep (item_id, yield_amount, yield_unit, shelf_life_hours, lead_time_minutes, lead_time_note, par_amount, par_unit) values
-  ('00000000-0000-4000-f000-000000000101', 750, 'ml', 168, 30, 'Cool before bottling', 2, 'L'),
-  ('00000000-0000-4000-f000-000000000102', 1, 'L', 336, 720, '12 h in the freezer, then strain', 2, 'L')
+insert into public.item_prep (item_id, yield_amount, yield_unit, shelf_life_hours, lead_time_minutes, lead_time_note) values
+  ('00000000-0000-4000-f000-000000000101', 750, 'ml', 168, 30, 'Cool before bottling'),
+  ('00000000-0000-4000-f000-000000000102', 1, 'L', 336, 720, '12 h in the freezer, then strain')
 on conflict (item_id) do nothing;
 
 insert into public.suppliers (id, bar_id, name) values

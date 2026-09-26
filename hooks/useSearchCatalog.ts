@@ -42,9 +42,14 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
   return capitalize(raw);
 }
 
-/** Unified catalog for home + search popover. */
-export function useSearchCatalog() {
-  const selectedContextIds = useAppStore((s) => s.selectedContextIds);
+/**
+ * Unified catalog for home + search popover. Filters by the sidebar's selected
+ * contexts unless `contextIds` is given (the redesign's Library passes the
+ * active venue). Pass a stable array, since it's a memo dependency.
+ */
+export function useSearchCatalog(contextIds?: string[]) {
+  const storeContextIds = useAppStore((s) => s.selectedContextIds);
+  const selectedContextIds = contextIds ?? storeContextIds;
   // ponytail: fetch all contexts once, filter client-side so venue toggles are instant
   const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails({
     allContexts: true,

@@ -48,7 +48,8 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         outdated_since,
                         images (
                             id,
-                            url
+                            url,
+                            palette
                         )
                     ),
                     item_categories (
@@ -100,7 +101,8 @@ export function useCocktail(id?: string | string[]) {
                         outdated_since,
                         images (
                             url,
-                            id
+                            id,
+                            palette
                         )
                     ),
                     recipes:app_recipe_presentation!recipe_item_id (
