@@ -1,5 +1,5 @@
 import { consumeAiQuota, requireUser } from "../_shared/auth.ts";
-import { describeImageAsJson, generateImagenPng } from "../_shared/gemini.ts";
+import { describeImageAsJson, generateImage } from "../_shared/gemini.ts";
 import { HttpError, serveJson } from "../_shared/http.ts";
 
 const GLASSWARE_ICON_KEYS = [
@@ -63,14 +63,14 @@ serveJson("identify-glassware", async (req) => {
 
     let iconUrl: string | null = null;
     if (!matchedIcon) {
-        const png = await generateImagenPng(
+        const icon = await generateImage(
             `Minimal single-stroke line art icon of an empty ${suggestedName} cocktail glass, side profile silhouette. ` +
                 "Clean white strokes on solid black background. Simple 24px app icon style matching other bar glass icons. " +
                 "No liquid, no garnish, no text, no shading.",
         );
-        const path = `glassware-icons/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+        const path = `glassware-icons/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${icon.ext}`;
         const bucket = caller.admin.storage.from("drinks");
-        const { error } = await bucket.upload(path, png, { contentType: "image/png", cacheControl: "86400", upsert: false });
+        const { error } = await bucket.upload(path, icon.bytes, { contentType: icon.mimeType, cacheControl: "86400", upsert: false });
         if (error) throw error;
         iconUrl = bucket.getPublicUrl(path).data.publicUrl;
     }
