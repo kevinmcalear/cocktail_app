@@ -1,7 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { useKeepAwake } from 'expo-keep-awake';
 import type { ComponentProps } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { CocktailDetailContent } from '@/components/cocktail/CocktailDetailContent';
 import { renderWithTamagui } from '@/jest.setup';
@@ -53,14 +52,8 @@ function makeEditor(): Editor {
   } as unknown as Editor;
 }
 
-// Edit mode's drag handles are GestureDetectors, which need the root view
-// app/_layout.tsx provides.
 const renderContent = (props: Partial<Props> = {}) =>
-  renderWithTamagui(
-    <GestureHandlerRootView>
-      <CocktailDetailContent cocktail={cocktail} isEditing={false} {...props} />
-    </GestureHandlerRootView>
-  );
+  renderWithTamagui(<CocktailDetailContent cocktail={cocktail} isEditing={false} {...props} />);
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,11 +1,13 @@
+// First, so gesture-handler's mocks are in place before anything imports it.
+import 'react-native-gesture-handler/jestSetup';
 import { render } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TamaguiProvider } from 'tamagui';
 
 import tamaguiConfig from '@/tamagui.config';
 
 // These call into native modules on import; each ships its own Jest mock.
-import 'react-native-gesture-handler/jestSetup';
 jest.mock('react-native-worklets', () => jest.requireActual('react-native-worklets/src/mock'));
 jest.mock('react-native-reanimated', () => jest.requireActual('react-native-reanimated/mock'));
 // ponytail: Reanimated 4.7.0 registers a CSS event handler at startup, which its
@@ -23,12 +25,16 @@ jest.mock('react-native-safe-area-context', () =>
   jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default
 );
 
-// Same provider app/_layout.tsx wraps the app in, so $tokens and themes resolve.
+// The same providers app/_layout.tsx wraps the app in: Tamagui, so $tokens and
+// themes resolve, and gesture-handler's root view, which gesture-handler 3
+// requires around every GestureDetector (edit mode's drag handles).
 function TamaguiWrapper({ children }: { children: ReactNode }) {
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      {children}
-    </TamaguiProvider>
+    <GestureHandlerRootView>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        {children}
+      </TamaguiProvider>
+    </GestureHandlerRootView>
   );
 }
 
