@@ -1,3 +1,5 @@
+import { isLocalStack } from "./localStack.ts";
+
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 function apiKey(): string {
@@ -13,19 +15,21 @@ export function decodeBase64(base64: string): Uint8Array {
   return bytes;
 }
 
-// A 16x16 sheet of sketch paper, returned instead of calling Imagen when
-// IMAGE_MODEL=mock (set for the local stack in config.toml).
+// A 16x16 sheet of sketch paper, returned instead of calling Imagen on a
+// local stack, so local runs and tests never spend real AI quota.
 const MOCK_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR42mN4//IuSYhhVMOohuGrAQB7O7UfT213LwAAAABJRU5ErkJggg==";
 
-/** Whether image generation is mocked. Only honoured against a local stack. */
-function mockImages(): boolean {
-  if (Deno.env.get("IMAGE_MODEL") !== "mock") return false;
-  const url = Deno.env.get("SUPABASE_URL") ?? "";
-  if (!/^http:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)[:/]/.test(url)) {
-    throw new Error("IMAGE_MODEL=mock is only allowed on a local stack");
-  }
-  return true;
+/**
+ * Whether image generation is mocked: always on a local stack unless
+ * IMAGE_MODEL=imagen (in supabase/functions/.env), never in production.
+ */
+export function mockImages(): boolean {
+  const model = Deno.env.get("IMAGE_MODEL");
+  if (model === "imagen") return false;
+  if (isLocalStack()) return true;
+  if (model === "mock") throw new Error("IMAGE_MODEL=mock is only allowed on a local stack");
+  return false;
 }
 
 /** Generates one square PNG with Imagen 4. */

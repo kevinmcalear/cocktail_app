@@ -382,13 +382,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# Local stack only; production secrets are set with `supabase secrets set`.
-[edge_runtime.secrets]
-# Draw a blank paper PNG instead of calling Imagen, so local runs and tests
-# never spend real AI quota. Refused unless SUPABASE_URL is local.
-IMAGE_MODEL = "mock"
-# Shared with the database's image_worker_secret in Vault.
-IMAGE_WORKER_SECRET = "local-image-worker-secret"
+# Don't add an [edge_runtime.secrets] section: `supabase secrets set` uploads it
+# to production too. Local-only function behaviour (the mocked image model, the
+# local image-worker secret) keys off the local SUPABASE_URL instead; see
+# supabase/functions/_shared/localStack.ts.
 
 [analytics]
 enabled = true

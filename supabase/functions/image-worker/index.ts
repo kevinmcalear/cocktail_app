@@ -2,9 +2,11 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+import { mockImages } from "../_shared/gemini.ts";
 import { corsHeaders, json } from "../_shared/http.ts";
 import { drawItemSketch, loadItemForPrompt } from "../_shared/itemImage.ts";
 import { isImageItemType } from "../_shared/itemPrompts.ts";
+import { isLocalStack, LOCAL_IMAGE_WORKER_SECRET } from "../_shared/localStack.ts";
 
 /**
  * Draws the automatic hero sketches queued in private.item_image_jobs.
@@ -24,7 +26,7 @@ const DEFAULT_USER_DAILY_LIMIT = 40;
 const TIME_BUDGET_MS = 60_000;
 
 function authorized(req: Request): boolean {
-  const expected = Deno.env.get("IMAGE_WORKER_SECRET") ?? "";
+  const expected = Deno.env.get("IMAGE_WORKER_SECRET") || (isLocalStack() ? LOCAL_IMAGE_WORKER_SECRET : "");
   const given = req.headers.get("x-image-worker-secret") ?? "";
   if (!expected || given.length !== expected.length) return false;
   return timingSafeEqual(Buffer.from(given), Buffer.from(expected));
@@ -40,7 +42,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (!authorized(req)) return json({ error: "Not allowed." }, 401);
   // Lets tests confirm the image model is mocked before queueing any work.
-  if (req.method === "GET") return json({ model: Deno.env.get("IMAGE_MODEL") === "mock" ? "mock" : "imagen" });
+  if (req.method === "GET") return json({ model: mockImages() ? "mock" : "imagen" });
 
   const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", {
     auth: { persistSession: false },

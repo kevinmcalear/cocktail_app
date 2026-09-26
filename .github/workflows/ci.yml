@@ -47,7 +47,7 @@ jobs:
       # Applies every migration to a fresh database, so a migration that
       # cannot rebuild the schema fails here.
       # The edge runtime serves image-worker and the generators for the image
-      # tests, with the image model mocked (IMAGE_MODEL=mock in config.toml).
+      # tests; on a local stack the image model is always mocked.
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
