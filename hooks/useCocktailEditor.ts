@@ -9,7 +9,8 @@ import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { capitalize } from "@/lib/stringUtils";
-import { mapPresentationRecipeToEditItem, sortRecipesByOrder } from "@/lib/recipeUtils";
+import { fetchEditableRecipes } from "@/lib/editableRecipes";
+import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { setItemImages } from "@/components/drink/drinkImages";
@@ -32,6 +33,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const { data: cocktail, isLoading: loadingCocktail } = useCocktail(enabled ? id : undefined);
 
     const isLoaded = useRef(false);
+    const [rawLoaded, setRawLoaded] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -110,29 +112,37 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             );
         }
 
-        if (c.recipes) {
-            setRecipeItems(
-                sortRecipesByOrder(c.recipes).map((r: any) =>
-                    mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })
-                ) as SortableRecipeItem[]
-            );
-        }
-
-        supabase
-            .from("items")
-            .select(
-                "bar_id, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
-            )
-            .eq("id", id)
-            .single()
-            .then(({ data }) => {
-                if (!data) return;
+        // Recipe rows and bar settings come from the raw tables, not the role-masked
+        // presentation views: a save writes every field back, so masked values
+        // would overwrite real ones. Saving waits until both have loaded.
+        setRawLoaded(false);
+        Promise.all([
+            fetchEditableRecipes(id),
+            supabase
+                .from("items")
+                .select(
+                    "bar_id, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
+                )
+                .eq("id", id)
+                .single(),
+        ])
+            .then(([recipes, { data, error }]) => {
+                if (error || !data) throw error ?? new Error("Cocktail not found");
+                setRecipeItems(
+                    recipes.map((r: any) =>
+                        mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })
+                    ) as SortableRecipeItem[]
+                );
                 setBarId(data.bar_id);
                 setOverrideVisibility(data.override_visibility_level?.toString() || null);
                 setOverrideGeneric(data.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(data.override_specific_brand_level?.toString() || null);
                 setOverrideMeasurement(data.override_measurement_level?.toString() || null);
                 setOverridePrep(data.override_prep_level?.toString() || null);
+                setRawLoaded(true);
+            })
+            .catch(() => {
+                Alert.alert("Error", "Could not load this cocktail for editing.");
             });
     }, [cocktail, enabled, id]);
 
@@ -300,6 +310,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     };
 
     const handleSave = async (): Promise<boolean> => {
+        if (!rawLoaded) {
+            Alert.alert("Still loading", "Wait for the recipe to finish loading, then save again.");
+            return false;
+        }
         if (!name?.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return false;
@@ -387,7 +401,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     };
 
     return {
-        loading: loadingDropdowns || loadingCocktail,
+        loading: loadingDropdowns || loadingCocktail || (enabled && !rawLoaded),
         saving,
         isDirty,
         dropdowns,

@@ -77,14 +77,11 @@ export function useIngredient(id?: string | string[]) {
                     sort_order,
                     created_at,
                     display_ingredient_id,
-                    ingredient_item_id,
-                    parent_ingredient_id,
                     amount,
                     unit,
                     preparation_notes,
                     is_optional,
-                    specific_ingredient:items!ingredient_item_id(id, name),
-                    generic_ingredient:items!parent_ingredient_id(id, name)
+                    display_ingredient(id, name)
                 `)
                 .eq('recipe_item_id', ingredientId);
 

@@ -277,7 +277,8 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                     editor.members.map((member: any) => (
                         <Card key={member.user_id} padding="$3" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius={12}>
                             <XStack justifyContent="space-between" alignItems="center">
-                                <Text fontSize={14} fontWeight="600" color="$color">{member.email}</Text>
+                                {/* Emails are only returned to bar admins (and your own row). */}
+                                <Text fontSize={14} fontWeight="600" color="$color">{member.email ?? 'Team member'}</Text>
                                 <Text fontSize={12} color="$color11">{getRoleName(member.role_level)}</Text>
                             </XStack>
                         </Card>

@@ -61,6 +61,38 @@ export function useEffectiveRole(barId?: string | null) {
   return effectiveRole(real, viewAsRoleLevel);
 }
 
+/**
+ * Whether to offer editing an item, following the items RLS rule
+ * (private.can_write).
+ *
+ * - Venue items: a Drink Creator (35) or above at the item's own venue, not
+ *   the selected one. View-as caps the role.
+ * - Shared items (no venue): their creator or a catalog admin. The client
+ *   can't see catalog admins, so this asks the can_edit_item RPC. A view-as
+ *   role of Bartender (30) or lower hides editing here too.
+ */
+export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
+  const { user } = useAuth();
+  const barId = item?.bar_id ?? null;
+  const venueRole = useEffectiveRole(barId);
+  const { viewAsRoleLevel } = useViewAs();
+  const shared = !!item && !barId;
+
+  const { data: canEditShared } = useQuery({
+    queryKey: ['canEditItem', item?.id, user?.id],
+    enabled: shared && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('can_edit_item', { p_item_id: item!.id });
+      if (error) throw error;
+      return data === true;
+    },
+  });
+
+  if (!item) return false;
+  if (barId) return venueRole > 30;
+  return canEditShared === true && (viewAsRoleLevel == null || viewAsRoleLevel > 30);
+}
+
 export function useMaxRealRole() {
   const { data: bars } = useBars();
   if (!bars?.length) return 10;

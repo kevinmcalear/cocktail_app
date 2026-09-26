@@ -14,7 +14,7 @@ import { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useEffectiveRole } from "@/hooks/useViewAs";
+import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 
@@ -36,7 +36,7 @@ export default function CocktailDetailsScreen() {
             : null
     );
 
-    const canEdit = useEffectiveRole() > 30;
+    const canEdit = useCanEditItem(cocktail);
     const [isEditing, setIsEditing] = useState(false);
 
     const editor = useCocktailEditor(id as string, { enabled: isEditing });

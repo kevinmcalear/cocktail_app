@@ -42,6 +42,7 @@ export interface SearchItem {
     draftProgress?: any;
     price?: string | null;
     recipes?: {
+        display_ingredient_id?: string | null;
         ingredient_item_id?: string;
         ingredient?: {
             name: string;
@@ -490,7 +491,7 @@ export function SearchList({
                     result = result.filter(
                         (c) =>
                            ((c.category === "Ingredient" && c.id === ingId) || false) ||
-                           (c.recipes?.some(r => r.ingredient_item_id === ingId) || false)
+                           (c.recipes?.some(r => (r.display_ingredient_id ?? r.ingredient_item_id) === ingId) || false)
                     );
                 } else if (chip.type === "Category") {
                     const categoryId = chip.id.replace("category-", "");

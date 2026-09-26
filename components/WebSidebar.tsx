@@ -264,7 +264,7 @@ export function WebSidebar() {
   const theme = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const { user } = useAuth();
-  const { isTestingEnabled, isEditModeEnabled } = useSettingsStore();
+  const { isTestingEnabled } = useSettingsStore();
   const selectedNode = useCreatorNavStore((s) => s.selectedNode);
   const setSelectedNode = useCreatorNavStore((s) => s.setSelectedNode);
   const requestCreate = useCreatorNavStore((s) => s.requestCreate);
@@ -515,11 +515,9 @@ export function WebSidebar() {
       </YStack>
 
       <YStack gap="$2" flexShrink={0} paddingTop="$2">
-        {isEditModeEnabled && (
-          <View style={styles.createSlot}>
-            <UniversalCreateButton variant="button" width="100%" />
-          </View>
-        )}
+        <View style={styles.createSlot}>
+          <UniversalCreateButton variant="button" width="100%" />
+        </View>
 
         <Pressable
           onPress={() => router.push('/settings' as any)}

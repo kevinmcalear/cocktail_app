@@ -1,0 +1,14 @@
+{
+  "name": "change-policy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Classifies a PR from its changed paths per change-policy.yml. Own manifest so CI can run it without installing the app.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "minimatch": "^10.0.1",
+    "yaml": "^2.6.1"
+  }
+}

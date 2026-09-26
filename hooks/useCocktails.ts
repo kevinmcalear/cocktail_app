@@ -30,19 +30,10 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         sort_order,
                         created_at,
                         display_ingredient_id,
-                        ingredient_item_id,
-                        parent_ingredient_id,
                         amount,
                         unit,
                         preparation_notes,
-                        specific_ingredient:items!ingredient_item_id (
-                            id,
-                            name,
-                            item_categories (
-                                category_id
-                            )
-                        ),
-                        generic_ingredient:items!parent_ingredient_id (
+                        display_ingredient (
                             id,
                             name,
                             item_categories (
@@ -120,18 +111,7 @@ export function useCocktail(id?: string | string[]) {
                         unit,
                         preparation_notes,
                         display_ingredient_id,
-                        ingredient_item_id,
-                        parent_ingredient_id,
-                        specific_ingredient:items!ingredient_item_id (
-                            id,
-                            name,
-                            item_images (
-                                images (
-                                    url
-                                )
-                            )
-                        ),
-                        generic_ingredient:items!parent_ingredient_id (
+                        display_ingredient (
                             id,
                             name,
                             item_images (

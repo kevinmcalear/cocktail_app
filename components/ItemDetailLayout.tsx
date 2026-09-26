@@ -11,7 +11,6 @@ import { CocktailPhotoPlaceholder } from "@/components/cocktail/CocktailPhotoPla
 import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useSettingsStore } from "@/store/useSettingsStore";
 import { Text, useTheme, XStack } from "tamagui";
 import { STATUS } from '@/constants/palette';
 import { DetailSkeleton } from '@/components/ui/Skeleton';
@@ -29,6 +28,7 @@ export interface ItemDetailLayoutProps {
     isInStudyPile: boolean;
     onToggleFavorite: (id: string) => void;
     onToggleStudyPile: (id: string) => void;
+    /** Shows the "…" actions. Pass only when the viewer's effective role can edit. */
     onEditPress?: () => void;
     canEdit?: boolean;
     onStartEdit?: () => void;
@@ -91,7 +91,6 @@ export function ItemDetailLayout({
     const { height: windowHeight, width: windowWidth } = useWindowDimensions();
     const theme = useTheme();
     const colorScheme = useColorScheme();
-    const { isEditModeEnabled } = useSettingsStore();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -297,7 +296,7 @@ export function ItemDetailLayout({
                 </TouchableOpacity>
             );
         }
-        if (onEditPress && isEditModeEnabled) {
+        if (onEditPress) {
             return (
                 <TouchableOpacity onPress={onEditPress} style={{ padding: 10 }} accessibilityRole="button" accessibilityLabel="More actions">
                     <IconSymbol name="ellipsis" size={24} color={theme.color?.get() as string} style={{ opacity: 0.8 }} />
@@ -382,7 +381,7 @@ export function ItemDetailLayout({
                 </TouchableOpacity>
             );
         }
-        if (onEditPress && isEditModeEnabled) {
+        if (onEditPress) {
             return (
                 <TouchableOpacity onPress={onEditPress} accessibilityRole="button" accessibilityLabel="More actions" style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string }]}>
                     <IconSymbol name="ellipsis" size={22} color={theme.color?.get() as string} />
