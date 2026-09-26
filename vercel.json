@@ -51,6 +51,10 @@
     {
       "source": "/v/:slug",
       "destination": "/v/[slug]"
+    },
+    {
+      "source": "/study/:deck",
+      "destination": "/study/[deck]"
     }
   ]
 }
