@@ -1,6 +1,6 @@
 # Design system: Back Bar
 
-The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf). When the brief and this file disagree, ask. The tokens land in step 1 as `constants/tokens.ts`, wired into `tamagui.config.ts`. Until then, colours come from `constants/palette.ts`. `npm run check:design` stops new raw values either way.
+The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf). When the brief and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
 
 ## Principles
 
@@ -62,6 +62,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 - iOS 26+: Expo Router `NativeTabs` for the tab bar, `GlassView` (expo-glass-effect) for floating controls, `BlurView` fallback where glass isn't available.
 - Android: solid raised surfaces (expo-blur can't blur the tab bar cleanly there).
 - Web: `backdrop-filter` blur with a solid fallback.
+- Glass controls sitting on a photo use `onMedia` (dark glass, light ink) in both themes; otherwise dark ink on a dark photo disappears.
 
 ## Images
 
@@ -95,6 +96,13 @@ Locked sections stay visible, collapsed, and say which role opens them ("Opens a
 
 Write from the person's side of the screen: "Where it lives", not "Location metadata". Buttons say what happens ("Add to prep list"). Errors say what went wrong and how to fix it. Specific beats clever.
 
+## Building a redesigned screen
+
+- Wrap it in `BackbarTheme` (fonts, the Back Bar colours, and the Tamagui sub-theme) and, once step 2 lands, the active venue's `BrandProvider`.
+- Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
+- Accessibility props: use `role` and `aria-*` (`aria-selected`, `aria-disabled`). The legacy `accessibilityRole`/`accessibilityState` props don't reach the DOM on web.
+- A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both are contrast-checked by `lib/color.ts`.
+
 ## The gallery
 
-Step 1 adds a hidden gallery route that renders every token and shared component in both themes, at phone and desktop widths, for two venue brands. New components get added there in the same PR. Agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden (not linked anywhere) and opens in every build: its switch is how you turn the redesign on for yourself in production. Add new ds components to it in the same PR; agents verify against it and against the brief.
