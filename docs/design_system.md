@@ -105,4 +105,4 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 
 ## The gallery
 
-`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden, and only opens in development or when the redesign flag is on. Add new ds components to it in the same PR; agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden (not linked anywhere) and opens in every build: its switch is how you turn the redesign on for yourself in production. Add new ds components to it in the same PR; agents verify against it and against the brief.
