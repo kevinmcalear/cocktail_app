@@ -6,7 +6,8 @@ import tamaguiConfig from '@/tamagui.config';
 
 // These call into native modules on import; each ships its own Jest mock.
 jest.mock('react-native-worklets', () => jest.requireActual('react-native-worklets/src/mock'));
-jest.mock('react-native-reanimated', () => jest.requireActual('react-native-reanimated/mock'));
+// The mock lacks useReducedMotion, which PressableScale (every ds button) calls.
+jest.mock('react-native-reanimated', () => ({ ...jest.requireActual('react-native-reanimated/mock'), useReducedMotion: () => false }));
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
