@@ -13,8 +13,9 @@ The spec is the "What the data needs" table in the Back Bar brief (https://claud
 | 6 | Lineage, credit and profiles | `20260926150400_profiles_and_credit.sql` |
 | 5 | Events | `20260926150500_events.sql` (after 6, since it credits a profile) |
 | 7 | Home bar and rankings | `20260926150600_home_bar_and_rankings.sql` |
+| 6 (fix) | Claims on bar profiles | `20260926160000_fix_profile_claims_insert.sql` |
 
-Tests: `supabase/tests/venue-platform.test.mjs` (39 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
+Tests: `supabase/tests/venue-platform.test.mjs` (40 tests), plus one updated assertion in `venue-slugs.test.mjs` for the wider branding lookup.
 
 **Not in this proposal:** photo angles, generated images and anything touching `images` or `item_images` (another task owns them); publishing (the level below Guest, per-drink publish mode, bar releases and collections); moderation (reports, blocks, filtering); stock counts and prep batches ("on hand", "made Tue"); the "can make" function itself (the approach is written up in section 7).
 

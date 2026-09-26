@@ -613,6 +613,24 @@ describe('profiles and credit', () => {
     const again = await users.outsider.client.from('profile_claims').insert({ profile_id: ids.samProfile });
     assert.ok(again.error);
   });
+
+  test('a bar claims an unclaimed venue profile only for itself, with publish rights', async () => {
+    const venue = (await serviceInsert('profiles', { kind: 'bar', handle: `venue${run}`, display_name: 'Old Haunt' })).id;
+    const historic = (await serviceInsert('profiles', { kind: 'person', handle: `legend${run}`, display_name: 'Legend' })).id;
+
+    const own = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barOne }).select('id');
+    assert.ifError(own.error);
+    assert.equal(own.data.length, 1);
+
+    const noPublish = await users.maker.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barOne });
+    assert.ok(noPublish.error, 'Drink Creators cannot claim for their bar');
+    const otherBar = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barTwo });
+    assert.ok(otherBar.error, 'nobody claims for a bar they cannot publish for');
+    const withoutBar = await users.outsider.client.from('profile_claims').insert({ profile_id: venue });
+    assert.ok(withoutBar.error, 'a venue claim names the bar');
+    const personWithBar = await users.admin.client.from('profile_claims').insert({ profile_id: historic, bar_id: ids.barOne });
+    assert.ok(personWithBar.error, 'a person claim carries no bar');
+  });
 });
 
 describe('events', () => {
