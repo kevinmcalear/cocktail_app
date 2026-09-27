@@ -251,13 +251,13 @@ describe('menu dates', () => {
     assert.equal(a.ends_at.getTime(), start.getTime());
 
     // Time passes (dates moved back without the trigger), then the sweep runs.
-    await db.query('ALTER TABLE public.menus DISABLE TRIGGER menus_sync_active');
+    await db.query("SET session_replication_role = replica"); // skip triggers without DDL locks
     await db.query(
       "UPDATE public.menus SET starts_at = starts_at - interval '4 days', ends_at = now() - interval '1 day' WHERE id = $1",
       [autumn]
     );
     await db.query("UPDATE public.menus SET starts_at = now() - interval '1 day' WHERE id = $1", [winter]);
-    await db.query('ALTER TABLE public.menus ENABLE TRIGGER menus_sync_active');
+    await db.query('SET session_replication_role = origin');
     assert.equal((await menuRow(winter)).is_active, false, 'not flipped until the sweep');
     await db.query('SELECT private.sweep_menu_dates()');
     assert.equal((await menuRow(winter)).is_active, true);
@@ -270,9 +270,9 @@ describe('menu dates', () => {
       "UPDATE public.menus SET starts_at = now() + interval '1 day' WHERE id = $1", [menu]
     );
     // The start passes but the sweep hasn't run: is_active is still false.
-    await db.query("ALTER TABLE public.menus DISABLE TRIGGER menus_sync_active");
+    await db.query("SET session_replication_role = replica"); // skip triggers without DDL locks
     await db.query("UPDATE public.menus SET starts_at = now() - interval '1 minute' WHERE id = $1", [menu]);
-    await db.query("ALTER TABLE public.menus ENABLE TRIGGER menus_sync_active");
+    await db.query('SET session_replication_role = origin');
     assert.equal((await menuRow(menu)).is_active, false);
 
     const { error } = await users.maker.client.from('menus').update({ name: `Due renamed ${run}` }).eq('id', menu);
