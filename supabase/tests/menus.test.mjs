@@ -196,6 +196,19 @@ describe('menu sections', () => {
   });
 });
 
+test('a legacy insert with no section at all lands in the menu’s first section', async () => {
+  const menu = await newMenu('No section');
+  const { error } = await users.maker.client.from('menu_drinks').insert({ menu_id: menu, item_id: ids.martini, sort_order: 0 });
+  assert.ifError(error);
+  const { error: secondError } = await users.maker.client.from('menu_drinks').insert({ menu_id: menu, item_id: ids.boloTie, sort_order: 1 });
+  assert.ifError(secondError);
+  const { rows } = await db.query(
+    'SELECT s.name, count(d.id)::int AS drinks FROM public.menu_sections s JOIN public.menu_drinks d ON d.menu_section_id = s.id WHERE s.menu_id = $1 GROUP BY s.id',
+    [menu]
+  );
+  assert.deepEqual(rows, [{ name: 'Drinks', drinks: 2 }]);
+});
+
 describe('menu dates', () => {
   test('a new menu is a draft; a legacy "current" insert starts now', async () => {
     const draft = await newMenu('Draft');

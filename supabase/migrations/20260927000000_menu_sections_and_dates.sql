@@ -96,13 +96,28 @@ WHERE "s"."menu_id" = "md"."menu_id"
 
 -- Legacy screens still insert menu_drinks with only a template section. Put
 -- those rows in the menu's copy of that section, making the copy if needed.
+-- A row with no section at all goes in the menu's first section (or a plain
+-- "Drinks" one), so no drink is ever on a menu but invisible.
 -- Runs as the caller, so the menu_sections policies still apply.
 CREATE FUNCTION "private"."menu_drinks_fill_section"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
 BEGIN
-  IF NEW.menu_section_id IS NOT NULL OR NEW.template_section_id IS NULL OR NEW.menu_id IS NULL THEN
+  IF NEW.menu_section_id IS NOT NULL OR NEW.menu_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.template_section_id IS NULL THEN
+    SELECT s.id INTO NEW.menu_section_id
+    FROM public.menu_sections s
+    WHERE s.menu_id = NEW.menu_id
+    ORDER BY s.sort_order, s.created_at
+    LIMIT 1;
+    IF NEW.menu_section_id IS NULL THEN
+      INSERT INTO public.menu_sections (menu_id, name, min_items)
+      VALUES (NEW.menu_id, 'Drinks', 0)
+      RETURNING id INTO NEW.menu_section_id;
+    END IF;
     RETURN NEW;
   END IF;
   SELECT s.id INTO NEW.menu_section_id
