@@ -618,9 +618,16 @@ describe('profiles and credit', () => {
     const venue = (await serviceInsert('profiles', { kind: 'bar', handle: `venue${run}`, display_name: 'Old Haunt' })).id;
     const historic = (await serviceInsert('profiles', { kind: 'person', handle: `legend${run}`, display_name: 'Legend' })).id;
 
-    const own = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barOne }).select('id');
+    // A bar that isn't on the app as a profile yet.
+    const barFive = (await serviceInsert('bars', { name: `Fifth Bar ${run}` })).id;
+    await serviceInsert('user_bars', { user_id: users.admin.id, bar_id: barFive, role_level: 40 });
+    const own = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: barFive }).select('id');
     assert.ifError(own.error);
     assert.equal(own.data.length, 1);
+
+    const secondVenue = (await serviceInsert('profiles', { kind: 'bar', handle: `venuetwo${run}`, display_name: 'Older Haunt' })).id;
+    const hasProfile = await users.admin.client.from('profile_claims').insert({ profile_id: secondVenue, bar_id: ids.barOne });
+    assert.ok(hasProfile.error, 'a bar that already has a profile cannot claim a second one');
 
     const noPublish = await users.maker.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barOne });
     assert.ok(noPublish.error, 'Drink Creators cannot claim for their bar');
@@ -630,6 +637,34 @@ describe('profiles and credit', () => {
     assert.ok(withoutBar.error, 'a venue claim names the bar');
     const personWithBar = await users.admin.client.from('profile_claims').insert({ profile_id: historic, bar_id: ids.barOne });
     assert.ok(personWithBar.error, 'a person claim carries no bar');
+  });
+
+  test('someone who already has a profile cannot claim another, and approval says why if they got one since', async () => {
+    const historic = (await serviceInsert('profiles', { kind: 'person', handle: `great${run}`, display_name: 'Great', is_public: true })).id;
+
+    const withProfile = await makeUser('hasprofile');
+    extraUserIds.push(withProfile.id);
+    await serviceInsert('profiles', { kind: 'person', handle: `has${run}`, display_name: 'Has one', user_id: withProfile.id });
+    assert.ok((await withProfile.client.from('profile_claims').insert({ profile_id: historic })).error);
+
+    // Claims first, makes a profile after: approval refuses in words.
+    const late = await makeUser('late');
+    extraUserIds.push(late.id);
+    const { data: claim, error } = await late.client.from('profile_claims').insert({ profile_id: historic }).select('id').single();
+    assert.ifError(error);
+    await serviceInsert('profiles', { kind: 'person', handle: `late${run}`, display_name: 'Late', user_id: late.id });
+    const approve = await users.catalogAdmin.client.rpc('approve_profile_claim', { p_claim_id: claim.id });
+    assert.match(approve.error?.message ?? '', /already has a profile/);
+  });
+
+  test('signed-out visitors see whether a profile is claimed, not whose it is', async () => {
+    const { data, error } = await anon.from('profiles').select('id, is_claimed').eq('id', ids.samProfile).single();
+    assert.ifError(error);
+    assert.equal(typeof data.is_claimed, 'boolean');
+    assert.ok((await anon.from('profiles').select('user_id').eq('id', ids.samProfile)).error);
+    assert.ok((await anon.from('profiles').select('created_by').eq('id', ids.samProfile)).error);
+    // Signed in, moderators still look claimants up by account.
+    assert.ifError((await users.catalogAdmin.client.from('profiles').select('user_id').eq('id', ids.samProfile)).error);
   });
 });
 
