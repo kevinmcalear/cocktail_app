@@ -8,7 +8,7 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useBars } from '@/hooks/useBars';
 import { useAuth } from '@/ctx/AuthContext';
-import { useDropdowns } from '@/hooks/useDropdowns';
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
@@ -237,7 +237,7 @@ export default function EditModeDashboard() {
                 if (entityType === 'menu') {
                     const { error } = await supabase.from('menus').delete().eq('id', id);
                     if (error) throw error;
-                    queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+                    queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
                 } else {
                     const { error } = await supabase.from('items').delete().eq('id', id);
                     if (error) throw error;

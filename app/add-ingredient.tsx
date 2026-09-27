@@ -16,7 +16,7 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
@@ -369,7 +369,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             }
 
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
             if (currentDraftId) {
                 await updateParentDraftsWithPublishedId(
                     currentDraftId,

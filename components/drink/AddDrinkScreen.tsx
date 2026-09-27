@@ -11,6 +11,7 @@ import { DrinkFormFields, drinkColumns, useDrinkFormState } from '@/components/d
 import { imageIdFor, pickDrinkPhotos, setItemImages, uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useDrafts } from '@/hooks/useDrafts';
+import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
@@ -219,13 +220,12 @@ export function AddDrinkScreen({
       await setItemImages(newId, imageIds, { replace: false });
 
       for (const catId of selectedCategories) {
-        await supabase
-          .from('item_categories')
+        await supabase.from('item_categories')
           .upsert({ item_id: newId, category_id: catId, is_primary: true }, { onConflict: 'item_id,category_id' });
       }
 
       queryClient.invalidateQueries({ queryKey: [kind.listQueryKey] });
-      await queryClient.invalidateQueries({ queryKey: ['dropdowns_v2'] });
+      await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
       if (currentDraftId) {
         await updateMenuDraftsWithPublishedId(`${kind.kind}-${currentDraftId}`, `${kind.kind}-${newId}`, drafts, saveDraft);
         await deleteDraft(currentDraftId);

@@ -44,7 +44,9 @@ export default function IngredientDetailScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const { data, isLoading: loading, error, refetch } = useIngredient(id as string);
+    // isPending, not isLoading: "no data yet" includes the static prerender and the
+    // first paint, when nothing is fetching, and those must not read as not found.
+    const { data, isPending: loading, error, refetch } = useIngredient(id as string);
     const ingredient = data?.ingredient as IngredientDetail | null;
     const recipe = data?.recipe as unknown as RecipeItem[] || [];
     const usedIn = data?.usedIn || [];

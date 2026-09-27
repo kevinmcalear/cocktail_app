@@ -7,12 +7,16 @@ import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useB
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import type { PresentationRecipe, SpecLevels } from '@/lib/spec';
+import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
+import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import { FamilyTree } from './FamilyTree';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -23,8 +27,8 @@ export interface DrinkScreenProps {
   onToggleStudyPile: () => void;
   canEdit: boolean;
   onEdit: () => void;
-  /** /dev/drink only: a bundled hero image and a simulated role. */
-  preview?: { heroSource?: number | null; role: number; levels: SpecLevels };
+  /** /dev/drink only: a bundled hero image, a simulated role, and where Batch goes. */
+  preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
 }
 
 interface Named {
@@ -81,6 +85,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const serviceMode = useSettingsStore((s) => s.serviceMode);
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const { data: dropdowns } = useDropdowns();
+  const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
 
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glass = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -121,13 +127,22 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkTags tags={tags} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
-      <View style={styles.hug}>
+      <View style={styles.actions}>
         <GlassButton
           accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
           label={serviceMode ? 'Service mode on' : 'Service mode'}
           icon="sun.max.fill"
           onPress={toggleServiceMode}
         />
+        {canBatch ? (
+          <GlassButton
+            accessibilityLabel="Batch: scale this drink for prep"
+            label="Batch"
+            icon="flask"
+            onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
+          />
+        ) : null}
+        {preview ? null : <RankActions item={item} picture={heroPicture(item.item_images as ItemImageLink[] | undefined)} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
@@ -137,6 +152,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      {preview ? null : <FamilyTree itemId={item.id} />}
     </View>
   );
 
@@ -173,7 +189,7 @@ const styles = StyleSheet.create({
   readable: { maxWidth: 720, width: '100%' },
   body: { gap: space.lg },
   notes: { gap: space.sm },
-  hug: { alignSelf: 'flex-start' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   controlsRight: { flexDirection: 'row', gap: space.sm },
 });
