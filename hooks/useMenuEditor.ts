@@ -1,5 +1,5 @@
 import { useDrafts } from '@/hooks/useDrafts';
-import { useDropdowns } from '@/hooks/useDropdowns';
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from '@/hooks/useDropdowns';
 import { resolveBeerId, resolveCocktailId, resolveWineId, updateMenuDraftsWithPublishedId } from '@/lib/drafts';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { capitalize } from '@/lib/stringUtils';
@@ -276,7 +276,7 @@ export function useMenuEditor(menuId: string | null, enabled: boolean) {
                 if (error) throw error;
             }
 
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v4'] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
             await queryClient.invalidateQueries({ queryKey: ['menu', menuId] });
             cleanRef.current = stateStr;
             return true;
