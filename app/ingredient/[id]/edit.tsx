@@ -21,7 +21,7 @@ import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDrafts } from "@/hooks/useDrafts";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { renameIngredientEntity } from "@/lib/drafts";
@@ -393,7 +393,7 @@ export default function EditIngredientScreen({
             await queryClient.invalidateQueries({ queryKey: ["ingredients"] });
             await queryClient.invalidateQueries({ queryKey: ["cocktail"] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
-            await queryClient.invalidateQueries({ queryKey: ["dropdowns_v2"] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
 
             cleanStateRef.current = currentStateStr;
             setShowPhotoSheet(false);
