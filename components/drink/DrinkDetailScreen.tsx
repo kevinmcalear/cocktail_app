@@ -45,7 +45,9 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { toggleStudyPile, isInStudyPile } = useStudyPile();
   const { data: dropdowns } = useDropdowns();
-  const { data: item, isLoading } = kind.useItem(safeId);
+  // isPending, not isLoading: "no data yet" includes the static prerender and the
+  // first paint, when nothing is fetching, and those must not read as not found.
+  const { data: item, isPending: isLoading } = kind.useItem(safeId);
   const canEdit = useCanEditItem(item);
   const [notesExpanded, setNotesExpanded] = useState(false);
 
