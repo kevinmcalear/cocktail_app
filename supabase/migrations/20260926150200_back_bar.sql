@@ -65,7 +65,8 @@ CREATE TABLE "public"."item_locations" (
     -- "1 L squeeze bottle, blue tape, date on the cap"
     "container" "text" CHECK (char_length("container") <= 200),
     "photo_url" "text",
-    -- How much should be at this spot when it's stocked.
+    -- How much should be at this spot when it's stocked. The only par: a bar's
+    -- par for an item (and so its prep and order targets) is the sum of these.
     "par_amount" numeric CHECK ("par_amount" > 0),
     "par_unit" "text",
     "sort_order" integer DEFAULT 0 NOT NULL,

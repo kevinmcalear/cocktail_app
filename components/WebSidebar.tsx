@@ -575,10 +575,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  searchTrigger: {
-    marginBottom: 4,
-    justifyContent: 'space-between',
-  },
+  searchTrigger: { marginBottom: 4, justifyContent: 'space-between' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -600,10 +597,7 @@ const styles = StyleSheet.create({
     paddingLeft: 28,
     borderRadius: 6,
   },
-  createSlot: {
-    alignItems: 'flex-start',
-    paddingHorizontal: 4,
-  },
+  createSlot: { alignItems: 'flex-start', paddingHorizontal: 4 },
   accountChip: {
     flexDirection: 'row',
     alignItems: 'center',

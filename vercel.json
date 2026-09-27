@@ -21,6 +21,10 @@
       "destination": "/cocktail/[id]/edit"
     },
     {
+      "source": "/cocktail/:id/batch",
+      "destination": "/cocktail/[id]/batch"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },
@@ -37,6 +41,10 @@
       "destination": "/wine/[id]/edit"
     },
     {
+      "source": "/p/:id",
+      "destination": "/p/[id]"
+    },
+    {
       "source": "/settings/bar/:id",
       "destination": "/settings/bar/[id]"
     },
@@ -45,8 +53,16 @@
       "destination": "/settings/bar/[id]/assign-items"
     },
     {
+      "source": "/rankings/:itemId",
+      "destination": "/rankings/[itemId]"
+    },
+    {
       "source": "/v/:slug",
       "destination": "/v/[slug]"
+    },
+    {
+      "source": "/study/:deck",
+      "destination": "/study/[deck]"
     }
   ]
 }

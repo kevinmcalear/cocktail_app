@@ -1,4 +1,4 @@
-import { Redirect, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,8 +46,11 @@ function ColumnBody() {
 
 /**
  * Every token and shared component, in both themes, for two sample venues.
- * Hidden: not linked from the app. Open /dev/gallery in development, or in a
- * build where the redesign preview is on.
+ * Hidden: not linked from the app, but it opens in every build, because its
+ * switch is how you turn the redesign preview on for yourself in production.
+ * ponytail: anyone who finds /dev/gallery can preview unfinished screens (their
+ * own view only; RLS still guards the data). Gate it on catalog admin once the
+ * client can ask the server who that is.
  */
 export default function Gallery() {
   const redesign = useRedesign();
@@ -57,7 +60,6 @@ export default function Gallery() {
   const wide = useBreakpoint() === 'desktop';
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  if (!__DEV__ && !redesign) return <Redirect href="/" />;
 
   const sample = brand === 'none' ? undefined : SAMPLE_BRANDS[brand];
   return (
