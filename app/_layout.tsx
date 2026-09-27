@@ -191,6 +191,10 @@ function RootLayoutNav() {
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/all" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>
       </View>

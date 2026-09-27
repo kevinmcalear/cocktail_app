@@ -19,11 +19,13 @@ export function useMenuDetails(menuId: string | null) {
             
             if (menuErr || !menuData) throw menuErr || new Error("Menu not found");
 
-            // 2. Get the template sections for this menu
+            // 2. The menu's own sections (menu_sections). Ones copied from its
+            // template keep the template section's id, which the legacy editor
+            // saves by; ones made in the new editor can't be edited here.
             const { data: sections, error: secErr } = await supabase
-                .from('template_sections')
-                .select('*')
-                .eq('template_id', menuData.template_id)
+                .from('menu_sections')
+                .select('id, name, allowed_types, template_section_id')
+                .eq('menu_id', menuId)
                 .order('sort_order');
                 
             if (secErr) throw secErr;
@@ -32,7 +34,7 @@ export function useMenuDetails(menuId: string | null) {
             const { data: drinksData, error: drinksErr } = await supabase
                 .from('menu_drinks')
                 .select(`
-                    template_section_id,
+                    menu_section_id,
                     sort_order,
                     item:items!item_id (
                         id, name, description, item_type, brand_maker, origin, price,
@@ -50,7 +52,7 @@ export function useMenuDetails(menuId: string | null) {
             // 4. Format into sections
             const formattedSections: MenuSection[] = (sections || []).map((sec: any) => {
                 const secDrinks = (drinksData || [])
-                    .filter(d => d.template_section_id === sec.id)
+                    .filter(d => d.menu_section_id === sec.id)
                     .sort((a, b) => a.sort_order - b.sort_order)
                     .map((d): MenuItem | null => {
                         const i: any = d.item;
@@ -104,7 +106,7 @@ export function useMenuDetails(menuId: string | null) {
                     }).filter((item): item is MenuItem => item !== null);
                 
                 return {
-                    id: sec.id,
+                    id: sec.template_section_id ?? sec.id,
                     title: sec.name,
                     allowedTypes: normalizeAllowedTypes(sec.allowed_types),
                     data: secDrinks
@@ -113,7 +115,10 @@ export function useMenuDetails(menuId: string | null) {
                 
             return {
                 menuName: menuData.name,
-                sections: formattedSections
+                sections: formattedSections,
+                // The legacy editor saves by template section, so it can only edit
+                // a menu whose every section still comes from its template.
+                editableHere: !!menuData.template_id && (sections || []).every((sec) => !!sec.template_section_id),
             };
         }
     });
