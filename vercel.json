@@ -21,6 +21,10 @@
       "destination": "/cocktail/[id]/edit"
     },
     {
+      "source": "/cocktail/:id/batch",
+      "destination": "/cocktail/[id]/batch"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },
