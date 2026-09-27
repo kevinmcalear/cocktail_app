@@ -4,7 +4,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBars } from "@/hooks/useBars";
 import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
-import { useDropdowns } from "@/hooks/useDropdowns";
+import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useWines } from "@/hooks/useWines";
 import { uriToBase64 } from "@/lib/imageBase64";
@@ -618,6 +618,7 @@ export default function CreateMenuWizard({
 
             if (activeMenuIdProp) {
                 const updatePayload = { ...insertPayload };
+                delete updatePayload.is_active; // republishing keeps Current as is; only a new menu starts Current
                 let { error: updateError } = await supabase
                     .from('menus')
                     .update(updatePayload)
@@ -669,7 +670,6 @@ export default function CreateMenuWizard({
             // 2. Add Drinks (item_id — matches prod schema)
             let globalSortOrder = 0;
             const drinksToInsert = [];
-            
             for (const sec of activeSections) {
                 const drinksInSection = selections[sec.id] || [];
                 for (const drinkId of drinksInSection) {
@@ -728,7 +728,7 @@ export default function CreateMenuWizard({
                 })
             );
 
-            await queryClient.invalidateQueries({ queryKey: ['dropdowns_v4'] });
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
             isExitingRef.current = true;
             if (isInline) {
                 if (onSave) onSave();

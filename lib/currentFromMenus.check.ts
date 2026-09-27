@@ -3,6 +3,7 @@ import {
   currentCocktailsFromDrinks,
   currentForLabel,
   currentMenus,
+  inRunningOrder,
   isCurrentMenu,
 } from './currentFromMenus';
 
@@ -32,6 +33,21 @@ assert.deepEqual(currentCocktailsFromDrinks(drinks, ['1', '3']), [
   { id: 'c1', name: 'Martini', menu_id: '1' },
   { id: 'c3', name: 'Negroni', menu_id: '3' },
 ]);
+
+// Running order: menus in the caller's order, then sort_order, never interleaved.
+const unordered = [
+  { menu_id: 'b', sort_order: 0, n: 'b0' },
+  { menu_id: 'a', sort_order: 2, n: 'a2' },
+  { menu_id: 'a', sort_order: null, n: 'a-' },
+  { menu_id: 'a', sort_order: 0, n: 'a0' },
+  { menu_id: 'b', sort_order: 1, n: 'b1' },
+  { menu_id: 'a', sort_order: 1, n: 'a1' },
+];
+assert.deepEqual(
+  inRunningOrder(unordered, ['a', 'b']).map((r) => r.n),
+  ['a0', 'a1', 'a2', 'a-', 'b0', 'b1']
+);
+assert.equal(unordered[0].n, 'b0', 'inRunningOrder must not mutate its input');
 
 assert.equal(currentForLabel(null), 'Personal');
 assert.equal(currentForLabel('x', 'Cottage'), 'Cottage');
