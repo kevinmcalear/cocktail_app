@@ -33,9 +33,9 @@ CREATE TABLE "public"."profiles" (
     "user_id" "uuid" UNIQUE REFERENCES "auth"."users"("id") ON DELETE CASCADE,
     -- A deleted bar leaves its profile behind unclaimed, so credits survive.
     "bar_id" "uuid" UNIQUE REFERENCES "public"."bars"("id") ON DELETE SET NULL,
-    -- Private until the owner (or, for an unclaimed profile, an admin)
-    -- publishes it.
-    "is_public" boolean DEFAULT false NOT NULL,
+    -- Bars are public unless they say otherwise; people are private until
+    -- they publish. Filled by set_profile_visibility() when left out.
+    "is_public" boolean NOT NULL,
     -- Shown on profiles and rankings: "Brunswick".
     "locality" "text" CHECK (char_length("locality") <= 80),
     -- Bars only: where it is, for its public page and area rankings.
@@ -78,6 +78,21 @@ CREATE TABLE "public"."profile_claims" (
 
 CREATE UNIQUE INDEX "profile_claims_one_pending_key" ON "public"."profile_claims" ("profile_id", "user_id") WHERE "status" = 'pending';
 CREATE INDEX "profile_claims_user_id_idx" ON "public"."profile_claims" ("user_id");
+
+-- A column default can't depend on kind, so a trigger fills is_public when
+-- the insert leaves it out. An explicit value, true or false, is kept.
+CREATE FUNCTION "private"."set_profile_visibility"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+    NEW.is_public := COALESCE(NEW.is_public, NEW.kind = 'bar');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER "set_profile_visibility" BEFORE INSERT ON "public"."profiles"
+    FOR EACH ROW EXECUTE FUNCTION "private"."set_profile_visibility"();
 
 -- --- Lineage and credit on drinks ---
 
@@ -267,5 +282,6 @@ CREATE POLICY "profile_claims_update_admin" ON "public"."profile_claims" FOR UPD
     WITH CHECK ("private"."is_app_admin"() AND "status" <> 'approved');
 
 REVOKE EXECUTE ON FUNCTION "private"."guard_item_credit"() FROM PUBLIC, "anon", "authenticated";
+REVOKE EXECUTE ON FUNCTION "private"."set_profile_visibility"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "public"."approve_profile_claim"("p_claim_id" "uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "public"."approve_profile_claim"("p_claim_id" "uuid") TO "authenticated", "service_role";
