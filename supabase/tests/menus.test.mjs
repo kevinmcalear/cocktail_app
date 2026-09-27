@@ -1,5 +1,5 @@
 // Menus own their sections and carry their dates
-// (migration 20260927000000_menu_sections_and_dates). Runs through the real
+// (migration 20260927100000_menu_sections_and_dates). Runs through the real
 // API as real users.
 //
 //   supabase start && supabase db reset
