@@ -77,7 +77,7 @@ describe('bar slugs', () => {
 });
 
 describe('get_venue_branding', () => {
-  test('gives signed-out visitors only the name, logo and colours', async () => {
+  test('gives signed-out visitors only the name, logo, colours and home-screen identity', async () => {
     const bar = await createBar(`Branded ${run}`);
     await service
       .from('bars')
@@ -88,11 +88,16 @@ describe('get_venue_branding', () => {
     assert.ifError(error);
     assert.equal(data.length, 1);
     assert.deepEqual(Object.keys(data[0]).sort(), [
+      'accent_light_color',
+      'display_face',
+      'ground_tint',
+      'icon_url',
       'id',
       'logo_url',
       'name',
       'primary_color',
       'secondary_color',
+      'short_name',
       'slug',
     ]);
     assert.equal(data[0].name, `Branded ${run}`);

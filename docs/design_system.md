@@ -41,7 +41,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 
 ## Shape and space
 
-- **Radius:** 12 (controls), 22 (cards), 36 (sheets), full (pills), all with continuous corners (`borderCurve: 'continuous'`).
+- **Radius:** 4 (marks drawn inside a card, like zones on the back bar plan), 12 (controls), 22 (cards), 36 (sheets), full (pills), all with continuous corners (`borderCurve: 'continuous'`).
 - **Space:** 4-point grid: 4, 8, 12, 16, 24, 32, 48. Screen side gutter 16 on phones, 24 on tablet, 32 on desktop.
 - **Tap targets:** at least 44 by 44.
 
