@@ -6,7 +6,9 @@ import { Body, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useD
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { radius, space } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
+import { venueContextIds } from '@/lib/barContextFilter';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 
 const FILTERS: { value: ItemCategory; label: string }[] = [
@@ -45,7 +47,11 @@ export function LibraryScreen() {
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const bottom = useTabBarInset();
-  const { items } = useSearchCatalog();
+  // The venue in the header, not the old sidebar's multi-select contexts.
+  const { active, isLoading: venuesLoading } = useActiveVenue();
+  const activeId = active?.id ?? null;
+  const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
+  const { items, isLoading } = useSearchCatalog(contextIds);
   const [filter, setFilter] = useState<ItemCategory>('Cocktail');
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
@@ -100,7 +106,7 @@ export function LibraryScreen() {
             </PressableScale>
           );
         }}
-        ListEmptyComponent={<Body tone="muted">Nothing here yet.</Body>}
+        ListEmptyComponent={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>}
       />
     </View>
   );

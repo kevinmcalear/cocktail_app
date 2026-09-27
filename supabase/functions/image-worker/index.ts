@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (!authorized(req)) return json({ error: "Not allowed." }, 401);
   // Lets tests confirm the image model is mocked before queueing any work.
-  if (req.method === "GET") return json({ model: mockImages() ? "mock" : "imagen" });
+  if (req.method === "GET") return json({ model: mockImages() ? "mock" : "live" });
 
   const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", {
     auth: { persistSession: false },
@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     const job = (data as Job[] | null)?.[0];
     if (!job) break;
 
+    let charged = false;
     try {
       const item = await loadItemForPrompt(admin, job.item_id);
       if (!item || !isImageItemType(item.item_type) || !job.spec_fingerprint) {
@@ -98,6 +99,7 @@ Deno.serve(async (req) => {
         tally.no_payer++;
         continue;
       }
+      charged = true;
 
       const url = await drawItemSketch(admin, item, item.item_type);
       const { error: attachError } = await admin.rpc("attach_generated_item_image", {
@@ -110,6 +112,11 @@ Deno.serve(async (req) => {
       tally.drawn++;
     } catch (err) {
       console.error(`${FN}: job ${job.item_id} failed:`, err);
+      if (charged) {
+        // Nothing was drawn, so it shouldn't count against the venue's allowance.
+        const { error: refundError } = await admin.rpc("refund_item_ai_quota", { p_item_id: job.item_id, p_fn: FN });
+        if (refundError) console.error(`${FN}: refund failed for ${job.item_id}:`, refundError);
+      }
       await release(job, "failed", err instanceof Error ? err.message : String(err));
       tally.failed++;
     }
