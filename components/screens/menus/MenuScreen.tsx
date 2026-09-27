@@ -51,7 +51,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
 
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/menus'));
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
   if (!menu) {
     return (
       <View style={[styles.screen, styles.missing, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
@@ -72,7 +72,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
         {hero ? <DrinkHero name={menu.name} imageUrl={hero} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
         <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
-          <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} />
+          {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
+          <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
           <Display>{menu.name}</Display>
           <Caption tone="muted">
             {[venue?.name ?? (menu.barId ? null : 'Just yours'), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}

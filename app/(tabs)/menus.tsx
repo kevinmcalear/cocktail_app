@@ -24,7 +24,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { creatorCreateHref, openDraftInCreator, useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect, useRouter } from "expo-router";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -39,7 +39,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, XStack, YStack, useTheme } from "tamagui";
 import { CardRowSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { MenusScreen as RedesignedMenus } from "@/components/screens/menus/MenusScreen";
 import { useRedesign } from "@/lib/flags";
 
 function firstDrinkImageUrl(sections: { data: { image?: any }[] }[] | undefined): string | null {
@@ -77,9 +76,9 @@ function toMenuItem(drink: SearchItem): MenuItem {
     };
 }
 
-// The redesign's Menus list; everyone else keeps this screen until it's the default.
+// The redesign's Menus list is a stack screen (native tabs can't open a hidden tab).
 export default function MenusRoute() {
-    return useRedesign() ? <RedesignedMenus /> : <MenusScreen />;
+    return useRedesign() ? <Redirect href="/menus/all" /> : <MenusScreen />;
 }
 
 function MenusScreen() {

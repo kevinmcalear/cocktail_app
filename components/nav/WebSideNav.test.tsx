@@ -33,7 +33,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   await fireEvent.press(screen.getByRole('link', { name: 'Back bar' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/back-bar');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/menus/all');
 });
 
 test('Menus stays marked on a menu page', async () => {

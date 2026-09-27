@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -30,7 +29,6 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 /**
  * Every menu at the venue: on now, coming up, drafts and previous, plus the
  * person's own menus. Reached from Tonight and, on wide web, the sidebar.
- * A hidden tab, so it sits inside the tabs' venue theme.
  */
 export function MenusScreen() {
   const ds = useDs();
@@ -39,7 +37,6 @@ export function MenusScreen() {
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
-  const bottom = useTabBarInset();
   const userId = useAuth().user?.id ?? null;
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const barId = active?.id ?? null;
@@ -64,7 +61,7 @@ export function MenusScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: wide ? 760 : undefined },
+          { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl, maxWidth: wide ? 760 : undefined },
         ]}
       >
         {sidebar ? null : (

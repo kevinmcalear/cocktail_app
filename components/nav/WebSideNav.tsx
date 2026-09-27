@@ -95,7 +95,7 @@ function SideNavBody() {
         {/* Phones reach menus from Tonight and the back bar from Prep; wide web has both here, as in the brief. */}
         {mode === 'venue' ? (
           <>
-            <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus')} />
+            <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus/all')} />
             <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
           </>
         ) : null}

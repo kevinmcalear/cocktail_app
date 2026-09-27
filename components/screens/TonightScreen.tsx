@@ -33,7 +33,7 @@ export function TonightScreen() {
   const { data: venueMenus = [] } = useVenueMenus(active?.id);
   const [now] = useState(() => Date.now());
   const onNow = groupMenus(venueMenus.filter((m) => m.barId === active?.id), now).on;
-  const openMenus = () => router.push('/menus');
+  const openMenus = () => router.push('/menus/all');
 
   const empty = !venuesLoading && !isLoading && drinks.length === 0;
 
