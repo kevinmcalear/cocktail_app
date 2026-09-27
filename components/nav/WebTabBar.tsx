@@ -49,12 +49,14 @@ export function WebTabBar({ state, navigation }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { mode } = useMode();
-  const current = state.routes[state.index]?.name;
+  // Menus is a hidden tab reached from Tonight, so Tonight stays lit there.
+  const routeName = state.routes[state.index]?.name;
+  const current = routeName === 'menus' ? 'index' : routeName;
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
     const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (current !== name && !event.defaultPrevented) navigation.navigate(name);
+    if (routeName !== name && !event.defaultPrevented) navigation.navigate(name);
   };
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>

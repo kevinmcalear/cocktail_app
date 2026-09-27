@@ -92,9 +92,12 @@ function SideNavBody() {
         {(mode === 'home' ? HOME_TABS : VENUE_TABS).map((t) => (
           <NavRow key={t.name} label={t.label} icon={t.icon} current={pathname === hrefFor(t.name)} onPress={() => go(t.name)} />
         ))}
-        {/* Phones reach the back bar from Prep (BackBarLink); wide web has it here, as in the brief. */}
+        {/* Phones reach menus from Tonight and the back bar from Prep; wide web has both here, as in the brief. */}
         {mode === 'venue' ? (
-          <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
+          <>
+            <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus')} />
+            <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
+          </>
         ) : null}
       </View>
     </View>

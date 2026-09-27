@@ -17,20 +17,11 @@ import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import { currentForLabel } from "@/lib/currentFromMenus";
 import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import { buildMenuDrinkIndex } from "@/lib/menuDrinkIndex";
-import {
-    itemAllowedInSection,
-    normalizeAllowedTypes,
-    sectionCommandFilter,
-    sectionCommandFilters,
-} from "@/lib/sectionAllowedTypes";
+import { itemAllowedInSection, normalizeAllowedTypes, sectionCommandFilter, sectionCommandFilters } from "@/lib/sectionAllowedTypes";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
-import {
-    creatorCreateHref,
-    openDraftInCreator,
-    useCreatorNavStore,
-} from "@/store/useCreatorNavStore";
+import { creatorCreateHref, openDraftInCreator, useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -48,6 +39,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, XStack, YStack, useTheme } from "tamagui";
 import { CardRowSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { MenusScreen as RedesignedMenus } from "@/components/screens/menus/MenusScreen";
+import { useRedesign } from "@/lib/flags";
 
 function firstDrinkImageUrl(sections: { data: { image?: any }[] }[] | undefined): string | null {
     for (const section of sections || []) {
@@ -84,7 +77,12 @@ function toMenuItem(drink: SearchItem): MenuItem {
     };
 }
 
-export default function MenusScreen() {
+// The redesign's Menus list; everyone else keeps this screen until it's the default.
+export default function MenusRoute() {
+    return useRedesign() ? <RedesignedMenus /> : <MenusScreen />;
+}
+
+function MenusScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();

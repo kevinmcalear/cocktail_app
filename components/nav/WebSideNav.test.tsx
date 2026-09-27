@@ -26,12 +26,21 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Back bar']);
+  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Back bar']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Back bar' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/back-bar');
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
+});
+
+test('Menus stays marked on a menu page', async () => {
+  mockMode = 'venue';
+  mockPathname = '/menus/abc';
+  await renderWithTamagui(<WebSideNav />);
+  expect(screen.getByRole('link', { name: 'Menus', selected: true })).toBeTruthy();
 });
 
 test('home mode lists the home tabs and navigates to their routes', async () => {

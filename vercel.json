@@ -61,6 +61,14 @@
       "destination": "/v/[slug]"
     },
     {
+      "source": "/menus/:id",
+      "destination": "/menus/[id]"
+    },
+    {
+      "source": "/menus/:id/card",
+      "destination": "/menus/[id]/card"
+    },
+    {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
     }
