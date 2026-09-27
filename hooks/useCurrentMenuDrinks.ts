@@ -1,8 +1,9 @@
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { inRunningOrder } from '@/lib/currentFromMenus';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
-/** Drinks on current (is_active) menus — used to derive Current cocktails. */
+/** Drinks on current (is_active) menus, in running order (menuIds order, then sort_order). */
 export function useCurrentMenuDrinks(menuIds: string[]) {
   const key = [...menuIds].sort();
   return useQuery({
@@ -11,11 +12,14 @@ export function useCurrentMenuDrinks(menuIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('menu_drinks')
-        .select('menu_id, item:items!item_id(id, name, item_type)')
-        .in('menu_id', key);
+        .select('menu_id, sort_order, item:items!item_id(id, name, item_type)')
+        .in('menu_id', key)
+        .order('sort_order', { ascending: true });
       if (error) throw error;
       return data || [];
     },
+    // The cache key sorts menu ids; re-apply the caller's menu order on read.
+    select: (rows) => inRunningOrder(rows, menuIds),
     staleTime: 1000 * 60 * 5,
   });
 }

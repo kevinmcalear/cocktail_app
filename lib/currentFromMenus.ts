@@ -9,6 +9,7 @@ export type MenuCurrentRow = {
 
 export type MenuDrinkRow = {
   menu_id: string;
+  sort_order?: number | null;
   item?: { id: string; name: string; item_type?: string | null } | null;
 };
 
@@ -37,6 +38,16 @@ export function currentCocktailsFromDrinks(
     out.push({ id: item.id, name: item.name, menu_id: row.menu_id });
   }
   return out;
+}
+
+/** Menu drinks in running order: menus in the given order, then each menu's sort_order (unset last). */
+export function inRunningOrder<T extends Pick<MenuDrinkRow, 'menu_id' | 'sort_order'>>(rows: T[], menuIds: string[]): T[] {
+  const rank = (id: string) => {
+    const i = menuIds.indexOf(id);
+    return i < 0 ? menuIds.length : i;
+  };
+  const pos = (n: number | null | undefined) => n ?? Number.MAX_SAFE_INTEGER;
+  return [...rows].sort((a, b) => rank(a.menu_id) - rank(b.menu_id) || pos(a.sort_order) - pos(b.sort_order));
 }
 
 /** Label for the set-current action: venue name or Personal. */

@@ -504,27 +504,26 @@ function MenusScreen() {
                 <Text color="$color11" fontSize={15}>
                     No menus yet. Create one to start building your list.
                 </Text>
-                {canEdit ? (
-                    <TouchableOpacity
-                        onPress={() =>
-                            router.push(
-                                creatorCreateHref(
-                                    'menu',
-                                    selectedMenu?.bar_id || PERSONAL_CONTEXT
-                                ) as any
-                            )
-                        }
-                        style={[styles.primaryBtn, { backgroundColor: theme.color8?.get() as string }]}
+                {/* Anyone signed in (this tab is auth-gated) can start a personal menu. */}
+                <TouchableOpacity
+                    onPress={() =>
+                        router.push(
+                            creatorCreateHref(
+                                'menu',
+                                selectedMenu?.bar_id || PERSONAL_CONTEXT
+                            ) as any
+                        )
+                    }
+                    style={[styles.primaryBtn, { backgroundColor: theme.color8?.get() as string }]}
+                >
+                    <Text
+                        color={theme.backgroundStrong?.get() as string}
+                        fontWeight="bold"
+                        fontSize={16}
                     >
-                        <Text
-                            color={theme.backgroundStrong?.get() as string}
-                            fontWeight="bold"
-                            fontSize={16}
-                        >
-                            New Menu
-                        </Text>
-                    </TouchableOpacity>
-                ) : null}
+                        New Menu
+                    </Text>
+                </TouchableOpacity>
                 {menuDrafts.length > 0 ? (
                     <YStack gap="$2" marginTop="$4">
                         <Text
