@@ -56,6 +56,8 @@ export interface DatabaseImage {
     id: string;
     url: string;
     created_at: string;
+    /** Drink field colours [dominant, deep, light] as "#rrggbb"; [] = no colour, null = not computed yet. */
+    palette?: string[] | null;
 }
 
 export interface DatabaseItemImage {

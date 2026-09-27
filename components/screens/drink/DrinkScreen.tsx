@@ -8,12 +8,15 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
+import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import { FamilyTree } from './FamilyTree';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -139,6 +142,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
             onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
           />
         ) : null}
+        {preview ? null : <RankActions item={item} picture={heroPicture(item.item_images as ItemImageLink[] | undefined)} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
@@ -148,6 +152,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      {preview ? null : <FamilyTree itemId={item.id} />}
     </View>
   );
 

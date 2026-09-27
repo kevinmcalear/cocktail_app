@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
@@ -6,6 +7,7 @@ import { Body, Caption, DsText, PressableScale, Title, useDs } from '@/component
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, DEFAULT_ACCENT, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
+import { useMode } from '@/hooks/useMode';
 import { accentFill } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 
@@ -25,26 +27,50 @@ export function VenueMark({ venue, size = 28 }: { venue: Venue | null; size?: nu
   );
 }
 
+/** Home mode's mark: a house on a plain tile. */
+function HomeMark({ size = 28 }: { size?: number }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.initial, { width: size, height: size, borderRadius: size * 0.28, backgroundColor: ds.c.raised }]}>
+      <IconSymbol name="house.fill" size={size * 0.55} color={ds.c.ink} />
+    </View>
+  );
+}
+
 /**
- * The chip in the corner of every redesigned screen: which venue you're in.
- * Tapping it switches venue (and, later, to home mode).
+ * The chip in the corner of every redesigned screen: which venue you're in,
+ * or your home bar. Tapping it switches, like switching accounts.
  */
 export function VenueSwitcher() {
   const ds = useDs();
+  const router = useRouter();
   const { venues, active, setActive } = useActiveVenue();
+  const { mode, setMode } = useMode();
   const [open, setOpen] = useState(false);
-  const canSwitch = venues.length > 1;
+  const home = mode === 'home';
+  const canSwitch = venues.length > 0;
+  // Land on the first tab, since the other tabs change with the mode.
+  const choose = (next: 'home' | Venue) => {
+    if (next === 'home') setMode('home');
+    else {
+      setActive(next.id);
+      setMode('venue');
+    }
+    setOpen(false);
+    router.navigate('/');
+  };
+  const label = home ? 'Home bar' : (active?.name ?? 'No venue yet');
   return (
     <>
       <PressableScale
         onPress={() => canSwitch && setOpen(true)}
         disabled={!canSwitch}
-        accessibilityLabel={active ? `Venue: ${active.name}${canSwitch ? '. Switch venue' : ''}` : 'No venue'}
+        accessibilityLabel={`${home ? 'Home bar' : `Venue: ${label}`}${canSwitch ? '. Switch' : ''}`}
         style={styles.chip}
       >
-        <VenueMark venue={active} />
+        {home ? <HomeMark /> : <VenueMark venue={active} />}
         <DsText variant="headline" numberOfLines={1} style={styles.chipName}>
-          {active?.name ?? 'No venue yet'}
+          {label}
         </DsText>
         {canSwitch ? <IconSymbol name="chevron.down" size={14} color={ds.c.muted} /> : null}
       </PressableScale>
@@ -52,19 +78,30 @@ export function VenueSwitcher() {
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={() => setOpen(false)}>
           <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-            <Title>Your venues</Title>
+            <Title>Switch to</Title>
+            <PressableScale
+              role="radio"
+              aria-selected={home}
+              accessibilityLabel="Home bar, your shelf and collection"
+              onPress={() => choose('home')}
+              style={[styles.row, { borderBottomColor: ds.c.line }]}
+            >
+              <HomeMark size={40} />
+              <View style={styles.rowText}>
+                <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>Home bar</Body>
+                <Caption tone="muted">Your shelf and collection</Caption>
+              </View>
+              {home ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
+            </PressableScale>
             {venues.map((v) => {
-              const selected = v.id === active?.id;
+              const selected = !home && v.id === active?.id;
               return (
                 <PressableScale
                   key={v.id}
                   role="radio"
                   aria-selected={selected}
                   accessibilityLabel={`${v.name}, ${roleLabel(v.roleLevel)}`}
-                  onPress={() => {
-                    setActive(v.id);
-                    setOpen(false);
-                  }}
+                  onPress={() => choose(v)}
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
                   <VenueMark venue={v} size={40} />

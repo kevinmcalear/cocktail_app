@@ -118,7 +118,7 @@
     "components/SearchList.tsx": 874,
     "components/SettingsScreen.tsx": 806,
     "components/VenueContextPicker.tsx": 349,
-    "components/WebSidebar.tsx": 628,
+    "components/WebSidebar.tsx": 626,
     "components/bar/BarInlineEditor.tsx": 374,
     "components/cocktail/CocktailDetailContent.tsx": 553,
     "components/cocktail/CocktailIngredientList.tsx": 499,

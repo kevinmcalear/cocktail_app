@@ -5,6 +5,7 @@ import {
   inSelectedContext,
   PERSONAL_CONTEXT,
   resolveDefaultContextIds,
+  venueContextIds,
 } from './barContextFilter';
 
 const bars = [
@@ -41,3 +42,10 @@ assert.deepEqual(resolveDefaultContextIds('gone', barIds), [PERSONAL_CONTEXT, 'a
 assert.deepEqual(resolveDefaultContextIds(DEFAULT_SEARCH_ALL, []), [PERSONAL_CONTEXT]);
 
 console.log('barContextFilter.check: ok');
+
+assert.deepEqual(venueContextIds('a', false), ['a']);
+assert.deepEqual(venueContextIds('a', true), ['a']);
+assert.deepEqual(venueContextIds(null, false), [PERSONAL_CONTEXT]);
+// still loading: match nothing rather than flash personal items
+assert.deepEqual(venueContextIds(null, true), []);
+assert.equal(inSelectedContext(null, venueContextIds('a', false)), false);

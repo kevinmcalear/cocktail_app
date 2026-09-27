@@ -25,6 +25,7 @@ const MAPPING = {
   'chevron.down': 'expand-more',
   'xmark.circle.fill': 'cancel',
   'plus': 'add',
+  'minus': 'remove',
   'plus.circle.fill': 'add-circle',
   'trash': 'delete',
   'xmark': 'close',
@@ -44,6 +45,12 @@ const MAPPING = {
   'globe': 'public',
   'note.text': 'notes',
   'checkmark': 'check',
+  'checkmark.circle.fill': 'check-circle',
+  'house': 'home',
+  'safari': 'explore',
+  'bookmark': 'bookmark-border',
+  'bookmark.fill': 'bookmark',
+  'person.crop.circle': 'account-circle',
   'folder.fill': 'folder',
   'tag.fill': 'local-offer',
   'person.circle.fill': 'account-circle',
@@ -83,6 +90,8 @@ const MAPPING = {
   'doc.plaintext': 'article',
   'circle.fill': 'circle',
   'sun.max.fill': 'wb-sunny',
+  'list.number': 'format-list-numbered',
+  'trophy': 'emoji-events',
 } satisfies IconMapping;
 
 /**
