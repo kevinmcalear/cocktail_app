@@ -44,6 +44,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       ...config.ios,
       bundleIdentifier: appId,
+      // Kevin's personal Apple Developer team. Pinned so EAS never signs with
+      // another team the same Apple ID can reach.
+      appleTeamId: 'X992AGRP7X',
       // Only standard HTTPS/TLS: exempt from export compliance paperwork.
       config: { usesNonExemptEncryption: false },
     },

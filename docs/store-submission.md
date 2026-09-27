@@ -43,6 +43,7 @@ Apple rejects template apps submitted on a client's behalf. Supported model:
 **Owner-only steps the first time:**
 
 - **The first iOS production build** asks you to sign in to Apple. EAS then registers the bundle ID `com.kevinmcalear.cocktail` and creates the certificates. That is the moment the bundle ID becomes permanent.
+- **Sign in with the personal Apple ID, not the Sandbox one.** The app ships under Kevin's individual team `X992AGRP7X`, pinned as `ios.appleTeamId` in `app.config.ts` and in the `eas.json` submit profile. To skip the account prompt, name it: `EXPO_APPLE_TEAM_ID=X992AGRP7X eas build --profile production --platform ios`.
 - **The first Android release** must be uploaded by hand in the Play Console, as the `.aab` from `eas build`. After that, `eas submit` can upload using a Play service-account key.
 - **Crash reports:** before relying on Sentry stack traces, add the `@sentry/react-native` config plugin to `app.json` (organisation and project) and set `SENTRY_AUTH_TOKEN` as an EAS secret. Without the token, the plugin's upload step fails every Release build, which is why it is not enabled yet.
 
