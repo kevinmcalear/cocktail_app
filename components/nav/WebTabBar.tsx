@@ -8,16 +8,16 @@ import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 
-type WebTab = { name: string; label: string; icon: IconName };
+export type WebTab = { name: string; label: string; icon: IconName };
 
-const VENUE_TABS: WebTab[] = [
+export const VENUE_TABS: WebTab[] = [
   { name: 'index', label: 'Tonight', icon: 'house.fill' },
   { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
   { name: 'prep', label: 'Prep', icon: 'flask' },
   { name: 'test', label: 'Study', icon: 'book' },
 ];
 
-const HOME_TABS: WebTab[] = [
+export const HOME_TABS: WebTab[] = [
   { name: 'index', label: 'Discover', icon: 'safari' },
   { name: 'bar', label: 'My Bar', icon: 'wineglass' },
   { name: 'collection', label: 'Collection', icon: 'bookmark' },

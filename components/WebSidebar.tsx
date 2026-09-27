@@ -3,7 +3,6 @@ import { isApplePlatform } from '@/lib/platformKeys';
 import { DraftFolderTree } from '@/components/DraftFolderTree';
 import { SearchPopover } from '@/components/SearchPopover';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
-import { useRedesign } from '@/lib/flags';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
@@ -41,10 +40,9 @@ const SIDEBAR_MAX = 400;
 type NavItem = {
   href: string;
   label: string;
-  icon: 'TabHome' | 'TabTest' | 'map.fill';
+  icon: 'TabHome' | 'TabTest';
   match: (pathname: string) => boolean;
   requiresTesting?: boolean;
-  requiresRedesign?: boolean;
 };
 
 const NAV: NavItem[] = [
@@ -54,7 +52,6 @@ const NAV: NavItem[] = [
     icon: 'TabHome',
     match: (p) => p === '/' || p === '' || p === '/(tabs)' || p.endsWith('/index'),
   },
-  { href: '/back-bar', label: 'Back bar', icon: 'map.fill', match: (p) => p.startsWith('/back-bar'), requiresRedesign: true },
   {
     href: '/(tabs)/test',
     label: 'Quiz',
@@ -366,8 +363,7 @@ export function WebSidebar() {
     'Account';
   const email = user?.email || '';
 
-  const redesign = useRedesign();
-  const items = NAV.filter((item) => (!item.requiresTesting || isTestingEnabled) && (!item.requiresRedesign || redesign));
+  const items = NAV.filter((item) => !item.requiresTesting || isTestingEnabled);
 
   const goCreatorHref = (href: string) => {
     if (pathname.includes('edit-mode')) {
@@ -464,7 +460,7 @@ export function WebSidebar() {
               ]}
             >
               <XStack alignItems="center" gap="$2.5" flex={1}>
-                {item.icon === 'map.fill' ? <IconSymbol name={item.icon} size={20} color={color} /> : <CustomIcon name={item.icon} size={20} color={color} />}
+                <CustomIcon name={item.icon} size={20} color={color} />
                 <Text
                   fontSize={14}
                   fontWeight={isFocused ? '600' : '500'}
