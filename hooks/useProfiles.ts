@@ -18,15 +18,15 @@ export interface Profile {
   locality: string | null;
   city: string | null;
   country_code: string | null;
-  /** Owner. Both null: unclaimed (a historic creator, a bar not on the app). */
-  user_id: string | null;
   bar_id: string | null;
   is_public: boolean;
+  /** False for a historic creator or a bar not on the app. (The owner's user_id is hidden from signed-out visitors.) */
+  is_claimed: boolean;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, user_id, bar_id, is_public';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed';
 
-export const isUnclaimed = (p: Pick<Profile, 'user_id' | 'bar_id'>) => !p.user_id && !p.bar_id;
+export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
 /** A profile by id or handle (a /p/<ref> link). Public ones for anyone; private ones for their owner. */
 export function useProfile(ref: string | string[] | null | undefined) {
