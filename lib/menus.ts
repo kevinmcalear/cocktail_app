@@ -1,4 +1,4 @@
-import type { MenuDetail, MenuStatus, MenuSummary } from '@/types/menus';
+import type { MenuDetail, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
 
 type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'>;
 
@@ -80,7 +80,7 @@ export interface Readiness {
 }
 
 /** What to fix, or know, before a menu goes on. */
-export function menuReadiness(menu: Pick<MenuDetail, 'sections'>): Readiness {
+export function menuReadiness(menu: { sections: Pick<MenuSectionDetail, 'name' | 'minItems' | 'maxItems' | 'drinks'>[] }): Readiness {
   const short: Readiness['short'] = [];
   const over: Readiness['over'] = [];
   const needsPhoto: string[] = [];

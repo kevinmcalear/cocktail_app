@@ -7,11 +7,14 @@ import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBr
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenu } from '@/hooks/useMenus';
 import { menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
+import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuSections } from './MenuSections';
 
 const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
@@ -50,6 +53,9 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
+  const [more, setMore] = useState(false);
+  const userId = useAuth().user?.id ?? null;
+  const caps = useCapabilities(menu?.barId);
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
   if (!menu) {
@@ -66,6 +72,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
   const hero = menu.coverUrl ?? menu.sections.flatMap((s) => s.drinks).find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
   const go = (href: string) => router.push(href as Href);
+  const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -79,6 +86,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             {[venue?.name ?? (menu.barId ? null : 'Just yours'), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
           </Caption>
           <View style={styles.actions}>
+            {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
             <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => go(`/menus/${menu.id}/card`)} />
             {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
             {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
@@ -88,7 +96,9 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       </ScrollView>
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={back} onMedia={!!hero} />
+        {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
+      {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
     </View>
   );
 }

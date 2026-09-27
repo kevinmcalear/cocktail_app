@@ -76,7 +76,7 @@ export function useVenueMenus(barId: string | null | undefined) {
   });
 }
 
-interface ItemRow {
+export interface MenuItemRow {
   id: string;
   name: string;
   item_type: string;
@@ -91,7 +91,7 @@ interface ItemRow {
 
 const KINDS: SectionDrinkType[] = ['cocktail', 'beer', 'wine'];
 
-export function toMenuDrink(item: ItemRow): MenuDrink | null {
+export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
   const kind = KINDS.find((k) => k === item.item_type);
   if (!kind) return null;
   const images = Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : [];
@@ -116,16 +116,22 @@ export function toMenuDrink(item: ItemRow): MenuDrink | null {
   };
 }
 
-export const MENU_DRINK_ITEM = `item:items!item_id(id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
+/** The columns a menu needs from a drink (items), for toMenuDrink. */
+export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
   item_images(sort_order, is_generated, images(url)),
-  recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name)))`;
+  recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))`;
+const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
 
-/** One menu with its sections in order and each section's drinks in order. */
-export function useMenu(menuId: string | null | undefined) {
+/**
+ * One menu with its sections in order and each section's drinks in order.
+ * `fresh`: always fetch on mount, whatever is cached (the editor starts from this).
+ */
+export function useMenu(menuId: string | null | undefined, { fresh = false }: { fresh?: boolean } = {}) {
   return useQuery({
     queryKey: menuKeys.detail(menuId ?? ''),
     enabled: !!menuId,
     staleTime: 30_000,
+    refetchOnMount: fresh ? 'always' : true,
     queryFn: async (): Promise<MenuDetail | null> => {
       const [menuRes, sectionsRes] = await Promise.all([
         supabase.from('menus').select(MENU_COLUMNS).eq('id', menuId!).maybeSingle(),
@@ -146,10 +152,10 @@ export function useMenu(menuId: string | null | undefined) {
           minItems: s.min_items ?? 0,
           maxItems: s.max_items ?? null,
           allowedTypes: normalizeAllowedTypes(s.allowed_types),
-          drinks: [...((s.menu_drinks ?? []) as { sort_order: number | null; item: ItemRow | ItemRow[] | null }[])]
+          drinks: [...((s.menu_drinks ?? []) as { sort_order: number | null; item: MenuItemRow | MenuItemRow[] | null }[])]
             .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
             .map((d) => one(d.item))
-            .filter((i): i is ItemRow => !!i)
+            .filter((i): i is MenuItemRow => !!i)
             .map(toMenuDrink)
             .filter((d): d is MenuDrink => !!d),
         })),

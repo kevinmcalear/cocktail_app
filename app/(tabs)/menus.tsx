@@ -312,7 +312,7 @@ function MenusScreen() {
         [drafts]
     );
 
-    const startEdit = () => setIsEditing(true);
+    const startEdit = () => (menuDetails?.editableHere === false ? Alert.alert("Edit in the new Menus", "This menu's sections are set up in the new Menus. Turn on the redesign preview to edit it.") : setIsEditing(true));
 
     const cancelEdit = () => {
         if (editor.isDirty) {

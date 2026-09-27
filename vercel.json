@@ -65,6 +65,10 @@
       "destination": "/menus/[id]"
     },
     {
+      "source": "/menus/:id/edit",
+      "destination": "/menus/[id]/edit"
+    },
+    {
       "source": "/menus/:id/card",
       "destination": "/menus/[id]/card"
     },

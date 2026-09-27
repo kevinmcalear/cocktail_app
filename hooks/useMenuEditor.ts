@@ -10,7 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
-async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
+export async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
     const ext = (uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
     const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
     const path = menuId

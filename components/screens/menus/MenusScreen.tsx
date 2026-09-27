@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -14,6 +14,7 @@ import { groupMenus, plural } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
 import { MenuCard, MenuListRow } from './MenuRows';
+import { NewMenuSheet } from './NewMenuSheet';
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -45,6 +46,9 @@ export function MenusScreen() {
   const canBuild = Array.isArray(caps.data) && caps.data.includes('menus');
   const { data: opensAt } = useCapabilityOpensAt(barId, 'menus');
   const [now] = useState(() => Date.now());
+  const [creating, setCreating] = useState(false);
+  // Anyone can make their own menu; a venue's needs Drink Creator or up.
+  const canCreate = canBuild || !barId;
 
   const venue = groupMenus(menus.filter((m) => m.barId === barId), now);
   const mine = menus.filter((m) => m.barId === null && m.createdBy === userId);
@@ -64,9 +68,12 @@ export function MenusScreen() {
           { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl, maxWidth: wide ? 760 : undefined },
         ]}
       >
-        {sidebar ? null : (
-          <GlassButton icon="chevron.left" accessibilityLabel="Back to Tonight" onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} />
-        )}
+        <View style={styles.top}>
+          {sidebar ? <View /> : (
+            <GlassButton icon="chevron.left" accessibilityLabel="Back to Tonight" onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} />
+          )}
+          {canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
+        </View>
         <View style={styles.title}>
           <Display>Menus</Display>
           {summary ? <Caption tone="muted">{summary}</Caption> : null}
@@ -125,6 +132,7 @@ export function MenusScreen() {
           </Group>
         ) : null}
       </ScrollView>
+      {creating ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>
   );
 }
@@ -132,6 +140,7 @@ export function MenusScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', gap: space.lg },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { gap: space.xs },
   group: { gap: space.sm },
   groupTitle: { letterSpacing: 1.5 },
