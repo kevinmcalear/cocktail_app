@@ -26,7 +26,9 @@ export default function CocktailDetailsScreen() {
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
-    const { data: cocktail, isLoading, error, refetch } = useCocktail(id as string);
+    // isPending, not isLoading: "no data yet" includes the static prerender and the
+    // first paint, when nothing is fetching, and those must not read as not found.
+    const { data: cocktail, isPending: isLoading, error, refetch } = useCocktail(id as string);
 
     useTrackRecent(
         !!cocktail,
