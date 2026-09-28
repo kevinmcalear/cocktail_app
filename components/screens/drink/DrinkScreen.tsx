@@ -16,6 +16,7 @@ import type { DatabaseItem } from '@/types/types';
 import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import { ClassicLink } from './ClassicLink';
 import { FamilyTree } from './FamilyTree';
 import { SpecSection } from './SpecSection';
 
@@ -153,6 +154,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         </View>
       ) : null}
       {preview ? null : <FamilyTree itemId={item.id} />}
+      {preview || !canEdit ? null : <ClassicLink item={item} />}
     </View>
   );
 
