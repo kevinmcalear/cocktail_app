@@ -7,6 +7,7 @@ import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useB
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
@@ -17,6 +18,7 @@ import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import { FamilyTree } from './FamilyTree';
+import { FlavorSection } from './FlavorSection';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -85,6 +87,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const serviceMode = useSettingsStore((s) => s.serviceMode);
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const { data: dropdowns } = useDropdowns();
+  const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
 
@@ -145,6 +148,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         {preview ? null : <RankActions item={item} picture={heroPicture(item.item_images as ItemImageLink[] | undefined)} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
+      {home && !preview ? <FlavorSection itemId={item.id} /> : null}
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
       {item.notes ? (
         <View style={styles.notes}>
