@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
+import { AddBarForm } from '@/components/screens/home/AddBar';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
@@ -35,6 +36,7 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
   const ds = useDs();
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState('');
+  const [adding, setAdding] = useState(false);
   const { data: found } = usePublicBars(search);
   const other = value && value.id !== ownBar?.id ? value : null;
   return (
@@ -77,6 +79,19 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
             ))}
             {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No public bars match.</Caption> : null}
           </View>
+          {search.trim().length >= 2 && !adding ? <Button label="Not here? Add it" icon="plus" variant="ghost" onPress={() => setAdding(true)} /> : null}
+          {adding ? (
+            <AddBarForm
+              initialName={search.trim()}
+              onCancel={() => setAdding(false)}
+              onAdded={(v) => {
+                onChange(v);
+                setAdding(false);
+                setSearching(false);
+                setSearch('');
+              }}
+            />
+          ) : null}
         </View>
       ) : null}
     </View>

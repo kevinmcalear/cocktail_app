@@ -1,57 +1,59 @@
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, Field, Title } from '@/components/ds';
-import { AreaRankList, ListNote } from '@/components/screens/rankings/RankingLists';
+import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useBarCities, useDrinkLists } from '@/hooks/useDiscover';
-import { useDrinkRankings } from '@/hooks/useRankings';
+import { useDiscoverRankings, useDrinkLists } from '@/hooks/useDiscover';
 import { findDrinks } from '@/lib/discover';
 import { itemHref } from '@/lib/itemRoutes';
+import { areaLabel, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
+
+import { ChipRow } from './DiscoverArea';
 
 // Enough chips to scan in one swipe; the search finds the rest.
 const MAX_CHIPS = 12;
 
-/** A row of chips that scrolls sideways instead of wrapping. */
-function ChipRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      <View role="radiogroup" accessibilityLabel={label} style={styles.chips}>
-        {children}
-      </View>
-    </ScrollView>
-  );
-}
-
 /**
- * "Best Martini in New York": pick a drink (search or chips) and a city, and
- * see the bars whose version people ranked highest. Each row is one drink at
- * one bar, as in the brief. "Near me" comes with bar coordinates.
+ * "Best Martini near you": pick a drink (search or chips) and see the bars
+ * whose version people ranked highest in the area. Each row is one drink at
+ * one bar, as in the brief. Below the ranker minimum the list is "Early":
+ * where people are ranking it, without scores.
  */
-export function DiscoverBest() {
+export function DiscoverBest({ area }: { area: Area }) {
   const router = useRouter();
   const signedIn = !!useAuth().user;
   const lists = useDrinkLists();
-  const { data: cities } = useBarCities();
   const [search, setSearch] = useState('');
   const [pickedId, setPickedId] = useState<string | null>(null);
-  const [cityKey, setCityKey] = useState<string | null>(null);
 
   const shown = findDrinks(lists.data ?? [], search).slice(0, MAX_CHIPS);
   // Typing moves the pick to the best match, unless the pick still matches.
   const drink = shown.find((d) => d.id === pickedId) ?? shown[0] ?? null;
-  const keyOf = (c: { city: string; country_code: string }) => `${c.city}|${c.country_code}`;
-  const city = cities?.find((c) => keyOf(c) === cityKey) ?? null;
-  const area: Record<string, string> = city ? { p_city: city.city, p_country_code: city.country_code } : {};
-  const where = city ? `in ${city.label}` : 'anywhere';
-  const best = useDrinkRankings(drink?.id, area);
+  const where = areaLabel(area);
+  const best = useDiscoverRankings(drink?.id, area);
+  const ranked = best.data?.ranked ?? [];
+  const early = best.data?.early ?? [];
 
   if (!lists.isLoading && !lists.data?.length) {
     return <ListNote>{signedIn ? 'No drinks to rank yet.' : 'Sign in to find the best drinks near you.'}</ListNote>;
   }
+
+  let results;
+  if (best.error) results = <ListNote>{`Couldn't load the rankings: ${best.error.message}`}</ListNote>;
+  else if (best.isLoading) results = <ListNote>Loading…</ListNote>;
+  else if (ranked.length) results = <AreaRankList rows={ranked} />;
+  else if (early.length) {
+    results = (
+      <>
+        <ListNote>{`Too few rankings to call a best yet. People have started ranking it at these bars; a score shows once ${MIN_RANKERS} people rank a bar's.`}</ListNote>
+        <EarlyList rows={early} />
+      </>
+    );
+  } else results = <ListNote>{`Nobody has ranked a ${drink?.name ?? 'drink'} at a bar ${where} yet.`}</ListNote>;
 
   return (
     <View style={styles.section}>
@@ -70,33 +72,15 @@ export function DiscoverBest() {
         ))}
       </ChipRow>
       {search.trim() && !shown.length ? <ListNote>{`No drink called "${search.trim()}" yet.`}</ListNote> : null}
-      {cities?.length ? (
-        <ChipRow label="Where">
-          <Chip label="Anywhere" selected={!city} onPress={() => setCityKey(null)} />
-          {cities.map((c) => (
-            <Chip key={keyOf(c)} label={c.label} selected={keyOf(c) === cityKey} onPress={() => setCityKey(keyOf(c))} />
-          ))}
-        </ChipRow>
-      ) : null}
 
       {drink ? (
         <View style={styles.results}>
-          <Caption tone="muted">Ranked by comparison</Caption>
-          <Title role="heading">{`Best ${drink.name} ${where}`}</Title>
-          {best.error ? (
-            <ListNote>{`Couldn't load the rankings: ${best.error.message}`}</ListNote>
-          ) : best.isLoading ? (
-            <ListNote>Loading…</ListNote>
-          ) : best.data?.length ? (
-            <AreaRankList rows={best.data} />
-          ) : (
-            <>
-              <ListNote>{`No ${drink.name} has enough rankers ${where} yet. A bar's shows here once ${MIN_RANKERS} people have ranked it.`}</ListNote>
-              {signedIn ? (
-                <Button label={`Rank a ${drink.name} you've had`} variant="secondary" onPress={() => router.push(itemHref('Cocktail', drink.id) as never)} />
-              ) : null}
-            </>
-          )}
+          <Caption tone="muted">{ranked.length || best.isLoading ? 'Ranked by comparison' : early.length ? 'Early' : 'Not ranked yet'}</Caption>
+          <Title role="heading">{ranked.length || best.isLoading ? `Best ${drink.name} ${where}` : `${drink.name} ${where}`}</Title>
+          {results}
+          {signedIn && !ranked.length && !best.isLoading ? (
+            <Button label={`Rank a ${drink.name} you've had`} variant="secondary" onPress={() => router.push(itemHref('Cocktail', drink.id) as never)} />
+          ) : null}
           <Button label={`All ${drink.name} rankings and your list`} variant="ghost" onPress={() => router.push(`/rankings/${drink.id}`)} />
         </View>
       ) : null}
@@ -106,6 +90,5 @@ export function DiscoverBest() {
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  chips: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   results: { gap: space.sm, marginTop: space.md },
 });

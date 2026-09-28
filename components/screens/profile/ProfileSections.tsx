@@ -1,10 +1,13 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { useVenueScore } from '@/hooks/useDiscover';
 import type { MenuCreditWithProfile, Original } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
+import { peopleCount } from '@/lib/nearMe';
+import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
 
@@ -91,6 +94,30 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
   );
 }
 
+/**
+ * A bar's score: its drinks' scores averaged, weighted by how many people
+ * ranked each. Early (under MIN_RANKERS people) says so, without a number.
+ */
+export function BarScore({ profileId }: { profileId: string }) {
+  const { data } = useVenueScore(profileId);
+  if (!data) return null;
+  const people = peopleCount(data.rankers);
+  const drinks = data.drinks === 1 ? '1 drink' : `${data.drinks} drinks`;
+  if (data.score === null) {
+    return (
+      <Caption tone="muted" align="center">
+        {`Early: ${people} ranked ${drinks} here so far. A bar score shows once ${MIN_RANKERS} people have.`}
+      </Caption>
+    );
+  }
+  return (
+    <View accessible accessibilityLabel={`Bar score ${formatScore(data.score)} out of 10, from ${people} across ${drinks}`} style={styles.score}>
+      <Spec align="center">{formatScore(data.score)}</Spec>
+      <Caption tone="muted" align="center">{`Bar score · ${people} · ${drinks}`}</Caption>
+    </View>
+  );
+}
+
 /** Rankings and the shelf arrive with their own steps (7c, and the home bar). */
 export function ComingSoon({ text }: { text: string }) {
   const ds = useDs();
@@ -108,5 +135,6 @@ const styles = StyleSheet.create({
   menus: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  score: { alignItems: 'center' },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });

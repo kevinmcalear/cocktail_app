@@ -1,9 +1,11 @@
+import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
+import { formatDistance, peopleCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
 const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
@@ -74,8 +76,19 @@ export function MyRankList({ entries, listName }: { entries: RankEntry[]; listNa
   );
 }
 
+// Read after data loads, so never during the static web render.
+const imperial = () => usesMiles(getLocales()[0]);
+
+/** "Brunswick, Melbourne · 1.2 km" */
+function placeOf(r: { locality: string | null; city: string | null; distance_km?: number | null }): string {
+  const place = [r.locality, r.city].filter(Boolean).join(', ') || 'Bar';
+  return r.distance_km == null ? place : `${place} · ${formatDistance(r.distance_km, imperial())}`;
+}
+
+type AreaRow = AreaRanking & { distance_km?: number | null };
+
 /** Bars in an area, best first. Each opens the bar's profile. */
-export function AreaRankList({ rows }: { rows: AreaRanking[] }) {
+export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; scoreDetail?: (r: AreaRow) => string }) {
   const router = useRouter();
   return (
     <View>
@@ -84,11 +97,42 @@ export function AreaRankList({ rows }: { rows: AreaRanking[] }) {
           key={r.venue_profile_id}
           position={r.position}
           title={r.display_name}
-          detail={[r.locality, r.city].filter(Boolean).join(', ') || 'Bar'}
+          detail={placeOf(r)}
           score={r.score}
-          scoreDetail={`${r.rankers} ranked`}
+          scoreDetail={scoreDetail(r)}
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
         />
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Early: bars people have started ranking, below the minimum. No position
+ * and no score, only how many people, so nothing reads as a verdict (or
+ * gives away a few people's private rankings).
+ */
+export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
+  const ds = useDs();
+  const router = useRouter();
+  return (
+    <View>
+      {rows.map((r) => (
+        <PressableScale
+          key={r.venue_profile_id}
+          role="link"
+          accessibilityLabel={`${r.display_name}, ${placeOf(r)}. Early: ${peopleCount(r.rankers)} ranked`}
+          onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+          style={[styles.row, { borderBottomColor: ds.c.line }]}
+        >
+          <View style={styles.flex}>
+            <Headline numberOfLines={1}>{r.display_name}</Headline>
+            <Caption tone="muted" numberOfLines={1}>
+              {placeOf(r)}
+            </Caption>
+          </View>
+          <Caption tone="muted">{`${peopleCount(r.rankers)} ranked`}</Caption>
+        </PressableScale>
       ))}
     </View>
   );
