@@ -36,6 +36,7 @@ assert.equal(suggest('Pina Colada'), 'Piña Colada');
 
 // --- Misspellings from real menus ---
 assert.equal(suggest('Boulvardier'), 'Boulevardier');
+assert.equal(suggestClassic('Pompiere', [{ id: 'p', name: 'Pompier' }])?.classic.name, 'Pompier');
 
 // --- Contains a classic's name: a suggestion, never exact; the longest wins ---
 assert.equal(suggest('Mega Negroni'), 'Negroni ?');

@@ -19,6 +19,7 @@ export interface ClassicMatch<C extends Classic = Classic> {
 const ALIASES: Record<string, string> = {
   boulvardier: 'boulevardier',
   'old fashion': 'old fashioned',
+  pompiere: 'pompier',
   'tommy margarita': 'tommys margarita',
   'whisky sour': 'whiskey sour',
 };
