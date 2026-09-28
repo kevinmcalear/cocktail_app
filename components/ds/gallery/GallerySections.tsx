@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { radius, space, type, type TypeStyle } from '@/constants/tokens';
 
 import { Button } from '../Button';
+import { Chip } from '../Chip';
 import { DrinkImage } from '../DrinkImage';
 import { GlassButton } from '../Glass';
 import { LockedSection } from '../LockedSection';
@@ -92,6 +93,10 @@ export function GallerySections() {
           <Tag label="Sketch" tone="sketch" />
           <Tag label="Ready" tone="success" />
           <Tag label="Needs photo" tone="warning" />
+        </View>
+        <View role="radiogroup" accessibilityLabel="Sample chips" style={styles.wrap}>
+          <Chip label="Martini" selected onPress={() => {}} />
+          <Chip label="Negroni" selected={false} onPress={() => {}} />
         </View>
         <Segmented
           accessibilityLabel="Drink sections"

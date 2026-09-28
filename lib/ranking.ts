@@ -95,6 +95,11 @@ export function rankScore(sentiment: Sentiment, index: number, count: number): n
   return Math.floor((2 * numerator + n) / (2 * n)) / 10;
 }
 
+// ponytail: mirrors private.ranking_min_rankers() (20). Upgrade path: return
+// it from get_drink_rankings if the number ever changes per drink or area.
+/** How many people must rank a drink at a bar before it shows in an area list. */
+export const MIN_RANKERS = 20;
+
 /** A score as people read it: one decimal, always. */
 export function formatScore(score: number): string {
   return score.toFixed(1);

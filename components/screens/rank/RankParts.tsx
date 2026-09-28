@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
@@ -24,15 +24,6 @@ export function SentimentPicker({ onPick }: { onPick: (s: Sentiment) => void }) 
         </PressableScale>
       ))}
     </View>
-  );
-}
-
-function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="radio" aria-selected={selected} accessibilityLabel={label} onPress={onPress} style={[styles.chip, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}>
-      <Caption color={selected ? ds.c.ground : ds.c.ink}>{label}</Caption>
-    </PressableScale>
   );
 }
 

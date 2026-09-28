@@ -7,7 +7,7 @@ import { BackbarTheme, Caption, GlassButton, Headline, Segmented, Title, useBrea
 import { layout, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
-import { plural } from '@/lib/ranking';
+import { MIN_RANKERS, plural } from '@/lib/ranking';
 
 import { AreaRankList, ListNote, MyRankList } from './RankingLists';
 
@@ -19,10 +19,6 @@ export interface RankingsScreenProps {
 }
 
 type Place = Pick<RankVenue, 'postcode' | 'city' | 'country_code' | 'locality'>;
-
-// ponytail: mirrors private.ranking_min_rankers() (20). Upgrade path: return
-// it from get_drink_rankings if the number ever changes per drink or area.
-const MIN_RANKERS = 20;
 
 function countryName(code: string): string {
   try {
