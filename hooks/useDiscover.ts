@@ -11,10 +11,9 @@ export interface DrinkList {
 }
 
 /**
- * The drinks you can find "the best" of: shared cocktails that aren't a
- * version of another drink (Martini, Negroni). A bar's own martini is ranked
- * in the Martini list through its riff_of_id. Best-known first. Signed-in
- * only, like every shared item.
+ * The drink catalog: the shared classics you can find "the best" of (Martini,
+ * Negroni). A bar's own martini is ranked in the Martini list through its
+ * riff_of_id. Best-known first. Signed-in only, like every shared item.
  */
 export function useDrinkLists() {
   return useQuery({
@@ -23,9 +22,7 @@ export function useDrinkLists() {
       const { data, error } = await supabase
         .from('items')
         .select('id, name, item_images ( sort_order, is_generated, images ( url ) )')
-        .eq('item_type', 'cocktail')
-        .is('bar_id', null)
-        .is('riff_of_id', null)
+        .eq('is_catalog', true)
         .order('name');
       if (error) throw error;
       const rows = (data ?? []) as unknown as { id: string; name: string; item_images: ItemImageLink[] | null }[];

@@ -67,7 +67,7 @@ export interface RankTarget {
   bar_id: string | null;
   origin: string | null;
   riff_of_id: string | null;
-  riff_of: { id: string; name: string } | null;
+  riff_of: { id: string; name: string; is_catalog: boolean } | null;
 }
 
 /** The drink being ranked, with what it's a version of (for "my martinis"). */
@@ -78,7 +78,7 @@ export function useRankTarget(itemId: string | null | undefined) {
     queryFn: async (): Promise<RankTarget | null> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, bar_id, origin, riff_of_id, riff_of:riff_of_id ( id, name )')
+        .select('id, name, bar_id, origin, riff_of_id, riff_of:riff_of_id ( id, name, is_catalog )')
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
