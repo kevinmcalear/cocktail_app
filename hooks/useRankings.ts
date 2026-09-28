@@ -149,7 +149,12 @@ export function useAddRankEntry() {
       if (error) throw error;
       return data as { id: string };
     },
-    onSuccess: (_, entry) => qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id }),
+    onSuccess: (_, entry) => {
+      qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id });
+      // Your taste and For you follow your rankings.
+      qc.invalidateQueries({ queryKey: ['my-taste'] });
+      qc.invalidateQueries({ queryKey: ['my-ranked-ids'] });
+    },
   });
 }
 

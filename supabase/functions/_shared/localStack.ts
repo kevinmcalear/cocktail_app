@@ -14,3 +14,6 @@ export const LOCAL_IMAGE_WORKER_SECRET = "local-image-worker-secret";
 
 /** The image-palette secret on a local stack (supabase/seed.sql puts the same value in Vault). */
 export const LOCAL_IMAGE_PALETTE_SECRET = "local-image-palette-secret";
+
+/** The flavor-worker secret on a local stack (supabase/seed.sql puts the same value in Vault). */
+export const LOCAL_FLAVOR_WORKER_SECRET = "local-flavor-worker-secret";
