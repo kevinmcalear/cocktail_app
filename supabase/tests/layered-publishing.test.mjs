@@ -268,3 +268,34 @@ describe('memories', () => {
     assert.equal(kept.data.name, `Garden release ${run}`);
   });
 });
+
+// 20260930000600_home_menus_hold_published_drinks.sql
+describe('home menus', () => {
+  test('a home menu holds a drink another bar published, but not one it keeps private', async () => {
+    const client = users.collector.client;
+    const menu = await client.from('menus').insert({ name: `Friday at ours ${run}`, created_by: users.collector.id }).select('id').single();
+    assert.ifError(menu.error);
+    const save = (itemIds) => client.rpc('save_menu', {
+      p_menu_id: menu.data.id, p_name: `Friday at ours ${run}`, p_cover_url: null, p_cover_position: 50,
+      p_sections: [{ name: 'Drinks', min_items: 1, max_items: null, allowed_types: ['cocktail'], item_ids: itemIds }],
+    });
+
+    assert.ifError((await save([ids.items.onMenu])).error);
+    const drinks = await client.from('menu_drinks').select('item_id').eq('menu_id', menu.data.id);
+    assert.deepEqual(drinks.data.map((d) => d.item_id), [ids.items.onMenu]);
+
+    const hidden = await save([ids.items.hiddenDrink]);
+    assert.match(hidden.error?.message ?? '', /not found/);
+  });
+
+  test('a venue menu still only holds drinks the editor can read', async () => {
+    const venueMenu = await users.openAdmin.client
+      .from('menus').insert({ name: `Open menu ${run}`, bar_id: ids.openBar, created_by: users.openAdmin.id }).select('id').single();
+    assert.ifError(venueMenu.error);
+    const save = await users.openAdmin.client.rpc('save_menu', {
+      p_menu_id: venueMenu.data.id, p_name: `Open menu ${run}`, p_cover_url: null, p_cover_position: 50,
+      p_sections: [{ name: 'Drinks', min_items: 1, max_items: null, allowed_types: ['cocktail'], item_ids: [ids.items.onMenu] }],
+    });
+    assert.match(save.error?.message ?? '', /not found/);
+  });
+});
