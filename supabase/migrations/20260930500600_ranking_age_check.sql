@@ -2,7 +2,7 @@
 -- Not applied to production; needs Kevin's review first.
 --
 -- Ranking needs a confirmed age, on the server as well as in the app, the
--- same as collecting (20260930000200). Adding or changing a ranking entry or
+-- same as collecting (20260930500200). Adding or changing a ranking entry or
 -- a comparison needs private.is_age_confirmed(); reading and deleting your
 -- own don't, so nobody loses access to what they already made.
 --

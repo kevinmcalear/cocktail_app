@@ -2,7 +2,7 @@
 -- Not applied to production; needs Kevin's review first.
 --
 -- What the app's report, block and moderation screens need on top of
--- 20260930000000 to 20260930000400:
+-- 20260930500000 to 20260930500400:
 --
 --   am_i_moderator()     whether the signed-in person is a catalog admin
 --                        (private.app_admins), so Settings can link the
@@ -96,7 +96,7 @@ BEGIN
 END;
 $$;
 
--- items_select (20260930000400), with a person's published drink following
+-- items_select (20260930500400), with a person's published drink following
 -- the same rule as published_items for everyone but its creator and
 -- moderators.
 DROP POLICY "items_select" ON "public"."items";

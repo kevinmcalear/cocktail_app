@@ -1,7 +1,7 @@
 // Tests for the safety screens' draft migrations: the moderator check, the
 // blocked-people list, the report queue, personal drinks following blocks
-// and moderation holds on the raw items read (20260930000500), and ranking
-// needing a confirmed age (20260930000600).
+// and moderation holds on the raw items read (20260930500500), and ranking
+// needing a confirmed age (20260930500600).
 //
 //   supabase start && supabase db reset
 //   npm run test:security

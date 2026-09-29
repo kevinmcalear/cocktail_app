@@ -1,5 +1,5 @@
 // Layered publishing, memories, and private personal drinks
-// (supabase/migrations/20260930000400_layered_publishing_and_memories.sql).
+// (supabase/migrations/20260930500400_layered_publishing_and_memories.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
