@@ -75,7 +75,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
         disabled && styles.disabled,
       ]}
     >
-      <View style={styles.flex}>
+      <View style={detail ? styles.flex : null}>
         <DsText variant="body" color={ink} style={{ fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
           {label}
         </DsText>
