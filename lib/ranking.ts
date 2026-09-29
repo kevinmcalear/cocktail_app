@@ -95,24 +95,32 @@ export function rankScore(sentiment: Sentiment, index: number, count: number): n
   return Math.floor((2 * numerator + n) / (2 * n)) / 10;
 }
 
+// ponytail: mirrors private.ranking_min_rankers() (20). Upgrade path: return
+// it from get_drink_rankings if the number ever changes per drink or area.
+/** How many people must rank a drink at a bar before it shows in an area list. */
+export const MIN_RANKERS = 20;
+
 /** A score as people read it: one decimal, always. */
 export function formatScore(score: number): string {
   return score.toFixed(1);
 }
 
 /**
- * The list a drink is ranked in. A bar's version of a classic (origin
- * "Classic" with `riff_of_id` set) is compared with every other martini;
- * originals and riffs are their own list.
+ * The list a drink is ranked in. A bar's version of a catalog classic (linked
+ * with `riff_of_id`), or any drink labelled "Classic" with `riff_of_id` set,
+ * is compared with every other martini; originals and riffs are their own
+ * list.
  */
 export function rankedAs(item: {
   id: string;
   name: string;
   origin?: string | null;
   riff_of_id?: string | null;
-  riff_of?: { id: string; name: string } | null;
+  riff_of?: { id: string; name: string; is_catalog?: boolean | null } | null;
 }): { id: string; name: string } {
-  if (item.origin === 'Classic' && item.riff_of_id) return { id: item.riff_of_id, name: item.riff_of?.name ?? item.name };
+  if (item.riff_of_id && (item.riff_of?.is_catalog || item.origin === 'Classic')) {
+    return { id: item.riff_of_id, name: item.riff_of?.name ?? item.name };
+  }
   return { id: item.id, name: item.name };
 }
 

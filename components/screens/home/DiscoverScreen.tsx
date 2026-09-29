@@ -1,24 +1,54 @@
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { AddBarSheet } from '@/components/screens/home/AddBar';
+import { DiscoverArea } from '@/components/screens/home/DiscoverArea';
+import { DiscoverBest } from '@/components/screens/home/DiscoverBest';
+import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
+import { TopBars } from '@/components/screens/home/TopBars';
 import { space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
+import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
+import type { Area } from '@/lib/nearMe';
 
 /**
- * Discover, the first tab in home mode: the drinks you can see, marking the
- * ones your shelf can make. ponytail: until bars can publish releases (the
- * publishing proposal), this is the shared library; releases become its top
- * section when they exist.
+ * Discover, the first tab in home mode: drinks for your taste, then where
+ * (near me, a city, anywhere), the best of a drink there, the top bars there
+ * and the most creative drinks, then the drinks you can see, marking the ones
+ * your shelf can make and how well each fits your taste. ponytail: until bars
+ * can publish releases (the publishing proposal), the last part is the shared
+ * library; releases become a section when they exist.
  */
 export function DiscoverScreen() {
   const ds = useDs();
+  const router = useRouter();
   const gutter = useGutter();
   const bottom = useTabBarInset();
   const bar = useMyBar();
+  const signedIn = !!useAuth().user;
+  const [area, setArea] = useState<Area>({ kind: 'anywhere' });
+  const [adding, setAdding] = useState(false);
+  const openBar = (ref: string) => {
+    setAdding(false);
+    router.push(`/p/${ref}`);
+  };
+
+  const { data: me } = useMyTaste();
+  const catalog = useFlavorCatalog();
+  // Match percentages only once your taste comes from enough rankings.
+  const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const matchFor = (id: string) => {
+    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
+    return profile ? `${matchPercent(scored, profile)}% match` : null;
+  };
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <FlatList
@@ -29,9 +59,23 @@ export function DiscoverScreen() {
           <View style={styles.header}>
             <ScreenHeaderSpacer />
             <Display>Discover</Display>
-            <Caption tone="muted">
-              {bar.shelf.length ? `${bar.canMake.length} of these you can make tonight` : 'Classics and drinks shared with you'}
-            </Caption>
+            <ForYou />
+            <DiscoverArea area={area} onChange={setArea} />
+            <DiscoverBest area={area} />
+            <TopBars area={area} />
+            <MostCreative />
+            {signedIn ? (
+              <View style={styles.add}>
+                <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
+                <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setAdding(true)} />
+              </View>
+            ) : null}
+            <View style={styles.library}>
+              <Headline role="heading">Make it yourself</Headline>
+              <Caption tone="muted">
+                {bar.shelf.length ? `${bar.canMake.length} of these you can make tonight` : 'Classics and drinks shared with you'}
+              </Caption>
+            </View>
           </View>
         }
         ListEmptyComponent={bar.isLoading ? undefined : <Body tone="muted">No drinks to show yet.</Body>}
@@ -41,15 +85,18 @@ export function DiscoverScreen() {
             href={itemHref('Cocktail', item.id)}
             imageUrl={item.imageUrl}
             glass={item.glass}
-            caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
+            caption={[bar.canMakeIds.has(item.id) ? 'You can make this' : null, matchFor(item.id)].filter(Boolean).join(' · ') || undefined}
           />
         )}
       />
+      {adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { gap: space.xs, paddingBottom: space.lg },
+  header: { gap: space.lg, paddingBottom: space.lg },
+  add: { gap: space.sm, alignItems: 'flex-start', marginTop: space.md },
+  library: { gap: space.xs, marginTop: space.xl },
 });

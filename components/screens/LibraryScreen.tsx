@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Body, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
@@ -81,6 +82,7 @@ export function LibraryScreen() {
               <ScreenHeader />
             </View>
             <Display>Library</Display>
+            {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
             <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
               {FILTERS.map((f) => (
                 <Filter key={f.value} label={f.label} count={counts[f.value] ?? 0} selected={filter === f.value} onPress={() => setFilter(f.value)} />

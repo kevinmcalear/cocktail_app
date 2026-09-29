@@ -37,7 +37,7 @@ import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
 import { useRedesign } from '@/lib/flags';
 import { initMonitoring } from '@/lib/monitoring';
-import { asyncStoragePersister, queryClient } from '@/lib/react-query';
+import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
 
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
@@ -191,6 +191,10 @@ function RootLayoutNav() {
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/all" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>
       </View>
@@ -236,7 +240,7 @@ export default function RootLayout() {
       <Theme name={colorScheme === "dark" ? "dark" : "light"}>
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister: asyncStoragePersister }}
+          persistOptions={persistOptions}
         >
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>

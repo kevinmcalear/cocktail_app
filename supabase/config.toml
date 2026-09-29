@@ -431,3 +431,7 @@ verify_jwt = false
 # not a user session.
 [functions.image-palette]
 verify_jwt = false
+
+# Called by the database (pg_net) with a shared secret, not a user session.
+[functions.flavor-worker]
+verify_jwt = false

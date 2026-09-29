@@ -92,6 +92,16 @@ assert.deepEqual(rankedAs({ id: 'house', name: 'House Martini', origin: 'Classic
 assert.deepEqual(rankedAs({ id: 'riff', name: 'Smoky Martini', origin: 'Varient', riff_of_id: 'martini' }), { id: 'riff', name: 'Smoky Martini' });
 assert.deepEqual(rankedAs({ id: 'original', name: 'Bolo Tie', origin: 'Original', riff_of_id: null }), { id: 'original', name: 'Bolo Tie' });
 assert.deepEqual(rankedAs({ id: 'martini', name: 'Martini', origin: 'Classic', riff_of_id: null }), { id: 'martini', name: 'Martini' });
+// Linked to a catalog classic: ranked with it whatever the bar labelled it.
+assert.deepEqual(
+  rankedAs({ id: 'mega', name: 'Mega Negroni', origin: null, riff_of_id: 'negroni', riff_of: { id: 'negroni', name: 'Negroni', is_catalog: true } }),
+  { id: 'negroni', name: 'Negroni' }
+);
+// A riff on another bar's original stays its own list.
+assert.deepEqual(
+  rankedAs({ id: 'riff', name: 'Smoked Pear Penicillin', origin: 'Original', riff_of_id: 'pen', riff_of: { id: 'pen', name: 'Penicillin', is_catalog: false } }),
+  { id: 'riff', name: 'Smoked Pear Penicillin' }
+);
 
 assert.equal(plural('Martini'), 'Martinis');
 assert.equal(plural("Bee's Knees"), "Bee's Knees");

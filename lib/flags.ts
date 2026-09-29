@@ -7,7 +7,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
  * current app until each new screen is finished. The first answer wins:
  *   1. the person's own choice (a preview toggle, for admins and testers),
  *   2. PostHog's `redesign` feature flag (bridged in components/Analytics),
- *   3. EXPO_PUBLIC_REDESIGN=1, for local and preview builds.
+ *   3. the default: on for everyone. EXPO_PUBLIC_REDESIGN=0 turns it back off
+ *      for a build, as the escape hatch while the old screens still exist.
  */
 interface FlagState {
   /** Persisted. null = no personal choice. */
@@ -34,7 +35,7 @@ export const useFlagStore = create<FlagState>()(
   )
 );
 
-const REDESIGN_DEFAULT = process.env.EXPO_PUBLIC_REDESIGN === '1';
+const REDESIGN_DEFAULT = process.env.EXPO_PUBLIC_REDESIGN !== '0';
 
 /** True when this person should see redesigned screens. */
 export function useRedesign(): boolean {

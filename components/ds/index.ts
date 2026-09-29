@@ -1,6 +1,7 @@
 // The Back Bar design system. Redesigned screens build from these; see
 // docs/design_system.md and the gallery at /dev/gallery.
 export { Button, type ButtonProps, type IconName } from './Button';
+export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
 export { Field } from './Field';
 export { GlassButton, GlassSurface } from './Glass';
