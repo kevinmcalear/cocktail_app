@@ -85,7 +85,8 @@ function RootLayoutNav() {
     if (!session && !inAuthGroup) {
       router.replace('/auth/login');
     } else if (session && inAuthGroup && !stayInAuth) {
-      router.replace('/(tabs)');
+      // A new account (no email confirmation needed) does the age check first.
+      router.replace(authScreen === 'sign-up' ? '/age-check' : '/(tabs)');
     }
   }, [session, loading, segments, passwordRecovery]);
 
