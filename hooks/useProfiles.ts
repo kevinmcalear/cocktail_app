@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
@@ -35,8 +36,10 @@ export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 /** A profile by id or handle (a /p/<ref> link). Public ones for anyone; private ones for their owner. */
 export function useProfile(ref: string | string[] | null | undefined) {
   const parsed = parseProfileRef(ref);
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['profile', parsed],
+    queryKey: ['profile', parsed, viewer.key],
+    meta: viewer.meta,
     enabled: !!parsed,
     queryFn: async (): Promise<Profile | null> => {
       const query = supabase.from('profiles').select(COLUMNS);
@@ -55,8 +58,10 @@ export interface Original extends LineageDrink {
 
 /** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
 export function useProfileOriginals(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['profile-originals', profileId],
+    queryKey: ['profile-originals', profileId, viewer.key],
+    meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
       const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId!).limit(100);
@@ -76,8 +81,10 @@ export function useProfileOriginals(profileId: string | null | undefined) {
 
 /** A profile's list places and titled awards, newest first. */
 export function useProfileAwards(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['profile-awards', profileId],
+    queryKey: ['profile-awards', profileId, viewer.key],
+    meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Award[]> => {
       const { data, error } = await supabase
@@ -102,8 +109,10 @@ export interface MenuCreditWithProfile extends MenuCredit {
  * "on the menu at" read from the publishing piece (7d).
  */
 export function useMenuCredits(itemIds: string[]) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['menu-credits', itemIds],
+    queryKey: ['menu-credits', itemIds, viewer.key],
+    meta: viewer.meta,
     enabled: itemIds.length > 0,
     queryFn: async (): Promise<MenuCreditWithProfile[]> => {
       const { data, error } = await supabase
@@ -272,8 +281,10 @@ const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
 
 /** Where a person works, or who works at a bar: current first, then by name. */
 export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['profile-positions', profile?.id],
+    queryKey: ['profile-positions', profile?.id, viewer.key],
+    meta: viewer.meta,
     enabled: !!profile,
     queryFn: async (): Promise<Position[]> => {
       const { data, error } = await supabase

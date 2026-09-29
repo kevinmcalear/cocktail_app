@@ -79,9 +79,9 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === 'auth';
     // Privacy, terms and account-deletion pages must open without signing in,
     // and venue staff links (/v/<slug>) have their own branded sign-in. The
-    // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>)
-    // and releases (/r/<id>) are public.
-    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r') return;
+    // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>),
+    // releases (/r/<id>) and public profiles (/p/<handle>) are public.
+    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
