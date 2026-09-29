@@ -43,7 +43,8 @@ export function useHomeMenu(editor: LayoutEditor): boolean {
 
 /** Save and Go live, or just Save for a menu that's already on (or a home menu, which has its own night). */
 export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; size?: 'md' | 'lg' }) {
-  const on = editor.status === 'on' || useHomeMenu(editor);
+  const home = useHomeMenu(editor);
+  const on = editor.status === 'on' || home;
   const saveLabel = editor.saving ? 'Saving…' : editor.changed ? (on ? 'Save changes' : 'Save draft') : 'Saved';
   return (
     <View style={styles.actions}>
