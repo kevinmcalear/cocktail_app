@@ -77,7 +77,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-        {hero ? <DrinkHero name={menu.name} imageUrl={hero} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
+        {hero ? <DrinkHero name={menu.name} pictures={[{ url: hero, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
         <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
           <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
