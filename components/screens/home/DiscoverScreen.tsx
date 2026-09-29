@@ -12,6 +12,7 @@ import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBe
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
+import { NewFromBars } from '@/components/screens/home/NewFromBars';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
@@ -25,9 +26,8 @@ import type { Area } from '@/lib/nearMe';
  * Discover, the first tab in home mode: drinks for your taste, then where
  * (near me, a city, anywhere), the best of a drink there, the top bars there
  * and the most creative drinks, then the drinks you can see, marking the ones
- * your shelf can make and how well each fits your taste. ponytail: until bars
- * can publish releases (the publishing proposal), the last part is the shared
- * library; releases become a section when they exist.
+ * your shelf can make and how well each fits your taste. New from bars (live
+ * releases and published drinks) comes first.
  */
 export function DiscoverScreen() {
   const ds = useDs();
@@ -94,6 +94,7 @@ export function DiscoverScreen() {
           <View style={styles.header}>
             <ScreenHeaderSpacer />
             <Display>Discover</Display>
+            <NewFromBars />
             <ForYou />
             <DiscoverArea area={area} onChange={setArea} />
             <DiscoverBest area={area} pick={pick} />
