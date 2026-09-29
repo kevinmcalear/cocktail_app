@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase';
  * menu card of each published drink), app_recipe_presentation (a spec drink's
  * rows, generic ingredients only) and live releases. Everything here works
  * signed out; see docs/publishing_moderation_proposal.md sections 1 and 2.
+ * The queries are marked public: a signed-out load clears every other query,
+ * mid-fetch too, which would leave the page loading (lib/clearUserData.ts).
  */
 
 export type PublishMode = 'description' | 'spec';
@@ -152,6 +154,7 @@ const NEW_RELEASES = 10;
 export function useNewFromBars() {
   return useQuery({
     queryKey: ['published', 'new'],
+    meta: { public: true },
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const now = new Date().toISOString();
@@ -191,6 +194,7 @@ export interface PublishedDrinkPage {
 export function usePublishedDrink(id: string | null | undefined) {
   return useQuery({
     queryKey: ['published', 'drink', id],
+    meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<PublishedDrinkPage | null> => {
       const [drink] = await fetchPublished([id!]);
@@ -237,6 +241,7 @@ export interface ReleasePage {
 export function useRelease(id: string | null | undefined) {
   return useQuery({
     queryKey: ['published', 'release', id],
+    meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<ReleasePage | null> => {
       const { data, error } = await supabase.from('releases').select(RELEASE_COLUMNS).eq('id', id!).lte('published_at', new Date().toISOString()).maybeSingle();
