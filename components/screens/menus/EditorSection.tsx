@@ -17,12 +17,15 @@ interface EditorSectionProps {
   onTarget?: () => void;
   onAdd: () => void;
   onSettings: () => void;
+  /** A home menu: the drink's line, not venue warnings about photos and prices. */
+  home?: boolean;
   onRemove: (drinkId: string) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
 }
 
-function status(drink: MenuDrink): { text: string; warn: boolean } {
+function status(drink: MenuDrink, home?: boolean): { text: string; warn: boolean } {
+  if (home) return { text: drink.line, warn: false };
   const price = formatPrice(drink.price);
   if (!drink.imageUrl || drink.isSketch) return { text: drink.imageUrl ? 'Sketch: needs a photo' : 'Needs a photo', warn: true };
   if (!price) return { text: 'No price yet', warn: true };
@@ -32,7 +35,7 @@ function status(drink: MenuDrink): { text: string; warn: boolean } {
 const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
 /** One section being edited: its rule, its drinks in order (drag to reorder), and adding more. */
-export function EditorSection({ section, targeted, onTarget, onAdd, onSettings, onRemove, onReorder, onMove }: EditorSectionProps) {
+export function EditorSection({ section, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove }: EditorSectionProps) {
   const ds = useDs();
   // Web from tablet width up: buttons to move a drink, for keyboards and mice.
   const breakpoint = useBreakpoint();
@@ -44,7 +47,7 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onSettings, 
 
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<MenuDrink>) => {
     const i = getIndex() ?? 0;
-    const s = status(item);
+    const s = status(item, home);
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
         <PressableScale

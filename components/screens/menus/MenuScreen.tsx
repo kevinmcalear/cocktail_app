@@ -11,9 +11,10 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenu } from '@/hooks/useMenus';
-import { menuDateLine, menuStatus, plural } from '@/lib/menus';
+import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
+import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuSections } from './MenuSections';
 
@@ -54,6 +55,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
   const [more, setMore] = useState(false);
+  const [night, setNight] = useState(false);
   const userId = useAuth().user?.id ?? null;
   const caps = useCapabilities(menu?.barId);
 
@@ -80,13 +82,17 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         {hero ? <DrinkHero name={menu.name} imageUrl={hero} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
         <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
-          <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
+          {/* A home menu is always a draft to the venue calendar: its night is in the line below. */}
+          {menu.barId || status !== 'draft' ? (
+            <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
+          ) : null}
           <Display>{menu.name}</Display>
           <Caption tone="muted">
-            {[venue?.name ?? (menu.barId ? null : 'Just yours'), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
+            {[venue?.name ?? (menu.barId ? null : 'Just yours'), homeMenuLine(menu, now), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
           </Caption>
           <View style={styles.actions}>
             {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
+            {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
             <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => go(`/menus/${menu.id}/card`)} />
             {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
             {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
@@ -98,6 +104,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={back} onMedia={!!hero} />
         {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
+      {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
       {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
     </View>
   );

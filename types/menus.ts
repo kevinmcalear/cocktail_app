@@ -14,6 +14,9 @@ export interface MenuSummary {
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;
+  /** A home menu's night and how many are coming. */
+  menuDate: string | null;
+  guestCount: number | null;
   itemIds: string[];
   /** The event this menu is for (a takeover), if any. */
   event: { id: string; name: string; startsAt: string } | null;
