@@ -15,12 +15,15 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
 import { RankActions } from '../rank/RankActions';
+import { useAgeGate } from '../safety/AgeGate';
+import { ReportAction } from '../safety/ReportSheet';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
 import { FamilyTree } from './FamilyTree';
 import { FlavorSection } from './FlavorSection';
+import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -91,6 +94,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const { data: dropdowns } = useDropdowns();
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  // Saving to your Collection (home mode) needs a confirmed age.
+  const ageGate = useAgeGate();
+  const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
 
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
@@ -105,7 +111,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     item.abv ? { label: 'ABV', value: `${item.abv}%` } : null,
   ].filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
-  const itemPictures = orderedPictures(item.item_images as ItemImageLink[] | undefined);
+  const links = item.item_images as ItemImageLink[] | undefined;
+  const itemPictures = orderedPictures(links);
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : itemPictures;
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
 
@@ -121,7 +128,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
       <View style={styles.controlsRight}>
-        <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={() => onToggleFavorite()} />
+        <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={toggleFavorite} />
         <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
         {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" onMedia={onPhoto && !wide} onPress={onEdit} /> : null}
       </View>
@@ -149,6 +156,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           />
         ) : null}
         {preview ? null : <RankActions item={item} picture={itemPictures[0] ?? null} />}
+        {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
@@ -159,6 +167,16 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      <ServiceSection
+        itemId={item.id}
+        barId={item.bar_id}
+        name={item.name}
+        links={links}
+        canEdit={canEdit}
+        glass={glass?.icon_key || glass?.name || null}
+        wide={wide}
+        preview={preview}
+      />
       {preview ? null : <FamilyTree itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
     </View>
@@ -185,6 +203,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         </ScrollView>
       )}
       {controls}
+      {ageGate.sheet}
     </View>
   );
 }

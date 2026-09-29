@@ -1,16 +1,13 @@
 import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
+import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
-import {
-  DEFAULT_SEARCH_ALL,
-  PERSONAL_CONTEXT,
-  resolveDefaultContextIds,
-} from '@/lib/barContextFilter';
+import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
@@ -23,12 +20,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  Switch,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
@@ -372,7 +364,7 @@ export function SettingsScreen() {
                         {name}
                       </Text>
                       <Text fontSize={12} color="$color11">
-                        Role level {ub.role_level}
+                        {roleLabel(ub.role_level)}
                       </Text>
                     </YStack>
                     <IconSymbol
@@ -646,6 +638,7 @@ export function SettingsScreen() {
     <Section title="Account" minWidth={240}>
       {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
       {linkRow('Terms of use', () => router.push('/legal/terms'))}
+      <SafetyLinks row={linkRow} />
       <Separator />
       <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">

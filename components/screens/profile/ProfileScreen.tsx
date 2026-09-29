@@ -10,8 +10,10 @@ import { layout, space } from '@/constants/tokens';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { barsCrediting } from '@/lib/profiles';
 
+import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { ClaimProfile } from './ClaimProfile';
-import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
+import { Positions } from './Positions';
+import { Awards, BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'originals' | 'rankings' | 'shelf';
 const TABS = [
@@ -65,27 +67,33 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const breakpoint = useBreakpoint();
   const { data: profile, isLoading, error } = useProfile(profileRef);
 
-  const back = (
-    <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
+  const controls = (
+    <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
         accessibilityLabel="Back"
         icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
+      {profile ? <ProfileSafety profile={profile} /> : null}
     </View>
   );
 
   let body;
   if (profile) body = <ProfileBody profile={profile} columns={breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4} />;
   else if (isLoading) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
-  else body = <Body tone="muted">{error ? "Couldn't load this profile. Check your connection and try again." : "There's no public profile here. It may be private or the link may be wrong."}</Body>;
+  else
+    body = (
+      <BlockedProfileNote profileRef={profileRef}>
+        <Body tone="muted">{error ? "Couldn't load this profile. Check your connection and try again." : "There's no public profile here. It may be private or the link may be wrong."}</Body>
+      </BlockedProfileNote>
+    );
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.readable}>{body}</View>
       </ScrollView>
-      {back}
+      {controls}
     </View>
   );
 }
@@ -116,6 +124,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <View style={styles.chips}>
           {originals.length > 0 && profile.kind === 'person' ? <Tag label="Creator" /> : null}
           {onMenus ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
+          {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
           {unclaimed ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
@@ -134,7 +143,11 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
 
+      <Awards profileId={profile.id} />
+
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
+
+      <Positions profile={profile} />
 
       <MenuCredits credits={credits} names={names} />
 
@@ -174,7 +187,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
-  controls: { position: 'absolute' },
+  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },

@@ -33,5 +33,10 @@ assert.deepEqual(
   ['Photo 1 of 3, may be out of date', 'Photo 2 of 3', 'Photo 3 of 3, sketch']
 );
 assert.equal(pictureLabel(pictures[1], 0, 1), 'Photo');
+// Service angles never become the hero or join the hero carousel.
+const top = { angle: 'top' as const, is_generated: false, images: { url: 'top.jpg' } };
+assert.equal(heroPicture([top, { ...sketch, angle: 'hero' as const }])?.url, 'sketch.png');
+assert.deepEqual(orderedPictures([top, photoB]).map((p) => p.url), ['b.jpg']);
+assert.equal(heroPicture([top]), null);
 
 console.log('itemImages.check: ok');

@@ -1,3 +1,4 @@
+import { dayLabel, parseDay, toDay } from '@/lib/collection';
 import type { MenuDetail, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
 
 type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'>;
@@ -65,6 +66,37 @@ export function formatPrice(price: string | null | undefined): string | null {
 
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
+}
+
+/** A home menu's night as the person is filling it in. */
+export interface NightDraft {
+  when: 'none' | 'tonight' | 'tomorrow' | 'date';
+  /** Typed, for 'date': 2026-10-04. */
+  date: string;
+  /** Typed: blank for not saying. */
+  guests: string;
+}
+
+/** The date and guest count to save, or what to fix (menus.guest_count is 1 to 500). */
+export function homeNight(draft: NightDraft, now: number): { menuDate: string | null; guestCount: number | null } | { error: string } {
+  const today = new Date(now);
+  const menuDate =
+    draft.when === 'none'
+      ? null
+      : draft.when === 'date'
+        ? parseDay(draft.date)
+        : toDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() + (draft.when === 'tomorrow' ? 1 : 0)));
+  if (draft.when === 'date' && !menuDate) return { error: 'Use a date like 2026-10-04.' };
+  const typed = draft.guests.trim();
+  const guestCount = typed ? Number(typed) : null;
+  if (guestCount !== null && (!Number.isInteger(guestCount) || guestCount < 1 || guestCount > 500)) return { error: 'Guests: a number from 1 to 500.' };
+  return { menuDate, guestCount };
+}
+
+/** A home menu's night: "Sat 4 Oct · 6 guests", either part alone, or null. */
+export function homeMenuLine(menu: { menuDate: string | null; guestCount: number | null }, now: number, locale?: string): string | null {
+  const parts = [menu.menuDate ? dayLabel(menu.menuDate, now, locale) : null, menu.guestCount ? plural(menu.guestCount, 'guest') : null];
+  return parts.filter(Boolean).join(' · ') || null;
 }
 
 export interface Readiness {

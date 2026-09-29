@@ -45,14 +45,6 @@
       "destination": "/p/[id]"
     },
     {
-      "source": "/settings/bar/:id",
-      "destination": "/settings/bar/[id]"
-    },
-    {
-      "source": "/settings/bar/:id/assign-items",
-      "destination": "/settings/bar/[id]/assign-items"
-    },
-    {
       "source": "/rankings/:itemId",
       "destination": "/rankings/[itemId]"
     },
@@ -75,6 +67,14 @@
     {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
+    },
+    {
+      "source": "/d/:id",
+      "destination": "/d/[id]"
+    },
+    {
+      "source": "/r/:id",
+      "destination": "/r/[id]"
     }
   ]
 }
