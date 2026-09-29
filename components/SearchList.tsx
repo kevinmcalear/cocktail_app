@@ -12,7 +12,8 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
-import { heroPicture, type ItemImageLink } from "@/lib/itemImages";
+import { heroPicture } from "@/lib/itemImages";
+import type { SearchItem } from "@/types/search";
 import { capitalize } from "@/lib/stringUtils";
 import { FlatList, Keyboard, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewToken, useWindowDimensions } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
@@ -33,36 +34,7 @@ function getGridColumns(width: number) {
     return 1;
 }
 
-export interface SearchItem {
-    id: string;
-    name: string;
-    description?: string | null;
-    category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category" | "Menu";
-    isDraft?: boolean;
-    draftProgress?: any;
-    price?: string | null;
-    recipes?: {
-        display_ingredient_id?: string | null;
-        ingredient_item_id?: string;
-        ingredient?: {
-            name: string;
-            item_categories?: {
-                category_id: string;
-            }[];
-        } | null;
-    }[];
-    item_images?: ItemImageLink[];
-    /** Set with `image` when that picture is a generated sketch. */
-    imageIsSketch?: boolean;
-    item_categories?: {
-        category_id: string;
-    }[];
-    image?: any;
-    method_id?: string | null;
-    glassware_id?: string | null;
-    family_id?: string | null;
-    ice_id?: string | null;
-}
+export type { SearchItem };
 
 interface SearchListProps {
     title: string;
