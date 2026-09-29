@@ -1,5 +1,5 @@
 import { ErrorState } from '@/components/ui/ErrorState';
-import { useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { Text, YStack } from "tamagui";
@@ -55,6 +55,9 @@ export default function CocktailDetailsScreen() {
         setIsEditing(false);
         setShowPhotoSheet(false);
     };
+
+    // Not yours to read (another bar's drink): its public page, if it's published.
+    if ((error as { code?: string } | null)?.code === "PGRST116") return <Redirect href={`/d/${id}`} />;
     // The drink page is the read view; editing still uses the editor below.
     if (!isEditing && !error) {
         return cocktail ? (

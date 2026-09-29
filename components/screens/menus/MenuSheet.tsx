@@ -75,7 +75,9 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
         disabled && styles.disabled,
       ]}
     >
-      <View style={styles.flex}>
+      {/* Only the full-width row stretches its text; in a content-sized pill,
+          flex: 1 collapses the label to nothing on iOS. */}
+      <View style={detail ? styles.flex : styles.label}>
         <DsText variant="body" color={ink} style={{ fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
           {label}
         </DsText>
@@ -107,6 +109,7 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { paddingHorizontal: space.xl, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, gap: space.sm },
   flex: { flex: 1, gap: 2 },
+  label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   mark: { width: 22, height: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

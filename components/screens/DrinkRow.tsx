@@ -6,21 +6,25 @@ import { space } from '@/constants/tokens';
 
 export interface DrinkRowProps {
   name: string;
-  href: string;
+  /** Opens this page, unless onPress does something else. */
+  href?: string;
+  onPress?: () => void;
   imageUrl: string | null;
   /** CustomIcons glass key for the drawn placeholder. */
   glass: string | null;
   caption?: string;
+  /** A second, longer line: a note of your own. */
+  note?: string;
 }
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, imageUrl, glass, caption }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
-      accessibilityLabel={`${name}, open`}
-      onPress={() => router.push(href as never)}
+      accessibilityLabel={`${[name, caption, note].filter(Boolean).join('. ')}, open`}
+      onPress={onPress ?? (() => href && router.push(href as never))}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <View style={styles.thumb}>
@@ -29,6 +33,11 @@ export function DrinkRow({ name, href, imageUrl, glass, caption }: DrinkRowProps
       <View style={styles.text}>
         <Headline numberOfLines={1}>{name}</Headline>
         {caption ? <Caption tone="muted">{caption}</Caption> : null}
+        {note ? (
+          <Caption numberOfLines={2}>
+            {note}
+          </Caption>
+        ) : null}
       </View>
     </PressableScale>
   );

@@ -10,6 +10,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useMode } from '@/hooks/useMode';
 import { groupMenus, plural } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
@@ -29,7 +30,9 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 
 /**
  * Every menu at the venue: on now, coming up, drafts and previous, plus the
- * person's own menus. Reached from Tonight and, on wide web, the sidebar.
+ * person's own menus. Reached from Tonight and, on wide web, the sidebar. In
+ * home mode (or with no venue) it's only the person's own menus, reached from
+ * Collection.
  */
 export function MenusScreen() {
   const ds = useDs();
@@ -40,7 +43,8 @@ export function MenusScreen() {
   const sidebar = useIsWideWeb();
   const userId = useAuth().user?.id ?? null;
   const { active, isLoading: venuesLoading } = useActiveVenue();
-  const barId = active?.id ?? null;
+  const home = useMode().mode === 'home';
+  const barId = home ? null : (active?.id ?? null);
   const { data: menus = [], isLoading, error } = useVenueMenus(barId);
   const caps = useCapabilities(barId);
   const canBuild = Array.isArray(caps.data) && caps.data.includes('menus');
@@ -51,10 +55,10 @@ export function MenusScreen() {
   // Anyone can make their own menu; a venue's needs Drink Creator or up.
   const canCreate = canBuild || !barId;
 
-  const venue = groupMenus(menus.filter((m) => m.barId === barId), now);
+  const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
   const mine = menus.filter((m) => m.barId === null && m.createdBy === userId);
   const summary = [
-    active?.name,
+    barId ? active?.name : null,
     venue.on.length ? `${venue.on.length} on now` : null,
     venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
   ]
@@ -71,7 +75,11 @@ export function MenusScreen() {
       >
         <View style={styles.top}>
           {sidebar ? <View /> : (
-            <GlassButton icon="chevron.left" accessibilityLabel="Back to Tonight" onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} />
+            <GlassButton
+              icon="chevron.left"
+              accessibilityLabel={barId ? 'Back to Tonight' : 'Back'}
+              onPress={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
+            />
           )}
           {canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
         </View>
@@ -83,7 +91,7 @@ export function MenusScreen() {
         {error ? <Body tone="muted">Couldn’t load the menus. Pull down or come back in a moment.</Body> : null}
         {!isLoading && !venuesLoading && !error && menus.length === 0 ? (
           <Body tone="muted">
-            {barId ? `${active?.name ?? 'This venue'} has no menus yet.` : 'Once a venue adds you to its team, its menus show here.'}
+            {barId ? `${active?.name ?? 'This venue'} has no menus yet.` : 'Plan a night in: pick the drinks, then share the menu with your guests.'}
           </Body>
         ) : null}
 
@@ -126,7 +134,7 @@ export function MenusScreen() {
           </Group>
         ) : null}
         {mine.length ? (
-          <Group title="Just yours">
+          <Group title={barId ? 'Just yours' : 'Your menus'}>
             {mine.map((m) => (
               <MenuListRow key={m.id} menu={m} now={now} />
             ))}
