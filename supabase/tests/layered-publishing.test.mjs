@@ -243,4 +243,28 @@ describe('memories', () => {
     const byStranger = await users.stranger.client.from('collected_items').select('id').eq('id', data.id);
     assert.deepEqual(byStranger.data, []);
   });
+
+  // 20260930000500_release_memories.sql
+  test('a collected release keeps its name and bar after the bar takes it down, and after it is deleted', async () => {
+    const release = await serviceInsert('releases', { bar_id: ids.closedBar, name: `Garden release ${run}`, release_date: '2026-09-27' });
+    await serviceInsert('release_items', { release_id: release.id, bar_id: ids.closedBar, item_id: ids.items.onMenu });
+    await db.query("UPDATE public.releases SET published_at = now() - interval '5 minutes' WHERE id = $1", [release.id]);
+
+    const collect = await users.collector.client
+      .from('collected_releases').insert({ release_id: release.id }).select('id, name, bar_name, release_date').single();
+    assert.ifError(collect.error);
+    assert.equal(collect.data.name, `Garden release ${run}`);
+    assert.equal(collect.data.bar_name, `Speakeasy ${run}`);
+    assert.equal(collect.data.release_date, '2026-09-27');
+    const rename = await users.collector.client.from('collected_releases').update({ name: 'Something else' }).eq('id', collect.data.id);
+    assert.ok(rename.error, 'renaming a release memory should be refused');
+
+    await db.query('UPDATE public.releases SET published_at = NULL WHERE id = $1', [release.id]);
+    const live = await users.collector.client.from('releases').select('id').eq('id', release.id);
+    assert.deepEqual(live.data, []);
+    await db.query('DELETE FROM public.releases WHERE id = $1', [release.id]);
+    const kept = await users.collector.client.from('collected_releases').select('name, release_id').eq('id', collect.data.id).single();
+    assert.equal(kept.data.release_id, null);
+    assert.equal(kept.data.name, `Garden release ${run}`);
+  });
 });
