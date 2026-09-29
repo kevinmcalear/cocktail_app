@@ -92,14 +92,18 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
   });
 }
 
-/** "Top bars near you": bars by their bar score, then early ones. Works signed out. */
+/**
+ * "Top bars near you": bars by their bar score, then early ones (including
+ * bars nobody has ranked yet). Up to 50, so a seeded list like The World's
+ * 50 Best Bars fits whole. Works signed out.
+ */
 export function useTopBars(area: Area) {
   const params = areaParams(area);
   return useQuery({
     queryKey: ['discover-top-bars', params],
     meta: pointMeta(area),
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 20 });
+      const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 50 });
       if (error) throw error;
       return splitEarly(asRows(data));
     },

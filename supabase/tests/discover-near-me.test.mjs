@@ -214,6 +214,7 @@ describe('near me, bar scores and early lists', () => {
     ids.hidden = await add('Hidden', 10.2, 20.201);
     await db.query('UPDATE public.profiles SET is_public = false WHERE id = $1', [ids.hidden]);
     ids.east = await add('East', -17, 179.99);
+    ids.d = await add('Driftwood', 10.205, 20.2); // nobody ranks anything here
 
     // One martini each, so every personal martini score is 10 and the
     // numbers below stay easy to check.
@@ -263,9 +264,11 @@ describe('near me, bar scores and early lists', () => {
   test('a bar score is its drinks\' scores weighted by rankers, once 20 different people have ranked there', async () => {
     const { data, error } = await anon.rpc('discover_top_bars', near);
     assert.ifError(error);
+    // A bar nobody has ranked is listed too, last, with no score.
     assert.deepEqual(data.map((r) => [r.venue_profile_id, r.position, r.is_early, r.rankers, r.drinks]), [
       [ids.a, 1, false, 20, 2],
       [ids.b, null, true, 3, 1],
+      [ids.d, null, true, 0, 0],
     ]);
     // Martini 10 (20 rankers), negroni 6.6 (5): (200 + 33) / 25 = 9.32.
     assert.equal(Number(data[0].score), 9.3);

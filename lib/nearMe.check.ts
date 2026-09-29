@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import {
   areaLabel,
   areaParams,
+  earlyNote,
   formatDistance,
   photonUrl,
+  rankedCount,
   roundCoord,
   splitEarly,
   usesMiles,
@@ -92,5 +94,12 @@ assert.equal(venueAddressesFrom({ features: [
   { geometry: { coordinates: [13.4, 52.5] }, properties: { osm_type: 'W', osm_id: 2, street: 'Torstraße', city: 'Berlin', countrycode: 'DE' } },
 ] }).length, 1);
 assert.deepEqual(venueAddressesFrom(null), []);
+
+// A bar nobody has ranked says so, rather than "0 people ranked".
+assert.equal(rankedCount(0), 'Not ranked yet');
+assert.equal(rankedCount(1), '1 person ranked');
+const unranked = { rankers: 0 } as Parameters<typeof earlyNote>[0][number];
+assert.match(earlyNote([unranked], 20), /^Nobody has ranked/);
+assert.match(earlyNote([unranked, { ...unranked, rankers: 3 }], 20), /started ranking/);
 
 console.log('nearMe: ok');
