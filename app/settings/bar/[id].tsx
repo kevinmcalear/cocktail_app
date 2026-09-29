@@ -150,7 +150,7 @@ export default function BarDetailScreen() {
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
                 <Text fontSize="$5" fontWeight="bold">{detailData?.bar?.name || "Loading..."}</Text>
-                <View style={{ width: 40 }} />
+                <TouchableOpacity role="link" aria-label="Brand and look" onPress={() => router.push(`/settings/bar/${id}/brand`)} style={{ minWidth: 40, minHeight: 40, justifyContent: 'center' }}><Text color="$color11">Brand</Text></TouchableOpacity>
             </XStack>
 
             <XStack paddingHorizontal="$4" marginBottom="$4" gap="$2">
@@ -284,4 +284,3 @@ export default function BarDetailScreen() {
         </YStack>
     );
 }
-import { View } from "react-native";

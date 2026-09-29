@@ -75,6 +75,10 @@
     {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
+    },
+    {
+      "source": "/settings/bar/:id/brand",
+      "destination": "/settings/bar/[id]/brand"
     }
   ]
 }
