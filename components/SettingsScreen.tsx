@@ -5,13 +5,11 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
+import { usePendingClaims } from '@/hooks/useProfiles';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
-import {
-  DEFAULT_SEARCH_ALL,
-  PERSONAL_CONTEXT,
-  resolveDefaultContextIds,
-} from '@/lib/barContextFilter';
+import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
+import { useRedesign } from '@/lib/flags';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
@@ -23,12 +21,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  Switch,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
@@ -75,6 +68,9 @@ export function SettingsScreen() {
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
   const tabBarInset = useFloatingTabBarInset();
+  // Only moderators can read other people's claims (RLS), so this is 0 for everyone else.
+  const claimCount = usePendingClaims().data?.length ?? 0;
+  const redesign = useRedesign();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -372,7 +368,7 @@ export function SettingsScreen() {
                         {name}
                       </Text>
                       <Text fontSize={12} color="$color11">
-                        Role level {ub.role_level}
+                        {roleLabel(ub.role_level)}
                       </Text>
                     </YStack>
                     <IconSymbol
@@ -646,6 +642,7 @@ export function SettingsScreen() {
     <Section title="Account" minWidth={240}>
       {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
       {linkRow('Terms of use', () => router.push('/legal/terms'))}
+      {redesign && claimCount ? linkRow(`Profile claims (${claimCount} waiting)`, () => router.push('/p/review-claims')) : null}
       <Separator />
       <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">
