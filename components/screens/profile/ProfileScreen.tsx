@@ -11,6 +11,7 @@ import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Prof
 import { barsCrediting } from '@/lib/profiles';
 
 import { ClaimProfile } from './ClaimProfile';
+import { Positions } from './Positions';
 import { Awards, BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'originals' | 'rankings' | 'shelf';
@@ -116,6 +117,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <View style={styles.chips}>
           {originals.length > 0 && profile.kind === 'person' ? <Tag label="Creator" /> : null}
           {onMenus ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
+          {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
           {unclaimed ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
@@ -137,6 +139,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       <Awards profileId={profile.id} />
 
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
+
+      <Positions profile={profile} />
 
       <MenuCredits credits={credits} names={names} />
 

@@ -81,3 +81,44 @@ export function glassOptions(correct: GlassOption, all: GlassOption[], seed: str
   }
   return options;
 }
+
+export interface Fact {
+  label: string;
+  value: string;
+}
+
+export interface PourFactsInput {
+  kind: 'beer' | 'wine';
+  maker: string | null;
+  abv: number | null;
+  price: string | number | null;
+  origin: string | null;
+  /** The glass it's served in, if the venue set one. */
+  glass: string | null;
+  /** The item's tags, with the name of each tag's group ("Beer Styles", "Wine Regions"). */
+  tags: { name: string; group: string | null }[];
+}
+
+/**
+ * What staff need to know about a beer or wine, in the order they'd say it:
+ * style, who makes it, where it's from, strength, how it's served, price.
+ * Style and region are tags; anything else tagged comes last.
+ */
+export function pourFacts(item: PourFactsInput): Fact[] {
+  const inGroup = (word: string) => (t: { group: string | null }) => !!t.group?.toLowerCase().includes(word);
+  const names = (list: { name: string }[]) => list.map((t) => t.name).join(', ');
+  const style = item.tags.filter(inGroup('style'));
+  const region = item.tags.filter(inGroup('region'));
+  const other = item.tags.filter((t) => !style.includes(t) && !region.includes(t));
+  const price = String(item.price ?? '').trim();
+  const facts: Fact[] = [
+    { label: 'Style', value: names(style) },
+    { label: item.kind === 'beer' ? 'Brewery' : 'Producer', value: item.maker?.trim() ?? '' },
+    { label: 'Region', value: names(region) || item.origin?.trim() || '' },
+    { label: 'ABV', value: item.abv != null ? `${item.abv}%` : '' },
+    { label: 'Serve', value: item.glass ?? '' },
+    { label: 'Price', value: price ? `$${price.replace(/^\$/, '')}` : '' },
+    { label: 'Tags', value: names(other) },
+  ];
+  return facts.filter((f) => f.value);
+}
