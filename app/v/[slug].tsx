@@ -5,9 +5,11 @@ import { ActivityIndicator } from 'react-native';
 import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
 
 import { AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
+import { JoinInvite } from '@/components/auth/JoinInvite';
 import { SignInScreen } from '@/components/auth/SignInScreen';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
+import { useMyBarInvite } from '@/hooks/useBarInvites';
 import { useBars } from '@/hooks/useBars';
 import { useVenueBranding, type VenueBranding } from '@/hooks/useVenueBranding';
 import { useVenueWebHead } from '@/hooks/useVenueWebHead';
@@ -100,6 +102,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   const mode = useInstallMode();
 
   const isMember = !!bars?.some((b) => b.bar_id === venue.id);
+  const invite = useMyBarInvite(isPending || isMember ? null : venue.id);
 
   const enter = useCallback(() => {
     setSelectedContextIds([venue.id]);
@@ -112,7 +115,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
     if (isMember && mode === 'installed') enter();
   }, [isMember, mode, enter]);
 
-  if (isPending || (isMember && mode === 'installed')) return <Loading />;
+  if (isPending || invite.isLoading || (isMember && mode === 'installed')) return <Loading />;
 
   if (isError) {
     return (
@@ -122,12 +125,14 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
     );
   }
 
+  if (!isMember && invite.data) return <JoinInvite invite={invite.data} venueName={venue.name} brand={brand} />;
+
   if (!isMember) {
     return (
       <AuthShell
         brand={brand}
         title="You're not on this team yet"
-        subtitle={`You're signed in as ${user?.email ?? 'someone else'}. Ask a ${venue.name} manager to add that email, then open this link again.`}
+        subtitle={`You're signed in as ${user?.email ?? 'someone else'}. Ask a ${venue.name} manager to invite that email, then open this link again.`}
       >
         <YStack gap="$3">
           <PrimaryButton label="Use a different account" onPress={() => void signOut()} />

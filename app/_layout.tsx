@@ -140,10 +140,6 @@ function RootLayoutNav() {
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="import-cocktails"
-              options={{ presentation: "modal", title: "Import Cocktails" }}
-            />
-            <Stack.Screen
               name="cocktail/[id]/index"
               options={{ presentation: "modal", headerShown: false }}
             />
@@ -169,10 +165,6 @@ function RootLayoutNav() {
             />
             <Stack.Screen
               name="wine/[id]/edit"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
-              name="profile/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
