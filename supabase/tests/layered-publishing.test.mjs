@@ -1,5 +1,5 @@
 // Layered publishing, memories, and private personal drinks
-// (supabase/migrations/20260930000400_layered_publishing_and_memories.sql).
+// (supabase/migrations/20260930500400_layered_publishing_and_memories.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -242,5 +242,60 @@ describe('memories', () => {
     assert.ok(rename.error, 'renaming a memory should be refused');
     const byStranger = await users.stranger.client.from('collected_items').select('id').eq('id', data.id);
     assert.deepEqual(byStranger.data, []);
+  });
+
+  // 20260930500700_release_memories.sql
+  test('a collected release keeps its name and bar after the bar takes it down, and after it is deleted', async () => {
+    const release = await serviceInsert('releases', { bar_id: ids.closedBar, name: `Garden release ${run}`, release_date: '2026-09-27' });
+    await serviceInsert('release_items', { release_id: release.id, bar_id: ids.closedBar, item_id: ids.items.onMenu });
+    await db.query("UPDATE public.releases SET published_at = now() - interval '5 minutes' WHERE id = $1", [release.id]);
+
+    const collect = await users.collector.client
+      .from('collected_releases').insert({ release_id: release.id }).select('id, name, bar_name, release_date').single();
+    assert.ifError(collect.error);
+    assert.equal(collect.data.name, `Garden release ${run}`);
+    assert.equal(collect.data.bar_name, `Speakeasy ${run}`);
+    assert.equal(collect.data.release_date, '2026-09-27');
+    const rename = await users.collector.client.from('collected_releases').update({ name: 'Something else' }).eq('id', collect.data.id);
+    assert.ok(rename.error, 'renaming a release memory should be refused');
+
+    await db.query('UPDATE public.releases SET published_at = NULL WHERE id = $1', [release.id]);
+    const live = await users.collector.client.from('releases').select('id').eq('id', release.id);
+    assert.deepEqual(live.data, []);
+    await db.query('DELETE FROM public.releases WHERE id = $1', [release.id]);
+    const kept = await users.collector.client.from('collected_releases').select('name, release_id').eq('id', collect.data.id).single();
+    assert.equal(kept.data.release_id, null);
+    assert.equal(kept.data.name, `Garden release ${run}`);
+  });
+});
+
+// 20260930500800_home_menus_hold_published_drinks.sql
+describe('home menus', () => {
+  test('a home menu holds a drink another bar published, but not one it keeps private', async () => {
+    const client = users.collector.client;
+    const menu = await client.from('menus').insert({ name: `Friday at ours ${run}`, created_by: users.collector.id }).select('id').single();
+    assert.ifError(menu.error);
+    const save = (itemIds) => client.rpc('save_menu', {
+      p_menu_id: menu.data.id, p_name: `Friday at ours ${run}`, p_cover_url: null, p_cover_position: 50,
+      p_sections: [{ name: 'Drinks', min_items: 1, max_items: null, allowed_types: ['cocktail'], item_ids: itemIds }],
+    });
+
+    assert.ifError((await save([ids.items.onMenu])).error);
+    const drinks = await client.from('menu_drinks').select('item_id').eq('menu_id', menu.data.id);
+    assert.deepEqual(drinks.data.map((d) => d.item_id), [ids.items.onMenu]);
+
+    const hidden = await save([ids.items.hiddenDrink]);
+    assert.match(hidden.error?.message ?? '', /not found/);
+  });
+
+  test('a venue menu still only holds drinks the editor can read', async () => {
+    const venueMenu = await users.openAdmin.client
+      .from('menus').insert({ name: `Open menu ${run}`, bar_id: ids.openBar, created_by: users.openAdmin.id }).select('id').single();
+    assert.ifError(venueMenu.error);
+    const save = await users.openAdmin.client.rpc('save_menu', {
+      p_menu_id: venueMenu.data.id, p_name: `Open menu ${run}`, p_cover_url: null, p_cover_position: 50,
+      p_sections: [{ name: 'Drinks', min_items: 1, max_items: null, allowed_types: ['cocktail'], item_ids: [ids.items.onMenu] }],
+    });
+    assert.match(save.error?.message ?? '', /not found/);
   });
 });
