@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { reportErrorMessage, reportRow, type ReportReason, type ReportTarget } from '@/lib/safety';
+import { reportErrorMessage, reportRow, type ReportKind, type ReportReason, type ReportStatus, type ReportTarget } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
 
 // --- Blocks ---
@@ -81,6 +81,51 @@ function targetColumns(target: ReportTarget) {
   };
 }
 
+export interface MyReport {
+  id: string;
+  target_kind: ReportKind | 'comment';
+  reason: ReportReason;
+  details: string | null;
+  status: ReportStatus;
+  /** The moderator's note, once it's closed. */
+  resolution: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  item_id: string | null;
+  /** Names I can still read; null once hidden or deleted. */
+  profile: { display_name: string } | null;
+  item: { name: string } | null;
+  release: { name: string } | null;
+}
+
+/** Reports I've sent, newest first, with what happened to each. */
+export function useMyReports() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['my-reports', user?.id],
+    enabled: !!user,
+    staleTime: 0,
+    queryFn: async (): Promise<MyReport[]> => {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('id, target_kind, reason, details, status, resolution, created_at, reviewed_at, item_id, profile:profiles(display_name), item:items(name), release:releases(name)')
+        .eq('reporter_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      const reports = (data ?? []) as unknown as MyReport[];
+      // A bar's published drink isn't readable through items outside the
+      // bar, so its name comes from the public projection.
+      const missing = [...new Set(reports.filter((r) => !r.item && r.target_kind !== 'profile').map((r) => r.item_id).filter((id): id is string => !!id))];
+      if (!missing.length) return reports;
+      const published = await supabase.from('published_items').select('id, name').in('id', missing);
+      if (published.error) throw published.error;
+      const names = new Map((published.data ?? []).map((p) => [p.id as string, p.name as string]));
+      return reports.map((r) => (!r.item && r.item_id && names.has(r.item_id) ? { ...r, item: { name: names.get(r.item_id)! } } : r));
+    },
+  });
+}
+
 /** My open report on this target, if I've already filed one. */
 export function useMyOpenReport(target: ReportTarget | null) {
   const { user } = useAuth();
@@ -116,7 +161,7 @@ export function useFileReport() {
       }
       throw new Error(reportErrorMessage(error, today));
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-open-report'] }),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['my-open-report'] }), qc.invalidateQueries({ queryKey: ['my-reports'] })]),
     onError: () => {},
   });
 }

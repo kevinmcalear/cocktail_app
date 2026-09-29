@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { countries, countryName, searchCountries } from './countries';
-import { localeCountry, parseBirthDate, REPORT_REASONS, reportErrorMessage, reportRow } from './safety';
+import { localeCountry, parseBirthDate, REPORT_REASONS, reportErrorMessage, reportOutcome, reportRow, reportSubject } from './safety';
 
 // Every reason the reports table takes, once, each with words.
 assert.deepEqual(
@@ -54,3 +54,13 @@ assert.equal(countryName('JP'), 'Japan');
 assert.equal(searchCountries('aus')[0].code, 'AU');
 assert.equal(searchCountries('us')[0].code, 'US');
 assert.ok(searchCountries('zealand').some((c) => c.code === 'NZ'));
+
+// A report's outcome and subject, for the reporter.
+assert.equal(reportOutcome('open').label, 'Waiting');
+assert.equal(reportOutcome('actioned').label, 'Action taken');
+assert.equal(reportOutcome('dismissed').label, 'No action taken');
+const names = { profile: 'Night Owl', item: 'Martini', release: null };
+assert.equal(reportSubject('ranking', names), 'Night Owl’s Martini');
+assert.equal(reportSubject('item', names), 'Martini');
+assert.equal(reportSubject('release', names), null);
+assert.equal(reportSubject('ranking', { ...names, item: null }), null);

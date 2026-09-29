@@ -42,7 +42,7 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
     body = (
       <>
         <Headline role="heading">Thanks. Your report is in.</Headline>
-        <Body>A moderator will look at it. We won’t tell anyone you reported it.</Body>
+        <Body>A moderator will look at it. We won’t tell anyone you reported it. You can see what happened in Settings, under Your reports.</Body>
         <Body tone="muted">If you don’t want to see them again, you can also block a person from their profile.</Body>
       </>
     );

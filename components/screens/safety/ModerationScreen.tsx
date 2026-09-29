@@ -91,7 +91,7 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
         {r.details ? <Body>{`“${r.details}”`}</Body> : <Caption tone="muted">No details given.</Caption>}
         {r.resolution ? <Body tone="muted">{`Note: ${r.resolution}`}</Body> : null}
         {open ? (
-          <Field label="Note (optional)" placeholder="What you did, in a sentence" hint="Kept with the report for the person who sent it." value={note} onChangeText={setNote} maxLength={1000} />
+          <Field label="Note (optional)" placeholder="What you did, in a sentence" hint="The person who reported it sees this under Your reports." value={note} onChangeText={setNote} maxLength={1000} />
         ) : null}
         {failed ? (
           <Caption tone="accent" role="alert">

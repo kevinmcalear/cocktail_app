@@ -6,7 +6,7 @@ import { usePendingClaims } from '@/hooks/useProfiles';
 import { useRedesign } from '@/lib/flags';
 
 /**
- * Settings › Account rows for safety: Blocked people for everyone, and the
+ * Settings › Account rows for safety: Your reports and Blocked people for everyone, and the
  * moderation queues (reports, profile claims) for moderators. Settings passes
  * its own row so these match the rest of the panel.
  */
@@ -19,6 +19,7 @@ export function SafetyLinks({ row }: { row: (label: string, onPress: () => void)
   if (!redesign) return null;
   return (
     <>
+      {row('Your reports', () => router.push('/settings/reports'))}
       {row('Blocked people', () => router.push('/settings/blocked'))}
       {isModerator ? row('Reports', () => router.push('/settings/moderation')) : null}
       {claimCount ? row(`Profile claims (${claimCount} waiting)`, () => router.push('/p/review-claims')) : null}

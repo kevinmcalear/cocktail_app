@@ -66,6 +66,50 @@ export function reportRow(target: ReportTarget, reason: ReportReason, details: s
   }
 }
 
+export type ReportStatus = 'open' | 'actioned' | 'dismissed';
+
+/** A report's outcome, in words, for the person who sent it. */
+export function reportOutcome(status: ReportStatus): { label: string; detail: string } {
+  switch (status) {
+    case 'actioned':
+      return { label: 'Action taken', detail: 'A moderator agreed and acted on it.' };
+    case 'dismissed':
+      return { label: 'No action taken', detail: 'A moderator looked and found it didn’t break the rules.' };
+    default:
+      return { label: 'Waiting', detail: 'A moderator hasn’t looked at it yet.' };
+  }
+}
+
+export const REPORT_KIND_LABEL: Record<ReportKind | 'comment', string> = {
+  profile: 'Profile',
+  item: 'Drink',
+  release: 'Release',
+  ranking: 'Ranking',
+  comment: 'Comment',
+};
+
+/**
+ * What a report was about, from the names the reporter can still read.
+ * Hidden or deleted things come back as null.
+ */
+export function reportSubject(
+  kind: ReportKind | 'comment',
+  names: { profile: string | null; item: string | null; release: string | null }
+): string | null {
+  switch (kind) {
+    case 'profile':
+      return names.profile;
+    case 'item':
+      return names.item;
+    case 'release':
+      return names.release;
+    case 'ranking':
+      return names.profile && names.item ? `${names.profile}’s ${names.item}` : null;
+    default:
+      return null;
+  }
+}
+
 export const DAILY_REPORT_LIMIT = 20;
 
 /**

@@ -5,12 +5,14 @@ import { renderWithTamagui } from '@/jest.setup';
 
 import { useAgeGate } from './AgeGate';
 import { DrinkingAgeGate } from './DrinkingAgeGate';
+import { MyReportsScreen } from './MyReportsScreen';
 import { ReportSheet } from './ReportSheet';
 
 let mockUser: { id: string } | null = { id: 'me' };
 let mockAge: 'confirmed' | 'under_age' | 'unknown' | undefined = 'confirmed';
 const mockFile = { mutate: jest.fn(), isPending: false, isSuccess: false, error: null as Error | null };
 let mockExisting: { id: string; created_at: string } | null = null;
+let mockReports: unknown[] = [];
 const mockStore = new Map<string, string>();
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }) }));
@@ -18,6 +20,7 @@ jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: mockUser, loadin
 jest.mock('@/hooks/useSafety', () => ({
   useFileReport: () => mockFile,
   useMyOpenReport: () => ({ data: mockExisting, isLoading: false }),
+  useMyReports: () => ({ data: mockReports, isLoading: false, error: null }),
 }));
 jest.mock('@/hooks/useAgeCheck', () => ({
   useAgeCheck: () => ({ data: mockAge, isError: false }),
@@ -166,5 +169,34 @@ describe('DrinkingAgeGate', () => {
       </DrinkingAgeGate>
     );
     expect(screen.getByText('The drink')).toBeTruthy();
+  });
+});
+
+describe('MyReportsScreen', () => {
+  const report = (over: object) => ({
+    id: 'r', target_kind: 'item', reason: 'misleading', details: null, status: 'open', resolution: null,
+    created_at: '2026-09-29T10:00:00Z', reviewed_at: null, item_id: 'i', profile: null, item: { name: 'Owl Sour' }, release: null, ...over,
+  });
+
+  test('each report says what happened, in words, with the moderator’s note', async () => {
+    mockReports = [
+      report({ id: 'a', status: 'actioned', resolution: 'Taken down while we check the credit.', item: null }),
+      report({ id: 'b', status: 'dismissed', target_kind: 'profile', profile: { display_name: 'Jo Park' }, item: null, item_id: null }),
+      report({ id: 'c' }),
+    ];
+    await renderWithTamagui(<MyReportsScreen />);
+    expect(screen.getByText('Action taken')).toBeTruthy();
+    expect(screen.getByText('Taken down')).toBeTruthy();
+    expect(screen.getByText('From the moderator: Taken down while we check the credit.')).toBeTruthy();
+    expect(screen.getByText('No action taken')).toBeTruthy();
+    expect(screen.getByText('Jo Park')).toBeTruthy();
+    expect(screen.getByText('Waiting')).toBeTruthy();
+    expect(screen.getByText('Owl Sour')).toBeTruthy();
+  });
+
+  test('says how to report when there’s nothing yet', async () => {
+    mockReports = [];
+    await renderWithTamagui(<MyReportsScreen />);
+    expect(screen.getByText(/You haven’t reported anything/)).toBeTruthy();
   });
 });
