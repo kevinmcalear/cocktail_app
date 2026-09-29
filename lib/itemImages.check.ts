@@ -26,4 +26,10 @@ assert.equal(pictureTag(null), null);
 // A sketch is never "out of date" to the viewer: the server redraws it.
 assert.equal(pictureTag(orderedPictures([{ ...sketch, outdated_since: 'x' }])[0]), 'Sketch');
 
+// Service angles never become the hero or join the hero carousel.
+const top = { angle: 'top' as const, is_generated: false, images: { url: 'top.jpg' } };
+assert.equal(heroPicture([top, { ...sketch, angle: 'hero' as const }])?.url, 'sketch.png');
+assert.deepEqual(orderedPictures([top, photoB]).map((p) => p.url), ['b.jpg']);
+assert.equal(heroPicture([top]), null);
+
 console.log('itemImages.check: ok');

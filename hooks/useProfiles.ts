@@ -58,7 +58,7 @@ export function useProfileOriginals(profileId: string | null | undefined) {
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(sort_order, is_generated, outdated_since, images(url))`)
+        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
         .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
         .order('name')
         .limit(100);

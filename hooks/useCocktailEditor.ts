@@ -8,6 +8,7 @@ import { useCocktail } from "@/hooks/useCocktails";
 import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
+import { isHeroLink } from "@/lib/itemImages";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
@@ -104,7 +105,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setIceId(c.ice_id);
 
         if (c.item_images) {
-            const sorted = [...c.item_images].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+            // Service photos (side, top, ...) are managed on the drink page, not here.
+            const sorted = c.item_images.filter(isHeroLink).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
             setLocalImages(
                 sorted
                     .map((ci: any) => ({ id: ci.images?.id, url: ci.images?.url, isNew: false }))
