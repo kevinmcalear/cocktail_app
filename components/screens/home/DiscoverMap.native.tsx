@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { Image, type ImageRef } from 'expo-image';
 import { AppleMaps, GoogleMaps } from 'expo-maps';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, processColor, StyleSheet } from 'react-native';
 
 import { backbar } from '@/constants/tokens';
 import { pinLabel, type MapPin, type Viewport } from '@/lib/discoverMap';
@@ -21,8 +21,7 @@ const viewportOf = (e: { coordinates: { latitude?: number; longitude?: number };
     ? null
     : { latitude: e.coordinates.latitude, longitude: e.coordinates.longitude, latitudeDelta: e.latitudeDelta, longitudeDelta: e.longitudeDelta };
 
-// Apple draws an annotation icon as a 32pt circle (patches/expo-maps), 96px at 3x;
-// Google draws the bitmap as is, about 36dp.
+// Both maps draw a logo as a 32pt circle with a ring (patches/expo-maps), so 96px covers 3x.
 const LOGO_PX = 96;
 
 // Pin logos, loaded once per URL for the session. ponytail: never released,
@@ -74,7 +73,8 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     quietUntil.current = Date.now() + 1500;
     const position = { coordinates: { latitude: camera.latitude, longitude: camera.longitude }, zoom: camera.zoom };
     apple.current?.setCameraPosition(position);
-    google.current?.setCameraPosition({ ...position, duration: 400 });
+    // Typed void, but Google returns a promise that rejects when a newer move cancels this one.
+    void Promise.resolve(google.current?.setCameraPosition({ ...position, duration: 400 }) as unknown).catch(() => undefined);
   }, [camera]);
 
   const onMove = (e: Parameters<NonNullable<AppleMaps.MapProps['onCameraMove']>>[0]) => {
@@ -82,7 +82,11 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     const v = viewportOf(e);
     if (v) onViewportChange(v);
   };
-  const initial = camera ? { coordinates: { latitude: camera.latitude, longitude: camera.longitude }, zoom: camera.zoom } : undefined;
+  // Where the map opens. Fixed from mount: later moves go through the ref above, and Google
+  // rejects the prop going back to null (an area with no pins has no camera).
+  const [initial] = useState(() =>
+    camera ? { coordinates: { latitude: camera.latitude, longitude: camera.longitude }, zoom: camera.zoom } : undefined,
+  );
 
   if (Platform.OS === 'ios') {
     return (
@@ -129,7 +133,14 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         coordinates: { latitude: p.latitude, longitude: p.longitude },
         title: p.name,
         snippet: p.score === null ? 'Early' : pinLabel(p),
-        ...(p.logo && logos[p.logo] ? { icon: logos[p.logo], anchor: { x: 0.5, y: 0.5 } } : null),
+        ...(p.logo && logos[p.logo]
+          ? {
+              icon: logos[p.logo],
+              anchor: { x: 0.5, y: 0.5 },
+              // The ring: light, or the accent when selected, as on iOS.
+              iconRingColor: processColor(p.id === selectedId ? accent.fill : backbar.dark.ink) as number,
+            }
+          : null),
         zIndex: p.id === selectedId ? 2 : 1,
       }))}
       onMarkerClick={(m) => onSelect(m.id ?? null)}

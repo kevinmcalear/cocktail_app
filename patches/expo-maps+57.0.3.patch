@@ -1,3 +1,111 @@
+diff --git a/node_modules/expo-maps/android/src/main/java/expo/modules/maps/GoogleMapsView.kt b/node_modules/expo-maps/android/src/main/java/expo/modules/maps/GoogleMapsView.kt
+index 82450b6..6258620 100644
+--- a/node_modules/expo-maps/android/src/main/java/expo/modules/maps/GoogleMapsView.kt
++++ b/node_modules/expo-maps/android/src/main/java/expo/modules/maps/GoogleMapsView.kt
+@@ -3,6 +3,11 @@ package expo.modules.maps
+ import android.annotation.SuppressLint
+ import android.content.Context
+ import android.graphics.Bitmap
++import android.graphics.BitmapShader
++import android.graphics.Canvas
++import android.graphics.Matrix
++import android.graphics.Paint
++import android.graphics.Shader
+ import android.graphics.Point
+ import android.graphics.drawable.Drawable
+ import android.view.MotionEvent
+@@ -194,7 +199,7 @@ class GoogleMapsView(context: Context, appContext: AppContext) :
+ 
+       for ((marker, state) in markerState.value) {
+         key(marker.id) {
+-          val icon = remember(marker.icon) { getIconDescriptor(marker) }
++          val icon = remember(marker.icon, marker.iconRingColor) { getIconDescriptor(marker) }
+ 
+           Marker(
+             state = state,
+@@ -422,11 +427,35 @@ class GoogleMapsView(context: Context, appContext: AppContext) :
+         icon.get(toKClass<SharedRef<Bitmap>>()).ref
+       }
+ 
+-      BitmapDescriptorFactory.fromBitmap(bitmap)
++      BitmapDescriptorFactory.fromBitmap(marker.iconRingColor?.let { roundIcon(bitmap, it) } ?: bitmap)
+     }
+   }
+ }
+ 
++// Cocktail: the icon cropped to a 32dp circle with a 2dp ring, like the iOS annotations.
++private fun GoogleMapsView.roundIcon(src: Bitmap, ringColor: Int): Bitmap {
++  val density = context.resources.displayMetrics.density
++  val size = (32 * density).toInt()
++  val ring = 2 * density
++  val radius = size / 2f
++  val scale = size.toFloat() / minOf(src.width, src.height)
++  val shader = BitmapShader(src, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
++    setLocalMatrix(Matrix().apply {
++      setScale(scale, scale)
++      postTranslate((size - src.width * scale) / 2f, (size - src.height * scale) / 2f)
++    })
++  }
++  val out = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
++  val canvas = Canvas(out)
++  canvas.drawCircle(radius, radius, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.shader = shader })
++  canvas.drawCircle(radius, radius, radius - ring / 2, Paint(Paint.ANTI_ALIAS_FLAG).apply {
++    style = Paint.Style.STROKE
++    strokeWidth = ring
++    color = ringColor
++  })
++  return out
++}
++
+ @Composable
+ private fun MapCircles(
+   circleState: List<Pair<CircleRecord, LatLng>>,
+diff --git a/node_modules/expo-maps/android/src/main/java/expo/modules/maps/Records.kt b/node_modules/expo-maps/android/src/main/java/expo/modules/maps/Records.kt
+index 1585460..7f53c45 100644
+--- a/node_modules/expo-maps/android/src/main/java/expo/modules/maps/Records.kt
++++ b/node_modules/expo-maps/android/src/main/java/expo/modules/maps/Records.kt
+@@ -85,7 +85,11 @@ data class MarkerRecord(
+   val anchor: AnchorRecord = AnchorRecord(),
+ 
+   @Field
+-  val zIndex: Float = 0.0f
++  val zIndex: Float = 0.0f,
++
++  // Cocktail: draw the icon as a round badge with a ring in this colour.
++  @Field
++  val iconRingColor: Int? = null
+ ) : Record
+ 
+ @OptimizedRecord
+diff --git a/node_modules/expo-maps/build/google/GoogleMaps.types.d.ts b/node_modules/expo-maps/build/google/GoogleMaps.types.d.ts
+index 100005c..bbd3dcd 100644
+--- a/node_modules/expo-maps/build/google/GoogleMaps.types.d.ts
++++ b/node_modules/expo-maps/build/google/GoogleMaps.types.d.ts
+@@ -47,6 +47,10 @@ export type GoogleMapsMarker = {
+      * The custom icon to display for the marker.
+      */
+     icon?: SharedRefType<'image'>;
++    /**
++     * Cocktail patch: draws the icon as a round badge with a ring in this colour (a processed colour).
++     */
++    iconRingColor?: number;
+     /**
+      * The anchor used to position the anchor relative to its coordinates.
+      * @default bottom-center of the icon
+diff --git a/node_modules/expo-maps/build/google/GoogleMapsView.js b/node_modules/expo-maps/build/google/GoogleMapsView.js
+index de124a6..0ea4d1f 100644
+--- a/node_modules/expo-maps/build/google/GoogleMapsView.js
++++ b/node_modules/expo-maps/build/google/GoogleMapsView.js
+@@ -20,7 +20,8 @@ export const GoogleMapsView = React.forwardRef(({ onMapLoaded, onMapClick, onMap
+     const nativeRef = React.useRef(null);
+     React.useImperativeHandle(ref, () => ({
+         setCameraPosition(config) {
+-            nativeRef.current?.setCameraPosition(config);
++            // Cocktail: return the promise so callers can handle a cancelled animation.
++            return nativeRef.current?.setCameraPosition(config);
+         },
+         async selectMarker(id, options) {
+             return nativeRef.current?.selectMarker(id, options);
 diff --git a/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift b/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift
 index 7484170..7e83648 100644
 --- a/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift

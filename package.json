@@ -111,6 +111,11 @@
         "buildFromSource": [
           "expo-maps"
         ]
+      },
+      "android": {
+        "buildFromSource": [
+          "expo-maps"
+        ]
       }
     }
   }
