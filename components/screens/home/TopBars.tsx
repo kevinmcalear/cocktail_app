@@ -1,0 +1,47 @@
+import { StyleSheet, View } from 'react-native';
+
+import { Caption, Headline } from '@/components/ds';
+import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
+import { space } from '@/constants/tokens';
+import { useTopBars } from '@/hooks/useDiscover';
+import { areaLabel, peopleCount, type Area } from '@/lib/nearMe';
+import { MIN_RANKERS } from '@/lib/ranking';
+
+/**
+ * "Top bars near you", by bar score: the average of a bar's drink scores,
+ * weighted by how many people ranked each (see the discover migration).
+ * Early bars (fewer than MIN_RANKERS people) are listed without a score when
+ * no bar has one yet.
+ */
+export function TopBars({ area }: { area: Area }) {
+  const where = areaLabel(area);
+  const { data, isLoading, error } = useTopBars(area);
+  const ranked = data?.ranked ?? [];
+  const early = data?.early ?? [];
+
+  let body;
+  if (error) body = <ListNote>{`Couldn't load the bars: ${error.message}`}</ListNote>;
+  else if (isLoading) body = <ListNote>Loading…</ListNote>;
+  else if (ranked.length) {
+    body = <AreaRankList rows={ranked} scoreDetail={(r) => `${peopleCount(r.rankers)}`} />;
+  } else if (early.length) {
+    body = (
+      <>
+        <ListNote>{`No bar ${where} has a score yet. These are the ones people have started ranking; a bar gets a score once ${MIN_RANKERS} people rank drinks there.`}</ListNote>
+        <EarlyList rows={early} />
+      </>
+    );
+  } else body = <ListNote>{`Nobody has ranked a drink at a bar ${where} yet.`}</ListNote>;
+
+  return (
+    <View style={styles.section}>
+      <Caption tone="muted">{ranked.length || isLoading ? 'Bar score, from every drink ranked there' : early.length ? 'Early' : 'Not ranked yet'}</Caption>
+      <Headline role="heading">{`Top bars ${where}`}</Headline>
+      {body}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: { gap: space.xs, marginTop: space.xl },
+});
