@@ -71,7 +71,7 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
   } else {
     body = (
       <>
-        <Body>Why are you reporting it? Only our moderators see reports, and we won’t tell them it was you.</Body>
+        <Body>Why are you reporting it? Only our moderators see reports. The person you report isn’t told who sent it.</Body>
         <View role="radiogroup" aria-label="Reason" style={styles.list}>
           {REPORT_REASONS.map((r) => (
             <Choice key={r.value} label={r.label} detail={r.detail} selected={reason === r.value} onPress={() => setReason(r.value)} />

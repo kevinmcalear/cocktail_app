@@ -31,7 +31,7 @@ export function BlockedPeopleScreen() {
   );
 }
 
-const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 function BlockedRow({ person }: { person: BlockedPerson }) {
   const ds = useDs();
@@ -50,7 +50,7 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
       <UserAvatar uri={person.avatar_url} name={name} size={40} />
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{name}</Headline>
-        <Caption tone="muted" numberOfLines={1}>
+        <Caption tone="muted">
           {[person.handle ? `@${person.handle}` : null, `Blocked ${DAY.format(new Date(person.blocked_at))}`].filter(Boolean).join(' · ')}
         </Caption>
         {setBlocked.error ? (

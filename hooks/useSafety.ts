@@ -61,9 +61,11 @@ export function useSetBlocked() {
       // Blocking twice is still blocked.
       if (error && error.code !== '23505') throw error;
     },
-    // ponytail: refetches every query rather than tracking which ones carry
-    // people's content. Blocking is rare; narrow this if it shows up.
-    onSuccess: () => qc.invalidateQueries(),
+    // Reset, not invalidate: a query whose refetch now fails (the other
+    // person's drink) would otherwise keep showing its cached copy.
+    // ponytail: drops every cached query rather than tracking which ones
+    // carry people's content. Blocking is rare; narrow this if it shows up.
+    onSuccess: () => qc.resetQueries(),
     onError: () => {},
   });
 }

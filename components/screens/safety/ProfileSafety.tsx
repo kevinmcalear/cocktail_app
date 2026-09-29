@@ -12,7 +12,7 @@ import { parseProfileRef } from '@/lib/profiles';
 
 import { ReportSheet } from './ReportSheet';
 
-export const BLOCK_EFFECT = "You won't see each other's drinks, rankings or profile. They aren't told you blocked them.";
+export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or profile. They aren’t told you blocked them.';
 
 /**
  * "More" on someone else's profile: report it, and for a person, block
@@ -31,7 +31,7 @@ export function ProfileSafety({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <GlassButton accessibilityLabel={`More for ${name}: report or block`} icon="ellipsis" onPress={() => setSheet('menu')} />
+      <GlassButton accessibilityLabel={`More for ${name}: ${canBlock ? 'report or block' : 'report'}`} icon="ellipsis" onPress={() => setSheet('menu')} />
       {sheet === 'menu' ? (
         <MenuSheet visible onClose={() => setSheet(null)} title={profile.display_name} subtitle={name}>
           <Button label={`Report ${name}`} icon="flag" variant="secondary" onPress={() => setSheet('report')} />

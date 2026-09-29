@@ -36,7 +36,7 @@ export function ModerationScreen() {
     );
   }
   return (
-    <SafetyPage title="Reports" intro="What people have reported. Hide it if it breaks the rules; the reporter sees your note, the person reported doesn't.">
+    <SafetyPage title="Reports" intro="What people have reported. Hide it if it breaks the rules. Nobody is told who reported them.">
       <Segmented accessibilityLabel="Which reports" options={LISTS} value={list} onChange={setList} />
       {error ? (
         <Body tone="muted">{`Couldn't load reports: ${error.message}`}</Body>
@@ -86,13 +86,12 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
           {open ? null : <Tag label={r.status === 'actioned' ? 'Actioned' : 'Dismissed'} />}
         </View>
         <Headline>{what}</Headline>
-        {r.target_detail ? <Caption tone="muted">{r.target_detail}</Caption> : null}
+        {r.target_detail ? <Caption tone="muted">{r.target_kind === 'profile' ? r.target_detail : `${r.target_kind === 'ranking' ? 'At' : 'From'} ${r.target_detail}`}</Caption> : null}
         <Caption tone="muted">{`Reported ${WHEN.format(new Date(r.created_at))}`}</Caption>
         {r.details ? <Body>{`“${r.details}”`}</Body> : <Caption tone="muted">No details given.</Caption>}
-        {r.resolution ? <Body tone="muted">{`Note to reporter: ${r.resolution}`}</Body> : null}
-        {href ? <Button label="Open it" variant="ghost" onPress={() => router.push(href)} /> : null}
+        {r.resolution ? <Body tone="muted">{`Note: ${r.resolution}`}</Body> : null}
         {open ? (
-          <Field label="Note to the reporter (optional)" placeholder="What you did, in a sentence" value={note} onChangeText={setNote} maxLength={1000} />
+          <Field label="Note (optional)" placeholder="What you did, in a sentence" hint="Kept with the report for the person who sent it." value={note} onChangeText={setNote} maxLength={1000} />
         ) : null}
         {failed ? (
           <Caption tone="accent" role="alert">
@@ -118,6 +117,7 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
               onPress={() => setHidden.mutate({ report: r, hidden: !r.target_hidden })}
             />
           ) : null}
+          {href ? <Button label={r.target_kind === 'ranking' ? 'Open the list' : 'Open profile'} variant="ghost" onPress={() => router.push(href)} /> : null}
         </View>
       </Surface>
     </View>

@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Field, Headline, PressableScale, useDs } from '@/components/ds';
 import { Choice } from '@/components/screens/menus/MenuSheet';
-import { BRAND } from '@/constants/brand';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useConfirmAge } from '@/hooks/useAgeCheck';
 import { countryName, searchCountries } from '@/lib/countries';
@@ -116,7 +115,7 @@ export function UnderAgeNote() {
       <Body>
         You’re under the drinking age where you live, so collecting drinks, ranking them and publishing your own aren’t available on this account.
       </Body>
-      <Body tone="muted">{`We kept only that answer, not your birth date. If it was a mistake, write to us at ${BRAND.supportEmail}.`}</Body>
+      <Body tone="muted">We kept only that answer, not your birth date. If it was a mistake, contact us at the address in our privacy policy.</Body>
     </View>
   );
 }
