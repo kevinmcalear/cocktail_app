@@ -80,8 +80,8 @@ function RootLayoutNav() {
     // Privacy, terms and account-deletion pages must open without signing in,
     // and venue staff links (/v/<slug>) have their own branded sign-in. The
     // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>)
-    // and releases (/r/<id>) are public.
-    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r') return;
+    // releases (/r/<id>) and shared home menus (/m/<id>) are public.
+    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'm') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
@@ -134,6 +134,7 @@ function RootLayoutNav() {
             <Stack.Screen name="v/[slug]" options={{ headerShown: false }} />
             <Stack.Screen name="d/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen
               name="menus/create/index"
               options={{ presentation: "modal", headerShown: false }}

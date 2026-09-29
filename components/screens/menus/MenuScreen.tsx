@@ -17,6 +17,7 @@ import type { MenuStatus } from '@/types/menus';
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuSections } from './MenuSections';
+import { ShareMenuSheet } from './ShareMenuSheet';
 
 const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
 const STATUS_TONE = { on: 'success', upcoming: 'accent', draft: 'default', previous: 'default' } as const;
@@ -56,6 +57,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const [now] = useState(() => Date.now());
   const [more, setMore] = useState(false);
   const [night, setNight] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const userId = useAuth().user?.id ?? null;
   const caps = useCapabilities(menu?.barId);
 
@@ -88,12 +90,13 @@ export function MenuScreen({ menuId }: { menuId: string }) {
           ) : null}
           <Display>{menu.name}</Display>
           <Caption tone="muted">
-            {[venue?.name ?? (menu.barId ? null : 'Just yours'), homeMenuLine(menu, now), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
+            {[venue?.name ?? (menu.barId ? null : menu.sharedAt ? 'Shared with a link' : 'Just yours'), homeMenuLine(menu, now), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
           </Caption>
           <View style={styles.actions}>
             {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
             {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
-            <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => go(`/menus/${menu.id}/card`)} />
+            {/* Your home menu shares as a link or a card; a venue's menu as its guest card. */}
+            <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (canEdit && !menu.barId ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
             {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
             {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
           </View>
@@ -105,6 +108,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
       {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
+      {sharing ? <ShareMenuSheet menu={menu} onClose={() => setSharing(false)} /> : null}
       {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
     </View>
   );
