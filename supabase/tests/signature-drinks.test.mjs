@@ -96,9 +96,12 @@ describe('signature drinks', () => {
                                (SELECT count(*) FROM public.recipes)::int AS recipes,
                                (SELECT count(*) FROM public.item_methods)::int AS methods`)
       ).rows[0];
-    const before = await count();
     await db.query('BEGIN');
     try {
+      // Other test files write to these tables at the same time; hold them
+      // still so the counts only see this run.
+      await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
+      const before = await count();
       await db.query(readFileSync(MIGRATION, 'utf8'));
       assert.deepEqual(await count(), before);
     } finally {
