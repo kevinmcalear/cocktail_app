@@ -50,20 +50,21 @@ export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
 
 /**
  * A menu in a list: coming up (with its date), a draft (dashed, still being
- * built), or previous (its dates).
+ * built), or previous (its dates). `note` adds a line of its own, like how
+ * many of the drinks you can make at home.
  */
-export function MenuListRow({ menu, now }: { menu: MenuSummary; now: number }) {
+export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
   const router = useRouter();
   const status = menuStatus(menu, now);
   const start = status === 'upcoming' ? new Date(menu.event?.startsAt ?? menu.startsAt!) : null;
   // With the date block showing, the caption doesn't repeat the date.
   const meta = start ? plural(menu.itemIds.length, 'drink') : metaLine(menu, now);
-  const label = menu.event ? `${menu.event.name} · ${meta}` : meta;
+  const label = [menu.event?.name, meta, note].filter(Boolean).join(' · ');
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, menu.event?.name, metaLine(menu, now)].filter(Boolean).join(', ')}
+      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, menu.event?.name, metaLine(menu, now), note].filter(Boolean).join(', ')}
       onPress={() => router.push(menuHref(menu.id))}
       style={[
         styles.row,
