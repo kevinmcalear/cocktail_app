@@ -1,56 +1,248 @@
--- Local and national bar awards for bars already on the map: 189 rows.
+-- Local and national bar awards for bars already on the map: 417 rows
+-- across 133 bars, 2021 to 2026.
 --
 -- The World's and regional 50 Best lists are global. These are the awards
--- each city's own bar scene watches: the UK's Top 50 Cocktail Bars, Time Out's
--- food and drink awards in Sydney, Melbourne, Hong Kong and Paris, Mexico's
--- Shaker Awards, Bangkok's Bar Show and BK Magazine's BAD Awards, Tatler Best,
--- and one James Beard Outstanding Bar. Rows by body:
+-- each country's or city's own bar scene watches, from the UK's Top 50
+-- Cocktail Bars and Melbourne's Good Food Guide hats to Mexico's Shaker
+-- Awards, 30 Best Bars India and Canada's 100 Best. Rows by body:
 --   Top 50 Cocktail Bars: 105
+--   Bangkok Bar Show Awards: 39
 --   Shaker Awards: 37
+--   30 Best Bars India: 31
+--   Top Cocktail Bars: 26
+--   Tatler Dining Bar Awards: 22
 --   Time Out Hong Kong Bar Awards: 17
---   Bangkok Bar Show Awards: 13
---   BAD Awards: 7
+--   BAD Awards: 15
+--   Canada's 100 Best: 15
+--   Premios Summum: 13
+--   DRiNK Awards: 12
+--   Food & Wine Global Tastemakers: 11
+--   Bartenders' Choice Awards: 10
+--   Exame Casual Melhores Bares do Brasil: 9
+--   Good Food Guide: 9
+--   Barawards: 7
+--   Mixology Bar Awards: 7
+--   What's On Nightlife Awards: 5
+--   Prêmio Paladar: 4
+--   South African Bar & Beverage Awards: 4
+--   The Cocktail Bar Awards: 3
 --   Time Out Melbourne Food & Drink Awards: 3
 --   Time Out Paris Food & Drink Awards: 3
+--   Taiwan Bar Awards: 2
 --   Time Out Sydney Food & Drink Awards: 2
+--   Gault&Millau: 1
 --   James Beard Awards: 1
+--   Melhores da Taça: 1
+--   Premios Somos: 1
 --   Tatler Best: 1
+--   What's On Dubai Awards: 1
 --
--- Rules, same as the earlier award seeds: winners and list places only (no
--- shortlists), no sponsor names in the body or the title, the title as the
--- body writes it (French and Spanish kept), person awards left out. Each row
--- links the page that names the bar and the award, checked 29-30 Sep 2026.
+-- Rules, same as the earlier award seeds: winners, hats and list places only
+-- (no shortlists, nominations or highly commended), no sponsor names in the
+-- body or the title, the title as the body writes it (Italian, Spanish,
+-- Portuguese, German and Dutch kept), no person awards and no awards to a
+-- single drink. A place on one of a body's several lists keeps the list's
+-- name as the title (Food & Wine's Top U.S. Bars, Summum's Mejor
+-- Restobar-Lounge). Years are the edition's own year. Each row links the page
+-- that names the bar and the award, checked 29-30 Sep 2026 (a web.archive.org
+-- copy where the live page blocks fetching).
 -- Rows join on the bar's handle, so a bar that isn't here is skipped, and a
 -- row already present (same bar, body, year and title) is left alone.
 --
--- Left out on purpose: Top 500 Bars (global, thin sourcing), Good Food Guide
--- hats (not verifiable from the guide itself), and Gourmet Traveller (its bar
--- award went to bars we don't list).
+-- Left out on purpose: Top 500 Bars (global, thin sourcing); Gourmet
+-- Traveller and the Observer Food Monthly Awards (no wins for our bars since
+-- 2021); Time Out Dubai (pages blocked, unverifiable); Summum 2026 (not
+-- announced until 1 Oct 2026).
 
 INSERT INTO "public"."profile_awards" ("profile_id", "award", "year", "position", "title", "source_url")
 SELECT p.id, v.award, v.year::smallint, v.position::smallint, v.title::text, v.source_url
 FROM (VALUES
+    ('boilermaker.goa', '30 Best Bars India', 2025, NULL, 'Best Bar Team', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('boilermaker.goa', '30 Best Bars India', 2025, 4, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2021, 5, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2022, 4, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2023, 3, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2024, NULL, 'Best Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2024, NULL, 'Best Cocktail Menu', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2024, 1, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('lair.newdelhi', '30 Best Bars India', 2025, 5, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('mr.hoots', '30 Best Bars India', 2021, 6, NULL, 'https://www.30bestbarsindia.in/list-of-bars/2021-archive/'),
+    ('mr.hoots', '30 Best Bars India', 2022, 11, NULL, 'https://www.30bestbarsindia.in/list-of-bars/2022-archive/'),
+    ('mr.hoots', '30 Best Bars India', 2023, 13, NULL, 'https://www.30bestbarsindia.in/list-of-bars/2023-archive/'),
+    ('mr.hoots', '30 Best Bars India', 2024, 18, NULL, 'https://www.30bestbarsindia.in/list-of-bars/2024-archive/'),
+    ('mr.hoots', '30 Best Bars India', 2025, 12, NULL, 'https://www.30bestbarsindia.in/list-of-bars/2025-archive/'),
+    ('sidecarindia', '30 Best Bars India', 2021, 2, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2022, NULL, 'Best Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2022, NULL, 'Best Cocktail Menu', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2022, NULL, 'Best Independent Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2022, 1, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2023, NULL, 'Best Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2023, NULL, 'Best Cocktail Menu', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2023, NULL, 'Best Independent Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2023, 1, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2024, 4, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('sidecarindia', '30 Best Bars India', 2025, 8, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, NULL, 'Best Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, NULL, 'Best Bar Design', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, NULL, 'Best Bar Team', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, NULL, 'Best Cocktail Menu', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, NULL, 'Best Independent Bar', 'https://www.30bestbarsindia.in/award-winners/'),
+    ('tesouro.goa', '30 Best Bars India', 2021, 1, NULL, 'https://www.30bestbarsindia.in/award-winners/'),
+    ('bar.us.bkk', 'BAD Awards', 2024, NULL, 'Best Cocktail Bar', 'https://www.bkmagazine.com/nightlife/news/bad-awards-2024-check-out-final-winners-list-bangkoks-best-bars/'),
     ('bar.us.bkk', 'BAD Awards', 2026, NULL, 'Bar of the Year', 'https://badawards.bkmagazine.com/bars-of-the-year/bad-awards-bar-of-the-year-for-2026/'),
+    ('bkksocialclub', 'BAD Awards', 2024, NULL, 'Best Hotel Bar', 'https://www.bkmagazine.com/nightlife/news/bad-awards-2024-check-out-final-winners-list-bangkoks-best-bars/'),
     ('bkksocialclub', 'BAD Awards', 2025, NULL, 'Best Hotel Bar', 'https://badawards.bkmagazine.com/bar-winners/winners-list-for-the-bad-awards-2025/'),
     ('bkksocialclub', 'BAD Awards', 2026, NULL, 'Best Hotel Bar', 'https://badawards.bkmagazine.com/hotel-bars/best-hotel-bars-in-bangkok-for-2026/'),
     ('drywavecocktailstudio', 'BAD Awards', 2025, NULL, 'Bar of the Year', 'https://badawards.bkmagazine.com/bar-winners/winners-list-for-the-bad-awards-2025/'),
     ('drywavecocktailstudio', 'BAD Awards', 2025, NULL, 'Best New Bar', 'https://badawards.bkmagazine.com/bar-winners/winners-list-for-the-bad-awards-2025/'),
     ('drywavecocktailstudio', 'BAD Awards', 2026, NULL, 'Best Cocktail Bar', 'https://badawards.bkmagazine.com/cocktail-bars/best-cocktail-bars-in-bangkok-for-2026/'),
+    ('mahaniyom.cocktailbar', 'BAD Awards', 2023, NULL, 'Best Cocktail Bar', 'https://www.bkmagazine.com/nightlife/check-out-final-winners-list-bad-awards-2023/'),
+    ('mahaniyom.cocktailbar', 'BAD Awards', 2023, NULL, 'Best Cocktail Menu', 'https://www.bkmagazine.com/nightlife/check-out-final-winners-list-bad-awards-2023/'),
+    ('mahaniyom.cocktailbar', 'BAD Awards', 2023, NULL, 'Best New Bar', 'https://www.bkmagazine.com/nightlife/check-out-final-winners-list-bad-awards-2023/'),
+    ('opm.bkk', 'BAD Awards', 2023, NULL, 'Bar of the Year', 'https://www.bkmagazine.com/nightlife/check-out-final-winners-list-bad-awards-2023/'),
+    ('opm.bkk', 'BAD Awards', 2023, NULL, 'Best Design', 'https://www.bkmagazine.com/nightlife/check-out-final-winners-list-bad-awards-2023/'),
+    ('opm.bkk', 'BAD Awards', 2024, NULL, 'Bar of the Year', 'https://www.bkmagazine.com/nightlife/news/bad-awards-2024-check-out-final-winners-list-bangkoks-best-bars/'),
     ('opm.bkk', 'BAD Awards', 2025, NULL, 'Best Cocktail Bar', 'https://badawards.bkmagazine.com/bar-winners/winners-list-for-the-bad-awards-2025/'),
+    ('bar.us.bkk', 'Bangkok Bar Show Awards', 2023, NULL, 'New Bar of the Year', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bar.us.bkk', 'Bangkok Bar Show Awards', 2023, 7, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bar.us.bkk', 'Bangkok Bar Show Awards', 2024, 8, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('bar.us.bkk', 'Bangkok Bar Show Awards', 2025, 2, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2023, NULL, 'Art of Hospitality', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2023, NULL, 'Bangkok''s Best Cocktail Bar', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2023, NULL, 'Hotel Bar of the Year', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2023, NULL, 'Thailand''s Best Cocktail Bar', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2023, 1, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2024, NULL, 'Hotel Bar of the Year', 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2024, 3, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('bkksocialclub', 'Bangkok Bar Show Awards', 2025, NULL, 'Art of Hospitality', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
     ('bkksocialclub', 'Bangkok Bar Show Awards', 2025, NULL, 'Hotel Bar of the Year', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('bkksocialclub', 'Bangkok Bar Show Awards', 2025, 5, NULL, 'https://www.timeout.com/bangkok/news/thirsty-the-bangkok-bar-show-awards-just-dropped-its-list-of-thailands-best-bars-for-2025-101425'),
+    ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2024, NULL, 'Bar Team of the Year', 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
+    ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2024, 1, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2025, NULL, 'Bar Team of the Year', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
     ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2025, NULL, 'Best Bar in Bangkok', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
     ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2025, NULL, 'Best Bar in Thailand', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
     ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2025, NULL, 'Menu Design of the Year', 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
     ('drywavecocktailstudio', 'Bangkok Bar Show Awards', 2025, 1, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('god_bkk', 'Bangkok Bar Show Awards', 2024, NULL, 'Menu Design of the Year', 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
+    ('god_bkk', 'Bangkok Bar Show Awards', 2024, NULL, 'New Bar of the Year', 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
+    ('god_bkk', 'Bangkok Bar Show Awards', 2024, 2, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('god_bkk', 'Bangkok Bar Show Awards', 2025, 3, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('mahaniyom.cocktailbar', 'Bangkok Bar Show Awards', 2023, 5, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('mahaniyom.cocktailbar', 'Bangkok Bar Show Awards', 2024, 10, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('mahaniyom.cocktailbar', 'Bangkok Bar Show Awards', 2025, 13, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('opm.bkk', 'Bangkok Bar Show Awards', 2023, 8, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('opm.bkk', 'Bangkok Bar Show Awards', 2024, 5, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('opm.bkk', 'Bangkok Bar Show Awards', 2025, 4, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
-    ('tropiccitybkk', 'Bangkok Bar Show Awards', 2025, 5, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('rabbitholebkk', 'Bangkok Bar Show Awards', 2023, NULL, 'Menu Design of the Year', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('rabbitholebkk', 'Bangkok Bar Show Awards', 2023, 16, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('tropiccitybkk', 'Bangkok Bar Show Awards', 2023, 3, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('tropiccitybkk', 'Bangkok Bar Show Awards', 2024, 6, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
+    ('vesperbkk', 'Bangkok Bar Show Awards', 2023, NULL, 'Bar Team of the Year', 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('vesperbkk', 'Bangkok Bar Show Awards', 2023, 2, NULL, 'https://thestandard.co/life/thailands-20-best-bars-2023/'),
+    ('vesperbkk', 'Bangkok Bar Show Awards', 2024, 4, NULL, 'https://www.bangkokpost.com/life/social-and-lifestyle/2894357/dry-wave-cocktail-studio-is-thailands-best-bar'),
     ('vesperbkk', 'Bangkok Bar Show Awards', 2025, 7, NULL, 'https://thedotmagazine.com/thailands-best-bars-revealed-in-the-bangkok-bar-show-awards-2025/'),
+    ('drinkkongbar', 'Barawards', 2021, NULL, 'Bar team dell''anno', 'https://www.bargiornale.it/barawards-albo-doro/'),
+    ('drinkkongbar', 'Barawards', 2022, NULL, 'Cocktail bar dell''anno', 'https://www.bargiornale.it/barawards-albo-doro/'),
+    ('freniefrizioni', 'Barawards', 2021, NULL, 'Cocktail bar dell''anno', 'https://www.bargiornale.it/barawards-albo-doro/'),
+    ('freniefrizioni', 'Barawards', 2025, NULL, 'Bar team dell''anno', 'https://www.bargiornale.it/bar-awards/barawards-2025-scopri-i-professionisti-vincitori-e-le-top-10/'),
+    ('lantiquario_napoli', 'Barawards', 2024, NULL, 'Cocktail bar dell''anno', 'https://www.bargiornale.it/barawards-albo-doro/'),
+    ('moebiusmilano', 'Barawards', 2025, NULL, 'Cocktail bar dell''anno', 'https://www.bargiornale.it/bar-awards/barawards-2025-scopri-i-locali-vincitori-e-le-top-10/'),
+    ('thecourtrome', 'Barawards', 2021, NULL, 'Bar d''albergo dell''anno', 'https://www.bargiornale.it/barawards-albo-doro/'),
+    ('lucysstockholm', 'Bartenders'' Choice Awards', 2022, NULL, 'Best Cocktail Bar', 'https://www.livetsgoda.se/vinnare-av-bartenders-choice-awards/'),
+    ('lucysstockholm', 'Bartenders'' Choice Awards', 2023, NULL, 'Best Cocktail Bar', 'https://www.diffordsguide.com/competition/1195/bartenders-choice-awards/2023'),
+    ('rodahusetsthlm', 'Bartenders'' Choice Awards', 2022, NULL, 'Best New Cocktail Bar', 'https://www.livetsgoda.se/vinnare-av-bartenders-choice-awards/'),
+    ('rodahusetsthlm', 'Bartenders'' Choice Awards', 2024, NULL, 'Best Cocktail Bar', 'https://www.livetsgoda.se/congratulations-to-the-winners-of-the-bartenders-choice-awards-2024/'),
+    ('tjoget', 'Bartenders'' Choice Awards', 2023, NULL, 'People''s Choice', 'https://www.diffordsguide.com/competition/1195/bartenders-choice-awards/2023'),
+    ('tjoget', 'Bartenders'' Choice Awards', 2024, NULL, 'People''s Choice', 'https://www.livetsgoda.se/congratulations-to-the-winners-of-the-bartenders-choice-awards-2024/'),
+    ('tjoget', 'Bartenders'' Choice Awards', 2025, NULL, 'People''s Choice', 'https://www.livetsgoda.se/bartenders-choice-awards-2025-celebrating-this-years-best-in-the-industry/'),
+    ('tjoget', 'Bartenders'' Choice Awards', 2026, NULL, 'Best Atmosphere', 'https://www.livetsgoda.se/bartenders-choice-awards-vinnare-2026/'),
+    ('tjoget', 'Bartenders'' Choice Awards', 2026, NULL, 'People''s Choice', 'https://www.livetsgoda.se/bartenders-choice-awards-vinnare-2026/'),
+    ('two.schmucks', 'Bartenders'' Choice Awards', 2022, NULL, 'Best International Cocktail Bar', 'https://www.livetsgoda.se/vinnare-av-bartenders-choice-awards/'),
+    ('bar_raval', 'Canada''s 100 Best', 2022, 8, NULL, 'https://canadas100best.com/best-bars/2022/'),
+    ('bar_raval', 'Canada''s 100 Best', 2023, 6, NULL, 'https://canadas100best.com/best-bars/2023/'),
+    ('bar_raval', 'Canada''s 100 Best', 2024, 25, NULL, 'https://canadas100best.com/list/2024/bar-raval-2024/'),
+    ('bar_raval', 'Canada''s 100 Best', 2025, 29, NULL, 'https://canadas100best.com/list/2025/bar-raval-2025/'),
+    ('bar_raval', 'Canada''s 100 Best', 2026, 10, NULL, 'https://canadas100best.com/best-bars/2026/'),
+    ('barpompette_to', 'Canada''s 100 Best', 2022, 11, NULL, 'https://canadas100best.com/best-bars/2022/'),
+    ('barpompette_to', 'Canada''s 100 Best', 2023, 5, NULL, 'https://canadas100best.com/best-bars/2023/'),
+    ('barpompette_to', 'Canada''s 100 Best', 2024, 1, NULL, 'https://canadas100best.com/best-bars/2024/'),
+    ('barpompette_to', 'Canada''s 100 Best', 2025, 1, NULL, 'https://canadas100best.com/best-bars/2025/'),
+    ('barpompette_to', 'Canada''s 100 Best', 2026, 2, NULL, 'https://canadas100best.com/best-bars/2026/'),
+    ('civlibto', 'Canada''s 100 Best', 2022, 1, NULL, 'https://canadas100best.com/list/2022/civil-liberties-2022/'),
+    ('civlibto', 'Canada''s 100 Best', 2023, 1, NULL, 'https://canadas100best.com/best-bars/2023/'),
+    ('civlibto', 'Canada''s 100 Best', 2024, 2, NULL, 'https://canadas100best.com/best-bars/2024/'),
+    ('civlibto', 'Canada''s 100 Best', 2025, 3, NULL, 'https://canadas100best.com/best-bars/2025/'),
+    ('civlibto', 'Canada''s 100 Best', 2026, 4, NULL, 'https://canadas100best.com/best-bars/2026/'),
+    ('epic_bar_shanghai', 'DRiNK Awards', 2022, NULL, 'Bar of the Year', 'https://web.archive.org/web/20260121091023/https://www.drinkmagazine.asia/2023/03/16/winners-of-national-drink-awards-2022-announced/'),
+    ('hopeandsesame', 'DRiNK Awards', 2021, NULL, 'Bar Team', 'https://web.archive.org/web/20251207155251/https://www.drinkmagazine.asia/2022/01/20/a-look-back-at-drink-awards-2021/'),
+    ('hopeandsesame', 'DRiNK Awards', 2021, NULL, 'Cocktail Program', 'https://web.archive.org/web/20251207155251/https://www.drinkmagazine.asia/2022/01/20/a-look-back-at-drink-awards-2021/'),
+    ('hopeandsesame', 'DRiNK Awards', 2024, NULL, 'Bar of the Year (South Regional)', 'https://web.archive.org/web/20260620173145/https://www.drinkmagazine.asia/2024/10/25/south-regional-drink-awards-winners/'),
+    ('mobarshenzhen', 'DRiNK Awards', 2024, NULL, 'Hotel Bar', 'https://web.archive.org/web/20260620115059/https://www.drinkmagazine.asia/2024/12/23/national-drink-awards-2024-winners/'),
+    ('mobarshenzhen', 'DRiNK Awards', 2024, NULL, 'Hotel Bar (South Regional)', 'https://web.archive.org/web/20260620173145/https://www.drinkmagazine.asia/2024/10/25/south-regional-drink-awards-winners/'),
+    ('sober_company', 'DRiNK Awards', 2021, NULL, 'High Volume Bar', 'https://web.archive.org/web/20251207155251/https://www.drinkmagazine.asia/2022/01/20/a-look-back-at-drink-awards-2021/'),
+    ('speaklow_shanghai', 'DRiNK Awards', 2023, NULL, 'Bar of the Year', 'https://web.archive.org/web/20260124084254/https://www.drinkmagazine.asia/2024/03/22/national-drink-awards-2023-winners/'),
+    ('uniontradingco', 'DRiNK Awards', 2021, NULL, 'Bar of the Year', 'https://web.archive.org/web/20251207155251/https://www.drinkmagazine.asia/2022/01/20/a-look-back-at-drink-awards-2021/'),
+    ('uniontradingco', 'DRiNK Awards', 2022, NULL, 'Bar Team', 'https://web.archive.org/web/20260121091023/https://www.drinkmagazine.asia/2023/03/16/winners-of-national-drink-awards-2022-announced/'),
+    ('uniontradingco', 'DRiNK Awards', 2024, NULL, 'Service', 'https://web.archive.org/web/20260620115059/https://www.drinkmagazine.asia/2024/12/23/national-drink-awards-2024-winners/'),
+    ('uniontradingco', 'DRiNK Awards', 2024, NULL, 'Service (Shanghai Regional)', 'https://web.archive.org/web/20260620115059/https://www.drinkmagazine.asia/2024/10/25/shanghai-regional-drink-awards-winners/'),
+    ('eximiabar', 'Exame Casual Melhores Bares do Brasil', 2025, 3, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-2025/'),
+    ('guilhotinabar', 'Exame Casual Melhores Bares do Brasil', 2022, 11, NULL, 'https://exame.com/casual/100-melhores-bares-do-brasil/'),
+    ('guilhotinabar', 'Exame Casual Melhores Bares do Brasil', 2023, 15, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-exame-casual-2023/'),
+    ('subastor', 'Exame Casual Melhores Bares do Brasil', 2022, 3, NULL, 'https://exame.com/casual/100-melhores-bares-do-brasil/'),
+    ('subastor', 'Exame Casual Melhores Bares do Brasil', 2023, 6, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-exame-casual-2023/'),
+    ('subastor', 'Exame Casual Melhores Bares do Brasil', 2025, 44, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-2025/'),
+    ('tantannb', 'Exame Casual Melhores Bares do Brasil', 2022, 1, NULL, 'https://exame.com/casual/100-melhores-bares-do-brasil/'),
+    ('tantannb', 'Exame Casual Melhores Bares do Brasil', 2023, 1, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-exame-casual-2023/'),
+    ('tantannb', 'Exame Casual Melhores Bares do Brasil', 2025, 1, NULL, 'https://exame.com/casual/os-100-melhores-bares-do-brasil-2025/'),
+    ('anvilhouston', 'Food & Wine Global Tastemakers', 2026, 2, 'Top U.S. Bars', 'https://www.foodandwine.com/top-united-states-bars-2026-11927147'),
+    ('aviarycocktails', 'Food & Wine Global Tastemakers', 2023, NULL, 'Most Creative U.S. Bars', 'https://www.foodandwine.com/most-creative-us-bars-global-tastemakers-2023-7479883'),
+    ('barkumiko', 'Food & Wine Global Tastemakers', 2024, 9, 'Top U.S. Bars', 'https://www.foodandwine.com/global-tastemakers-best-united-states-bars-2024-8611101'),
+    ('barkumiko', 'Food & Wine Global Tastemakers', 2025, 3, 'Top U.S. Bars', 'https://www.foodandwine.com/top-united-states-bars-2025-11691821'),
+    ('barpompette_to', 'Food & Wine Global Tastemakers', 2026, 6, 'Top Global Bars', 'https://www.foodandwine.com/top-global-bars-2026-11924474'),
+    ('brokenshaker', 'Food & Wine Global Tastemakers', 2026, 4, 'Top U.S. Hotel Bars', 'https://www.foodandwine.com/top-united-states-hotel-bars-2026-11924789'),
+    ('cafelatrovamiami', 'Food & Wine Global Tastemakers', 2024, 5, 'Top U.S. Bars', 'https://www.foodandwine.com/global-tastemakers-best-united-states-bars-2024-8611101'),
+    ('jewelnola', 'Food & Wine Global Tastemakers', 2024, 6, 'Top U.S. Bars', 'https://www.foodandwine.com/global-tastemakers-best-united-states-bars-2024-8611101'),
+    ('mirate.losangeles', 'Food & Wine Global Tastemakers', 2025, 7, 'Top U.S. Bars', 'https://www.foodandwine.com/top-united-states-bars-2025-11691821'),
+    ('sweetlibertymia', 'Food & Wine Global Tastemakers', 2026, 9, 'Top U.S. Bars', 'https://www.foodandwine.com/top-united-states-bars-2026-11927147'),
+    ('trickdogbar', 'Food & Wine Global Tastemakers', 2025, 8, 'Top U.S. Bars', 'https://www.foodandwine.com/top-united-states-bars-2025-11691821'),
+    ('flyingdutchmencocktails', 'Gault&Millau', 2025, NULL, 'Cocktailbar van het Jaar', 'https://www.gault-millau.nl/en/cocktail-bars/flying-dutchmen-cocktails-amsterdam'),
+    ('apolloinn.bar', 'Good Food Guide', 2025, NULL, 'Bar of the Year', 'https://www.theage.com.au/goodfood/vic-good-food-guide/bar-of-the-year-apollo-inn-20241115-p5kr1x.html'),
+    ('bar.bellamy', 'Good Food Guide', 2025, NULL, 'One Hat', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-awards-2025-the-full-list-of-hats-20241115-p5kqz0.html'),
+    ('bar.bellamy', 'Good Food Guide', 2026, NULL, 'One Hat', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-2026-awards-full-list-of-hats-20251024-p5n50h.html'),
+    ('caretakers.cottage', 'Good Food Guide', 2023, NULL, 'Bar of the Year', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-2023-all-the-award-winners-20221104-h27n3y.html'),
+    ('gimlet.melbourne', 'Good Food Guide', 2023, NULL, 'Two Hats', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-awards-2023-full-list-of-hats-20221111-h27sv2.html'),
+    ('gimlet.melbourne', 'Good Food Guide', 2024, NULL, 'Two Hats', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-awards-2024-full-list-of-hats-20231027-p5efky.html'),
+    ('gimlet.melbourne', 'Good Food Guide', 2025, NULL, 'Two Hats', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-awards-2025-the-full-list-of-hats-20241115-p5kqz0.html'),
+    ('gimlet.melbourne', 'Good Food Guide', 2026, NULL, 'Two Hats', 'https://www.theage.com.au/goodfood/melbourne-eating-out/the-age-good-food-guide-2026-awards-full-list-of-hats-20251024-p5n50h.html'),
+    ('ps40bar', 'Good Food Guide', 2024, NULL, 'Bar of the Year', 'https://www.nineforbrands.com.au/media-release/margaret-named-nsw-restaurant-of-the-year-as-the-sydney-morning-herald-good-food-guide-2024-launched/'),
     ('barkumiko', 'James Beard Awards', 2025, NULL, 'Outstanding Bar', 'https://www.jamesbeard.org/stories/the-2025-james-beard-award-winners'),
+    ('tantannb', 'Melhores da Taça', 2025, NULL, 'Melhor Bar do Brasil', 'https://www.timeout.com/pt/rio-de-janeiro/noticias/coquetel-vinho-e-cerveja-rio-e-palco-de-premiacao-nacional-092825'),
+    ('barlelion', 'Mixology Bar Awards', 2025, NULL, 'Bar-Institution des Jahres', 'https://www.tageskarte.io/gastronomie/detail/bar-des-jahres-2025-das-sind-die-gewinner-der-mixology-bar-awards.html'),
+    ('buckandbreckberlin', 'Mixology Bar Awards', 2026, NULL, 'Bar-Institution des Jahres', 'https://www.tageskarte.io/gastronomie/detail/bar-des-jahres-2026-das-sind-die-gewinner-der-mixology-bar-awards.html'),
+    ('schumanns_house', 'Mixology Bar Awards', 2023, NULL, 'Bar-Ikone des Jahres', 'https://www.about-drinks.com/berlin-kann-bar-mixology-bar-awards-2023-verliehen/'),
+    ('velvet.berlin', 'Mixology Bar Awards', 2023, NULL, 'Bar des Jahres Deutschland', 'https://www.about-drinks.com/berlin-kann-bar-mixology-bar-awards-2023-verliehen/'),
+    ('waxonberlin', 'Mixology Bar Awards', 2023, NULL, 'Neue Bar des Jahres', 'https://www.about-drinks.com/berlin-kann-bar-mixology-bar-awards-2023-verliehen/'),
+    ('waxonberlin', 'Mixology Bar Awards', 2024, NULL, 'Bar des Jahres Deutschland', 'https://www.about-drinks.com/mixology-bar-awards-2024-die-bar-des-jahres-steht-in-berlin/'),
+    ('waxonberlin', 'Mixology Bar Awards', 2024, NULL, 'Barteam des Jahres', 'https://www.about-drinks.com/mixology-bar-awards-2024-die-bar-des-jahres-steht-in-berlin/'),
+    ('carnavalbar', 'Premios Somos', 2023, NULL, 'Mejor barra de Lima', 'https://elcomercio.pe/provecho/tendencias/estos-son-los-10-mejores-bares-de-lima-segun-los-premios-somos-2023-noticia/'),
+    ('carnavalbar', 'Premios Summum', 2022, 2, 'Mejor Bar de Lima', 'https://www.summum.pe/publicaciones/summum22.pdf'),
+    ('carnavalbar', 'Premios Summum', 2022, 5, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum22.pdf'),
+    ('carnavalbar', 'Premios Summum', 2023, 3, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum23.pdf'),
+    ('carnavalbar', 'Premios Summum', 2024, 2, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum24.pdf'),
+    ('carnavalbar', 'Premios Summum', 2025, 3, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum25.pdf'),
+    ('ladybee.lima', 'Premios Summum', 2022, 6, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum22.pdf'),
+    ('ladybee.lima', 'Premios Summum', 2022, 9, 'Mejor Bar de Lima', 'https://www.summum.pe/publicaciones/summum22.pdf'),
+    ('ladybee.lima', 'Premios Summum', 2023, 6, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum23.pdf'),
+    ('ladybee.lima', 'Premios Summum', 2024, 4, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum24.pdf'),
+    ('ladybee.lima', 'Premios Summum', 2025, 2, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum25.pdf'),
+    ('sastreriamartinezlima', 'Premios Summum', 2023, 5, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum23.pdf'),
+    ('sastreriamartinezlima', 'Premios Summum', 2024, 1, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum24.pdf'),
+    ('sastreriamartinezlima', 'Premios Summum', 2025, 4, 'Mejor Restobar-Lounge', 'https://www.summum.pe/publicaciones/summum25.pdf'),
+    ('eximiabar', 'Prêmio Paladar', 2025, 7, NULL, 'https://circuitomt.com.br/pr-mio-paladar-elege-os-20-melhores-bares-e-os-20-restaurantes-de-s-o-paulo-veja-os-vencedores/'),
+    ('subastor', 'Prêmio Paladar', 2025, 10, NULL, 'https://circuitomt.com.br/pr-mio-paladar-elege-os-20-melhores-bares-e-os-20-restaurantes-de-s-o-paulo-veja-os-vencedores/'),
+    ('tantannb', 'Prêmio Paladar', 2025, 1, NULL, 'https://circuitomt.com.br/pr-mio-paladar-elege-os-20-melhores-bares-e-os-20-restaurantes-de-s-o-paulo-veja-os-vencedores/'),
+    ('tantannb', 'Prêmio Paladar', 2026, 1, NULL, 'https://www.estadao.com.br/paladar/premio-paladar/dez-bares-sao-os-melhores-de-sao-paulo-pelo-premio-paladar-2026-veja-quais-sao-eles/'),
     ('3monosbar', 'Shaker Awards', 2025, NULL, 'Mejor bar de Latinoamérica', 'https://www.eluniversal.com.mx/menu/los-30-mejores-bares-de-mexico-segun-shaker-awards-2025/'),
     ('alquimicocartagena', 'Shaker Awards', 2023, NULL, 'Mejor Bar del Mundo', 'https://shakerawards.com/awards/awards2023/'),
     ('arcatulum', 'Shaker Awards', 2023, 6, NULL, 'https://shakerawards.com/top-30/top2023/'),
@@ -88,7 +280,38 @@ FROM (VALUES
     ('zapotebar', 'Shaker Awards', 2024, 3, NULL, 'https://shakerawards.com/top-30/top2024/'),
     ('zapotebar', 'Shaker Awards', 2025, NULL, 'Mejor bar de hotel de México', 'https://www.eluniversal.com.mx/menu/los-30-mejores-bares-de-mexico-segun-shaker-awards-2025/'),
     ('zapotebar', 'Shaker Awards', 2025, 6, NULL, 'https://shakerawards.com/top-30/top2025/'),
+    ('sin_tax_bar', 'South African Bar & Beverage Awards', 2023, NULL, 'Best Cocktail Bar', 'https://barandbeverageawards.co.za/awards-2023/'),
+    ('sin_tax_bar', 'South African Bar & Beverage Awards', 2024, NULL, 'Best Bar Team', 'https://barandbeverageawards.co.za/awards2024/'),
+    ('sin_tax_bar', 'South African Bar & Beverage Awards', 2024, NULL, 'Best Cocktail Bar', 'https://barandbeverageawards.co.za/awards2024/'),
+    ('thehouseofmachines_cpt', 'South African Bar & Beverage Awards', 2023, NULL, 'Best Bar Team', 'https://barandbeverageawards.co.za/awards-2023/'),
+    ('ahasaloon', 'Taiwan Bar Awards', 2023, 16, NULL, 'https://www.tw-tw.com.tw/breaking-news/2023/taiwan-bar-awards-2022-2023/'),
+    ('barmood_taipei', 'Taiwan Bar Awards', 2024, 15, NULL, 'https://www.1shot.tw/47519/2024%E5%8F%B0%E7%81%A3%E9%85%92%E5%90%A7%E5%A4%A7%E7%8D%8Etaiwan-bar-award'),
     ('barleonehk', 'Tatler Best', 2025, NULL, 'Bar of the Year, Asia-Pacific', 'https://tatlergroup.com/news-articles/tatler-best-awards-2025-concludes-with-a-glamorous-gala-dinner-celebrating-hospitalitys-best-in-class-across-asia-pacific-and-the-middle-east'),
+    ('argobarhk', 'Tatler Dining Bar Awards', 2022, NULL, 'Best New Bar', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('argobarhk', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('argobarhk', 'Tatler Dining Bar Awards', 2023, NULL, 'Best Service', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('argobarhk', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('barleonehk', 'Tatler Dining Bar Awards', 2023, NULL, 'Best Food Programme', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('barleonehk', 'Tatler Dining Bar Awards', 2023, NULL, 'Best New Bar', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('barleonehk', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('coahongkong', 'Tatler Dining Bar Awards', 2022, NULL, 'Best Drinks Programme', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('coahongkong', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('coahongkong', 'Tatler Dining Bar Awards', 2023, NULL, 'Impact', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('coahongkong', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('darksidehk', 'Tatler Dining Bar Awards', 2022, NULL, 'Best Service', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('darksidehk', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('darksidehk', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('penicillin_bar', 'Tatler Dining Bar Awards', 2022, NULL, 'Initiative of the Year', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('penicillin_bar', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('penicillin_bar', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('quinaryhk', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('quinaryhk', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('theoldman_hk', 'Tatler Dining Bar Awards', 2022, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2022-the-winners'),
+    ('thesavoryproject', 'Tatler Dining Bar Awards', 2023, NULL, 'Best Drinks Programme', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('thesavoryproject', 'Tatler Dining Bar Awards', 2023, NULL, 'Top 10 Bars', 'https://www.tatlerasia.com/dining/drinks/tatler-dining-bar-awards-2023-the-winners'),
+    ('3monosbar', 'The Cocktail Bar Awards', 2025, NULL, 'Community Spirit', 'https://www.rinconbonvivant.com.ar/2025/09/08/the-cocktail-bar-awards-2025-los-ganadores-son/'),
+    ('3monosbar', 'The Cocktail Bar Awards', 2025, NULL, 'The Best Cocktail Bar', 'https://www.rinconbonvivant.com.ar/2025/09/08/the-cocktail-bar-awards-2025-los-ganadores-son/'),
+    ('victoraudiobar', 'The Cocktail Bar Awards', 2025, NULL, 'Best Experience', 'https://www.rinconbonvivant.com.ar/2025/09/08/the-cocktail-bar-awards-2025-los-ganadores-son/'),
     ('argobarhk', 'Time Out Hong Kong Bar Awards', 2021, NULL, 'Best Cocktail Programme', 'https://www.timeout.com/hong-kong/bar-awards-2021-winners'),
     ('argobarhk', 'Time Out Hong Kong Bar Awards', 2021, NULL, 'Best New Bar', 'https://www.timeout.com/hong-kong/bar-awards-2021-winners'),
     ('argobarhk', 'Time Out Hong Kong Bar Awards', 2021, NULL, 'Readers'' Choice', 'https://www.timeout.com/hong-kong/bar-awards-2021-winners'),
@@ -218,7 +441,39 @@ FROM (VALUES
     ('threesheetssoho', 'Top 50 Cocktail Bars', 2026, 11, NULL, 'https://www.top50cocktailbars.com/list/1-50'),
     ('viajantebar', 'Top 50 Cocktail Bars', 2025, 17, NULL, 'https://www.timeout.com/uk/news/the-uks-top-50-cocktail-bars-have-been-crowned-for-2025-full-list-of-award-winning-bars-021225'),
     ('viajantebar', 'Top 50 Cocktail Bars', 2026, 33, NULL, 'https://www.top50cocktailbars.com/list/1-50'),
-    ('waltzbar', 'Top 50 Cocktail Bars', 2026, 5, NULL, 'https://www.morningadvertiser.co.uk/Article/2026/02/10/couch-in-stirchley-west-midlands-named-number-one-on-top-50-cocktail-bars-2026-list/')
+    ('waltzbar', 'Top 50 Cocktail Bars', 2026, 5, NULL, 'https://www.morningadvertiser.co.uk/Article/2026/02/10/couch-in-stirchley-west-midlands-named-number-one-on-top-50-cocktail-bars-2026-list/'),
+    ('1862drybar', 'Top Cocktail Bars', 2022, NULL, '1 estrella', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('1862drybar', 'Top Cocktail Bars', 2023, NULL, '1 estrella', 'https://www.elespanol.com/madrid/ocio/20230126/mejores-coctelerias-madrid-cielo-infierno-traves-destilados/736426749_0.html'),
+    ('1862drybar', 'Top Cocktail Bars', 2024, NULL, '1 estrella', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('1862drybar', 'Top Cocktail Bars', 2025, NULL, '1 estrella', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('dr.stravinsky_bcn', 'Top Cocktail Bars', 2025, NULL, '1 estrella', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('dr.stravinsky_bcn', 'Top Cocktail Bars', 2025, NULL, 'Carta Sin Alcohol', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('foco.bcn', 'Top Cocktail Bars', 2024, NULL, '1 estrella', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('madridangelita', 'Top Cocktail Bars', 2022, NULL, '2 estrellas', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('madridangelita', 'Top Cocktail Bars', 2023, NULL, '3 estrellas', 'https://www.elespanol.com/madrid/ocio/20230126/mejores-coctelerias-madrid-cielo-infierno-traves-destilados/736426749_0.html'),
+    ('madridangelita', 'Top Cocktail Bars', 2024, NULL, '3 estrellas', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('madridangelita', 'Top Cocktail Bars', 2025, NULL, '3 estrellas', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('paradiso_barcelona', 'Top Cocktail Bars', 2022, NULL, '1 estrella', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('paradiso_barcelona', 'Top Cocktail Bars', 2024, NULL, '2 estrellas', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('paradiso_barcelona', 'Top Cocktail Bars', 2025, NULL, '2 estrellas', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('salmonguru', 'Top Cocktail Bars', 2022, NULL, '2 estrellas', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('salmonguru', 'Top Cocktail Bars', 2023, NULL, '2 estrellas', 'https://www.elespanol.com/madrid/ocio/20230126/mejores-coctelerias-madrid-cielo-infierno-traves-destilados/736426749_0.html'),
+    ('salmonguru', 'Top Cocktail Bars', 2024, NULL, '2 estrellas', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('salmonguru', 'Top Cocktail Bars', 2025, NULL, '2 estrellas', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('savasbarmad', 'Top Cocktail Bars', 2022, NULL, '3 estrellas', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('savasbarmad', 'Top Cocktail Bars', 2023, NULL, '2 estrellas', 'https://www.elespanol.com/madrid/ocio/20230126/mejores-coctelerias-madrid-cielo-infierno-traves-destilados/736426749_0.html'),
+    ('savasbarmad', 'Top Cocktail Bars', 2024, NULL, '2 estrellas', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('savasbarmad', 'Top Cocktail Bars', 2025, NULL, '2 estrellas', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('sips.barcelona', 'Top Cocktail Bars', 2022, NULL, '1 estrella', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('sips.barcelona', 'Top Cocktail Bars', 2024, NULL, '1 estrella', 'https://www.huleymantel.com/menu-dia/estas-son-mejores-coctelerias-espana-portugal-2024-segun-top-cocktail-bars_102101_102.html'),
+    ('sips.barcelona', 'Top Cocktail Bars', 2025, NULL, '2 estrellas', 'https://www.infohoreca.com/noticias/20250930/top-cocktail-bars-2025-mejores-coctelerias-espana-portugal-estrellas-premios'),
+    ('two.schmucks', 'Top Cocktail Bars', 2022, NULL, '3 estrellas', 'https://www.revistahosteleria.com/texto-diario/mostrar/3513441/top-cocktail-bars-elige-mejores-coctelerias-espana-portugal'),
+    ('mimikakushi', 'What''s On Dubai Awards', 2026, NULL, 'Favourite Bar', 'https://whatson.ae/2026/06/whats-on-dubai-awards-2026-every-winner-from-dubais-biggest-night-in-food-and-entertainment/'),
+    ('lpmdubai', 'What''s On Nightlife Awards', 2024, NULL, 'Best Aperitivo', 'https://whatson.ae/2024/10/whats-on-nightlife-awards-2024-here-are-the-winners/'),
+    ('mimikakushi', 'What''s On Nightlife Awards', 2022, NULL, 'Best Date Night Spot', 'https://whatson.ae/2022/10/whats-on-nightlife-awards-2022-here-are-the-winners/'),
+    ('mimikakushi', 'What''s On Nightlife Awards', 2023, NULL, 'Best Restaurant Bar', 'https://whatson.ae/2023/10/whats-on-nightlife-awards-2023-here-are-the-winners/'),
+    ('mimikakushi', 'What''s On Nightlife Awards', 2024, NULL, 'Best Cocktail Bar', 'https://whatson.ae/2024/10/whats-on-nightlife-awards-2024-here-are-the-winners/'),
+    ('mimikakushi', 'What''s On Nightlife Awards', 2025, NULL, 'Bar of the Year', 'https://whatson.ae/2025/10/whats-on-nightlife-awards-2025-here-are-the-winners/')
 ) AS v ("handle", "award", "year", "position", "title", "source_url")
 JOIN "public"."profiles" p ON p.handle = v.handle AND p.kind = 'bar'
 ON CONFLICT DO NOTHING;

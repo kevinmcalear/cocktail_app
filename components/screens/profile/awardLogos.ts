@@ -5,7 +5,8 @@
  * without one show the body's initials). If bodies start arriving from an admin
  * screen, move these to storage with an awards table that holds the URL.
  * James Beard is left out on purpose: its seal is for honorees' own use.
- * Bangkok Bar Show Awards has no official logo we could find.
+ * Bodies without an official logo we could use (Bangkok Bar Show, Tatler
+ * Dining, What's On, and others) show initials too.
  */
 const the50 = require('@/assets/images/awards/the-50.png') as number;
 const timeOut = require('@/assets/images/awards/time-out.png') as number;
@@ -26,4 +27,12 @@ export const AWARD_LOGOS: Record<string, number> = {
   'Shaker Awards': require('@/assets/images/awards/shaker-awards.png') as number,
   'BAD Awards': require('@/assets/images/awards/bad-awards.png') as number,
   'Tatler Best': require('@/assets/images/awards/tatler-best.png') as number,
+  'Good Food Guide': require('@/assets/images/awards/good-food-guide.png') as number,
+  '30 Best Bars India': require('@/assets/images/awards/30-best-bars-india.png') as number,
+  'Top Cocktail Bars': require('@/assets/images/awards/top-cocktail-bars.png') as number,
+  "Bartenders' Choice Awards": require('@/assets/images/awards/bartenders-choice-awards.png') as number,
+  Barawards: require('@/assets/images/awards/barawards.png') as number,
+  'Premios Summum': require('@/assets/images/awards/premios-summum.png') as number,
+  'DRiNK Awards': require('@/assets/images/awards/drink-awards.png') as number,
+  'Food & Wine Global Tastemakers': require('@/assets/images/awards/food-and-wine.png') as number,
 };
