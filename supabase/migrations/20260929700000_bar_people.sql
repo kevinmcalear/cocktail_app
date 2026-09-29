@@ -320,7 +320,7 @@ FROM (VALUES
     ('sara.moudoulaud', 'barnouveau', 'Co-founder and owner', true, 'https://www.the50.com/bars/best-in-the-world/the-list/bar-nouveau.html'),
     ('hiroyasu.kayama', 'benfiddich_tokyo', 'Owner and bartender', true, 'https://www.the50.com/bars/best-in-the-world/the-list/bar-benfiddich.html'),
     ('darren.leaney', 'caretakers.cottage', 'Bartender', true, 'https://www.boothby.com.au/doublethink-from-caretakers-cottage/'),
-    ('eddie.goddard', 'caretakers.cottage', 'Team', true, NULL),
+    ('eddie.goddard', 'caretakers.cottage', 'Bar manager', true, NULL),
     ('kitty.gardner', 'caretakers.cottage', 'Bartender', true, 'https://www.boothby.com.au/doublethink-from-caretakers-cottage/'),
     ('matt.stirling', 'caretakers.cottage', 'Co-owner and operator', true, 'https://www.the50.com/bars/best-in-the-world/the-list/caretakers-cottage.html'),
     ('rob.libecans', 'caretakers.cottage', 'Co-owner, director and bartender', true, 'https://www.the50.com/bars/best-in-the-world/the-list/caretakers-cottage.html'),
