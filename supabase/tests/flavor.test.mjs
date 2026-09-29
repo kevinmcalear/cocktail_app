@@ -229,6 +229,8 @@ describe('your taste', () => {
   before(async () => {
     await saveProfile(ids.negroni, { bitter: 0.9, strong: 0.8, sweet: 0.6 });
     await saveProfile(ids.daiquiri, { sour: 0.8, sweet: 0.8, strong: 0.6 });
+    // Ranking needs a confirmed age (20260930000600).
+    assert.ifError((await users.ranker.client.rpc('confirm_age', { p_birth_date: '1990-01-01', p_country_code: 'AU' })).error);
     const rank = (item, sentiment) =>
       users.ranker.client.from('rank_entries').insert({ item_id: item, ranked_as_item_id: item, sentiment, rank_key: 0 });
     assert.ifError((await rank(ids.negroni, 'loved')).error);

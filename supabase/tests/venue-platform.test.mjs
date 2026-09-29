@@ -713,6 +713,10 @@ describe('home bar and rankings', () => {
       assert.ifError(error);
       return data.id;
     };
+    // Ranking needs a confirmed age (20260930000600).
+    for (const client of [home, users.outsider.client]) {
+      assert.ifError((await client.rpc('confirm_age', { p_birth_date: '1990-01-01', p_country_code: 'AU' })).error);
+    }
     const atRye = await entry(home, ids.barOneProfile, 1);
     const atHome = await entry(home, null, 2);
     const outsiders = await entry(users.outsider.client, ids.barOneProfile, 1);

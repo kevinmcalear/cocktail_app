@@ -1,6 +1,7 @@
-// Tests for the safety screens' draft migration (20260930000500): the
-// moderator check, the blocked-people list, the report queue, and personal
-// drinks following blocks and moderation holds on the raw items read.
+// Tests for the safety screens' draft migrations: the moderator check, the
+// blocked-people list, the report queue, personal drinks following blocks
+// and moderation holds on the raw items read (20260930000500), and ranking
+// needing a confirmed age (20260930000600).
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -56,7 +57,7 @@ const canReadItem = async (client, id) => {
 
 before(async () => {
   await db.connect();
-  for (const label of ['jo', 'ash', 'bystander', 'moderator', 'loner']) users[label] = await makeUser(label);
+  for (const label of ['jo', 'ash', 'bystander', 'moderator', 'loner', 'ranker', 'minor', 'earlyRanker']) users[label] = await makeUser(label);
   await db.query('INSERT INTO private.app_admins (user_id) VALUES ($1)', [users.moderator.id]);
 
   ids.bar = (await serviceInsert('bars', { name: `Night Owl ${run}` })).id;
@@ -201,5 +202,46 @@ describe('get_report_queue', () => {
     assert.equal(done.target_name, `Owl Sour ${run}`);
     const { data: stillOpen } = await users.moderator.client.rpc('get_report_queue', { p_open: true });
     assert.ok(!stillOpen.some((r) => r.id === byKind.item.id));
+  });
+});
+
+describe('ranking needs a confirmed age', () => {
+  const rank = (who, venue = null, key = 1) =>
+    users[who].client
+      .from('rank_entries')
+      .insert({ item_id: ids.list, ranked_as_item_id: ids.list, venue_profile_id: venue, sentiment: 'loved', rank_key: key })
+      .select('id')
+      .single();
+  const years = (n) => `${new Date().getFullYear() - n}-01-01`;
+
+  test('no answer yet: refused, then allowed once confirmed', async () => {
+    assert.ok((await rank('ranker')).error);
+    assert.ifError((await users.ranker.client.rpc('confirm_age', { p_birth_date: years(30), p_country_code: 'AU' })).error);
+    const home = await rank('ranker');
+    assert.ifError(home.error);
+    const bar = await rank('ranker', ids.barProfile, 2);
+    assert.ifError(bar.error);
+    assert.ifError((await users.ranker.client.from('rank_comparisons').insert({ winner_entry_id: bar.data.id, loser_entry_id: home.data.id })).error);
+  });
+
+  test('under age: refused, and stays refused', async () => {
+    const { data } = await users.minor.client.rpc('confirm_age', { p_birth_date: years(15), p_country_code: 'AU' });
+    assert.equal(data, null);
+    assert.ok((await rank('minor')).error);
+  });
+
+  test('rankings made before the check can still be read and deleted, not changed', async () => {
+    const { rows } = await db.query(
+      `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key)
+       VALUES ($1, $2, $2, NULL, 'fine', 1), ($1, $2, $2, $3, 'loved', 2) RETURNING id`,
+      [users.earlyRanker.id, ids.list, ids.barProfile]
+    );
+    const early = users.earlyRanker.client;
+    const { data: mine } = await early.from('rank_entries').select('id');
+    assert.equal(mine.length, 2);
+    assert.ok((await early.from('rank_entries').update({ sentiment: 'disliked' }).eq('id', rows[0].id)).error);
+    assert.ok((await early.from('rank_comparisons').insert({ winner_entry_id: rows[1].id, loser_entry_id: rows[0].id })).error);
+    const { data: deleted } = await early.from('rank_entries').delete().eq('id', rows[0].id).select('id');
+    assert.equal(deleted.length, 1);
   });
 });

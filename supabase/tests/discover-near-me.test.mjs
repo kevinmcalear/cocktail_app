@@ -194,6 +194,8 @@ describe('adding a bar', () => {
     const { data } = await anon.from('profiles').select('id, is_claimed').eq('id', ids.harbour).single();
     assert.equal(data.is_claimed, false);
     assert.ok((await anon.from('profiles').select('created_by').eq('id', ids.harbour)).error);
+    // Ranking needs a confirmed age (20260930000600).
+    assert.ifError((await users.other.client.rpc('confirm_age', { p_birth_date: '1990-01-01', p_country_code: 'AU' })).error);
     const { error } = await users.other.client
       .from('rank_entries')
       .insert({ item_id: ids.negroni, ranked_as_item_id: ids.negroni, venue_profile_id: ids.harbour, sentiment: 'fine', rank_key: 1 });
