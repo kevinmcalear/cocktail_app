@@ -2,39 +2,31 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { DsText } from '@/components/ds';
-import { backbar, fontFamilies, radius, space, type } from '@/constants/tokens';
-import { pinLabel, type MapPin } from '@/lib/discoverMap';
+import { fontFamilies, radius, type } from '@/constants/tokens';
+import { MAP_STYLE, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
 export const mapAvailable = true;
 
-// OpenFreeMap: free, no key, OpenStreetMap data. Muted base maps so the pins
-// and the drink photos carry the colour, in both schemes.
-const STYLE = {
-  light: 'https://tiles.openfreemap.org/styles/positron',
-  dark: 'https://tiles.openfreemap.org/styles/dark',
-} as const;
-
 type MapLibre = typeof import('maplibre-gl');
 
-/** A pin: the score in a pill (a dot while early), ink by default, the accent when selected. */
+/** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
 function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
-  const label = pinLabel(pin);
-  el.textContent = label;
-  el.setAttribute('aria-label', `${pin.name}${label ? `, score ${label}` : ', early'}`);
+  const look = pinLook(pin, selected, accent);
+  el.textContent = look.label;
+  el.setAttribute('aria-label', `${pin.name}${look.label ? `, score ${look.label}` : ', early'}`);
   el.setAttribute('aria-pressed', String(selected));
   Object.assign(el.style, {
-    minWidth: label ? '44px' : '18px',
-    height: label ? '30px' : '18px',
-    padding: label ? `0 ${space.sm}px` : '0',
+    minWidth: `${look.minWidth}px`,
+    height: `${look.height}px`,
+    padding: `0 ${look.paddingHorizontal}px`,
     borderRadius: `${radius.pill}px`,
-    border: `2px solid ${backbar.dark.ink}`,
-    background: selected ? accent.fill : pin.score === null ? backbar.light.muted : backbar.light.ink,
-    color: selected ? accent.text : backbar.dark.ink,
+    border: `2px solid ${look.borderColor}`,
+    background: look.backgroundColor,
+    color: look.color,
     font: `${type.caption.fontSize}px ${fontFamilies.monoMedium}, ui-monospace, monospace`,
     display: 'flex',
     alignItems: 'center',
@@ -100,7 +92,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       const start = latest.current.camera;
       const m = new ml.Map({
         container,
-        style: STYLE[scheme],
+        style: MAP_STYLE[scheme],
         center: start ? [start.longitude, start.latitude] : [0, 20],
         zoom: start?.zoom ?? 1.5,
         // OpenStreetMap asks for a visible credit: in full here, or in the sheet (MapCredit) on phones.
@@ -119,13 +111,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           return;
         }
         const b = m.getBounds();
-        const c = m.getCenter();
-        latest.current.onViewportChange({
-          latitude: c.lat,
-          longitude: c.lng,
-          latitudeDelta: b.getNorth() - b.getSouth(),
-          longitudeDelta: b.getEast() - b.getWest(),
-        });
+        latest.current.onViewportChange(viewportFrom(m.getCenter(), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]));
       });
       m.on('click', () => latest.current.onSelect(null));
       map.current = m;
@@ -143,7 +129,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   }, []);
 
   useEffect(() => {
-    map.current?.setStyle(STYLE[scheme]);
+    map.current?.setStyle(MAP_STYLE[scheme]);
   }, [scheme]);
 
   useEffect(() => {
@@ -159,15 +145,6 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   useEffect(syncPins);
 
   return <View ref={host} style={[styles.fill, style]} />;
-}
-
-/** The tile and data credit, for when the map is too small to show it (phones, in the sheet). */
-export function MapCredit() {
-  return (
-    <DsText variant="caption" tone="muted" role="link" onPress={() => Linking.openURL('https://www.openstreetmap.org/copyright')}>
-      Map by OpenFreeMap · © OpenMapTiles · data © OpenStreetMap contributors
-    </DsText>
-  );
 }
 
 const styles = StyleSheet.create({

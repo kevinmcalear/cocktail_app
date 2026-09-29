@@ -1,10 +1,22 @@
 /**
  * Discover's map: pins from ranked rows, fitting the camera to them, and
  * turning what the map shows into a "search this area" point. Pure; checked
- * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap.
+ * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
+ * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
+import { backbar, space } from '../constants/tokens';
 import { formatScore } from './ranking';
 import { roundCoord, type Area, type DiscoverRow } from './nearMe';
+
+/**
+ * OpenFreeMap: free, no key, OpenStreetMap data. Muted base maps so the pins
+ * and the drink photos carry the colour, in both schemes. Web and native load
+ * the same style, so the maps look the same everywhere.
+ */
+export const MAP_STYLE = {
+  light: 'https://tiles.openfreemap.org/styles/positron',
+  dark: 'https://tiles.openfreemap.org/styles/dark',
+} as const;
 
 export interface MapPin {
   id: string;
@@ -43,6 +55,20 @@ export function pinLabel(pin: MapPin): string {
   return pin.score === null ? '' : formatScore(pin.score);
 }
 
+/** How a pin looks on either map: the score in a pill (a dot while early), ink by default, the accent when selected. */
+export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
+  const label = pinLabel(pin);
+  return {
+    label,
+    minWidth: label ? 44 : 18,
+    height: label ? 30 : 18,
+    paddingHorizontal: label ? space.sm : 0,
+    borderColor: backbar.dark.ink,
+    backgroundColor: selected ? accent.fill : pin.score === null ? backbar.light.muted : backbar.light.ink,
+    color: selected ? accent.text : backbar.dark.ink,
+  };
+}
+
 /** What the map is showing: its centre and how many degrees it spans. */
 export interface Viewport {
   latitude: number;
@@ -56,6 +82,11 @@ export interface Camera {
   longitude: number;
   /** Web-mercator zoom, as MapLibre, Apple and Google maps take it. */
   zoom: number;
+}
+
+/** A viewport from a map's centre and its [west, south, east, north] bounds, as MapLibre reports them. */
+export function viewportFrom(center: { lat: number; lng: number }, [west, south, east, north]: readonly [number, number, number, number]): Viewport {
+  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west };
 }
 
 const KM_PER_DEG = 111.045;
