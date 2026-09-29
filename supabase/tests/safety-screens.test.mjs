@@ -1,7 +1,8 @@
 // Tests for the safety screens' draft migrations: the moderator check, the
 // blocked-people list, the report queue, personal drinks following blocks
-// and moderation holds on the raw items read (20260930500500), and ranking
-// needing a confirmed age (20260930500600).
+// and moderation holds on the raw items read (20260930500500), ranking
+// needing a confirmed age (20260930500600), and shared scores counting only
+// people who've confirmed it (20260930500900).
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -243,5 +244,44 @@ describe('ranking needs a confirmed age', () => {
     assert.ok((await early.from('rank_comparisons').insert({ winner_entry_id: rows[1].id, loser_entry_id: rows[0].id })).error);
     const { data: deleted } = await early.from('rank_entries').delete().eq('id', rows[0].id).select('id');
     assert.equal(deleted.length, 1);
+  });
+});
+
+describe('shared scores count only people who confirmed their age', () => {
+  // Runs after 'ranking needs a confirmed age': ranker (confirmed) has a
+  // ranking at the bar, earlyRanker (never answered) one made before the
+  // check, and minor (under age) gets one written straight to the table.
+  const counts = async () => {
+    await db.query('SELECT private.refresh_rankings()');
+    const one = async (sql, args) => (await db.query(sql, args)).rows[0]?.rankers ?? 0;
+    return {
+      atBar: await one('SELECT rankers FROM private.venue_drink_scores WHERE ranked_as_item_id = $1 AND venue_profile_id = $2', [ids.list, ids.barProfile]),
+      drink: await one('SELECT rankers FROM private.item_scores WHERE item_id = $1', [ids.list]),
+      bar: await one('SELECT rankers FROM private.venue_scores WHERE venue_profile_id = $1', [ids.barProfile]),
+    };
+  };
+
+  test('rankings from before the check and from under-age people are left out', async () => {
+    await db.query(
+      `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key)
+       VALUES ($1, $2, $2, $3, 'loved', 1)`,
+      [users.minor.id, ids.list, ids.barProfile]
+    );
+    const { rows } = await db.query('SELECT count(DISTINCT user_id)::int AS n FROM public.rank_entries WHERE item_id = $1 AND venue_profile_id = $2', [ids.list, ids.barProfile]);
+    assert.equal(rows[0].n, 3, 'three people ranked it at the bar');
+    assert.deepEqual(await counts(), { atBar: 1, drink: 1, bar: 1 });
+  });
+
+  test('someone who confirms later counts from the next refresh; their rankings were kept', async () => {
+    assert.ifError((await users.earlyRanker.client.rpc('confirm_age', { p_birth_date: '1990-01-01', p_country_code: 'AU' })).error);
+    assert.deepEqual(await counts(), { atBar: 2, drink: 2, bar: 2 });
+  });
+
+  test('the counted source stays private', async () => {
+    assert.ok((await users.ranker.client.schema('private').from('counted_rank_scores').select('*').limit(1)).error);
+    const { rows } = await db.query(
+      "SELECT has_table_privilege('authenticated', 'private.counted_rank_scores', 'SELECT') AS signed_in, has_table_privilege('anon', 'private.counted_rank_scores', 'SELECT') AS anon"
+    );
+    assert.deepEqual(rows[0], { signed_in: false, anon: false });
   });
 });

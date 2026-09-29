@@ -739,12 +739,19 @@ describe('home bar and rankings', () => {
     const rankers = [];
     for (let i = 0; i < 19; i++) rankers.push((await makeUser(`ranker${i}`, { signIn: false })).id);
     extraUserIds.push(...rankers);
-    const addEntry = (userId) =>
-      db.query(
+    // Shared scores count only people who've confirmed their age (20260930500900).
+    const addEntry = async (userId) => {
+      await db.query(
+        `INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now())
+         ON CONFLICT (user_id) DO NOTHING`,
+        [userId]
+      );
+      return db.query(
         `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key)
          VALUES ($1, $2, $2, $3, 'loved', 1)`,
         [userId, ids.martini, ids.barOneProfile]
       );
+    };
     for (const id of rankers) await addEntry(id);
     // Staff ranking their own bar don't count.
     await addEntry(users.bartender.id);

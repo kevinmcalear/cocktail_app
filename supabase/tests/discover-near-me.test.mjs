@@ -64,8 +64,14 @@ const venue = (name, lat, lng, extra = {}) => ({
 });
 
 // Rank entries straight into the table: these tests check the aggregation;
-// the rank_entries policies are covered in venue-platform.test.mjs.
+// the rank_entries policies are covered in venue-platform.test.mjs. Shared
+// scores count only people who've confirmed their age (20260930500900).
 async function rank(userId, itemId, venueId, sentiment) {
+  await db.query(
+    `INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now())
+     ON CONFLICT (user_id) DO NOTHING`,
+    [userId]
+  );
   await db.query(
     `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key)
      VALUES ($1, $2, $2, $3, $4, 1)`,
