@@ -45,6 +45,10 @@
       "destination": "/p/[id]"
     },
     {
+      "source": "/settings/bar/:id/publishing",
+      "destination": "/settings/bar/[id]/publishing"
+    },
+    {
       "source": "/rankings/:itemId",
       "destination": "/rankings/[itemId]"
     },

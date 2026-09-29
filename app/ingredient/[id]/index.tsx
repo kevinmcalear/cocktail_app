@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
 import { WhereItLives } from "@/components/backbar/WhereItLives";
+import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -126,6 +127,7 @@ export default function IngredientDetailScreen() {
                 )}
 
                 {redesign ? <WhereItLives itemId={ingredient.id} itemName={ingredient.name} /> : null}
+                {redesign ? <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" /> : null}
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
                 {canViewDetails && recipe.length > 0 && (
