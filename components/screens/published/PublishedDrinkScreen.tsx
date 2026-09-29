@@ -10,6 +10,7 @@ import { usePublishedDrink, type PublicBar } from '@/hooks/usePublished';
 import { hadOnLine } from '@/lib/collection';
 import { specLines } from '@/lib/spec';
 
+import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
 import { PublicMissing, PublicShell } from './PublicShell';
@@ -86,6 +87,9 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
           <Body tone="muted">{`${who} shares this drink’s menu description, not its spec.`}</Body>
         )}
       </View>
+      <View style={styles.report}>
+        <ReportAction subject={drink.name} targets={[{ label: drink.name, target: { kind: 'item', itemId: id } }]} />
+      </View>
       {editing && mine ? <MemorySheet memory={mine} onClose={() => setEditing(false)} /> : null}
     </PublicShell>
   );
@@ -96,4 +100,5 @@ const styles = StyleSheet.create({
   section: { gap: space.md },
   memory: { gap: space.xs, padding: space.lg },
   edit: { alignSelf: 'flex-start', marginTop: space.xs },
+  report: { alignItems: 'flex-start' },
 });
