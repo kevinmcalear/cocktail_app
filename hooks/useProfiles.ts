@@ -23,9 +23,12 @@ export interface Profile {
   is_public: boolean;
   /** False for a historic creator or a bar not on the app. (The owner's user_id is hidden from signed-out visitors.) */
   is_claimed: boolean;
+  /** A bar that has shut for good; closed_year when it's known. */
+  is_closed: boolean;
+  closed_year: number | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
