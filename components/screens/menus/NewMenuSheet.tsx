@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { Body, Button, Caption, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useMenuLayouts } from '@/hooks/useMenuMutations';
 import { useMenu } from '@/hooks/useMenus';
 import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
+import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
@@ -35,6 +36,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const { venues, active } = useActiveVenue();
   const buildable = venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
   const [name, setName] = useState('');
+  const nameRef = useRef<TextInput>(null);
   const [barId, setBarId] = useState<string | null>(buildable.some((v) => v.id === active?.id) ? active!.id : (buildable[0]?.id ?? null));
   const venueMenus = menus.filter((m) => m.barId === barId);
   const groups = groupMenus(venueMenus, now);
@@ -77,9 +79,10 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       onClose={onClose}
       title="New menu"
       subtitle="It starts as a draft. Nobody sees it until it goes on."
+      onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
       footer={<Button label={create.isPending ? 'Making the draft…' : 'Create draft'} size="lg" onPress={submit} disabled={create.isPending} />}
     >
-      <Field label="Name" value={name} onChangeText={setName} placeholder="Winter menu" autoFocus />
+      <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Winter menu" autoFocus={MODAL_AUTOFOCUS} />
       <Caption tone="muted">For</Caption>
       <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
         {buildable.map((v) => (

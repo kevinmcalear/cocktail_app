@@ -14,14 +14,16 @@ interface MenuSheetProps {
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
+  /** Called once the sheet is on screen. */
+  onShow?: () => void;
 }
 
 /** The Menus screens' sheet: slides over the screen, closes on the scrim. */
-export function MenuSheet({ visible, onClose, title, subtitle, children, footer }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onShow={onShow}>
       <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]}>
         <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose} />
         {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). The negative
