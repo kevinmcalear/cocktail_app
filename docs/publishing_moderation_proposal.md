@@ -6,13 +6,13 @@ This is step 7 of the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKd
 
 | # | Piece | Migration |
 |---|---|---|
-| 4a | Blocks and moderation holds | `20260930000000_blocks_and_moderation_holds.sql` (first, because the public read paths filter on it) |
-| 1, 2 | Publish modes, releases, the public projection | `20260930000100_publishing.sql` |
-| 3 | Collections, home menus, the age check | `20260930000200_collections_and_age_check.sql` |
-| 4b | Reports and moderator tools | `20260930000300_reports.sql` |
-| 5 | Layered publishing, memories, private personal drinks (Kevin's decisions of 2026-09-29) | `20260930000400_layered_publishing_and_memories.sql` |
+| 4a | Blocks and moderation holds | `20260930500000_blocks_and_moderation_holds.sql` (first, because the public read paths filter on it) |
+| 1, 2 | Publish modes, releases, the public projection | `20260930500100_publishing.sql` |
+| 3 | Collections, home menus, the age check | `20260930500200_collections_and_age_check.sql` |
+| 4b | Reports and moderator tools | `20260930500300_reports.sql` |
+| 5 | Layered publishing, memories, private personal drinks (Kevin's decisions of 2026-09-29) | `20260930500400_layered_publishing_and_memories.sql` |
 
-Tests: `supabase/tests/publishing-moderation.test.mjs` (47 tests) and `supabase/tests/layered-publishing.test.mjs` (9). With every other suite that's 263, all passing on an isolated stack with the migrations renumbered after production's latest (20260929400000).
+Tests: `supabase/tests/publishing-moderation.test.mjs` (47 tests) and `supabase/tests/layered-publishing.test.mjs` (9). With every other suite that's 263, all passing on an isolated stack. The migrations were renumbered on 2026-09-29 to `20260930500000` onwards, after production's latest (`20260930100000`) and clear of open branches' `20260930200000` and `300000`, so they apply in order with a plain `supabase db push`.
 
 **Not in this proposal:** comments (reports accept a comment id so they're ready for it); the "can make" function; share cards and shopping lists (app work over these tables); an admin moderation screen (moderators work through two RPCs for now); any app UI.
 
@@ -135,7 +135,7 @@ One policy change: **bar-less menus become private to their creator.** Today `me
 
 `private.age_checks` is in the private schema with RLS on and no policies: nobody reads it through the API.
 
-Enforced today on collecting (drinks and releases). See the open questions for where else it should apply.
+Enforced on collecting (drinks and releases) and on ranking (`20260930500600`). Shared scores (a bar's drink, a drink overall, a bar overall) count only people who have confirmed their age (`20260930500900`), so rankings from before the check, or from anyone who answered under age, are kept for their owner but left out of the scores.
 
 ## 4. Moderation
 
@@ -240,7 +240,7 @@ Bold tables and views are new in this proposal.
 - **One new unique constraint on `items`** (`id`, `bar_id`), for the release foreign key. It can't fail (id is already unique). Moving a released drink to another bar with `assign_item_to_bar` will fail until it's taken out of the release.
 - **Advisors:** `published_items` shows the same "security definer view" ERROR as `app_recipe_presentation`, on purpose: it must run as its owner to return public columns of rows the caller can't read. The new two-policy tables add the same "multiple permissive policies" WARN as #44's.
 - **App follow-ups** (not in this PR): hooks for the tables above; add them to `types/`; home screens read `published_items` instead of `items`/`app_item_presentation`; the sign-up flow calls `confirm_age`.
-- **Applying to production** needs Kevin's explicit OK, and the order matters: 170000, 170100, 170200, 170300.
+- **Applying to production** needs Kevin's explicit OK, and the order matters: `20260930500000` to `500400`, then the app PRs' drafts (`500500`, `500600` and `500900` from the safety screens, `500700` and `500800` from collecting). Before pushing, check that nothing later than `20260930500000` has reached production; if something has, renumber this group after it again.
 
 ## Open questions for Kevin
 

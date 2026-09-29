@@ -5,13 +5,14 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { menuDateLine, menuStatus, plural } from '@/lib/menus';
+import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
 function metaLine(menu: MenuSummary, now: number): string {
-  return [plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now)].filter(Boolean).join(' · ');
+  // A home menu has a night instead of dates on a venue's calendar.
+  return [homeMenuLine(menu, now), plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now)].filter(Boolean).join(' · ');
 }
 
 /** A menu that's on now: its cover, name, and how long it's been on. */
@@ -50,20 +51,21 @@ export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
 
 /**
  * A menu in a list: coming up (with its date), a draft (dashed, still being
- * built), or previous (its dates).
+ * built), or previous (its dates). `note` adds a line of its own, like how
+ * many of the drinks you can make at home.
  */
-export function MenuListRow({ menu, now }: { menu: MenuSummary; now: number }) {
+export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
   const router = useRouter();
   const status = menuStatus(menu, now);
   const start = status === 'upcoming' ? new Date(menu.event?.startsAt ?? menu.startsAt!) : null;
   // With the date block showing, the caption doesn't repeat the date.
   const meta = start ? plural(menu.itemIds.length, 'drink') : metaLine(menu, now);
-  const label = menu.event ? `${menu.event.name} · ${meta}` : meta;
+  const label = [menu.event?.name, meta, note].filter(Boolean).join(' · ');
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, menu.event?.name, metaLine(menu, now)].filter(Boolean).join(', ')}
+      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, menu.event?.name, metaLine(menu, now), note].filter(Boolean).join(', ')}
       onPress={() => router.push(menuHref(menu.id))}
       style={[
         styles.row,

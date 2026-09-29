@@ -64,8 +64,14 @@ const venue = (name, lat, lng, extra = {}) => ({
 });
 
 // Rank entries straight into the table: these tests check the aggregation;
-// the rank_entries policies are covered in venue-platform.test.mjs.
+// the rank_entries policies are covered in venue-platform.test.mjs. Shared
+// scores count only people who've confirmed their age (20260930500900).
 async function rank(userId, itemId, venueId, sentiment) {
+  await db.query(
+    `INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now())
+     ON CONFLICT (user_id) DO NOTHING`,
+    [userId]
+  );
   await db.query(
     `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key)
      VALUES ($1, $2, $2, $3, $4, 1)`,
@@ -194,6 +200,8 @@ describe('adding a bar', () => {
     const { data } = await anon.from('profiles').select('id, is_claimed').eq('id', ids.harbour).single();
     assert.equal(data.is_claimed, false);
     assert.ok((await anon.from('profiles').select('created_by').eq('id', ids.harbour)).error);
+    // Ranking needs a confirmed age (20260930500600).
+    assert.ifError((await users.other.client.rpc('confirm_age', { p_birth_date: '1990-01-01', p_country_code: 'AU' })).error);
     const { error } = await users.other.client
       .from('rank_entries')
       .insert({ item_id: ids.negroni, ranked_as_item_id: ids.negroni, venue_profile_id: ids.harbour, sentiment: 'fine', rank_key: 1 });

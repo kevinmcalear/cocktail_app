@@ -16,6 +16,8 @@ import type { DatabaseItem } from '@/types/types';
 
 import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
+import { useAgeGate } from '../safety/AgeGate';
+import { ReportAction } from '../safety/ReportSheet';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import { ClassicLink } from './ClassicLink';
@@ -92,6 +94,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const { data: dropdowns } = useDropdowns();
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  // Saving to your Collection (home mode) needs a confirmed age.
+  const ageGate = useAgeGate();
+  const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
 
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
@@ -123,7 +128,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
       <View style={styles.controlsRight}>
-        <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={() => onToggleFavorite()} />
+        <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={toggleFavorite} />
         <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
         {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" onMedia={onPhoto && !wide} onPress={onEdit} /> : null}
       </View>
@@ -151,6 +156,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           />
         ) : null}
         {preview ? null : <RankActions item={item} picture={heroPic} />}
+        {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
@@ -205,6 +211,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         </ScrollView>
       )}
       {controls}
+      {ageGate.sheet}
     </View>
   );
 }
