@@ -184,9 +184,15 @@ describe('who sets images.palette', () => {
   test('the guard holds even if a future policy lets users update images', async () => {
     // Today no UPDATE policy exists, so RLS stops users first. Add one inside a
     // transaction that is rolled back, to check the trigger on its own.
+    // As supabase_admin, not postgres: when postgres runs CREATE POLICY,
+    // supautils' policy_grants takes an ACCESS EXCLUSIVE lock on every auth,
+    // storage and realtime table, which deadlocks with the other test files
+    // creating users in parallel. As the superuser it locks only images.
     const palette = ['#b02828', '#3a0c0c', '#f5dcdc'];
     const id = await insertImage({ url: `https://example.test/${run}-policy.png`, palette });
-    const db = new pg.Client({ connectionString: status.DB_URL });
+    const adminUrl = new URL(status.DB_URL);
+    adminUrl.username = 'supabase_admin';
+    const db = new pg.Client({ connectionString: adminUrl.href });
     await db.connect();
     try {
       await db.query('BEGIN');

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { sortAwards, type Award } from '@/lib/awards';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -18,15 +19,15 @@ export interface Profile {
   locality: string | null;
   city: string | null;
   country_code: string | null;
-  /** Owner. Both null: unclaimed (a historic creator, a bar not on the app). */
-  user_id: string | null;
   bar_id: string | null;
   is_public: boolean;
+  /** False for a historic creator or a bar not on the app. (The owner's user_id is hidden from signed-out visitors.) */
+  is_claimed: boolean;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, user_id, bar_id, is_public';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed';
 
-export const isUnclaimed = (p: Pick<Profile, 'user_id' | 'bar_id'>) => !p.user_id && !p.bar_id;
+export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
 /** A profile by id or handle (a /p/<ref> link). Public ones for anyone; private ones for their owner. */
 export function useProfile(ref: string | string[] | null | undefined) {
@@ -57,12 +58,28 @@ export function useProfileOriginals(profileId: string | null | undefined) {
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(sort_order, is_generated, outdated_since, images(url))`)
+        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
         .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
         .order('name')
         .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/** A profile's list places and titled awards, newest first. */
+export function useProfileAwards(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-awards', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<Award[]> => {
+      const { data, error } = await supabase
+        .from('profile_awards')
+        .select('id, award, year, position, title, source_url')
+        .eq('profile_id', profileId!);
+      if (error) throw error;
+      return sortAwards((data ?? []) as Award[]);
     },
   });
 }

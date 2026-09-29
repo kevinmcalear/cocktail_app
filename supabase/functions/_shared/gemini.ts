@@ -97,3 +97,35 @@ export async function describeImageAsJson(imageBase64: string, mimeType: string,
   if (!text) throw new Error("Gemini returned no answer");
   return text;
 }
+
+/**
+ * The flavor worker's AI fill: 'mock' on a local stack unless FLAVOR_MODEL=live
+ * (never a real call there by default), 'live' only when FLAVOR_MODEL=live is
+ * set, and 'off' in production otherwise. Off means rules only: nothing is
+ * spent until someone turns it on.
+ */
+export function flavorModel(): "mock" | "live" | "off" {
+  const model = Deno.env.get("FLAVOR_MODEL");
+  if (model === "live") return "live";
+  if (isLocalStack()) return "mock";
+  if (model === "mock") throw new Error("FLAVOR_MODEL=mock is only allowed on a local stack");
+  return "off";
+}
+
+/** Asks Gemini Flash a text question and returns its JSON reply as text. */
+export async function askJson(prompt: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/gemini-2.5-flash:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json", temperature: 0 },
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini failed: ${res.status} ${await res.text()}`);
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Gemini returned no answer");
+  return text;
+}

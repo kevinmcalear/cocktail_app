@@ -1,6 +1,6 @@
 {
   "expo": {
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -45,8 +45,17 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
-          "cameraPermission": false,
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera so you can photograph drinks for your team.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find the best drinks and bars near you. It isn't saved.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
         }
       ],
       "expo-web-browser",

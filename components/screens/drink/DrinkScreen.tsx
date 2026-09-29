@@ -7,6 +7,7 @@ import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useB
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
@@ -16,7 +17,10 @@ import type { DatabaseItem } from '@/types/types';
 import { RankActions } from '../rank/RankActions';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import { ClassicLink } from './ClassicLink';
 import { FamilyTree } from './FamilyTree';
+import { FlavorSection } from './FlavorSection';
+import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
 
 export interface DrinkScreenProps {
@@ -85,6 +89,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const serviceMode = useSettingsStore((s) => s.serviceMode);
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const { data: dropdowns } = useDropdowns();
+  const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
 
@@ -100,7 +105,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     item.abv ? { label: 'ABV', value: `${item.abv}%` } : null,
   ].filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
-  const imageUrl = preview?.heroSource ?? item.item_images?.[0]?.images?.url ?? null;
+  const links = item.item_images as ItemImageLink[] | undefined;
+  const heroPic = heroPicture(links);
+  const imageUrl = preview ? (preview.heroSource ?? null) : (heroPic?.url ?? null);
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
 
   // Controls over the photo use dark glass and light ink; on wide screens the
@@ -142,9 +149,10 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
             onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
           />
         ) : null}
-        {preview ? null : <RankActions item={item} picture={heroPicture(item.item_images as ItemImageLink[] | undefined)} />}
+        {preview ? null : <RankActions item={item} picture={heroPic} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
+      {home && !preview ? <FlavorSection itemId={item.id} /> : null}
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
       {item.notes ? (
         <View style={styles.notes}>
@@ -152,12 +160,30 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      <ServiceSection
+        itemId={item.id}
+        barId={item.bar_id}
+        name={item.name}
+        links={links}
+        canEdit={canEdit}
+        glass={glass?.icon_key || glass?.name || null}
+        wide={wide}
+        preview={preview}
+      />
       {preview ? null : <FamilyTree itemId={item.id} />}
+      {preview || !canEdit ? null : <ClassicLink item={item} />}
     </View>
   );
 
   const hero = (
-    <DrinkHero name={item.name} imageUrl={imageUrl} glass={glass?.icon_key || glass?.name || null} height={heroHeight} fade={!wide} />
+    <DrinkHero
+      name={item.name}
+      imageUrl={imageUrl}
+      generated={!preview && !!heroPic?.isSketch}
+      glass={glass?.icon_key || glass?.name || null}
+      height={heroHeight}
+      fade={!wide}
+    />
   );
 
   return (

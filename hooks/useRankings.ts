@@ -34,7 +34,7 @@ export interface RankEntry {
 
 const ENTRY_COLUMNS = `
   id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key, had_on, created_at, score,
-  item:items!item_id ( name, item_images ( sort_order, is_generated, images ( url ) ) ),
+  item:items!item_id ( name, item_images ( angle, sort_order, is_generated, images ( url ) ) ),
   venue:profiles!venue_profile_id ( display_name, locality, postcode, city, country_code )
 `;
 
@@ -67,8 +67,17 @@ export interface RankTarget {
   bar_id: string | null;
   origin: string | null;
   riff_of_id: string | null;
-  riff_of: { id: string; name: string } | null;
+  riff_of: { id: string; name: string; is_catalog: boolean } | null;
+  origin_bar_profile_id: string | null;
+  created_by: string | null;
 }
+
+/**
+ * A bar's signature with no venue behind it (added for the bar's public
+ * profile, nobody's own drink): it's had at that bar, so rank it there.
+ */
+export const signatureBarOf = (t: RankTarget | null | undefined) =>
+  t && !t.bar_id && !t.created_by ? t.origin_bar_profile_id : null;
 
 /** The drink being ranked, with what it's a version of (for "my martinis"). */
 export function useRankTarget(itemId: string | null | undefined) {
@@ -78,7 +87,7 @@ export function useRankTarget(itemId: string | null | undefined) {
     queryFn: async (): Promise<RankTarget | null> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, bar_id, origin, riff_of_id, riff_of:riff_of_id ( id, name )')
+        .select('id, name, bar_id, origin, riff_of_id, riff_of:riff_of_id ( id, name, is_catalog ), origin_bar_profile_id, created_by')
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
@@ -89,19 +98,17 @@ export function useRankTarget(itemId: string | null | undefined) {
 
 const VENUE_COLUMNS = 'id, display_name, locality, postcode, city, country_code';
 
-/** A bar's public profile: where its drinks can be ranked, and its area. Null if it has none. */
-export function useBarProfile(barId: string | null | undefined) {
+/**
+ * A bar's public profile: where its drinks can be ranked, and its area. Null
+ * if it has none. By venue (bar_id), or by profile id for a bar's signature.
+ */
+export function useBarProfile(barId: string | null | undefined, profileId?: string | null) {
   return useQuery({
-    queryKey: ['bar-profile', barId],
-    enabled: !!barId,
+    queryKey: ['bar-profile', barId, profileId ?? null],
+    enabled: !!barId || !!profileId,
     queryFn: async (): Promise<RankVenue | null> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(VENUE_COLUMNS)
-        .eq('kind', 'bar')
-        .eq('bar_id', barId!)
-        .eq('is_public', true)
-        .maybeSingle();
+      const query = supabase.from('profiles').select(VENUE_COLUMNS).eq('kind', 'bar').eq('is_public', true);
+      const { data, error } = await (barId ? query.eq('bar_id', barId) : query.eq('id', profileId!)).maybeSingle();
       if (error) throw error;
       return data as RankVenue | null;
     },
@@ -149,7 +156,12 @@ export function useAddRankEntry() {
       if (error) throw error;
       return data as { id: string };
     },
-    onSuccess: (_, entry) => qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id }),
+    onSuccess: (_, entry) => {
+      qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id });
+      // Your taste and For you follow your rankings.
+      qc.invalidateQueries({ queryKey: ['my-taste'] });
+      qc.invalidateQueries({ queryKey: ['my-ranked-ids'] });
+    },
   });
 }
 

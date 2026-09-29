@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
+import { AddBarForm } from '@/components/screens/home/AddBar';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
@@ -27,15 +28,6 @@ export function SentimentPicker({ onPick }: { onPick: (s: Sentiment) => void }) 
   );
 }
 
-function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="radio" aria-selected={selected} accessibilityLabel={label} onPress={onPress} style={[styles.chip, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}>
-      <Caption color={selected ? ds.c.ground : ds.c.ink}>{label}</Caption>
-    </PressableScale>
-  );
-}
-
 /**
  * "Where did you have it?": the drink's own bar (if it has a public profile),
  * at home, or another public bar found by name. `null` is at home.
@@ -44,6 +36,7 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
   const ds = useDs();
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState('');
+  const [adding, setAdding] = useState(false);
   const { data: found } = usePublicBars(search);
   const other = value && value.id !== ownBar?.id ? value : null;
   return (
@@ -86,6 +79,19 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
             ))}
             {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No public bars match.</Caption> : null}
           </View>
+          {search.trim().length >= 2 && !adding ? <Button label="Not here? Add it" icon="plus" variant="ghost" onPress={() => setAdding(true)} /> : null}
+          {adding ? (
+            <AddBarForm
+              initialName={search.trim()}
+              onCancel={() => setAdding(false)}
+              onAdded={(v) => {
+                onChange(v);
+                setAdding(false);
+                setSearching(false);
+                setSearch('');
+              }}
+            />
+          ) : null}
         </View>
       ) : null}
     </View>
