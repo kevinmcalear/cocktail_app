@@ -1,5 +1,5 @@
 // Asia's, North America's and Europe's 50 Best Bars 2026
-// (20260929900000_regional_fifty_best.sql): every bar on the three lists has a public profile and its place, and running the
+// (20260930300000_regional_fifty_best.sql): every bar on the three lists has a public profile and its place, and running the
 // seed again adds nothing.
 //
 //   supabase start && supabase db reset
@@ -20,7 +20,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run regional 50 Best tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260929900000_regional_fifty_best.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930300000_regional_fifty_best.sql', import.meta.url);
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
 

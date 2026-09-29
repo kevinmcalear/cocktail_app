@@ -15,6 +15,13 @@
 --    signature-drinks seed: our own description and notes, ingredients where
 --    a menu or article lists them, and measures only where a real spec is
 --    published, each checked against the source's own text.
+-- 4. The same for 20 bars on The World's 50 Best Bars 2026 51-100 list that
+--    the decade seed (20260930100000) added or that had no researched drinks:
+--    their drinks keep the names that seed gave them, and gain our notes,
+--    ingredients and published specs.
+-- Where the decade seed already created a bar under another handle, this
+-- uses that handle, and a drink that bar already has (same name) only gains
+-- empty fields and a spec.
 --
 -- Safe to re-run: bars, awards and drinks already present are left alone.
 
@@ -28,7 +35,7 @@ FROM (VALUES
     ('aquabarbangkok', 'AQUA Bar', 'Courtyard bar in the garden of the Anantara Siam Bangkok Hotel on Rajadamri Road, a fixture of the hotel for more than two decades. Its current identity is built around Quill the Duck, a nod to the ducks that once lived in the courtyard ponds, and a Potions of the Garden menu led by head mixologist Ryan Germino that leans into heat, spice and umami. No. 48 on Asia''s 50 Best Bars 2026.', 'https://www.aquabangkok.com/', 'Pathum Wan', 'Anantara Siam Bangkok Hotel, 155 Rajadamri Road', '10330', 'Bangkok', NULL, 'TH', 13.74117, 100.54043),
     ('barspiritforward.blr', 'Bar Spirit Forward', 'Lavelle Road bar on the ground floor of Hotel Southern Star, opened in the second half of 2023 by drinks veteran Arijit Bose, formerly of Countertop India, with the team behind Goa''s Tesouro. Around 60 seats face a long teak and granite counter, and the list favours precise, boozy classics such as a frozen, pre-diluted Vesper, backed by a shadow list of classics made on request. No. 30 on Asia''s 50 Best Bars 2026.', 'https://www.instagram.com/barspiritforward.blr/', 'Ashok Nagar', 'Ground Floor, Hotel Southern Star, 40/2 Lavelle Road', '560001', 'Bengaluru', 'Karnataka', 'IN', 12.97467, 77.59934),
     ('barkumiko', 'Kumiko', 'Japanese dining bar in Chicago''s West Loop opened on New Year''s Eve 2018 by Julia Momosé with Noah and Cara Sandoval of Oriole. Named after a Japanese woodworking technique, it pairs seasonal cocktails, sake and shochu with a full list of spirit-free drinks, and its service is built on omotenashi. No. 11 on North America''s 50 Best Bars 2026, where it also won the Michter''s Art of Hospitality Award.', 'https://www.barkumiko.com/', 'West Loop', '630 W Lake St', '60661', 'Chicago', 'Illinois', 'US', 41.88587, -87.64406),
-    ('smoke.bitters', 'Smoke & Bitters', 'Open-air bar and smokehouse in a coconut grove on Pehebiya Beach, Hiriketiya, opened in 2020 by London-raised bartender Don Ranasinghe and his childhood friend, chef Lahiru ''Lalla'' Perera. Drinks take a tiki-rooted approach built on Sri Lankan arrack, local gins and house-made bitters and syrups, while the kitchen cooks over native woods. No. 29 on Asia''s 50 Best Bars 2026 and winner of its Michter''s Art of Hospitality Award.', 'https://www.smokeandbitters.com/', 'Hiriketiya', 'Pehebiya Road', '81200', 'Hiriketiya', 'Southern Province', 'LK', 5.96136, 80.70135),
+    ('smokeandbitters', 'Smoke & Bitters', 'Open-air bar and smokehouse in a coconut grove on Pehebiya Beach, Hiriketiya, opened in 2020 by London-raised bartender Don Ranasinghe and his childhood friend, chef Lahiru ''Lalla'' Perera. Drinks take a tiki-rooted approach built on Sri Lankan arrack, local gins and house-made bitters and syrups, while the kitchen cooks over native woods. No. 29 on Asia''s 50 Best Bars 2026 and winner of its Michter''s Art of Hospitality Award.', 'https://www.smokeandbitters.com/', 'Hiriketiya', 'Pehebiya Road', '81200', 'Hiriketiya', 'Southern Province', 'LK', 5.96136, 80.70135),
     ('threexco_kl', 'Three X Co', 'Speakeasy behind a barbershop front on the third floor of Bangsar Shopping Centre, opened in late 2017 by friends Wong Wai Hung, Eugene Yeoh and Daniel Gunawan with bartender David Hans. The chinoiserie room, watched over by a mural of a Chinese opera diva, is known for twisted classics with Malaysian and Chinese flavours, and its IndiVDuality menus tie each drink to a persona. No. 32 on Asia''s 50 Best Bars 2026 and The Best Bar in Malaysia.', 'https://www.threexco.com/', 'Bangsar', 'Level 3, Bangsar Shopping Center, 285 Jalan Maarof', '59000', 'Kuala Lumpur', 'Federal Territory of Kuala Lumpur', 'MY', 3.1431, 101.66733),
     ('kaitodelvalle', 'Kaito del Valle', 'Izakaya-style cocktail bar co-founded in 2016 by bartender Claudia Cabrera as Latin America''s first bar run entirely by women, named after Japan''s female pearl divers. In 2025 it moved from Del Valle to a larger space in Colonia Juárez entered through a vending-machine door, with a karaoke room upstairs and a seasonal menu of Japanese-inflected cocktails. No. 25 on North America''s 50 Best Bars 2026.', 'https://www.kaitodelvalle.com/', 'Juárez', 'Hamburgo 70B', '06600', 'Mexico City', 'Ciudad de México', 'MX', 19.42707, -99.16244),
     ('angelssharenyc', 'Angel''s Share', 'Japanese-style cocktail bar opened by Tony Yoshida in 1993 in a second-floor East Village room, one of the first places in New York to show off Japanese precision bartending, carved ice and strict house rules. It closed in 2022 and reopened in June 2023 on Grove Street in the West Village under his daughter Erina Yoshida, with the original cherub mural brought along. No. 31 on North America''s 50 Best Bars 2026.', 'https://www.angelssharenyc.com/', 'West Village', '45 Grove St', '10014', 'New York', 'New York', 'US', 40.73301, -74.00433),
@@ -105,7 +112,7 @@ FROM (VALUES
     ('dunlin.bar', 'Dunlin', 'Innsbruck cocktail bar opened in 2020 on Meraner Straße, led by bar chef Kostas Karvounis. Its focus is fermentation: the team makes its own fruit wines and fruit vermouths from regional seasonal fruit in temperature-controlled tanks at the bar, and the menu is organised into chapters each devoted to one fruit. Named Best Bar Austria 2026 by Mixology magazine and the only Austrian bar on the first list. No. 50 on Europe''s 50 Best Bars 2026.', 'https://www.dunlin-bar.at/', 'Innenstadt', 'Meraner Straße 6', '6020', 'Innsbruck', 'Tyrol', 'AT', 47.26488, 11.3963),
     ('waxonberlin', 'Wax On', 'Neukölln cocktail bar on Weserstraße, opened in 2021 by London-born bartender Sam Orrock with Damien Guichard and Rose-Manon Baux. A basement lab clarifies, distils and ferments ingredients for a short menu of reworked classics and highballs, many of them batched and poured on tap. Named the Best Bar in Germany 2026. No. 17 on Europe''s 50 Best Bars 2026.', 'https://www.instagram.com/waxonberlin/', 'Neukölln', 'Weserstr. 208', '12047', 'Berlin', 'Berlin', 'DE', 52.48815, 13.42988),
     ('alma__prague', 'Alma Prague', 'Restaurant, café, wine bar and cocktail bar from the team behind Prague''s Kro Kitchen, set in a centuries-old New Town complex that once housed the Alma arthouse cinema. Head bartender Pavel Sochor''s team makes many tinctures, syrups, sodas and kombuchas in-house from seasonal Czech ingredients, and highballs are poured from taps. Named the Best Bar in Czechia 2026. No. 25 on Europe''s 50 Best Bars 2026.', 'https://www.almaprague.cz/en', 'Nové Město', 'V Jirchářích 150/8', '110 00', 'Prague', NULL, 'CZ', 50.08008, 14.41655),
-    ('gucciosteria', 'Gucci Giardino', 'All-day café and cocktail bar that Gucci opened on Florence''s Piazza della Signoria on 14 February 2022, first as Gucci Giardino 25, with a design inspired by a florist that once traded on the square. Bar manager Martina Bonci runs an aperitivo-led list of spritzes, Negroni twists and seasonal drinks using Tuscan ingredients and lighter, lower-proof builds. No. 29 on Europe''s 50 Best Bars 2026.', 'https://www.gucciosteria.com/en/florence/giardino', 'Centro storico', 'Piazza della Signoria, 37r', '50122', 'Florence', 'Tuscany', 'IT', 43.76995, 11.25671),
+    ('guccigiardino', 'Gucci Giardino', 'All-day café and cocktail bar that Gucci opened on Florence''s Piazza della Signoria on 14 February 2022, first as Gucci Giardino 25, with a design inspired by a florist that once traded on the square. Bar manager Martina Bonci runs an aperitivo-led list of spritzes, Negroni twists and seasonal drinks using Tuscan ingredients and lighter, lower-proof builds. No. 29 on Europe''s 50 Best Bars 2026.', 'https://www.gucciosteria.com/en/florence/giardino', 'Centro storico', 'Piazza della Signoria, 37r', '50122', 'Florence', 'Tuscany', 'IT', 43.76995, 11.25671),
     ('gorillabarskg', 'Gorilla', 'High-energy cocktail bar in Thessaloniki''s Ano Ladadika, opened in 2016 by Achilleas Plakidas, the 2018 Diageo World Class Greece winner, under the motto fine drinking and fun. The team uses kitchen kit such as sous vide and centrifuges for a new themed menu each year, served amid loud music, dancing and a photobooth. No. 33 on Europe''s 50 Best Bars 2026.', 'https://gorillabar.gr/', 'Ano Ladadika', 'Veroias 3', '54625', 'Thessaloniki', 'Central Macedonia', 'GR', 40.63716, 22.93766),
     ('tjoget', 'Tjoget', 'Hornstull neighbourhood restaurant and cocktail bar opened in 2012 in Stockholm, with a Mediterranean-leaning kitchen, wine bodega, beer café and local DJs as the night goes on. The bar serves classics alongside house signatures that borrow flavours from southern Europe, North Africa and the Middle East, aiming for drinkability over spectacle. Named the Best Bar in Sweden 2026. No. 37 on Europe''s 50 Best Bars 2026.', 'https://www.tjoget.com/', 'Hornstull, Södermalm', 'Hornsbruksgatan 24', '117 34', 'Stockholm', 'Stockholm County', 'SE', 59.31619, 18.03494),
     ('super.lyan', 'Super Lyan', 'Neon-lit bar in a 17th-century house at the Kimpton De Witt hotel in central Amsterdam, and the first venue outside the UK from Ryan Chetiyawardana''s Mr Lyan team. It plays a retro-futurist diner look against sustainable, technique-heavy riffs on familiar drinks, with fast, walk-in service late into the night. Named the Best Bar in the Netherlands 2026. No. 42 on Europe''s 50 Best Bars 2026.', 'https://www.superlyan.com/', 'Centrum', 'Nieuwezijds Voorburgwal 3', '1012 RC', 'Amsterdam', 'North Holland', 'NL', 52.37742, 4.89572),
@@ -161,7 +168,7 @@ FROM (VALUES
     ('virtutokyo', 'Asia''s 50 Best Bars', 2026, 26, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
     ('cmyk.china', 'Asia''s 50 Best Bars', 2026, 27, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
     ('ralphsbarchengdu', 'Asia''s 50 Best Bars', 2026, 28, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
-    ('smoke.bitters', 'Asia''s 50 Best Bars', 2026, 29, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
+    ('smokeandbitters', 'Asia''s 50 Best Bars', 2026, 29, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
     ('barspiritforward.blr', 'Asia''s 50 Best Bars', 2026, 30, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
     ('god_bkk', 'Asia''s 50 Best Bars', 2026, 31, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
     ('threexco_kl', 'Asia''s 50 Best Bars', 2026, 32, NULL, 'https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html'),
@@ -261,7 +268,7 @@ FROM (VALUES
     ('aldea.bcn', 'Europe''s 50 Best Bars', 2026, 26, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('harrysbar_theoriginal', 'Europe''s 50 Best Bars', 2026, 27, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('lantiquario_napoli', 'Europe''s 50 Best Bars', 2026, 28, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
-    ('gucciosteria', 'Europe''s 50 Best Bars', 2026, 29, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('guccigiardino', 'Europe''s 50 Best Bars', 2026, 29, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('the_clumsies', 'Europe''s 50 Best Bars', 2026, 30, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('freniefrizioni', 'Europe''s 50 Best Bars', 2026, 31, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('drinkkongbar', 'Europe''s 50 Best Bars', 2026, 32, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
@@ -294,10 +301,10 @@ FROM (VALUES
     ('boilermaker.goa', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in India', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('modernhausjkt', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Indonesia', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('threexco_kl', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Malaysia', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
-    ('smoke.bitters', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Sri Lanka', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
+    ('smokeandbitters', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Sri Lanka', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('problemchild_ph', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in the Philippines', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('mius.hongkong', 'Asia''s 50 Best Bars', 2026, NULL, 'Bartenders'' Bartender Award (Shelley Tai)', 'https://www.theworlds50best.com/bars/best-in-asia/awards/bartenders-bartender.html'),
-    ('smoke.bitters', 'Asia''s 50 Best Bars', 2026, NULL, 'Art of Hospitality Award', 'https://www.theworlds50best.com/bars/best-in-asia/awards/art-of-hospitality-award.html'),
+    ('smokeandbitters', 'Asia''s 50 Best Bars', 2026, NULL, 'Art of Hospitality Award', 'https://www.theworlds50best.com/bars/best-in-asia/awards/art-of-hospitality-award.html'),
     ('kinsman.hk', 'Asia''s 50 Best Bars', 2026, NULL, 'Best Cocktail Menu Award', 'https://www.theworlds50best.com/bars/best-in-asia/awards/best-cocktail-menu.html'),
     ('mius.hongkong', 'Asia''s 50 Best Bars', 2026, NULL, 'Best Bar Design Award', 'https://www.theworlds50best.com/bars/best-in-asia/awards/best-bar-design.html'),
     ('workshop14.hanoi', 'Asia''s 50 Best Bars', 2026, NULL, 'Best New Opening Award', 'https://www.theworlds50best.com/bars/best-in-asia/awards/best-new-opening.html'),
@@ -423,19 +430,19 @@ Sources: https://www.barkumiko.com/dining-room-and-bar', 'Martini', NULL, NULL, 
     ('barkumiko', NULL, 'Yamazaki Vieux Carré', 'Yamazaki 12 year single malt with armagnac, 20-year oloroso sherry, Cocchi Vermouth di Torino, Benedictine and Peychaud''s and Angostura bitters.', 'A Japanese-whisky rebuild of the New Orleans classic, with oloroso sherry adding nutty depth. One of the premium signatures on the current dining room and bar list.
 
 Sources: https://www.barkumiko.com/dining-room-and-bar', 'Vieux Carré', NULL, NULL, NULL, NULL),
-    ('smoke.bitters', NULL, 'No. 23', 'Tequila with naarang (Sri Lankan sour citrus), falernum, passion fruit liqueur, Ceylon and kaffir lime bitters and a mezcal spray.', 'The bar''s signature, built around naarang, a local citrus somewhere between calamansi and lime that the team juices daily. Tropical spice from house falernum and a mezcal mist tie it to the bar''s tiki and smoke themes.
+    ('smokeandbitters', NULL, 'No. 23', 'Tequila with naarang (Sri Lankan sour citrus), falernum, passion fruit liqueur, Ceylon and kaffir lime bitters and a mezcal spray.', 'The bar''s signature, built around naarang, a local citrus somewhere between calamansi and lime that the team juices daily. Tropical spice from house falernum and a mezcal mist tie it to the bar''s tiki and smoke themes.
 
 Sources: https://www.smokeandbitters.com/, https://www.the50.com/stories/News/smoke-and-bitters-art-of-hospitality-asias-50-best-bars-2026.html', NULL, NULL, NULL, NULL, NULL),
-    ('smoke.bitters', NULL, 'Pamuditha''s Punch', 'A rum blend with Halmilla-wood arrack, absinthe, naarang, falernum, coconut Angostura bitters and bay leaf bitters.', 'A tiki-style punch that puts Sri Lankan coconut arrack alongside rum and uses local sour citrus and house bitters. 50 Best highlights it as a showcase of the bar''s local-first approach.
+    ('smokeandbitters', NULL, 'Pamuditha''s Punch', 'A rum blend with Halmilla-wood arrack, absinthe, naarang, falernum, coconut Angostura bitters and bay leaf bitters.', 'A tiki-style punch that puts Sri Lankan coconut arrack alongside rum and uses local sour citrus and house bitters. 50 Best highlights it as a showcase of the bar''s local-first approach.
 
 Sources: https://www.smokeandbitters.com/, https://www.theworlds50best.com/bars/best-in-asia/the-list/smoke-and-bitters.html', NULL, NULL, NULL, NULL, NULL),
-    ('smoke.bitters', NULL, 'Pepper Pots', 'Gin with pineapple, spiced orgeat, cumin, pepper, chilli and spiced bitters.', 'A deliberately fiery drink that channels Sri Lankan spice-box flavours through a tiki template. Singled out by 50 Best in 2026 for its heat.
+    ('smokeandbitters', NULL, 'Pepper Pots', 'Gin with pineapple, spiced orgeat, cumin, pepper, chilli and spiced bitters.', 'A deliberately fiery drink that channels Sri Lankan spice-box flavours through a tiki template. Singled out by 50 Best in 2026 for its heat.
 
 Sources: https://www.theworlds50best.com/bars/best-in-asia/the-list/smoke-and-bitters.html', NULL, NULL, NULL, NULL, NULL),
-    ('smoke.bitters', NULL, 'Mai Chai', 'Chai-infused rum with triple sec, spiced orgeat, chai syrup and Elemakule tiki bitters.', 'A play on the Mai Tai that swaps in Ceylon tea spice: chai goes into both the rum and the syrup. It sits among the signatures on the bar''s own site and in Drinks International''s 2025 menu feature.
+    ('smokeandbitters', NULL, 'Mai Chai', 'Chai-infused rum with triple sec, spiced orgeat, chai syrup and Elemakule tiki bitters.', 'A play on the Mai Tai that swaps in Ceylon tea spice: chai goes into both the rum and the syrup. It sits among the signatures on the bar''s own site and in Drinks International''s 2025 menu feature.
 
 Sources: https://www.smokeandbitters.com/, https://drinksint.com/news/fullstory.php/aid/11604/Menu_of_the_month:_Smoke___Bitters.html', 'Mai Tai', NULL, NULL, NULL, NULL),
-    ('smoke.bitters', NULL, 'Bananarama', 'Halmilla-wood arrack with smoked wild bee honey, banana peel, falernum, passion fruit and smoked hellfire bitters.', 'Uses wild honey from Sri Lanka''s jungles, smoked in-house, with banana peel to add fruit without waste. A good example of the bar pairing arrack with smoke.
+    ('smokeandbitters', NULL, 'Bananarama', 'Halmilla-wood arrack with smoked wild bee honey, banana peel, falernum, passion fruit and smoked hellfire bitters.', 'Uses wild honey from Sri Lanka''s jungles, smoked in-house, with banana peel to add fruit without waste. A good example of the bar pairing arrack with smoke.
 
 Sources: https://www.smokeandbitters.com/', NULL, NULL, NULL, NULL, NULL),
     ('threexco_kl', NULL, 'Mellow Michel', 'Rye and bourbon with macadamia, sesame oil, oyster sauce, lemon and peanut candy.', 'From the Individuality 2.0 menu, where each drink is tied to a persona. It pushes a whiskey sour-style base toward savoury, nutty territory with oyster sauce and sesame oil, flavours from Malaysian Chinese home cooking.
@@ -716,7 +723,7 @@ Sources: https://thestregismacao.qrd.by/theartofconcoctionmenu', NULL, NULL, NUL
     ('stregisbar_macao', NULL, 'Disco Sazerac', 'Cognac, rye, Champagne syrup, absinthe, peach bitters and edible glitter.', 'A Studio 54-themed take on the Sazerac from the New York, New York menu, adding Champagne and peach to the classic''s cognac-rye base.
 
 Sources: https://thestregismacao.qrd.by/nynymenu', 'Sazerac', NULL, NULL, NULL, NULL),
-    ('mirate.losangeles', NULL, 'El Guero', 'A margarita with aguachile, nopal granita, coconut and avocado-washed Don Fulano Fuerte tequila.', 'Named after the Mariscos El Guero stand in Ensenada, it turns a seafood aguachile into a margarita and has been the most popular drink since opening. 50 Best calls it the fan favourite, garnished with cucumber-kelp caviar; the spec keeps evolving.
+    ('mirate.losangeles', NULL, 'El Güero', 'A margarita with aguachile, nopal granita, coconut and avocado-washed Don Fulano Fuerte tequila.', 'Named after the Mariscos El Guero stand in Ensenada, it turns a seafood aguachile into a margarita and has been the most popular drink since opening. 50 Best calls it the fan favourite, garnished with cucumber-kelp caviar; the spec keeps evolving.
 
 Created by Max Reis.
 
@@ -1150,7 +1157,7 @@ Sources: https://www.the50.com/stories/News/north-america-highest-new-entry-2023
 Created by Hugo Togni.
 
 Sources: https://foodism.ca/eat-drink/bars-restaurants/bar-pompette-toronto/, https://www.thealchemistmagazine.ca/2024/07/19/getting-tipsy-with-bar-pompette/', 'Piña Colada', NULL, NULL, NULL, NULL),
-    ('barpompette_to', NULL, '11 a.m. in Marseille', 'Sour of beeswax-infused pastis with roasted almond orgeat, citrus and egg white.', 'On the menu since day one and Togni''s tribute to the southern French pastis habit, a play on the Mauresque. Ontario beeswax softens the anise and the dark-roasted orgeat recalls the peanuts served in French bars.
+    ('barpompette_to', NULL, '11am in Marseille', 'Sour of beeswax-infused pastis with roasted almond orgeat, citrus and egg white.', 'On the menu since day one and Togni''s tribute to the southern French pastis habit, a play on the Mauresque. Ontario beeswax softens the anise and the dark-roasted orgeat recalls the peanuts served in French bars.
 
 Created by Hugo Togni.
 
@@ -1285,7 +1292,7 @@ Lavender and dry spice syrup: Toast allspice, cloves and cinnamon sticks, simmer
 Ginger tea: Juice fresh ginger and keep the fibres. Toast allspice, cloves and cinnamon, simmer in water with lemon peel, add the ginger fibres off the heat, cool, add the ginger juice and strain, pressing the solids.
 
 Spec from Liquor.com (https://www.liquor.com/lavender-mule-cocktail-recipe-8412231).', 'Moscow Mule', NULL, 'Highball', NULL, 'Shake'),
-    ('lafactoriapr', NULL, 'Peligroso', 'Shaken rum sour with Campari, Averna, lime, Angostura and a house allspice, clove and cinnamon syrup.', 'Its name means dangerous, a nod to how easily the bittersweet mix goes down. The bar shared the spec with Imbibe, and Difford''s traces it to La Factoría in 2019.
+    ('lafactoriapr', NULL, 'El Peligroso', 'Shaken rum sour with Campari, Averna, lime, Angostura and a house allspice, clove and cinnamon syrup.', 'Its name means dangerous, a nod to how easily the bittersweet mix goes down. The bar shared the spec with Imbibe, and Difford''s traces it to La Factoría in 2019.
 
 Method: Shake all ingredients with ice and strain.
 Spiced syrup: Simmer 4 cups water with 20 allspice berries, 10 cloves and a cinnamon stick for 20 minutes, dissolve in 4 cups sugar in two additions, cool and strain. Keeps 2 weeks refrigerated.
@@ -1682,25 +1689,25 @@ Sources: https://www.almaprague.cz/en/drinks', 'Paloma', NULL, NULL, NULL, NULL)
     ('alma__prague', NULL, 'Frozen Martini 3.0', 'Grey Goose and Dolin Dry with bugleweed, Pineau des Charentes and Alma''s own quince brandy.', 'The third version of the bar''s frozen Martini, served very cold and bringing in a house quince eau-de-vie and a foraged herb. It shows the lab-meets-local approach that 50 Best highlights.
 
 Sources: https://www.almaprague.cz/en/drinks', 'Martini', NULL, NULL, NULL, NULL),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 'A clear Negroni of white bitter, Martini Riserva Ambrato vermouth and butterfly-pea-infused gin, turned violet with yuzu sake.', 'The bar''s signature: butterfly pea flower turns the clear Negroni blue, and the acidity of yuzu sake shifts it to violet, a nod to the purple of ACF Fiorentina. It is lighter and more citrusy than the classic, fitting the bar''s low-and-slow aperitivo style, and has been on the menu since the early days.
+    ('guccigiardino', NULL, 'Memoire di Negroni', 'A clear Negroni of white bitter, Martini Riserva Ambrato vermouth and butterfly-pea-infused gin, turned violet with yuzu sake.', 'The bar''s signature: butterfly pea flower turns the clear Negroni blue, and the acidity of yuzu sake shifts it to violet, a nod to the purple of ACF Fiorentina. It is lighter and more citrusy than the classic, fitting the bar''s low-and-slow aperitivo style, and has been on the menu since the early days.
 
 Created by Martina Bonci in 2022.
 
 Spec from Le Cocktail Connoisseur (https://lecocktailconnoisseur.com/2022/05/12/martina-bonci-gucci-in-giardino-25-florence/).', 'Negroni', 2022, NULL, NULL, NULL),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 'Casamigos blanco tequila with Italicus bergamot rosolio, Ancho Reyes Verde, mint and lemon, with a salt and pea rim.', 'Bonci describes it as a cross between a Margarita and a Tommy''s Margarita, with a green chile liqueur for heat and bergamot for lift. The pea-powder rim is an unusual savoury touch, and it remains on the signature list.
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 'Casamigos blanco tequila with Italicus bergamot rosolio, Ancho Reyes Verde, mint and lemon, with a salt and pea rim.', 'Bonci describes it as a cross between a Margarita and a Tommy''s Margarita, with a green chile liqueur for heat and bergamot for lift. The pea-powder rim is an unusual savoury touch, and it remains on the signature list.
 
 Created by Martina Bonci.
 
 Spec from Le Cocktail Connoisseur (https://lecocktailconnoisseur.com/2022/05/12/martina-bonci-gucci-in-giardino-25-florence/).', 'Margarita', NULL, NULL, NULL, NULL),
-    ('gucciosteria', NULL, 'Queen Bee', 'Banana-infused Michter''s bourbon and mango-infused vodka with a pineapple and Greek yoghurt milk wash, honey, lemon and propolis.', 'Bonci''s own drink and a personal favourite, named for the idea that a bar works like a hive. The yoghurt milk wash gives a silky texture, and it arrives with a honeycomb garnish.
+    ('guccigiardino', NULL, 'Queen Bee', 'Banana-infused Michter''s bourbon and mango-infused vodka with a pineapple and Greek yoghurt milk wash, honey, lemon and propolis.', 'Bonci''s own drink and a personal favourite, named for the idea that a bar works like a hive. The yoghurt milk wash gives a silky texture, and it arrives with a honeycomb garnish.
 
 Created by Martina Bonci.
 
 Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.coqtail.com/en/martina-bonci-gucci-giardino-beehive-pairing/', NULL, NULL, NULL, NULL, NULL),
-    ('gucciosteria', NULL, 'Level 256', 'Roku gin with Lillet Blanc, blue curaçao, lemon and Peychaud''s bitters, finished with absinthe vapour.', 'A tribute to 1980s arcade games, named after the Pac-Man level that crashes because of a bug, with a small Pac-Man perched on the ice. It shows the playful side of a list that is otherwise built on Italian aperitivo.
+    ('guccigiardino', NULL, 'Level 256', 'Roku gin with Lillet Blanc, blue curaçao, lemon and Peychaud''s bitters, finished with absinthe vapour.', 'A tribute to 1980s arcade games, named after the Pac-Man level that crashes because of a bug, with a small Pac-Man perched on the ice. It shows the playful side of a list that is otherwise built on Italian aperitivo.
 
 Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.coqtail.com/en/martina-bonci-gucci-giardino-beehive-pairing/', NULL, NULL, NULL, NULL, NULL),
-    ('gucciosteria', NULL, 'Gucci Spritz', 'Cocchi Rosa with pink grapefruit liqueur and Angostura, topped with Bellavista Franciacorta.', 'The house spritz, made with Italian sparkling wine rather than prosecco. Spritzes are central to the bar''s terrace aperitivo on the piazza, which is what 50 Best leads with.
+    ('guccigiardino', NULL, 'Gucci Spritz', 'Cocchi Rosa with pink grapefruit liqueur and Angostura, topped with Bellavista Franciacorta.', 'The house spritz, made with Italian sparkling wine rather than prosecco. Spritzes are central to the bar''s terrace aperitivo on the piazza, which is what 50 Best leads with.
 
 Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.theworlds50best.com/bars/best-in-europe/the-list/gucci-giardino.html', NULL, NULL, NULL, NULL, NULL),
     ('gorillabarskg', NULL, 'Simba the Lion', 'A milk punch of reposado tequila, a house burnt-butter liqueur, passion fruit and Oreo ice cream.', 'The best-seller of the pop-up-book Zoo menu and one of the three drinks Plakidas recommends. Milk-punch clarification turns rich dessert flavours into a clear, easy-drinking serve.
@@ -1752,7 +1759,7 @@ Sources: https://www.superlyan.com/', 'Martini', NULL, NULL, NULL, NULL),
     ('super.lyan', NULL, 'Beeswax Old Fashioned', 'Maker''s Mark and Millstone Dutch rye with beeswax, flamed orange, raw sugar and bitters.', 'A long-running Lyan All Star that pairs American bourbon with Dutch rye and uses beeswax for a rounded, honeyed texture.
 
 Sources: https://www.superlyan.com/', 'Old Fashioned', NULL, NULL, NULL, NULL),
-    ('foco.bcn', NULL, 'Old Fashioned', 'Bourbon with maple-glazed doughnut, toasted milk and walnut.', 'Turns the Old Fashioned into a breakfast-pastry drink while keeping it stirred and spirit-forward. 50 Best uses it as the example of how Foco hides new techniques behind familiar names.
+    ('foco.bcn', NULL, 'Doughnut Old Fashioned', 'Bourbon with maple-glazed doughnut, toasted milk and walnut.', 'Turns the Old Fashioned into a breakfast-pastry drink while keeping it stirred and spirit-forward. 50 Best uses it as the example of how Foco hides new techniques behind familiar names.
 
 Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf, https://www.theworlds50best.com/bars/best-in-europe/the-list/foco.html', 'Old Fashioned', NULL, NULL, NULL, NULL),
     ('foco.bcn', NULL, 'Amaretto Sour', 'Scotch whisky with a mulled cherry cordial and an apple and almond ''champagne''.', 'A sour that keeps the amaretto flavour without the liqueur, getting almond from a sparkling apple-almond component and depth from spiced cherry. 50 Best singles it out alongside the Old Fashioned.
@@ -1863,7 +1870,278 @@ Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktail
 Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
     ('ritacocktails', NULL, 'Moka Express', 'WhistlePig 10 rye and Eminente 7 rum with moka coffee, cocoa, vanilla and salted caramel syrup, for two.', 'A sharing drink named after the Bialetti stovetop coffee maker, one of the best-known pieces of Italian design. It turns the moka pot''s coffee into a rich after-dinner cocktail for two people.
 
-Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL);
+Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('1661bar', NULL, 'Belfast Coffee', 'A cold, poitín-based take on Irish Coffee: Bán poitín, cold brew coffee and demerara syrup, stirred and topped with floated cream and nutmeg.', 'It swaps whiskey for poitín, the once-banned Irish spirit the bar is named after (1661 is the year it was outlawed), and serves the drink cold. First worked out around 2017 at Ladies & Gents in London with owner Dave Mulligan, it became BAR 1661''s calling card and has spread to other bars in Ireland and the US.
+
+Created by Lukas Etus and Dave Mulligan (Ladies & Gents, London) in 2017.
+
+Method: Stir the poitín, syrup and cold brew with ice, strain into a chilled glass and float the cream on top.
+
+Spec adapted from Difford''s Guide (https://www.diffordsguide.com/cocktails/recipe/32395/belfast-coffee).', NULL, 2017, NULL, NULL, 'Stir'),
+    ('1661bar', NULL, 'Ban and Black Boilermaker', 'A shot of Bán poitín served alongside a pint of Guinness, boilermaker style.', 'The name pairs Bán (Irish for white, and the poitín brand founded by owner Dave Mulligan) with the black of a Guinness. It is the bar''s pub-style ritual for putting poitín in front of drinkers who have never tried it.
+
+Created by Dave Mulligan.
+
+Method: Serve a shot of poitín next to a pint of Guinness.
+
+Ingredients from 50 Best Discovery (https://www.the50.com/discovery/Establishments/Ireland/Dublin/Bar-1661.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('arcatulum', NULL, 'Green Garden', 'Condesa Sahumerio gin with St-Germain and pulque, finished with drops of cinnamon-leaf oil.', 'Pulque, the tangy fermented agave sap, gives a gin highball-style drink a funky, living backbone, and the floating beads of cinnamon-leaf oil add aroma and a striking look. 50 Best singled it out as a recent favourite, and it sits in the menu''s ''Leaves'' section built around local foliage.
+
+Ingredients from ARCA Tulum menu (https://arcatulum.com/menu). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('arcatulum', NULL, 'Holy Last Word', 'A mezcal Last Word built on Montelobos Ensamble with hoja santa, coconut, Maya lime liqueur and Green Chartreuse.', 'It keeps the equal-parts herbal logic of the Last Word but swaps in smoky mezcal and hoja santa, the anise-scented Mexican ''holy leaf'' that gives the drink its name. Coconut and a liqueur of local Maya lime tie it to the Yucatán jungle setting.
+
+Ingredients from ARCA Tulum menu (https://arcatulum.com/menu). No measures have been published.', 'Last Word', NULL, NULL, NULL, NULL),
+    ('arcatulum', NULL, 'Bloody Mayan', 'Ketel One vodka with xoconostle (sour prickly pear) and achiote, lengthened with Modelo beer.', 'A Yucatán spin on the Bloody Mary that replaces tomato with tart xoconostle and colours and seasons the drink with achiote, the annatto paste behind the region''s cochinita pibil. Topping with Mexican lager pushes it toward a michelada. 50 Best named it as the drink to order with the kitchen''s crab esquites.
+
+Ingredients from ARCA Tulum menu (https://arcatulum.com/menu). No measures have been published.', 'Bloody Mary', NULL, NULL, NULL, NULL),
+    ('bar_trench', NULL, 'Trench 75', 'A Japanese French 75: Nikka Coffey Gin with honey, topped with sparkling sake instead of Champagne.', 'Rogerio Igarashi Vaz built it around Nikka Coffey Gin, with its sansho pepper botanical, when that gin launched, and swapped Champagne for sparkling sake and sugar for honey. It was never pushed as a signature; regulars made it one, and years later it is still the bar''s top seller.
+
+Created by Rogerio Igarashi Vaz in 2017.
+
+Ingredients from Jigger Daily (https://jiggerdaily.com/rogerio-igarashi-vaz-bar-trench-tokyo-cocktails/). No measures have been published.', 'French 75', 2017, NULL, NULL, NULL),
+    ('bar_trench', NULL, 'Artichoke Julep', 'Woodford Reserve bourbon and Cynar julep with Abbott''s bitters and black pepper.', 'It shows off the bar''s roots in bitter herbal liqueurs (Trench grew out of the absinthe-focused Bar Tram): the artichoke amaro Cynar adds a vegetal bitterness to a bourbon julep, and cracked black pepper gives it a dry, spicy edge.
+
+Ingredients from Asia Bars & Restaurants (https://www.asia-bars.com/2017/10/bar-trench-cocktail-bar-in-tokyo/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 'Nikka whisky sour-style drink with Cocchi Americano, apple cider reduction, lemon, egg white, absinthe and Bob''s bitters.', 'A modern take on the old Morning Glory family of whisky drinks, it leans on the absinthe that the Small Axe group (Bar Tram, Trench) is known for, with a cooked-down apple cider adding depth and egg white a silky texture.
+
+Ingredients from Asia Bars & Restaurants (https://www.asia-bars.com/2017/10/bar-trench-cocktail-bar-in-tokyo/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('bargabriel.ist', NULL, 'Künefe', 'Dessert-inspired house cocktail with pistachio vodka, künefe syrup and pistachio.', 'It turns künefe, the syrup-soaked cheese-and-shredded-pastry dessert of southern Turkey, into a drink, with pistachio vodka nodding to the nuts traditionally scattered on top. It is one of the drinks press and guests name first when describing the bar''s local-ingredient menu.
+
+Ingredients from Müdavim / Euronews (https://mudavim.net/bar-gabriel/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('bargabriel.ist', NULL, 'Nazar', 'Herbal, absinthe-led house cocktail with oregano and fennel, served in a glass evil-eye bead.', 'Named after the blue nazar amulet hung all over Turkey to ward off the evil eye, and served inside a nazar-shaped vessel. Oregano and fennel with absinthe give it a savoury anise profile built on everyday Turkish botanicals.
+
+Ingredients from Euronews (https://www.euronews.com/2026/09/25/the-50-best-bars-2026-18-spots-in-europe-make-extended-51-100-list). No measures have been published.', NULL, NULL, 'Custom', NULL, NULL),
+    ('employeesonlyny', NULL, 'Amelía', 'Vodka shaken with St-Germain elderflower liqueur, blackberry purée and lemon, served up with a slapped mint crown.', 'Often called EO''s most successful drink: it has been on the New York menu since the 2004 opening and is the one cocktail served at every Employees Only (New York, Los Angeles, Sydney, Singapore). Its fruity, floral profile was meant to lure vodka drinkers toward more nuanced cocktails.
+
+Created by Dushan Zaric in 2004.
+
+Method: Shake everything with ice and strain into a chilled coupe. Clap the mint between your palms to release its oils and use it as the garnish.
+Blackberry purée: Blend 4 oz blackberries with 2 tbsp each of sugar, water and lemon juice, strain and refrigerate; keeps 3 to 4 days (EO''s batch recipe as given to Robb Report).
+
+Spec from Imbibe (recipe by Dushan Zaric, Employees Only) (https://imbibemagazine.com/recipe/employees-only-los-angeles-amelia/).', NULL, 2004, 'Coupette', NULL, 'Shake'),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 'Overproof bourbon shaken with lemon, simple syrup, EO''s spiced grenadine and house absinthe bitters, served up with a lemon wheel.', 'A richer spin on the Prohibition-era Millionaire, named, the founders joke, for inflation. The house grenadine and a dose of EO''s own absinthe bitters (absinthe, Green Chartreuse and three kinds of bitters) give a bourbon sour an anise, herbal bite, and it has become one of the bar''s best-known modern classics.
+
+Created by Dushan Zaric and Jason Kosmas.
+
+Method: Shake with ice and strain into a chilled coupe.
+Absinthe bitters: Combine 3 cups Pernod 68 absinthe, 1/2 cup Green Chartreuse, 1 tsp Peychaud''s, 1 tsp Angostura and 2 tbsp Fee Brothers mint bitters in a bottle; invert gently a few times to mix. Keeps indefinitely at room temperature.
+
+Spec from Speakeasy (Kosmas & Zaric, 2010), quoted by Bar-Vademecum (https://bar-vademecum.eu/billionaire-cocktail/).', 'Whiskey Sour', NULL, 'Coupette', NULL, 'Shake'),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 'Overproof rye stirred with a generous pour of sweet vermouth, Grand Marnier and Angostura, finished with a lemon twist.', 'EO''s house Manhattan is vermouth-heavy and adds Grand Marnier for orange depth, a nod to older ''fancy'' Manhattan styles. The white-jacketed bartenders have been stirring it since 2004, and 50 Best still calls out the bar''s Manhattans as the drink to order.
+
+Created by Jason Kosmas and Dushan Zaric in 2004.
+
+Method: Stir with ice and strain into a chilled cocktail glass.
+
+Spec from Speakeasy (Kosmas & Zaric, 2010), quoted by Bar-Vademecum (https://bar-vademecum.eu/manhattan-cocktail/).', 'Manhattan', 2004, 'Martini', NULL, 'Stir'),
+    ('frontbackaccra', NULL, 'Spicy Note', 'Tequila shaken with house raspberry purée, orange liqueur, agave and lime, served with a hot pepper dust rim.', 'The drink 50 Best credits with building the bar''s reputation when it entered the 51-100 list in 2026. It is a fruit-forward Margarita build where a rim of ground hot pepper brings a West African kick.
+
+Ingredients from The 50 Best Bars (https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('frontbackaccra', NULL, 'Kandanka Sour', 'Blanco tequila shaken with mandarin, dragon fruit and lavender.', '50 Best has singled it out twice (its 2024 round-up of exciting African bars and its Discovery guide) as the example of the club''s compact list of originals. Dragon fruit gives it a vivid colour and mandarin and lavender a soft, floral citrus profile.
+
+Method: Shaken.
+
+Ingredients from 50 Best Discovery (https://www.the50.com/discovery/Establishments/Ghana/Accra/FrontBack.html). No measures have been published.', NULL, NULL, NULL, NULL, 'Shake'),
+    ('frontbackaccra', NULL, 'Akwasi', 'House gin with fresh cucumber juice, moringa-dandelion juice, apple juice, rosemary-basil syrup and lemon.', 'Named with an Akan day name, it is a green, garden-fresh gin sour built on moringa, a nutrient-rich leaf widely used in Ghana, alongside dandelion and cucumber. It has been on the menu since at least 2024 and is one of the two originals 50 Best highlights.
+
+Ingredients from Front/Back menu book 2024 (https://uploads-ssl.webflow.com/60a676b012dee37145d9e5f1/661eb74ffe3c6514060bf3a6_FB%20MENU%20BOOK%202024.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('laborrachagh', NULL, 'House Margarita', 'The cantina''s fresh house margarita, the lead drink on a menu of 11 margarita variations.', 'Margaritas are the bar''s identity: 50 Best notes they flow all night, backed by what it calls one of Ghana''s best tequila collections. The house version is the entry point to that list.
+
+Sources: https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html, https://www.the50.com/discovery/Establishments/Ghana/Accra/La-Borracha.html', 'Margarita', 2021, NULL, NULL, NULL),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 'Tequila margarita made with sobolo (Ghanaian hibiscus drink), agave nectar, triple sec, mint and lime.', 'It fuses the Mexican margarita with sobolo, the spiced hibiscus drink sold all over Ghana, giving a deep red, tart-floral twist. Local press named it one of the must-try cocktails in Accra and credits it to the bar''s manager, Chris.
+
+Created by Chris (bar manager).
+
+Ingredients from Accra Events GH (https://www.accraeventsgh.com/post/must-try-cocktails-in-accra). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('lasaladelaura', NULL, 'Lluvia con Sol', 'Sparkling highball of the bar''s own prontoalivio (Lippia alba) distillate with an archucha (Andean cucumber) shrub, topped with sparkling wine.', 'Named after the Bogotá phenomenon of rain falling in sunshine, it uses a spirit the bar distils from prontoalivio, a verbena-like medicinal herb, and a shrub of archucha, a native Andean gourd. It has been a guest favourite since opening and is the drink press most often uses to explain the bar''s ecosystem-by-ecosystem approach.
+
+Created by Laura Hernández Espinosa in 2021.
+
+Ingredients from La Sala de Laura menu (https://restauranteleo.com/wp-content/uploads/2026/05/MENU-BAR-Y-COCTELES.pdf). No measures have been published.', NULL, 2021, NULL, NULL, NULL),
+    ('lasaladelaura', NULL, 'Negroni de La Sala', 'The house Negroni: Territorio Páramo (the bar''s own distillate), Vermú de Monte (wild red vermouth), Campari and cacao husk.', 'Every component but the Campari is Colombian, from the bar''s own páramo (high Andean moorland) distillate to its mountain vermouth, and cacao husk adds a dry chocolate note. It shows how the bar reworks classics through local biodiversity.
+
+Created by Laura Hernández Espinosa.
+
+Ingredients from La Sala de Laura menu (https://restauranteleo.com/wp-content/uploads/2026/05/MENU-BAR-Y-COCTELES.pdf). No measures have been published.', 'Negroni', NULL, NULL, NULL, NULL),
+    ('lasaladelaura', NULL, 'Martini Piedemonte', 'Stirred drink of the bar''s Territorio Piedemonte (coca leaf and cacao) spirit with Vermú de Monte, wild vanilla perfume and an aromatic pipe.', 'Built on a house spirit distilled from coca leaf and cacao that evokes the Andean foothills, it is finished with a spray of wild vanilla and served with an aromatic smoking pipe for scent. It closes the bar''s tasting experience and is listed among the guest favourites since opening, now under the name Territorio No. 6.
+
+Created by Laura Hernández Espinosa in 2021.
+
+Ingredients from La Sala de Laura menu (https://restauranteleo.com/wp-content/uploads/2026/05/MENU-BAR-Y-COCTELES.pdf). No measures have been published.', 'Martini', 2021, NULL, NULL, NULL),
+    ('littlereddoor_paris', NULL, 'Aquaponie', 'Light, herbal vodka drink of Grey Goose, St-Germain, basil and lemon zest.', 'Its ambassador ingredient is basil from Jaden, an aquaponics farm in Chantilly where fish fertilise the plants and the plants clean the water, so a thirsty herb is grown with far less water. It is the menu''s bright aperitif and the drink every write-up of the menu leads with.
+
+Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2025/09/little-red-door-creates-regenerative-farming-menu/). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('littlereddoor_paris', NULL, 'Agroforesterie', 'Elderberry and wild botanicals with fortified wines and Gewürztraminer eau-de-vie.', 'It stands for agroforestry, where trees and crops are grown together, and is placed as the finale of the menu. Elderberry, a hedgerow fruit, meets the floral lift of a Gewürztraminer eau-de-vie for a layered, wine-like drink.
+
+Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2025/09/little-red-door-creates-regenerative-farming-menu/). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('littlereddoor_paris', NULL, 'Aquaculture', 'Anaë Dulse gin with sea lettuce and a lovage soda, topped with a crisp seaweed chip.', 'It celebrates seaweed farming: a gin distilled with dulse seaweed, sea lettuce and savoury lovage make a saline, green highball, and the seaweed crisp on top adds texture and a snack-like finish.
+
+Ingredients from Sortiraparis / The Spirits Business (https://www.sortiraparis.com/en/where-to-eat-in-paris/bars-cafes/articles/344888-little-red-door-the-cocktail-bar-where-you-can-experience-a-truly-sensory-journey). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('littlereddoor_paris', NULL, 'Carbone', 'Deep red drink of beetroot, black garlic, smoked gin and Dartigalongue Un-Oaked Armagnac, served with a cube of cream cheese.', 'It represents regenerative farming, where beetroot helps restore soil health. Black garlic adds a rounded umami depth rather than raw bite, and the cream cheese on the side turns it into a savoury, almost culinary pairing. It is the most discussed drink of the menu.
+
+Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2025/09/little-red-door-creates-regenerative-farming-menu/). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('lpmdubai', NULL, 'Tomatini', 'Muddled Campari tomatoes shaken with Ketel One vodka, white balsamic, a little sugar syrup, salt and pepper, served up with a seasoned cherry tomato.', 'Created in 2010 by Jimmy Barrat for LPM Dubai''s opening, it recreates the Riviera taste of a ripe tomato with salt, pepper and balsamic, landing between a Martini and a Bloody Mary. It has become LPM''s calling card worldwide, with tens of thousands sold a year in Dubai alone, a tableside crack from an oversized pepper mill, and its own World Tomatini Day every 12 November.
+
+Created by Jimmy Barrat in 2010.
+
+Method: Muddle the tomatoes in a shaker, season with salt and pepper, add the balsamic, syrup and vodka, shake with ice and double strain into a martini glass. Sprinkle salt-and-pepper seasoning on top.
+
+Spec from LPM Dubai (https://lpmrestaurants.com/dubai/blog/a-toast-to-the-tomatini-and-tomati-no-cocktail/).', NULL, 2010, 'Martini', NULL, 'muddle and shake'),
+    ('lpmdubai', NULL, 'Bikini', 'Ketel One and Tanqueray No. Ten with mandarin, peach and Rinquinquin peach aperitif.', 'The lead drink on LPM Dubai''s ''Déjà Vu'' menu, which pays tribute to the French Riviera''s golden decades and figures like Brigitte Bardot. Rinquinquin, a Provençal peach-wine aperitif, gives a sunny, stone-fruit profile to a vodka and gin base.
+
+Ingredients from LPM Dubai bar menu (https://lpmrestaurants.com/dubai/menus/bar-menu/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('lpmdubai', NULL, 'Lettre a Coco', 'Ketel One vodka with a Champagne cordial, jasmine, bergamot and rose.', 'One of LPM''s house classics, listed next to the Tomatini. A house Champagne cordial carries the character of Champagne into a vodka base, and jasmine, bergamot and rose give it a floral, perfumed finish.
+
+Ingredients from LPM Dubai bar menu (https://lpmrestaurants.com/dubai/menus/bar-menu/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('mius.hongkong', NULL, 'Tomatotini', 'Vodka with tomato shrub, dill and lime, finished with basil oil: a bright, savoury Martini-style drink.', 'The drink 50 Best singles out first, a savoury tomato Martini built on a house tomato shrub rather than juice, so it stays clean and sharp. The bar pairs it with its dashi-pickled cherry tomatoes, which 50 Best calls basically obligatory alongside it.
+
+Ingredients from Mius menu (https://www.mius.hk/menu). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
+    ('mius.hongkong', NULL, 'Highball', 'Frozen whisky topped with chilled Japanese soda and served without ice.', 'An ice-free, Kobe-style highball: the whisky is kept in the freezer and the soda well chilled so the drink stays cold and fizzy without dilution. It shows the bar''s focus on doing simple drinks precisely.
+
+Method: Serve without ice.
+
+Ingredients from Mius menu (https://www.mius.hk/menu). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 'Gin, Italian bitter amaro, Grenache wine, strawberry and pink peppercorn: a fruit-forward Negroni.', 'Replaces sweet vermouth with Grenache red wine and adds strawberry, with pink peppercorn lifting the fruit. 50 Best names it among the bar''s classics with a twist.
+
+Ingredients from Mius menu (https://www.mius.hk/menu). No measures have been published.', 'Negroni', NULL, NULL, NULL, NULL),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 'Tequila with fennel pollen, olive, gentian and lime: a savoury, floral Margarita.', 'Crosses a Margarita with a Dirty Martini: olive brings brine and salinity, gentian adds a bitter edge and fennel pollen gives a floral anise lift. The menu bills it as a savoury, floral riff on the classic.
+
+Ingredients from Mius menu (https://www.mius.hk/menu). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('naked.athens', NULL, 'Transparent Strawberry Bloody Mary', 'A crystal-clear Bloody Mary of Absolut vodka, Luxardo Bitter and ''invisible strawberries'', garnished with a faux cherry tomato.', 'The drink 50 Best Discovery uses to sum up the bar: vodka is redistilled with Campari and Bloody Mary flavours (tomato, celery, cucumber, hot sauce) and clarified with fresh strawberries so it pours like water yet tastes savoury and spicy. The cherry tomato garnish is made from leftover pulp, in line with the bar''s zero-waste approach.
+
+Ingredients from Naked Athens menu (https://nakedbarathens.com/wp-content/uploads/2026/09/NKD-ATH-COCKTAIL-MENU.pdf). No measures have been published.', 'Bloody Mary', NULL, NULL, NULL, NULL),
+    ('naked.athens', NULL, 'Carob Old Fashioned', 'Jameson Irish whiskey and Metaxa 12 sweetened with carob and popcorn.', 'Sweetened with a carob ''honey'' made from kitchen byproducts (leftover carob, bread waste and toasted corn) instead of sugar, giving an earthy, molasses-like depth. It pairs Irish whiskey with Greek Metaxa, a Greek-Irish mix the bar leans into.
+
+Ingredients from Naked Athens menu (https://nakedbarathens.com/wp-content/uploads/2026/09/NKD-ATH-COCKTAIL-MENU.pdf). No measures have been published.', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('naked.athens', NULL, 'Apple #Not Martini', 'Beefeater and Roku gins with Roots mastiha and ''invisible'' green apple, served clear with apple liqueur frozen into the ice.', 'A clear, grown-up Appletini: green apple and verbena are clarified so the drink looks like water, Greek mastiha adds a resinous note, and green apple liqueur frozen inside the ice cube changes the drink as it melts.
+
+Ingredients from Naked Athens menu (https://nakedbarathens.com/wp-content/uploads/2026/09/NKD-ATH-COCKTAIL-MENU.pdf). No measures have been published.', NULL, NULL, NULL, 'Cubes', NULL),
+    ('naked.athens', NULL, 'Pineapple Tai', 'A Mai Tai twist of Havana Club 7, Metaxa 12 and Cointreau with pineapple ketchup and granola.', 'Uses the pineapple twice, the juice in the drink and the solids as garnish, and replaces orgeat''s nuttiness with granola. The pineapple ketchup (made with mushrooms) adds a savoury edge to the tiki classic.
+
+Ingredients from Naked Athens menu (https://nakedbarathens.com/wp-content/uploads/2026/09/NKD-ATH-COCKTAIL-MENU.pdf). No measures have been published.', 'Mai Tai', NULL, NULL, NULL, NULL),
+    ('offtrack.sg', NULL, 'House Espresso Martini', 'Offtrack''s house Espresso Martini, lifted with orange blossom and dry curaçao.', 'The bar''s best-known drink and the one press most often tells guests to order. Orange blossom and dry curaçao push the coffee classic toward a brighter, fruitier finish while keeping it silky and simple, in line with the bar''s focus on reworked classics.
+
+Created by Joash Conceicao.
+
+Ingredients from The World''s 50 Best Bars (https://www.theworlds50best.com/bars/best-in-asia/the-list/offtrack.html). No measures have been published.', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('offtrack.sg', NULL, 'Rum & Raisin Manhattan', 'A Manhattan built on rum with PX sherry and hazelnut, evoking rum-and-raisin ice cream.', 'Swaps rye and vermouth for rum and raisiny Pedro Ximénez sherry, with hazelnut for a nutty, dessert-like depth. 50 Best calls it out as one of the bar''s signature reworked classics.
+
+Created by Joash Conceicao.
+
+Ingredients from The World''s 50 Best Bars (https://www.theworlds50best.com/bars/best-in-asia/the-list/offtrack.html). No measures have been published.', 'Manhattan', NULL, NULL, NULL, NULL),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 'The old Tuxedo No. 2 revived: gin, dry vermouth, maraschino, absinthe and orange bitters.', 'A rarely seen pre-Prohibition Martini variation that Offtrack put back on its list, true to its cult-classics approach. Reviewers single it out for its savoury, wet style lifted by cherry liqueur and a touch of absinthe.
+
+Ingredients from Indulgentism (https://www.indulgentism.com/food-reviews/offtrack/). No measures have been published.', 'Tuxedo', NULL, NULL, NULL, NULL),
+    ('otro___bar', NULL, 'Mini Ramito', 'A small, tropical Ramos-style fizz of banana liqueur, citrus, coconut cream and coffee soda.', 'A Costa Rican take on the Ramos Gin Fizz that swaps gin and dairy for banana liqueur and coconut cream and lengthens it with a coffee soda, two of the local staples the bar builds around. It is deliberately served in a mini format and is named as one of the house''s two emblematic cocktails.
+
+Ingredients from Guía Comino (https://comino.cl/otro-bar-costa-rica-celebra-su-primer-aniversario-con-invitados-de-lujo/). No measures have been published.', 'Ramos Gin Fizz', NULL, NULL, NULL, NULL),
+    ('otro___bar', NULL, 'Juguito Verde', 'Sage-infused mezcal with an herbal liqueur, lemongrass and sage cordial and lime: a bright, herbal aperitivo.', 'The bar''s other emblematic drink, a green, herbaceous aperitif built on house infusions and cordials. La República also picks it out when covering the bar''s 50 Best debut.
+
+Ingredients from Guía Comino (https://comino.cl/otro-bar-costa-rica-celebra-su-primer-aniversario-con-invitados-de-lujo/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('otro___bar', NULL, 'Highball Fresquito', 'A highball built on a soursop (guanábana) distillate and soju.', 'Uses a house soursop distillate, showing the bar''s habit of distilling Costa Rican fruit in its own lab, paired with light Korean soju for an easy, refreshing long drink.
+
+Ingredients from La República (https://www.larepublica.net/otro-bar-50-best/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('penicillin_bar', NULL, 'One Penicillin, One Tree', 'White chocolate whisky with strawberry brine and coconut kefir: creamy, tangy and sour.', 'The bar''s flagship climate-positive serve, launched in January 2021: through Ecospirits and Green Steps Group, every one sold plants a native Mallotus muticus (swamp tree) in Borneo''s Kalimantan rainforest. The recipe changes with the seasons; the current version pairs white chocolate whisky with a strawberry brine and coconut kefir from the bar''s own fermentation room.
+
+Ingredients from Penicillin menu (https://penicillinbarhk.com/img/menu2.jpg). No measures have been published.', NULL, 2021, NULL, NULL, NULL),
+    ('penicillin_bar', NULL, 'Our Final Warning', 'Rotovap watermelon gin, omija-berry vermouth and jalapeño sous-vide Campari: a spicy, fruity Negroni-style stir.', 'A Negroni reworked with lab techniques: the gin is redistilled with watermelon on a rotary evaporator, the vermouth is flavoured with Korean omija (five-flavour berry) and the Campari is infused with jalapeño by sous-vide. 50 Best singles it out as a highlight of the menu.
+
+Ingredients from Penicillin menu (https://penicillinbarhk.com/img/menu2.jpg). No measures have been published.', 'Negroni', NULL, NULL, NULL, NULL),
+    ('penicillin_bar', NULL, 'Hot, Flat & Crowded', 'Mango-curd gin, salted burnt butter, grilled purple cabbage cream soda and vitamin C, served long and fizzy.', 'A savoury, smoky highball built around a cream soda made from grilled purple cabbage, a vegetable most bars would never put in a glass. SCMP''s 100 Top Tables lists it as a must-try in both 2024 and 2025.
+
+Ingredients from The Drink Journal (https://www.thedrinkjournal.com/journal/penicillin-hong-kong). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('penicillin_bar', NULL, 'The Original', 'Recycled seashell vodka with spiced cherry tomato, salted coconut cordial and citrus hydrosol: clear, savoury and dry.', 'Co-founder Agung Prabowo''s own signature, built from waste streams such as seashells and leftover citrus. It pours crystal clear yet tastes savoury, and SCMP names it among the bar''s must-try drinks.
+
+Created by Agung Prabowo.
+
+Ingredients from Penicillin menu (https://penicillinbarhk.com/img/menu2.jpg). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('the_sg_club', NULL, 'Wagyumafia Fashioned', 'Woodford Reserve bourbon fat-washed with Kobe beef fat, served with Kobe beef jerky and honey.', 'A fat-washed Old Fashioned made with Tokyo wagyu specialist Wagyumafia: bourbon is mixed with Kobe beef fat, chilled and strained, keeping the beef''s sweet, almost pancake-like aroma without the grease. It was born at a Gokan and Hamada collaboration dinner in Bangkok, Hamada still tweaks it and designed the soy-soaked jerky garnish, and it was the headline drink of the basement Sip bar; the SG group now serves Wagyu Old Fashioned variations in Tokyo, Shanghai and New York.
+
+Created by Shingo Gokan and Hisato Hamada (Wagyumafia).
+
+Method: Bourbon is mixed with Kobe beef fat, chilled and strained before mixing.
+Beef fat-washed bourbon: Mix Woodford Reserve with Kobe beef fat, chill until the fat sets, then strain it out.
+
+Ingredients from Metropolis Japan (https://metropolisjapan.com/the-sg-club/). No measures have been published.', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('the_sg_club', NULL, 'Figroni', 'A Negroni made with fig-infused ingredients, from the ground-floor Guzzle menu.', 'Part of Guzzle''s menu of familiar classics given a twist (alongside a Cold Brew Martini and a Rum and Cola made without cola). Fig infusion gives the bitter Negroni a jammy, rounder fruit note.
+
+Sources: https://metropolisjapan.com/the-sg-club/', 'Negroni', NULL, NULL, NULL, NULL),
+    ('the_sg_club', NULL, 'Natural / Unnatural Wine', 'Bombay Sapphire gin with fermented green apple, grapefruit and mate tea, built to drink like a crisp natural white wine.', 'A cocktail that imitates natural wine: fermented green apple brings the acidity and funk, mate tea adds herbal grip, and the result reads like a glass of skin-light white. The name plays on the line between natural and artificial.
+
+Ingredients from Bishoku Quest (https://bishokuquest.com/en/restaurants/8412/). No measures have been published.', NULL, 2023, NULL, NULL, NULL),
+    ('the_sg_club', NULL, 'Cold Brew Martini', 'The SG Club''s take on the Espresso Martini, made with cold brew coffee and sweetened with kokuto (Okinawan black sugar).', 'Guzzle swaps espresso for cold brew and plain sugar for kokuto, a mineral, molasses-like Okinawan cane sugar, giving the modern classic a Japanese accent.
+
+Sources: https://metropolisjapan.com/the-sg-club/', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 'Clarified peanut rum with beef essence, coconut water, bird''s eye chilli and makrut lime: a clear drink that tastes like the salad.', 'The bar''s best-known drink, which 50 Best calls its superstar and SCMP gave a dedicated ''Drink in Focus'' feature. It recreates a Thai beef salad in a glass: peanut-infused rum is clarified, then beef essence brings umami while chilli and makrut lime supply the heat and aromatics. It has been on the menu since the bar opened in June 2023, when the launch version was described with Angus biltong as the beef element.
+
+Created by Jay Khan and Ajit Gurung in 2023.
+
+Ingredients from 50 Best Discovery (https://www.theworlds50best.com/discovery/Establishments/Hong-Kong/Hong-Kong/The-Savory-Project.html). No measures have been published.', NULL, 2023, NULL, NULL, NULL),
+    ('thesavoryproject', NULL, 'Biryani', 'Tequila with ghee, biryani masala, plum, tonka bean, pineapple and peppers, inspired by the Indian rice dish.', 'Translates a biryani''s warm spice and richness into a cocktail, setting ghee and a biryani masala blend against tequila, fruit and tonka. Reviewers describe it as spiced and savoury yet clean, and it is one of the drinks guests pass around the bar to share.
+
+Ingredients from 50 Best Discovery (https://www.theworlds50best.com/discovery/Establishments/Hong-Kong/Hong-Kong/The-Savory-Project.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('thesavoryproject', NULL, 'Mala Punch', 'Gin with Sichuan peppercorn, mint, passionfruit and fermented bean: fruity, aromatic and tongue-numbing.', 'Brings the numbing tingle of Sichuan mala into a fruity gin punch, with fermented bean adding a savoury base note. The Drink Journal lists it first among the bar''s signatures and calls it a modern Hong Kong icon.
+
+Ingredients from The Drink Journal (https://www.thedrinkjournal.com/journal/the-savory-project-hong-kong). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('threehorsesbar', NULL, 'Jabberwock', 'The house Martini made with a splash of fino sherry, poured tableside and served with a gold horse swizzle stick.', 'The sherry bar''s answer to Caretaker''s Cottage''s cult House Martini (house gin made with Four Pillars and a house dry vermouth), seasoned with dry fino. The name borrows from the old Savoy-era Jabberwock, a gin and sherry drink, and the tableside pour makes it the room''s signature ritual.
+
+Method: Poured tableside.
+
+Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2026/02/three-horses-the-sherry-led-sequel-to-caretakers-cottage/). No measures have been published.', 'Martini', 2026, NULL, NULL, 'Build'),
+    ('threehorsesbar', NULL, 'Margarita', 'A slushy-textured Margarita of lime sorbet whipped with Espolòn Blanco tequila and mandarin sherry.', 'One of the bar''s whipped sorbet drinks: surplus seasonal fruit is turned into house sorbet and whipped to order with the spirit, giving a smooth, icy texture without shaved ice. Mandarin sherry stands in for orange liqueur, keeping the sherry thread running through the menu.
+
+Method: Whipped to order.
+
+Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2026/02/three-horses-the-sherry-led-sequel-to-caretakers-cottage/). No measures have been published.', 'Margarita', 2026, NULL, NULL, NULL),
+    ('threehorsesbar', NULL, 'Mango G&T', 'House gin with mango sorbet, Fever-Tree tonic and fresh lime zest, whipped to order and served in a steel coupe.', 'Time Out names it one of the two drinks that steal the show and a mainstay since opening. The sorbet is whipped with the gin and tonic to order so the drink is silky with no ice shards, tasting of pure mango lifted by lime.
+
+Method: Whipped to order.
+
+Ingredients from Time Out Melbourne (https://www.timeout.com/melbourne/bars/three-horses). No measures have been published.', NULL, 2026, 'Coupette', NULL, NULL),
+    ('threehorsesbar', NULL, 'Ir(ish) Coffee', 'Pedro Ximénez sherry with blueberry coffee and Baba''s macadamia Irish cream, looking like a tiny Guinness.', 'A sherry-based Irish Coffee that replaces whiskey with PX and dairy cream with a macadamia Irish cream, so it drinks lighter than it looks. Time Out ranks it alongside the Mango G&T as the bar''s standout.
+
+Ingredients from Time Out Melbourne (https://www.timeout.com/melbourne/bars/three-horses). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('threesheetssoho', NULL, 'French 75', 'A bottled, crystal-clear French 75 of gin, clarified lemon, orange flower water, white wine, cloud tea and verjus, carbonated in-house.', 'The drink that made Three Sheets Dalston famous and brought ''cocktail tourists'' to Kingsland Road, reworked for Soho with oak and tea for extra dryness. Verjus and gin are used to split the lemon juice, which is then filtered clear and carbonated below 4°C three times before bottling, so it pours like sparkling wine.
+
+Created by Max and Noel Venning.
+
+Method: Mix everything together and let the verjus and gin split the lemon juice. Strain through a coffee filter, carbonate below 4°C three times with 20-minute rests between, then bottle.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1359/East_heads_west_-_the_journey_to_Three_Sheets_the_sequel_.html). No measures have been published.', 'French 75', NULL, NULL, NULL, 'Build'),
+    ('threesheetssoho', NULL, 'Dirty Martini', 'Belvedere vodka with Koseret tea, olive oil, Picpoul and sea salt: a softer, savoury Dirty Martini.', 'Carried over unchanged from Dalston to Soho. Instead of olive brine it gets its savouriness from olive oil and sea salt, with Ethiopian Koseret tea and Picpoul wine softening the booze, and it can be ordered with a caviar bump.
+
+Created by Max and Noel Venning.
+
+Ingredients from Three Sheets Soho menu (https://www.threesheets-bar.com/s/Website-menu.pdf). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 'Hennessy VS with fermented strawberry, Forgotten bitter, Earl Grey and Pineau des Charentes.', 'A cognac-based Boulevardier in which fermented strawberry brings a jammy, slightly funky fruit note and Pineau des Charentes stands in for sweet vermouth, with Earl Grey adding tannin. It shows the bar''s habit of reworking classics with a few clean, seasonal components.
+
+Ingredients from Three Sheets Soho menu (https://www.threesheets-bar.com/s/Website-menu.pdf). No measures have been published.', 'Boulevardier', NULL, NULL, NULL, NULL),
+    ('threesheetssoho', NULL, 'Sazzaquack', 'A Sazerac of Seven Tails brandy and WhistlePig rye seasoned with Peking duck spices, rooibos and a drop of soy, with a lemon-absinthe spritz.', 'Created for the Soho opening, it gives the Sazerac its anise from a blend of Peking duck spices rather than only absinthe, plus a touch of soy for savouriness. 50 Best singles it out, served in a tumbler with a glass duck that seems to float inside.
+
+Created by Max and Noel Venning in 2024.
+
+Method: Finish with a spritz of absinthe mixed with lemon zest-infused vodka.
+Peking spice Seven Tails: Seven Tails brandy infused with the traditional spices used for Peking duck.
+Rooibos Seven Tails: Seven Tails brandy infused with rooibos tea.
+
+Spec from CLASS (https://classbarmag.com/news/fullstory.php/aid/1359/East_heads_west_-_the_journey_to_Three_Sheets_the_sequel_.html).', 'Sazerac', 2024, 'Rocks', NULL, NULL),
+    ('vesperbkk', NULL, 'Vesper', 'The house Vesper of Tanqueray gin, Boatyard vodka and Cocchi Americano, served shaken, stirred or straight from the freezer.', 'The bar is named after James Bond''s martini and has served it since opening in 2014; 50 Best calls it the signature that will never leave the menu. Guests choose how it is made (shaken, stirred or a frozen pour), and the bar keeps a ''Vesper Bible'' of twists on it.
+
+Method: Shaken, stirred, or poured straight from the freezer.
+
+Ingredients from Vesper menu (https://www.vesperbar.co/_files/ugd/a7e7ff_ebd0ec311fa44849b545a30d2ab0f375.pdf). No measures have been published.', 'Vesper', 2014, NULL, NULL, 'Shake'),
+    ('vesperbkk', NULL, 'Beesting', 'A Sazerac-style stir of Michter''s rye and Martell VS with carrot, caraway, beeswax, honey, absinthe and Peychaud''s.', 'The spring-section take on a Sazerac: carrot and caraway bring an earthy, savoury sweetness, beeswax is used to give a rounder, silkier texture, and honey finishes it. The base is split between rye and cognac.
+
+Ingredients from Vesper menu (https://www.vesperbar.co/_files/ugd/a7e7ff_ebd0ec311fa44849b545a30d2ab0f375.pdf). No measures have been published.', 'Sazerac', 2025, NULL, NULL, NULL),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 'Beefeater 24 gin with rhubarb, hibiscus, almond, vanilla, cream and egg white: a pink, Ramos-style fizz.', 'A rhubarb-and-cream Ramos Gin Fizz for the spring section of a British-seasons menu, with hibiscus for colour and almond and vanilla for a creamy, dessert-like depth.
+
+Ingredients from Vesper menu (https://www.vesperbar.co/_files/ugd/a7e7ff_ebd0ec311fa44849b545a30d2ab0f375.pdf). No measures have been published.', 'Ramos Gin Fizz', 2025, NULL, NULL, NULL),
+    ('vesperbkk', NULL, 'Roots', 'A Manhattan twist of Woodford Reserve with coconut, beetroot, parsnip, Talisker 10, Ratafia Rossi, Thai agricole rum and maraschino.', 'The autumn-section Manhattan built around root vegetables: beetroot and parsnip bring earthy sweetness, coconut rounds it out, and a Thai agricole rum from Choeng Doi plus a touch of peaty Talisker add local and smoky layers.
+
+Ingredients from Vesper menu (https://www.vesperbar.co/_files/ugd/a7e7ff_ebd0ec311fa44849b545a30d2ab0f375.pdf). No measures have been published.', 'Manhattan', 2025, NULL, NULL, NULL),
+    ('vesperbkk', NULL, 'Forest Walk', 'A Gimlet twist of Roku gin with Douglas fir, eucalyptus, menthe, vanilla, guava cordial and Peychaud''s, garnished with a frozen grape.', 'The winter drink evokes a walk through a British pine forest: resinous Douglas fir and eucalyptus with a cool mint note, softened by vanilla and a tropical guava cordial in place of lime cordial. The frozen grape doubles as garnish and chiller.
+
+Ingredients from Vesper menu (https://www.vesperbar.co/_files/ugd/a7e7ff_ebd0ec311fa44849b545a30d2ab0f375.pdf). No measures have been published.', 'Gimlet', 2025, NULL, NULL, NULL);
 
 INSERT INTO "seed_lines" VALUES
     ('barkumiko', NULL, 'Bright One', 0, 0.5, 'oz', 'Lemon Juice', NULL, 'fresh', false),
@@ -2238,12 +2516,12 @@ INSERT INTO "seed_lines" VALUES
     ('lafactoriapr', NULL, 'Lavender Mule', 2, 0.75, 'oz', 'Lavender and Dry Spice Syrup', NULL, 'house-made', false),
     ('lafactoriapr', NULL, 'Lavender Mule', 3, 0.75, 'oz', 'Ginger Tea', NULL, 'house-made', false),
     ('lafactoriapr', NULL, 'Lavender Mule', 4, NULL, NULL, 'Lime wheel; fresh lavender sprig (optional)', NULL, 'garnish', false),
-    ('lafactoriapr', NULL, 'Peligroso', 0, 1.5, 'oz', 'Rum', NULL, NULL, false),
-    ('lafactoriapr', NULL, 'Peligroso', 1, 0.5, 'oz', 'Campari', NULL, NULL, false),
-    ('lafactoriapr', NULL, 'Peligroso', 2, 0.5, 'oz', 'Averna', NULL, NULL, false),
-    ('lafactoriapr', NULL, 'Peligroso', 3, 0.75, 'oz', 'Lime Juice', NULL, 'fresh', false),
-    ('lafactoriapr', NULL, 'Peligroso', 4, 0.75, 'oz', 'Spiced Syrup', NULL, 'house-made', false),
-    ('lafactoriapr', NULL, 'Peligroso', 5, 2, 'dash', 'Angostura', NULL, NULL, false),
+    ('lafactoriapr', NULL, 'El Peligroso', 0, 1.5, 'oz', 'Rum', NULL, NULL, false),
+    ('lafactoriapr', NULL, 'El Peligroso', 1, 0.5, 'oz', 'Campari', NULL, NULL, false),
+    ('lafactoriapr', NULL, 'El Peligroso', 2, 0.5, 'oz', 'Averna', NULL, NULL, false),
+    ('lafactoriapr', NULL, 'El Peligroso', 3, 0.75, 'oz', 'Lime Juice', NULL, 'fresh', false),
+    ('lafactoriapr', NULL, 'El Peligroso', 4, 0.75, 'oz', 'Spiced Syrup', NULL, 'house-made', false),
+    ('lafactoriapr', NULL, 'El Peligroso', 5, 2, 'dash', 'Angostura', NULL, NULL, false),
     ('lafactoriapr', NULL, 'Guanabana Punch', 0, NULL, NULL, 'Rum', NULL, 'soursop infused', false),
     ('lafactoriapr', NULL, 'Guanabana Punch', 1, NULL, NULL, 'Chai', NULL, NULL, false),
     ('lafactoriapr', NULL, 'Spiced Old Fashioned', 0, NULL, NULL, 'Aged Rum', NULL, NULL, false),
@@ -2474,17 +2752,17 @@ INSERT INTO "seed_lines" VALUES
     ('waxonberlin', NULL, 'Playa de Neukölln', 5, 10, 'drop', 'Sesame Distillate', NULL, NULL, false),
     ('waxonberlin', NULL, 'Playa de Neukölln', 6, NULL, NULL, 'Vegan Egg White Substitute', NULL, 'amount not given', false),
     ('waxonberlin', NULL, 'Playa de Neukölln', 7, NULL, NULL, 'Orange zest', NULL, 'garnish', false),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 0, 30, 'ml', 'Luxardo Bitter Bianco', 'White Bitter', NULL, false),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 1, 30, 'ml', 'Martini Riserva Ambrato Vermouth', 'Vermouth', NULL, false),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 2, 30, 'ml', 'Peter in Florence Gin', 'Gin', 'infused with butterfly pea flowers', false),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 3, 5, 'ml', 'Yuzu Sake', NULL, NULL, false),
-    ('gucciosteria', NULL, 'Mémoire di Negroni', 4, 2, 'dash', 'Grapefruit Bitters', NULL, NULL, false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 0, 25, 'ml', 'Mint Syrup', NULL, 'homemade', false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 1, 30, 'ml', 'Lemon Juice', NULL, NULL, false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 2, 45, 'ml', 'Casamigos Blanco Tequila', 'Blanco Tequila', NULL, false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 3, 15, 'ml', 'Italicus Rosolio di Bergamotto', 'Bergamot Liqueur', NULL, false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 4, 5, 'ml', 'Ancho Reyes Verde', 'Green Chile Liqueur', NULL, false),
-    ('gucciosteria', NULL, 'Chi si ferma è perduto', 5, NULL, NULL, 'Rim of salt and pea powder', NULL, 'garnish', false),
+    ('guccigiardino', NULL, 'Memoire di Negroni', 0, 30, 'ml', 'Luxardo Bitter Bianco', 'White Bitter', NULL, false),
+    ('guccigiardino', NULL, 'Memoire di Negroni', 1, 30, 'ml', 'Martini Riserva Ambrato Vermouth', 'Vermouth', NULL, false),
+    ('guccigiardino', NULL, 'Memoire di Negroni', 2, 30, 'ml', 'Peter in Florence Gin', 'Gin', 'infused with butterfly pea flowers', false),
+    ('guccigiardino', NULL, 'Memoire di Negroni', 3, 5, 'ml', 'Yuzu Sake', NULL, NULL, false),
+    ('guccigiardino', NULL, 'Memoire di Negroni', 4, 2, 'dash', 'Grapefruit Bitters', NULL, NULL, false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 0, 25, 'ml', 'Mint Syrup', NULL, 'homemade', false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 1, 30, 'ml', 'Lemon Juice', NULL, NULL, false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 2, 45, 'ml', 'Casamigos Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 3, 15, 'ml', 'Italicus Rosolio di Bergamotto', 'Bergamot Liqueur', NULL, false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 4, 5, 'ml', 'Ancho Reyes Verde', 'Green Chile Liqueur', NULL, false),
+    ('guccigiardino', NULL, 'Chi si ferma e perduto', 5, NULL, NULL, 'Rim of salt and pea powder', NULL, 'garnish', false),
     ('gorillabarskg', NULL, 'Do Not Ask for Extra Bar Food', 0, 60, 'ml', 'Bourbon and Metaxa', NULL, 'distilled with tsoureki', false),
     ('gorillabarskg', NULL, 'Do Not Ask for Extra Bar Food', 1, 45, 'ml', 'Mango and Banana Cordial', NULL, 'fermented', false),
     ('tjoget', NULL, 'Beets by Tjoget', 0, 50, 'ml', 'Beetroot Vodka', NULL, 'house infusion, see prep', false),
@@ -2614,7 +2892,305 @@ INSERT INTO "seed_lines" VALUES
     ('ritacocktails', NULL, 'Moka Express', 1, NULL, NULL, 'Eminente 7 Cuban Rum', 'Cuban Rum', NULL, false),
     ('ritacocktails', NULL, 'Moka Express', 2, NULL, NULL, 'Moka Coffee', NULL, NULL, false),
     ('ritacocktails', NULL, 'Moka Express', 3, NULL, NULL, 'Cocoa and Vanilla', NULL, NULL, false),
-    ('ritacocktails', NULL, 'Moka Express', 4, NULL, NULL, 'Salted Caramel Syrup', NULL, NULL, false);
+    ('ritacocktails', NULL, 'Moka Express', 4, NULL, NULL, 'Salted Caramel Syrup', NULL, NULL, false),
+    ('1661bar', NULL, 'Belfast Coffee', 0, 1, 'oz', 'Poitín', NULL, NULL, false),
+    ('1661bar', NULL, 'Belfast Coffee', 1, 0.5, 'oz', 'Demerara Sugar Syrup', NULL, '2 sugar to 1 water', false),
+    ('1661bar', NULL, 'Belfast Coffee', 2, 2, 'oz', 'Brew Coffee Concentrate', NULL, NULL, false),
+    ('1661bar', NULL, 'Belfast Coffee', 3, 1, 'oz', 'Double Cream', NULL, 'chilled, floated', false),
+    ('1661bar', NULL, 'Belfast Coffee', 4, NULL, NULL, 'Freshly grated nutmeg', NULL, 'garnish', false),
+    ('1661bar', NULL, 'Ban and Black Boilermaker', 0, NULL, NULL, 'Bán', 'Poitín', 'served as a shot', false),
+    ('1661bar', NULL, 'Ban and Black Boilermaker', 1, NULL, NULL, 'Guinness', 'Stout', 'a pint, served alongside', false),
+    ('arcatulum', NULL, 'Green Garden', 0, NULL, NULL, 'Condesa Sahumerio Gin', 'Gin', NULL, false),
+    ('arcatulum', NULL, 'Green Garden', 1, NULL, NULL, 'St-Germain', 'Elderflower Liqueur', NULL, false),
+    ('arcatulum', NULL, 'Green Garden', 2, NULL, NULL, 'Pulque', NULL, NULL, false),
+    ('arcatulum', NULL, 'Green Garden', 3, NULL, NULL, 'Cinnamon Leaf Oil', NULL, 'drops on top', false),
+    ('arcatulum', NULL, 'Green Garden', 4, NULL, NULL, 'Drops of cinnamon leaf oil', NULL, 'garnish', false),
+    ('arcatulum', NULL, 'Holy Last Word', 0, NULL, NULL, 'Montelobos Ensamble Mezcal', 'Mezcal', NULL, false),
+    ('arcatulum', NULL, 'Holy Last Word', 1, NULL, NULL, 'Hoja Santa', NULL, NULL, false),
+    ('arcatulum', NULL, 'Holy Last Word', 2, NULL, NULL, 'Coconut', NULL, NULL, false),
+    ('arcatulum', NULL, 'Holy Last Word', 3, NULL, NULL, 'Maya Lime Liqueur', NULL, NULL, false),
+    ('arcatulum', NULL, 'Holy Last Word', 4, NULL, NULL, 'Chartreuse', NULL, NULL, false),
+    ('arcatulum', NULL, 'Bloody Mayan', 0, NULL, NULL, 'Ketel One Vodka', 'Vodka', NULL, false),
+    ('arcatulum', NULL, 'Bloody Mayan', 1, NULL, NULL, 'Xoconostle', NULL, NULL, false),
+    ('arcatulum', NULL, 'Bloody Mayan', 2, NULL, NULL, 'Achiote', NULL, NULL, false),
+    ('arcatulum', NULL, 'Bloody Mayan', 3, NULL, NULL, 'Cerveza Modelo', 'Mexican Lager', NULL, false),
+    ('bar_trench', NULL, 'Trench 75', 0, NULL, NULL, 'Nikka Coffey Gin', 'Gin', NULL, false),
+    ('bar_trench', NULL, 'Trench 75', 1, NULL, NULL, 'Honey', NULL, 'in place of sugar', false),
+    ('bar_trench', NULL, 'Trench 75', 2, NULL, NULL, 'Sparkling Sake', NULL, 'in place of Champagne', false),
+    ('bar_trench', NULL, 'Artichoke Julep', 0, NULL, NULL, 'Woodford Reserve Bourbon', 'Bourbon', NULL, false),
+    ('bar_trench', NULL, 'Artichoke Julep', 1, NULL, NULL, 'Cynar', NULL, NULL, false),
+    ('bar_trench', NULL, 'Artichoke Julep', 2, NULL, NULL, 'Abbott''s', 'Bitters', NULL, false),
+    ('bar_trench', NULL, 'Artichoke Julep', 3, NULL, NULL, 'Black Pepper', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 0, NULL, NULL, 'Nikka Japanese Whisky', 'Japanese Whisky', NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 1, NULL, NULL, 'Cocchi', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 2, NULL, NULL, 'Apple Cider Reduction', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 3, NULL, NULL, 'Lemon Juice', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 4, NULL, NULL, 'Egg White', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 5, NULL, NULL, 'Absinthe', NULL, NULL, false),
+    ('bar_trench', NULL, 'Uplifted Morning Glory', 6, NULL, NULL, 'Bob''s', 'Bitters', NULL, false),
+    ('bargabriel.ist', NULL, 'Künefe', 0, NULL, NULL, 'Pistachio Vodka', NULL, NULL, false),
+    ('bargabriel.ist', NULL, 'Künefe', 1, NULL, NULL, 'Künefe Syrup', NULL, 'described as kunefe sherbet', false),
+    ('bargabriel.ist', NULL, 'Künefe', 2, NULL, NULL, 'Pistachio', NULL, NULL, false),
+    ('bargabriel.ist', NULL, 'Nazar', 0, NULL, NULL, 'Absinthe', NULL, NULL, false),
+    ('bargabriel.ist', NULL, 'Nazar', 1, NULL, NULL, 'Oregano', NULL, NULL, false),
+    ('bargabriel.ist', NULL, 'Nazar', 2, NULL, NULL, 'Fennel', NULL, NULL, false),
+    ('employeesonlyny', NULL, 'Amelía', 0, 1.75, 'oz', 'Vodka', NULL, NULL, false),
+    ('employeesonlyny', NULL, 'Amelía', 1, 1, 'oz', 'St-Germain', 'Elderflower Liqueur', NULL, false),
+    ('employeesonlyny', NULL, 'Amelía', 2, 0.75, 'oz', 'Blackberry Purée', NULL, NULL, false),
+    ('employeesonlyny', NULL, 'Amelía', 3, 0.75, 'oz', 'Lemon Juice', NULL, 'fresh', false),
+    ('employeesonlyny', NULL, 'Amelía', 4, NULL, NULL, 'Crown of fresh mint', NULL, 'garnish', false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 0, 2, 'oz', 'Baker''s 107 proof Bourbon', 'Bourbon', NULL, false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 1, 1, 'oz', 'Lemon Juice', NULL, 'freshly squeezed', false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 2, 0.5, 'oz', 'Simple Syrup', NULL, NULL, false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 3, 0.5, 'oz', 'Grenadine', NULL, 'EO house grenadine', false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 4, 0.25, 'oz', 'Absinthe Bitters', NULL, 'house-made', false),
+    ('employeesonlyny', NULL, 'Billionaire Cocktail', 5, NULL, NULL, 'Lemon wheel', NULL, 'garnish', false),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 0, 1.5, 'oz', 'Rittenhouse 100 proof Rye', 'Rye Whiskey', 'current menu uses Wild Turkey 101', false),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 1, 1.75, 'oz', 'Dolin Rouge Sweet Vermouth', 'Sweet Vermouth', NULL, false),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 2, 0.5, 'oz', 'Grand Marnier', 'Orange Liqueur', NULL, false),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 3, 3, 'dash', 'Angostura', NULL, NULL, false),
+    ('employeesonlyny', NULL, 'Manhattan Cocktail', 4, NULL, NULL, 'Lemon twist', NULL, 'garnish', false),
+    ('frontbackaccra', NULL, 'Spicy Note', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Spicy Note', 1, NULL, NULL, 'Raspberry Purée', NULL, 'house-made', false),
+    ('frontbackaccra', NULL, 'Spicy Note', 2, NULL, NULL, 'Orange Liqueur', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Spicy Note', 3, NULL, NULL, 'Agave Syrup', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Spicy Note', 4, NULL, NULL, 'Lime Juice', NULL, 'fresh', false),
+    ('frontbackaccra', NULL, 'Spicy Note', 5, NULL, NULL, 'Hot Pepper Dust', NULL, 'on the rim', false),
+    ('frontbackaccra', NULL, 'Spicy Note', 6, NULL, NULL, 'Hot pepper dust rim', NULL, 'garnish', false),
+    ('frontbackaccra', NULL, 'Kandanka Sour', 0, NULL, NULL, 'Blanco Tequila', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Kandanka Sour', 1, NULL, NULL, 'Mandarin', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Kandanka Sour', 2, NULL, NULL, 'Dragon Fruit', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Kandanka Sour', 3, NULL, NULL, 'Lavender', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Akwasi', 0, NULL, NULL, 'Gin', NULL, 'house gin', false),
+    ('frontbackaccra', NULL, 'Akwasi', 1, NULL, NULL, 'Cucumber Juice', NULL, 'fresh', false),
+    ('frontbackaccra', NULL, 'Akwasi', 2, NULL, NULL, 'Moringa-dandelion Juice', NULL, NULL, false),
+    ('frontbackaccra', NULL, 'Akwasi', 3, NULL, NULL, 'Apple Juice', NULL, 'fresh', false),
+    ('frontbackaccra', NULL, 'Akwasi', 4, NULL, NULL, 'Rosemary-basil Syrup', NULL, 'house-made', false),
+    ('frontbackaccra', NULL, 'Akwasi', 5, NULL, NULL, 'Lemon Juice', NULL, NULL, false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 1, NULL, NULL, 'Sobolo', NULL, 'hibiscus tea', false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 2, NULL, NULL, 'Agave Nectar', NULL, NULL, false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 3, NULL, NULL, 'Triple Sec', NULL, NULL, false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 4, NULL, NULL, 'Mint', NULL, NULL, false),
+    ('laborrachagh', NULL, 'Hibisco Margarita', 5, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('lasaladelaura', NULL, 'Lluvia con Sol', 0, NULL, NULL, 'Prontoalivio (Lippia Alba) Distillate', NULL, 'house-distilled', false),
+    ('lasaladelaura', NULL, 'Lluvia con Sol', 1, NULL, NULL, 'Archucha Shrub', NULL, 'house-made', false),
+    ('lasaladelaura', NULL, 'Lluvia con Sol', 2, NULL, NULL, 'Sparkling Wine', NULL, 'cava in the 2023 description', false),
+    ('lasaladelaura', NULL, 'Negroni de La Sala', 0, NULL, NULL, 'Páramo Distillate', NULL, 'made with Territorio Páramo; house-distilled', false),
+    ('lasaladelaura', NULL, 'Negroni de La Sala', 1, NULL, NULL, 'Vermú de Monte Sweet Vermouth', 'Sweet Vermouth', 'wild red vermouth', false),
+    ('lasaladelaura', NULL, 'Negroni de La Sala', 2, NULL, NULL, 'Campari', NULL, NULL, false),
+    ('lasaladelaura', NULL, 'Negroni de La Sala', 3, NULL, NULL, 'Cacao Husk', NULL, NULL, false),
+    ('lasaladelaura', NULL, 'Martini Piedemonte', 0, NULL, NULL, 'Coca Leaf and Cacao Distillate', NULL, 'made with Territorio Piedemonte; house-distilled', false),
+    ('lasaladelaura', NULL, 'Martini Piedemonte', 1, NULL, NULL, 'Vermú de Monte Sweet Vermouth', 'Sweet Vermouth', 'wild red vermouth', false),
+    ('lasaladelaura', NULL, 'Martini Piedemonte', 2, NULL, NULL, 'Wild Vanilla Perfume', NULL, 'sprayed', false),
+    ('lasaladelaura', NULL, 'Martini Piedemonte', 3, NULL, NULL, 'Aromatic pipe', NULL, 'garnish', false),
+    ('littlereddoor_paris', NULL, 'Aquaponie', 0, NULL, NULL, 'Grey Goose Vodka', 'Vodka', NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaponie', 1, NULL, NULL, 'St-Germain', 'Elderflower Liqueur', NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaponie', 2, NULL, NULL, 'Basil', NULL, 'aquaponic, from Jaden (Chantilly)', false),
+    ('littlereddoor_paris', NULL, 'Aquaponie', 3, NULL, NULL, 'Lemon Zest', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Agroforesterie', 0, NULL, NULL, 'Elderberry', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Agroforesterie', 1, NULL, NULL, 'Wild Botanicals', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Agroforesterie', 2, NULL, NULL, 'Fortified Wine', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Agroforesterie', 3, NULL, NULL, 'Gewürztraminer Eau-de-vie', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaculture', 0, NULL, NULL, 'Anaë Dulse Gin', 'Gin', NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaculture', 1, NULL, NULL, 'Sea Lettuce', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaculture', 2, NULL, NULL, 'Lovage Soda', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Aquaculture', 3, NULL, NULL, 'Seaweed chip', NULL, 'garnish', false),
+    ('littlereddoor_paris', NULL, 'Carbone', 0, NULL, NULL, 'Beetroot Juice', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Carbone', 1, NULL, NULL, 'Black Garlic', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Carbone', 2, NULL, NULL, 'Smoked Gin', NULL, NULL, false),
+    ('littlereddoor_paris', NULL, 'Carbone', 3, NULL, NULL, 'Dartigalongue Un-Oaked Armagnac', 'Armagnac', NULL, false),
+    ('littlereddoor_paris', NULL, 'Carbone', 4, NULL, NULL, 'Cube of cream cheese on the side', NULL, 'garnish', false),
+    ('lpmdubai', NULL, 'Tomatini', 0, NULL, NULL, 'Tomatoes', NULL, '100 g, quartered (Campari tomatoes)', false),
+    ('lpmdubai', NULL, 'Tomatini', 1, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Tomatini', 2, NULL, NULL, 'Black Pepper', NULL, 'freshly ground', false),
+    ('lpmdubai', NULL, 'Tomatini', 3, 10, 'ml', 'Maison Pensato', 'Balsamic Vinegar', NULL, false),
+    ('lpmdubai', NULL, 'Tomatini', 4, 5, 'ml', 'Simple Syrup', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Tomatini', 5, 50, 'ml', 'Ketel One Vodka', 'Vodka', NULL, false),
+    ('lpmdubai', NULL, 'Tomatini', 6, NULL, NULL, 'Whole cherry tomato dipped in salt and pepper; black pepper cracked at the table', NULL, 'garnish', false),
+    ('lpmdubai', NULL, 'Bikini', 0, NULL, NULL, 'Mandarin', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Bikini', 1, NULL, NULL, 'Peach', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Bikini', 2, NULL, NULL, 'Rinquinquin', 'Peach Aperitif', NULL, false),
+    ('lpmdubai', NULL, 'Bikini', 3, NULL, NULL, 'Ketel One Vodka', 'Vodka', NULL, false),
+    ('lpmdubai', NULL, 'Bikini', 4, NULL, NULL, 'Tanqueray No. Ten Gin', 'Gin', NULL, false),
+    ('lpmdubai', NULL, 'Lettre a Coco', 0, NULL, NULL, 'Ketel One Vodka', 'Vodka', NULL, false),
+    ('lpmdubai', NULL, 'Lettre a Coco', 1, NULL, NULL, 'Champagne Cordial', NULL, 'house-made', false),
+    ('lpmdubai', NULL, 'Lettre a Coco', 2, NULL, NULL, 'Jasmine', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Lettre a Coco', 3, NULL, NULL, 'Bergamot', NULL, NULL, false),
+    ('lpmdubai', NULL, 'Lettre a Coco', 4, NULL, NULL, 'Rose', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 0, NULL, NULL, 'Vodka', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 1, NULL, NULL, 'Tomato Shrub', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 2, NULL, NULL, 'Dill', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 3, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 4, NULL, NULL, 'Basil Oil', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Tomatotini', 5, NULL, NULL, 'Basil oil', NULL, 'garnish', false),
+    ('mius.hongkong', NULL, 'Highball', 0, NULL, NULL, 'Whisky', NULL, 'frozen', false),
+    ('mius.hongkong', NULL, 'Highball', 1, NULL, NULL, 'Soda', NULL, 'chilled Japanese soda', false),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 1, NULL, NULL, 'Italian Bitter Amaro', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 2, NULL, NULL, 'Grenache Wine', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 3, NULL, NULL, 'Strawberry', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Strawberry Negroni', 4, NULL, NULL, 'Pink Peppercorn', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 1, NULL, NULL, 'Fennel Pollen', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 2, NULL, NULL, 'Olive', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 3, NULL, NULL, 'Gentian', NULL, NULL, false),
+    ('mius.hongkong', NULL, 'Dirty Margarita', 4, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('naked.athens', NULL, 'Transparent Strawberry Bloody Mary', 0, NULL, NULL, 'Absolut Vodka', 'Vodka', 'redistilled with Campari and Bloody Mary ingredients', false),
+    ('naked.athens', NULL, 'Transparent Strawberry Bloody Mary', 1, NULL, NULL, 'Luxardo Bitter', 'Bitter Liqueur', NULL, false),
+    ('naked.athens', NULL, 'Transparent Strawberry Bloody Mary', 2, NULL, NULL, 'Strawberries', NULL, '''invisible strawberries'' (clarified)', false),
+    ('naked.athens', NULL, 'Transparent Strawberry Bloody Mary', 3, NULL, NULL, 'Faux cherry tomato made from leftover pulp', NULL, 'garnish', false),
+    ('naked.athens', NULL, 'Carob Old Fashioned', 0, NULL, NULL, 'Jameson Irish Whiskey', 'Irish Whiskey', NULL, false),
+    ('naked.athens', NULL, 'Carob Old Fashioned', 1, NULL, NULL, 'Metaxa 12 Greek Brandy', 'Greek Brandy', NULL, false),
+    ('naked.athens', NULL, 'Carob Old Fashioned', 2, NULL, NULL, 'Carob', NULL, 'carob syrup from kitchen leftovers', false),
+    ('naked.athens', NULL, 'Carob Old Fashioned', 3, NULL, NULL, 'Popcorn', NULL, NULL, false),
+    ('naked.athens', NULL, 'Apple #Not Martini', 0, NULL, NULL, 'Beefeater London Dry Gin', 'London Dry Gin', NULL, false),
+    ('naked.athens', NULL, 'Apple #Not Martini', 1, NULL, NULL, 'Roku Gin', 'Gin', NULL, false),
+    ('naked.athens', NULL, 'Apple #Not Martini', 2, NULL, NULL, 'Roots', 'Mastiha Liqueur', NULL, false),
+    ('naked.athens', NULL, 'Apple #Not Martini', 3, NULL, NULL, 'Green Apple', NULL, '''invisible'' (clarified green apple and verbena)', false),
+    ('naked.athens', NULL, 'Pineapple Tai', 0, NULL, NULL, 'Havana Club Añejo 7 Años Aged Rum', 'Aged Rum', NULL, false),
+    ('naked.athens', NULL, 'Pineapple Tai', 1, NULL, NULL, 'Metaxa 12 Greek Brandy', 'Greek Brandy', NULL, false),
+    ('naked.athens', NULL, 'Pineapple Tai', 2, NULL, NULL, 'Cointreau', 'Orange Liqueur', NULL, false),
+    ('naked.athens', NULL, 'Pineapple Tai', 3, NULL, NULL, 'Pineapple Ketchup', NULL, 'house-made with pineapple and mushrooms', false),
+    ('naked.athens', NULL, 'Pineapple Tai', 4, NULL, NULL, 'Granola', NULL, NULL, false),
+    ('naked.athens', NULL, 'Pineapple Tai', 5, NULL, NULL, 'Pineapple', NULL, 'garnish', false),
+    ('offtrack.sg', NULL, 'House Espresso Martini', 0, NULL, NULL, 'Vodka', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'House Espresso Martini', 1, NULL, NULL, 'Espresso', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'House Espresso Martini', 2, NULL, NULL, 'Orange Blossom', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'House Espresso Martini', 3, NULL, NULL, 'Dry Curaçao', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Rum & Raisin Manhattan', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Rum & Raisin Manhattan', 1, NULL, NULL, 'PX Sherry', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Rum & Raisin Manhattan', 2, NULL, NULL, 'Hazelnut', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 1, NULL, NULL, 'Dry Vermouth', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 2, NULL, NULL, 'Maraschino', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 3, NULL, NULL, 'Absinthe', NULL, NULL, false),
+    ('offtrack.sg', NULL, 'Tuxedo No. 2', 4, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('otro___bar', NULL, 'Mini Ramito', 0, NULL, NULL, 'Banana Liqueur', NULL, NULL, false),
+    ('otro___bar', NULL, 'Mini Ramito', 1, NULL, NULL, 'Citrus', NULL, NULL, false),
+    ('otro___bar', NULL, 'Mini Ramito', 2, NULL, NULL, 'Coconut Cream', NULL, NULL, false),
+    ('otro___bar', NULL, 'Mini Ramito', 3, NULL, NULL, 'Coffee Soda', NULL, NULL, false),
+    ('otro___bar', NULL, 'Juguito Verde', 0, NULL, NULL, 'Mezcal', NULL, 'sage-infused', false),
+    ('otro___bar', NULL, 'Juguito Verde', 1, NULL, NULL, 'Herbal Liqueur', NULL, NULL, false),
+    ('otro___bar', NULL, 'Juguito Verde', 2, NULL, NULL, 'Lemongrass and Sage Cordial', NULL, NULL, false),
+    ('otro___bar', NULL, 'Juguito Verde', 3, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('otro___bar', NULL, 'Highball Fresquito', 0, NULL, NULL, 'Soursop Distillate', NULL, NULL, false),
+    ('otro___bar', NULL, 'Highball Fresquito', 1, NULL, NULL, 'Soju', NULL, NULL, false),
+    ('penicillin_bar', NULL, 'One Penicillin, One Tree', 0, NULL, NULL, 'Whisky', NULL, 'white chocolate infused', false),
+    ('penicillin_bar', NULL, 'One Penicillin, One Tree', 1, NULL, NULL, 'Strawberry Brine', NULL, NULL, false),
+    ('penicillin_bar', NULL, 'One Penicillin, One Tree', 2, NULL, NULL, 'Coconut Kefir', NULL, NULL, false),
+    ('penicillin_bar', NULL, 'Our Final Warning', 0, NULL, NULL, 'Gin', NULL, 'rotovap watermelon gin', false),
+    ('penicillin_bar', NULL, 'Our Final Warning', 1, NULL, NULL, 'Vermouth', NULL, 'omija-berry vermouth', false),
+    ('penicillin_bar', NULL, 'Our Final Warning', 2, NULL, NULL, 'Campari', 'Bitter Aperitivo', 'jalapeño sous-vide infused', false),
+    ('penicillin_bar', NULL, 'Hot, Flat & Crowded', 0, NULL, NULL, 'Gin', NULL, 'mango-curd gin', false),
+    ('penicillin_bar', NULL, 'Hot, Flat & Crowded', 1, NULL, NULL, 'Salted Burnt Butter', NULL, NULL, false),
+    ('penicillin_bar', NULL, 'Hot, Flat & Crowded', 2, NULL, NULL, 'Cream Soda', NULL, 'grilled purple cabbage', false),
+    ('penicillin_bar', NULL, 'Hot, Flat & Crowded', 3, NULL, NULL, 'Vitamin C', NULL, NULL, false),
+    ('penicillin_bar', NULL, 'The Original', 0, NULL, NULL, 'Vodka', NULL, 'recycled seashell vodka', false),
+    ('penicillin_bar', NULL, 'The Original', 1, NULL, NULL, 'Cherry Tomato', NULL, 'spiced', false),
+    ('penicillin_bar', NULL, 'The Original', 2, NULL, NULL, 'Coconut Cordial', NULL, 'salted', false),
+    ('penicillin_bar', NULL, 'The Original', 3, NULL, NULL, 'Citrus Hydrosol', NULL, NULL, false),
+    ('the_sg_club', NULL, 'Wagyumafia Fashioned', 0, NULL, NULL, 'Woodford Reserve Bourbon', 'Bourbon', 'Kobe beef fat-washed', false),
+    ('the_sg_club', NULL, 'Wagyumafia Fashioned', 1, NULL, NULL, 'Honey', NULL, NULL, false),
+    ('the_sg_club', NULL, 'Wagyumafia Fashioned', 2, NULL, NULL, 'Kobe beef jerky (soaked in aged soy sauce)', NULL, 'garnish', false),
+    ('the_sg_club', NULL, 'Natural / Unnatural Wine', 0, NULL, NULL, 'Bombay Sapphire Gin', 'Gin', NULL, false),
+    ('the_sg_club', NULL, 'Natural / Unnatural Wine', 1, NULL, NULL, 'Green Apple', NULL, 'fermented', false),
+    ('the_sg_club', NULL, 'Natural / Unnatural Wine', 2, NULL, NULL, 'Grapefruit', NULL, NULL, false),
+    ('the_sg_club', NULL, 'Natural / Unnatural Wine', 3, NULL, NULL, 'Mate Tea', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 0, NULL, NULL, 'Rum', NULL, 'peanut-infused, clarified', false),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 1, NULL, NULL, 'Beef Essence', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 2, NULL, NULL, 'Coconut Water', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 3, NULL, NULL, 'Bird''s Eye Chilli', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Thai Beef Salad', 4, NULL, NULL, 'Makrut Lime', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 1, NULL, NULL, 'Ghee', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 2, NULL, NULL, 'Biryani Masala', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 3, NULL, NULL, 'Plum', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 4, NULL, NULL, 'Tonka Bean', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 5, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Biryani', 6, NULL, NULL, 'Peppers', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Mala Punch', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Mala Punch', 1, NULL, NULL, 'Sichuan Peppercorn', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Mala Punch', 2, NULL, NULL, 'Mint', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Mala Punch', 3, NULL, NULL, 'Passionfruit', NULL, NULL, false),
+    ('thesavoryproject', NULL, 'Mala Punch', 4, NULL, NULL, 'Fermented Bean', NULL, NULL, false),
+    ('threehorsesbar', NULL, 'Jabberwock', 0, NULL, NULL, 'Gin', NULL, 'the House Martini uses a house gin made with Four Pillars', false),
+    ('threehorsesbar', NULL, 'Jabberwock', 1, NULL, NULL, 'Dry Vermouth', NULL, 'house dry vermouth (as in the House Martini)', false),
+    ('threehorsesbar', NULL, 'Jabberwock', 2, NULL, NULL, 'Fino Sherry', NULL, 'a splash', false),
+    ('threehorsesbar', NULL, 'Jabberwock', 3, NULL, NULL, 'Gold horse swizzle stick', NULL, 'garnish', false),
+    ('threehorsesbar', NULL, 'Margarita', 0, NULL, NULL, 'Espolòn Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('threehorsesbar', NULL, 'Margarita', 1, NULL, NULL, 'Lime Sorbet', NULL, 'house-made', false),
+    ('threehorsesbar', NULL, 'Margarita', 2, NULL, NULL, 'Mandarin Sherry', NULL, NULL, false),
+    ('threehorsesbar', NULL, 'Mango G&T', 0, NULL, NULL, 'Caretaker''s Cottage x Four Pillars house gin', 'Gin', NULL, false),
+    ('threehorsesbar', NULL, 'Mango G&T', 1, NULL, NULL, 'Mango Sorbet', NULL, 'house-made', false),
+    ('threehorsesbar', NULL, 'Mango G&T', 2, NULL, NULL, 'Fever-Tree', 'Tonic Water', NULL, false),
+    ('threehorsesbar', NULL, 'Mango G&T', 3, NULL, NULL, 'Lime Zest', NULL, NULL, false),
+    ('threehorsesbar', NULL, 'Mango G&T', 4, NULL, NULL, 'Lime zest', NULL, 'garnish', false),
+    ('threehorsesbar', NULL, 'Ir(ish) Coffee', 0, NULL, NULL, 'Pedro Ximénez Sherry', NULL, NULL, false),
+    ('threehorsesbar', NULL, 'Ir(ish) Coffee', 1, NULL, NULL, 'Coffee', NULL, 'blueberry coffee', false),
+    ('threehorsesbar', NULL, 'Ir(ish) Coffee', 2, NULL, NULL, 'Baba''s', 'Macadamia Irish Cream', NULL, false),
+    ('threesheetssoho', NULL, 'French 75', 0, NULL, NULL, 'Gin', NULL, '94.9 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 1, NULL, NULL, 'Lemon Juice', NULL, '23.0 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 2, NULL, NULL, 'Simple Syrup', NULL, 'made with Teissiere; 45.9 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 3, NULL, NULL, 'Minus 8', 'White Verjus', '66.6 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 4, NULL, NULL, 'Picpoul Wine', NULL, '171.4 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 5, NULL, NULL, 'Orange Flower Water', NULL, '0.9 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 6, NULL, NULL, 'Water', NULL, '327.5 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 7, NULL, NULL, 'Cloud Tea', NULL, '10.7 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'French 75', 8, NULL, NULL, 'Oak Vodka', NULL, '9.2 g per bottle batch', false),
+    ('threesheetssoho', NULL, 'Dirty Martini', 0, NULL, NULL, 'Belvedere Vodka', 'Vodka', NULL, false),
+    ('threesheetssoho', NULL, 'Dirty Martini', 1, NULL, NULL, 'Koseret Tea', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Dirty Martini', 2, NULL, NULL, 'Olive Oil', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Dirty Martini', 3, NULL, NULL, 'Picpoul Wine', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Dirty Martini', 4, NULL, NULL, 'Sea Salt', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 0, NULL, NULL, 'Hennessy VS Cognac', 'Cognac', NULL, false),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 1, NULL, NULL, 'Strawberry', NULL, 'fermented', false),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 2, NULL, NULL, 'Forgotten Bitter', 'Bitter Liqueur', NULL, false),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 3, NULL, NULL, 'Earl Grey Tea', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Strawberry Boulevardier', 4, NULL, NULL, 'Pineau Des Charentes', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 0, 23.75, 'ml', 'Seven Tails Brandy', 'Brandy', NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 1, 25, 'ml', 'WhistlePig Rye', 'Rye Whiskey', NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 2, 2.5, 'ml', 'Seven Tails Brandy', 'Brandy', 'rooibos-infused', false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 3, 8.75, 'ml', 'Gomme Syrup', NULL, 'made with Teissiere', false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 4, 1.25, 'ml', 'Seven Tails Brandy', 'Brandy', 'Peking spice-infused', false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 5, 0.25, 'ml', 'Soy Sauce', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 6, 0.05, 'ml', 'Orange Flower Water', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 7, 0.1, 'ml', 'Peychaud''s', NULL, NULL, false),
+    ('threesheetssoho', NULL, 'Sazzaquack', 8, NULL, NULL, 'Absinthe and Lemon-zest Vodka Mix', NULL, 'spritzed over the drink', false),
+    ('vesperbkk', NULL, 'Vesper', 0, NULL, NULL, 'Tanqueray Gin', 'Gin', NULL, false),
+    ('vesperbkk', NULL, 'Vesper', 1, NULL, NULL, 'Boatyard Vodka', 'Vodka', NULL, false),
+    ('vesperbkk', NULL, 'Vesper', 2, NULL, NULL, 'Cocchi Americano', 'Aromatised Wine', NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 0, NULL, NULL, 'Michter''s Rye', 'Rye Whiskey', NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 1, NULL, NULL, 'Martell VS Cognac', 'Cognac', NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 2, NULL, NULL, 'Carrot', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 3, NULL, NULL, 'Caraway', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 4, NULL, NULL, 'Beeswax', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 5, NULL, NULL, 'Honey', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 6, NULL, NULL, 'Absinthe', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Beesting', 7, NULL, NULL, 'Peychaud''s', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 0, NULL, NULL, 'Beefeater 24 Gin', 'Gin', NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 1, NULL, NULL, 'Rhubarb', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 2, NULL, NULL, 'Hibiscus', NULL, 'syrup', false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 3, NULL, NULL, 'Almond', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 4, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 5, NULL, NULL, 'Cream', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Rhubarb & Cream', 6, NULL, NULL, 'Egg White', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Roots', 0, NULL, NULL, 'Woodford Reserve Bourbon', 'Bourbon', NULL, false),
+    ('vesperbkk', NULL, 'Roots', 1, NULL, NULL, 'Coconut', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Roots', 2, NULL, NULL, 'Beetroot', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Roots', 3, NULL, NULL, 'Parsnip', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Roots', 4, NULL, NULL, 'Talisker 10 Scotch', 'Scotch Whisky', NULL, false),
+    ('vesperbkk', NULL, 'Roots', 5, NULL, NULL, 'Ratafia Rossi', 'Cherry Wine Aperitif', NULL, false),
+    ('vesperbkk', NULL, 'Roots', 6, NULL, NULL, 'Choeng Doi Agricole Rum', 'Agricole Rum', NULL, false),
+    ('vesperbkk', NULL, 'Roots', 7, NULL, NULL, 'Maraschino Liqueur', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 0, NULL, NULL, 'Roku Gin', 'Gin', NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 1, NULL, NULL, 'Douglas Fir', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 2, NULL, NULL, 'Eucalyptus', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 3, NULL, NULL, 'Menthe', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 4, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 5, NULL, NULL, 'Guava Cordial', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 6, NULL, NULL, 'Peychaud''s', NULL, NULL, false),
+    ('vesperbkk', NULL, 'Forest Walk', 7, NULL, NULL, 'Frozen grape', NULL, 'garnish', false);
 
 
 -- --- Glassware this adds (the picker had no Nick & Nora or martini glass) ---
