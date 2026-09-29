@@ -5,8 +5,10 @@
  * without one show the body's initials). If bodies start arriving from an admin
  * screen, move these to storage with an awards table that holds the URL.
  * James Beard is left out on purpose: its seal is for honorees' own use.
+ * Bangkok Bar Show Awards has no official logo we could find.
  */
 const the50 = require('@/assets/images/awards/the-50.png') as number;
+const timeOut = require('@/assets/images/awards/time-out.png') as number;
 
 export const AWARD_LOGOS: Record<string, number> = {
   "The World's 50 Best Bars": the50,
@@ -16,4 +18,12 @@ export const AWARD_LOGOS: Record<string, number> = {
   'Australian Bar Awards': require('@/assets/images/awards/australian-bar-awards.png') as number,
   'Tales of the Cocktail Spirited Awards': require('@/assets/images/awards/spirited-awards.png') as number,
   'CLASS Bar Awards': require('@/assets/images/awards/class-bar-awards.png') as number,
+  'Top 50 Cocktail Bars': require('@/assets/images/awards/top-50-cocktail-bars.png') as number,
+  'Time Out Sydney Food & Drink Awards': timeOut,
+  'Time Out Melbourne Food & Drink Awards': timeOut,
+  'Time Out Hong Kong Bar Awards': timeOut,
+  'Time Out Paris Food & Drink Awards': timeOut,
+  'Shaker Awards': require('@/assets/images/awards/shaker-awards.png') as number,
+  'BAD Awards': require('@/assets/images/awards/bad-awards.png') as number,
+  'Tatler Best': require('@/assets/images/awards/tatler-best.png') as number,
 };
