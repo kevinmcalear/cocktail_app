@@ -1125,7 +1125,7 @@ Created by Harrison Ginsberg in 2021.
 Method: Dry shake all ingredients without ice, then add ice and shake again. Strain into a coupe and express a lemon twist over the top.
 
 Spec adapted from Punch (https://punchdrink.com/recipes/chelsea-sidecar/).', NULL, 2021, 'Coupette', NULL, 'dry shake and shake'),
-    (NULL, 'PDT', 'Benton''s Old-Fashioned', 'An Old-Fashioned of bacon fat-washed bourbon sweetened with Grade B maple syrup and seasoned with Angostura bitters.', 'Don Lee created this drink at PDT in New York''s East Village, fat-washing bourbon with Benton''s smoky Tennessee bacon. The technique was seen as a hassle at first, but the drink became the bar''s bestseller; Punch reports PDT makes around 150 a week and goes through about 12 bottles of the washed bourbon in that time. The recipe comes from Jim Meehan''s The PDT Cocktail Book (2011).
+    (NULL, 'PDT', 'Benton''s Old Fashioned', 'An Old-Fashioned of bacon fat-washed bourbon sweetened with Grade B maple syrup and seasoned with Angostura bitters.', 'Don Lee created this drink at PDT in New York''s East Village, fat-washing bourbon with Benton''s smoky Tennessee bacon. The technique was seen as a hassle at first, but the drink became the bar''s bestseller; Punch reports PDT makes around 150 a week and goes through about 12 bottles of the washed bourbon in that time. The recipe comes from Jim Meehan''s The PDT Cocktail Book (2011).
 
 Created by Don Lee.
 
@@ -1174,7 +1174,7 @@ Created by Audrey Saunders in 2006.
 Method: Muddle the lime juice, syrup and mint in a shaker. Add the gin, pastis and ice, shake until chilled and fine-strain into a coupe.
 
 Spec adapted from Punch (https://punchdrink.com/recipes/french-pearl/).', NULL, 2006, 'Coupette', NULL, 'muddle and shake'),
-    (NULL, 'Dante', 'Dante''s Garibaldi', 'Campari topped with freshly juiced, aerated fluffy orange juice, built over ice in a small highball.', 'The Garibaldi is an old two-ingredient Italian aperitivo, but Naren Young and his team at Dante in New York turned it into the bar''s signature. The trick is orange juice run through a high-speed Breville juicer to order, which whips air into it for a light, frothy texture; Young has said the bar did not invent the drink but perfected it. Its success set off a wave of riffs across the US, from frozen versions to tequila takes. The name honors Giuseppe Garibaldi, with red Campari from the north and Sicilian-style orange from the south standing for Italian unification.
+    (NULL, 'Dante', 'Garibaldi', 'Campari topped with freshly juiced, aerated fluffy orange juice, built over ice in a small highball.', 'The Garibaldi is an old two-ingredient Italian aperitivo, but Naren Young and his team at Dante in New York turned it into the bar''s signature. The trick is orange juice run through a high-speed Breville juicer to order, which whips air into it for a light, frothy texture; Young has said the bar did not invent the drink but perfected it. Its success set off a wave of riffs across the US, from frozen versions to tequila takes. The name honors Giuseppe Garibaldi, with red Campari from the north and Sicilian-style orange from the south standing for Italian unification.
 
 Created by Naren Young.
 
@@ -2283,10 +2283,10 @@ INSERT INTO "seed_lines" VALUES
     ('overstory', NULL, 'Chelsea Sidecar', 3, 0.75, 'oz', 'Lemon Juice', NULL, NULL, false),
     ('overstory', NULL, 'Chelsea Sidecar', 4, 1, NULL, 'Egg White', NULL, NULL, false),
     ('overstory', NULL, 'Chelsea Sidecar', 5, NULL, NULL, 'Lemon twist, plus drops of lemon, lime and orange oils', NULL, 'garnish', false),
-    (NULL, 'PDT', 'Benton''s Old-Fashioned', 0, 2, 'oz', 'Bacon Fat-infused Bourbon', NULL, 'made with Four Roses', false),
-    (NULL, 'PDT', 'Benton''s Old-Fashioned', 1, 0.25, 'oz', 'Grade B Maple Syrup', NULL, NULL, false),
-    (NULL, 'PDT', 'Benton''s Old-Fashioned', 2, 2, 'dash', 'Angostura', NULL, NULL, false),
-    (NULL, 'PDT', 'Benton''s Old-Fashioned', 3, NULL, NULL, 'Orange peel', NULL, 'garnish', false),
+    (NULL, 'PDT', 'Benton''s Old Fashioned', 0, 2, 'oz', 'Bacon Fat-infused Bourbon', NULL, 'made with Four Roses', false),
+    (NULL, 'PDT', 'Benton''s Old Fashioned', 1, 0.25, 'oz', 'Grade B Maple Syrup', NULL, NULL, false),
+    (NULL, 'PDT', 'Benton''s Old Fashioned', 2, 2, 'dash', 'Angostura', NULL, NULL, false),
+    (NULL, 'PDT', 'Benton''s Old Fashioned', 3, NULL, NULL, 'Orange peel', NULL, 'garnish', false),
     (NULL, 'Employees Only', 'Ginger Smash', 0, 2, 'slice', 'Ginger Root', NULL, 'thin', false),
     (NULL, 'Employees Only', 'Ginger Smash', 1, 2, NULL, 'Kumquats', NULL, NULL, false),
     (NULL, 'Employees Only', 'Ginger Smash', 2, 2, 'tsp', 'Sugar', NULL, NULL, false),
@@ -2318,9 +2318,9 @@ INSERT INTO "seed_lines" VALUES
     (NULL, 'Pegu Club', 'French Pearl', 2, 0.75, 'oz', 'Lime Juice', NULL, NULL, false),
     (NULL, 'Pegu Club', 'French Pearl', 3, 0.75, 'oz', 'Simple Syrup', NULL, NULL, false),
     (NULL, 'Pegu Club', 'French Pearl', 4, 6, 'sprig', 'Mint', NULL, NULL, false),
-    (NULL, 'Dante', 'Dante''s Garibaldi', 0, 1.5, 'oz', 'Campari', NULL, NULL, false),
-    (NULL, 'Dante', 'Dante''s Garibaldi', 1, 4, 'oz', 'Orange Juice, Juiced To Order So It Is Fluffy', NULL, NULL, false),
-    (NULL, 'Dante', 'Dante''s Garibaldi', 2, NULL, NULL, 'Orange wedge', NULL, 'garnish', false),
+    (NULL, 'Dante', 'Garibaldi', 0, 1.5, 'oz', 'Campari', NULL, NULL, false),
+    (NULL, 'Dante', 'Garibaldi', 1, 4, 'oz', 'Orange Juice, Juiced To Order So It Is Fluffy', NULL, NULL, false),
+    (NULL, 'Dante', 'Garibaldi', 2, NULL, NULL, 'Orange wedge', NULL, 'garnish', false),
     (NULL, 'Milk & Honey', 'Greenpoint', 0, 2, 'oz', 'Rye Whiskey', NULL, NULL, false),
     (NULL, 'Milk & Honey', 'Greenpoint', 1, 0.5, 'oz', 'Sweet Vermouth', NULL, NULL, false),
     (NULL, 'Milk & Honey', 'Greenpoint', 2, 0.5, 'oz', 'Chartreuse', NULL, NULL, false),
