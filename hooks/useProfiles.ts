@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { sortAwards, type Award } from '@/lib/awards';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -66,6 +67,22 @@ export function useProfileOriginals(profileId: string | null | undefined) {
         .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/** A profile's list places and titled awards, newest first. */
+export function useProfileAwards(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-awards', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<Award[]> => {
+      const { data, error } = await supabase
+        .from('profile_awards')
+        .select('id, award, year, position, title, source_url')
+        .eq('profile_id', profileId!);
+      if (error) throw error;
+      return sortAwards((data ?? []) as Award[]);
     },
   });
 }
