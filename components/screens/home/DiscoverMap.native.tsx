@@ -24,6 +24,9 @@ const viewportOf = (e: { coordinates: { latitude?: number; longitude?: number };
  * Native map through expo-maps: Apple Maps on iOS (score labels as
  * annotations), Google Maps on Android (markers with the score as title).
  * Follows the app's light or dark scheme.
+ * ponytail: no logos on native pins yet (the selected card and the list
+ * show them). Upgrade path: expo-image's useImage per pin, passed as the
+ * annotation/marker icon.
  */
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, style }: DiscoverMapProps) {
   const apple = useRef<AppleMaps.MapView>(null);

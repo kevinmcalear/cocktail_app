@@ -21,18 +21,41 @@ const STYLE = {
 
 type MapLibre = typeof import('maplibre-gl');
 
-/** A pin: the score in a pill (a dot while early), ink by default, the accent when selected. */
+/** Pin heights, and the logo inside one. */
+const PIN = { dot: 18, logo: 26, pill: 30 };
+
+/**
+ * A pin: the bar's logo (when it has one) and its score in a pill, or a dot
+ * while early. Ink by default, the accent when selected.
+ */
 function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
   const label = pinLabel(pin);
-  el.textContent = label;
+  // Only rebuild what's inside when it changes, so logos don't reload on every render.
+  const key = `${pin.logo ?? ''}|${label}`;
+  if (el.dataset.key !== key) {
+    el.dataset.key = key;
+    const parts: (HTMLElement | string)[] = [];
+    if (pin.logo) {
+      const img = document.createElement('img');
+      img.src = pin.logo;
+      img.alt = '';
+      Object.assign(img.style, { width: `${PIN.logo}px`, height: `${PIN.logo}px`, borderRadius: `${radius.pill}px`, objectFit: 'cover', background: backbar.light.surface });
+      parts.push(img);
+    }
+    if (label) parts.push(label);
+    el.replaceChildren(...parts);
+  }
+  // Buttons size to their border edge, so a lone logo needs room for its 2px ring.
+  const size = label ? PIN.pill : pin.logo ? PIN.logo + 4 : PIN.dot;
   el.setAttribute('aria-label', `${pin.name}${label ? `, score ${label}` : ', early'}`);
   el.setAttribute('aria-pressed', String(selected));
   Object.assign(el.style, {
-    minWidth: label ? '44px' : '18px',
-    height: label ? '30px' : '18px',
-    padding: label ? `0 ${space.sm}px` : '0',
+    minWidth: label ? '44px' : `${size}px`,
+    height: `${size}px`,
+    padding: label ? `0 ${space.sm}px 0 ${pin.logo ? 2 : space.sm}px` : '0',
+    gap: `${space.xs}px`,
     borderRadius: `${radius.pill}px`,
-    border: `2px solid ${backbar.dark.ink}`,
+    border: `2px solid ${selected ? accent.fill : backbar.dark.ink}`,
     background: selected ? accent.fill : pin.score === null ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
     font: `${type.caption.fontSize}px ${fontFamilies.monoMedium}, ui-monospace, monospace`,

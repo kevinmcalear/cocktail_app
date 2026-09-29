@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
@@ -32,6 +33,7 @@ function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
   return (
     <Surface raised style={styles.card}>
       <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.score === null ? `Early: ${peopleCount(pin.rankers)} ranked` : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
+        <UserAvatar uri={pin.logo} name={pin.name} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
