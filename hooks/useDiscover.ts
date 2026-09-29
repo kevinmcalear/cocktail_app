@@ -58,6 +58,7 @@ export function useBarCities() {
         .select('city, country_code')
         .eq('kind', 'bar')
         .eq('is_public', true)
+        .eq('is_closed', false)
         .not('city', 'is', null);
       if (error) throw error;
       return citiesFrom(data ?? []);
