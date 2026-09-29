@@ -6,6 +6,7 @@ import { renderWithTamagui } from '@/jest.setup';
 import { useAgeGate } from './AgeGate';
 import { DrinkingAgeGate } from './DrinkingAgeGate';
 import { MyReportsScreen } from './MyReportsScreen';
+import { NotAvailable } from './NotAvailable';
 import { ReportSheet } from './ReportSheet';
 
 let mockUser: { id: string } | null = { id: 'me' };
@@ -198,5 +199,22 @@ describe('MyReportsScreen', () => {
     mockReports = [];
     await renderWithTamagui(<MyReportsScreen />);
     expect(screen.getByText(/You haven’t reported anything/)).toBeTruthy();
+  });
+});
+
+describe('NotAvailable', () => {
+  test('says what might have happened and offers a way on, without saying which', async () => {
+    await renderWithTamagui(<NotAvailable what="drink" />);
+    expect(screen.getByText('Not available')).toBeTruthy();
+    expect(screen.getByText(/made private or removed, or a moderator may have hidden it\. Or it’s from someone you’ve blocked\./)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Discover drinks' })).toBeTruthy();
+  });
+
+  test('signed out: no talk of blocks, and a way to sign in', async () => {
+    mockUser = null;
+    await renderWithTamagui(<NotAvailable what="release" />);
+    expect(screen.getByText(/The bar may not have published it yet/)).toBeTruthy();
+    expect(screen.queryByText(/blocked/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Sign in to find more' })).toBeTruthy();
   });
 });

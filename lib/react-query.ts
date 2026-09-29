@@ -15,7 +15,11 @@ onlineManager.setEventListener((setOnline) => {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
+      // "No rows" (PostgREST's PGRST116 from .single()) is an answer, not a
+      // glitch: a drink that's private, hidden or gone won't appear on a
+      // retry, and retrying only keeps a blank page up before the not
+      // available one.
+      retry: (failures, error) => (error as { code?: string } | null)?.code !== 'PGRST116' && failures < 2,
       refetchOnWindowFocus: true,
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
       staleTime: 1000 * 60 * 5, // 5 minutes

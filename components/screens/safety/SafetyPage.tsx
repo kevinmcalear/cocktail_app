@@ -13,9 +13,11 @@ interface SafetyPageProps {
   children: ReactNode;
   /** Hide the back button (the age check after sign-up has its own way on). */
   noBack?: boolean;
+  /** Where Back goes when there's no history (a link opened cold). */
+  backTo?: '/settings' | '/';
 }
 
-/** The plain page the safety screens share: a title, a line of intro, a readable column. */
+/** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */
 export function SafetyPage(props: SafetyPageProps) {
   return (
     <BackbarTheme>
@@ -24,7 +26,7 @@ export function SafetyPage(props: SafetyPageProps) {
   );
 }
 
-function Page({ title, intro, children, noBack }: SafetyPageProps) {
+function Page({ title, intro, children, noBack, backTo = '/settings' }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -49,7 +51,7 @@ function Page({ title, intro, children, noBack }: SafetyPageProps) {
           <GlassButton
             accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
             icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/settings'))}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace(backTo))}
           />
         </View>
       )}
