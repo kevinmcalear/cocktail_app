@@ -1,0 +1,720 @@
+{
+  "city": "Melbourne",
+  "new_bars": [
+    {
+      "handle": "aboveboardbarmelb",
+      "name": "Above Board",
+      "bio": "Seated-only cocktail bar up a laneway stair off Smith Street, opened in 2016 by Hayden Lambert, a veteran of Belfast's Merchant Hotel and Melbourne's Bar Americano, with partners Manu Potoi and Cornelis Ribbe. The bottles stay hidden and the list keeps to about 25 carefully tuned signatures and classics. Australian Cocktail Bar of the Year 2024 and Small Bar of the Year 2026.",
+      "website": "https://www.aboveboardbar.com",
+      "locality": "Collingwood",
+      "address_line": "Level 1, 306 Smith Street",
+      "postcode": "3066",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.80009,
+      "longitude": 144.98443,
+      "coord_source": "osm node 7138935325",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/570db5ddf85082287b0bfe07/1495617701995-SS4GXEG19D1IHGR7GAN6/Above%2BBoard_Logo_WEB-02.png",
+      "why": "No. 100 on The World's 50 Best Bars 2024 and a winner at three straight Australian Bar Awards (2024-2026).",
+      "sources": [
+        "https://www.aboveboardbar.com/info",
+        "https://www.broadsheet.com.au/melbourne/collingwood/bars/above-board",
+        "https://www.the50.com/bars/previous-lists/2024/51-100",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "handle": "threehorsesbar",
+      "name": "Three Horses",
+      "bio": "Sherry-led cocktail bar on Little Lonsdale Street from Matt Stirling, Ryan Noreiks and Rob Libecans, the team behind Caretaker's Cottage a few doors down. Opened in September 2025 in the old Troika space and inspired by Madrid's sherry bodegas, it pours a rotating sherry list next to sherry-seasoned cocktails such as the tableside Jabberwock. No. 84 on The World's 50 Best Bars 2026 (51-100).",
+      "website": "https://www.threehorses.bar",
+      "locality": "Melbourne CBD",
+      "address_line": "106 Little Lonsdale Street",
+      "postcode": "3000",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.80921,
+      "longitude": 144.96869,
+      "coord_source": "osm node 6422188285",
+      "logo_url": null,
+      "why": "Best new opening in the city: New Bar of the Year 2026 and a new entry at No. 84 on The World's 50 Best Bars 2026 within a year of opening.",
+      "sources": [
+        "https://www.threehorses.bar/",
+        "https://www.broadsheet.com.au/melbourne/food-and-drink/article/caretakers-cottage-new-bar-three-horses-opens",
+        "https://www.thespiritsbusiness.com/2026/02/three-horses-the-sherry-led-sequel-to-caretakers-cottage/",
+        "https://www.prnewswire.com/news-releases/the-50-best-bars-announces-the-extended-51-100-list-for-2026-302884566.html",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "handle": "blackpearlfitzroy",
+      "name": "Black Pearl",
+      "bio": "Brunswick Street institution that has anchored Fitzroy's bar scene for more than two decades, owned by Tash Conte and long known as a training ground for Australian bartending talent. The downstairs bar is walk-in and runs until 3am, while The Attic upstairs takes bookings. The Death Flip was created here in 2010, and the bar held a place on The World's 50 Best Bars list from 2009 to 2018.",
+      "website": "https://www.blackpearlbar.com.au",
+      "locality": "Fitzroy",
+      "address_line": "304 Brunswick Street",
+      "postcode": "3065",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.79807,
+      "longitude": 144.97875,
+      "coord_source": "osm way 982408032",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/58e326c71e5b6c8ff9282911/1501650581145-WOCJ8RJIQLWJY3WQ8BYQ/black-pearl-logo-WHITE.png",
+      "why": "Historic: Melbourne's longest-running World's 50 Best Bars entrant (every list 2009-2018) and birthplace of the Death Flip.",
+      "sources": [
+        "https://www.blackpearlbar.com.au/",
+        "https://www.broadsheet.com.au/melbourne/fitzroy/bars/black-pearl",
+        "https://www.the50.com/bars/previous-lists/2024/1-50",
+        "https://punchdrink.com/articles/death-flip-became-modern-classic-jagermeister-chartreuse-cocktail-recipe-black-pearl/"
+      ]
+    },
+    {
+      "handle": "gimlet.melbourne",
+      "name": "Gimlet at Cavendish House",
+      "bio": "Andrew McConnell's grand cocktail bar and dining room inside Cavendish House, a heritage building on the corner of Russell Street and Flinders Lane, opened in 2020 by his Trader House group. Known for its namesake Gimlet, a polished martini list and European-leaning food served late into the night. Restaurant Bar of the Year at the 2025 Australian Bar Awards.",
+      "website": "https://gimlet.melbourne",
+      "locality": "Melbourne CBD",
+      "address_line": "33 Russell Street",
+      "postcode": "3000",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.81588,
+      "longitude": 144.96931,
+      "coord_source": "osm node 11466812433",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/5e6007894f92d81ba23bb9f1/62ecaf74-4639-49c0-a638-a713b16b2639/gimlet-logo%402x.png",
+      "why": "The city's benchmark restaurant bar; Restaurant Bar of the Year 2025.",
+      "sources": [
+        "https://gimlet.melbourne/",
+        "https://gimlet.melbourne/s/Spring-Cocktail-List.pdf",
+        "https://en.wikipedia.org/wiki/Gimlet_(restaurant)",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "handle": "apolloinn.bar",
+      "name": "Apollo Inn",
+      "bio": "Intimate Flinders Lane cocktail bar from Andrew McConnell and Jo McGann of Trader House, opened in June 2023 as a small sibling to Gimlet and named after one of Melbourne's first public houses, which stood on the nearby corner in 1844. Leather doors, a European-style room and a martini-led list of old-world classics with a modern touch. New Bar of the Year at the 2024 Australian Bar Awards.",
+      "website": "https://apolloinn.bar",
+      "locality": "Melbourne CBD",
+      "address_line": "165 Flinders Lane",
+      "postcode": "3000",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.81597,
+      "longitude": 144.96898,
+      "coord_source": "osm node 12882574782",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/6448988532ddff0acfcb6bfb/84bd5272-a49c-4b28-ba50-e52699e2ef38/APOLLO+INN_LOGOTYPE_RGB_WHITE_CROPPED.png",
+      "why": "New Bar of the Year 2024 and a 2026 Cocktail Bar of the Year finalist; a classic-leaning counterpoint to the city's newer bars.",
+      "sources": [
+        "https://apolloinn.bar/gimlet-bar-melbourne",
+        "https://apolloinn.bar/cocktails",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2026/07/03/cocktail-bar-of-the-year-the-bar-awards-2026-finalists-unveiled/"
+      ]
+    },
+    {
+      "handle": "bar.bellamy",
+      "name": "Bar Bellamy",
+      "bio": "Warm neighbourhood bistro and cocktail bar on leafy Rathdowne Street in Carlton, opened in May 2023 by married couple Dani and Oska Whitehart. Communal tables, a seasonal European menu and small-batch cocktails that rotate several times a week, with inventive martini twists a speciality. Best Bar Food winner at the 2025 Australian Bar Awards.",
+      "website": "https://barbellamy.com",
+      "locality": "Carlton",
+      "address_line": "164 Rathdowne Street",
+      "postcode": "3053",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.79547,
+      "longitude": 144.97113,
+      "coord_source": "osm via photon",
+      "logo_url": "https://freight.cargo.site/i/cb675dc4c64d46bd1b698b075e10dc705bda96d0f42b43d45832f75a25baea40/web_Bar-Bellamy_logo_green.png",
+      "why": "Standout neighbourhood bar with national awards for its hospitality (Host of the Year 2024) and food (Best Bar Food 2025).",
+      "sources": [
+        "https://barbellamy.com/",
+        "https://www.boothby.com.au/bar-bellamy/",
+        "https://www.broadsheet.com.au/melbourne/carlton/bars/bar-bellamy",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "name": "Goodwater",
+      "bio": "American whiskey and cocktail bar on High Street in Northcote, opened in early 2024 by a crew of bartenders and drinks writers led by Nathaniel White, including Cara Devine and Fred Siggins. Named after the Native American name for the Ohio River, it stocks around 200 American whiskeys and pairs them with modern classics and sandwiches. Small Bar of the Year at the 2025 Australian Bar Awards.",
+      "website": "https://goodwater.melbourne",
+      "locality": "Northcote",
+      "address_line": "300 High Street",
+      "postcode": "3070",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.77136,
+      "longitude": 144.99876,
+      "coord_source": "osm node 12032082712",
+      "logo_url": "https://goodwater.melbourne/wp-content/uploads/2023/11/Goodwater-Simple-Logo-1-300x300.png",
+      "why": "American whiskey specialist; Bar Team of the Year 2024 and Small Bar of the Year 2025.",
+      "sources": [
+        "https://goodwater.melbourne/",
+        "https://goodwater.melbourne/wp-content/uploads/2026/07/Drinks.pdf",
+        "https://www.boothby.com.au/whiskey-and-cocktail-bar-goodwater-opens/",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "handle": "ginpalacemelb",
+      "name": "Gin Palace",
+      "bio": "Russell Place laneway bar opened by Vernon Chalker in 1997, reviving the name of a notorious Melbourne gin house shut down in 1870 and helping start the city's small-bar era. Now part of the Vespertine group, it stocks more than 330 gins, pours long 90ml martinis and serves its famous toasted chicken sandwiches until close. Gin Bar of the Year at the 2024 Australian Bar Awards.",
+      "website": "https://www.ginpalace.com.au",
+      "locality": "Melbourne CBD",
+      "address_line": "10 Russell Place",
+      "postcode": "3000",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.81384,
+      "longitude": 144.96749,
+      "coord_source": "osm node 2686206075",
+      "logo_url": null,
+      "why": "Historic laneway pioneer (1997) and gin specialist; Gin Bar of the Year 2024.",
+      "sources": [
+        "https://www.ginpalace.com.au/story",
+        "https://www.ginpalace.com.au/menu",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+      ]
+    },
+    {
+      "handle": "pendant.publicbar",
+      "name": "Pendant Public Bar",
+      "bio": "Fitzroy neighbourhood bar on Brunswick Street from Belinda Linton and Luke Kelly, whose resumes include Black Pearl, The Everleigh, Apollo Inn and Mr West. Opened in 2025 in the former Enoteca Zingara site, it mixes old Irish pub with New Orleans cocktail bar: Guinness on tap, a very dry house martini, a short list of classics and live bluegrass on Sundays. New Bar of the Year at the 2025 Australian Bar Awards.",
+      "website": "https://www.pendantpublicbar.com",
+      "locality": "Fitzroy",
+      "address_line": "334 Brunswick Street",
+      "postcode": "3065",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.7973,
+      "longitude": 144.97887,
+      "coord_source": "osm via photon",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/66a0769418556e7d64c5afdc/fddfca74-e1e1-45f6-a77a-bd8344601b65/Pendant+Logos+Circle.png",
+      "why": "New Bar of the Year 2025; a pub-meets-cocktail-bar from Black Pearl and Everleigh alumni.",
+      "sources": [
+        "https://www.pendantpublicbar.com/",
+        "https://www.broadsheet.com.au/melbourne/fitzroy/bars/pendant-public-bar",
+        "https://www.boothby.com.au/pendant-public-bar/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "handle": "handsdownmelbourne",
+      "name": "Hands Down",
+      "bio": "Loud, fun Greeves Street bar in Fitzroy from Dominic Xavier (Bar Liberty) with Hayden Lambert and Manu Potoi (Above Board), run by Alex Boon of Pearl Diver. Opened in November 2025 in the former Bad Frankie space, it pours a dozen vermouth- and sherry-leaning cocktails inspired by the coasts of southern France and northern Spain, with gildas at the bar and a 40-seat parklet outside.",
+      "website": "https://www.handsdownmelbourne.com",
+      "locality": "Fitzroy",
+      "address_line": "139-141 Greeves Street",
+      "postcode": "3065",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.80032,
+      "longitude": 144.98375,
+      "coord_source": "osm via photon",
+      "logo_url": "https://static1.squarespace.com/static/6821c442d352ec33844b68d9/t/68903e2d33167255891a1ed8/1754283565597/Hands+Down_Logo_black.png",
+      "why": "Most talked-about 2025 opening in the north; from the Above Board team and a 2026 New Bar of the Year finalist.",
+      "sources": [
+        "https://www.handsdownmelbourne.com/",
+        "https://www.broadsheet.com.au/melbourne/fitzroy/bars/hands-down",
+        "https://concreteplayground.com/melbourne/bars/hands-down",
+        "https://www.timeout.com/melbourne/bars/hands-down",
+        "https://www.melbournefoodandwine.com.au/drink/hands-down-in-three-drinks/"
+      ]
+    },
+    {
+      "handle": "bar1806",
+      "name": "1806",
+      "bio": "Theatre-district cocktail bar on Exhibition Street, opened in 2007 and named for the year the word cocktail was first defined in print. Set in a building that once housed a theatre restaurant, it pairs an ornate old-world room with a deep classics list and a menu of story-driven house signatures, and it was on the first World's 50 Best Bars list in 2009.",
+      "website": "https://www.1806.com.au",
+      "locality": "Melbourne CBD",
+      "address_line": "169 Exhibition Street",
+      "postcode": "3000",
+      "city": "Melbourne",
+      "region": "Victoria",
+      "country_code": "AU",
+      "latitude": -37.81162,
+      "longitude": 144.97013,
+      "coord_source": "osm node 726973675",
+      "logo_url": null,
+      "why": "Historic: one of Melbourne's original modern cocktail bars (2007) and a World's 50 Best Bars entrant in 2009 and 2010.",
+      "sources": [
+        "https://www.1806.com.au/",
+        "https://www.broadsheet.com.au/melbourne/bars/1806",
+        "https://www.the50.com/bars/previous-lists/2024/1-50"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "handle": "caretakers.cottage",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 21,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/1-50"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Best Bar in Australasia",
+      "source_url": "https://www.timeout.com/melbourne/news/two-melbourne-bars-were-just-named-in-the-worlds-50-best-bars-2024-102324"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Art of Hospitality Award",
+      "source_url": "https://www.timeout.com/melbourne/news/this-pint-sized-melbourne-bar-just-took-home-a-prestigious-award-as-part-of-the-worlds-50-best-bars-2024-100224"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": null,
+      "title": "Best Bar in Australasia",
+      "source_url": "https://www.the50.com/bars/the-list/caretakers-cottage.html"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Cocktail Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 100,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/51-100"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Cocktail Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Cocktail List of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Small Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "threehorsesbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 84,
+      "title": null,
+      "source_url": "https://www.prnewswire.com/news-releases/the-50-best-bars-announces-the-extended-51-100-list-for-2026-302884566.html"
+    },
+    {
+      "handle": "threehorsesbar",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "New Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "apolloinn.bar",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "New Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "gimlet.melbourne",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Restaurant Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "bar.bellamy",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Host of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "bar.bellamy",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Best Bar Food",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Bar Team of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Small Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "ginpalacemelb",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Gin Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "pendant.publicbar",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "New Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "caretakers.cottage",
+      "name": "House Martini",
+      "description": "A freezer-cold martini built on a gin made to the bar's own spec; pair it with a pint of Guinness and it becomes the bar's famous boilermaker.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.the50.com/bars/the-list/caretakers-cottage.html"
+    },
+    {
+      "handle": "caretakers.cottage",
+      "name": "Home Comforts",
+      "description": "House-made limoncello and passionfruit sorbet topped with a local sparkling wine.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.boothby.com.au/caretakers-cottage-drinks-menu/"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "name": "H.S.L. Special",
+      "description": "Amaro Montenegro with crème de mûre, lime and a dash of absinthe, shaken and finished with a blackberry and icing sugar.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://spiritsplatform.com.au/bartenders-corner/above-board-bartenders-dream-come-true/"
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "name": "Cherry Rascal",
+      "description": "Smoky Islay whisky stirred with cherry brandy and a touch of absinthe.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.interestingbars.com/bar/above-board-melbourne"
+    },
+    {
+      "handle": "threehorsesbar",
+      "name": "Jabberwock",
+      "description": "The house martini of gin made with Four Pillars and house dry vermouth, seasoned with a splash of fino sherry and poured at the table.",
+      "riff_of": "Martini",
+      "origin_year": 2025,
+      "on_current_menu": false,
+      "source_url": "https://www.thespiritsbusiness.com/2026/02/three-horses-the-sherry-led-sequel-to-caretakers-cottage/"
+    },
+    {
+      "handle": "threehorsesbar",
+      "name": "Margarita",
+      "description": "Espolòn Blanco tequila with a mandarin sherry and a lime sorbet in place of fresh juice.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.thespiritsbusiness.com/2026/02/three-horses-the-sherry-led-sequel-to-caretakers-cottage/"
+    },
+    {
+      "handle": "blackpearlfitzroy",
+      "name": "Death Flip",
+      "description": "Blanco tequila, yellow Chartreuse and Jägermeister shaken with a whole egg and a little syrup, dusted with nutmeg. Created by Chris Hysted-Adams.",
+      "riff_of": null,
+      "origin_year": 2010,
+      "on_current_menu": false,
+      "source_url": "https://punchdrink.com/articles/death-flip-became-modern-classic-jagermeister-chartreuse-cocktail-recipe-black-pearl/"
+    },
+    {
+      "handle": "blackpearlfitzroy",
+      "name": "Café Frappé",
+      "description": "Vodka and fresh espresso with coffee liqueur, Averna, a little crème de menthe and vanilla. Created by Felix Woods and still made on request.",
+      "riff_of": null,
+      "origin_year": 2022,
+      "on_current_menu": false,
+      "source_url": "https://www.boothby.com.au/cafe-frappe-cocktail/"
+    },
+    {
+      "handle": "gimlet.melbourne",
+      "name": "Gimlet",
+      "description": "Tanqueray gin with Moscato and a three-citrus cordial, lifted with native Geraldton wax.",
+      "riff_of": "Gimlet",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://gimlet.melbourne/s/Spring-Cocktail-List.pdf"
+    },
+    {
+      "handle": "gimlet.melbourne",
+      "name": "Cavendish House Martini",
+      "description": "Tanqueray No. Ten with a house vermouth blend and orange bitters, served with a choice of olives.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://gimlet.melbourne/s/Spring-Cocktail-List.pdf"
+    },
+    {
+      "handle": "gimlet.melbourne",
+      "name": "Quince Martinez",
+      "description": "Ketel One vodka with a peach aperitif, bianco vermouth and quince.",
+      "riff_of": "Martinez",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://gimlet.melbourne/s/Spring-Cocktail-List.pdf"
+    },
+    {
+      "handle": "apolloinn.bar",
+      "name": "French 75",
+      "description": "Christian Drouin's apple-based gin with Meyer lemon and neroli, topped with Bollinger Special Cuvée.",
+      "riff_of": "French 75",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apolloinn.bar/cocktails"
+    },
+    {
+      "handle": "apolloinn.bar",
+      "name": "Black Forest Manhattan",
+      "description": "Lagavulin 16 and Johnnie Walker Green Label with Cocchi di Torino, Beechworth Black Forest bitters and dark chocolate.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apolloinn.bar/cocktails"
+    },
+    {
+      "handle": "apolloinn.bar",
+      "name": "Hazelnut Martini",
+      "description": "Hazelnut eau de vie stirred with amontillado sherry and a house-made hazelnut liqueur.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apolloinn.bar/cocktails"
+    },
+    {
+      "handle": "bar.bellamy",
+      "name": "Lupini Tini",
+      "description": "A savoury martini made with sake and brine from lupini beans bought at an old Italian grocer in Brunswick.",
+      "riff_of": "Martini",
+      "origin_year": 2023,
+      "on_current_menu": false,
+      "source_url": "https://www.boothby.com.au/bar-bellamy/"
+    },
+    {
+      "handle": "bar.bellamy",
+      "name": "Blue Heaven",
+      "description": "A house-distilled raspberry, butter and vanilla vodka with blue curaçao, Calpis and lemon, whipped with crushed ice into a frozen coupe.",
+      "riff_of": null,
+      "origin_year": 2024,
+      "on_current_menu": false,
+      "source_url": "https://www.boothby.com.au/blue-heaven/"
+    },
+    {
+      "handle": "bar.bellamy",
+      "name": "Adonis",
+      "description": "An inverted Adonis: Punt e Mes leads over oloroso sherry, with dashes of Amaro Lucano, Angostura and orange bitters.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.gourmettraveller.com.au/drinks/drinks-recipes/adonis-cocktail-recipe/"
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "name": "Kentucky Nitro Martini",
+      "description": "Gospel solera rye with cold brew coffee, cola and cherry, served on nitro as a tribute to London's White Lyan.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://goodwater.melbourne/wp-content/uploads/2026/07/Drinks.pdf"
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "name": "Dustbowl Negroni",
+      "description": "MGC gin and Campari with a spiced Cocchi Torino vermouth and amburana wood.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://goodwater.melbourne/wp-content/uploads/2026/07/Drinks.pdf"
+    },
+    {
+      "handle": "goodwater.melbourne",
+      "name": "Free Practice",
+      "description": "Rye and cognac shaken with pineapple and fig leaf, with a hint of pastis.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://goodwater.melbourne/wp-content/uploads/2026/07/Drinks.pdf"
+    },
+    {
+      "handle": "ginpalacemelb",
+      "name": "Classic Martini",
+      "description": "A long 90ml pour of Never Never Triple Juniper gin and Noilly Prat dry vermouth, with olives or a twist.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ginpalace.com.au/menu"
+    },
+    {
+      "handle": "ginpalacemelb",
+      "name": "Vesper",
+      "description": "Brookie's gin and Republic of Fremantle vodka with Cocchi Americano, shaken.",
+      "riff_of": "Vesper",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ginpalace.com.au/menu"
+    },
+    {
+      "handle": "ginpalacemelb",
+      "name": "Sirena",
+      "description": "A Gibson variation of Melbourne Gin Company gin and vermouth with Tasmanian aquavit and a pickled onion.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ginpalace.com.au/menu"
+    },
+    {
+      "handle": "pendant.publicbar",
+      "name": "Martini",
+      "description": "Never Never gin and dry vermouth at a very dry seven-to-one, seasoned with tiny amounts of salt, sugar and acid.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.broadsheet.com.au/melbourne/fitzroy/bars/pendant-public-bar"
+    },
+    {
+      "handle": "pendant.publicbar",
+      "name": "Cognac Old Fashioned",
+      "description": "The bar's lead drink: an Old Fashioned with cognac in the mix.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.broadsheet.com.au/melbourne/fitzroy/bars/pendant-public-bar"
+    },
+    {
+      "handle": "handsdownmelbourne",
+      "name": "50-50 Martini",
+      "description": "Archie Rose Bone Dry gin with equal parts Cocchi Americano and fino sherry, garnished with a gordal olive in picante brine.",
+      "riff_of": "Martini",
+      "origin_year": 2025,
+      "on_current_menu": false,
+      "source_url": "https://www.melbournefoodandwine.com.au/drink/hands-down-in-three-drinks/"
+    },
+    {
+      "handle": "handsdownmelbourne",
+      "name": "Pastis Swizzle",
+      "description": "A moscato-based artichoke amaro with Ricard pastis and lemon, swizzled and crowned with a float of crème de mûre.",
+      "riff_of": null,
+      "origin_year": 2025,
+      "on_current_menu": false,
+      "source_url": "https://www.melbournefoodandwine.com.au/drink/hands-down-in-three-drinks/"
+    },
+    {
+      "handle": "handsdownmelbourne",
+      "name": "Café Italiano",
+      "description": "Italian brandy with nocino and Averna, topped with an orange cream.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.timeout.com/melbourne/bars/hands-down"
+    },
+    {
+      "handle": "bar1806",
+      "name": "Ashes Will Bloom",
+      "description": "Starward whisky stirred with roasted wattleseed, cacao and amari for an Australian take on the Old Fashioned.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6759032ad003dab7a141781f/6913eb7b65e85239e5e39a5f_1806%20Cocktail%20Menu.pdf"
+    },
+    {
+      "handle": "bar1806",
+      "name": "Salt & Sea",
+      "description": "A mineral martini of Four Pillars Modern Australian gin with nori and oyster shell.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6759032ad003dab7a141781f/6913eb7b65e85239e5e39a5f_1806%20Cocktail%20Menu.pdf"
+    },
+    {
+      "handle": "bar1806",
+      "name": "The Last Soliloquy",
+      "description": "Sazerac rye with miso and banana, finished with black walnut.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6759032ad003dab7a141781f/6913eb7b65e85239e5e39a5f_1806%20Cocktail%20Menu.pdf"
+    }
+  ],
+  "notes": [
+    "Byrdi (No. 35 in 2024, No. 91 in 2025 on The World's 50 Best Bars; Cocktail Bar of the Year at the 2026 Australian Bar Awards) is excluded: it closed its Melbourne Central site in mid-September 2026. Its website says it is closed; co-owner Luke Whearty called it closed at that location, not necessarily for good.",
+    "Also excluded as closed: The Everleigh (closed March 2025) and Bar Americano (Broadsheet lists it permanently closed since December 2022; its own site is stale).",
+    "The World's 50 Best Bars 2026 top 50 is announced on 7 October 2026, after this research date. Only the 2026 51-100 list was available (Three Horses No. 84). Caretaker's Cottage and Above Board may appear in the 2026 top 50 once it is out.",
+    "Caretaker's Cottage 2025 No. 19 on The World's 50 Best Bars is left out because we already have it. Its 2023 No. 23 is outside the 2024-2026 window.",
+    "Australian Bar Awards results come from australianbartender.com.au (Bartender Magazine's site). Only national category winners are listed. State category winners in 2024 (Caretaker's Cottage Bar of the Year VIC, Above Board Cocktail Bar of the Year VIC) are left out as duplicates.",
+    "Bar Bellamy's 2024 Host of the Year award went to co-owner Danielle Whitehart personally, not the venue. Drop it if person awards should not attach to bars.",
+    "Hands Down Instagram: its own website and Melbourne Food and Wine Festival give @handsdownmelbourne, but one search result showed an @handsdownbar profile. The handle used here follows the bar's own site.",
+    "Three Horses Instagram handle (threehorsesbar) comes from Broadsheet. The bar's website links no Instagram and its page title reuses the Caretaker's Cottage template, so logo_url is null.",
+    "on_current_menu is true only when the drink was read from the bar's own current menu (web page or PDF). Drinks sourced from press are marked false even when they may still be poured (for example Three Horses' Jabberwock or Pendant's martini).",
+    "Above Board has no public menu; its two drinks come from older features and may no longer be on the list. The Cherry Rascal source is a bar directory (interestingbars.com).",
+    "Black Pearl: its website says it has been open 23 years, and Boothby dated its 24th birthday to August 2026, so it opened around 2002. The bio says 'more than two decades'. Its 2017 Spirited Award (Best International Cocktail Bar) is outside the allowed categories.",
+    "Photon (OSM) coordinates: Bar Bellamy and Pendant Public Bar are the street-address points for 164 Rathdowne Street and 334 Brunswick Street. Hands Down is OSM node 2108124493 at 141 Greeves Street, still tagged with the previous tenant, Bad Frankie. The other bars are OSM venue matches from Nominatim.",
+    "1806's cocktail menu PDF is marked as published in 2024 but is the one linked from the bar's current website."
+  ]
+}

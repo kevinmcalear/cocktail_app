@@ -1,0 +1,981 @@
+{
+  "city": "Hong Kong",
+  "new_bars": [
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "argobarhk",
+      "name": "Argo",
+      "bio": "Hotel bar inside the Four Seasons Hong Kong, opened in July 2021 and styled after a Gilded Age botanical conservatory, with a glowing cylindrical back bar and harbour views. Beverage manager Jonathan Gabbay's current Exploration menu leans on Hong Kong makers and seasonal produce. Best International Hotel Bar at the 2026 Spirited Awards. No. 37 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.fourseasons.com/hongkong/dining/lounges/argo/",
+      "locality": "Central",
+      "address_line": "Four Seasons Hotel Hong Kong, 8 Finance Street",
+      "latitude": 22.28663,
+      "longitude": 114.15666,
+      "coord_source": "osm way 148554935 (Four Seasons Hotel Hong Kong; bar itself not mapped)",
+      "logo_url": null,
+      "why": "Hong Kong's top hotel bar: on every Asia's 50 Best list since 2022 and 2026 Spirited Awards Best International Hotel Bar.",
+      "sources": [
+        "https://www.the50.com/bars/best-in-asia/the-list/argo.html",
+        "https://press.fourseasons.com/hongkong/hotel-news/2026/argo-exploration-new-cocktail-menu/",
+        "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "gokan.hk",
+      "name": "Gokan",
+      "bio": "Japanese cocktail bar from SG Group founder Shingo Gokan, opened in 2024 with Russell Stradmoor and Amanda Cheung on Ice House Street, the site of the city's first ice store. Drinks are sorted by the five tastes and served as a highball, on the rocks or straight up, next to izakaya-style plates. No. 22 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.instagram.com/gokan.hk/",
+      "locality": "Central",
+      "address_line": "30 Ice House Street",
+      "latitude": 22.28035,
+      "longitude": 114.15644,
+      "coord_source": "osm node 14072432001",
+      "logo_url": null,
+      "why": "Shingo Gokan's Hong Kong bar, climbing fast: No. 22 in Asia 2026 and No. 70 in the world in 2025.",
+      "sources": [
+        "https://www.the50.com/bars/best-in-asia/the-list/gokan.html",
+        "https://www.tatlerasia.com/dining/drinks/shingo-gokan-interview-gokan-hong-kong"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "mius.hongkong",
+      "name": "Mius",
+      "bio": "Walk-in neighbourhood bar on Gough Street, opened in 2025 by Hong Kong-born bartender Shelley Tai after five years leading Singapore's Nutmeg Collective. A short list of about a dozen drinks, each kept to six ingredients or fewer, sits beside grower Champagne and Cantonese comfort food. No. 36 on Asia's 50 Best Bars 2026, where it also won Best Bar Design.",
+      "website": "https://www.mius.hk/",
+      "locality": "Central",
+      "address_line": "29 Gough Street",
+      "latitude": 22.28438,
+      "longitude": 114.15237,
+      "coord_source": "osm address match (way 1220174245, 29-31 Gough Street)",
+      "logo_url": "https://static.wixstatic.com/media/2bd52c_c00f21b755c64581958db9ff1f3703d1~mv2.png",
+      "why": "The city's most talked-about new bar: straight onto Asia's 50 Best (No. 36) and the World's 51-100 (No. 81) in 2026.",
+      "sources": [
+        "https://www.mius.hk/",
+        "https://www.the50.com/bars/best-in-asia/the-list/mius.html",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "penicillin_bar",
+      "name": "Penicillin",
+      "bio": "Sustainability-driven bar on Hollywood Road, opened in late 2020 by Agung Prabowo and Roman Ghale of The Old Man. Billed as Hong Kong's first closed-loop cocktail bar, it upcycles local produce and ferments ingredients in its own climate-controlled 'Stinky Room', all in a white-tiled, lab-like room. No. 69 on The World's 50 Best Bars 2026 (51-100).",
+      "website": "https://penicillinbarhk.com/",
+      "locality": "Central",
+      "address_line": "L/G, Amber Lodge, 23 Hollywood Road",
+      "latitude": 22.2821,
+      "longitude": 114.15399,
+      "coord_source": "osm address match (way 540389804, Amber Lodge, 23 Hollywood Road)",
+      "logo_url": "https://penicillinbarhk.com/img/p-logo-b.png",
+      "why": "Hong Kong's leading sustainability bar, on Asia's 50 Best every year 2024-2026 and No. 69 in the world in 2026.",
+      "sources": [
+        "https://penicillinbarhk.com/",
+        "https://www.the50.com/bars/best-in-asia/the-list/penicillin.html",
+        "https://www.asia-bars.com/2020/10/penicillin-new-cocktail-bar-opening-in-hong-kong"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "thesavoryproject",
+      "name": "The Savory Project",
+      "bio": "Soho bar from Jay Khan and Ajit Gurung of COA, opened in 2023 around a hexagonal counter. The menu chases savoury and umami flavours using pantry staples like miso, ponzu, shiitake and cumin, with a full non-alcoholic list alongside. Won Best New Opening at Asia's 50 Best Bars 2024. No. 60 on Asia's 50 Best Bars 2026.",
+      "website": "https://thesavoryproject.com/",
+      "locality": "SoHo",
+      "address_line": "4 Staunton Street",
+      "latitude": 22.28156,
+      "longitude": 114.15319,
+      "coord_source": "osm address match (way 1216100488, 2-4 Staunton Street)",
+      "logo_url": "https://thesavoryproject.com/wp-content/uploads/2023/03/LOGO_600.png",
+      "why": "Umami-focused sibling of COA; on the World's 51-100 list three years running (2024-2026).",
+      "sources": [
+        "https://thesavoryproject.com/",
+        "https://www.the50.com/bars/best-in-asia/the-list/the-savory-project.html",
+        "https://www.prnewswire.com/news-releases/bar-leone-in-hong-kong-named-the-best-bar-in-asia-sponsored-by-perrier-as-the-asias-50-best-bars-2024-list-is-revealed-302198378.html"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "montanabarhk",
+      "name": "Montana",
+      "bio": "Party bar on Hollywood Road inspired by Cuban cocktail history and 1970s Miami, opened in summer 2025 by Lorenzo Antinori of Bar Leone and Simone Caporale of Sips. Expect Cuban-era classics like the daiquiri and El Presidente, a disco soundtrack, Latin American snacks and no reservations. New entry at No. 47 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.montanabarhk.com/",
+      "locality": "Sheung Wan",
+      "address_line": "108 Hollywood Road",
+      "latitude": 22.28388,
+      "longitude": 114.15067,
+      "coord_source": "osm node 13159933280",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/685173b49a081461acfd289d/76a7da45-c535-4f4d-ba73-8cf9e06e412d/FinalLogo+Montana-07.png",
+      "why": "Second bar from the Bar Leone founder, with Simone Caporale; debuted on Asia's 50 Best 2026 at No. 47.",
+      "sources": [
+        "https://www.montanabarhk.com/",
+        "https://www.the50.com/bars/best-in-asia/the-list/montana.html",
+        "https://drinksint.com/news/fullstory.php/aid/11747/Montana:_Inside_Antinori_x_Caporale_s_new_bar.html"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "theoppositeshk",
+      "name": "The Opposites",
+      "bio": "Hollywood Road bar opened in July 2024 by veteran bartenders Antonio Lai of Quinary and Samuel Kwok. The menu takes one classic at a time and serves it two ways: a balanced, classic-leaning version from Kwok and a theatrical, lab-driven take from Lai. No. 54 on Asia's 50 Best Bars 2026, up 26 places on 2025.",
+      "website": "https://www.theopposites.hk/",
+      "locality": "Central",
+      "address_line": "LG/F, Hilltop Plaza, 49 Hollywood Road",
+      "latitude": 22.28275,
+      "longitude": 114.15309,
+      "coord_source": "osm node 12708072684",
+      "logo_url": null,
+      "why": "A two-styles-per-classic concept from two Hong Kong veterans, rising to No. 54 in Asia in 2026.",
+      "sources": [
+        "https://www.theopposites.hk/",
+        "https://www.tatlerasia.com/dining/drinks/the-opposites-antonio-lai-samuel-kwok",
+        "https://www.timeout.com/hong-kong/news/three-hong-kong-bars-rank-in-asias-50-best-bars-2026-extended-51-100-list-071426"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "quinaryhk",
+      "name": "Quinary",
+      "bio": "Pioneering multisensory cocktail bar on Hollywood Road, opened in 2012 by Antonio Lai. Its long counter runs into an open lab of rotary evaporators and centrifuges used to redistill and infuse house spirits, and its Earl Grey Caviar Martini is among the city's best-known drinks. Listed on Asia's 50 Best Bars for an eighth time in 2024, at No. 26.",
+      "website": "https://www.quinary.hk/",
+      "locality": "Central",
+      "address_line": "G/F, 56-58 Hollywood Road",
+      "latitude": 22.28273,
+      "longitude": 114.15285,
+      "coord_source": "osm node 4701371989",
+      "logo_url": null,
+      "why": "Historic: the bar that brought molecular mixology to Hong Kong, a regular on Asia's 50 Best for a decade.",
+      "sources": [
+        "https://www.quinary.hk/",
+        "https://www.tatlerasia.com/dining/quinary",
+        "https://www.diffordsguide.com/encyclopedia/2721/people/antonio-lai"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "kinsman.hk",
+      "name": "Kinsman",
+      "bio": "Cantonese cocktail salon on Peel Street, opened in late 2023 by drinks writer Gavin Yeung with Singular Concepts. Styled with nods to Wong Kar-wai films, it revives local and Chinese liquors such as Yuk Bing Siu, rose and rice wines and baijiu. Its A Tale of Chinatowns menu won Best Cocktail Menu at Asia's 50 Best Bars 2026.",
+      "website": "https://www.kinsman.hk/",
+      "locality": "Central",
+      "address_line": "G/F, 65 Peel Street",
+      "latitude": 22.2823,
+      "longitude": 114.15213,
+      "coord_source": "osm address match (way 1216944131, 65-65A Peel Street)",
+      "logo_url": null,
+      "why": "Distinctive concept built on forgotten Cantonese spirits; won Best Cocktail Menu at Asia's 50 Best Bars 2026.",
+      "sources": [
+        "https://www.kinsman.hk/",
+        "https://www.afoodieworld.com/blog/2023/12/06/gavin-yeung-promotes-cantonese-spirits-at-kinsman/",
+        "https://www.the50.com/bars/best-in-asia/list/Individual-Awards"
+      ]
+    },
+    {
+      "city": "Hong Kong",
+      "region": null,
+      "country_code": "HK",
+      "postcode": null,
+      "handle": "tellcamellia",
+      "name": "Tell Camellia",
+      "bio": "Tea-focused cocktail bar tucked into the H Code building, opened in 2019 by bar veterans Sandeep Hathiramani and Gagan Gurung and now helmed by Gurung. Teas from sencha and hojicha to lapsang and white peony are brewed, infused or redistilled into nearly every drink. Back on Asia's 50 Best Bars in 2026 at No. 81.",
+      "website": "https://www.tellcamellia.hk/",
+      "locality": "Central",
+      "address_line": "Shop 2, LG/F, H Code, 45 Pottinger Street",
+      "latitude": 22.28229,
+      "longitude": 114.15432,
+      "coord_source": "osm node 4713706093",
+      "logo_url": "https://www.tellcamellia.hk/images/TC_logoC_white_T.png",
+      "why": "Hong Kong's specialist tea-cocktail bar, re-entering Asia's 50 Best (51-100) in 2026.",
+      "sources": [
+        "https://www.tellcamellia.hk/",
+        "https://www.afoodieworld.com/blog/2019/09/29/2019-09-19-new-bar-tell-camellia/",
+        "https://www.the50.com/bars/best-in-asia/list/51-100"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "handle": "barleonehk",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 2,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/previous-list/2024"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 1,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "The Best Bar in Asia",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-in-hong-kong-named-the-best-bar-in-asia-sponsored-by-perrier-as-the-asias-50-best-bars-2024-list-is-revealed-302198378.html"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "The Best Bar in Hong Kong",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-in-hong-kong-named-the-best-bar-in-asia-sponsored-by-perrier-as-the-asias-50-best-bars-2024-list-is-revealed-302198378.html"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Highest New Entry Award",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-in-hong-kong-named-the-best-bar-in-asia-sponsored-by-perrier-as-the-asias-50-best-bars-2024-list-is-revealed-302198378.html"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 1,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": null,
+      "title": "The Best Bar in Asia",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-is-crowned-the-best-bar-in-asia-at-asias-50-best-bars-for-the-second-consecutive-year-302505815.html"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": null,
+      "title": "The Best Bar in Hong Kong",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-is-crowned-the-best-bar-in-asia-at-asias-50-best-bars-for-the-second-consecutive-year-302505815.html"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 3,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": null,
+      "title": "The Best Bar in Hong Kong",
+      "source_url": "https://www.afoodieworld.com/blog/2026/07/29/asias-50-best-bars-2026-list/"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Best New International Cocktail Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2024-spirited-awards-winners/"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Best International Cocktail Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2025-spirited-awards-winners-2/"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2025,
+      "position": null,
+      "title": "International Bartender of the Year",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2025-spirited-awards-winners-2/"
+    },
+    {
+      "handle": "barleonehk",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best International Bar Team",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 18,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/previous-list/2024"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 54,
+      "title": null,
+      "source_url": "https://www.timeout.com/news/worlds-best-bars-first-batch-092326"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 4,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 17,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 24,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "coahongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": null,
+      "title": "Legend of the List Award",
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 58,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/previous-list/2024"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 56,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/list/51-100"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 9,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 11,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 37,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "argobarhk",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best International Hotel Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    },
+    {
+      "handle": "gokan.hk",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 70,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/list/51-100"
+    },
+    {
+      "handle": "gokan.hk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 33,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "gokan.hk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 22,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "mius.hongkong",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 81,
+      "title": null,
+      "source_url": "https://www.timeout.com/news/worlds-best-bars-first-batch-092326"
+    },
+    {
+      "handle": "mius.hongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 36,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "mius.hongkong",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": null,
+      "title": "Best Bar Design Award",
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-list-revealed.html"
+    },
+    {
+      "handle": "penicillin_bar",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 69,
+      "title": null,
+      "source_url": "https://www.timeout.com/news/worlds-best-bars-first-batch-092326"
+    },
+    {
+      "handle": "penicillin_bar",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 24,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "penicillin_bar",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 27,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "penicillin_bar",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 49,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 82,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/previous-list/2024"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 86,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/list/51-100"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 96,
+      "title": null,
+      "source_url": "https://www.timeout.com/news/worlds-best-bars-first-batch-092326"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 19,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Best New Opening Award",
+      "source_url": "https://www.prnewswire.com/news-releases/bar-leone-in-hong-kong-named-the-best-bar-in-asia-sponsored-by-perrier-as-the-asias-50-best-bars-2024-list-is-revealed-302198378.html"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 32,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "thesavoryproject",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 60,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/51-100"
+    },
+    {
+      "handle": "montanabarhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 47,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/1-50"
+    },
+    {
+      "handle": "theoppositeshk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 80,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "theoppositeshk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 54,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/51-100"
+    },
+    {
+      "handle": "quinaryhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 26,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "quinaryhk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 91,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2025"
+    },
+    {
+      "handle": "kinsman.hk",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": null,
+      "title": "Best Cocktail Menu Award",
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/Individual-Awards"
+    },
+    {
+      "handle": "tellcamellia",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 97,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/previous-list/2024"
+    },
+    {
+      "handle": "tellcamellia",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 81,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/best-in-asia/list/51-100"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "barleonehk",
+      "name": "Leone Martini",
+      "description": "House Martini batched ahead and poured straight from the freezer into a chilled glass, finished with a lemon twist or a smoked olive.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/bar-leone.html"
+    },
+    {
+      "handle": "barleonehk",
+      "name": "Spring Break Manhattan",
+      "description": "Manhattan made with Mancino Rosso Amaranto vermouth infused with chamomile and seasoned with saffron orange bitters.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/bar-leone.html"
+    },
+    {
+      "handle": "barleonehk",
+      "name": "Olive Oil Sour",
+      "description": "Bourbon, Vecchia Romagna brandy, oloroso sherry and Sicilian banana wine, shaken silky with extra virgin olive oil and egg white, with grated nutmeg.",
+      "riff_of": "Whiskey Sour",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://imbibemagazine.com/recipe/olive-oil-sour-from-bar-leone/"
+    },
+    {
+      "handle": "coahongkong",
+      "name": "La Paloma de Oaxaca",
+      "description": "Blanco tequila and young mezcal with lime and grapefruit soda, rimmed with worm salt. On the list since the bar opened in 2017.",
+      "riff_of": "Paloma",
+      "origin_year": 2017,
+      "on_current_menu": true,
+      "source_url": "https://coa.com.hk/"
+    },
+    {
+      "handle": "coahongkong",
+      "name": "Ancho Highball",
+      "description": "Blanco tequila lengthened with guava soda, with salted plum and ancho chile for a savoury, gently spiced edge.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://coa.com.hk/"
+    },
+    {
+      "handle": "coahongkong",
+      "name": "Smacked Cucumber",
+      "description": "Mezcal and tequila with cucumber and a soy-based Chinese salad dressing, modelled on the cold smashed cucumber dish.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/coa.html"
+    },
+    {
+      "handle": "argobarhk",
+      "name": "Hong Kong Punch",
+      "description": "Rémy Martin VSOP, Iichiko shochu and magnolia liqueur with black tea, topped with egg tart foam and served with a butter tartlet to scoop it.",
+      "riff_of": null,
+      "origin_year": 2026,
+      "on_current_menu": true,
+      "source_url": "https://press.fourseasons.com/hongkong/hotel-news/2026/argo-exploration-new-cocktail-menu/"
+    },
+    {
+      "handle": "argobarhk",
+      "name": "Pickled G&T",
+      "description": "A savoury highball of gin, shochu and Riesling with pickled kale.",
+      "riff_of": null,
+      "origin_year": 2026,
+      "on_current_menu": true,
+      "source_url": "https://press.fourseasons.com/hongkong/hotel-news/2026/argo-exploration-new-cocktail-menu/"
+    },
+    {
+      "handle": "argobarhk",
+      "name": "Herbal Boulevardier",
+      "description": "Michter's bourbon, Fernet Hunter and Mancino Bianco Ambrato over a Campari ice sphere infused with roselle that shifts the drink as it melts.",
+      "riff_of": "Boulevardier",
+      "origin_year": 2026,
+      "on_current_menu": true,
+      "source_url": "https://press.fourseasons.com/hongkong/hotel-news/2026/argo-exploration-new-cocktail-menu/"
+    },
+    {
+      "handle": "gokan.hk",
+      "name": "Watermelon Koffeezz",
+      "description": "Gin fizz-style long drink built on clarified watermelon juice and light roast coffee from Tokyo's Koffee Mameya.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/gokan.html"
+    },
+    {
+      "handle": "gokan.hk",
+      "name": "Wabi-Sabi Paloma",
+      "description": "Paloma twist brightened with kiwi and given heat with wasabi.",
+      "riff_of": "Paloma",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/gokan.html"
+    },
+    {
+      "handle": "gokan.hk",
+      "name": "Rocket Grasshopper",
+      "description": "Grasshopper variation made with the house SG shochu, rocket and Hokkaido milk.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/gokan.html"
+    },
+    {
+      "handle": "mius.hongkong",
+      "name": "Strawberry Negroni",
+      "description": "Gin, Italian bitter amaro and Grenache with strawberry and pink peppercorn, a fruit-forward take on the Negroni.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.mius.hk/menu"
+    },
+    {
+      "handle": "mius.hongkong",
+      "name": "Tomatotini",
+      "description": "Vodka with tomato shrub, dill and lime, finished with a few drops of basil oil.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.mius.hk/menu"
+    },
+    {
+      "handle": "mius.hongkong",
+      "name": "Dirty Margarita",
+      "description": "Savoury Margarita of tequila and lime with olive, gentian and fennel pollen.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.mius.hk/menu"
+    },
+    {
+      "handle": "mius.hongkong",
+      "name": "Highball",
+      "description": "Frozen whisky topped with chilled Japanese soda and served with no ice, in the Kobe highball style.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.mius.hk/menu"
+    },
+    {
+      "handle": "penicillin_bar",
+      "name": "Our Final Warning",
+      "description": "Negroni-style stirred drink of rotovap watermelon gin, omija vermouth and Campari infused with pink jalapeño.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/penicillin.html"
+    },
+    {
+      "handle": "penicillin_bar",
+      "name": "One Penicillin, One Tree",
+      "description": "Creamy, tangy mix of white chocolate-infused whisky, strawberry brine and coconut kefir; each one sold funds a tree planted in Borneo.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://100toptables.scmp.com/restaurants-profile-2024/penicillin"
+    },
+    {
+      "handle": "penicillin_bar",
+      "name": "Hot, Flat & Crowded",
+      "description": "Mango custard gin with salted burnt butter, lengthened with a grilled purple cabbage cream soda.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://100toptables.scmp.com/restaurants-profile-2024/penicillin"
+    },
+    {
+      "handle": "thesavoryproject",
+      "name": "Thai Beef Salad",
+      "description": "Clarified peanut rum with beef essence, coconut water, bird's eye chilli and makrut lime, echoing the Thai salad.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/the-savory-project.html"
+    },
+    {
+      "handle": "thesavoryproject",
+      "name": "Biryani",
+      "description": "Tequila with ghee, biryani masala, plum, tonka bean, pineapple and peppers, built around the flavours of the rice dish.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/the-savory-project.html"
+    },
+    {
+      "handle": "montanabarhk",
+      "name": "Santa Marta Daiquiri",
+      "description": "Daiquiri after a 1930s Havana bartenders' club recipe: rum, lime and maraschino, with a float of kirsch.",
+      "riff_of": "Daiquiri",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/11747/Montana:_Inside_Antinori_x_Caporale_s_new_bar.html"
+    },
+    {
+      "handle": "montanabarhk",
+      "name": "Piña Colada",
+      "description": "Slushy Piña Colada upgraded with juice from rotisserie-caramelised pineapple and toasted coconut.",
+      "riff_of": "Piña Colada",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/11747/Montana:_Inside_Antinori_x_Caporale_s_new_bar.html"
+    },
+    {
+      "handle": "montanabarhk",
+      "name": "Rum & Coke Sour",
+      "description": "Cuba Libre recast as a sour, with Italian amaro, ginger falernum, cola syrup and lime.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/11747/Montana:_Inside_Antinori_x_Caporale_s_new_bar.html"
+    },
+    {
+      "handle": "theoppositeshk",
+      "name": "Oye Muchacha",
+      "description": "Samuel Kwok's balanced Paloma: Don Julio Blanco and mezcal with Chinese honey, pomegranate, jasmine tea and grapefruit soda.",
+      "riff_of": "Paloma",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theopposites.hk/_files/ugd/7c65c8_b7fe512d81144305b00b8524daf2f565.pdf"
+    },
+    {
+      "handle": "theoppositeshk",
+      "name": "Miss Gazpacho",
+      "description": "Antonio Lai's theatrical Bloody Mary of wasabi-redistilled vodka, cherry tomato, kimchi, redistilled Tabasco and spices.",
+      "riff_of": "Bloody Mary",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theopposites.hk/_files/ugd/7c65c8_b7fe512d81144305b00b8524daf2f565.pdf"
+    },
+    {
+      "handle": "theoppositeshk",
+      "name": "Soya Sour",
+      "description": "Pisco Sour reworked with tofu and ginger, passion fruit, lime, matcha and green cardamom.",
+      "riff_of": "Pisco Sour",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theopposites.hk/_files/ugd/7c65c8_b7fe512d81144305b00b8524daf2f565.pdf"
+    },
+    {
+      "handle": "quinaryhk",
+      "name": "Earl Grey Caviar Martini",
+      "description": "Citrus vodka, Cointreau, elderflower, apple, lemon, lime and cucumber, crowned with Earl Grey tea air and spherified Earl Grey 'caviar'.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.diffordsguide.com/encyclopedia/2721/people/antonio-lai"
+    },
+    {
+      "handle": "quinaryhk",
+      "name": "Haak Lo Mai",
+      "description": "Rye infused with black glutinous rice, with amaro, mango and tamarind nectar, coconut foam and a dusting of purple sweet potato.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/discovery/Establishments/China/Hong-Kong/Quinary.html"
+    },
+    {
+      "handle": "kinsman.hk",
+      "name": "Bloody Boat Maggi",
+      "description": "Clarified Bloody Mary led by Thai boat noodle broth, with onion port wine, Green Chartreuse, vodka, tomato and chilli vinegar.",
+      "riff_of": "Bloody Mary",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.kinsman.hk/_files/ugd/09b12f_92fd1551825d4f299048130c6d071d0a.pdf"
+    },
+    {
+      "handle": "kinsman.hk",
+      "name": "Miss Joaquim",
+      "description": "Paloma twist of osmanthus wine, Mui Kwe Lu rose liquor and gin with elderflower, grapefruit soda and rose tofu.",
+      "riff_of": "Paloma",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.kinsman.hk/_files/ugd/09b12f_92fd1551825d4f299048130c6d071d0a.pdf"
+    },
+    {
+      "handle": "kinsman.hk",
+      "name": "Shaoxing Vesper",
+      "description": "Vesper built on Huadiao Shaoxing wine with gin, vodka, Cocchi Americano, umami bitters and a Gordal olive.",
+      "riff_of": "Vesper",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.kinsman.hk/_files/ugd/09b12f_92fd1551825d4f299048130c6d071d0a.pdf"
+    },
+    {
+      "handle": "kinsman.hk",
+      "name": "Milk & Honey",
+      "description": "House signature of Yuk Bing Siu rice spirit with milk liqueur, pineapple rum, sparkling milky oolong, lychee honey and licorice root.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.kinsman.hk/_files/ugd/09b12f_92fd1551825d4f299048130c6d071d0a.pdf"
+    },
+    {
+      "handle": "tellcamellia",
+      "name": "Not Negroni",
+      "description": "Gin, Campari and vermouth reworked with roasted green tea, hojicha and fig leaf.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.tellcamellia.hk/"
+    },
+    {
+      "handle": "tellcamellia",
+      "name": "Pa Pa Da",
+      "description": "Dark rum with lapsang tea, sandalwood, mushroom and cacao husk chocolate bitters.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.tellcamellia.hk/"
+    },
+    {
+      "handle": "tellcamellia",
+      "name": "South of Jazz",
+      "description": "Tequila with jasmine tea, duck fat, dulce de leche and pink guava.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.tellcamellia.hk/"
+    },
+    {
+      "handle": "tellcamellia",
+      "name": "Tall Pine",
+      "description": "Gin and tonic with cold brew sencha, shiso, pine and elderflower.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.tellcamellia.hk/"
+    }
+  ],
+  "notes": [
+    "Bar Leone and COA are existing profiles; only awards and drinks added. Bar Leone's 2025 World's 50 Best No. 1 and COA's 2025 No. 38 are skipped as instructed.",
+    "The World's 50 Best Bars 2026 top 50 is not out yet (ceremony in Milan on 7 October 2026). Bar Leone, Gokan, Argo and Montana are not on the 2026 51-100 list, so they may place in the top 50; add those later.",
+    "World's 2026 51-100 positions (COA 54, Penicillin 69, Mius 81, The Savory Project 96) come from Time Out and Lifestyle Asia coverage of the 23 Sept 2026 announcement; the50.com's list page still showed the 2025 edition when checked.",
+    "Asia 2024/2025 positions were read from the50.com previous-list pages (a single page holds all years; blocks matched to years by content and cross-checked with the 2024 and 2025 press releases).",
+    "Person awards left out of awards: Jay Khan (COA, The Savory Project) Industry Icon Award, Asia's 50 Best Bars 2025; Shelley Tai (Mius) Bartenders' Bartender Award, Asia's 50 Best Bars 2026. Lorenzo Antinori's 2025 Spirited Awards International Bartender of the Year IS included under barleonehk since Tales credits it to Bar Leone; drop it if person awards shouldn't attach to bars.",
+    "Argo has no standalone site (Four Seasons page, which blocks scripted fetches) and no OSM node; coordinates are the hotel building. Gokan has no website found, so website is its Instagram.",
+    "Opening dates: Gokan 'opened in 2024' is inferred from July 2024 coverage describing it as new; Mius 2025 per press (August 2025).",
+    "Tell Camellia logo is a white-on-transparent wordmark; it may need a dark background.",
+    "Considered but left out: The Aubrey (Mandarin Oriental; temporarily closed 1 Jul-30 Sep 2026 for renovation), Darkside (Rosewood), Mostly Harmless.",
+    "Drinks marked on_current_menu false come from 50 Best profiles or press, not a menu the bar publishes; menus for Penicillin, Quinary, Gokan and Bar Leone are image-only or not public."
+  ]
+}

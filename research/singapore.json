@@ -1,0 +1,901 @@
+{
+  "city": "Singapore",
+  "new_bars": [
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "fura.sg",
+      "name": "FURA",
+      "bio": "Sustainability-led cocktail bar and kitchen upstairs in an Amoy Street shophouse, opened in October 2023 by Christina Rasmussen, formerly head forager at Noma, and Sasha Wijidessa, ex-head bartender of Operation Dagger. Drinks and plates lean on foraged, fermented and 'future protein' ingredients such as insects and jellyfish. Named World's Best Bar at the 2026 Spirited Awards.",
+      "website": "https://www.fura.space",
+      "locality": "Telok Ayer",
+      "address_line": "74A Amoy Street, Level 2",
+      "postcode": "069893",
+      "latitude": 1.28036,
+      "longitude": 103.84662,
+      "coord_source": "osm address match: way 172904512 (74 Amoy Street)",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/64b3b2e9262dd80bf39d5cbc/8d8f1457-c1a9-47dc-ae58-a6005a50c14b/cropee.png?format=1500w",
+      "why": "World's Best Bar and Best International Restaurant Bar at the 2026 Spirited Awards; Asia's 50 Best Sustainable Bar Award 2024.",
+      "sources": [
+        "https://www.fura.space/",
+        "https://www.fura.space/menu",
+        "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/",
+        "https://www.thespiritsbusiness.com/2026/07/singapores-fura-wins-worlds-best-bar-at-spirited-awards/",
+        "https://www.tatlerasia.com/dining/drinks/christina-rasmussen-sasha-wijidessa-founders-sustainable-cocktail-bar-fura-interview"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "offtrack.sg",
+      "name": "Offtrack",
+      "bio": "Music-first bar and restaurant on North Canal Road, opened in January 2022 by Dean Chew of Darker Than Wax and Daniel O'Connor of Ice Cream Sundays. A tuned sound system and vinyl from Singapore and the region set the tone, the drinks list splits evenly between reworked classics and house cocktails under head bartender Joash Conceicao, and the food is pan-Asian sharing plates. No. 16 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.offtrack.sg",
+      "locality": "Boat Quay",
+      "address_line": "34 North Canal Road",
+      "postcode": "059290",
+      "latitude": 1.28701,
+      "longitude": 103.84725,
+      "coord_source": "osm address match: way 172781455 (34 North Canal Road)",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/6385a489c135605dd715d661/b924a8f5-6cb7-4aae-9f78-592b7ab17f35/OFFTRACK_logo-White.png?format=1500w",
+      "why": "Singapore's No. 3 on Asia's 50 Best Bars 2026 (No. 16) and No. 89 on The World's 50 Best Bars 2026 51-100; a listening bar with serious drinks.",
+      "sources": [
+        "https://www.offtrack.sg/",
+        "https://www.the50.com/bars/best-in-asia/the-list/offtrack.html",
+        "https://mixmag.asia/read/offtrack-opens-singapore-klipsch-feed-your-soul-local",
+        "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "nativebarsg",
+      "name": "Native",
+      "bio": "Vijay Mudaliar's Amoy Street bar, open since late 2016, built around spirits and produce from Singapore and Southeast Asia, much of it foraged, with a low-waste approach and no classic cocktails on the menu. Its first list introduced the Antz, a rum drink topped with ants. The bar sits upstairs, with a restaurant serving regional comfort food below. No. 80 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.tribenative.com",
+      "locality": "Telok Ayer",
+      "address_line": "52A Amoy Street",
+      "postcode": "069878",
+      "latitude": 1.28017,
+      "longitude": 103.84686,
+      "coord_source": "osm node 7056192886",
+      "logo_url": "https://static.wixstatic.com/media/337345_06e4136836b24d269dc9c25c0a4af29c~mv2.png",
+      "why": "Pioneer of hyper-local, low-waste drinking in Asia; on The World's 50 Best Bars 51-100 in 2024 and 2025 and on Asia's 50 Best every year 2024-2026.",
+      "sources": [
+        "https://www.tribenative.com/",
+        "https://www.the50.com/bars/asia/the-list/native.html",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html",
+        "https://thehoneycombers.com/singapore/new-bars-singapore/"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "originbarsg",
+      "name": "Origin Bar",
+      "bio": "Travel-themed lobby bar in the Tower Wing of Shangri-La Singapore, opened in 2017 and styled like a vintage railway lounge in gold, deep blue and dark wood. Set up by Adam Bursik after stints at Nutmeg & Clove and The Library, it rebuilds its menu around one team-wide idea every year or so and keeps a back bar of some 600 spirits, heavy on rum. No. 43 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.originbar.sg",
+      "locality": "Tanglin",
+      "address_line": "22 Orange Grove Road, Shangri-La Singapore (Tower Wing, Lobby Level)",
+      "postcode": "258350",
+      "latitude": 1.31148,
+      "longitude": 103.82644,
+      "coord_source": "osm way 1177637812 (Shangri-La Hotel Singapore, 22 Orange Grove Road)",
+      "logo_url": "https://www.originbar.sg/wp-content/uploads/2023/05/Origin-logo.png",
+      "why": "Singapore's leading hotel bar on the lists: Asia's 50 Best No. 32 (2024), No. 60 (2025) and No. 43 (2026).",
+      "sources": [
+        "https://www.originbar.sg/",
+        "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "catbiteclub",
+      "name": "Cat Bite Club",
+      "bio": "Agave and rice spirits bar hidden behind a curtain inside a Duxton Road cafe, opened in June 2023 by San Francisco-raised childhood friends Gabriel Lowe and Jesse Vida. Classics are reworked with tequila, mezcal, soju, shochu and baijiu drawn from more than 300 bottles from Mexico and Asia. Won the One To Watch award at The World's 50 Best Bars 2024, where it ranked No. 56.",
+      "website": "https://catbiteclub.com",
+      "locality": "Duxton",
+      "address_line": "75 Duxton Road",
+      "postcode": "089534",
+      "latitude": 1.27836,
+      "longitude": 103.84309,
+      "coord_source": "osm address match: way 172814550 (75 Duxton Road)",
+      "logo_url": "https://catbiteclub.com/wp-content/uploads/2025/01/Logo-1.png",
+      "why": "Distinctive agave-and-rice-spirits concept; World's 50 Best One To Watch 2024 and on Asia's 50 Best 2024-2026.",
+      "sources": [
+        "https://catbiteclub.com/",
+        "https://catbiteclub.com/menu-offerings/",
+        "https://www.the50.com/stories/News/cat-bite-club-one-to-watch-the-worlds-50-best-bars-2024.html",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "sidedoor_sg",
+      "name": "Side Door",
+      "bio": "Neighbourhood cocktail bar and kitchen on Neil Road run by husband-and-wife Bannie Kang, the 2019 Diageo World Class global champion, and chef Tryson Quek. It began as a tiny private supper club in their home before moving into a 40-seat space in late 2023, where Kang's pared-back takes on classics are paired with Quek's small plates. No. 57 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.instagram.com/sidedoor_sg/",
+      "locality": "Tanjong Pagar",
+      "address_line": "3 Neil Road, #01-01",
+      "postcode": "088805",
+      "latitude": 1.28018,
+      "longitude": 103.84376,
+      "coord_source": "osm address match: way 172769147 (3 Neil Road)",
+      "logo_url": null,
+      "why": "Bar-and-kitchen pairing concept from a World Class global champion; on Asia's 50 Best 51-100 in 2025 (No. 53) and 2026 (No. 57).",
+      "sources": [
+        "https://www.timeout.com/singapore/bars-and-pubs/side-door",
+        "https://www.tatlerasia.com/dining/drinks/new-side-door-opens-neil-road",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html",
+        "https://www.prnewswire.com/news-releases/asias-50-best-bars-2025-reveals-the-establishments-ranked-on-the-extended-51-100-list-302496729.html"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "elephantroomsg",
+      "name": "The Elephant Room",
+      "bio": "Bar founded in 2019 by Yugnes Susela, formerly of Smoke & Mirrors, that draws every drink from Little India: spices, produce and dishes sourced around Tekka market become cocktails such as a clarified curry drink, a biryani riff and a ghee-washed sour, served with Indian bar bites in a room on Tanjong Pagar Road. No. 58 on Asia's 50 Best Bars 2026.",
+      "website": "https://www.theelephantroom.sg",
+      "locality": "Tanjong Pagar",
+      "address_line": "33 Tanjong Pagar Road, #01-02",
+      "postcode": "088456",
+      "latitude": 1.27916,
+      "longitude": 103.8441,
+      "coord_source": "osm address match: way 172815258 (33 Tanjong Pagar Road, postcode 088456)",
+      "logo_url": "https://www.theelephantroom.sg/cdn/shop/files/Group_1833_2.png?v=1719460714&width=500",
+      "why": "Singular Little India-driven concept; Asia's 50 Best 51-100 in 2024 (No. 65) and 2026 (No. 58).",
+      "sources": [
+        "https://www.theelephantroom.sg/",
+        "https://www.theelephantroom.sg/pages/cocktails",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html",
+        "https://www.theedgesingapore.com/options/behind-bottle/elephant-rooms-yugnes-susela-introduces-new-menu-little-india-inspired"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "atlasbarsg",
+      "name": "ATLAS",
+      "bio": "Grand Art Deco lobby bar on the ground floor of Parkview Square, opened in 2017 by the Parkview Group. Its towering gin display holds more than 1,300 gins, some dating to the early 1900s, alongside one of Asia's largest Champagne lists, and the ATLAS Martini is the house signature. Asia's 50 Best Bars Legend of the List in 2024 and No. 43 on The World's 50 Best Bars 2024.",
+      "website": "https://atlasbar.sg",
+      "locality": "Bugis",
+      "address_line": "600 North Bridge Road, Parkview Square",
+      "postcode": "188778",
+      "latitude": 1.3001,
+      "longitude": 103.85771,
+      "coord_source": "osm node 6033094985",
+      "logo_url": "https://atlasbar.sg/themes/atlas/assets/images/logo/atlas-logo-alt.svg",
+      "why": "Landmark gin bar and design icon; No. 43 on The World's 50 Best Bars 2024 plus Legend of the List and Best Bar Design at Asia's 50 Best 2024.",
+      "sources": [
+        "https://atlasbar.sg/",
+        "https://atlasbar.sg/drinking",
+        "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html",
+        "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "longbarsg",
+      "name": "Long Bar",
+      "bio": "The Raffles Hotel bar where bartender Ngiam Tong Boon created the Singapore Sling in 1915. It now occupies the second floor of the Raffles Arcade, decorated in the style of 1920s Malayan plantation life, and guests still brush peanut shells onto the floor. The Sling is made today with locally distilled Brass Lion Singapura Gin, and there is an alcohol-free version.",
+      "website": "https://www.raffles.com/singapore/dining/long-bar/",
+      "locality": "City Hall",
+      "address_line": "328 North Bridge Road, #02-01 Raffles Arcade",
+      "postcode": "188719",
+      "latitude": 1.29513,
+      "longitude": 103.85347,
+      "coord_source": "osm node 1766486405",
+      "logo_url": null,
+      "why": "Birthplace of the Singapore Sling, one of the most historically important bars in Asian cocktail culture.",
+      "sources": [
+        "https://www.raffles.com/singapore/dining/long-bar/",
+        "https://www.rafflesarcade.com.sg/arcade/longbar"
+      ]
+    },
+    {
+      "city": "Singapore",
+      "region": null,
+      "country_code": "SG",
+      "handle": "bop_bartendersofpony",
+      "name": "BOP (Bartenders of Pony)",
+      "bio": "Korean cocktail dining bar in a Tras Street shophouse, opened in early 2026 by the Jigger & Pony Group and led by group creative director Uno Jang. Familiar cocktail templates are rebuilt with soju, makgeolli, rice nuruk, perilla and seaweed, alongside iced somaek and Korean bar food from chef David Tang with Jason Oh. It debuted at No. 52 on Asia's 50 Best Bars 2026.",
+      "website": "https://bartendersofpony.com",
+      "locality": "Tanjong Pagar",
+      "address_line": "76 Tras Street",
+      "postcode": "079015",
+      "latitude": 1.2774,
+      "longitude": 103.84406,
+      "coord_source": "osm address match: way 172815300 (76 Tras Street, postcode 079015)",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/68db96b2ac1e4c0e227e2265/f154bbbf-4e2c-4fc8-a989-90586dc451e0/B.O.P+LOGOGRAM+RGB+VERSION+%281%29.png",
+      "why": "The most notable 2026 opening: a new Korean concept from the Jigger & Pony team that went straight onto Asia's 50 Best 51-100 at No. 52.",
+      "sources": [
+        "https://bartendersofpony.com/",
+        "https://bartendersofpony.com/menu",
+        "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html",
+        "https://www.timeout.com/singapore/news/its-a-bop-this-new-korean-bar-is-jigger-ponys-most-accessible-concept-yet-with-soju-bombs-and-dalgona-cocktails-021926"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "handle": "jiggerandponysg",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 5,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 3,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Best Bar in Singapore",
+      "source_url": "https://www.spiritedasia.com/2024/07/asias-50-best-bars-2024/"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 3,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": null,
+      "title": "Best Bar in Singapore",
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 9,
+      "title": null,
+      "source_url": "https://hungrygowhere.com/food-news/asias-50-best-bars-2026-list/"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": null,
+      "title": "Best Bar in Singapore",
+      "source_url": "https://www.spiritedasia.com/2026/07/asias-50-best-bars-2026/"
+    },
+    {
+      "handle": "nutmegandclove",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 28,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "nutmegandclove",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 6,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "nutmegandclove",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 24,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "nutmegandclove",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 12,
+      "title": null,
+      "source_url": "https://hungrygowhere.com/food-news/asias-50-best-bars-2026-list/"
+    },
+    {
+      "handle": "fura.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 42,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "fura.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Sustainable Bar Award",
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "fura.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 95,
+      "title": null,
+      "source_url": "https://www.prnewswire.com/news-releases/asias-50-best-bars-2025-reveals-the-establishments-ranked-on-the-extended-51-100-list-302496729.html"
+    },
+    {
+      "handle": "fura.sg",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "World's Best Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    },
+    {
+      "handle": "fura.sg",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best International Restaurant Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    },
+    {
+      "handle": "offtrack.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 25,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "offtrack.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 23,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "offtrack.sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 16,
+      "title": null,
+      "source_url": "https://hungrygowhere.com/food-news/asias-50-best-bars-2026-list/"
+    },
+    {
+      "handle": "offtrack.sg",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 89,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+    },
+    {
+      "handle": "nativebarsg",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 67,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+    },
+    {
+      "handle": "nativebarsg",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 84,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/list/51-100"
+    },
+    {
+      "handle": "nativebarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 31,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "nativebarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 45,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "nativebarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 80,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+    },
+    {
+      "handle": "originbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 32,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "originbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 60,
+      "title": null,
+      "source_url": "https://www.prnewswire.com/news-releases/asias-50-best-bars-2025-reveals-the-establishments-ranked-on-the-extended-51-100-list-302496729.html"
+    },
+    {
+      "handle": "originbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 43,
+      "title": null,
+      "source_url": "https://hungrygowhere.com/food-news/asias-50-best-bars-2026-list/"
+    },
+    {
+      "handle": "catbiteclub",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 56,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+    },
+    {
+      "handle": "catbiteclub",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "One To Watch Award",
+      "source_url": "https://www.the50.com/stories/News/cat-bite-club-one-to-watch-the-worlds-50-best-bars-2024.html"
+    },
+    {
+      "handle": "catbiteclub",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 77,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-eight-bars-in-the-51-100-list-070924"
+    },
+    {
+      "handle": "catbiteclub",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 44,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2025-the-list-revealed.html"
+    },
+    {
+      "handle": "catbiteclub",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 86,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+    },
+    {
+      "handle": "sidedoor_sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2025,
+      "position": 53,
+      "title": null,
+      "source_url": "https://www.prnewswire.com/news-releases/asias-50-best-bars-2025-reveals-the-establishments-ranked-on-the-extended-51-100-list-302496729.html"
+    },
+    {
+      "handle": "sidedoor_sg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 57,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+    },
+    {
+      "handle": "elephantroomsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 65,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-eight-bars-in-the-51-100-list-070924"
+    },
+    {
+      "handle": "elephantroomsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 58,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+    },
+    {
+      "handle": "atlasbarsg",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 43,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "atlasbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": 49,
+      "title": null,
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "atlasbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Legend of the List Award",
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "atlasbarsg",
+      "award": "Asia's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Best Bar Design Award",
+      "source_url": "https://www.timeout.com/singapore/news/asias-50-best-bars-2024-singapore-has-11-bars-on-the-list-071724"
+    },
+    {
+      "handle": "bop_bartendersofpony",
+      "award": "Asia's 50 Best Bars",
+      "year": 2026,
+      "position": 52,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/asias-50-best-bars-2026-the-51-100-list-revealed.html"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "jiggerandponysg",
+      "name": "Yuzu Whisky Sour",
+      "description": "Maker's Mark bourbon shaken with yuzu, St-Germain elderflower liqueur, lemon and egg white on a classic sour frame.",
+      "riff_of": "Whiskey Sour",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://jiggerandpony.aflip.in/bloom-menu-2026"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "name": "Bloom Martini",
+      "description": "Tanqueray No. Ten with Cinzano Extra Dry and Cocchi Americano, lifted with lemon and lime and a touch of carbonation.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://jiggerandpony.aflip.in/bloom-menu-2026"
+    },
+    {
+      "handle": "jiggerandponysg",
+      "name": "Singa Sling",
+      "description": "A pared-back Singapore Sling of Monkey 47 gin, Cointreau, cherry and pineapple, served carbonated.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://jiggerandpony.aflip.in/bloom-menu-2026"
+    },
+    {
+      "handle": "nutmegandclove",
+      "name": "Nutmeg & Clove",
+      "description": "The bar's namesake signature: Ron Zacapa 23 rum with nutmeg, clove, gula melaka, cream, egg white and lemon, topped with ginger beer.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.nutmegclove.com/_files/ugd/39dbee_02452c8c3601464f8fc41832ad27b01e.pdf"
+    },
+    {
+      "handle": "nutmegandclove",
+      "name": "Is it Really Boulevardier?",
+      "description": "Woodford Reserve bourbon, Campari and sweet vermouth given a local turn with pandan, coffee and coconut.",
+      "riff_of": "Boulevardier",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.nutmegclove.com/_files/ugd/39dbee_02452c8c3601464f8fc41832ad27b01e.pdf"
+    },
+    {
+      "handle": "nutmegandclove",
+      "name": "Heng Ong Huat",
+      "description": "Fords gin and amontillado sherry with pineapple, kumquat and oolong tea, clarified into a milk punch.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.nutmegclove.com/_files/ugd/39dbee_02452c8c3601464f8fc41832ad27b01e.pdf"
+    },
+    {
+      "handle": "fura.sg",
+      "name": "Get the Worm",
+      "description": "Tequila with chilli, lime, cilantro and mealworm, a savoury take on the bar's insect-forward cooking.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.fura.space/menu"
+    },
+    {
+      "handle": "fura.sg",
+      "name": "Jellyfish Martini",
+      "description": "Gin and dry vermouth with jellyfish, fish leaf and spirulina, finished with kombu oil.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.fura.space/menu"
+    },
+    {
+      "handle": "fura.sg",
+      "name": "Make Local Tomatoes Great Again",
+      "description": "Mezcal with local tomatoes lacto-fermented with MSG, basil and parsley, lengthened with fizz.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.fura.space/menu"
+    },
+    {
+      "handle": "offtrack.sg",
+      "name": "Rum & Raisin Manhattan",
+      "description": "Bacardi Reserva Ocho rum stirred with PX sherry, hazelnut and sweet vermouth.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.offtrack.sg/"
+    },
+    {
+      "handle": "offtrack.sg",
+      "name": "House Espresso Martini",
+      "description": "Belvedere vodka, Mr Black coffee liqueur and espresso, brightened with orange blossom and dry curacao.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.offtrack.sg/"
+    },
+    {
+      "handle": "offtrack.sg",
+      "name": "O² Martini",
+      "description": "Fords gin and dry vermouth scented with osmanthus flower and orange.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.offtrack.sg/"
+    },
+    {
+      "handle": "nativebarsg",
+      "name": "Antz",
+      "description": "Chalong Bay rum with coconut yoghurt, salt-baked tapioca, soursop and foraged weaver ants, topped with Thai ants on a frozen basil leaf.",
+      "riff_of": null,
+      "origin_year": 2016,
+      "on_current_menu": false,
+      "source_url": "https://thehoneycombers.com/singapore/native-on-amoy-street-singapore-this-new-cocktail-bar-has-a-drink-with-ants-in-it/"
+    },
+    {
+      "handle": "nativebarsg",
+      "name": "Chempedak Carajillo",
+      "description": "Oak-roasted coffee rum with gula melaka and buah keluak miso, crowned with an aged chempedak cream.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://thehoneycombers.com/singapore/new-bars-singapore/"
+    },
+    {
+      "handle": "nativebarsg",
+      "name": "Cured Aging Mary",
+      "description": "A Bloody Mary built on tomatoes cured with gochujang and miso and an aged fish stock.",
+      "riff_of": "Bloody Mary",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://thehoneycombers.com/singapore/new-bars-singapore/"
+    },
+    {
+      "handle": "originbarsg",
+      "name": "Respect The Martini",
+      "description": "Gin stirred with muscat, junmai daiginjo sake and dry vermouth.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+    },
+    {
+      "handle": "originbarsg",
+      "name": "Duty Free",
+      "description": "A whisky-based Hanky Panky variation layered with pistachio and chocolate.",
+      "riff_of": "Hanky Panky",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+    },
+    {
+      "handle": "originbarsg",
+      "name": "Shake Shuka",
+      "description": "Gin mixed with tomato and basil, then given a numbing kick of Sichuan mala spice.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+    },
+    {
+      "handle": "catbiteclub",
+      "name": "Cat Bite Margarita",
+      "description": "Codigo 1530 blanco tequila and espadin mezcal with Cointreau, citrus, agave nectar and a dash of sherry.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://catbiteclub.com/wp-content/uploads/2026/01/FINAL-2026-CBC_Menu.pdf"
+    },
+    {
+      "handle": "catbiteclub",
+      "name": "Soju Sprint",
+      "description": "Tokki black soju with amontillado sherry, peach, honey, citrus and soda, finished with absinthe.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://catbiteclub.com/wp-content/uploads/2026/01/FINAL-2026-CBC_Menu.pdf"
+    },
+    {
+      "handle": "catbiteclub",
+      "name": "Get The MSG?",
+      "description": "Peanut chilli oil-washed mezcal with a Sichuan peppercorn tomato cordial, peach, amaro, citrus, MSG and a beer float.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://catbiteclub.com/wp-content/uploads/2026/01/FINAL-2026-CBC_Menu.pdf"
+    },
+    {
+      "handle": "sidedoor_sg",
+      "name": "TNT",
+      "description": "Don Julio Blanco tequila with a tomato-wasabi mix and jasmine, served with a paired bite.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.timeout.com/singapore/bars-and-pubs/side-door"
+    },
+    {
+      "handle": "sidedoor_sg",
+      "name": "Green Door",
+      "description": "Tanqueray No. Ten gin with green Chartreuse, cucumber and lime.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.timeout.com/singapore/bars-and-pubs/side-door"
+    },
+    {
+      "handle": "sidedoor_sg",
+      "name": "One For The Road",
+      "description": "Bannie Kang's Manhattan variation with rye whiskey, plum and a touch of espresso.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.spiritedasia.com/2025/02/side-door/"
+    },
+    {
+      "handle": "elephantroomsg",
+      "name": "Ghee Sour",
+      "description": "Paul John Indian whisky in a sour made rich and nutty with ghee, the clarified butter of Indian kitchens.",
+      "riff_of": "Whiskey Sour",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theelephantroom.sg/pages/cocktails"
+    },
+    {
+      "handle": "elephantroomsg",
+      "name": "Holy Basil",
+      "description": "The bar's Negroni, reworked with holy basil and sarsaparilla for a peppery, herbal edge.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theelephantroom.sg/pages/cocktails"
+    },
+    {
+      "handle": "elephantroomsg",
+      "name": "Briyani",
+      "description": "A savoury tribute to biryani: a blended basmati rice and milk brew with plum, under a butter chicken foam.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.theelephantroom.sg/pages/cocktails"
+    },
+    {
+      "handle": "atlasbarsg",
+      "name": "ATLAS Martini",
+      "description": "The house gin stirred with ambrato vermouth and orange bitters, with a dash of Champagne vinegar.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://atlasbar.sg/storage/app/uploads/public/69d/332/f55/69d332f5526c7253694601.pdf"
+    },
+    {
+      "handle": "atlasbarsg",
+      "name": "ATLAS Negroni",
+      "description": "London dry gin, Italian bitter liqueur and sweet vermouth, perfumed with frankincense.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://atlasbar.sg/storage/app/uploads/public/69d/332/f55/69d332f5526c7253694601.pdf"
+    },
+    {
+      "handle": "atlasbarsg",
+      "name": "Vintage Martini",
+      "description": "A Martini made with a gin from the decade of your choice, drawn from the bar's collection going back to the 1910s.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://atlasbar.sg/storage/app/uploads/public/69d/332/f55/69d332f5526c7253694601.pdf"
+    },
+    {
+      "handle": "longbarsg",
+      "name": "Singapore Sling",
+      "description": "The 1915 original: gin with pineapple and lime juices, curacao, Benedictine, grenadine and cherry liqueur, now made with Brass Lion Singapura gin.",
+      "riff_of": null,
+      "origin_year": 1915,
+      "on_current_menu": true,
+      "source_url": "https://www.raffles.com/singapore/dining/long-bar/"
+    },
+    {
+      "handle": "longbarsg",
+      "name": "Singapore Sling Zero",
+      "description": "Alcohol-free Sling of Tanqueray 0.0% with house grenadine, pineapple and lime juices, Sling tea, a spice tincture, orange peel and cherry.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.raffles.com/singapore/dining/long-bar/"
+    },
+    {
+      "handle": "bop_bartendersofpony",
+      "name": "BOP Martini",
+      "description": "Andong soju and gin with seaweed and takju rice wine, garnished with a jangajji-pickled olive.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://bartendersofpony.com/s/BOP-Menu-Sep-2026.pdf"
+    },
+    {
+      "handle": "bop_bartendersofpony",
+      "name": "K-Town Manhattan",
+      "description": "Maker's Mark bourbon and Hwayo 19 soju with pine nut makgeolli, port, roasted pine nuts and vermouth.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://bartendersofpony.com/s/BOP-Menu-Sep-2026.pdf"
+    },
+    {
+      "handle": "bop_bartendersofpony",
+      "name": "Signature Iced Somaek",
+      "description": "The Korean beer-and-soju bomb, made with Cass draft and a house soju blend.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://bartendersofpony.com/s/BOP-Menu-Sep-2026.pdf"
+    }
+  ],
+  "notes": [
+    "Existing bars counted in the 12: Jigger & Pony and Nutmeg & Clove (awards exclude their 2025 World's 50 Best top-50 entries).",
+    "The World's 50 Best Bars 2026 top 50 is announced on 7 October 2026 (after today), so only the 2026 51-100 list is included; Jigger & Pony, Nutmeg & Clove and Native are not in 2026 51-100 and may appear in the top 50.",
+    "ATLAS: the50.com Discovery page says No. 42 on World's 50 Best 2024, but the official 2024 list article shows No. 43; used 43.",
+    "FURA: fura.sg does not resolve; the working site is www.fura.space. Drinks taken from its live /menu page, which carries no date.",
+    "Side Door has no website of its own; website field is its Instagram. It opened at Neil Road in late 2023 (Asia's 50 Best says 2023; Time Out says November).",
+    "Origin Bar drinks come from the Asia's 50 Best 2026 profile of its current 'X' menu; the bar's own site still shows an older menu.",
+    "Native's bar menu is only in a popup on its site; current drinks sourced from Honeycombers (August 2026 menu). Antz origin_year 2016 is the year Native opened (it was on the first menu).",
+    "BOP opening month is reported inconsistently (January vs March 2026); bio says early 2026. Asia's 50 Best 2026 51-100 lists it at No. 52.",
+    "Asia's 50 Best 2026: Bar Bon Funk was cited as No. 91 in some press but No. 90 on the official page (not in our 12).",
+    "Coordinates: Nominatim returned HTTP 429 for most queries (shared rate limit); addresses were matched against OSM building ways via Overpass instead. Origin Bar uses the Shangri-La hotel way centroid.",
+    "Person awards not captured: Indra Kantono (Jigger & Pony co-founder) won Best International Bar Mentor at the 2026 Spirited Awards and the Industry Icon Award at Asia's 50 Best Bars 2026.",
+    "Considered but left out: Sago House (open, Duxton Hill; Asia's 50 Best No. 15 in 2024, No. 56 in 2025, off the 2026 list), Night Hawk, Analogue Initiative (left CHIJMES in November 2024; status unclear), Bar Bon Funk, Stay Gold Flamingo."
+  ]
+}

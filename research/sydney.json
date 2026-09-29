@@ -1,0 +1,731 @@
+{
+  "city": "Sydney",
+  "new_bars": [
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "cantina.ok",
+      "name": "Cantina OK!",
+      "bio": "A standing-room-only mezcal bar for about 20 people, set in a converted garage down Council Place, a short laneway off Clarence Street. Opened in 2019 by Jeremy Blackmore and Alex Dowd of Tio's Cerveceria (now MUCHO Group), it pours hand-sourced agave spirits and margaritas over hand-cranked shaved ice. No. 96 on The World's 50 Best Bars 2024.",
+      "website": "https://www.muchogroup.com.au/cantinaok",
+      "locality": "CBD",
+      "address_line": "Council Place",
+      "postcode": "2000",
+      "latitude": -33.87027,
+      "longitude": 151.20505,
+      "coord_source": "osm node 9465706817",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/64509ef043e5407e4fd5eba9/4907b3c6-aebe-4eb1-abe7-d821ac1abfd1/CANTINA-OK-LOGO-HOVER-1.png",
+      "why": "Sydney's tiny agave landmark: World's 50 Best Bars No. 96 (2024) and Australian Tequila Bar of the Year 2025 and 2026.",
+      "sources": [
+        "https://www.muchogroup.com.au/cantinaok",
+        "https://australianbartender.com.au/2019/03/15/cantina-ok/",
+        "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "barplanetbar",
+      "name": "Bar Planet",
+      "bio": "A playful, space-age martini bar at the Newtown end of Enmore Road, opened in 2022 by the MUCHO Group team behind Cantina OK! (Jeremy Blackmore, Alex Dowd and Daisy Tulley). The house martini is built on a seasonal in-house spirit and poured from height out of a porrón, alongside a short list of fresh, fruit-led cocktails. Australian Gin Bar of the Year in 2025 and 2026.",
+      "website": "https://www.muchogroup.com.au/barplanet",
+      "locality": "Newtown",
+      "address_line": "16 Enmore Road",
+      "postcode": "2042",
+      "latitude": -33.89821,
+      "longitude": 151.17764,
+      "coord_source": "osm node 13652532833",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/64509ef043e5407e4fd5eba9/a4eb58e6-4d21-4531-b3fb-c336b3e7fd82/WEB-LOGO-BAR-PLANET.png",
+      "why": "The Inner West's martini temple, back-to-back Gin Bar of the Year at the Australian Bar Awards.",
+      "sources": [
+        "https://www.muchogroup.com.au/barplanet",
+        "https://australianbartender.com.au/2022/05/19/bar-planet-a-planet-themed-bar-in-newtown-from-the-cantina-ok-family/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "oldmatesplace",
+      "name": "Old Mate's Place",
+      "bio": "A two-level bar on the top floor of 199 Clarence Street, with a whisky- and rum-heavy back bar downstairs and a hidden rooftop above. Opened in August 2018 by Andres and Gabrielle Walters and Daniel Noble, it is loved by the trade for fun, fruit-forward drinks and easygoing service. Australian Bar of the Year 2025 and Best Bartenders' Bar 2026.",
+      "website": "https://oldmates.sydney/",
+      "locality": "CBD",
+      "address_line": "Level 4, 199 Clarence Street",
+      "postcode": "2000",
+      "latitude": -33.86937,
+      "longitude": 151.20509,
+      "coord_source": "osm node 6185388985",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/5b87600e7e3c3a634e42f92b/1535601526050-EL5G45L9UNJMOAV89SQL/OM_LOGO_transp-light.png",
+      "why": "Named Australia's Bar of the Year in 2025 and the country's Best Bartenders' Bar in 2026.",
+      "sources": [
+        "https://oldmates.sydney/",
+        "https://australianbartender.com.au/2018/08/23/get-a-first-look-at-the-just-opened-sydney-bar-old-mates-place/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "oldlovessyd",
+      "name": "Old Love's",
+      "bio": "A tiki-leaning rum bar in the basement of 199 Clarence Street, opened in late 2023 by the Old Mate's Place team led by Dre Walters. Guests get a house 'Book of Rum', the back bar is shelved in the same order as the book, and the drinks revive old Caribbean and Pacific recipes. Rum Bar of the Year 2024, 2025 and 2026; its Callum Marra was 2026 Australian Bartender of the Year.",
+      "website": "https://www.oldloves.sydney",
+      "locality": "CBD",
+      "address_line": "Basement, 199 Clarence Street",
+      "postcode": "2000",
+      "latitude": -33.86963,
+      "longitude": 151.2052,
+      "coord_source": "osm node 14139630501",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/67eb2241e7dfb3406b5907db/8f042674-883f-4d34-8407-368e6f21977d/Old-loves-logos-transp.png",
+      "why": "Three straight Rum Bar of the Year wins (2024-2026) and home of the 2026 Australian Bartender of the Year.",
+      "sources": [
+        "https://www.oldloves.sydney",
+        "https://concreteplayground.com/sydney/food-drink/old-mates-old-mates-place-sydney-cocktail-bar",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "deanandnancyon22",
+      "name": "Dean & Nancy on 22",
+      "bio": "A mid-century style hotel bar on level 22 of A by Adina Sydney, opened in 2021 and run with the Maybe Sammy team. Black and gold interiors, a brass staircase, a grand piano and skyline views frame the 'Time Machine' list of cocktails inspired by 1950s and 60s legends and pop culture. Australian Hotel Bar of the Year in 2024 and 2025.",
+      "website": "https://www.deanandnancyon22.com.au/",
+      "locality": "CBD",
+      "address_line": "Level 22, 2 Hunter Street",
+      "postcode": "2000",
+      "latitude": -33.86534,
+      "longitude": 151.20755,
+      "coord_source": "osm way 409035079 (A by Adina tower at George and Hunter Streets, tagged 'Adina Grand')",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/607264cf402e1253d79240dc/97deb8ff-c450-455f-a2f8-853186e7173d/Dean%26NancyOn22_Horizontal_Burgundy.png",
+      "why": "Sydney's standout hotel bar, Hotel Bar of the Year at the Australian Bar Awards in 2024 and 2025.",
+      "sources": [
+        "https://www.deanandnancyon22.com.au/about",
+        "https://www.deanandnancyon22.com.au/menu",
+        "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "bartilda.sydney",
+      "name": "Bar Tilda",
+      "bio": "A moody, marble-clad hotel bar off Phillip Street in the Sofitel Sydney Wentworth, opened in October 2024 by House Made Hospitality with drinks by Jason Williams and Christian Blair. Its showpieces are an armoire holding more than 100 Australian whiskies and an Archie Rose martini trolley mixed at the table, plus live music. Australian Hotel Bar of the Year 2026.",
+      "website": "https://www.bartilda.sydney/",
+      "locality": "CBD",
+      "address_line": "61-101 Phillip Street",
+      "postcode": "2000",
+      "latitude": -33.8655,
+      "longitude": 151.21102,
+      "coord_source": "osm node 1160951401 (Sofitel Wentworth Sydney hotel)",
+      "logo_url": null,
+      "why": "A new-wave hotel bar built around Australian whisky and tableside martinis; Hotel Bar of the Year 2026.",
+      "sources": [
+        "https://www.sofitelsydney.com.au/dining/bar-tilda",
+        "https://australianbartender.com.au/2024/10/30/house-made-hospitality-opens-two-new-venues-at-the-sofitel-wentworth/",
+        "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "ramblinrascaltavern",
+      "name": "Ramblin' Rascal Tavern",
+      "bio": "A self-styled five-star dive bar in a basement near the corner of Park and Elizabeth Streets, marked only by a sign with three skulls. Opened in 2014 by former Swillhouse bartenders Charlie Lehmann, Dardan Shervashidze and Sebastian Soto, it pairs a deep cognac and whisky back bar with cheap tins, sharp cocktails and live music four nights a week. Best Bartenders' Bar 2025.",
+      "website": "https://www.ramblinrascal.com/",
+      "locality": "CBD",
+      "address_line": "199 Elizabeth Street",
+      "postcode": "2000",
+      "latitude": -33.87309,
+      "longitude": 151.20971,
+      "coord_source": "osm node 11148986547",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/5de595625511bf790e40399a/1599554170450-R6XF4MG452ZNNFWNZ26Q/logo.png",
+      "why": "The industry's favourite after-shift dive, named Best Bartenders' Bar at the 2025 Australian Bar Awards.",
+      "sources": [
+        "https://www.ramblinrascal.com/",
+        "https://www.ramblinrascal.com/drinks",
+        "https://www.gourmettraveller.com.au/drinks/drinks-news/signature-drink-ramblin-rascal-taverns-tombstone-6578/",
+        "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "thebaxterinnsydney",
+      "name": "The Baxter Inn",
+      "bio": "The basement whisky bar that helped define Sydney's small-bar era, hidden at the end of an alley off Clarence Street. Opened in 2011 by Swillhouse founders Anton Forte and Jason Scott, it is known for a towering wall of whisky, staff happy to talk through any bottle, pretzels and a short list of seasonal house cocktails. Walk-in only, open until 3am.",
+      "website": "https://swillhouse.com/venues/the-baxter-inn/",
+      "locality": "CBD",
+      "address_line": "Basement, 152-156 Clarence Street",
+      "postcode": "2000",
+      "latitude": -33.86975,
+      "longitude": 151.20553,
+      "coord_source": "osm node 4464011889",
+      "logo_url": null,
+      "why": "Historic pick: the 2011 whisky den that set the template for Sydney's hidden laneway bars and is still packed nightly.",
+      "sources": [
+        "https://swillhouse.com/venues/the-baxter-inn/",
+        "https://swillhouse.com/wp-content/uploads/menus/the-baxter-inn-menu-9.8.26-web.pdf"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "ps40bar",
+      "name": "PS40",
+      "bio": "A cocktail bar and soda lab off Skittle Lane in the CBD, opened in 2016 by Michael Chiem and Thor Bergquist and owned solely by Chiem since 2019. House sodas such as wattle cola and bush tonic are made and poured on tap, and the list applies kitchen techniques to native Australian flavours. Its signature Africola remains one of the city's best-known drinks.",
+      "website": "https://ps40bar.com/",
+      "locality": "CBD",
+      "address_line": "Shop 2, 40 King Street",
+      "postcode": "2000",
+      "latitude": -33.86858,
+      "longitude": 151.20479,
+      "coord_source": "osm node 14139574301",
+      "logo_url": "https://ps40bar.com/wp-content/themes/ps40/images/logo.svg",
+      "why": "Ten years on, still Sydney's most inventive small bar, built around its own native-flavoured soda program.",
+      "sources": [
+        "https://ps40bar.com/",
+        "https://ps40bar.com/menu-3/",
+        "https://www.boothby.com.au/10-years-in-ps40-is-busier-every-year/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "deadwax.enmore",
+      "name": "Deadwax",
+      "bio": "A Japanese-inspired vinyl listening bar on Enmore Road, opened in August 2025 by Conor O'Brien and Dan Teh of Otis. Hi-fi sound, a large record library, DJs at weekends and a bar top made from 70 layers of resin-soaked denim set the scene for Japanese-leaning riffs on classics, a big Japanese whisky range and late-night snacks. A 2026 finalist for Australia's New Bar of the Year.",
+      "website": "https://www.deadwaxbar.com.au/",
+      "locality": "Enmore",
+      "address_line": "182 Enmore Road",
+      "postcode": "2042",
+      "latitude": -33.8992,
+      "longitude": 151.17218,
+      "coord_source": "geocoded street number: interpolated between osm-addressed 164 and 192 Enmore Road (no venue or number 182 in OSM)",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/67ed07313843fc11ffae80d7/6979bf6d-a7f3-4c76-84c7-6db78d91c126/Deadwax-16.png",
+      "why": "The most talked-about new opening of 2025 on Sydney's liveliest bar strip, pairing listening-bar culture with Japanese technique.",
+      "sources": [
+        "https://www.deadwaxbar.com.au/menu",
+        "https://australianbartender.com.au/2025/08/15/enmores-new-late-night-music-bar-deadwax/",
+        "https://australianbartender.com.au/2026/07/14/the-2026-australian-bar-awards-full-finalist-list/"
+      ]
+    },
+    {
+      "city": "Sydney",
+      "region": "New South Wales",
+      "country_code": "AU",
+      "handle": "apolloniabar",
+      "name": "Apollonia",
+      "bio": "A basement bar beneath Hinchcliff House near Circular Quay, imagined as a Sicilian bandit's drinking den and named for Apollonia from The Godfather. Opened in April 2021 by House Made Hospitality, with drinks overseen by former Australian Bartender of the Year Jason Williams, it is known for Negronis and an Italian-leaning 'Playbill' menu told in four acts.",
+      "website": "https://apollonia.sydney/",
+      "locality": "Circular Quay",
+      "address_line": "Basement, 5-7 Young Street",
+      "postcode": "2000",
+      "latitude": -33.86252,
+      "longitude": 151.21095,
+      "coord_source": "osm way 1095401677 (Hinchcliff House building)",
+      "logo_url": null,
+      "why": "A distinctive Italian-themed late-night bar, 2026 finalist for both Bar of the Year and Cocktail List of the Year.",
+      "sources": [
+        "https://apollonia.sydney/",
+        "https://apollonia.sydney/menu/",
+        "https://australianbartender.com.au/2021/04/26/open-now-apollonia-bar-at-hinchcliff-house-in-sydney/",
+        "https://australianbartender.com.au/2026/07/14/the-2026-australian-bar-awards-full-finalist-list/"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "handle": "maybe_sammy_sydney",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 26,
+      "title": null,
+      "source_url": "https://www.timeout.com/sydney/news/this-sydney-bar-was-just-named-in-the-worlds-50-best-bars-2024-102224"
+    },
+    {
+      "handle": "maybe_sammy_sydney",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 75,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+    },
+    {
+      "handle": "maybe_sammy_sydney",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Cocktail List of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "cantina.ok",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 96,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+    },
+    {
+      "handle": "cantina.ok",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Tequila Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "cantina.ok",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Tequila Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "barplanetbar",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Gin Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "barplanetbar",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Gin Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "oldmatesplace",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "oldmatesplace",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best Bartenders' Bar",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "oldlovessyd",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Rum Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "oldlovessyd",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Rum Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "oldlovessyd",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Rum Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "deanandnancyon22",
+      "award": "Australian Bar Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Hotel Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2024/09/12/all-the-winners-for-the-23rd-annual-australian-bar-awards-announced/"
+    },
+    {
+      "handle": "deanandnancyon22",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Hotel Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    },
+    {
+      "handle": "bartilda.sydney",
+      "award": "Australian Bar Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Hotel Bar of the Year",
+      "source_url": "https://australianbartender.com.au/2026/09/17/the-2026-australian-bar-awards-winners/"
+    },
+    {
+      "handle": "ramblinrascaltavern",
+      "award": "Australian Bar Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Best Bartenders' Bar",
+      "source_url": "https://australianbartender.com.au/2025/09/19/all-the-winners-for-the-2025-bar-awards/"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "maybe_sammy_sydney",
+      "name": "Our Planet",
+      "description": "A trio of vodka and dry vermouth martinis themed ocean, forest and desert, with samphire brine, mushroom distillate or camel milk and wattleseed.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.maybesammy.com/showtime/our-planet"
+    },
+    {
+      "handle": "maybe_sammy_sydney",
+      "name": "The Grand Budapest Hotel",
+      "description": "A gimlet twist: Hendrick's gin with pandan liqueur, a watermelon and pink pepper cordial, coconut water and a coffee wash.",
+      "riff_of": "Gimlet",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.maybesammy.com/showtime/the-grand-budapest-hotel"
+    },
+    {
+      "handle": "maybe_sammy_sydney",
+      "name": "Willy Wonka",
+      "description": "Grey Goose vodka sour with hazelnut, dark cacao, amarena cherry and whey, topped with a floating bubble.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.maybesammy.com/showtime/willy-wonka"
+    },
+    {
+      "handle": "cantina.ok",
+      "name": "Margarita OK!",
+      "description": "The house margarita: tequila with a touch of mezcal, fresh lime and orange oil, served over hand-shaved ice.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/cantina-ok-menu"
+    },
+    {
+      "handle": "cantina.ok",
+      "name": "Spicy OK!",
+      "description": "Mezcal shaken with citron, yuzushu, cascabel chilli and lime for a bright, gently hot sour.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/cantina-ok-menu"
+    },
+    {
+      "handle": "cantina.ok",
+      "name": "Redwing OK!",
+      "description": "Tequila, mezcal and rum with lime, macadamia and an amaro for a nutty, bittersweet agave sour.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/cantina-ok-menu"
+    },
+    {
+      "handle": "barplanetbar",
+      "name": "Bar Planet Martini",
+      "description": "The house martini: a seasonal in-house vodka with vermouth, a lemon twist and an olive, poured from a porrón.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/bar-planet-menu"
+    },
+    {
+      "handle": "barplanetbar",
+      "name": "Dirty Martini",
+      "description": "Gin or vodka with seaweed, olive brine and three olives, a salty, savoury take on the dirty martini.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/bar-planet-menu"
+    },
+    {
+      "handle": "barplanetbar",
+      "name": "Tortoise",
+      "description": "The bar's evolving house 'Infinite Spirit' with celery seed and pandan, topped with a pineapple foam.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://mucho.li/bar-planet-menu"
+    },
+    {
+      "handle": "oldmatesplace",
+      "name": "The Mandy",
+      "description": "A long-running regulars' pick: tequila, fino sherry and sake with citrus and fruit that rotates with the seasons.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://oldmates.sydney/menu"
+    },
+    {
+      "handle": "oldmatesplace",
+      "name": "Baker's Dozen",
+      "description": "An old fashioned reworked with whisky, roasted almond and cultured-butter croissant flavours plus bitters.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://oldmates.sydney/menu"
+    },
+    {
+      "handle": "oldmatesplace",
+      "name": "Hidden Pina Colada",
+      "description": "A piña colada built on slow-cooked pineapple rum, pineapple rum, coconut liqueur and pineapple water.",
+      "riff_of": "Piña Colada",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://oldmates.sydney/menu"
+    },
+    {
+      "handle": "oldlovessyd",
+      "name": "Cuban Payphone",
+      "description": "White rum brightened with sherry, citrus, sugar and orange bitters, a daiquiri-style opener.",
+      "riff_of": "Daiquiri",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://concreteplayground.com/sydney/food-drink/old-mates-old-mates-place-sydney-cocktail-bar"
+    },
+    {
+      "handle": "oldlovessyd",
+      "name": "The Pet Dragon",
+      "description": "A house rum-based take on Drambuie with dried plum extract, citrus and egg white for a silky sour.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://concreteplayground.com/sydney/food-drink/old-mates-old-mates-place-sydney-cocktail-bar"
+    },
+    {
+      "handle": "deanandnancyon22",
+      "name": "Kiwi Negroni",
+      "description": "Nikka Coffey gin with kiwi, Suze and Cocchi Americano, lifted with dill and quinine for a pale, bitter negroni.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deanandnancyon22.com.au/s/Dean-Nancy-on-22-Time-Machine-Cocktail-Menu.pdf"
+    },
+    {
+      "handle": "deanandnancyon22",
+      "name": "Ginza Highball",
+      "description": "Toki Japanese whisky with honeydew, lemongrass, white pepper, green tea and Midori, carbonated.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deanandnancyon22.com.au/s/Dean-Nancy-on-22-Time-Machine-Cocktail-Menu.pdf"
+    },
+    {
+      "handle": "deanandnancyon22",
+      "name": "Black Box",
+      "description": "The Dalmore 12 single malt with toasted macadamia, blackberry, mandarin and Chinotto Nero.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deanandnancyon22.com.au/s/Dean-Nancy-on-22-Time-Machine-Cocktail-Menu.pdf"
+    },
+    {
+      "handle": "bartilda.sydney",
+      "name": "Yellowbelly Martini",
+      "description": "Ester dry gin with cucumber vermouth, yellow Chartreuse and a pinch of chicken salt, mixed tableside.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://australianbartender.com.au/2024/10/30/house-made-hospitality-opens-two-new-venues-at-the-sofitel-wentworth/"
+    },
+    {
+      "handle": "bartilda.sydney",
+      "name": "Presidential Visit",
+      "description": "An old fashioned of Michter's bourbon and Lagavulin with root beer bitters, tonka bean and orange liqueur.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://australianbartender.com.au/2024/10/30/house-made-hospitality-opens-two-new-venues-at-the-sofitel-wentworth/"
+    },
+    {
+      "handle": "bartilda.sydney",
+      "name": "Ringo Loves a Blueberry",
+      "description": "Milk-washed Tanqueray No. Ten with blueberry liqueur and shrub, lavender, vermouth, lemon and menthol pepper.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://australianbartender.com.au/2024/10/30/house-made-hospitality-opens-two-new-venues-at-the-sofitel-wentworth/"
+    },
+    {
+      "handle": "ramblinrascaltavern",
+      "name": "Spoonful",
+      "description": "Cognac and sweet vermouth with cola citrus, bitters and coffee liqueur, served as a dark, stirred sipper.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ramblinrascal.com/drinks"
+    },
+    {
+      "handle": "ramblinrascaltavern",
+      "name": "Silk Sonic",
+      "description": "Tequila with grapefruit, lime and capsicum, a savoury, dairy-softened twist on the paloma.",
+      "riff_of": "Paloma",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ramblinrascal.com/drinks"
+    },
+    {
+      "handle": "ramblinrascaltavern",
+      "name": "Mum's Breakfast",
+      "description": "Gin with mandarin-infused dry vermouth, mandarin jam, lemon and egg white.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.ramblinrascal.com/drinks"
+    },
+    {
+      "handle": "ramblinrascaltavern",
+      "name": "Tombstone",
+      "description": "Co-owner Charlie Lehmann's early signature: Booker's bourbon, sugar and barrel-aged bitters, shaken hard and served up with a cherry.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.gourmettraveller.com.au/drinks/drinks-news/signature-drink-ramblin-rascal-taverns-tombstone-6578/"
+    },
+    {
+      "handle": "thebaxterinnsydney",
+      "name": "Crimson Peel",
+      "description": "Wild Turkey rye stirred with a mandarin and cacao nib liqueur and sweet vermouth, served up.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://swillhouse.com/wp-content/uploads/menus/the-baxter-inn-menu-9.8.26-web.pdf"
+    },
+    {
+      "handle": "thebaxterinnsydney",
+      "name": "Old Money",
+      "description": "Tanqueray gin with late harvest semillon, quinine and Peychaud's bitters, served up.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://swillhouse.com/wp-content/uploads/menus/the-baxter-inn-menu-9.8.26-web.pdf"
+    },
+    {
+      "handle": "thebaxterinnsydney",
+      "name": "Tap Old Fashioned",
+      "description": "The bar's on-tap old fashioned: bourbon, bitters and sugar poured over ice.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://swillhouse.com/wp-content/uploads/menus/the-baxter-inn-menu-9.8.26-web.pdf"
+    },
+    {
+      "handle": "ps40bar",
+      "name": "Africola",
+      "description": "PS40's signature: Mr Black coffee liqueur and the bar's native cola, topped with coconut foam, served in two textures and temperatures.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://ps40bar.com/menu-3/"
+    },
+    {
+      "handle": "ps40bar",
+      "name": "Breakfast Negroni",
+      "description": "Gin, Campari and sweet vermouth carrying banana bread, coffee bean and tonka bean flavours.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://ps40bar.com/menu-3/"
+    },
+    {
+      "handle": "ps40bar",
+      "name": "Gladys Gimlet",
+      "description": "Tanqueray gin and lime finished with freshly grated makrut lime zest.",
+      "riff_of": "Gimlet",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://ps40bar.com/menu-3/"
+    },
+    {
+      "handle": "deadwax.enmore",
+      "name": "Wax Blossom",
+      "description": "The bar's sesame martini: a house spirit blend with sake and dry vermouth, finished with lemon and sesame oil.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deadwaxbar.com.au/menu"
+    },
+    {
+      "handle": "deadwax.enmore",
+      "name": "The Big Cherry",
+      "description": "Coconut-washed bourbon stirred with vermouth, cacao and cherry.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deadwaxbar.com.au/menu"
+    },
+    {
+      "handle": "deadwax.enmore",
+      "name": "Honeydew High",
+      "description": "El Jimador tequila with Midori, honeydew melon and makrut lime leaf, served long.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.deadwaxbar.com.au/menu"
+    },
+    {
+      "handle": "apolloniabar",
+      "name": "Sophia Loren",
+      "description": "Espolòn blanco tequila with mandarin triple sec, tarragon, passionfruit, citrus and Broome chilli.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apollonia.sydney/menu/"
+    },
+    {
+      "handle": "apolloniabar",
+      "name": "Monica Bellucci",
+      "description": "Gin and Campari with rhubarb, lime, eucalyptus and neroli, shaken with aquafaba.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apollonia.sydney/menu/"
+    },
+    {
+      "handle": "apolloniabar",
+      "name": "Francis Ford Coppola",
+      "description": "Maker's Mark bourbon with Zucca rabarbaro, a coffee spirit, cherry, wattleseed and orange.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://apollonia.sydney/menu/"
+    }
+  ],
+  "notes": [
+    "Maybe Sammy (existing handle maybe_sammy_sydney): 2025 top-50 position (No. 42) intentionally omitted; added 2024 No. 26 (source: Time Out Sydney report of the results, as the50.com 2024 1-50 page now shows 2025) and 2026 No. 75 on the 51-100 list published 23 Sep 2026. The 2026 top 50 is announced 7 Oct 2026, after this research.",
+    "No Sydney bar won a Tales of the Cocktail Spirited Award in 2024, 2025 or 2026 (checked the official winners pages). Asia's and North America's 50 Best do not cover Australia.",
+    "Australian Bar Awards results are from australianbartender.com.au (Bartender Magazine's site). Person awards were not entered as bar awards: Callum Marra of Old Love's was 2026 Bartender of the Year; Alicia Clarke (Double Deuce) was 2025 Bar Manager of the Year; House Made Hospitality (Apollonia, Bar Tilda) was 2025 Bar Operator of the Year.",
+    "Cantina OK!'s own news post says it won Tequila Bar of the Year three years running, but the 2024 official winners list shows Centro 86 for that category, so only 2025 and 2026 are entered. cantinaok.com.au did not resolve, so website is the MUCHO Group venue page (which is also the OSM website tag).",
+    "Double Deuce Lounge (NSW Cocktail Bar of the Year 2024 state award) has closed; MUCHO's Bar Bridge opened in its Bridge Street site in 2026. Not included.",
+    "Old Mate's Place and Old Love's share a building and owners (Old Mates Group); Cantina OK! and Bar Planet share MUCHO Group; Dean & Nancy on 22 is run with the Maybe Sammy team; Bar Tilda and Apollonia are both House Made Hospitality. Kept because each has a distinct concept and its own awards.",
+    "The Baxter Inn is included for historic importance (no 2024-2026 list awards found). Its owner, Swillhouse, was the subject of 2024 press reports alleging workplace misconduct; reviewer may want to weigh that.",
+    "Ramblin' Rascal Tavern: its website gives 199 Elizabeth Street; OSM tags the node as 197 Elizabeth Street and older press uses the building's 60 Park Street address. Website address used.",
+    "Deadwax: no OSM node for the venue or for number 182, so coordinates are interpolated along the even-numbered side of Enmore Road between 164 and 192; treat as approximate (within ~30 m). Old Love's and PS40 drinks come from 2023-era sources (Concrete Playground review; PS40's menu page dated a Friday 7 July, likely 2023), so on_current_menu is false. Bar Tilda drinks are from its October 2024 launch coverage, also marked not current.",
+    "Dean & Nancy on 22: the OSM building way for the A by Adina tower is tagged 'Adina Grand, 280 George Street'; it matches the 26-storey tower at George and Hunter Streets, and the bar gives its address as Level 22, 2 Hunter Street."
+  ]
+}

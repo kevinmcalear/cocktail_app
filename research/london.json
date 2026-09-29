@@ -1,0 +1,693 @@
+{
+  "city": "London",
+  "new_bars": [
+    {
+      "handle": "kwantmayfair",
+      "name": "Kwãnt Mayfair",
+      "bio": "Erik Lorincz, the former head bartender of the American Bar at The Savoy, first opened Kwãnt off Regent Street in 2019 and relaunched it in 2023 on a Mayfair corner by Green Park. The room leans tropical, with cane, palms and ceiling fans, and the drinks lean on ferments and unusual distillates, served by bartenders working stations around the counter. No. 79 on The World's 50 Best Bars 2025.",
+      "website": "https://www.instagram.com/kwantmayfair/",
+      "locality": "Mayfair",
+      "address_line": "52 Stratton Street",
+      "postcode": "W1J 8LN",
+      "latitude": 51.50719,
+      "longitude": -0.14329,
+      "coord_source": "osm node 3357928298",
+      "logo_url": null,
+      "why": "Erik Lorincz's bar; No. 52 (2024) and No. 79 (2025) on The World's 50 Best Bars 51-100, No. 40 on Europe's 50 Best Bars 2026.",
+      "sources": [
+        "https://www.the50.com/bars/best-in-europe/the-list/kwant-mayfair.html",
+        "https://www.the50.com/discovery/Establishments/UK/London/Kw%C4%81nt-Mayfair.html",
+        "https://www.the50.com/bars/list/51-100",
+        "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "threesheetssoho",
+      "name": "Three Sheets Soho",
+      "bio": "Brothers Max and Noel Venning took the Three Sheets formula from their original Dalston bar to a Manette Street site in Soho in 2024. Menus are short and built on pared-back, seasonal twists on modern classics, with a carbonated French 75 as the calling card, plus oysters and a proper burger from the kitchen. No. 73 on The World's 50 Best Bars 2026 (51-100).",
+      "website": "https://www.threesheets-bar.com/soho",
+      "locality": "Soho",
+      "address_line": "13 Manette Street",
+      "postcode": "W1D 4AP",
+      "latitude": 51.51473,
+      "longitude": -0.13096,
+      "coord_source": "osm node 12913859809",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/6920ae6ddeb0f54911cfc7d1/1763749494532-WQO8O0CZ2GFJQ7JZ2B0Z/Three+Sheets+Logo+Plain.png?format=1500w",
+      "why": "Venning brothers' Soho bar; No. 80 (2025) and No. 73 (2026) on The World's 50 Best Bars 51-100, No. 41 on Europe's 50 Best Bars 2026.",
+      "sources": [
+        "https://www.threesheets-bar.com/",
+        "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html",
+        "https://www.the50.com/bars/list/51-100",
+        "https://www.the50.com/bars/best-in-europe/the-list/three-sheets-soho.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "name": "A Bar with Shapes for a Name",
+      "bio": "Remy Savage and Paul Lougrat opened this Kingsland Road bar in May 2021, naming it with a yellow triangle, red square and blue circle. The whole concept borrows from the Bauhaus: a spare, functional room and short menus where each drink is designed around a single lead flavour, with classics on request. No. 73 on The World's 50 Best Bars 2025 (51-100).",
+      "website": "https://www.clubbauhaus.com/abarwithshapesforaname",
+      "locality": "Haggerston",
+      "address_line": "232 Kingsland Road",
+      "postcode": "E2 8AX",
+      "latitude": 51.53561,
+      "longitude": -0.07672,
+      "coord_source": "osm node 11159464805",
+      "logo_url": null,
+      "why": "Bauhaus-themed bar from Remy Savage; No. 61 (2024) and No. 73 (2025) on The World's 50 Best Bars 51-100.",
+      "sources": [
+        "https://www.clubbauhaus.com/abarwithshapesforaname",
+        "https://www.the50.com/discovery/Establishments/UK/London/A-Bar-with-Shapes-For-a-Name.html",
+        "https://www.the50.com/bars/list/51-100",
+        "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "waltzbar",
+      "name": "Waltz",
+      "bio": "Tokyo-born bartender Gento Torigata, formerly of Kwãnt, opened Waltz in spring 2025 behind a discreet door on Scrutton Street. About a dozen seats face a long elm counter, jazz plays through custom speakers, and the Japanese-style menu splits into evergreen signatures and drinks that shift with Japan's 72 micro-seasons. No. 23 on Europe's 50 Best Bars 2026.",
+      "website": "https://waltzbar.uk/",
+      "locality": "Shoreditch",
+      "address_line": "28 Scrutton Street",
+      "postcode": "EC2A 4RP",
+      "latitude": 51.5232,
+      "longitude": -0.08289,
+      "coord_source": "osm address match (way 316772033, 28 Scrutton Street)",
+      "logo_url": "https://waltzbar.uk/wp-content/uploads/2025/01/Waltz_logo-1.png",
+      "why": "2025 opening; No. 23 and Best New Opening on Europe's 50 Best Bars 2026, Japanese listening-bar concept.",
+      "sources": [
+        "https://waltzbar.uk/",
+        "https://www.the50.com/bars/best-in-europe/the-list/waltz.html",
+        "https://classbarmag.com/news/fullstory.php/aid/1922/Review:_Waltz_may_be_London_s_most_authentic_Japanese_cocktail_bar.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "sidehustlelondon",
+      "name": "Side Hustle",
+      "bio": "The cocktail bar of NoMad London, opened in 2021 inside the former Bow Street police station and magistrates' court in Covent Garden. Around a marble-topped bar and green leather booths, it pairs a Latin American-leaning, agave-focused cocktail list with tacos and snacks. Best International Hotel Bar at the 2025 Spirited Awards.",
+      "website": "https://www.hilton.com/en/hotels/lonnmnd-nomad-london/dining/side-hustle/",
+      "locality": "Covent Garden",
+      "address_line": "28 Bow Street",
+      "postcode": "WC2E 7AW",
+      "latitude": 51.51351,
+      "longitude": -0.1221,
+      "coord_source": "osm node 10251693509",
+      "logo_url": null,
+      "why": "Agave-focused hotel bar; Best International Hotel Bar, Tales of the Cocktail Spirited Awards 2025.",
+      "sources": [
+        "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2025-spirited-awards-winners-2/",
+        "https://www.timeout.com/london/news/this-fancy-london-bar-was-just-crowned-the-best-in-the-world-072925",
+        "https://www.the50.com/discovery/Establishments/UK/London/Side-Hustle.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "name": "American Bar",
+      "bio": "The Savoy's American Bar opened in 1893 and the hotel calls it London's original cocktail bar. Harry Craddock and Ada Coleman both worked here, and Coleman's Hanky Panky was born at The Savoy. Today's menu tells stories from the hotel's history alongside vintage spirits and classics. It was No. 1 on The World's 50 Best Bars 2017 and the Spirited Awards' World's Best Bar 2018.",
+      "website": "https://www.thesavoylondon.com/restaurants-and-bars/american-bar",
+      "locality": "Covent Garden",
+      "address_line": "The Savoy, Strand",
+      "postcode": "WC2R 0EZ",
+      "latitude": 51.51013,
+      "longitude": -0.1205,
+      "coord_source": "osm way 95199889 (Savoy Hotel building)",
+      "logo_url": null,
+      "why": "Historic London hotel bar (1893); World's 50 Best Bars No. 1 in 2017 and Spirited Awards World's Best Bar 2018.",
+      "sources": [
+        "https://www.thesavoylondon.com/restaurants-and-bars/american-bar",
+        "https://drinksint.com/news/fullstory.php/aid/7382/Savoy_s_American_Bar_tops_The_World_s_50_Best_Bars.html",
+        "https://talesofthecocktail.org/tales-cocktail-foundation-announces-12th-annual-spirited-awards-winners/",
+        "https://www.thespiritsbusiness.com/2025/02/the-savoys-american-bar-unveils-new-menu/"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "lyanessbar",
+      "name": "Lyaness",
+      "bio": "Ryan Chetiyawardana (Mr Lyan) opened Lyaness in March 2019 at Sea Containers London on the South Bank, in the room that had housed his Dandelyan. The menu is organised around house-made ingredients rather than classic templates, built through ferments and collaborations, and served over Dandelyan's original green marble bar. World's Best Bar at the 2022 Spirited Awards.",
+      "website": "https://www.lyaness.com/",
+      "locality": "South Bank",
+      "address_line": "Sea Containers London, 20 Upper Ground",
+      "postcode": "SE1 9PD",
+      "latitude": 51.50857,
+      "longitude": -0.10674,
+      "coord_source": "osm node 12248646901",
+      "logo_url": "https://www.lyaness.com/media/ehldu30g/lyaness-logo.svg",
+      "why": "Mr Lyan's flagship and a London innovation benchmark; Spirited Awards World's Best Bar 2022.",
+      "sources": [
+        "https://www.lyaness.com/",
+        "https://www.thespiritsbusiness.com/2019/03/ryan-chetiyawardana-opens-lyaness-bar-in-london/",
+        "https://drinksint.com/news/fullstory.php/aid/10127/London_92s_Lyaness_named_world_92s_best_bar_at_The_Tales_of_the_Cocktail_92s_Spirited_Awards.html"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "officialcafepacifico",
+      "name": "Café Pacifico",
+      "bio": "A Covent Garden Mexican restaurant and tequila bar, open since 1982, that calls itself London's oldest and says it was the first to bring Mexican food and tequila to the UK. Margaritas are the core of the list, alongside a long agave selection and mezcal drinks, and its bartenders have repeatedly won London's Margarita Rumble. Timeless International Award at the 2024 Spirited Awards.",
+      "website": "https://cafe-pacifico.com/",
+      "locality": "Covent Garden",
+      "address_line": "5 Langley Street",
+      "postcode": "WC2H 9JA",
+      "latitude": 51.51315,
+      "longitude": -0.1251,
+      "coord_source": "osm node 659039058",
+      "logo_url": "https://cafe-pacifico.com/wp-content/uploads/2022/05/Cafe-Pacifico-Covent-Garden-Logo-Black-1024x576.png",
+      "why": "London's pioneering tequila bar (1982); Timeless International Award, Tales of the Cocktail Spirited Awards 2024.",
+      "sources": [
+        "https://cafe-pacifico.com/history/",
+        "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2024-spirited-awards-winners/",
+        "https://cafe-pacifico.com/wp-content/uploads/2026/06/Cafe-Pacifico-Drinks-Menu-June-2026.pdf"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    },
+    {
+      "handle": "swiftsoho",
+      "name": "Swift Soho",
+      "bio": "Mia Johansson and Bobby Hiddleston opened Swift on Old Compton Street in November 2016, the first of three Swift bars. Upstairs is a walk-in room for quick aperitivo-style drinks; the booked basement pours more involved cocktails, hosts live jazz and holds a whisky list of more than 300 bottles. Its Irish Coffee has become one of the city's signature serves.",
+      "website": "https://www.barswift.com/swift-soho",
+      "locality": "Soho",
+      "address_line": "12 Old Compton Street",
+      "postcode": "W1D 4TQ",
+      "latitude": 51.51374,
+      "longitude": -0.12999,
+      "coord_source": "osm node 692190788",
+      "logo_url": "https://static1.squarespace.com/static/6408946af82c2a0b73bbf390/t/64639959c1beec7bab97147b/1684248921166/Swift+logo.png",
+      "why": "Soho stalwart approaching its 10th anniversary, famous Irish Coffee and whisky list; long a fixture of best-bar lists.",
+      "sources": [
+        "https://www.barswift.com/swift-soho",
+        "https://www.thespiritsbusiness.com/2025/11/swift-soho-enters-10th-year-with-new-menu/",
+        "https://www.barswift.com/soho-menu"
+      ],
+      "city": "London",
+      "region": null,
+      "country_code": "GB"
+    }
+  ],
+  "awards": [
+    {
+      "handle": "connaughtbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 13,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "connaughtbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2020,
+      "position": 1,
+      "title": null,
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/9206/Connaught_triumphs_at_World_s_50_Best_Bars.html"
+    },
+    {
+      "handle": "connaughtbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2021,
+      "position": 1,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/connaught-bar-the-worlds-best-bar-2021.html"
+    },
+    {
+      "handle": "connaughtbar",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2012,
+      "position": null,
+      "title": "World's Best Cocktail Bar",
+      "source_url": "https://www.diffordsguide.com/encyclopedia/1014/cocktails/tales-of-the-cocktail-spirited-awards-winners"
+    },
+    {
+      "handle": "connaughtbar",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2016,
+      "position": null,
+      "title": "World's Best Cocktail Bar",
+      "source_url": "https://www.diffordsguide.com/encyclopedia/1014/cocktails/tales-of-the-cocktail-spirited-awards-winners"
+    },
+    {
+      "handle": "satans_whiskers",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 29,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "satans_whiskers",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best International Cocktail Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    },
+    {
+      "handle": "scarfesbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 37,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-list.html"
+    },
+    {
+      "handle": "scarfesbar",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 77,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+    },
+    {
+      "handle": "kwantmayfair",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 52,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+    },
+    {
+      "handle": "kwantmayfair",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 79,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/list/51-100"
+    },
+    {
+      "handle": "threesheetssoho",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 80,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/list/51-100"
+    },
+    {
+      "handle": "threesheetssoho",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 73,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 61,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/the-worlds-50-best-bars-2024-51-100-list.html"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": 73,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/list/51-100"
+    },
+    {
+      "handle": "sidehustlelondon",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2025,
+      "position": null,
+      "title": "Best International Hotel Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2025-spirited-awards-winners-2/"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "award": "The World's 50 Best Bars",
+      "year": 2017,
+      "position": 1,
+      "title": null,
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/7382/Savoy_s_American_Bar_tops_The_World_s_50_Best_Bars.html"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2018,
+      "position": null,
+      "title": "World's Best Bar",
+      "source_url": "https://talesofthecocktail.org/tales-cocktail-foundation-announces-12th-annual-spirited-awards-winners/"
+    },
+    {
+      "handle": "lyanessbar",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2022,
+      "position": null,
+      "title": "World's Best Bar",
+      "source_url": "https://drinksint.com/news/fullstory.php/aid/10127/London_92s_Lyaness_named_world_92s_best_bar_at_The_Tales_of_the_Cocktail_92s_Spirited_Awards.html"
+    },
+    {
+      "handle": "officialcafepacifico",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Timeless International Award",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2024-spirited-awards-winners/"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "connaughtbar",
+      "name": "Connaught Martini",
+      "description": "Gin or vodka with dry vermouth, mixed tableside from the martini trolley and finished with the guest's pick of the bar's aromatic bitters.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.maybourne.com/en/hotels/the-connaught/restaurants-bars/connaught-bar"
+    },
+    {
+      "handle": "connaughtbar",
+      "name": "Low Tide",
+      "description": "A reversed Manhattan: rye whiskey with Amaro Nonino and walnut-infused white port, sharpened with coriander bitters.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://dxp.maybourne.com/globalassets/our-hotels/the-connaught/rb/connaught-bar/menus/7.-july/the-connaught-bar-of-the-moment-menu-july-2026.pdf"
+    },
+    {
+      "handle": "connaughtbar",
+      "name": "Afterglow",
+      "description": "Johnnie Walker Blue Label with long pepper-infused sweet vermouth, a yuzu and cherry sherbet and a measure of Suze.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://dxp.maybourne.com/globalassets/our-hotels/the-connaught/rb/connaught-bar/menus/7.-july/the-connaught-bar-of-the-moment-menu-july-2026.pdf"
+    },
+    {
+      "handle": "satans_whiskers",
+      "name": "Satan's Manhattan",
+      "description": "A by-the-book Manhattan whose ingredients are frozen ahead of serving, giving a colder, denser and silkier drink.",
+      "riff_of": "Manhattan",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-europe/the-list/satans-whiskers.html"
+    },
+    {
+      "handle": "satans_whiskers",
+      "name": "Miami Vice",
+      "description": "Strawberry daiquiri and piña colada poured side by side in one glass so the two halves stay separate, served with an umbrella.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-europe/the-list/satans-whiskers.html"
+    },
+    {
+      "handle": "scarfesbar",
+      "name": "4.50 From Paddington",
+      "description": "A gin and tonic twist named for Agatha Christie: Fords gin with chinotto honey and acqua di cedro, lengthened with tonic.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://scarfesbar.com/wp-content/uploads/2026/03/Heroes-and-Villains.pdf"
+    },
+    {
+      "handle": "scarfesbar",
+      "name": "Whodunnit",
+      "description": "Rémy Martin 1738 cognac shaken with a tart blackberry and kumquat aperitif, the bar's take on a sidecar.",
+      "riff_of": "Sidecar",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://scarfesbar.com/wp-content/uploads/2026/03/Heroes-and-Villains.pdf"
+    },
+    {
+      "handle": "scarfesbar",
+      "name": "Iron Lady",
+      "description": "Glenfiddich 12 whisky with chocolate wine and fig leaf, balanced with clarified citrus.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://scarfesbar.com/wp-content/uploads/2026/03/Heroes-and-Villains.pdf"
+    },
+    {
+      "handle": "kwantmayfair",
+      "name": "See the Sea",
+      "description": "A savoury martini of gin, langoustine distillate, fino sherry and Cocchi Americano with a few drops of sea oil.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-europe/the-list/kwant-mayfair.html"
+    },
+    {
+      "handle": "kwantmayfair",
+      "name": "Green Park Margarita",
+      "description": "Tequila shaken with blended avocado and yuzu plus ayuuk, a Danish spirit made from beer malt and smoked chilli.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://thenudge.com/london-bars/kwant-mayfair/"
+    },
+    {
+      "handle": "threesheetssoho",
+      "name": "French 75",
+      "description": "Bombay Premier Cru gin, clarified lemon, orange flower water, Picpoul wine, tea, oak and verjus, carbonated and served sparkling.",
+      "riff_of": "French 75",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.threesheets-bar.com/s/Soho-Menu-Website.pdf"
+    },
+    {
+      "handle": "threesheetssoho",
+      "name": "Dirty Martini",
+      "description": "Belvedere vodka with Koseret tea, olive oil, Picpoul and sea salt, with an optional caviar bump.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.threesheets-bar.com/s/Soho-Menu-Website.pdf"
+    },
+    {
+      "handle": "threesheetssoho",
+      "name": "Strawberry Boulevardier",
+      "description": "Hennessy VS with fermented strawberry, a bitter aperitivo, Earl Grey tea and Pineau des Charentes.",
+      "riff_of": "Boulevardier",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.threesheets-bar.com/s/Soho-Menu-Website.pdf"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "name": "Core",
+      "description": "El Gobernador pisco with ruby cacao and kalamata olive, served short.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://drive.google.com/file/d/15PbzJcI98ZZlYlty_xZE6F9jPVP2nTM9/view"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "name": "Toreador",
+      "description": "Ocho tequila with Greensand apricot eau de vie, the bar's recomposed lime and agave.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://drive.google.com/file/d/15PbzJcI98ZZlYlty_xZE6F9jPVP2nTM9/view"
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "name": "Atlas",
+      "description": "Redbreast 12 Irish whiskey and Amarás espadín mezcal with dulce de leche and tonka.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://drive.google.com/file/d/15PbzJcI98ZZlYlty_xZE6F9jPVP2nTM9/view"
+    },
+    {
+      "handle": "waltzbar",
+      "name": "Matcha Old Fashioned",
+      "description": "Hibiki Harmony whisky stirred with Yame matcha and honey, one of the bar's standing signatures.",
+      "riff_of": "Old Fashioned",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://classbarmag.com/news/fullstory.php/aid/1922/Review:_Waltz_may_be_London_s_most_authentic_Japanese_cocktail_bar.html"
+    },
+    {
+      "handle": "waltzbar",
+      "name": "Wakayama",
+      "description": "Suntory Chita whisky stirred with baijiu, ripe banana and umeshu plum liqueur.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://classbarmag.com/news/fullstory.php/aid/1922/Review:_Waltz_may_be_London_s_most_authentic_Japanese_cocktail_bar.html"
+    },
+    {
+      "handle": "waltzbar",
+      "name": "Cherry Blossom",
+      "description": "A clean, crisp mix of sake, sherry, cherry blossom liqueur and shochu.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-europe/the-list/waltz.html"
+    },
+    {
+      "handle": "sidehustlelondon",
+      "name": "Sergeant Pepper",
+      "description": "Abelha cachaça and Altos Blanco tequila with green pepper, coriander, jalapeño, pineapple and lemon.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.top50cocktailbars.com/Bars/UK/Greater-London/Side-Hustle.html"
+    },
+    {
+      "handle": "sidehustlelondon",
+      "name": "Toreador",
+      "description": "Don Fulano Fuerte and Tapatío Reposado tequilas with apricot, génépi, lime and agave.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.top50cocktailbars.com/Bars/UK/Greater-London/Side-Hustle.html"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "name": "Hanky Panky",
+      "description": "Gin and sweet vermouth with a dash of Fernet-Branca, created at The Savoy by head bartender Ada 'Coley' Coleman.",
+      "riff_of": "Hanky Panky",
+      "origin_year": 1903,
+      "on_current_menu": false,
+      "source_url": "https://www.thespiritsbusiness.com/2025/02/the-savoys-american-bar-unveils-new-menu/"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "name": "Since 1986",
+      "description": "White port and blanco rum, a tribute to Savoy doorman Tony Cortegaca and his Portuguese roots.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.thesavoylondon.com/restaurants-and-bars/american-bar"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "name": "Painter's Palette",
+      "description": "Rabbit Hole Boxergrail rye, Khoosh bitter and Viña AB amontillado sherry, a nod to Monet's stays at the hotel.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.thesavoylondon.com/restaurants-and-bars/american-bar"
+    },
+    {
+      "handle": "americanbarsavoy",
+      "name": "Red Carpet",
+      "description": "Whisky with 30&40 Double Jus, Amaro Lucano, honey and cold-brew coffee, inspired by Dior's 1950 Savoy show.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.thesavoylondon.com/restaurants-and-bars/american-bar"
+    },
+    {
+      "handle": "lyanessbar",
+      "name": "Pink Belly Gimlet",
+      "description": "Hendrick's gin with carrot salami, aquavit honey and lemon; also offered alcohol-free.",
+      "riff_of": "Gimlet",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lyaness.com/"
+    },
+    {
+      "handle": "lyanessbar",
+      "name": "Chet² Martini",
+      "description": "Belvedere vodka and vermouth given body by direct-sourced fermented cacao from BiBi chocolate.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lyaness.com/"
+    },
+    {
+      "handle": "lyanessbar",
+      "name": "Rapaport Cocktail",
+      "description": "A Martinez-style sipper of Fords gin, tree caramel and a sequentially fermented vermouth with VORS sherry.",
+      "riff_of": "Martinez",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lyaness.com/"
+    },
+    {
+      "handle": "officialcafepacifico",
+      "name": "Pacifico Margarita",
+      "description": "Ocho Blanco tequila, agave nectar and fresh lime, on the rocks or up in a salt-rimmed glass; also sold by the bottle.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cafe-pacifico.com/wp-content/uploads/2026/06/Cafe-Pacifico-Drinks-Menu-June-2026.pdf"
+    },
+    {
+      "handle": "officialcafepacifico",
+      "name": "Pomelon Margarita",
+      "description": "Jose Cuervo Tradicional reposado with watermelon, mint, lime, pomegranate, orange liqueur and house citrus bitters.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cafe-pacifico.com/wp-content/uploads/2026/06/Cafe-Pacifico-Drinks-Menu-June-2026.pdf"
+    },
+    {
+      "handle": "officialcafepacifico",
+      "name": "Bru-groni",
+      "description": "Bruxo espadín-barril mezcal with Campari, Karminia vermouth and Cynar, finished with smoked rosemary.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cafe-pacifico.com/wp-content/uploads/2026/06/Cafe-Pacifico-Drinks-Menu-June-2026.pdf"
+    },
+    {
+      "handle": "swiftsoho",
+      "name": "Irish Coffee",
+      "description": "Jameson Caskmates Stout Edition with a Send coffee blend made for Swift, demerara, a float of cream and nutmeg.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.barswift.com/s/Swift-Soho-Upstairs-Menu.pdf"
+    },
+    {
+      "handle": "swiftsoho",
+      "name": "Imperial Gimlet",
+      "description": "Beefeater gin, Italicus, white Pineau des Charentes, pineapple sherbet, makrut lime and lemon.",
+      "riff_of": "Gimlet",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.barswift.com/s/Swift-Soho-Downstairs.pdf"
+    },
+    {
+      "handle": "swiftsoho",
+      "name": "Little Venice",
+      "description": "Hendrick's gin, Pommeau, peach vermouth and Campari, stirred bitter and floral.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.barswift.com/s/Swift-Soho-Upstairs-Menu.pdf"
+    }
+  ],
+  "notes": [
+    "Tayēr + Elementary (existing handle tayer_elementary) is excluded: it has been closed since a May 2026 fire, and in September 2026 the owners said it will stay shut for the rest of 2026 (https://www.restaurantonline.co.uk/Article/2026/09/17/we-miss-you-tayer-elementary-duo-dash-hopes-of-reopening-this-year/). A summer 2026 pop-up (Casual by Tayēr at Cato, Covent Garden) has ended.",
+    "The World's 50 Best Bars 2026 top 50 is announced on 7 October 2026 (after this research); only the 2026 51-100 list is included. Satan's Whiskers and Connaught Bar are absent from 51-100 so may place in the top 50.",
+    "the50.com is the current domain of theworlds50best.com (301 redirect); award source URLs point there.",
+    "Connaught Bar 2012 and 2016 Spirited Awards 'World's Best Cocktail Bar' wins are sourced from Difford's Guide's winners list, not an official Tales page.",
+    "Scarfes Bar's own site claims 'No. 1 Best International Hotel Bar, Tales of the Cocktail 2024', but the official 2024 winners list gives that award to BKK Social Club (Bangkok); not included.",
+    "Kwãnt Mayfair has no working website (kwant.co.uk is a parked 'coming soon' page), so website is its Instagram. Its OSM node shows postcode W1J 8LR; the bar and 50 Best use W1J 8LN.",
+    "Three Sheets' Instagram @threesheetsbars covers both Dalston and Soho; handle threesheetssoho is a variant for the Soho bar that is ranked.",
+    "A Bar with Shapes for a Name: Instagram @a_bar_with_shapes_for_a_name_ ends in an underscore, so handle is abarwithshapesforaname. Drinks come from the 'sample menu' PDF linked from clubbauhaus.com (file named 'shapes neue menu 12-09'); the year of that menu is not stated.",
+    "Swift's Instagram @swiftbars covers three sites; handle swiftsoho is a variant. American Bar has no separate Instagram (hotel account @thesavoylondon), so handle americanbarsavoy is a variant.",
+    "Side Hustle: thenomadhotel.com no longer resolves; website is NoMad London's Hilton page. Its drinks are from a bar guide (top50cocktailbars.com), not a current menu, so on_current_menu is false.",
+    "The 50 Best lists the Haggerston bar with a shapes emoji prefix (🔶🟥🔵); name here uses the plain words. Kwãnt appears as Kwãnt on the 50 Best lists and as Kwānt on 50 Best Discovery; the bar has no website to confirm.",
+    "Waltz changes much of its menu with Japan's micro-seasons; drinks are from 2025-2026 press, not a live menu, so on_current_menu is false.",
+    "Hanky Panky ingredients (gin, sweet vermouth, Fernet-Branca) are the standard published spec; the source confirms the 1903 Savoy origin and that it is still served, but not today's exact menu.",
+    "Near misses: Artesian (The Langham; No. 1 on the World's 50 Best Bars 2012-2015) and Amaro (No. 90, 2024) were left out for variety; Artesian is a strong alternative."
+  ]
+}

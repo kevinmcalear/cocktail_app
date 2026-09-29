@@ -1,0 +1,624 @@
+{
+  "city": "Paris",
+  "new_bars": [
+    {
+      "handle": "littlereddoor_paris",
+      "name": "Little Red Door",
+      "bio": "Unsigned speakeasy behind a red door on Rue Charlot, co-founded in 2012 by Timothée Prangé and long a fixture on The World's 50 Best Bars. Since July 2024 it has been run by Hugo Gallou and Hyacinthe Lescoët of The Cambridge Public House. The current Agri/Culture menu turns farming techniques into drinks built on French producers. No. 93 on The World's 50 Best Bars 2026 (51-100).",
+      "website": "https://www.lrdparis.com",
+      "locality": "Le Marais",
+      "address_line": "60 Rue Charlot",
+      "postcode": "75003",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86366,
+      "longitude": 2.36359,
+      "coord_source": "osm node 3265513124",
+      "logo_url": "https://assets.softr-files.com/applications/ff1268d2-763f-409f-b92b-1b3c54927805/assets/0ef92158-66d0-4027-b878-ae3b0f65042a.png",
+      "why": "Paris pioneer of concept menus and sustainable bartending; back on The World's 50 Best Bars (No. 93, 2026) after No. 59 in 2024.",
+      "sources": [
+        "https://www.the50.com/discovery/Establishments/France/Paris/Little-Red-Door.html",
+        "https://www.thespiritsbusiness.com/2024/07/paris-cambridge-owners-buy-little-red-door/",
+        "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html",
+        "https://www.lrdparis.com/contact"
+      ]
+    },
+    {
+      "handle": "devie.bar",
+      "name": "De Vie",
+      "bio": "Bar and tasting counter in Montorgueil, opened in 2025 by Alex Francis and Barney O'Kane, formerly of Little Red Door. There is no ice: drinks are pre-batched and pre-diluted at set temperatures, and each one is named after a single seasonal ingredient from independent French producers. Named Best New International Cocktail Bar at the 2026 Spirited Awards.",
+      "website": "https://devie.bar",
+      "locality": "Montorgueil",
+      "address_line": "22-24 Rue Saint-Sauveur",
+      "postcode": "75002",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86618,
+      "longitude": 2.34807,
+      "coord_source": "osm address match (node 691560666, 22 Rue Saint-Sauveur)",
+      "logo_url": "https://images.squarespace-cdn.com/content/v1/67a5e05fd09aef6e3bc0b922/cd52e908-c3ea-48b6-bb2f-4781437f3199/Logo_Devie_White.png",
+      "why": "The city's most-awarded new bar: Spirited Awards Best New International Cocktail Bar 2026 and No. 34 on the first Europe's 50 Best Bars.",
+      "sources": [
+        "https://devie.bar/",
+        "https://devie.bar/about",
+        "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/",
+        "https://www.the50.com/bars/best-in-europe/the-list/de-vie.html"
+      ]
+    },
+    {
+      "handle": "harrysbar_theoriginal",
+      "name": "Harry's Bar",
+      "bio": "Paris's founding American bar, opened on Rue Daunou on 26 November 1911 with a bar shipped over from Manhattan and later taken over by Scottish bartender Harry MacElhone. It claims the Bloody Mary, Sidecar, French 75 and Boulevardier among its creations. Still run by the MacElhone family, now fourth-generation Franz-Arthur, with a basement piano bar and a whisky cellar of 350-plus references.",
+      "website": "https://www.harrysbar.com",
+      "locality": "Opéra",
+      "address_line": "5 Rue Daunou",
+      "postcode": "75002",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86921,
+      "longitude": 2.33217,
+      "coord_source": "osm node 251023849",
+      "logo_url": "https://www.harrysbar.com/wp-content/uploads/2026/01/logo-harrysBar.png",
+      "why": "Historic birthplace of several classics and No. 27 on the inaugural Europe's 50 Best Bars 2026.",
+      "sources": [
+        "https://www.harrysbar.com/",
+        "https://www.the50.com/bars/best-in-europe/the-list/harrys-bar-paris.html",
+        "https://www.the50.com/discovery/Establishments/France/Paris/Harrys-New-York-Bar.html"
+      ]
+    },
+    {
+      "handle": "barhemingway",
+      "name": "Bar Hemingway",
+      "bio": "Twenty-five-seat bar inside the Ritz Paris, named for Ernest Hemingway, who made the hotel's bar his base from the 1920s. Colin Peter Field ran it for almost three decades until 2023 and created the Serendipity here. Leather armchairs, Hemingway letters and objects, no music, and a house specialty of cocktails made to order alongside a famous Dry Martini.",
+      "website": "https://www.ritzparis.com/hotel/paris/bars-restaurants/bar-hemingway",
+      "locality": "Place Vendôme",
+      "address_line": "15 Place Vendôme",
+      "postcode": "75001",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86879,
+      "longitude": 2.32751,
+      "coord_source": "osm node 247439149",
+      "logo_url": null,
+      "why": "Paris's most famous hotel bar and a landmark of cocktail history, home of the Serendipity.",
+      "sources": [
+        "https://www.ritzparis.com/hotel/paris/bars-restaurants/bar-hemingway",
+        "https://en.wikipedia.org/wiki/Colin_Peter_Field",
+        "https://www.forbes.com/sites/johnmariani/2023/06/05/au-revoir-farewell-to-colin-field-the-worlds-greatest-barman/"
+      ]
+    },
+    {
+      "handle": "candelariaparis",
+      "name": "Candelaria",
+      "bio": "A taqueria in the Haut-Marais with a cocktail bar hidden behind an unmarked back door, opened in 2011 by the Quixotic Projects team, including Josh Fontaine and Carina Soto Velásquez. The bar is built around tequila and mezcal, and its house classic is the Guêpe Verte. Walk-in only, no reservations. A former World's 50 Best Bars entry.",
+      "website": "https://candelaria-paris.com",
+      "locality": "Le Marais",
+      "address_line": "52 Rue de Saintonge",
+      "postcode": "75003",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86299,
+      "longitude": 2.36402,
+      "coord_source": "osm node 3105229883",
+      "logo_url": null,
+      "why": "Agave specialist and one of the bars that launched Paris's modern cocktail scene; the Guêpe Verte is a city classic.",
+      "sources": [
+        "https://candelaria-paris.com/",
+        "https://www.pariseater.com/restaurants/candelaria/",
+        "https://www.the50.com/discovery/Establishments/France/Paris/Candelaria.html"
+      ]
+    },
+    {
+      "handle": "experimentalcocktailclub",
+      "name": "Experimental Cocktail Club",
+      "bio": "The bar that started the Experimental Group: three childhood friends opened it on Rue Saint-Sauveur in 2007, when Paris had almost no cocktail bars, with a New York-inspired room by Cuoco Black that Dorothée Meilichzon refreshed in 2025. The seasonal list mixes house signatures with riffs on classics, resident DJs play late, and it takes no reservations.",
+      "website": "https://www.experimentalgroup.com/paris/experimental-cocktail-club-paris",
+      "locality": "Montorgueil",
+      "address_line": "37 Rue Saint-Sauveur",
+      "postcode": "75002",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86606,
+      "longitude": 2.34831,
+      "coord_source": "osm node 2383363290",
+      "logo_url": "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/6ab3f36e6f1eaf627a4de5fd_LOGO%20ECC%20PARIS%20WHITE-01.png",
+      "why": "Credited with igniting Paris's cocktail renaissance in 2007; the root of a group now spanning several countries.",
+      "sources": [
+        "https://www.experimentalgroup.com/paris/experimental-cocktail-club-paris",
+        "https://www.the50.com/discovery/Establishments/France/Paris/Experimental-Cocktail-Club.html",
+        "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/69f3c3b1c65a3bdb964baaff_cocktails.pdf"
+      ]
+    },
+    {
+      "handle": "copperbay_paris",
+      "name": "CopperBay",
+      "bio": "Bright, nautical-themed cocktail bar near Porte Saint-Martin, opened in October 2014 by Aurélie Panhelleux, Elfi Fabritius and Julien Lopez as a sunny alternative to dark speakeasies. Seasonal signatures sit next to pastis serves such as the Frozen Mauresque and a Hall of Fame of past hits like the Roquettini. The team has since opened in Marseille and at Hôtel Lancaster.",
+      "website": "http://copperbay.fr",
+      "locality": "Porte Saint-Martin",
+      "address_line": "5 Rue Bouchardon",
+      "postcode": "75010",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.86984,
+      "longitude": 2.35703,
+      "coord_source": "osm node 3936222238",
+      "logo_url": null,
+      "why": "Long-running independent favourite known for culinary, savoury cocktails and a light, beach-bar take on the craft bar.",
+      "sources": [
+        "http://copperbay.fr/",
+        "http://copperbay.fr/img/pdf/menu_paris.pdf",
+        "https://drinksint.com/copperbay-opens-third-venue-inside-pariss-hotel-lancaster/",
+        "https://www.the50.com/discovery/Establishments/France/Paris/CopperBay.html"
+      ]
+    },
+    {
+      "handle": "lesyndicat",
+      "name": "Le Syndicat",
+      "bio": "Behind a poster-plastered front on Rue du Faubourg Saint-Denis, Le Syndicat has used only French spirits and liqueurs since it opened in 2014, founded by Romain Le Mouellic and bartender Sullivan Doh. Cognac, armagnac, calvados and forgotten regional liqueurs go into playful cocktails, with a hip-hop soundtrack and a raw, industrial room. A former World's 50 Best Bars entry.",
+      "website": "https://www.instagram.com/lesyndicat/",
+      "locality": "Faubourg Saint-Denis",
+      "address_line": "51 Rue du Faubourg Saint-Denis",
+      "postcode": "75010",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.8718,
+      "longitude": 2.35362,
+      "coord_source": "osm node 4880757721",
+      "logo_url": null,
+      "why": "Distinctive all-French-spirits concept that became a fixture of world bar lists (No. 84 in 2022).",
+      "sources": [
+        "https://www.the50.com/discovery/Establishments/France/Paris/Le-Syndicat.html",
+        "https://www.diffordsguide.com/bars/YzkMe9/le-syndicat",
+        "https://www.sortiraparis.com/en/where-to-eat-in-paris/bars-cafes/articles/210602-the-cocktail-bar-union-aureole-of-distinctions-and-beverages-between-mixology-and-gastronomy"
+      ]
+    },
+    {
+      "handle": "cravanparis",
+      "name": "Cravan",
+      "bio": "Café by day and cocktail bar by night in a listed 1911 Hector Guimard building in Auteuil that has always held a café. Historian Franck Audoux opened it in June 2018 and named it for the dada boxer-poet Arthur Cravan. Drinks are short, precise and rooted in cocktail history, led by the Yellow. A larger, four-level Cravan now also runs on Boulevard Saint-Germain.",
+      "website": "https://www.cravanparis.com",
+      "locality": "Auteuil",
+      "address_line": "17 Rue Jean de la Fontaine",
+      "postcode": "75016",
+      "city": "Paris",
+      "region": null,
+      "country_code": "FR",
+      "latitude": 48.85166,
+      "longitude": 2.27379,
+      "coord_source": "osm node 6931175799",
+      "logo_url": "https://www.cravanparis.com/app/themes/Cravan-Paris/library/images/identity/logo-big.svg",
+      "why": "A distinctive, history-minded cocktail café in an Art Nouveau landmark whose Yellow has become a modern Paris signature.",
+      "sources": [
+        "https://www.cravanparis.com/en/",
+        "https://www.cravanparis.com/en/menu/cravan-16/",
+        "https://www.thesocialitefamily.com/en-ww/media/article/cravan-bar-a-cocktails-paris",
+        "https://www.the50.com/discovery/Establishments/France/Paris/Cravan.html"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "handle": "barnouveau",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 39,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/1-50"
+    },
+    {
+      "handle": "thecambridge_paris",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 19,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/1-50"
+    },
+    {
+      "handle": "thecambridge_paris",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": null,
+      "title": "Highest Climber Award",
+      "source_url": "https://www.the50.com/bars/best-in-the-world/awards/highest-climber-award.html"
+    },
+    {
+      "handle": "thecambridge_paris",
+      "award": "The World's 50 Best Bars",
+      "year": 2025,
+      "position": null,
+      "title": "Ketel One Sustainable Bar Award",
+      "source_url": "https://www.the50.com/bars/best-in-the-world/awards/sustainable-bar-award.html"
+    },
+    {
+      "handle": "danicoparis",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 49,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/1-50"
+    },
+    {
+      "handle": "danicoparis",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2024,
+      "position": null,
+      "title": "Best International Restaurant Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2024-spirited-awards-winners/"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "award": "The World's 50 Best Bars",
+      "year": 2024,
+      "position": 59,
+      "title": null,
+      "source_url": "https://www.the50.com/bars/previous-lists/2024/1-50"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "award": "The World's 50 Best Bars",
+      "year": 2026,
+      "position": 93,
+      "title": null,
+      "source_url": "https://www.the50.com/stories/News/best-in-the-world-2026-51-100-list.html"
+    },
+    {
+      "handle": "devie.bar",
+      "award": "Tales of the Cocktail Spirited Awards",
+      "year": 2026,
+      "position": null,
+      "title": "Best New International Cocktail Bar",
+      "source_url": "https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/"
+    }
+  ],
+  "drinks": [
+    {
+      "handle": "barnouveau",
+      "name": "Bellini",
+      "description": "Peach dressed with violet and jasmine notes and lifted by a sparkling rhubarb element, the bar's take on the Venetian aperitif.",
+      "riff_of": "Bellini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.timeout.fr/paris/bars/bar-nouveau"
+    },
+    {
+      "handle": "barnouveau",
+      "name": "Ramos",
+      "description": "Vodka, elderflower liqueur and vanilla yoghurt with a peated whisky accent, a creamy reworking of the Ramos fizz.",
+      "riff_of": "Ramos Gin Fizz",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.timeout.fr/paris/bars/bar-nouveau"
+    },
+    {
+      "handle": "barnouveau",
+      "name": "Fine à l'eau",
+      "description": "The old French bistro serve of cognac lengthened with water, rounded with a little sugar and sharpened with verjus.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://52martinis.com/bar-nouveau/"
+    },
+    {
+      "handle": "thecambridge_paris",
+      "name": "Pimm's",
+      "description": "The pub's French answer to a Pimm's Cup, reworked most years: gin, Alsatian wine and St-Germain, batched and carbonated like a pet-nat.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-the-world/the-list/the-cambridge-public-house.html"
+    },
+    {
+      "handle": "thecambridge_paris",
+      "name": "Cigarette After Sex",
+      "description": "Mezcal with a little sloe gin and agua de Jamaica (hibiscus tea), sweetened with French honey and sharpened with verjus. A house standard since opening.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://jiggerdaily.com/cambridge-public-house-nicolas-goradesky-cocktail-menu/"
+    },
+    {
+      "handle": "danicoparis",
+      "name": "Kota Ternate",
+      "description": "Planteray OFTD and 3 Stars rums with pineapple, coconut, a spice mix and lime, clarified with milk into a smooth punch.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://daroco.fr/wp-content/uploads/2026/06/danico-menu-des-10-ans-web.pdf"
+    },
+    {
+      "handle": "danicoparis",
+      "name": "L'Alligator C'est Vert",
+      "description": "Absinthe shaken with coconut milk, pandan, nutmeg and a whole egg into a creamy green flip.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://daroco.fr/wp-content/uploads/2026/06/danico-menu-des-10-ans-web.pdf"
+    },
+    {
+      "handle": "danicoparis",
+      "name": "Sakura",
+      "description": "Citadelle gin, sweet vermouth and Campari with umeshu and sakura, the team's favourite Negroni variation.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://daroco.fr/wp-content/uploads/2026/06/danico-menu-des-10-ans-web.pdf"
+    },
+    {
+      "handle": "danicoparis",
+      "name": "Café de Flore",
+      "description": "Vodka, Cointreau, Picon and chicory cold brew with toasted croissant notes, served in a coffee cup with a tiny house-made croissant.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.the50.com/bars/best-in-europe/the-list/danico.html"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "name": "Aquaponie",
+      "description": "Grey Goose vodka and St-Germain with a cordial of Thai basil from a Hauts-de-France aquaponic farm, sweet clover liqueur and lemon.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lrdparis.com/menu"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "name": "Aquaculture",
+      "description": "Anaë Iodyssée gin, made with dulse seaweed, and Noilly Prat Ambré topped with a house soda of Breton sea lettuce and lovage.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lrdparis.com/menu"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "name": "Circulaire",
+      "description": "Black-rice-infused Bear Brothers vodka, Wakaze saké infused with Beaufort rinds, a saké-kasu cordial and tomato liqueur.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lrdparis.com/menu"
+    },
+    {
+      "handle": "littlereddoor_paris",
+      "name": "Agroforesterie",
+      "description": "Elderberry juice made into a vermouth, botanicals macerated in neutral spirit, French fortified wines and Mette gewürztraminer eau-de-vie.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.lrdparis.com/menu"
+    },
+    {
+      "handle": "devie.bar",
+      "name": "Chicory",
+      "description": "Chicory bitter with French wheat shochu and a rye porter reduction, served pre-diluted and without ice.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://heyzine.com/flip-book/d6c63573f9.html"
+    },
+    {
+      "handle": "devie.bar",
+      "name": "Beetroot",
+      "description": "Beetroot-molasses eau de vie and wild raspberry eau de vie stirred with dry vermouth into a spirit-forward sipper.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://heyzine.com/flip-book/d6c63573f9.html"
+    },
+    {
+      "handle": "devie.bar",
+      "name": "Pepper",
+      "description": "Charred pepper spirit with prickly pear eau de vie and a cordial made from herb stems, in a daisy style.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://heyzine.com/flip-book/d6c63573f9.html"
+    },
+    {
+      "handle": "harrysbar_theoriginal",
+      "name": "Bloody Mary",
+      "description": "Vodka and tomato juice with lemon, Tabasco, salt and pepper, at the bar that claims to have created the drink.",
+      "riff_of": "Bloody Mary",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.harrysbar.com/"
+    },
+    {
+      "handle": "harrysbar_theoriginal",
+      "name": "Side Car",
+      "description": "Cognac VS shaken with triple sec and lemon juice, one of the classics the bar lists among its own inventions.",
+      "riff_of": "Sidecar",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.harrysbar.com/"
+    },
+    {
+      "handle": "harrysbar_theoriginal",
+      "name": "French 75",
+      "description": "Gin and lemon juice topped with Champagne, finished in the house version with a few drops of absinthe.",
+      "riff_of": "French 75",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.harrysbar.com/"
+    },
+    {
+      "handle": "harrysbar_theoriginal",
+      "name": "Le Boulevardier",
+      "description": "Bourbon, red vermouth and Campari, the drink named for the 1920s Paris expat magazine The Boulevardier.",
+      "riff_of": "Boulevardier",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.harrysbar.com/"
+    },
+    {
+      "handle": "barhemingway",
+      "name": "Serendipity",
+      "description": "Brandy, fresh apple juice and mint in a tall glass topped with Champagne, created at the bar by Colin Peter Field.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.ritzparis.com/hotel/paris/bars-restaurants/bar-hemingway"
+    },
+    {
+      "handle": "barhemingway",
+      "name": "Picasso Martini",
+      "description": "A gin Martini served with an ice cube of frozen dry vermouth that slowly seasons the drink, a Colin Peter Field creation.",
+      "riff_of": "Martini",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://en.wikipedia.org/wiki/Colin_Peter_Field"
+    },
+    {
+      "handle": "candelariaparis",
+      "name": "Guêpe Verte",
+      "description": "Chile-infused tequila muddled with cucumber and coriander, shaken with lime and agave nectar. The bar's house classic.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://imbibemagazine.com/recipe/guepe-verte-from-candelaria-paris/"
+    },
+    {
+      "handle": "candelariaparis",
+      "name": "Santa Margarita",
+      "description": "Tequila with agave, hibiscus, vanilla and lime, a floral house twist on the Margarita.",
+      "riff_of": "Margarita",
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://hipparis.com/candelaria-tacos-and-clandestine-cocktails-in-paris/"
+    },
+    {
+      "handle": "experimentalcocktailclub",
+      "name": "Rose Paloma",
+      "description": "Tequila Ocho Blanco with grapefruit and coriander cordial, vin d'épine, Cocchi Dopo Teatro and lime, clarified with soy milk.",
+      "riff_of": "Paloma",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/69f3c3b1c65a3bdb964baaff_cocktails.pdf"
+    },
+    {
+      "handle": "experimentalcocktailclub",
+      "name": "Rice Rice Baby",
+      "description": "Buffalo Trace bourbon, mango cordial, coconut syrup, verjus and saké, crowned with a rice foam.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/69f3c3b1c65a3bdb964baaff_cocktails.pdf"
+    },
+    {
+      "handle": "experimentalcocktailclub",
+      "name": "Fly Me To Cancun",
+      "description": "Del Maguey mezcal and Aalborg aquavit with cumin, fennel liqueur, lime, agave, cucumber and celery bitters.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/69f3c3b1c65a3bdb964baaff_cocktails.pdf"
+    },
+    {
+      "handle": "experimentalcocktailclub",
+      "name": "Barrel From The Barrel",
+      "description": "Nikka From The Barrel and Drouin calvados stirred with yellow Chartreuse, Punt e Mes, Cocchi Storico and Cocchi Rosa.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://cdn.prod.website-files.com/6932dc91bcf2019d2c1c5686/69f3c3b1c65a3bdb964baaff_cocktails.pdf"
+    },
+    {
+      "handle": "copperbay_paris",
+      "name": "Roquettini",
+      "description": "Vodka with cherry tomatoes, fresh rocket, lemon and white balsamic, a salad-inspired signature kept in the bar's Hall of Fame.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "http://copperbay.fr/img/pdf/menu_paris.pdf"
+    },
+    {
+      "handle": "copperbay_paris",
+      "name": "Tiramisu",
+      "description": "Cognac infused with cacao nibs, amaretto, coffee liqueur, cold brew, vanilla and cream, clarified with mascarpone.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "http://copperbay.fr/img/pdf/menu_paris.pdf"
+    },
+    {
+      "handle": "copperbay_paris",
+      "name": "Dirty Negroni",
+      "description": "Gin, Campari, vermouth, red wine and olive brine, served boilermaker-style with a beer on the side.",
+      "riff_of": "Negroni",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "http://copperbay.fr/img/pdf/menu_paris.pdf"
+    },
+    {
+      "handle": "lesyndicat",
+      "name": "Holy G",
+      "description": "Two 3 Rivières rums with white absinthe, toasted coconut water, clarified lime and habanero, created with chef Adrien Cachot.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.sortiraparis.com/en/where-to-eat-in-paris/bars-cafes/articles/210602-the-cocktail-bar-union-aureole-of-distinctions-and-beverages-between-mixology-and-gastronomy"
+    },
+    {
+      "handle": "lesyndicat",
+      "name": "Get That Bread!",
+      "description": "Amber St-Raphaël, Arbois wine, armagnac and aged rum with toast water and verjus under a buckwheat foam, created with chef Amandine Chaignot.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": false,
+      "source_url": "https://www.sortiraparis.com/en/where-to-eat-in-paris/bars-cafes/articles/210602-the-cocktail-bar-union-aureole-of-distinctions-and-beverages-between-mixology-and-gastronomy"
+    },
+    {
+      "handle": "cravanparis",
+      "name": "Yellow",
+      "description": "Gin, gentian liqueur, yellow Chartreuse and lemon, shaken; the bar's best-known signature.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.cravanparis.com/en/menu/cravan-16/"
+    },
+    {
+      "handle": "cravanparis",
+      "name": "Mad Collins",
+      "description": "Gin with ginger, lemon and sparkling water, a spicy, bright take on the Collins.",
+      "riff_of": "Tom Collins",
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.cravanparis.com/en/menu/cravan-16/"
+    },
+    {
+      "handle": "cravanparis",
+      "name": "Campagne-Première",
+      "description": "Lemon-infused vodka with lemon verbena and egg white, a silky, citrus-scented sour.",
+      "riff_of": null,
+      "origin_year": null,
+      "on_current_menu": true,
+      "source_url": "https://www.cravanparis.com/en/menu/cravan-16/"
+    }
+  ],
+  "notes": [
+    "The World's 50 Best site (theworlds50best.com) now redirects to the50.com; source URLs use the50.com pages that were opened.",
+    "Coordinates come from OpenStreetMap via the Overpass API (Nominatim returned HTTP 429 rate limits throughout this session). Venue nodes matched by name for all bars except De Vie, which uses the OSM address node for 22 Rue Saint-Sauveur.",
+    "Existing bars (Bar Nouveau, The Cambridge Public House, Danico) count toward the 12; their 2025 top-50 positions were skipped as instructed. None of the three appears on the 2026 51-100 list, so they are presumably in the 2026 top 50, due 7 October 2026.",
+    "Europe's 50 Best Bars 2026 (a new list) placed Bar Nouveau 5 (plus Best Bar in France), The Cambridge 7, Danico 19, Harry's Bar 27 and De Vie 34 (plus its Sustainable Bar Award). Not recorded as awards because that list is not an allowed award value; consider adding it.",
+    "De Vie's own awards page lists 'N°93 The World's Best Bars', but the official 2026 51-100 list gives No. 93 to Little Red Door. Nothing recorded for De Vie on that list.",
+    "Little Red Door: ownership passed to The Cambridge founders (Hugo Gallou, Hyacinthe Lescoët) in July 2024. De Vie was founded by LRD's former bar director and head bartender.",
+    "De Vie cocktail menu is the flipbook linked from devie.bar, labelled 'Printemps v3' (PDF dated May 2026); drinks are versioned (e.g. CHICORY_v3) and rotate, so names omit the version suffix.",
+    "Danico drinks come from its 10th-anniversary Best Of menu, advertised for June to September 2026; it may change in October. Café de Flore is from the earlier France Xplorer menu (on_current_menu false).",
+    "Bar Nouveau and The Cambridge publish no named cocktail list online (Cambridge says ask for the weekly menu), so their drinks come from press and are marked on_current_menu false.",
+    "Harry's Bar drinks are the house versions of classics it claims to have invented; riff_of is set to the classic so they link to the catalog entry. Bloody Mary and Sidecar origins are disputed historically.",
+    "Bar Hemingway: handle 'barhemingway' is invented (the only Instagram is the hotel's @ritzparis). Colin Peter Field left in 2023 (Forbes); current head bartender not named. Serendipity base spirit is given as cognac by Difford's and Calvados elsewhere, so described as brandy.",
+    "Le Syndicat: no website found, Instagram used. Latest menu details found are from 2022 (chef collaboration drinks), marked on_current_menu false. Open per Yelp listing updated August 2026, but not confirmed by an official 2026 source.",
+    "Cravan has two Paris venues (Cravan 16, the 2018 original, and Cravan 6 at 165 Boulevard Saint-Germain). Profile and drinks are for Cravan 16; the Instagram handle @cravanparis covers both.",
+    "Experimental Cocktail Club: handle is the brand account @experimentalcocktailclub, which may also cover ECC venues in other cities.",
+    "White-on-transparent logos (may be invisible on light backgrounds): Harry's Bar, De Vie, Experimental Cocktail Club. No logo found on own site for Candelaria, CopperBay, Le Syndicat; Bar Hemingway left null (hotel)."
+  ]
+}
