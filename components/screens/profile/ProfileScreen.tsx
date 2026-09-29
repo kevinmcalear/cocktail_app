@@ -11,6 +11,7 @@ import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Prof
 import { barsCrediting } from '@/lib/profiles';
 
 import { ClaimProfile } from './ClaimProfile';
+import { Positions } from './Positions';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'originals' | 'rankings' | 'shelf';
@@ -135,6 +136,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
 
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
+
+      <Positions profile={profile} />
 
       <MenuCredits credits={credits} names={names} />
 
