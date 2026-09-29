@@ -58,7 +58,7 @@ function LibraryPanel({ editor }: { editor: LayoutEditor }) {
     <View style={[styles.side, { borderRightColor: ds.c.line }]}>
       <Headline>{target ? `Add to ${target.name}` : 'Add a section first'}</Headline>
       <Caption tone="muted">Click a section to add to it instead.</Caption>
-      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search the venue’s drinks" autoCapitalize="none" />
+      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
       <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
         <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
         <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />

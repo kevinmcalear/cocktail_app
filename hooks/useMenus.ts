@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
 
-const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at';
+const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count';
 
 interface MenuRow {
   id: string;
@@ -19,6 +20,8 @@ interface MenuRow {
   starts_at: string | null;
   ends_at: string | null;
   created_at: string;
+  menu_date: string | null;
+  guest_count: number | null;
 }
 
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
@@ -34,6 +37,8 @@ function toSummaryBase(row: MenuRow) {
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     createdAt: row.created_at,
+    menuDate: row.menu_date,
+    guestCount: row.guest_count,
   };
 }
 
@@ -116,9 +121,16 @@ export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
   };
 }
 
+/** A drink another bar published, as a menu shows it: its menu card, no price. */
+export function publishedMenuDrink(p: PublishedDrink): MenuDrink | null {
+  const kind = KINDS.find((k) => k === p.itemType);
+  if (!kind) return null;
+  return { id: p.id, name: p.name, kind, line: p.description ?? '', price: null, imageUrl: p.imageUrl, isSketch: p.imageIsGenerated, glass: null };
+}
+
 /** The columns a menu needs from a drink (items), for toMenuDrink. */
 export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
-  item_images(sort_order, is_generated, images(url)),
+  item_images(angle, sort_order, is_generated, images(url)),
   recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))`;
 const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
 
@@ -137,13 +149,24 @@ export function useMenu(menuId: string | null | undefined, { fresh = false }: { 
         supabase.from('menus').select(MENU_COLUMNS).eq('id', menuId!).maybeSingle(),
         supabase
           .from('menu_sections')
-          .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, ${MENU_DRINK_ITEM})`)
+          .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, item_id, ${MENU_DRINK_ITEM})`)
           .eq('menu_id', menuId!)
           .order('sort_order'),
       ]);
       if (menuRes.error) throw menuRes.error;
       if (sectionsRes.error) throw sectionsRes.error;
       if (!menuRes.data) return null;
+      type Row = { sort_order: number | null; item_id: string | null; item: MenuItemRow | MenuItemRow[] | null };
+      const rows = (sectionsRes.data ?? []).flatMap((s) => (s.menu_drinks ?? []) as Row[]);
+      // A home menu can hold drinks other bars published: the public read them
+      // through published_items, not items.
+      const published = await fetchPublished(rows.filter((r) => !one(r.item) && r.item_id).map((r) => r.item_id!));
+      const drinkFor = (r: Row): MenuDrink | null => {
+        const item = one(r.item);
+        if (item) return toMenuDrink(item);
+        const p = published.find((x) => x.id === r.item_id);
+        return p ? publishedMenuDrink(p) : null;
+      };
       return {
         ...toSummaryBase(menuRes.data as MenuRow),
         sections: (sectionsRes.data ?? []).map((s) => ({
@@ -152,11 +175,9 @@ export function useMenu(menuId: string | null | undefined, { fresh = false }: { 
           minItems: s.min_items ?? 0,
           maxItems: s.max_items ?? null,
           allowedTypes: normalizeAllowedTypes(s.allowed_types),
-          drinks: [...((s.menu_drinks ?? []) as { sort_order: number | null; item: MenuItemRow | MenuItemRow[] | null }[])]
+          drinks: [...((s.menu_drinks ?? []) as Row[])]
             .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
-            .map((d) => one(d.item))
-            .filter((i): i is MenuItemRow => !!i)
-            .map(toMenuDrink)
+            .map(drinkFor)
             .filter((d): d is MenuDrink => !!d),
         })),
       };

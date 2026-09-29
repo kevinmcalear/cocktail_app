@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { sortAwards, type Award } from '@/lib/awards';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -22,9 +23,12 @@ export interface Profile {
   is_public: boolean;
   /** False for a historic creator or a bar not on the app. (The owner's user_id is hidden from signed-out visitors.) */
   is_claimed: boolean;
+  /** A bar that has shut for good; closed_year when it's known. */
+  is_closed: boolean;
+  closed_year: number | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -49,20 +53,39 @@ export interface Original extends LineageDrink {
   item_images: ItemImageLink[] | null;
 }
 
-/** Drinks credited to a profile: made by the person, or first made at the bar. */
+/** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
 export function useProfileOriginals(profileId: string | null | undefined) {
   return useQuery({
     queryKey: ['profile-originals', profileId],
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
+      const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId!).limit(100);
+      if (co.error) throw co.error;
+      const coIds = (co.data ?? []).map((r) => r.item_id as string);
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(sort_order, is_generated, outdated_since, images(url))`)
-        .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
+        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
+        .or([`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])].join(','))
         .order('name')
         .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/** A profile's list places and titled awards, newest first. */
+export function useProfileAwards(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-awards', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<Award[]> => {
+      const { data, error } = await supabase
+        .from('profile_awards')
+        .select('id, award, year, position, title, source_url')
+        .eq('profile_id', profileId!);
+      if (error) throw error;
+      return sortAwards((data ?? []) as Award[]);
     },
   });
 }
@@ -225,5 +248,43 @@ export function useReviewClaim() {
     },
     // Shown inline by ClaimsReview, not as the global toast.
     onError: () => {},
+  });
+}
+
+// --- Positions ---
+
+export interface PositionProfile {
+  id: string;
+  handle: string;
+  display_name: string;
+  avatar_url: string | null;
+}
+
+export interface Position {
+  id: string;
+  title: string;
+  is_current: boolean;
+  person: PositionProfile;
+  bar: PositionProfile;
+}
+
+const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
+
+/** Where a person works, or who works at a bar: current first, then by name. */
+export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-positions', profile?.id],
+    enabled: !!profile,
+    queryFn: async (): Promise<Position[]> => {
+      const { data, error } = await supabase
+        .from('profile_positions')
+        .select(`id, title, is_current, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
+        .eq(profile!.kind === 'person' ? 'person_profile_id' : 'bar_profile_id', profile!.id)
+        .limit(50);
+      if (error) throw error;
+      // RLS hides a row whose other side is private, so both are present.
+      const other = (p: Position) => (profile!.kind === 'person' ? p.bar : p.person).display_name;
+      return ((data ?? []) as unknown as Position[]).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
+    },
   });
 }

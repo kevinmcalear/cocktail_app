@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { canMake, type RecipeRow } from '@/lib/canMake';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -19,7 +20,7 @@ interface CatalogRow {
   name: string;
   item_type: 'cocktail' | 'ingredient';
   glassware_id: string | null;
-  item_images: { images: { url: string } | null }[] | null;
+  item_images: ItemImageLink[] | null;
   recipes: { display_ingredient_id: string | null; parent_ingredient_id: string | null; is_optional: boolean | null }[] | null;
 }
 
@@ -84,7 +85,7 @@ function useCatalog() {
       const { data, error } = await supabase
         .from('app_item_presentation')
         .select(
-          'id, name, item_type, glassware_id, item_images(images(url)), recipes:app_recipe_presentation!recipe_item_id(display_ingredient_id, parent_ingredient_id, is_optional)'
+          'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(display_ingredient_id, parent_ingredient_id, is_optional)'
         )
         .in('item_type', ['cocktail', 'ingredient'])
         .order('name', { ascending: true });
@@ -119,7 +120,7 @@ export function useMyBar() {
         id: c.id,
         name: c.name,
         type: c.item_type,
-        imageUrl: c.item_images?.[0]?.images?.url ?? null,
+        imageUrl: heroPicture(c.item_images)?.url ?? null,
         glass: c.glassware_id ? (glassIcon.get(c.glassware_id) ?? null) : null,
       });
       const rows = toRows(c.recipes);
