@@ -1,4 +1,4 @@
-// Security and behaviour tests for 20260929200000_city_bars_and_awards:
+// Security and behaviour tests for 20260929400000_city_bars_and_awards:
 // awards on profiles, the seeded city bars and their signature drinks, and
 // the Library leaving other bars' signatures out. Runs through the real API
 // as real users.
