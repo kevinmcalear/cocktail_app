@@ -7,6 +7,7 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useMenuLayouts } from '@/hooks/useMenuMutations';
 import { useMenu } from '@/hooks/useMenus';
+import { useMode } from '@/hooks/useMode';
 import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
@@ -33,7 +34,9 @@ const BUILDS_MENUS = 35;
 export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
   const router = useRouter();
   const { venues, active } = useActiveVenue();
-  const buildable = venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
+  // Home mode is like another account: a menu made there is always your own.
+  const home = useMode().mode === 'home';
+  const buildable = home ? [] : venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
   const [name, setName] = useState('');
   const [barId, setBarId] = useState<string | null>(buildable.some((v) => v.id === active?.id) ? active!.id : (buildable[0]?.id ?? null));
   const venueMenus = menus.filter((m) => m.barId === barId);
@@ -80,13 +83,17 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       footer={<Button label={create.isPending ? 'Making the draft…' : 'Create draft'} size="lg" onPress={submit} disabled={create.isPending} />}
     >
       <Field label="Name" value={name} onChangeText={setName} placeholder="Winter menu" autoFocus />
-      <Caption tone="muted">For</Caption>
-      <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
-        {buildable.map((v) => (
-          <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
-        ))}
-        <Choice label="Just me" selected={barId === null} onPress={() => pickVenue(null)} />
-      </View>
+      {buildable.length ? (
+        <>
+          <Caption tone="muted">For</Caption>
+          <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
+            {buildable.map((v) => (
+              <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
+            ))}
+            <Choice label="Just me" selected={barId === null} onPress={() => pickVenue(null)} />
+          </View>
+        </>
+      ) : null}
       <Caption tone="muted">Start from</Caption>
       <View role="radiogroup" accessibilityLabel="Start from" style={styles.list}>
         {copyable.map((m) => (
