@@ -3,6 +3,7 @@ import { Button, Card, Input, Text, XStack, YStack } from 'tamagui';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
+import { useBarInvites, useRemoveInvite } from '@/hooks/useBarInvites';
 import { pressedProps } from '@/lib/a11yState';
 import { confirmAsync } from '@/lib/dialogs';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
@@ -51,8 +52,8 @@ function RolePills({ label, value, choices, disabled, onPick }: {
 }
 
 /**
- * The venue's team. Admins add people by email and change roles; everyone else
- * sees a read-only list. The RPC decides who may (real Admins only), so this
+ * The venue's team. Admins invite people by email (they join when they accept
+ * on the staff link) and change roles; everyone else sees a read-only list. The RPC decides who may (real Admins only), so this
  * only reflects it: no controls on your own row, so you can't demote yourself
  * out of the venue, and no role above your own.
  */
@@ -64,7 +65,9 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
   const [newRole, setNewRole] = useState(10);
   const canManage = myRole >= ADMIN;
   const choices = ROLE_LEVELS.filter((r) => r.level <= myRole);
-  const busy = change.isPending || add.isPending;
+  const { data: invites = [] } = useBarInvites(barId, canManage);
+  const remove = useRemoveInvite(barId);
+  const busy = change.isPending || add.isPending || remove.isPending;
 
   // Admin hands over the keys, so it asks first.
   const confirmRole = (who: string, level: number) =>
@@ -82,13 +85,13 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
       </Text>
       {canManage ? (
         <Card padding="$3" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
-          <Text fontSize="$3" fontWeight="600" color="$color">Add someone</Text>
-          <Text fontSize="$2" color="$color11">Use the email they signed up with.</Text>
+          <Text fontSize="$3" fontWeight="600" color="$color">Invite someone</Text>
+          <Text fontSize="$2" color="$color11">They join when they open your staff link and sign in with this email.</Text>
           <Input
             value={email}
             onChangeText={setEmail}
             placeholder="Email"
-            aria-label="Email of the person to add"
+            aria-label="Email of the person to invite"
             autoCapitalize="none"
             keyboardType="email-address"
             textAlign="left"
@@ -107,7 +110,7 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
               add.mutate({ email, roleLevel: newRole }, { onSuccess: () => setEmail('') });
             }}
           >
-            <Text color="$backgroundStrong" fontWeight="bold">Add to team</Text>
+            <Text color="$backgroundStrong" fontWeight="bold">Invite</Text>
           </Button>
         </Card>
       ) : null}
@@ -138,6 +141,18 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
           </Card>
         );
       })}
+      {remove.error ? <Text fontSize="$2" color="$red10" role="alert">{roleError(remove.error)}</Text> : null}
+      {invites.map((i) => (
+        <Card key={i.id} padding="$3" gap="$1" backgroundColor="$background" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
+          <Text fontSize="$3" color="$color">{i.email}</Text>
+          <XStack justifyContent="space-between" alignItems="center" gap="$2">
+            <Text fontSize="$2" color="$color11">{`Invited as ${roleLabel(i.role_level)}, not joined yet`}</Text>
+            <Button size="$2" chromeless disabled={busy} aria-label={`Cancel the invite for ${i.email}`} onPress={() => remove.mutate(i.id)}>
+              <Text fontSize="$2" color="$color">Cancel</Text>
+            </Button>
+          </XStack>
+        </Card>
+      ))}
     </YStack>
   );
 }

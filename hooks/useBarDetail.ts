@@ -58,9 +58,10 @@ export function useBarDetail(barId: string) {
 }
 
 /**
- * Adds someone to the venue by email, or changes a member's role. The
- * add_user_to_bar_by_email RPC decides who may: only the venue's real Admins,
- * and only to a valid role level. Errors show inline, not as the global toast.
+ * Changes a member's role, or invites anyone else by email (they join when they
+ * accept). The add_user_to_bar_by_email RPC decides who may: only the venue's
+ * real Admins, and only to a valid role level. Errors show inline, not as the
+ * global toast.
  */
 export function useSetMemberRole(barId: string) {
     const queryClient = useQueryClient();
@@ -73,7 +74,10 @@ export function useSetMemberRole(barId: string) {
             });
             if (error) throw error;
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bar', barId] }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
+        },
         onError: () => {},
     });
 }
