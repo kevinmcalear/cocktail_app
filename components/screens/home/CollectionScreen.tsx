@@ -10,9 +10,11 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 
+import { CollectionMenus } from './CollectionMenus';
+
 /**
- * Collection, in home mode: the drinks you've saved with the heart on a drink
- * page. ponytail: saves are per device (useFavorites) and there are no bar
+ * Collection, in home mode: the menus you build for home, and the drinks
+ * you've saved with the heart on a drink page. ponytail: saves are per device (useFavorites) and there are no bar
  * releases yet; both move to the collections tables in the publishing
  * proposal, and releases get their own section here.
  */
@@ -37,7 +39,11 @@ export function CollectionScreen() {
           <View style={styles.header}>
             <ScreenHeaderSpacer />
             <Display>Collection</Display>
-            <Caption tone="muted">{saved.length ? `${saved.length} saved` : 'Drinks you save, all in one place'}</Caption>
+            <CollectionMenus canMakeIds={bar.canMakeIds} />
+            <View style={styles.drinks}>
+              <Headline role="heading">Drinks</Headline>
+              <Caption tone="muted">{saved.length ? `${saved.length} saved` : 'Drinks you save, all in one place'}</Caption>
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -65,5 +71,6 @@ export function CollectionScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.xs, paddingBottom: space.lg },
+  drinks: { gap: space.xs, paddingTop: space.xl },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

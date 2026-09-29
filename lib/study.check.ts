@@ -1,7 +1,7 @@
 // Checks for lib/study.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dayKey, glassOptions, knownCount, orderDeck, streak } from './study';
+import { dayKey, glassOptions, knownCount, orderDeck, pourFacts, streak } from './study';
 
 const progress = {
   a: { rating: 'nailed' as const, seenAt: '2026-09-20T10:00:00Z' },
@@ -31,5 +31,30 @@ assert.ok(opts.some((o) => o.id === 'rocks'), 'always includes the right glass')
 assert.equal(new Set(opts.map((o) => o.id)).size, 3, 'no duplicates');
 assert.deepEqual(glassOptions(glasses[1], glasses, 'penicillin'), opts, 'stable for the same drink');
 assert.equal(glassOptions(glasses[0], [glasses[0]], 'x').length, 1, 'works with only one glass known');
+
+const lager = pourFacts({
+  kind: 'beer',
+  maker: ' Bellwoods ',
+  abv: 5.2,
+  price: '8.00',
+  origin: null,
+  glass: 'Tulip',
+  tags: [
+    { name: 'Canada', group: 'Beer Regions' },
+    { name: 'Lager', group: 'Beer Styles' },
+    { name: 'Crisp', group: null },
+  ],
+});
+assert.deepEqual(
+  lager.map((f) => `${f.label}: ${f.value}`),
+  ['Style: Lager', 'Brewery: Bellwoods', 'Region: Canada', 'ABV: 5.2%', 'Serve: Tulip', 'Price: $8.00', 'Tags: Crisp'],
+  'style, maker, region, strength, glass, price, then other tags'
+);
+const wine = pourFacts({ kind: 'wine', maker: 'Tawse', abv: null, price: '', origin: 'Niagara', glass: null, tags: [] });
+assert.deepEqual(wine, [{ label: 'Producer', value: 'Tawse' }, { label: 'Region', value: 'Niagara' }], 'empty facts drop out; origin stands in for a region tag');
+assert.deepEqual(pourFacts({ kind: 'wine', maker: null, abv: 0, price: 12, origin: null, glass: null, tags: [] }), [
+  { label: 'ABV', value: '0%' },
+  { label: 'Price', value: '$12' },
+], 'zero ABV is still a fact');
 
 console.log('study: ok');
