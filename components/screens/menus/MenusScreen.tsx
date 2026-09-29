@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +46,8 @@ export function MenusScreen() {
   const canBuild = Array.isArray(caps.data) && caps.data.includes('menus');
   const { data: opensAt } = useCapabilityOpensAt(barId, 'menus');
   const [now] = useState(() => Date.now());
-  const [creating, setCreating] = useState(false);
+  // New → Menu arrives with ?new=1 and opens straight into the new menu sheet.
+  const [creating, setCreating] = useState(useLocalSearchParams<{ new?: string }>().new === '1');
   // Anyone can make their own menu; a venue's needs Drink Creator or up.
   const canCreate = canBuild || !barId;
 
