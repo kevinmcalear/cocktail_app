@@ -17,7 +17,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { palette } from "@/constants/palette";
 import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
@@ -33,6 +33,7 @@ import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { BRAND } from '@/constants/brand';
+import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
 import { useRedesign } from '@/lib/flags';
@@ -56,11 +57,21 @@ function RootLayoutNav() {
   const router = useRouter();
 
   // Signed out (button, expiry or another tab), or opened signed out: forget
-  // the previous user's cached data. Bar iPads are shared.
+  // the previous user's cached data. Bar iPads are shared. Signed in as someone
+  // new: refetch everything, since screens mounted under the sign-in page
+  // (and requests racing the sign-in) cached what anon may see.
+  const userId = session?.user.id ?? null;
+  const settledUserId = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    if (loading || session) return;
-    clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
-  }, [loading, session]);
+    if (loading) return;
+    const action = cacheActionOnAuth(settledUserId.current, userId);
+    settledUserId.current = userId;
+    if (action === 'clear') {
+      clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
+    } else if (action === 'reset') {
+      resetUserQueries(queryClient).catch((e) => console.warn('Refetching after sign-in failed', e));
+    }
+  }, [loading, userId]);
 
   useEffect(() => {
     if (loading) return;
