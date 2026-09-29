@@ -2,7 +2,7 @@
 -- Not applied to production; needs Kevin's review first.
 --
 -- A collected release keeps a memory too, like a collected drink
--- (20260930000400): its name, the bar, the cover and the date it's known by,
+-- (20260930500400): its name, the bar, the cover and the date it's known by,
 -- filled in when collected. If the bar takes the release down or deletes it,
 -- the row stays as a memory; its drinks only ever come from the live release.
 

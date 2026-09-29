@@ -11,7 +11,7 @@ const KEY = 'drinking-age-answer';
 type Answer = 'yes' | 'no';
 
 /**
- * Wrap public drink pages with this. Signed-out web visitors are asked once
+ * Wraps the public drink and release pages (/d, /r). Signed-out web visitors are asked once
  * whether they're of drinking age where they live; the answer stays on this
  * device and nowhere else. Signed-in people passed the real age check, and
  * native apps always have an account, so they go straight through.
