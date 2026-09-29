@@ -202,6 +202,7 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>
