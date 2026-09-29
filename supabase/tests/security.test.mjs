@@ -487,6 +487,53 @@ describe('venue invites', () => {
   });
 });
 
+describe('a venue keeps an admin', () => {
+  const keep = {};
+  before(async () => {
+    for (const label of ['keepA', 'keepB', 'keepStaff']) users[label] = await makeUser(label);
+    keep.bar = (await serviceInsert('bars', { name: `Keep ${run}` })).id;
+    keep.solo = (await serviceInsert('bars', { name: `Keep solo ${run}` })).id;
+    for (const [label, bar, role] of [['keepA', keep.bar, 40], ['keepStaff', keep.bar, 30], ['keepB', keep.solo, 40]]) {
+      await serviceInsert('user_bars', { user_id: users[label].id, bar_id: bar, role_level: role });
+    }
+  });
+  const role = async (label, bar = keep.bar) =>
+    (await service.from('user_bars').select('role_level').eq('bar_id', bar).eq('user_id', users[label].id)).data[0]?.role_level ?? null;
+
+  test('the only admin can\'t demote themselves, directly or through the RPC', async () => {
+    const { error } = await users.keepA.client.from('user_bars').update({ role_level: 30 }).eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.match(error?.message ?? '', /needs at least one Admin/);
+    const rpc = await users.keepA.client.rpc('add_user_to_bar_by_email', { p_email: users.keepA.email, p_bar_id: keep.bar, p_role_level: 35 });
+    assert.match(rpc.error?.message ?? '', /needs at least one Admin/);
+    assert.equal(await role('keepA'), 40);
+  });
+
+  test('the only admin can\'t leave while others are still on the team', async () => {
+    const { error } = await users.keepA.client.from('user_bars').delete().eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.ok(error);
+    assert.equal(await role('keepA'), 40);
+  });
+
+  test('with a second admin, either can step down, but not both', async () => {
+    await users.keepA.client.from('user_bars').update({ role_level: 40 }).eq('bar_id', keep.bar).eq('user_id', users.keepStaff.id);
+    assert.equal(await role('keepStaff'), 40);
+    const { error } = await users.keepA.client.from('user_bars').update({ role_level: 30 }).eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.ifError(error);
+    const { error: last } = await users.keepStaff.client.from('user_bars').update({ role_level: 10 }).eq('bar_id', keep.bar).eq('user_id', users.keepStaff.id);
+    assert.ok(last);
+    assert.equal(await role('keepStaff'), 40);
+  });
+
+  test('the last admin of a venue nobody else is in can leave, and a venue can still be deleted', async () => {
+    const { error } = await users.keepB.client.from('user_bars').delete().eq('bar_id', keep.solo).eq('user_id', users.keepB.id);
+    assert.ifError(error);
+    assert.equal(await role('keepB', keep.solo), null);
+    const { data, error: deleteError } = await users.keepStaff.client.from('bars').delete().eq('id', keep.bar).select('id');
+    assert.ifError(deleteError);
+    assert.equal(data.length, 1);
+  });
+});
+
 describe('catalog admins', () => {
   test('edit legacy shared items, menus, templates and categories', async () => {
     const client = users.catalogAdmin.client;
