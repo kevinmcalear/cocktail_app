@@ -18,23 +18,33 @@ import { ChipRow } from './DiscoverArea';
 const MAX_CHIPS = 12;
 
 /**
+ * Which drink Discover is about: typed or tapped. Shared by the list and the
+ * map, so both show the same drink.
+ */
+export function useDrinkPick() {
+  const lists = useDrinkLists();
+  const [search, setSearch] = useState('');
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const shown = findDrinks(lists.data ?? [], search).slice(0, MAX_CHIPS);
+  // Typing moves the pick to the best match, unless the pick still matches.
+  const drink = shown.find((d) => d.id === pickedId) ?? shown[0] ?? null;
+  return { lists, search, setSearch, setPickedId, shown, drink };
+}
+
+export type DrinkPick = ReturnType<typeof useDrinkPick>;
+
+/**
  * "Best Martini near you": pick a drink (search or chips) and see the bars
  * whose version people ranked highest in the area. Each row is one drink at
  * one bar, as in the brief. Below the ranker minimum the list is "Early":
  * where people are ranking it, without scores.
  */
-export function DiscoverBest({ area }: { area: Area }) {
+export function DiscoverBest({ area, pick }: { area: Area; pick: DrinkPick }) {
   const router = useRouter();
   const signedIn = !!useAuth().user;
-  const lists = useDrinkLists();
-  const [search, setSearch] = useState('');
-  const [pickedId, setPickedId] = useState<string | null>(null);
-
-  const shown = findDrinks(lists.data ?? [], search).slice(0, MAX_CHIPS);
-  // Typing moves the pick to the best match, unless the pick still matches.
-  const drink = shown.find((d) => d.id === pickedId) ?? shown[0] ?? null;
+  const { lists, search, setSearch, setPickedId, shown, drink } = pick;
   const where = areaLabel(area);
-  const best = useDiscoverRankings(drink?.id, area);
+  const best = useDiscoverRankings(drink?.id ?? null, area);
   const ranked = best.data?.ranked ?? [];
   const early = best.data?.early ?? [];
 
