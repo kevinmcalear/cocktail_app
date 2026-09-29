@@ -1,3 +1,6 @@
+/** item_images.angle. Hero pictures lead the drink; the rest are service photos. */
+export type ImageAngle = 'hero' | 'side' | 'top' | 'garnish' | 'handoff';
+
 /**
  * An item's pictures as the app selects them from item_images. Sketches are
  * drawn by the server (automatically, or with the Generate button) and carry
@@ -5,6 +8,9 @@
  * outdated_since until an editor confirms them.
  */
 export interface ItemImageLink {
+  id?: string;
+  /** Selects that leave it out get every link, as before angles existed. */
+  angle?: ImageAngle | null;
   sort_order?: number | null;
   is_generated?: boolean | null;
   outdated_since?: string | null;
@@ -17,10 +23,19 @@ export interface ItemPicture {
   isOutdated: boolean;
 }
 
-/** Photos first, then sketches, each in their saved order. The first is the hero. */
+/** Whether a link is one of the item's hero pictures (not a service angle). */
+export function isHeroLink(link: ItemImageLink): boolean {
+  return (link.angle ?? 'hero') === 'hero';
+}
+
+/**
+ * The hero pictures: photos first, then sketches, each in their saved order.
+ * The first is the hero. Service angles (side, top, ...) are left out, so a
+ * top-down shot never becomes a drink's thumbnail.
+ */
 export function orderedPictures(links: ItemImageLink[] | null | undefined): ItemPicture[] {
   return (links ?? [])
-    .filter((link) => !!link.images?.url)
+    .filter((link) => !!link.images?.url && isHeroLink(link))
     .sort(
       (a, b) =>
         Number(!!a.is_generated) - Number(!!b.is_generated) ||

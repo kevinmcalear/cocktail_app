@@ -10,6 +10,7 @@ import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { venueContextIds } from '@/lib/barContextFilter';
+import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 
 const FILTERS: { value: ItemCategory; label: string }[] = [
@@ -99,7 +100,7 @@ export function LibraryScreen() {
               style={[styles.tile, { maxWidth: `${100 / columns}%` }]}
             >
               <DrinkImage
-                source={item.item_images?.[0]?.images?.url ?? null}
+                source={heroPicture(item.item_images)?.url ?? null}
                 glass={fallbackGlass(category)}
                 accessibilityLabel={item.name}
                 hideTag

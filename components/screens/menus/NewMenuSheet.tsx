@@ -7,10 +7,12 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useMenuLayouts } from '@/hooks/useMenuMutations';
 import { useMenu } from '@/hooks/useMenus';
+import { useMode } from '@/hooks/useMode';
 import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
-import { groupMenus, plural } from '@/lib/menus';
+import { groupMenus, homeNight, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
+import { EMPTY_NIGHT, HomeNightFields } from './HomeNight';
 import { Choice, MenuSheet } from './MenuSheet';
 
 type Start = { kind: 'copy'; menuId: string } | { kind: 'layout'; layoutId: string } | { kind: 'blank' };
@@ -33,7 +35,9 @@ const BUILDS_MENUS = 35;
 export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
   const router = useRouter();
   const { venues, active } = useActiveVenue();
-  const buildable = venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
+  // Home mode is like another account: a menu made there is always your own.
+  const home = useMode().mode === 'home';
+  const buildable = home ? [] : venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
   const [name, setName] = useState('');
   const [barId, setBarId] = useState<string | null>(buildable.some((v) => v.id === active?.id) ? active!.id : (buildable[0]?.id ?? null));
   const venueMenus = menus.filter((m) => m.barId === barId);
@@ -43,6 +47,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const { data: layouts = [] } = useMenuLayouts(barId);
   const { data: source } = useMenu(start.kind === 'copy' ? start.menuId : null);
   const create = useCreateMenu();
+  const [night, setNight] = useState(EMPTY_NIGHT);
   const [error, setError] = useState<string | null>(null);
 
   const pickVenue = (id: string | null) => {
@@ -53,6 +58,8 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
 
   const submit = async () => {
     if (!name.trim()) return setError('Give the menu a name.');
+    const when = home ? homeNight(night, Date.now()) : null;
+    if (when && 'error' in when) return setError(when.error);
     let layout: MenuLayout = { name, coverUrl: null, coverPosition: 50, sections: [blankSection()] };
     if (start.kind === 'copy') {
       if (!source) return setError('Still loading that menu. Try again in a moment.');
@@ -63,7 +70,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
     }
     setError(null);
     try {
-      const id = await create.mutateAsync({ barId, layout });
+      const id = await create.mutateAsync({ barId, layout, night: when ?? undefined });
       onClose();
       router.push(`/menus/${id}/edit`);
     } catch (e) {
@@ -76,17 +83,22 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       visible={visible}
       onClose={onClose}
       title="New menu"
-      subtitle="It starts as a draft. Nobody sees it until it goes on."
+      subtitle={home ? 'Only you see it. Share the menu card with your guests when it’s ready.' : 'It starts as a draft. Nobody sees it until it goes on.'}
       footer={<Button label={create.isPending ? 'Making the draft…' : 'Create draft'} size="lg" onPress={submit} disabled={create.isPending} />}
     >
-      <Field label="Name" value={name} onChangeText={setName} placeholder="Winter menu" autoFocus />
-      <Caption tone="muted">For</Caption>
-      <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
-        {buildable.map((v) => (
-          <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
-        ))}
-        <Choice label="Just me" selected={barId === null} onPress={() => pickVenue(null)} />
-      </View>
+      <Field label="Name" value={name} onChangeText={setName} placeholder={home ? 'Friday at ours' : 'Winter menu'} autoFocus />
+      {home ? <HomeNightFields value={night} onChange={setNight} /> : null}
+      {buildable.length ? (
+        <>
+          <Caption tone="muted">For</Caption>
+          <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
+            {buildable.map((v) => (
+              <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
+            ))}
+            <Choice label="Just me" selected={barId === null} onPress={() => pickVenue(null)} />
+          </View>
+        </>
+      ) : null}
       <Caption tone="muted">Start from</Caption>
       <View role="radiogroup" accessibilityLabel="Start from" style={styles.list}>
         {copyable.map((m) => (

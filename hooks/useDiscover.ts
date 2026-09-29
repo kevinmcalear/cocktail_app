@@ -34,7 +34,7 @@ export function useDrinkLists() {
     queryFn: async (): Promise<DrinkList[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, item_images ( sort_order, is_generated, images ( url ) )')
+        .select('id, name, item_images ( angle, sort_order, is_generated, images ( url ) )')
         .eq('is_catalog', true)
         .order('name');
       if (error) throw error;
@@ -58,6 +58,7 @@ export function useBarCities() {
         .select('city, country_code')
         .eq('kind', 'bar')
         .eq('is_public', true)
+        .eq('is_closed', false)
         .not('city', 'is', null);
       if (error) throw error;
       return citiesFrom(data ?? []);

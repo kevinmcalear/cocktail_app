@@ -59,7 +59,7 @@ const award = (profileId, extra = {}) => ({
 });
 
 // The Library's filter (hooks/useCocktails.ts): other bars' signatures out.
-const libraryFilter = (userId) => `bar_id.not.is.null,origin_bar_profile_id.is.null,created_by.eq.${userId}`;
+const libraryFilter = (userId) => `bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null),created_by.eq.${userId}`;
 
 before(async () => {
   await db.connect();
@@ -151,6 +151,8 @@ describe('the Library', () => {
       .single();
     assert.ifError(mine.error);
     const shared = await serviceInsert('items', { name: `Shared ${run}`, item_type: 'cocktail', created_by: null });
+    const person = await serviceInsert('profiles', { kind: 'person', handle: `maker.${run}`, display_name: `Maker ${run}`, is_public: true });
+    const personal = await serviceInsert('items', { name: `Their Original ${run}`, item_type: 'cocktail', created_by: null, creator_profile_id: person.id });
 
     const { data, error } = await users.member.client
       .from('app_item_presentation')
@@ -160,6 +162,7 @@ describe('the Library', () => {
     assert.ifError(error);
     const seen = new Set(data.map((r) => r.id));
     assert.ok(!seen.has(signature.id), "another bar's signature is left out");
+    assert.ok(!seen.has(personal.id), "a bartender's original with no venue is left out too");
     assert.ok(seen.has(mine.data.id), 'your own drink crediting a bar stays');
     assert.ok(seen.has(shared.id), 'a shared drink with no bar credit stays');
 

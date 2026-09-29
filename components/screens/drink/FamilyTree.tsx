@@ -10,7 +10,9 @@ import {
   creditLabel,
   creditSentence,
   creditText,
+  creators,
   hasLineage,
+  shortNames,
   type CreditProfile,
   type CreditStatus,
   type LineageDrink,
@@ -64,8 +66,8 @@ export function FamilyTree({ itemId }: { itemId: string }) {
         >
           <UserAvatar uri={who.avatar_url} name={who.display_name} size={40} />
           <View style={styles.flex}>
-            <DsText variant="headline" numberOfLines={2}>
-              {drink!.creator ? `Created by ${drink!.creator.display_name}` : `First made at ${who.display_name}`}
+            <DsText variant="headline" numberOfLines={3}>
+              {drink!.creator ? `Created by ${shortNames(creators(drink!).map((c) => c.display_name))}` : `First made at ${who.display_name}`}
             </DsText>
             <Caption tone="muted" numberOfLines={2}>
               {[drink!.origin_bar && drink!.creator ? drink!.origin_bar.display_name : who.locality, drink!.origin_year].filter(Boolean).join(' · ') || 'See their drinks'}

@@ -67,6 +67,14 @@
     {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
+    },
+    {
+      "source": "/d/:id",
+      "destination": "/d/[id]"
+    },
+    {
+      "source": "/r/:id",
+      "destination": "/r/[id]"
     }
   ]
 }
