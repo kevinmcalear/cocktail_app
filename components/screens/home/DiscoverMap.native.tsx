@@ -1,10 +1,11 @@
 import Constants from 'expo-constants';
+import { Image, type ImageRef } from 'expo-image';
 import { AppleMaps, GoogleMaps } from 'expo-maps';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import { backbar } from '@/constants/tokens';
-import { pinLabel, type Viewport } from '@/lib/discoverMap';
+import { pinLabel, type MapPin, type Viewport } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -20,17 +21,48 @@ const viewportOf = (e: { coordinates: { latitude?: number; longitude?: number };
     ? null
     : { latitude: e.coordinates.latitude, longitude: e.coordinates.longitude, latitudeDelta: e.latitudeDelta, longitudeDelta: e.longitudeDelta };
 
+// Apple draws an annotation icon at 50pt (so 150px at 3x); Google draws the bitmap as is.
+const LOGO_PX = Platform.OS === 'ios' ? 150 : 96;
+
+// Pin logos, loaded once per URL for the session. ponytail: never released,
+// fine for the few hundred bars a session sees (small bitmaps). Upgrade path:
+// release the refs no pin uses.
+const logoRefs = new Map<string, ImageRef>();
+
+/** The loaded logo for each pin's URL. A logo that fails to load leaves the plain pin. */
+function usePinLogos(pins: MapPin[]): Record<string, ImageRef> {
+  const [refs, setRefs] = useState<Record<string, ImageRef>>(() => Object.fromEntries(logoRefs));
+  const key = [...new Set(pins.flatMap((p) => (p.logo ? [p.logo] : [])))].join('\n');
+  useEffect(() => {
+    const missing = key ? key.split('\n').filter((u) => !logoRefs.has(u)) : [];
+    if (!missing.length) return;
+    let live = true;
+    void Promise.all(
+      missing.map((u) =>
+        Image.loadAsync(u, { maxWidth: LOGO_PX, maxHeight: LOGO_PX }).then(
+          (ref) => void logoRefs.set(u, ref),
+          () => undefined,
+        ),
+      ),
+    ).then(() => {
+      if (live) setRefs(Object.fromEntries(logoRefs));
+    });
+    return () => {
+      live = false;
+    };
+  }, [key]);
+  return refs;
+}
+
 /**
  * Native map through expo-maps: Apple Maps on iOS (score labels as
  * annotations), Google Maps on Android (markers with the score as title).
- * Follows the app's light or dark scheme.
- * ponytail: no logos on native pins yet (the selected card and the list
- * show them). Upgrade path: expo-image's useImage per pin, passed as the
- * annotation/marker icon.
+ * Bars with a logo show it as the pin. Follows the app's light or dark scheme.
  */
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, style }: DiscoverMapProps) {
   const apple = useRef<AppleMaps.MapView>(null);
   const google = useRef<GoogleMaps.MapView>(null);
+  const logos = usePinLogos(pins);
   // Camera moves we make ourselves don't count as the person moving the map.
   const quietUntil = useRef(0);
 
@@ -62,11 +94,15 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         properties={{ pointsOfInterest: { including: [] }, selectionEnabled: false }}
         annotations={pins.map((p) => {
           const selected = p.id === selectedId;
+          const icon = p.logo ? logos[p.logo] : undefined;
+          // Apple draws the text over the icon, so a logo pin carries its score in the title under it.
+          const label = pinLabel(p);
           return {
             id: p.id,
             coordinates: { latitude: p.latitude, longitude: p.longitude },
-            title: p.name,
-            text: pinLabel(p) || '·',
+            title: icon && label ? `${p.name} · ${label}` : p.name,
+            text: icon ? '' : label || '·',
+            icon,
             // Ink pins read on both map schemes; early ones are muted; the selected one takes the accent.
             backgroundColor: selected ? accent.fill : p.score === null ? backbar.light.muted : backbar.light.ink,
             textColor: selected ? accent.text : backbar.dark.ink,
@@ -91,6 +127,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         coordinates: { latitude: p.latitude, longitude: p.longitude },
         title: p.name,
         snippet: p.score === null ? 'Early' : pinLabel(p),
+        ...(p.logo && logos[p.logo] ? { icon: logos[p.logo], anchor: { x: 0.5, y: 0.5 } } : null),
         zIndex: p.id === selectedId ? 2 : 1,
       }))}
       onMarkerClick={(m) => onSelect(m.id ?? null)}
