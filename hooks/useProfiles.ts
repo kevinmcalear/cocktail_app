@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { sortEditions, type Accolade, type MenuEdition } from '@/lib/accolades';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -63,6 +64,41 @@ export function useProfileOriginals(profileId: string | null | undefined) {
         .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/** A bar's placings and awards (World's 50 Best, Spirited Awards...), readable with its profile. */
+export function useProfileAccolades(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-accolades', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<Accolade[]> => {
+      const { data, error } = await supabase
+        .from('profile_accolades')
+        .select('id, award, year, position, title, source_url')
+        .eq('profile_id', profileId!)
+        .order('year', { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      return (data ?? []) as Accolade[];
+    },
+  });
+}
+
+/** Every cocktail menu a bar has put out, newest first. */
+export function useMenuEditions(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-menu-editions', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<MenuEdition[]> => {
+      const { data, error } = await supabase
+        .from('profile_menu_editions')
+        .select('id, name, year, month, theme, drinks, source_url')
+        .eq('profile_id', profileId!)
+        .limit(200);
+      if (error) throw error;
+      return sortEditions((data ?? []) as MenuEdition[]);
     },
   });
 }

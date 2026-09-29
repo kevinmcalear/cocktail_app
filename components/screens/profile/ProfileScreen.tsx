@@ -10,15 +10,18 @@ import { layout, space } from '@/constants/tokens';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { barsCrediting } from '@/lib/profiles';
 
+import { Accolades, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
-type Tab = 'originals' | 'rankings' | 'shelf';
+type Tab = 'menus' | 'originals' | 'rankings' | 'shelf';
 const TABS = [
   { value: 'originals', label: 'Originals' },
   { value: 'rankings', label: 'Rankings' },
   { value: 'shelf', label: 'Shelf' },
 ] as const;
+/** A bar's page leads with its menus. */
+const BAR_TABS = [{ value: 'menus', label: 'Menus' }, ...TABS] as const;
 
 /**
  * A public profile: a person or a bar, the same kind of page. Who they are,
@@ -93,7 +96,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
 const KIND: Record<Profile['kind'], string> = { person: 'Bartender', bar: 'Bar' };
 
 function ProfileBody({ profile, columns }: { profile: Profile; columns: number }) {
-  const [tab, setTab] = useState<Tab>('originals');
+  const [tab, setTab] = useState<Tab>(profile.kind === 'bar' ? 'menus' : 'originals');
   const { data: originals = [], isLoading } = useProfileOriginals(profile.id);
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   const names = new Map(originals.map((d) => [d.id, d.name]));
@@ -133,13 +136,16 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       </View>
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
+      {profile.kind === 'bar' ? <Accolades profileId={profile.id} /> : null}
 
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
 
       <MenuCredits credits={credits} names={names} />
 
-      <Segmented accessibilityLabel="Profile sections" options={TABS} value={tab} onChange={setTab} />
-      {tab === 'originals' ? (
+      <Segmented accessibilityLabel="Profile sections" options={profile.kind === 'bar' ? BAR_TABS : TABS} value={tab} onChange={setTab} />
+      {tab === 'menus' ? (
+        <MenuHistory profileId={profile.id} name={profile.display_name} />
+      ) : tab === 'originals' ? (
         isLoading ? (
           <Caption tone="muted">Loading drinks…</Caption>
         ) : (
