@@ -116,6 +116,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <View style={styles.chips}>
           {originals.length > 0 && profile.kind === 'person' ? <Tag label="Creator" /> : null}
           {onMenus ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
+          {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
           {unclaimed ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
