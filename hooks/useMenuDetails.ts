@@ -38,7 +38,7 @@ export function useMenuDetails(menuId: string | null) {
                     sort_order,
                     item:items!item_id (
                         id, name, description, item_type, brand_maker, origin, price,
-                        item_images ( sort_order, is_generated, images ( url ) ),
+                        item_images ( angle, sort_order, is_generated, images ( url ) ),
                         recipes:app_recipe_presentation!recipe_item_id (
                             amount, unit, sort_order, created_at, display_ingredient_id,
                             display_ingredient ( id, name )

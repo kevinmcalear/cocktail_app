@@ -44,6 +44,8 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         )
                     ),
                     item_images (
+                        id,
+                        angle,
                         sort_order,
                         image_id,
                         is_generated,
@@ -59,9 +61,10 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     )
                 `)
                 .eq('item_type', 'cocktail')
-                // Another bar's credited drinks with no venue behind them (a bar's
-                // signatures on its public profile) stay on that profile, out of the Library.
-                .or(`bar_id.not.is.null,origin_bar_profile_id.is.null${userId ? `,created_by.eq.${userId}` : ''}`);
+                // Drinks credited to another bar or person with no venue behind them (a
+                // bar's signatures, a bartender's originals) stay on that public profile,
+                // out of the Library.
+                .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
             if (!options?.allContexts) {
                 query = applyBarContextFilter(query, selectedContextIds);
@@ -101,6 +104,8 @@ export function useCocktail(id?: string | string[]) {
                 .select(`
                     *,
                     item_images (
+                        id,
+                        angle,
                         sort_order,
                         is_generated,
                         outdated_since,

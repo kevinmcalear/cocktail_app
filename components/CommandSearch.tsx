@@ -1,4 +1,5 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
+import { heroPicture } from '@/lib/itemImages';
 import { itemHref } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/lib/searchItem';
 import { SpecPillButton } from '@/components/SpecPillButton';
@@ -160,8 +161,7 @@ function categoryIcon(category?: SearchItem['category'] | RecentActivity['kind']
 
 function itemImageUrl(item: SearchItem): string | null {
   if (item.image?.uri) return item.image.uri as string;
-  const url = item.item_images?.[0]?.images?.url;
-  return url || null;
+  return heroPicture(item.item_images)?.url ?? null;
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
