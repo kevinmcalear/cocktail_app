@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, useTheme } from "tamagui";
 
 import { CustomIcon } from "@/components/ui/CustomIcons";
-import { webImageDropProps } from "@/lib/imageDrop";
+import { useWebImageDrop } from "@/hooks/useWebImageDrop";
 
 interface CocktailPhotoPlaceholderProps {
     onPress?: () => void;
@@ -15,10 +15,11 @@ export function CocktailPhotoPlaceholder({ onPress, onDropImages }: CocktailPhot
     const iconColor = theme.color11?.get() as string;
     const [dragOver, setDragOver] = useState(false);
     const isWeb = Platform.OS === "web";
-    const dropProps = isWeb ? (webImageDropProps(onDropImages, setDragOver) as any) : undefined;
+    const dropRef = useWebImageDrop(onDropImages, setDragOver);
 
     const content = (
         <View
+            ref={dropRef}
             style={[
                 styles.container,
                 {
@@ -39,14 +40,14 @@ export function CocktailPhotoPlaceholder({ onPress, onDropImages }: CocktailPhot
 
     if (!onPress) {
         return (
-            <View style={styles.pressable} {...dropProps}>
+            <View style={styles.pressable}>
                 {content}
             </View>
         );
     }
 
     return (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.pressable} {...dropProps}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.pressable}>
             {content}
         </TouchableOpacity>
     );

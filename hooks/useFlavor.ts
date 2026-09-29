@@ -113,7 +113,7 @@ export function useFlavorCatalog() {
     queryFn: async (): Promise<FlavorDrink[]> => {
       const { data, error } = await supabase
         .from('item_flavors')
-        .select(`${DIM_COLUMNS}, coverage, source, item:items!item_id ( id, name, bar_id, riff_of_id, item_images ( sort_order, is_generated, images ( url ) ) )`)
+        .select(`${DIM_COLUMNS}, coverage, source, item:items!item_id ( id, name, bar_id, riff_of_id, item_images ( angle, sort_order, is_generated, images ( url ) ) )`)
         .gte('coverage', MIN_COVERAGE);
       if (error) throw error;
       return ((data ?? []) as unknown as CatalogRow[])
