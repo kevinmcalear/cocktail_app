@@ -187,7 +187,6 @@ function RootLayoutNav() {
               name="ingredient/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
-            <Stack.Screen name="test" options={{ headerShown: false }} />
             {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
