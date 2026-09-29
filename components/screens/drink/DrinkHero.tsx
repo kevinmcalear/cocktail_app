@@ -24,6 +24,8 @@ interface DrinkHeroProps {
 export function DrinkHero({ name, imageUrl, glass, generated, palette, height, fade }: DrinkHeroProps) {
   const ds = useDs();
   const glow = palette?.[0] ? withAlpha(palette[0], ds.scheme === 'dark' ? 0.35 : 0.22) : null;
+  // Not 'transparent': that is transparent black, and iOS blends through it as a grey band.
+  const clear = withAlpha(ds.c.ground, 0);
   return (
     <View style={{ height, backgroundColor: ds.c.paper }}>
       <DrinkImage
@@ -36,7 +38,7 @@ export function DrinkHero({ name, imageUrl, glass, generated, palette, height, f
       />
       {fade ? (
         <LinearGradient
-          colors={[withAlpha(ds.c.ground, 0.35), 'transparent', glow ?? 'transparent', ds.c.ground]}
+          colors={[withAlpha(ds.c.ground, 0.35), clear, glow ?? clear, ds.c.ground]}
           locations={[0, 0.25, 0.7, 1]}
           style={styles.overlay}
         />
