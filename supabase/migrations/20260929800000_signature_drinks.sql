@@ -330,12 +330,12 @@ Ingredients from Superbueno menu (https://www.superbuenonyc.com/menu). No measur
 Created by Alonso Palomino.
 
 Ingredients from The Spirits Business (https://www.thespiritsbusiness.com/2025/01/cocktail-chat-limas-lady-bee/). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
-    ('ladybee.lima', NULL, 'Oca/Mashua', 'A dry, earthy drink on a red oca distillate from Cusco, coloured with mashua and topped with slices of both Andean tubers.', 'A customer favourite from the Tubers section that puts Andean root crops in the glass. The base is a red oca spirit made by Manuel Choqque in Huatata, Cusco, and slices of oca and mashua sit on the ice as edible accents. The same pickled tubers turn up on the food menu, and an earlier version, Oca/Olluco, used olluco tubers and potato pickles.
+    ('ladybee.lima', NULL, 'Oca Mashua', 'A dry, earthy drink on a red oca distillate from Cusco, coloured with mashua and topped with slices of both Andean tubers.', 'A customer favourite from the Tubers section that puts Andean root crops in the glass. The base is a red oca spirit made by Manuel Choqque in Huatata, Cusco, and slices of oca and mashua sit on the ice as edible accents. The same pickled tubers turn up on the food menu, and an earlier version, Oca/Olluco, used olluco tubers and potato pickles.
 
 Created by Alonso Palomino.
 
 Ingredients from The World''s 50 Best Bars (https://www.theworlds50best.com/stories/News/the-buzz-about-limas-lady-bee.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
-    ('ladybee.lima', NULL, 'Bee''s Knees', 'The classic gin, honey and citrus sour with an Amazon twist: mandarin-lime and honey from stingless ''abeja señorita'' bees.', 'Half of the bar''s name and a permanent fixture on the list. The honey comes from the native stingless bee that the bar is named after, one of the first products it received from its Amazon producer communities.
+    ('ladybee.lima', NULL, 'Bee''s Knees (Amazon twist)', 'The classic gin, honey and citrus sour with an Amazon twist: mandarin-lime and honey from stingless ''abeja señorita'' bees.', 'Half of the bar''s name and a permanent fixture on the list. The honey comes from the native stingless bee that the bar is named after, one of the first products it received from its Amazon producer communities.
 
 Created by Alonso Palomino in 2021.
 
@@ -349,7 +349,7 @@ Ingredients from 50 Best (https://www.the50.com/stories/News/what-bartenders-rea
     ('himkok.oslo', NULL, 'Birch', 'A dry martini twist on Himkok''s own Old Tom gin with meadowsweet and a birch sap syrup, served with a blue cheese olive.', 'Himkok''s answer to the martini and, per The World''s 50 Best Bars, a modern cocktail icon and must-try. It uses Old Tom gin from the bar''s own micro-distillery with syrup made from native birch and meadowsweet.
 
 Ingredients from The World''s 50 Best Bars (https://www.theworlds50best.com/bars/best-in-the-world/the-list/himkok.html). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
-    ('himkok.oslo', NULL, 'Beetroot Martini', 'An earthy, mezcal-based martini built on beetroot.', 'One of the house classics Himkok keeps on its list across menu changes, pairing smoky mezcal with Nordic beetroot for an adventurous take on the martini.
+    ('himkok.oslo', NULL, 'Beetroot (Reindeer Moss Martini)', 'An earthy, mezcal-based martini built on beetroot.', 'One of the house classics Himkok keeps on its list across menu changes, pairing smoky mezcal with Nordic beetroot for an adventurous take on the martini.
 
 Ingredients from Europe''s 50 Best Bars (https://www.the50.com/bars/best-in-europe/the-list/himkok.html). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
     ('himkok.oslo', NULL, 'Softis', 'A soft-serve-inspired dessert drink of Himkok x Linie aquavit with Diplom-Is ice cream, amaretto, white cacao and fino sherry.', 'Modelled on the Norwegian soft-serve cone. On the 2025 ''Designed by Sipping'' menu each drink was turned into a design object by Studio Sløyd, and Softis became a sculptural clock evoking melting ice cream.
@@ -581,7 +581,7 @@ Sources: https://www.the50.com/discovery/Establishments/Argentina/Buenos-Aires/C
 Created by Inés de los Santos.
 
 Ingredients from 50 Best Discovery (https://www.the50.com/discovery/Establishments/Argentina/Buenos-Aires/CoChinChina.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
-    ('baba_au_rum', NULL, 'Supremus No58', 'Rhum agricole and aged rum with lime, distilled falernum, spices and white summer tea.', 'The bar''s modern take on the Ti'' Punch, keeping grassy rhum agricole at the centre but adding an aged rum, a distilled falernum and white tea for a lighter, more aromatic drink. 50 Best names it among the signatures.
+    ('baba_au_rum', NULL, 'Supremus n°58', 'Rhum agricole and aged rum with lime, distilled falernum, spices and white summer tea.', 'The bar''s modern take on the Ti'' Punch, keeping grassy rhum agricole at the centre but adding an aged rum, a distilled falernum and white tea for a lighter, more aromatic drink. 50 Best names it among the signatures.
 
 Ingredients from Baba au Rum menu (https://www.babaaurum.com/the-menu). No measures have been published.', 'Ti'' Punch', NULL, 'Rocks', NULL, NULL),
     ('baba_au_rum', NULL, 'Baba''s Zombie', 'Five aged rums with fresh tropical juices, falernum, dry orange curaçao, lime, bitters and spices, in a tiki mug.', 'The house Zombie is the bar''s tiki flagship, blending five hand-picked Caribbean rums with old-school tiki ingredients. A pricier Star-5-Zombie version swaps in five ultra-premium aged rums for special occasions.
@@ -714,7 +714,7 @@ Created by Iain McPherson.
 Method: Freeze the rum, remove the frozen water, replace it with roasted coconut milk, then clarify milk-punch style.
 
 Ingredients from EdinburghGuide.com (https://edinburghguide.com/venues/pubs/panda-sons). No measures have been published.', 'Daiquiri', NULL, NULL, NULL, NULL),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 'Bloody Mary of cucumber and makrut lime gin, cryo-concentrated tomato juice, spice, Worcestershire and lemon, under a black Guinness foam.', 'The Red Panda has been on since the bar opened in 2013; the 2.0 version keeps the ingredients but freezes the water out of the tomato juice for a denser, sweeter, more acidic base. Punch called it one of the best Bloody Marys in the UK.
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 'Bloody Mary of cucumber and makrut lime gin, cryo-concentrated tomato juice, spice, Worcestershire and lemon, under a black Guinness foam.', 'The Red Panda has been on since the bar opened in 2013; the 2.0 version keeps the ingredients but freezes the water out of the tomato juice for a denser, sweeter, more acidic base. Punch called it one of the best Bloody Marys in the UK.
 
 Created by Iain McPherson in 2013.
 
@@ -749,7 +749,7 @@ Ingredients from The World''s 50 Best Bars (https://www.the50.com/bars/the-list/
     ('rodahusetsthlm', NULL, 'Raspberries & Whey', 'Tequila with whey flavoured with raspberries.', 'Another 50 Best pick, using whey, a dairy by-product, as the body of the drink, in keeping with the bar''s Fäviken-inspired focus on Nordic produce and preservation.
 
 Ingredients from The World''s 50 Best Bars (https://www.the50.com/bars/the-list/roda-huset.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
-    ('mimikakushi', NULL, 'Shadrach', 'Pre-bottled Martini of The Botanist gin dripped through Japanese ume with a touch of Mancino Secco vermouth, frozen in ice and served at -20°C.', 'The bar''s trademark, billed as one of the world''s coldest Martinis. Bottles are frozen layer by layer into a big ice block for a week, then carved out at the table from a trolley with Japanese ice tools, poured thick and syrupy, spritzed with a house citrus perfume and paired with a Toshiko Akiyoshi jazz track that gives it its name.
+    ('mimikakushi', NULL, 'Shadrach (Kori Kakushi Martini)', 'Pre-bottled Martini of The Botanist gin dripped through Japanese ume with a touch of Mancino Secco vermouth, frozen in ice and served at -20°C.', 'The bar''s trademark, billed as one of the world''s coldest Martinis. Bottles are frozen layer by layer into a big ice block for a week, then carved out at the table from a trolley with Japanese ice tools, poured thick and syrupy, spritzed with a house citrus perfume and paired with a Toshiko Akiyoshi jazz track that gives it its name.
 
 Created by Manja Stankovic.
 
@@ -1032,7 +1032,7 @@ Ingredients from Wine & Spirits Association of All Japan (https://wine-spirits.b
 Created by Atsushi Suzuki.
 
 Ingredients from Tokyo Weekender (https://www.tokyoweekender.com/food-and-drink/the-bellwood-tokyo-cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
-    ('the_bellwood', NULL, 'New-groni', 'A Negroni reworked with distilled Tabasco and a vermouth made with fermented strawberry juice.', 'A late-2023 menu addition where Suzuki rebuilds the Negroni with lab techniques: a distilled Tabasco brings chilli character, and the vermouth element is made with fermented strawberry juice.
+    ('the_bellwood', NULL, 'Ne(w)groni', 'A Negroni reworked with distilled Tabasco and a vermouth made with fermented strawberry juice.', 'A late-2023 menu addition where Suzuki rebuilds the Negroni with lab techniques: a distilled Tabasco brings chilli character, and the vermouth element is made with fermented strawberry juice.
 
 Created by Atsushi Suzuki in 2023.
 
@@ -1461,13 +1461,13 @@ INSERT INTO "seed_lines" VALUES
     ('ladybee.lima', NULL, 'Three Sips Martini', 1, NULL, NULL, 'Sherry', NULL, NULL, false),
     ('ladybee.lima', NULL, 'Three Sips Martini', 2, NULL, NULL, 'Extra-dry Vermouth', NULL, NULL, false),
     ('ladybee.lima', NULL, 'Three Sips Martini', 3, NULL, NULL, 'Olive, sea lettuce (and salicornia) and trout caviar served on a three-bowl…', NULL, 'garnish', false),
-    ('ladybee.lima', NULL, 'Oca/Mashua', 0, NULL, NULL, 'Red Oca Distillate', NULL, 'made with Manuel Choqque', false),
-    ('ladybee.lima', NULL, 'Oca/Mashua', 1, NULL, NULL, 'Mashua', NULL, 'for colour', false),
-    ('ladybee.lima', NULL, 'Oca/Mashua', 2, NULL, NULL, 'Pickled Tubers', NULL, 'per 50 Best 2025', false),
-    ('ladybee.lima', NULL, 'Oca/Mashua', 3, NULL, NULL, 'Slices of oca and mashua on the ice', NULL, 'garnish', false),
-    ('ladybee.lima', NULL, 'Bee''s Knees', 0, NULL, NULL, 'Gin', NULL, NULL, false),
-    ('ladybee.lima', NULL, 'Bee''s Knees', 1, NULL, NULL, 'Mandarin-lime Juice', NULL, NULL, false),
-    ('ladybee.lima', NULL, 'Bee''s Knees', 2, NULL, NULL, 'Stingless Bee Honey', NULL, 'abeja señorita, Amazon', false),
+    ('ladybee.lima', NULL, 'Oca Mashua', 0, NULL, NULL, 'Red Oca Distillate', NULL, 'made with Manuel Choqque', false),
+    ('ladybee.lima', NULL, 'Oca Mashua', 1, NULL, NULL, 'Mashua', NULL, 'for colour', false),
+    ('ladybee.lima', NULL, 'Oca Mashua', 2, NULL, NULL, 'Pickled Tubers', NULL, 'per 50 Best 2025', false),
+    ('ladybee.lima', NULL, 'Oca Mashua', 3, NULL, NULL, 'Slices of oca and mashua on the ice', NULL, 'garnish', false),
+    ('ladybee.lima', NULL, 'Bee''s Knees (Amazon twist)', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('ladybee.lima', NULL, 'Bee''s Knees (Amazon twist)', 1, NULL, NULL, 'Mandarin-lime Juice', NULL, NULL, false),
+    ('ladybee.lima', NULL, 'Bee''s Knees (Amazon twist)', 2, NULL, NULL, 'Stingless Bee Honey', NULL, 'abeja señorita, Amazon', false),
     ('ladybee.lima', NULL, 'Bloody Mary', 0, NULL, NULL, 'Scallop', NULL, 'fresh, from Ica; as topping', false),
     ('ladybee.lima', NULL, 'Bloody Mary', 1, NULL, NULL, 'Fresh Ica scallop', NULL, 'garnish', false),
     ('ladybee.lima', NULL, 'Acholado Cacaotal', 0, NULL, NULL, 'Acholado Pisco', NULL, 'house blend', false),
@@ -1476,8 +1476,8 @@ INSERT INTO "seed_lines" VALUES
     ('himkok.oslo', NULL, 'Birch', 1, NULL, NULL, 'Meadowsweet', NULL, NULL, false),
     ('himkok.oslo', NULL, 'Birch', 2, NULL, NULL, 'Birch Sap', NULL, NULL, false),
     ('himkok.oslo', NULL, 'Birch', 3, NULL, NULL, 'Blue cheese olive', NULL, 'garnish', false),
-    ('himkok.oslo', NULL, 'Beetroot Martini', 0, NULL, NULL, 'Mezcal', NULL, NULL, false),
-    ('himkok.oslo', NULL, 'Beetroot Martini', 1, NULL, NULL, 'Beetroot', NULL, NULL, false),
+    ('himkok.oslo', NULL, 'Beetroot (Reindeer Moss Martini)', 0, NULL, NULL, 'Mezcal', NULL, NULL, false),
+    ('himkok.oslo', NULL, 'Beetroot (Reindeer Moss Martini)', 1, NULL, NULL, 'Beetroot', NULL, NULL, false),
     ('himkok.oslo', NULL, 'Softis', 0, NULL, NULL, 'Linie', 'Aquavit', NULL, false),
     ('himkok.oslo', NULL, 'Softis', 1, NULL, NULL, 'Diplom-Is', 'Ice Cream', NULL, false),
     ('himkok.oslo', NULL, 'Softis', 2, NULL, NULL, 'Disaronno', 'Amaretto', NULL, false),
@@ -1700,12 +1700,12 @@ INSERT INTO "seed_lines" VALUES
     ('cochinchina.bar', NULL, 'Jazmín Shanghái', 0, NULL, NULL, 'Whisky', NULL, NULL, false),
     ('cochinchina.bar', NULL, 'Jazmín Shanghái', 1, NULL, NULL, 'Umeshu', NULL, NULL, false),
     ('cochinchina.bar', NULL, 'Jazmín Shanghái', 2, NULL, NULL, 'Jasmine Tea', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 0, NULL, NULL, 'Rhum Agricole', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 1, NULL, NULL, 'Aged Rum', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 2, NULL, NULL, 'Lime', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 3, NULL, NULL, 'Distilled Falernum', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 4, NULL, NULL, 'Spices', NULL, NULL, false),
-    ('baba_au_rum', NULL, 'Supremus No58', 5, NULL, NULL, 'White Summer Tea', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 0, NULL, NULL, 'Rhum Agricole', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 1, NULL, NULL, 'Aged Rum', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 2, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 3, NULL, NULL, 'Distilled Falernum', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 4, NULL, NULL, 'Spices', NULL, NULL, false),
+    ('baba_au_rum', NULL, 'Supremus n°58', 5, NULL, NULL, 'White Summer Tea', NULL, NULL, false),
     ('baba_au_rum', NULL, 'Baba''s Zombie', 0, NULL, NULL, 'Aged Rums', NULL, 'five, blended', false),
     ('baba_au_rum', NULL, 'Baba''s Zombie', 1, NULL, NULL, 'Tropical Juices', NULL, NULL, false),
     ('baba_au_rum', NULL, 'Baba''s Zombie', 2, NULL, NULL, 'Bitters', NULL, NULL, false),
@@ -1891,13 +1891,13 @@ INSERT INTO "seed_lines" VALUES
     ('pandaandsons', NULL, 'Coconut Daiquiri', 0, NULL, NULL, 'Bacardi Carta Blanca White Rum', 'White Rum', 'switched with roasted coconut milk', false),
     ('pandaandsons', NULL, 'Coconut Daiquiri', 1, NULL, NULL, 'Coconut Milk', NULL, 'Thai, with roasted coconut flakes', false),
     ('pandaandsons', NULL, 'Coconut Daiquiri', 2, NULL, NULL, 'Lime', NULL, NULL, false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 0, NULL, NULL, 'Tanqueray No. Ten Gin', 'Gin', 'infused with cucumber and torn makrut lime leaves', false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 1, NULL, NULL, 'Tomato Juice', NULL, 'cryo-concentrated', false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 2, NULL, NULL, 'Spice Mix', NULL, 'house blend', false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 3, NULL, NULL, 'Salt and Pepper', NULL, NULL, false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 4, NULL, NULL, 'Worcestershire Sauce', NULL, NULL, false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 5, NULL, NULL, 'Lemon Juice', NULL, 'fresh', false),
-    ('pandaandsons', NULL, 'Red Panda 2.0', 6, NULL, 'top', 'Guinness', NULL, NULL, false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 0, NULL, NULL, 'Tanqueray No. Ten Gin', 'Gin', 'infused with cucumber and torn makrut lime leaves', false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 1, NULL, NULL, 'Tomato Juice', NULL, 'cryo-concentrated', false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 2, NULL, NULL, 'Spice Mix', NULL, 'house blend', false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 3, NULL, NULL, 'Salt and Pepper', NULL, NULL, false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 4, NULL, NULL, 'Worcestershire Sauce', NULL, NULL, false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 5, NULL, NULL, 'Lemon Juice', NULL, 'fresh', false),
+    ('pandaandsons', NULL, 'Red Panda 2.0 (Bloody Mary)', 6, NULL, 'top', 'Guinness', NULL, NULL, false),
     ('pandaandsons', NULL, 'Birdcage', 0, NULL, NULL, 'Johnnie Walker Gold Reserve Blended Scotch', 'Blended Scotch Whisky', NULL, false),
     ('pandaandsons', NULL, 'Birdcage', 1, NULL, NULL, 'Rhubarb and Lemongrass Shrub', NULL, 'house made', false),
     ('pandaandsons', NULL, 'Birdcage', 2, NULL, NULL, 'Aperol', NULL, NULL, false),
@@ -1915,10 +1915,10 @@ INSERT INTO "seed_lines" VALUES
     ('rodahusetsthlm', NULL, 'Plums from Dreyer in Höör', 2, NULL, NULL, 'Eau-de-vie', NULL, NULL, false),
     ('rodahusetsthlm', NULL, 'Raspberries & Whey', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
     ('rodahusetsthlm', NULL, 'Raspberries & Whey', 1, NULL, NULL, 'Whey', NULL, 'raspberry flavoured', false),
-    ('mimikakushi', NULL, 'Shadrach', 0, 60, 'ml', 'The Botanist Islay Dry Gin', 'Gin', NULL, false),
-    ('mimikakushi', NULL, 'Shadrach', 1, 20, 'ml', 'Japanese Ume', NULL, 'the gin is dripped slowly through the ume', false),
-    ('mimikakushi', NULL, 'Shadrach', 2, NULL, NULL, 'Mancino Vermouth Secco', 'Dry Vermouth', 'a touch', false),
-    ('mimikakushi', NULL, 'Shadrach', 3, NULL, NULL, 'Spritz of house citrus perfume', NULL, 'garnish', false),
+    ('mimikakushi', NULL, 'Shadrach (Kori Kakushi Martini)', 0, 60, 'ml', 'The Botanist Islay Dry Gin', 'Gin', NULL, false),
+    ('mimikakushi', NULL, 'Shadrach (Kori Kakushi Martini)', 1, 20, 'ml', 'Japanese Ume', NULL, 'the gin is dripped slowly through the ume', false),
+    ('mimikakushi', NULL, 'Shadrach (Kori Kakushi Martini)', 2, NULL, NULL, 'Mancino Vermouth Secco', 'Dry Vermouth', 'a touch', false),
+    ('mimikakushi', NULL, 'Shadrach (Kori Kakushi Martini)', 3, NULL, NULL, 'Spritz of house citrus perfume', NULL, 'garnish', false),
     ('mimikakushi', NULL, 'Tokoramo', 0, NULL, NULL, 'Campari', NULL, NULL, false),
     ('mimikakushi', NULL, 'Tokoramo', 1, NULL, NULL, 'Mancino Rosso Sweet Vermouth', 'Sweet Vermouth', NULL, false),
     ('mimikakushi', NULL, 'Tokoramo', 2, NULL, NULL, 'Cherry Sencha Kombucha', NULL, NULL, false),
@@ -2187,8 +2187,8 @@ INSERT INTO "seed_lines" VALUES
     ('the_bellwood', NULL, 'Yama no Highball', 0, NULL, NULL, 'Tree-sap Spirit', NULL, NULL, false),
     ('the_bellwood', NULL, 'Yama no Highball', 1, NULL, NULL, 'Black Cardamom', NULL, NULL, false),
     ('the_bellwood', NULL, 'Yama no Highball', 2, NULL, NULL, 'Bay Leaves', NULL, 'roasted', false),
-    ('the_bellwood', NULL, 'New-groni', 0, NULL, NULL, 'Tabasco Distillate', NULL, NULL, false),
-    ('the_bellwood', NULL, 'New-groni', 1, NULL, NULL, 'Strawberry Vermouth', NULL, 'made from fermented strawberry juice', false),
+    ('the_bellwood', NULL, 'Ne(w)groni', 0, NULL, NULL, 'Tabasco Distillate', NULL, NULL, false),
+    ('the_bellwood', NULL, 'Ne(w)groni', 1, NULL, NULL, 'Strawberry Vermouth', NULL, 'made from fermented strawberry juice', false),
     ('bkksocialclub', NULL, 'Hand of God', 0, NULL, NULL, 'Ocho Reposado Tequila', 'Reposado Tequila', NULL, false),
     ('bkksocialclub', NULL, 'Hand of God', 1, NULL, NULL, 'Campari', NULL, NULL, false),
     ('bkksocialclub', NULL, 'Hand of God', 2, NULL, NULL, 'Cacao Malbec Wine Cordial', NULL, 'house-made', false),
