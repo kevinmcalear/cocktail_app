@@ -1,6 +1,6 @@
-// Security tests for 20260929200000_bar_accolades_and_menu_history: a bar's
-// accolades and menu editions are read with its profile by anyone, and
-// written by app admins only.
+// Security tests for 20260929900000_menu_history: a bar's menu editions are
+// read with its profile by anyone, and written by app admins only.
+// (profile_awards has its own, profile-awards.test.mjs.)
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -19,7 +19,7 @@ const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
 );
 if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
-  throw new Error(`Refusing to run accolade tests against a non-local API: ${status.API_URL}`);
+  throw new Error(`Refusing to run menu history tests against a non-local API: ${status.API_URL}`);
 }
 
 const run = randomUUID().slice(0, 8);
@@ -49,7 +49,6 @@ async function serviceInsert(table, row) {
 }
 
 const barProfile = (name, extra = {}) => ({ kind: 'bar', handle: `${name}.${run}`, display_name: `${name} ${run}`, ...extra });
-const accolade = (profileId, extra = {}) => ({ profile_id: profileId, award: "The World's 50 Best Bars", year: 2024, position: 12, ...extra });
 const edition = (profileId, extra = {}) => ({ profile_id: profileId, name: `Chapter One ${run}`, year: 2023, month: 5, ...extra });
 
 before(async () => {
@@ -60,10 +59,7 @@ before(async () => {
   await serviceInsert('user_bars', { user_id: users.barAdmin.id, bar_id: ids.bar, role_level: 40 });
   ids.public = (await serviceInsert('profiles', barProfile('harbour', { bar_id: ids.bar, is_public: true }))).id;
   ids.hidden = (await serviceInsert('profiles', barProfile('hidden', { is_public: false }))).id;
-  for (const id of [ids.public, ids.hidden]) {
-    await serviceInsert('profile_accolades', accolade(id));
-    await serviceInsert('profile_menu_editions', edition(id, { drinks: ['Harbour Martini'] }));
-  }
+  for (const id of [ids.public, ids.hidden]) await serviceInsert('profile_menu_editions', edition(id, { drinks: ['Harbour Martini'] }));
 });
 
 after(async () => {
@@ -76,16 +72,14 @@ after(async () => {
 });
 
 describe('reading', () => {
-  test("signed-out visitors read a public bar's accolades and menus, not a hidden bar's", async () => {
-    for (const table of ['profile_accolades', 'profile_menu_editions']) {
-      const { data, error } = await anon.from(table).select('profile_id').in('profile_id', [ids.public, ids.hidden]);
-      assert.ifError(error);
-      assert.deepEqual(data.map((r) => r.profile_id), [ids.public], table);
-    }
+  test("signed-out visitors read a public bar's menus, not a hidden bar's", async () => {
+    const { data, error } = await anon.from('profile_menu_editions').select('profile_id, drinks').in('profile_id', [ids.public, ids.hidden]);
+    assert.ifError(error);
+    assert.deepEqual(data, [{ profile_id: ids.public, drinks: ['Harbour Martini'] }]);
   });
 
   test('the hidden bar stays hidden from signed-in strangers too', async () => {
-    const { data } = await users.stranger.client.from('profile_accolades').select('profile_id').eq('profile_id', ids.hidden);
+    const { data } = await users.stranger.client.from('profile_menu_editions').select('profile_id').eq('profile_id', ids.hidden);
     assert.deepEqual(data, []);
   });
 });
@@ -93,39 +87,30 @@ describe('reading', () => {
 describe('writing', () => {
   test("nobody but an app admin adds, edits or removes them, not even the bar's own admin", async () => {
     for (const who of [anon, users.stranger.client, users.barAdmin.client]) {
-      const add = await who.from('profile_accolades').insert(accolade(ids.public, { year: 2025, position: 1 }));
-      assert.ok(add.error, 'accolade insert refused');
       const addMenu = await who.from('profile_menu_editions').insert(edition(ids.public, { name: `Sneaky ${run}` }));
       assert.ok(addMenu.error, 'menu insert refused');
-      const edit = await who.from('profile_accolades').update({ position: 1 }).eq('profile_id', ids.public).select();
-      assert.deepEqual(edit.data ?? [], [], 'accolade update touches nothing');
+      const edit = await who.from('profile_menu_editions').update({ month: 1 }).eq('profile_id', ids.public).select();
+      assert.deepEqual(edit.data ?? [], [], 'menu update touches nothing');
       const drop = await who.from('profile_menu_editions').delete().eq('profile_id', ids.public).select();
       assert.deepEqual(drop.data ?? [], [], 'menu delete touches nothing');
     }
-    const { rows } = await db.query('SELECT position FROM public.profile_accolades WHERE profile_id = $1', [ids.public]);
-    assert.deepEqual(rows, [{ position: 12 }]);
+    const { rows } = await db.query('SELECT month FROM public.profile_menu_editions WHERE profile_id = $1', [ids.public]);
+    assert.deepEqual(rows, [{ month: 5 }]);
   });
 
   test('an app admin curates them', async () => {
     const client = users.appAdmin.client;
-    const add = await client.from('profile_accolades').insert(accolade(ids.public, { position: null, title: 'Highest Climber' })).select().single();
+    const add = await client.from('profile_menu_editions').insert(edition(ids.public, { name: `Chapter Two ${run}`, year: 2024 })).select().single();
     assert.ifError(add.error);
-    const edit = await client.from('profile_menu_editions').update({ month: 6 }).eq('profile_id', ids.public).select();
+    const edit = await client.from('profile_menu_editions').update({ month: 6 }).eq('id', add.data.id).select();
     assert.ifError(edit.error);
     assert.equal(edit.data[0].month, 6);
-    const drop = await client.from('profile_accolades').delete().eq('id', add.data.id).select();
+    const drop = await client.from('profile_menu_editions').delete().eq('id', add.data.id).select();
     assert.equal(drop.data.length, 1);
   });
 });
 
 describe('shape', () => {
-  test('an accolade needs a position or a title, and the same one twice is refused', async () => {
-    const empty = await service.from('profile_accolades').insert(accolade(ids.public, { position: null, title: null }));
-    assert.equal(empty.error?.code, '23514');
-    const twice = await service.from('profile_accolades').insert(accolade(ids.public));
-    assert.equal(twice.error?.code, '23505');
-  });
-
   test('months run 1 to 12 and may be unknown; the same edition twice is refused', async () => {
     const bad = await service.from('profile_menu_editions').insert(edition(ids.public, { name: `Thirteen ${run}`, month: 13 }));
     assert.equal(bad.error?.code, '23514');
@@ -135,13 +120,12 @@ describe('shape', () => {
     assert.equal(twice.error?.code, '23505');
   });
 
-  test('deleting a profile takes its accolades and menus with it', async () => {
+  test('deleting a profile takes its menus with it', async () => {
     const gone = (await serviceInsert('profiles', barProfile('gone', { is_public: true }))).id;
-    await serviceInsert('profile_accolades', accolade(gone));
     await serviceInsert('profile_menu_editions', edition(gone));
     await db.query('DELETE FROM public.profiles WHERE id = $1', [gone]);
     const { rows } = await db.query(
-      'SELECT (SELECT count(*) FROM public.profile_accolades WHERE profile_id = $1) + (SELECT count(*) FROM public.profile_menu_editions WHERE profile_id = $1) AS n',
+      'SELECT count(*) AS n FROM public.profile_menu_editions WHERE profile_id = $1',
       [gone]
     );
     assert.equal(Number(rows[0].n), 0);

@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase';
 export const PROFILE_COLUMNS = 'id, kind, handle, display_name, avatar_url, locality';
 export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, credit_status, origin,
   creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
-  origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS})`;
+  origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),
+  co_creators:item_co_creators(profile:profiles(${PROFILE_COLUMNS}))`;
 
 async function fetchDrink(id: string): Promise<LineageDrink | null> {
   const { data, error } = await supabase.from('items').select(LINEAGE_COLUMNS).eq('id', id).maybeSingle();

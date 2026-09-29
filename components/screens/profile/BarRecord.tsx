@@ -1,55 +1,73 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useMenuEditions, useProfileAccolades } from '@/hooks/useProfiles';
-import { groupAccolades, menuDate, type MenuEdition } from '@/lib/accolades';
+import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
+import { groupAwards } from '@/lib/awards';
+import { menuDate, type MenuEdition } from '@/lib/menuEditions';
 
 const FIRST_MENUS = 6;
 
+const GROUPS_SHOWN = 3;
+
 /**
- * A bar's accolades, one row per award: its placings as year chips
- * ("2025 · No. 1") and named awards as lines under them. Nothing when it has none.
+ * A profile's awards, one row per list: its places as year chips
+ * ("2025 · No. 1") and its titles as lines under them. Each opens the list it
+ * came from. Long records start folded. Nothing when there are none.
  */
-export function Accolades({ profileId }: { profileId: string }) {
+export function Awards({ profileId }: { profileId: string }) {
   const ds = useDs();
-  const { data = [] } = useProfileAccolades(profileId);
-  const groups = groupAccolades(data);
+  const [all, setAll] = useState(false);
+  const { data = [] } = useProfileAwards(profileId);
+  const groups = groupAwards(data);
   if (!groups.length) return null;
+  const shown = all ? groups : groups.slice(0, GROUPS_SHOWN);
   return (
     <View style={styles.section}>
       <Caption tone="muted" style={styles.cap}>
-        Accolades
+        Awards
       </Caption>
       <View role="list">
-        {groups.map((g) => {
-          const placings = g.entries.filter((e) => e.label.startsWith('No. '));
-          const awards = g.entries.filter((e) => !e.label.startsWith('No. '));
-          const summary = g.entries.map((e) => `${e.year} ${e.label}`).join(', ');
-          return (
-            <View key={g.award} role="listitem" accessible accessibilityLabel={`${g.award}: ${summary}`} style={[styles.award, { borderBottomColor: ds.c.line }]}>
-              <View style={styles.awardHead}>
-                <DsText variant="headline" style={styles.flex}>
-                  {g.award}
-                </DsText>
-                {g.best !== null ? <Caption tone="muted">{`Best: No. ${g.best}`}</Caption> : null}
-              </View>
-              {placings.length ? (
-                <View style={styles.chips}>
-                  {placings.map((e) => (
-                    <Tag key={e.key} label={`${e.year} · ${e.label}`} tone={e.label === 'No. 1' ? 'accent' : 'default'} />
-                  ))}
-                </View>
-              ) : null}
-              {awards.map((e) => (
-                <Caption key={e.key}>{`${e.year} · ${e.label}`}</Caption>
-              ))}
+        {shown.map((g) => (
+          <View key={g.award} role="listitem" style={[styles.award, { borderBottomColor: ds.c.line }]}>
+            <View style={styles.head}>
+              <DsText variant="headline" style={styles.flex}>
+                {g.award}
+              </DsText>
+              {g.best !== null ? <Caption tone="muted">{`Best: No. ${g.best}`}</Caption> : null}
             </View>
-          );
-        })}
+            {g.places.length ? (
+              <View style={styles.chips}>
+                {g.places.map((a) => (
+                  <SourceLink key={a.id} url={a.source_url} label={`No. ${a.position}, ${g.award} ${a.year}`}>
+                    <Tag label={`${a.year} · No. ${a.position}`} tone={a.position === 1 ? 'accent' : 'default'} />
+                  </SourceLink>
+                ))}
+              </View>
+            ) : null}
+            {g.titles.map((a) => (
+              <SourceLink key={a.id} url={a.source_url} label={`${a.title}, ${g.award} ${a.year}`}>
+                <Caption>{`${a.year} · ${a.title}`}</Caption>
+              </SourceLink>
+            ))}
+          </View>
+        ))}
       </View>
+      {groups.length > GROUPS_SHOWN ? (
+        <Button label={all ? 'Show fewer' : `Show all ${data.length} awards`} variant="secondary" onPress={() => setAll((v) => !v)} />
+      ) : null}
     </View>
+  );
+}
+
+/** Opens where an award came from; plain text when there's no source. */
+function SourceLink({ url, label, children }: { url: string | null; label: string; children: ReactNode }) {
+  if (!url) return <View accessible accessibilityLabel={label}>{children}</View>;
+  return (
+    <PressableScale role="link" accessibilityLabel={`${label}. Open the list`} onPress={() => void Linking.openURL(url)} style={styles.start}>
+      {children}
+    </PressableScale>
   );
 }
 
@@ -81,7 +99,7 @@ function EditionRow({ edition: m, current }: { edition: MenuEdition; current: bo
   return (
     <View role="listitem" style={[styles.edition, { borderBottomColor: ds.c.line }]}>
       <View accessible accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, m.drinks.length ? `Drinks: ${m.drinks.join(', ')}` : null].filter(Boolean).join('. ')} style={styles.editionText}>
-        <View style={styles.awardHead}>
+        <View style={styles.head}>
           <DsText variant="headline" style={styles.flex}>
             {m.name}
           </DsText>
@@ -104,9 +122,10 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   award: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  awardHead: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
+  head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   editionText: { gap: space.xs },
+  start: { alignSelf: 'flex-start' },
   link: { textDecorationLine: 'underline', alignSelf: 'flex-start' },
 });

@@ -1,11 +1,13 @@
--- Accolades and menu history for the 50 bars on the map (the World's 50
--- Best Bars 2025 profiles from 20260929100000), researched on 29 Sep 2026
--- from the published lists and press; every row keeps the page it came from.
+-- Awards and menu history for every bar on the map: the World's 50 Best Bars
+-- 2025 (20260929100000) and the seven-city bars (20260929400000), researched
+-- on 29 Sep 2026 from the published lists and press; every row keeps the page
+-- it came from.
 --
---   accolades: 587 rows for 50 bars. The World's 50 Best Bars (1-100),
+--   awards: 587 rows for 50 bars. The World's 50 Best Bars (1-100),
 --     Asia's, North America's and Europe's 50 Best Bars (Europe's began in
 --     2026) with their special awards, the Tales of the Cocktail Spirited
---     Awards, the James Beard Outstanding Bar award and the CLASS Bar Awards,
+--     Awards, the James Beard Outstanding Bar award, the CLASS Bar Awards and
+--     the Australian Bar Awards,
 --     through the 2026 editions already announced: placings as positions,
 --     named awards as titles, by the year each was announced. Awards to people
 --     count only where the source ties them to the bar, and name them.
@@ -18,7 +20,7 @@
 -- Rows join on the profile handle, so a database without these profiles
 -- (local, tests) inserts nothing, and a rerun inserts nothing twice.
 
-INSERT INTO "public"."profile_accolades" ("profile_id", "award", "year", "position", "title", "source_url")
+INSERT INTO "public"."profile_awards" ("profile_id", "award", "year", "position", "title", "source_url")
 SELECT p.id, v.award, v.year::smallint, v.position::smallint, v.title, v.source_url
 FROM (VALUES
     ('barleonehk', 'Asia''s 50 Best Bars', 2026, 3, NULL, 'https://www.the50.com/bars/best-in-asia/list/1-50'),
@@ -610,7 +612,8 @@ FROM (VALUES
     ('nutmegandclove', 'The World''s 50 Best Bars', 2019, 90, NULL, 'https://www.the50.com/stories/News/the-worlds-50-best-bars-2019-51-100-list-in-pictures.html')
 ) AS v("handle", "award", "year", "position", "title", "source_url")
 JOIN "public"."profiles" p ON p.handle = v.handle AND p.kind = 'bar'
-ON CONFLICT ON CONSTRAINT "profile_accolades_once" DO NOTHING;
+-- Rows already there (the 2025 places from 20260929400000) are kept.
+ON CONFLICT DO NOTHING;
 
 INSERT INTO "public"."profile_menu_editions" ("profile_id", "name", "year", "month", "theme", "drinks", "source_url")
 SELECT p.id, v.name, v.year::smallint, v.month::smallint, v.theme, v.drinks, v.source_url

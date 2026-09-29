@@ -398,6 +398,8 @@ describe('members of a bar', () => {
       p_email: users.invitee.email, p_bar_id: ids.barOne, p_role_level: 10,
     });
     assert.ifError(error);
+    const { error: acceptError } = await users.invitee.client.rpc('accept_bar_invite', { p_bar_id: ids.barOne });
+    assert.ifError(acceptError);
 
     const { data } = await client
       .from('user_bars')
@@ -413,6 +415,122 @@ describe('members of a bar', () => {
       p_item_id: ids.legacyGlobal, p_bar_id: ids.barOne,
     });
     assert.ok(error);
+  });
+});
+
+describe('venue invites', () => {
+  const add = (who, email, bar = ids.barTwo, role = 20) =>
+    users[who].client.rpc('add_user_to_bar_by_email', { p_email: email, p_bar_id: bar, p_role_level: role });
+  const members = async (bar) => (await service.from('user_bars').select('user_id').eq('bar_id', bar)).data.map((r) => r.user_id);
+
+  test('adding an email answers the same whether or not it has an account, and nobody joins yet', async () => {
+    const withAccount = await add('otherAdmin', users.outsider.email.toUpperCase());
+    const without = await add('otherAdmin', `nobody-${run}@security-test.local`);
+    assert.deepEqual(withAccount, without);
+    assert.equal(withAccount.error, null);
+    assert.ok(!(await members(ids.barTwo)).includes(users.outsider.id));
+
+    const { data } = await users.otherAdmin.client.from('bar_invites').select('email, role_level').eq('bar_id', ids.barTwo).order('email');
+    assert.deepEqual(data, [
+      { email: `nobody-${run}@security-test.local`, role_level: 20 },
+      { email: users.outsider.email, role_level: 20 },
+    ]);
+  });
+
+  test('only the invitee and the venue\'s admins see an invite; nobody writes one directly', async () => {
+    const own = await users.outsider.client.from('bar_invites').select('email').eq('bar_id', ids.barTwo);
+    assert.deepEqual(own.data, [{ email: users.outsider.email }]);
+    for (const who of ['bartender', 'owner', 'invitee']) {
+      const { data } = await users[who].client.from('bar_invites').select('id').eq('bar_id', ids.barTwo);
+      assert.deepEqual(data, [], who);
+    }
+    const { error } = await users.outsider.client
+      .from('bar_invites')
+      .insert({ bar_id: ids.barOne, email: users.outsider.email, role_level: 40 });
+    assert.ok(error);
+    const { data: raised } = await users.outsider.client
+      .from('bar_invites')
+      .update({ role_level: 40 })
+      .eq('bar_id', ids.barTwo)
+      .select('id');
+    assert.ok(!raised?.length);
+  });
+
+  test('someone else can\'t accept an invite; the invitee joins at the invited role', async () => {
+    const { error: stolen } = await users.bartender.client.rpc('accept_bar_invite', { p_bar_id: ids.barTwo });
+    assert.ok(stolen);
+    assert.ok(!(await members(ids.barTwo)).includes(users.bartender.id));
+
+    const { data, error } = await users.outsider.client.rpc('accept_bar_invite', { p_bar_id: ids.barTwo });
+    assert.ifError(error);
+    assert.equal(data.role_level, 20);
+    const again = await users.outsider.client.rpc('accept_bar_invite', { p_bar_id: ids.barTwo });
+    assert.ok(again.error, 'an invite is used once');
+  });
+
+  test('adding a current member changes their role straight away', async () => {
+    const { data, error } = await add('otherAdmin', users.outsider.email, ids.barTwo, 30);
+    assert.ifError(error);
+    assert.equal(data.role_level, 30);
+    const { data: left } = await service.from('bar_invites').select('id').eq('bar_id', ids.barTwo).eq('email', users.outsider.email);
+    assert.deepEqual(left, []);
+  });
+
+  test('non-admins can\'t invite, and the invitee or an admin can remove an invite', async () => {
+    assert.ok((await add('bartender', `x-${run}@security-test.local`, ids.barOne)).error);
+    const { data: declined } = await users.otherAdmin.client
+      .from('bar_invites')
+      .delete()
+      .eq('email', `nobody-${run}@security-test.local`)
+      .select('id');
+    assert.equal(declined.length, 1);
+  });
+});
+
+describe('a venue keeps an admin', () => {
+  const keep = {};
+  before(async () => {
+    for (const label of ['keepA', 'keepB', 'keepStaff']) users[label] = await makeUser(label);
+    keep.bar = (await serviceInsert('bars', { name: `Keep ${run}` })).id;
+    keep.solo = (await serviceInsert('bars', { name: `Keep solo ${run}` })).id;
+    for (const [label, bar, role] of [['keepA', keep.bar, 40], ['keepStaff', keep.bar, 30], ['keepB', keep.solo, 40]]) {
+      await serviceInsert('user_bars', { user_id: users[label].id, bar_id: bar, role_level: role });
+    }
+  });
+  const role = async (label, bar = keep.bar) =>
+    (await service.from('user_bars').select('role_level').eq('bar_id', bar).eq('user_id', users[label].id)).data[0]?.role_level ?? null;
+
+  test('the only admin can\'t demote themselves, directly or through the RPC', async () => {
+    const { error } = await users.keepA.client.from('user_bars').update({ role_level: 30 }).eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.match(error?.message ?? '', /needs at least one Admin/);
+    const rpc = await users.keepA.client.rpc('add_user_to_bar_by_email', { p_email: users.keepA.email, p_bar_id: keep.bar, p_role_level: 35 });
+    assert.match(rpc.error?.message ?? '', /needs at least one Admin/);
+    assert.equal(await role('keepA'), 40);
+  });
+
+  test('the only admin can\'t leave while others are still on the team', async () => {
+    const { error } = await users.keepA.client.from('user_bars').delete().eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.ok(error);
+    assert.equal(await role('keepA'), 40);
+  });
+
+  test('with a second admin, either can step down, but not both', async () => {
+    await users.keepA.client.from('user_bars').update({ role_level: 40 }).eq('bar_id', keep.bar).eq('user_id', users.keepStaff.id);
+    assert.equal(await role('keepStaff'), 40);
+    const { error } = await users.keepA.client.from('user_bars').update({ role_level: 30 }).eq('bar_id', keep.bar).eq('user_id', users.keepA.id);
+    assert.ifError(error);
+    const { error: last } = await users.keepStaff.client.from('user_bars').update({ role_level: 10 }).eq('bar_id', keep.bar).eq('user_id', users.keepStaff.id);
+    assert.ok(last);
+    assert.equal(await role('keepStaff'), 40);
+  });
+
+  test('the last admin of a venue nobody else is in can leave, and a venue can still be deleted', async () => {
+    const { error } = await users.keepB.client.from('user_bars').delete().eq('bar_id', keep.solo).eq('user_id', users.keepB.id);
+    assert.ifError(error);
+    assert.equal(await role('keepB', keep.solo), null);
+    const { data, error: deleteError } = await users.keepStaff.client.from('bars').delete().eq('id', keep.bar).select('id');
+    assert.ifError(deleteError);
+    assert.equal(data.length, 1);
   });
 });
 

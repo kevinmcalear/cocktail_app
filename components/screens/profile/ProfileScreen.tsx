@@ -10,8 +10,9 @@ import { layout, space } from '@/constants/tokens';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { barsCrediting } from '@/lib/profiles';
 
-import { Accolades, MenuHistory } from './BarRecord';
+import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
+import { Positions } from './Positions';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'shelf';
@@ -136,9 +137,12 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       </View>
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
-      {profile.kind === 'bar' ? <Accolades profileId={profile.id} /> : null}
+
+      <Awards profileId={profile.id} />
 
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
+
+      <Positions profile={profile} />
 
       <MenuCredits credits={credits} names={names} />
 

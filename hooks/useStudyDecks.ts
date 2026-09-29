@@ -5,6 +5,7 @@ import { useCocktails } from '@/hooks/useCocktails';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useStudyPile } from '@/hooks/useStudyPile';
 import { useTonight } from '@/hooks/useTonight';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import type { PresentationRecipe } from '@/lib/spec';
 import type { GlassOption } from '@/lib/study';
 
@@ -31,7 +32,7 @@ interface CocktailRow {
   name: string;
   bar_id: string | null;
   glassware_id: string | null;
-  item_images?: { images?: { url: string } | null }[] | null;
+  item_images?: ItemImageLink[] | null;
   recipes?: PresentationRecipe[] | null;
 }
 
@@ -64,7 +65,7 @@ export function useStudyDecks() {
       cards[c.id] = {
         id: c.id,
         name: c.name,
-        imageUrl: c.item_images?.[0]?.images?.url ?? null,
+        imageUrl: heroPicture(c.item_images)?.url ?? null,
         barId: c.bar_id,
         glass: glasses.find((g) => g.id === c.glassware_id) ?? null,
         recipes: c.recipes ?? [],
