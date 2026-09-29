@@ -1,4 +1,4 @@
-// Who works where and who made what (20260929500000_bar_people.sql):
+// Who works where and who made what (20260929700000_bar_people.sql):
 // positions link a person's profile to a bar's; anyone who can see both sees
 // it, and only the person, the bar's publishers or a moderator can change it.
 // Co-creators share a drink's credit; moderators add them. Runs through the
