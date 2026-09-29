@@ -47,6 +47,7 @@ function ReleaseEditor({ barId, releaseId }: { barId: string; releaseId: string 
       </WebHead>
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
         <View style={styles.readable}>{body}</View>
