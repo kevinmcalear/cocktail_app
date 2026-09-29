@@ -82,7 +82,7 @@ export function AddDrinkSheet({ section, onClose, library, elsewhere, onAdd }: A
         </>
       }
     >
-      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search the venue’s drinks" autoCapitalize="none" />
+      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
       <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
         <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
         <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />

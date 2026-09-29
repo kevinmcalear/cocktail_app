@@ -190,8 +190,8 @@ export function useMenuLayouts(barId: string | null) {
 }
 
 /**
- * The drinks a menu can use: the venue's cocktails, beer and wine (or yours,
- * for a menu with no venue), newest first.
+ * The drinks a menu can use: the venue's cocktails, beer and wine (or yours
+ * plus the shared classics, for a menu with no venue), newest first.
  */
 export function useMenuLibrary(barId: string | null | undefined, enabled = true) {
   const userId = useAuth().user?.id ?? null;
@@ -208,7 +208,9 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
         .in('item_type', ['cocktail', 'beer', 'wine'])
         .order('created_at', { ascending: false })
         .limit(500);
-      const { data, error } = barId ? await query.eq('bar_id', barId) : await query.is('bar_id', null).eq('created_by', userId!);
+      const { data, error } = barId
+        ? await query.eq('bar_id', barId)
+        : await query.is('bar_id', null).or(`created_by.eq.${userId},is_catalog.eq.true`);
       if (error) throw error;
       return ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
     },
