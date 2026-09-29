@@ -40,7 +40,7 @@ interface CocktailRow {
   name: string;
   bar_id: string | null;
   glassware_id: string | null;
-  item_images?: { images?: { url: string } | null }[] | null;
+  item_images?: ItemImageLink[] | null;
   recipes?: PresentationRecipe[] | null;
 }
 
@@ -100,7 +100,7 @@ export function useStudyDecks() {
         id: c.id,
         kind: 'cocktail',
         name: c.name,
-        imageUrl: c.item_images?.[0]?.images?.url ?? null,
+        imageUrl: heroPicture(c.item_images)?.url ?? null,
         barId: c.bar_id,
         glass: glassOf(c.glassware_id),
         recipes: c.recipes ?? [],

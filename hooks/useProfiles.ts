@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { sortAwards, type Award } from '@/lib/awards';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -57,12 +58,28 @@ export function useProfileOriginals(profileId: string | null | undefined) {
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(sort_order, is_generated, outdated_since, images(url))`)
+        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
         .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
         .order('name')
         .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/** A profile's list places and titled awards, newest first. */
+export function useProfileAwards(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-awards', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<Award[]> => {
+      const { data, error } = await supabase
+        .from('profile_awards')
+        .select('id, award, year, position, title, source_url')
+        .eq('profile_id', profileId!);
+      if (error) throw error;
+      return sortAwards((data ?? []) as Award[]);
     },
   });
 }

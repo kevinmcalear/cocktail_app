@@ -1,3 +1,4 @@
+import { useAuth } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
@@ -9,9 +10,10 @@ import { useAppStore } from '@/store/useAppStore';
 export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
+    const userId = useAuth().user?.id ?? null;
 
     return useQuery({
-        queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel],
+        queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel, userId],
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
@@ -42,6 +44,8 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         )
                     ),
                     item_images (
+                        id,
+                        angle,
                         sort_order,
                         image_id,
                         is_generated,
@@ -56,7 +60,10 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                         category_id
                     )
                 `)
-                .eq('item_type', 'cocktail');
+                .eq('item_type', 'cocktail')
+                // Another bar's credited drinks with no venue behind them (a bar's
+                // signatures on its public profile) stay on that profile, out of the Library.
+                .or(`bar_id.not.is.null,origin_bar_profile_id.is.null${userId ? `,created_by.eq.${userId}` : ''}`);
 
             if (!options?.allContexts) {
                 query = applyBarContextFilter(query, selectedContextIds);
@@ -96,6 +103,8 @@ export function useCocktail(id?: string | string[]) {
                 .select(`
                     *,
                     item_images (
+                        id,
+                        angle,
                         sort_order,
                         is_generated,
                         outdated_since,
