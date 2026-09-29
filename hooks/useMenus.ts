@@ -118,7 +118,7 @@ export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
 
 /** The columns a menu needs from a drink (items), for toMenuDrink. */
 export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
-  item_images(sort_order, is_generated, images(url)),
+  item_images(angle, sort_order, is_generated, images(url)),
   recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))`;
 const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
 
