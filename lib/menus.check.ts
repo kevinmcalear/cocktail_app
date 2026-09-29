@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { groupMenus, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
+import { groupMenus, homeMenuLine, homeNight, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -22,7 +22,7 @@ assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: new Date(
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({
   id, name: id, barId: 'bar', createdBy: null, coverUrl: null, coverPosition: 50,
-  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), itemIds: [], event: null,
+  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, itemIds: [], event: null,
 });
 const groups = groupMenus(
   [
@@ -96,5 +96,19 @@ assert.equal(
   ),
   'Autumn menu at Little Rye\n\nSTIRRED\nHouse Martini 18\n  Gin, dry vermouth\nBolo Tie 19.50\nRye'
 );
+
+// --- a home menu's night ---
+assert.equal(homeMenuLine({ menuDate: '2026-10-03', guestCount: 6 }, now, 'en-GB'), 'Sat 3 Oct · 6 guests');
+assert.equal(homeMenuLine({ menuDate: null, guestCount: 1 }, now, 'en-GB'), '1 guest');
+assert.equal(homeMenuLine({ menuDate: null, guestCount: null }, now), null);
+const at = new Date(2026, 8, 25, 21, 0).getTime();
+assert.deepEqual(homeNight({ when: 'tonight', date: '', guests: '6' }, at), { menuDate: '2026-09-25', guestCount: 6 });
+assert.deepEqual(homeNight({ when: 'tomorrow', date: '', guests: '' }, at), { menuDate: '2026-09-26', guestCount: null });
+assert.deepEqual(homeNight({ when: 'date', date: '2026-10-4', guests: ' 12 ' }, at), { menuDate: '2026-10-04', guestCount: 12 });
+assert.deepEqual(homeNight({ when: 'none', date: 'junk', guests: '' }, at), { menuDate: null, guestCount: null });
+assert.ok('error' in homeNight({ when: 'date', date: 'next sat', guests: '' }, at));
+assert.ok('error' in homeNight({ when: 'none', date: '', guests: '0' }, at));
+assert.ok('error' in homeNight({ when: 'none', date: '', guests: '2.5' }, at));
+assert.ok('error' in homeNight({ when: 'none', date: '', guests: '501' }, at));
 
 console.log('menus: ok');

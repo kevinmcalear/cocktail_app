@@ -2,6 +2,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, DrinkImage, GlassButton, useDs } from '@/components/ds';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
+import { useMode } from '@/hooks/useMode';
 
 import { EditorSection } from './EditorSection';
 import type { LayoutEditor } from './useLayoutEditor';
@@ -35,9 +36,15 @@ export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height
   );
 }
 
-/** Save and Go live, or just Save for a menu that's already on. */
+/** A menu of your own, in home mode: no venue calendar, prices or menu photos. */
+export function useHomeMenu(editor: LayoutEditor): boolean {
+  return useMode().mode === 'home' && !editor.menu.barId;
+}
+
+/** Save and Go live, or just Save for a menu that's already on (or a home menu, which has its own night). */
 export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; size?: 'md' | 'lg' }) {
-  const on = editor.status === 'on';
+  const home = useHomeMenu(editor);
+  const on = editor.status === 'on' || home;
   const saveLabel = editor.saving ? 'Saving…' : editor.changed ? (on ? 'Save changes' : 'Save draft') : 'Saved';
   return (
     <View style={styles.actions}>
@@ -58,6 +65,7 @@ export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; s
 
 /** Every section, in order, then adding one. */
 export function EditorSections({ editor, targetable }: { editor: LayoutEditor; targetable?: boolean }) {
+  const home = useHomeMenu(editor);
   return (
     <View style={styles.sections}>
       {editor.layout.sections.map((s) => (
@@ -68,6 +76,7 @@ export function EditorSections({ editor, targetable }: { editor: LayoutEditor; t
           onTarget={targetable ? () => editor.setTargetKey(s.key) : undefined}
           onAdd={() => editor.setSheet({ kind: 'add', key: s.key })}
           onSettings={() => editor.setSheet({ kind: 'section', key: s.key })}
+          home={home}
           onRemove={(id) => editor.remove(s.key, id)}
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}
