@@ -1,15 +1,14 @@
 import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
+import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
-import { usePendingClaims } from '@/hooks/useProfiles';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
-import { useRedesign } from '@/lib/flags';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
@@ -68,9 +67,6 @@ export function SettingsScreen() {
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
   const tabBarInset = useFloatingTabBarInset();
-  // Only moderators can read other people's claims (RLS), so this is 0 for everyone else.
-  const claimCount = usePendingClaims().data?.length ?? 0;
-  const redesign = useRedesign();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -642,7 +638,7 @@ export function SettingsScreen() {
     <Section title="Account" minWidth={240}>
       {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
       {linkRow('Terms of use', () => router.push('/legal/terms'))}
-      {redesign && claimCount ? linkRow(`Profile claims (${claimCount} waiting)`, () => router.push('/p/review-claims')) : null}
+      <SafetyLinks row={linkRow} />
       <Separator />
       <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">

@@ -50,6 +50,7 @@ const MAPPING = {
   'safari': 'explore',
   'bookmark': 'bookmark-border',
   'bookmark.fill': 'bookmark',
+  'calendar': 'event',
   'person.crop.circle': 'account-circle',
   'folder.fill': 'folder',
   'tag.fill': 'local-offer',
@@ -92,6 +93,7 @@ const MAPPING = {
   'sun.max.fill': 'wb-sunny',
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
+  'flag': 'outlined-flag',
 } satisfies IconMapping;
 
 /**

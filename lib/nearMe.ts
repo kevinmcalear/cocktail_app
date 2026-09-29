@@ -69,6 +69,8 @@ export interface DiscoverRow {
   is_early: boolean;
   /** discover_top_bars only: drinks ranked there. */
   drinks?: number;
+  /** The bar's logo (its profile avatar), added by hooks/useDiscover. */
+  avatar_url?: string | null;
 }
 
 export interface RankedRow extends DiscoverRow {

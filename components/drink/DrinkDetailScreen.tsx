@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Paragraph, Text, XStack, YStack, useTheme } from 'tamagui';
@@ -47,7 +47,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
   const { data: dropdowns } = useDropdowns();
   // isPending, not isLoading: "no data yet" includes the static prerender and the
   // first paint, when nothing is fetching, and those must not read as not found.
-  const { data: item, isPending: isLoading } = kind.useItem(safeId);
+  const { data: item, isPending: isLoading, error } = kind.useItem(safeId);
   const canEdit = useCanEditItem(item);
   const [notesExpanded, setNotesExpanded] = useState(false);
 
@@ -60,6 +60,9 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
         })
       : null
   );
+
+  // Not yours to read (another bar's drink): its public page, if it's published.
+  if ((error as { code?: string } | null)?.code === 'PGRST116' && safeId) return <Redirect href={`/d/${safeId}`} />;
 
   if (isLoading || !item) {
     return (

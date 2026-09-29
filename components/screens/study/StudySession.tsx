@@ -12,6 +12,7 @@ import { glassOptions, orderDeck, type GlassOption, type Rating } from '@/lib/st
 import { useStudyProgress } from '@/store/useStudyProgress';
 
 import { GlassQuestion } from './GlassQuestion';
+import { PourBack } from './PourBack';
 
 const RATINGS: { rating: Rating; label: string; hint: string }[] = [
   { rating: 'again', label: 'Again', hint: 'You’ll see it first next time' },
@@ -25,7 +26,10 @@ interface StudySessionProps {
   glasses: GlassOption[];
 }
 
-/** One deck, one card at a time: guess the glass, reveal the spec, rate yourself. */
+/**
+ * One deck, one card at a time: guess the glass, reveal the spec (or, for a
+ * beer or wine, what to know about it), rate yourself.
+ */
 export function StudySession({ deck, cards, glasses }: StudySessionProps) {
   const ds = useDs();
   const router = useRouter();
@@ -88,7 +92,10 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
           </View>
         ) : card ? (
           <View style={styles.card}>
-            <Title>{card.name}</Title>
+            <View style={styles.name}>
+              {card.kind !== 'cocktail' ? <Caption tone="muted">{card.kind === 'beer' ? 'Beer' : 'Wine'}</Caption> : null}
+              <Title>{card.name}</Title>
+            </View>
             {card.glass ? (
               <GlassQuestion options={glassOptions(card.glass, glasses, card.id)} correctId={card.glass.id} picked={picked} onPick={setPicked} />
             ) : null}
@@ -98,10 +105,14 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
               <DrinkImage source={card.imageUrl} glass={card.glass?.icon ?? null} accessibilityLabel={card.name} aspectRatio={4 / 3} />
             ) : null}
             {revealed ? (
-              <SpecSection itemId={card.id} barId={card.barId} recipes={card.recipes} scale={1} />
+              card.kind === 'cocktail' ? (
+                <SpecSection itemId={card.id} barId={card.barId} recipes={card.recipes} scale={1} />
+              ) : (
+                <PourBack card={card} />
+              )
             ) : (
               <Button
-                label="Show the spec"
+                label={card.kind === 'cocktail' ? 'Show the spec' : 'Show the details'}
                 variant={card.glass && picked === null ? 'secondary' : 'primary'}
                 onPress={() => setRevealed(true)}
                 style={styles.reveal}
@@ -140,6 +151,7 @@ const styles = StyleSheet.create({
   segment: { flex: 1, height: 4, borderRadius: radius.pill },
   body: { paddingTop: space.lg, maxWidth: 640, width: '100%', alignSelf: 'center' },
   card: { gap: space.lg },
+  name: { gap: space.xs },
   reveal: { alignSelf: 'flex-start' },
   footer: { paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   rates: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, maxWidth: 640, width: '100%', alignSelf: 'center' },
