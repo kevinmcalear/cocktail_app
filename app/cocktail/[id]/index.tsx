@@ -17,7 +17,6 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
-import { useRedesign } from "@/lib/flags";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 
 export default function CocktailDetailsScreen() {
@@ -56,10 +55,8 @@ export default function CocktailDetailsScreen() {
         setIsEditing(false);
         setShowPhotoSheet(false);
     };
-
-    const redesign = useRedesign();
-    // The redesign replaces the read view; editing still uses the editor below.
-    if (redesign && !isEditing && !error) {
+    // The drink page is the read view; editing still uses the editor below.
+    if (!isEditing && !error) {
         return cocktail ? (
             <DrinkScreen
                 item={cocktail}

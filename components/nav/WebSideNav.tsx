@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { WEB_SIDEBAR_WIDTH } from '@/components/WebSidebar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useMode } from '@/hooks/useMode';
 import { currentProps } from '@/lib/a11yState';
@@ -15,6 +14,9 @@ import { CreateSheet } from './CreateSheet';
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { VenueSwitcher } from './VenueSwitcher';
 import { HOME_TABS, VENUE_TABS } from './WebTabBar';
+
+/** How wide the side nav is on wide web. */
+export const WEB_SIDEBAR_WIDTH = 240;
 
 const hrefFor = (name: string) => (name === 'index' ? '/' : `/${name}`) as Href;
 

@@ -15,7 +15,6 @@ jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
 jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null }));
-jest.mock('@/components/WebSidebar', () => ({ WEB_SIDEBAR_WIDTH: 240 }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 const mockPush = jest.fn();
 

@@ -9,7 +9,6 @@ Features start as a GitHub issue using the **Feature** template: the problem, wh
 ## 2. Build on a branch
 
 - Branch names: `feat/…`, `fix/…`, `docs/…`, or `stepN/…` for the redesign roadmap.
-- Redesigned screens go behind `useRedesign()` from `lib/flags.ts`.
 - Keep PRs to one step. If a step depends on an unmerged one, stack it on that branch and say so in the PR.
 
 ## 3. Verify
@@ -30,7 +29,6 @@ Recipes:
 - **Web against local Supabase:** `EXPO_NO_DOTENV=1` plus the env values from `supabase status`, then `expo start --web --no-dev --port 8090`. Dev mode bundles `.env` as a module and would point at production. `--no-dev` doesn't rebuild on edits, so restart after changes. Port 8081 is often taken.
 - **Demo data:** `docker exec -i supabase_db_cocktail_app psql -U postgres < supabase/seed_demo.sql` loads two made-up venues (Little Rye and Pale Moth), glassware, drinks and a current menu at each.
 - **Signing in locally without a password:** `node scripts/dev-user.mjs` creates `demo@example.test` (Admin at Little Rye, Bartender at Pale Moth) on the local stack only and writes a session to `.expo/dev-session.json`. On web, put its `session` in localStorage under its `storageKey` and reload. On the simulator, generate a magic link with the admin API and open `cocktailapp://auth/callback?token_hash=…&type=magiclink`, then tap Continue.
-- **Redesigned screens are the default** everywhere. To see the old screens locally, add `EXPO_PUBLIC_REDESIGN=0` to the web or native server's environment (with `--clear` if another checkout's server ran recently, since Metro can reuse a bundle built with other env values).
 - **iOS release build:** `npx expo run:ios --configuration Release`. Cancel the dev-client URL prompt and launch from the icon.
 - **Production web build:** `npm run build:web`, then serve `dist/` with the `vercel.json` rewrites applied.
 - **CI typecheck differs from local:** CI has no `expo-env.d.ts` or `.expo/types` (generated, ignored). Move both aside and run `tsc` to reproduce it.
@@ -51,7 +49,7 @@ Migrations, RLS, auth, `lib/roles.ts`, edge function deploys, production data, s
 
 The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the target. Each step ships on phone, tablet and web together.
 
-0. **Guardrails:** agent docs, the main-branch hook, the design ratchet, the redesign flag, PR and issue templates.
+0. **Guardrails:** agent docs, the main-branch hook, the design ratchet, the redesign flag (removed in step 9), PR and issue templates.
 1. **Design system:** tokens (colour, type, radius, spacing, springs), fonts, shared components, and a hidden gallery route showing them in both themes, at phone and desktop widths, for two venue brands.
 2. **Navigation and venue theming:** NativeTabs (Tonight, Library, Prep, Study), the venue switcher, and a per-venue theme from the logo colours.
 3. **The drink page:** colour-field hero, spec, photo angles with automatic sketches, locked sections by role, venue roles.
@@ -59,3 +57,5 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 5. **Study and batch.**
 6. **Expo SDK 58**, once it's stable.
 7. **Home mode, then the public layer:** my bar, collections, profiles, credit and lineage, comparison rankings, moderation.
+8. **The gaps from steps 2 and 3:** venue brand settings with a live preview; the drink page's Service section.
+9. **Retire the old app:** port what only the old screens did (New and drafts, beer and wine study, the photo carousel, home menus, orphaned screens), then delete the old screens and the redesign flag.

@@ -1,0 +1,35 @@
+import type { ItemImageLink } from '@/lib/itemImages';
+
+/** One row in search and the menu builders: a drink, ingredient, menu or category. */
+export interface SearchItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category" | "Menu";
+  isDraft?: boolean;
+  /** How far a draft has got, for its badge. */
+  draftProgress?: { percentage: number; color: string; label: string; badgeBg: string; badgeText: string };
+  price?: string | null;
+  recipes?: {
+    display_ingredient_id?: string | null;
+    ingredient_item_id?: string;
+    ingredient?: {
+      name: string;
+      item_categories?: {
+        category_id: string;
+      }[];
+    } | null;
+  }[];
+  item_images?: ItemImageLink[];
+  /** Set with `image` when that picture is a generated sketch. */
+  imageIsSketch?: boolean;
+  item_categories?: {
+    category_id: string;
+  }[];
+  /** The picture, as an image source. */
+  image?: { uri?: string } | null;
+  method_id?: string | null;
+  glassware_id?: string | null;
+  family_id?: string | null;
+  ice_id?: string | null;
+}

@@ -15,7 +15,7 @@ import { UniversalCreateButton } from '@/components/UniversalCreateButton';
 import { CreatorWorkspace } from '@/components/CreatorWorkspace';
 import { CreatorWorkspaceEditor } from '@/components/CreatorWorkspaceEditor';
 import { DraftFolderTree, DraftNodeType, SelectedDraftNode } from '@/components/DraftFolderTree';
-import type { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/lib/searchItem';
 import {
     WorkspaceFrame,
     EditingState,

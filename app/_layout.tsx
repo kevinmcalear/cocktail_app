@@ -27,7 +27,6 @@ import { DialogHost } from '@/components/DialogHost';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
-import { WebSidebar } from '@/components/WebSidebar';
 import { WebSideNav } from '@/components/nav/WebSideNav';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -35,7 +34,6 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { BRAND } from '@/constants/brand';
 import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
-import { useRedesign } from '@/lib/flags';
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
@@ -93,7 +91,6 @@ function RootLayoutNav() {
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
   const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v';
-  const redesign = useRedesign();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -113,7 +110,7 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? (redesign ? <WebSideNav /> : <WebSidebar />) : null}
+        {showWebSidebar ? <WebSideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
