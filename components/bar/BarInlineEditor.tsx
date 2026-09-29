@@ -4,10 +4,12 @@ import { Image } from 'expo-image';
 import { Button, Card, Input, Label, ScrollView, Text, XStack, YStack, useTheme } from 'tamagui';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
+import { TeamMembers } from '@/components/bar/TeamMembers';
 import { GlassView } from '@/components/ui/GlassView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useBarEditor } from '@/hooks/useBarEditor';
 import type { EditorChromeState } from '@/lib/editorChrome';
+import { roleLabel } from '@/lib/roles';
 
 interface BarInlineEditorProps {
     barId: string;
@@ -15,14 +17,6 @@ interface BarInlineEditorProps {
     onChromeState?: (state: EditorChromeState | null) => void;
     /** Skip own ScrollView when nested in a parent scroller (e.g. Settings). */
     embedded?: boolean;
-}
-
-function getRoleName(level: number) {
-    if (level >= 40) return 'Admin / Owner';
-    if (level >= 35) return 'Drink Creator';
-    if (level >= 30) return 'Manager';
-    if (level >= 20) return 'Bartender';
-    return 'Viewer';
 }
 
 function ColorSwatchPicker({
@@ -245,7 +239,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                             Your Access Level
                         </Text>
                         <Text fontSize={15} fontWeight="bold" color="$color">
-                            {getRoleName(editor.roleLevel)}
+                            {roleLabel(editor.roleLevel)}
                         </Text>
                         {!editor.canEdit && (
                             <Text fontSize={12} color="$color11" marginTop="$1">
@@ -269,24 +263,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                 </YStack>
             </Card>
 
-            <YStack gap="$3">
-                <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
-                    Members ({editor.members.length})
-                </Text>
-                {editor.members.length > 0 ? (
-                    editor.members.map((member: any) => (
-                        <Card key={member.user_id} padding="$3" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius={12}>
-                            <XStack justifyContent="space-between" alignItems="center">
-                                {/* Emails are only returned to bar admins (and your own row). */}
-                                <Text fontSize={14} fontWeight="600" color="$color">{member.email ?? 'Team member'}</Text>
-                                <Text fontSize={12} color="$color11">{getRoleName(member.role_level)}</Text>
-                            </XStack>
-                        </Card>
-                    ))
-                ) : (
-                    <Text color="$color11" fontStyle="italic" fontSize={13}>No members found.</Text>
-                )}
-            </YStack>
+            <TeamMembers barId={barId} members={editor.members} myRole={editor.roleLevel} />
 
             <YStack gap="$3">
                 <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>

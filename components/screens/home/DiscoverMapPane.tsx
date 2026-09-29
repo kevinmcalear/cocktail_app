@@ -8,7 +8,7 @@ import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings
 import { layout, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
-import { areaLabel, areaParams, peopleCount, type Area } from '@/lib/nearMe';
+import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { DiscoverMap, MapCredit } from './DiscoverMap';
@@ -39,7 +39,7 @@ function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
           </Caption>
         </View>
         {pin.score === null ? (
-          <Caption tone="muted">{`Early · ${peopleCount(pin.rankers)}`}</Caption>
+          <Caption tone="muted">{pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
         ) : (
           <View style={styles.score}>
             <Spec>{formatScore(pin.score)}</Spec>
@@ -111,7 +111,7 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
     <AreaRankList rows={ranked} scoreDetail={byDrink ? undefined : (r) => peopleCount(r.rankers)} />
   ) : early.length ? (
     <>
-      <ListNote>{`Early: nothing here has ${MIN_RANKERS} rankers yet, so there are no scores. These are the bars people have started ranking.`}</ListNote>
+      <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
       <EarlyList rows={early} />
     </>
   ) : (
