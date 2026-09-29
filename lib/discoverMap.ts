@@ -11,6 +11,8 @@ export interface MapPin {
   /** For the /p/<handle> link. */
   handle: string;
   name: string;
+  /** The bar's logo, when it has one. */
+  logo: string | null;
   place: string;
   latitude: number;
   longitude: number;
@@ -29,6 +31,7 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
       id: r.venue_profile_id,
       handle: r.handle,
       name: r.display_name,
+      logo: r.avatar_url ?? null,
       place: [r.locality, r.city].filter(Boolean).join(', '),
       latitude: r.latitude!,
       longitude: r.longitude!,
