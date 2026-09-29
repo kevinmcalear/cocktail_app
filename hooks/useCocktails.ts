@@ -112,7 +112,9 @@ export function useCocktail(id?: string | string[]) {
                         images (
                             url,
                             id,
-                            palette
+                            palette,
+                            credit,
+                            source_url
                         )
                     ),
                     recipes:app_recipe_presentation!recipe_item_id (
