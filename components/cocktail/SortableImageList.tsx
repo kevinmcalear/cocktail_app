@@ -1,6 +1,6 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { webImageDropProps } from '@/lib/imageDrop';
+import { useWebImageDrop } from '@/hooks/useWebImageDrop';
 import { Image as ExpoImage } from 'expo-image';
 import React, { useState } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -24,6 +24,7 @@ interface SortableImageListProps {
 
 export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUris, generateComponent }: SortableImageListProps) {
     const [dragOver, setDragOver] = useState(false);
+    const dropRef = useWebImageDrop(onAddUris, setDragOver);
     const isWeb = Platform.OS === 'web';
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<ImageItem>) => {
         const index = getIndex();
@@ -80,7 +81,7 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
             
             <View
                 style={[styles.listContainer, dragOver && styles.listContainerDragOver]}
-                {...(isWeb ? (webImageDropProps(onAddUris, setDragOver) as any) : null)}
+                ref={dropRef}
             >
                 <DraggableFlatList
                     data={images}

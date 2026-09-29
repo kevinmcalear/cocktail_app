@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useCurrentMenuDrinks } from '@/hooks/useCurrentMenuDrinks';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
 
 interface MenuRow {
@@ -21,7 +22,7 @@ interface NamedItem {
 interface CocktailRow {
   id: string;
   glassware_id: string | null;
-  item_images?: { images?: { url: string } | null }[] | null;
+  item_images?: ItemImageLink[] | null;
 }
 
 export interface TonightDrink {
@@ -62,7 +63,7 @@ export function useTonight(venueId: string | null) {
         id: item.id,
         name: item.name,
         category,
-        imageUrl: cocktail?.item_images?.[0]?.images?.url ?? null,
+        imageUrl: heroPicture(cocktail?.item_images)?.url ?? null,
         glass: (cocktail?.glassware_id && glassIcon.get(cocktail.glassware_id)) || fallbackGlass(category),
         menuId: row.menu_id,
       });

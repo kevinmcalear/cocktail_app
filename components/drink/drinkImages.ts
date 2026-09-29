@@ -3,6 +3,7 @@ import { decode } from 'base64-arraybuffer';
 import { Alert } from 'react-native';
 
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
+import { isHeroLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
 
 /** Asks for photo access and lets the user pick photos; returns their local URIs. */
@@ -19,6 +20,17 @@ export async function pickDrinkPhotos(): Promise<string[]> {
     quality: 0.8,
   });
   return result.canceled ? [] : result.assets.map((asset) => asset.uri);
+}
+
+/** Asks for camera access and takes one photo; returns its local URI, or null if cancelled. */
+export async function takeDrinkPhoto(): Promise<string | null> {
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Camera access needed', 'Allow camera access in Settings to take drink photos.');
+    return null;
+  }
+  const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 5], quality: 0.8 });
+  return result.canceled ? null : (result.assets[0]?.uri ?? null);
 }
 
 /** Uploads a local photo to the drinks bucket at `folder/`; returns its new `images` row id. */
@@ -63,22 +75,27 @@ export async function imageIdFor(uri: string, folder: string): Promise<string | 
 }
 
 /**
- * Sets an item's picture links to `imageIds`, in order. With `replace`, links
- * not in the list are removed. Links that stay are updated in place rather
- * than deleted and re-created, so what the server knows about each one (its
- * angle, and whether a photo may be out of date) survives the save.
+ * Sets an item's hero picture links to `imageIds`, in order. With `replace`,
+ * hero links not in the list are removed. Links that stay are updated in place
+ * rather than deleted and re-created, so what the server knows about each one
+ * (whether a photo may be out of date) survives the save. Service photos (side,
+ * top, garnish, hand-off) belong to the drink page's Service section and are
+ * never touched here.
  */
 export async function setItemImages(itemId: string, imageIds: string[], { replace }: { replace: boolean }) {
-  const { data: existing, error } = await supabase
+  const { data: links, error } = await supabase
     .from('item_images')
-    .select('id, image_id, sort_order')
+    .select('id, image_id, sort_order, angle')
     .eq('item_id', itemId);
   if (error) throw error;
-  const linkByImage = new Map((existing ?? []).map((link) => [link.image_id, link]));
+  const existing = (links ?? []).filter(isHeroLink);
+  const servicePhotos = new Set((links ?? []).filter((link) => !isHeroLink(link)).map((link) => link.image_id));
+  const linkByImage = new Map(existing.map((link) => [link.image_id, link]));
+  const heroIds = imageIds.filter((id) => !servicePhotos.has(id));
 
   if (replace) {
-    const keep = new Set(imageIds);
-    const removed = (existing ?? []).filter((link) => !keep.has(link.image_id)).map((link) => link.id);
+    const keep = new Set(heroIds);
+    const removed = existing.filter((link) => !keep.has(link.image_id)).map((link) => link.id);
     if (removed.length) {
       const { error: deleteError } = await supabase.from('item_images').delete().in('id', removed);
       if (deleteError) throw deleteError;
@@ -86,7 +103,7 @@ export async function setItemImages(itemId: string, imageIds: string[], { replac
   }
 
   const added: { item_id: string; image_id: string; sort_order: number }[] = [];
-  for (const [index, imageId] of imageIds.entries()) {
+  for (const [index, imageId] of heroIds.entries()) {
     const link = linkByImage.get(imageId);
     if (!link) {
       added.push({ item_id: itemId, image_id: imageId, sort_order: index });

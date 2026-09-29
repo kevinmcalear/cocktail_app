@@ -34,7 +34,7 @@ export interface RankEntry {
 
 const ENTRY_COLUMNS = `
   id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key, had_on, created_at, score,
-  item:items!item_id ( name, item_images ( sort_order, is_generated, images ( url ) ) ),
+  item:items!item_id ( name, item_images ( angle, sort_order, is_generated, images ( url ) ) ),
   venue:profiles!venue_profile_id ( display_name, locality, postcode, city, country_code )
 `;
 

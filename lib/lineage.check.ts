@@ -4,8 +4,11 @@ import {
   creditLabel,
   creditSentence,
   creditText,
+  creators,
   hasLineage,
+  joinNames,
   MAX_ANCESTORS,
+  shortNames,
   sortRiffs,
   walkAncestors,
   type CreditProfile,
@@ -76,6 +79,18 @@ async function main() {
   assert.equal(creditText(creditSentence(drink('x', null, { creator: person }), null)), 'By Sam Ross');
   assert.equal(creditText(creditSentence(drink('x', null, { origin_bar: bar, origin_year: 1999 }), null)), 'At Milk & Honey, 1999');
   assert.equal(creditText(creditSentence(drink('x', 'y'), { id: 'y', name: 'Daiquiri' })), 'Riff of Daiquiri');
+  // Several makers: first-named first, each a link, no repeats.
+  const kitty: CreditProfile = { ...person, id: 'p2', handle: 'kitty', display_name: 'Kitty Gardner' };
+  const tom: CreditProfile = { ...person, id: 'p3', handle: 'tom', display_name: 'Tom McHugh' };
+  const team = drink('dt', null, { creator: person, co_creators: [{ profile: kitty }, { profile: tom }, { profile: person }, { profile: null }], origin_bar: bar });
+  assert.deepEqual(creators(team).map((p) => p.id), ['p1', 'p2', 'p3']);
+  assert.equal(creditText(creditSentence(team, null)), 'By Sam Ross, Kitty Gardner and Tom McHugh at Milk & Honey');
+  assert.equal(creditSentence(team, null).filter((p) => p.profileId).length, 4);
+  assert.equal(joinNames(['Kitty']), 'Kitty');
+  assert.equal(joinNames(['Kitty', 'Tom']), 'Kitty and Tom');
+  assert.equal(joinNames([]), '');
+  assert.equal(shortNames(['Kitty', 'Tom']), 'Kitty and Tom');
+  assert.equal(shortNames(['Kitty', 'Darren', 'Tom']), 'Kitty and 2 others');
   // A year alone says nothing useful.
   assert.deepEqual(creditSentence(drink('x', null, { origin_year: 1920 }), null), []);
 

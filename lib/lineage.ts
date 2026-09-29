@@ -25,6 +25,24 @@ export interface LineageDrink {
   origin: string | null;
   creator: CreditProfile | null;
   origin_bar: CreditProfile | null;
+  /** Everyone else who made it (item_co_creators), after the first-named creator. */
+  co_creators?: { profile: CreditProfile | null }[] | null;
+}
+
+/** Everyone credited with making the drink, first-named first. */
+export function creators(drink: Pick<LineageDrink, 'creator' | 'co_creators'>): CreditProfile[] {
+  const all = [drink.creator, ...(drink.co_creators ?? []).map((c) => c.profile)].filter((p): p is CreditProfile => !!p);
+  return all.filter((p, i) => all.findIndex((q) => q.id === p.id) === i);
+}
+
+/** "Kitty", "Kitty and Darren", "Kitty, Darren and Tom". */
+export function joinNames(names: string[]): string {
+  return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+}
+
+/** Short enough for a card: "Kitty and Darren", "Kitty and 2 others". The credit sentence names everyone. */
+export function shortNames(names: string[]): string {
+  return names.length > 2 ? `${names[0]} and ${names.length - 1} others` : joinNames(names);
 }
 
 /** Deep enough for any real family (Whisky Sour > Gold Rush > Penicillin > a riff). */
@@ -89,9 +107,11 @@ export type CreditPart = { text: string; profileId?: string; drinkId?: string };
 export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, 'id' | 'name'> | null): CreditPart[] {
   const parts: CreditPart[] = [];
   if (parent) parts.push({ text: 'Riff of ' }, { text: parent.name, drinkId: parent.id });
-  if (drink.creator) {
-    parts.push({ text: parts.length ? ' by ' : 'By ' }, { text: drink.creator.display_name, profileId: drink.creator.id });
-  }
+  const makers = creators(drink);
+  makers.forEach((m, i) => {
+    const joiner = i === 0 ? (parts.length ? ' by ' : 'By ') : i === makers.length - 1 ? ' and ' : ', ';
+    parts.push({ text: joiner }, { text: m.display_name, profileId: m.id });
+  });
   if (drink.origin_bar) {
     parts.push({ text: parts.length ? ' at ' : 'At ' }, { text: drink.origin_bar.display_name, profileId: drink.origin_bar.id });
   }
