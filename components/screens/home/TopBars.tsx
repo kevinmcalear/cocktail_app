@@ -4,14 +4,14 @@ import { Caption, Headline } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useTopBars } from '@/hooks/useDiscover';
-import { areaLabel, peopleCount, type Area } from '@/lib/nearMe';
+import { areaLabel, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
 
 /**
  * "Top bars near you", by bar score: the average of a bar's drink scores,
  * weighted by how many people ranked each (see the discover migration).
- * Early bars (fewer than MIN_RANKERS people) are listed without a score when
- * no bar has one yet.
+ * Early bars (fewer than MIN_RANKERS people, or nobody yet) are listed
+ * without a score when no bar has one yet.
  */
 export function TopBars({ area }: { area: Area }) {
   const where = areaLabel(area);
@@ -27,15 +27,15 @@ export function TopBars({ area }: { area: Area }) {
   } else if (early.length) {
     body = (
       <>
-        <ListNote>{`No bar ${where} has a score yet. These are the ones people have started ranking; a bar gets a score once ${MIN_RANKERS} people rank drinks there.`}</ListNote>
+        <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
         <EarlyList rows={early} />
       </>
     );
-  } else body = <ListNote>{`Nobody has ranked a drink at a bar ${where} yet.`}</ListNote>;
+  } else body = <ListNote>{`No bars ${where} on Cocktail yet.`}</ListNote>;
 
   return (
     <View style={styles.section}>
-      <Caption tone="muted">{ranked.length || isLoading ? 'Bar score, from every drink ranked there' : early.length ? 'Early' : 'Not ranked yet'}</Caption>
+      <Caption tone="muted">{ranked.length || isLoading ? 'Bar score, from every drink ranked there' : early.some((r) => r.rankers > 0) ? 'Early' : early.length ? 'Not ranked yet' : 'No bars yet'}</Caption>
       <Headline role="heading">{`Top bars ${where}`}</Headline>
       {body}
     </View>

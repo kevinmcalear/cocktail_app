@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
-import { formatDistance, peopleCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
+import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
 const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
@@ -121,7 +121,7 @@ export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
         <PressableScale
           key={r.venue_profile_id}
           role="link"
-          accessibilityLabel={`${r.display_name}, ${placeOf(r)}. Early: ${peopleCount(r.rankers)} ranked`}
+          accessibilityLabel={`${r.display_name}, ${placeOf(r)}. ${rankedCount(r.rankers)}`}
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
           style={[styles.row, { borderBottomColor: ds.c.line }]}
         >
@@ -131,7 +131,7 @@ export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
               {placeOf(r)}
             </Caption>
           </View>
-          <Caption tone="muted">{`${peopleCount(r.rankers)} ranked`}</Caption>
+          <Caption tone="muted">{rankedCount(r.rankers)}</Caption>
         </PressableScale>
       ))}
     </View>

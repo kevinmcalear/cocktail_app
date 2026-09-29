@@ -92,6 +92,18 @@ export function peopleCount(n: number): string {
   return n === 1 ? '1 person' : `${n} people`;
 }
 
+/** "3 people ranked", or "Not ranked yet" for a bar on Cocktail nobody has ranked. */
+export function rankedCount(n: number): string {
+  return n ? `${peopleCount(n)} ranked` : 'Not ranked yet';
+}
+
+/** The note over early bars: some people ranking them, or nobody yet. */
+export function earlyNote(early: readonly DiscoverRow[], minRankers: number): string {
+  return early.some((r) => r.rankers > 0)
+    ? `Nothing here has ${minRankers} rankers yet, so there are no scores. The bars people have started ranking come first.`
+    : `Nobody has ranked a drink at these bars yet. A bar gets a score once ${minRankers} people rank drinks there.`;
+}
+
 // --- Adding a bar from an address search ---
 
 /** Photon asks for at most about one request a second per user, so: */
