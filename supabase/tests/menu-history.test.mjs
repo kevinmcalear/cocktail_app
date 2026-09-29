@@ -1,4 +1,4 @@
-// Security tests for 20260929900000_menu_history: a bar's menu editions are
+// Security tests for 20260930400000_menu_history: a bar's menu editions are
 // read with its profile by anyone, and written by app admins only.
 // (profile_awards has its own, profile-awards.test.mjs.)
 //
