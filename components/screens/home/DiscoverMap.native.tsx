@@ -21,8 +21,9 @@ const viewportOf = (e: { coordinates: { latitude?: number; longitude?: number };
     ? null
     : { latitude: e.coordinates.latitude, longitude: e.coordinates.longitude, latitudeDelta: e.latitudeDelta, longitudeDelta: e.longitudeDelta };
 
-// Apple draws an annotation icon at 50pt (so 150px at 3x); Google draws the bitmap as is.
-const LOGO_PX = Platform.OS === 'ios' ? 150 : 96;
+// Apple draws an annotation icon as a 32pt circle (patches/expo-maps), 96px at 3x;
+// Google draws the bitmap as is, about 36dp.
+const LOGO_PX = 96;
 
 // Pin logos, loaded once per URL for the session. ponytail: never released,
 // fine for the few hundred bars a session sees (small bitmaps). Upgrade path:
@@ -104,7 +105,8 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
             text: icon ? '' : label || '·',
             icon,
             // Ink pins read on both map schemes; early ones are muted; the selected one takes the accent.
-            backgroundColor: selected ? accent.fill : p.score === null ? backbar.light.muted : backbar.light.ink,
+            // On a logo pin this is the ring: light, like the web pins, or the accent.
+            backgroundColor: selected ? accent.fill : icon ? backbar.dark.ink : p.score === null ? backbar.light.muted : backbar.light.ink,
             textColor: selected ? accent.text : backbar.dark.ink,
           };
         })}

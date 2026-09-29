@@ -1,0 +1,38 @@
+diff --git a/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift b/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift
+index 7484170..7e83648 100644
+--- a/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift
++++ b/node_modules/expo-maps/ios/AppleMapsViewiOS17.swift
+@@ -82,9 +82,13 @@ struct AppleMapsViewiOS17: View, AppleMapsViewProtocol {
+           ) {
+             ZStack {
+               if let icon = annotation.icon {
++                // Cocktail: a round logo with a ring in the annotation's background colour.
+                 Image(uiImage: icon.ref)
+                   .resizable()
+-                  .frame(width: 50, height: 50)
++                  .scaledToFill()
++                  .frame(width: 32, height: 32)
++                  .clipShape(SwiftUI.Circle())
++                  .overlay(SwiftUI.Circle().stroke(annotation.backgroundColor, lineWidth: 2))
+               } else {
+                 RoundedRectangle(cornerRadius: 5)
+                   .fill(annotation.backgroundColor)
+diff --git a/node_modules/expo-maps/ios/AppleMapsViewiOS18.swift b/node_modules/expo-maps/ios/AppleMapsViewiOS18.swift
+index 7be247b..89dd601 100644
+--- a/node_modules/expo-maps/ios/AppleMapsViewiOS18.swift
++++ b/node_modules/expo-maps/ios/AppleMapsViewiOS18.swift
+@@ -136,9 +136,13 @@ struct AppleMapsViewiOS18: View, AppleMapsViewProtocol {
+           ) {
+             ZStack {
+               if let icon = annotation.icon {
++                // Cocktail: a round logo with a ring in the annotation's background colour.
+                 Image(uiImage: icon.ref)
+                   .resizable()
+-                  .frame(width: 50, height: 50)
++                  .scaledToFill()
++                  .frame(width: 32, height: 32)
++                  .clipShape(SwiftUI.Circle())
++                  .overlay(SwiftUI.Circle().stroke(annotation.backgroundColor, lineWidth: 2))
+               } else {
+                 RoundedRectangle(cornerRadius: 5)
+                   .fill(annotation.backgroundColor)
