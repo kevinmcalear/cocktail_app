@@ -1,5 +1,5 @@
 // Spirited Awards (2016-2026) and James Beard bar awards
-// (20260930400000_spirited_and_beard_awards.sql): the awards land on the
+// (20260930630000_spirited_and_beard_awards.sql): the awards land on the
 // right bars and people, signed-out visitors see them, and running the seed
 // again adds nothing.
 //
@@ -21,7 +21,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Spirited Awards tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260930400000_spirited_and_beard_awards.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930630000_spirited_and_beard_awards.sql', import.meta.url);
 const AWARD = 'Tales of the Cocktail Spirited Awards';
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
@@ -80,16 +80,24 @@ describe('Spirited Awards', () => {
                                (SELECT count(*) FROM public.items)::int AS items,
                                (SELECT count(*) FROM public.recipes)::int AS recipes`)
       ).rows[0];
-    await db.query('BEGIN');
-    try {
-      // Other test files write to these tables at the same time; hold them
-      // still so the counts only see this run.
-      await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
-      const before = await count();
-      await db.query(readFileSync(MIGRATION, 'utf8'));
-      assert.deepEqual(await count(), before);
-    } finally {
-      await db.query('ROLLBACK');
+    // Retried because holding these tables can deadlock with another test
+    // file's open transaction; Postgres then cancels one side.
+    for (let attempt = 1; ; attempt++) {
+      await db.query('BEGIN');
+      try {
+        // Other test files write to these tables at the same time; hold them
+        // still so the counts only see this run.
+        await db.query("SET LOCAL lock_timeout = '10s'");
+        await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
+        const before = await count();
+        await db.query(readFileSync(MIGRATION, 'utf8'));
+        assert.deepEqual(await count(), before);
+        break;
+      } catch (e) {
+        if (attempt >= 3 || !['40P01', '55P03'].includes(e.code)) throw e;
+      } finally {
+        await db.query('ROLLBACK');
+      }
     }
   });
 });
