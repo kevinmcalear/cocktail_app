@@ -7,7 +7,7 @@ import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useCollect, useCollection } from '@/hooks/useCollection';
 
-import { useAgeGate } from './AgeGate';
+import { useAgeGate } from '../safety/AgeGate';
 
 type Target = { kind: 'drink'; itemId: string; releaseId?: string | null } | { kind: 'release'; releaseId: string };
 

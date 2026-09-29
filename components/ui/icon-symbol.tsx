@@ -93,6 +93,7 @@ const MAPPING = {
   'sun.max.fill': 'wb-sunny',
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
+  'flag': 'outlined-flag',
 } satisfies IconMapping;
 
 /**
