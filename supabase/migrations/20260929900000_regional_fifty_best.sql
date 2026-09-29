@@ -1,14 +1,15 @@
--- Asia's 50 Best Bars 2026 and North America's 50 Best Bars 2026: every bar
--- on both lists, its place on the list, and its signature drinks.
+-- Asia's, North America's and Europe's 50 Best Bars 2026: every bar on the
+-- three lists, its place on the list, and its signature drinks. Europe's list
+-- is new this year (first edition, June 2026).
 --
--- 1. The 70 bars that weren't here yet, as public, unclaimed venue
+-- 1. The 92 bars that weren't here yet, as public, unclaimed venue
 --    profiles, same rules as the World's 50 Best seed: a bar already here
 --    (same name within 150 m, or the handle taken) is left alone, and each bar
 --    claims its profile the usual way. Bios are ours and end with the bar's
 --    place on the list. Map points are the venue's OpenStreetMap entry or its
 --    street address, checked in September 2026.
--- 2. Each bar's 2026 place on its list, and the list's named awards (Best Bar
---    in <country>, Best New Opening...), for all 100 bars, including the ones
+-- 2. Each bar's 2026 place on its list, and the lists' named awards (Best Bar
+--    in <country>, Best New Opening...), for all 150 bars, including the ones
 --    that were already here.
 -- 3. Each new bar's best-known drinks, credited to the bar, same as the
 --    signature-drinks seed: our own description and notes, ingredients where
@@ -93,7 +94,29 @@ FROM (VALUES
     ('bekeb_sma', 'Bekeb', 'San Miguel de Allende bar founded in 2019 by Jalisco-born bartender Fabiola Padilla, formerly of Cosme in New York; the name comes from the Tzotzil word for seed. Drinks are built on Mexican agave spirits, herbs, flowers and roots, and in 2025 the bar moved from a downtown terrace into the Live Aqua hotel, where its menu explores Mexican herbalism. No. 24 on North America''s 50 Best Bars 2026.', 'https://www.bekebsma.com/', 'Zona Centro', 'Calzada de la Presa 85, inside Hotel Live Aqua', '37700', 'San Miguel de Allende', 'Guanajuato', 'MX', 20.91982, -100.73922),
     ('venderbar', 'Vender', 'Taichung bar opened in 2019 by Summer Chen and Darren Lim after years bartending in Singapore. Guests insert a coin in a vending machine to open the door, get a mini Singapore Sling on arrival and choose from cocktails named after vending machines and built on Singaporean and Malaysian flavours such as kaya, durian and Milo. No. 14 on Asia''s 50 Best Bars 2026, also named The Best Bar in Taiwan.', 'https://www.instagram.com/venderbar/', 'West District', 'No. 118, Wuquan West 4th St', '403', 'Taichung', NULL, 'TW', 24.13557, 120.6625),
     ('librarybartoronto', 'Library Bar', 'Bar in the Fairmont Royal York, opened in the early 1970s in the room that once held the hotel''s guest library. It is known for the Birdbath Martini, thrown and poured ice cold at the table with house Quill gin or vodka. Director of beverage James Grant''s menu Lights draws each drink from Michael Ondaatje''s Toronto novel In the Skin of a Lion. No. 19 on North America''s 50 Best Bars 2026.', 'https://www.librarybartoronto.com/', 'Financial District', '100 Front St W, Fairmont Royal York', 'M5J 1E3', 'Toronto', 'Ontario', 'CA', 43.64558, -79.38203),
-    ('servicebardc', 'Service Bar', 'U Street neighbourhood bar opened in 2016 by DC bartenders Chad Spangler and Glendon Hartley as a relaxed, affordable alternative to the city''s more formal cocktail rooms. It pairs a long, playful list of original drinks and a cheap weekday happy hour with a kitchen known for its fried chicken. No. 39 on North America''s 50 Best Bars 2026.', 'https://www.servicebardc.com/', 'U Street', '926-928 U St NW', '20001', 'Washington', 'District of Columbia', 'US', 38.91683, -77.02503)
+    ('servicebardc', 'Service Bar', 'U Street neighbourhood bar opened in 2016 by DC bartenders Chad Spangler and Glendon Hartley as a relaxed, affordable alternative to the city''s more formal cocktail rooms. It pairs a long, playful list of original drinks and a cheap weekday happy hour with a kitchen known for its fried chicken. No. 39 on North America''s 50 Best Bars 2026.', 'https://www.servicebardc.com/', 'U Street', '926-928 U St NW', '20001', 'Washington', 'District of Columbia', 'US', 38.91683, -77.02503),
+    ('barronegroathens', 'Barro Negro', 'Athens'' first tequila and mezcal bar, opened in late 2019 by bartenders Stelios Papadopoulos and George Kavaklis after years of trips to Mexico. The small vaulted room holds some 300 agave bottlings, and the house is known for its Margarita and Paloma, its in-house distillates and its Academia de Barro Negro education programme. No. 13 on Europe''s 50 Best Bars 2026.', 'https://www.barronegroathens.com/', 'Syntagma', 'Ioannou Paparrigopoulou 15', '105 61', 'Athens', NULL, 'GR', 37.97848, 23.73075),
+    ('bird.cph', 'Bird', 'Neighbourhood vinyl bar on Gammel Kongevej in Frederiksberg, named after a jazz great and built around hand-built speakers, vintage hi-fi and records spun by the bartenders on shift. The Danish-minimal drinks are batched and bottled, mostly without fresh citrus or added sugar, use local produce where possible and change monthly; the team has since opened further Bird outposts. Named the Best Bar in Denmark 2026. No. 24 on Europe''s 50 Best Bars 2026.', 'https://birdcph.dk/', 'Frederiksberg', 'Gl. Kongevej 102', '1850', 'Copenhagen', NULL, 'DK', 55.6758, 12.54479),
+    ('lantiquario_napoli', 'L''Antiquario', 'Speakeasy-style bar in Chiaia co-founded by Neapolitan bartender Alexander (Alex) Frezza with long-time partners. Red velvet, floral wallpaper, dark wood and weeknight live music set a mid-century grand hotel mood, and white-jacketed bartenders focus on Italian classics and precise modern drinks, including a trio of Negronis served on a silver tower. No. 28 on Europe''s 50 Best Bars 2026.', 'https://www.instagram.com/lantiquario_napoli/', 'Chiaia', 'Via Vannella Gaetani, 2', '80121', 'Naples', 'Campania', 'IT', 40.83296, 14.24224),
+    ('freniefrizioni', 'Freni e Frizioni', 'High-volume street cocktail bar in a former car mechanic''s workshop on the edge of Trastevere; the name means brakes and clutches. It was set up to bring northern Italian aperitivo culture to Rome and now pairs nightly DJs and a busy piazza crowd with a serious back bar and themed menus under Riccardo Rossi. No. 31 on Europe''s 50 Best Bars 2026.', 'https://www.freniefrizioni.com/', 'Trastevere', 'Via del Politeama, 4', '00153', 'Rome', 'Lazio', 'IT', 41.89128, 12.47067),
+    ('boadascocktails', 'Boadas', 'Barcelona''s oldest cocktail bar, opened on 22 August 1933 by Havana-born Miguel Boadas, who trained at El Floridita, in a tiny triangular room just off La Rambla. It is famous for throwing drinks between tins, above all its Dry Martini. The Sips team of Simone Caporale and Marc Álvarez took it over in 2022, restored the room and revived the founder''s recipes. No. 36 on Europe''s 50 Best Bars 2026.', 'https://boadascocktails.com/', 'El Raval, Ciutat Vella', 'Carrer dels Tallers, 1', '08001', 'Barcelona', 'Catalonia', 'ES', 41.38466, 2.17027),
+    ('tag.cocktails', 'Tag', 'Krakow cocktail bar run by Maciej Mazur and bar manager Alicja Bączyk-Mazur, named after a graffiti artist''s signature. Neon scrawls cover matte black walls and the bottles hang from a glass rack above the bar, and the playful, ever-changing menus have included Trueschool, 14 drinks based on rap genres. Named the Best Bar in Poland 2026. No. 39 on Europe''s 50 Best Bars 2026.', 'https://tagcocktails.com/', 'Stare Miasto', 'Podwale 7/2', '31-118', 'Krakow', 'Lesser Poland', 'PL', 50.06339, 19.93241),
+    ('madridangelita', 'Angelita', 'Opened in 2016 on Calle de la Reina, just off Gran Vía, by brothers David and Mario Villalón, with a wine bar and dining room upstairs and a cocktail bar in the basement. The bar works without ice or citrus, weighs every drink and builds cocktails from its own spirits, ferments and produce grown on the family''s garden in Zamora. No. 45 on Europe''s 50 Best Bars 2026.', 'https://madrid-angelita.es/', 'Chueca, Centro', 'C. de la Reina, 4', '28004', 'Madrid', 'Community of Madrid', 'ES', 40.42035, -3.70037),
+    ('dunlin.bar', 'Dunlin', 'Innsbruck cocktail bar opened in 2020 on Meraner Straße, led by bar chef Kostas Karvounis. Its focus is fermentation: the team makes its own fruit wines and fruit vermouths from regional seasonal fruit in temperature-controlled tanks at the bar, and the menu is organised into chapters each devoted to one fruit. Named Best Bar Austria 2026 by Mixology magazine and the only Austrian bar on the first list. No. 50 on Europe''s 50 Best Bars 2026.', 'https://www.dunlin-bar.at/', 'Innenstadt', 'Meraner Straße 6', '6020', 'Innsbruck', 'Tyrol', 'AT', 47.26488, 11.3963),
+    ('waxonberlin', 'Wax On', 'Neukölln cocktail bar on Weserstraße, opened in 2021 by London-born bartender Sam Orrock with Damien Guichard and Rose-Manon Baux. A basement lab clarifies, distils and ferments ingredients for a short menu of reworked classics and highballs, many of them batched and poured on tap. Named the Best Bar in Germany 2026. No. 17 on Europe''s 50 Best Bars 2026.', 'https://www.instagram.com/waxonberlin/', 'Neukölln', 'Weserstr. 208', '12047', 'Berlin', 'Berlin', 'DE', 52.48815, 13.42988),
+    ('alma__prague', 'Alma Prague', 'Restaurant, café, wine bar and cocktail bar from the team behind Prague''s Kro Kitchen, set in a centuries-old New Town complex that once housed the Alma arthouse cinema. Head bartender Pavel Sochor''s team makes many tinctures, syrups, sodas and kombuchas in-house from seasonal Czech ingredients, and highballs are poured from taps. Named the Best Bar in Czechia 2026. No. 25 on Europe''s 50 Best Bars 2026.', 'https://www.almaprague.cz/en', 'Nové Město', 'V Jirchářích 150/8', '110 00', 'Prague', NULL, 'CZ', 50.08008, 14.41655),
+    ('gucciosteria', 'Gucci Giardino', 'All-day café and cocktail bar that Gucci opened on Florence''s Piazza della Signoria on 14 February 2022, first as Gucci Giardino 25, with a design inspired by a florist that once traded on the square. Bar manager Martina Bonci runs an aperitivo-led list of spritzes, Negroni twists and seasonal drinks using Tuscan ingredients and lighter, lower-proof builds. No. 29 on Europe''s 50 Best Bars 2026.', 'https://www.gucciosteria.com/en/florence/giardino', 'Centro storico', 'Piazza della Signoria, 37r', '50122', 'Florence', 'Tuscany', 'IT', 43.76995, 11.25671),
+    ('gorillabarskg', 'Gorilla', 'High-energy cocktail bar in Thessaloniki''s Ano Ladadika, opened in 2016 by Achilleas Plakidas, the 2018 Diageo World Class Greece winner, under the motto fine drinking and fun. The team uses kitchen kit such as sous vide and centrifuges for a new themed menu each year, served amid loud music, dancing and a photobooth. No. 33 on Europe''s 50 Best Bars 2026.', 'https://gorillabar.gr/', 'Ano Ladadika', 'Veroias 3', '54625', 'Thessaloniki', 'Central Macedonia', 'GR', 40.63716, 22.93766),
+    ('tjoget', 'Tjoget', 'Hornstull neighbourhood restaurant and cocktail bar opened in 2012 in Stockholm, with a Mediterranean-leaning kitchen, wine bodega, beer café and local DJs as the night goes on. The bar serves classics alongside house signatures that borrow flavours from southern Europe, North Africa and the Middle East, aiming for drinkability over spectacle. Named the Best Bar in Sweden 2026. No. 37 on Europe''s 50 Best Bars 2026.', 'https://www.tjoget.com/', 'Hornstull, Södermalm', 'Hornsbruksgatan 24', '117 34', 'Stockholm', 'Stockholm County', 'SE', 59.31619, 18.03494),
+    ('super.lyan', 'Super Lyan', 'Neon-lit bar in a 17th-century house at the Kimpton De Witt hotel in central Amsterdam, and the first venue outside the UK from Ryan Chetiyawardana''s Mr Lyan team. It plays a retro-futurist diner look against sustainable, technique-heavy riffs on familiar drinks, with fast, walk-in service late into the night. Named the Best Bar in the Netherlands 2026. No. 42 on Europe''s 50 Best Bars 2026.', 'https://www.superlyan.com/', 'Centrum', 'Nieuwezijds Voorburgwal 3', '1012 RC', 'Amsterdam', 'North Holland', 'NL', 52.37742, 4.89572),
+    ('foco.bcn', 'Foco', 'Gràcia cocktail bar run by British bartenders Tom Godfrey and Theo Quinn, alumni of Paradiso and Two Schmucks, named after the Foreign Correspondents'' Clubs where journalists traded stories. Its short menu reworks well-known classics with unexpected ingredients and modern prep, alongside bottled cocktails to drink in or take away. No. 48 on Europe''s 50 Best Bars 2026.', 'https://www.focobcn.com/', 'Gràcia', 'Carrer de l''Encarnació, 52', '08024', 'Barcelona', 'Catalonia', 'ES', 41.40656, 2.16042),
+    ('camparinoingalleria', 'Camparino in Galleria', 'Opened in 1915 by Davide Campari, son of Campari''s inventor Gaspare, at the Duomo corner of the Galleria Vittorio Emanuele II, with a system that piped chilled soda up from the cellars for its Campari and soda. Campari took the bar back in 2018; it now runs over three levels: the standing Bar di Passo, the cocktail room Sala Spiritello and the private Sala Gaspare, led by Tommaso Cecca. No. 18 on Europe''s 50 Best Bars 2026.', 'https://www.camparino.com/', 'Duomo', 'Piazza Duomo, 21', '20121', 'Milan', 'Lombardy', 'IT', 45.46492, 9.18988),
+    ('aldea.bcn', 'Aldea', 'El Born cocktail bar from Austrian bartender Silvia Dorninger and Italian hospitality professional Francesco (Fran) Falco, who spent months building its furniture and interior by hand; the name means ''hamlet''. A downstairs lab with a rotovap makes house distillates for drinks drawn from the pair''s memories and travels, served with Japanese-style sandos. No. 26 on Europe''s 50 Best Bars 2026.', 'https://aldeabar.com/', 'El Born', 'Carrer de l''Esparteria, 14', '08003', 'Barcelona', 'Catalonia', 'ES', 41.38443, 2.18327),
+    ('the_clumsies', 'The Clumsies', 'All-day bar opened in 2014 by Greek World Class winners Vasilis Kyritsis and Nikos Bakoulis in a restored neoclassical townhouse on Praxitelous Street, with rooms over several floors and a private, bookable Room with a pool table. A fixture of The World''s 50 Best Bars, it reached No. 3 in 2020, and its drinks lean on Greek produce and botanicals. No. 30 on Europe''s 50 Best Bars 2026.', 'https://www.theclumsies.gr/', 'Plaka', 'Praxitelous 30', '105 61', 'Athens', 'Attica', 'GR', 37.97897, 23.72983),
+    ('14delarosa', '14 De La Rosa', 'Gràcia neighbourhood bar that British bartender Dean Shury, who ran the bar at London''s Chiltern Firehouse, took over and reopened in 2018 in a room that had housed a local bar for more than 60 years. White-jacketed bartenders serve precise classics, often with sherry, at a marble counter or in a back sitting room, with snacks such as gildas and mojama. No. 35 on Europe''s 50 Best Bars 2026.', 'https://www.14delarosa.com/', 'Gràcia', 'Carrer de Martínez de la Rosa, 14', '08012', 'Barcelona', 'Catalonia', 'ES', 41.39932, 2.15973),
+    ('forbina_bar', 'Forbína Bar', 'Opened in 2024 in the old theatre café of the Café Slavia building on Národní, directly opposite Prague''s National Theatre, behind a velvet curtain off Slavia''s foyer; the name refers to the forestage made famous by Voskovec and Werich. Led by Peter Plieštik and Jan Vlasák, it serves theatrical cocktails amid wood inlays and hand-melted glass lighting. No. 38 on Europe''s 50 Best Bars 2026.', 'https://www.barforbina.cz/en', 'Staré Město', 'Národní 1', '110 00', 'Prague', NULL, 'CZ', 50.08153, 14.41342),
+    ('latebloomers.zurich', 'Late Bloomers', 'Neighbourhood bar on Dienerstrasse in Zurich''s Langstrasse district, opened in late 2022 and run by owner-bartenders Vangelis, Aineias and Stelios. It serves coffee by day and cocktails by night with a zero-waste approach, a menu full of Greek ingredients such as retsina, mastiha and Metaxa, and local DJs playing funk, disco and hip-hop at weekends. Named The Best Bar in Switzerland 2026. No. 44 on Europe''s 50 Best Bars 2026.', 'https://latebloomersthebar.com/', 'Langstrasse', 'Dienerstrasse 20', '8004', 'Zurich', 'Zurich', 'CH', 47.37779, 8.52853),
+    ('ritacocktails', 'Rita', 'Opened on 12 December 2002 by Edoardo Nono and Gianluca Chiaruttini on a side street off the Naviglio Grande, Rita was one of Milan''s first American bars to build its drinks on fresh, seasonal, house-made ingredients. Partner Chiara Buzzi joined in 2018 and opened Rita''s Tiki Room nearby; the current menu turns icons of Italian design into cocktails. No. 49 on Europe''s 50 Best Bars 2026.', 'https://www.ritacocktails.com/', 'Navigli', 'Via Angelo Fumagalli, 1', '20143', 'Milan', 'Lombardy', 'IT', 45.45041, 9.16985)
 ) AS v("handle", "name", "bio", "website", "locality", "address_line", "postcode", "city", "region", "country_code",
        "latitude", "longitude")
 -- Not a second copy of a bar someone already added (add_venue's rule).
@@ -210,6 +233,56 @@ FROM (VALUES
     ('baltrabar', 'North America''s 50 Best Bars', 2026, 48, NULL, 'https://www.theworlds50best.com/stories/News/north-americas-50-best-bars-2026-the-list.html'),
     ('librarybytheseagc', 'North America''s 50 Best Bars', 2026, 49, NULL, 'https://www.theworlds50best.com/stories/News/north-americas-50-best-bars-2026-the-list.html'),
     ('bonvivantsbahamas', 'North America''s 50 Best Bars', 2026, 50, NULL, 'https://www.theworlds50best.com/stories/News/north-americas-50-best-bars-2026-the-list.html'),
+    ('line.athens', 'Europe''s 50 Best Bars', 2026, 1, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('the.bar.in.front.of.the.bar', 'Europe''s 50 Best Bars', 2026, 2, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('sips.barcelona', 'Europe''s 50 Best Bars', 2026, 3, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('himkok.oslo', 'Europe''s 50 Best Bars', 2026, 4, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('barnouveau', 'Europe''s 50 Best Bars', 2026, 5, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('moebiusmilano', 'Europe''s 50 Best Bars', 2026, 6, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('thecambridge_paris', 'Europe''s 50 Best Bars', 2026, 7, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('mirrorbarcarlton', 'Europe''s 50 Best Bars', 2026, 8, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('paradiso_barcelona', 'Europe''s 50 Best Bars', 2026, 9, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('connaughtbar', 'Europe''s 50 Best Bars', 2026, 10, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('satans_whiskers', 'Europe''s 50 Best Bars', 2026, 11, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('tayer_elementary', 'Europe''s 50 Best Bars', 2026, 12, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('barronegroathens', 'Europe''s 50 Best Bars', 2026, 13, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('baba_au_rum', 'Europe''s 50 Best Bars', 2026, 14, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('svanen.oslo', 'Europe''s 50 Best Bars', 2026, 15, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('nouvellevague_tirana', 'Europe''s 50 Best Bars', 2026, 16, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('waxonberlin', 'Europe''s 50 Best Bars', 2026, 17, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('camparinoingalleria', 'Europe''s 50 Best Bars', 2026, 18, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('danicoparis', 'Europe''s 50 Best Bars', 2026, 19, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('pandaandsons', 'Europe''s 50 Best Bars', 2026, 20, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('localefirenze', 'Europe''s 50 Best Bars', 2026, 21, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('1930cocktailbar', 'Europe''s 50 Best Bars', 2026, 22, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('waltzbar', 'Europe''s 50 Best Bars', 2026, 23, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('bird.cph', 'Europe''s 50 Best Bars', 2026, 24, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('alma__prague', 'Europe''s 50 Best Bars', 2026, 25, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('aldea.bcn', 'Europe''s 50 Best Bars', 2026, 26, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('harrysbar_theoriginal', 'Europe''s 50 Best Bars', 2026, 27, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('lantiquario_napoli', 'Europe''s 50 Best Bars', 2026, 28, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('gucciosteria', 'Europe''s 50 Best Bars', 2026, 29, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('the_clumsies', 'Europe''s 50 Best Bars', 2026, 30, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('freniefrizioni', 'Europe''s 50 Best Bars', 2026, 31, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('drinkkongbar', 'Europe''s 50 Best Bars', 2026, 32, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('gorillabarskg', 'Europe''s 50 Best Bars', 2026, 33, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('devie.bar', 'Europe''s 50 Best Bars', 2026, 34, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('14delarosa', 'Europe''s 50 Best Bars', 2026, 35, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('boadascocktails', 'Europe''s 50 Best Bars', 2026, 36, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('tjoget', 'Europe''s 50 Best Bars', 2026, 37, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('forbina_bar', 'Europe''s 50 Best Bars', 2026, 38, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('tag.cocktails', 'Europe''s 50 Best Bars', 2026, 39, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('kwantmayfair', 'Europe''s 50 Best Bars', 2026, 40, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('threesheetssoho', 'Europe''s 50 Best Bars', 2026, 41, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('super.lyan', 'Europe''s 50 Best Bars', 2026, 42, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('rodahusetsthlm', 'Europe''s 50 Best Bars', 2026, 43, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('latebloomers.zurich', 'Europe''s 50 Best Bars', 2026, 44, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('madridangelita', 'Europe''s 50 Best Bars', 2026, 45, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('salmonguru', 'Europe''s 50 Best Bars', 2026, 46, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('scarfesbar', 'Europe''s 50 Best Bars', 2026, 47, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('foco.bcn', 'Europe''s 50 Best Bars', 2026, 48, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('ritacocktails', 'Europe''s 50 Best Bars', 2026, 49, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
+    ('dunlin.bar', 'Europe''s 50 Best Bars', 2026, 50, NULL, 'https://www.theworlds50best.com/stories/News/europes-50-best-bars-2026-the-list.html'),
     ('hopeandsesame', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Asia', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('hopeandsesame', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Mainland China', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
     ('zest.seoul', 'Asia''s 50 Best Bars', 2026, NULL, 'The Best Bar in Korea', 'https://www.theworlds50best.com/bars/best-in-asia/awards/destination-awards.html'),
@@ -248,7 +321,29 @@ FROM (VALUES
     ('librarybartoronto', 'North America''s 50 Best Bars', 2026, NULL, 'Sustainable Bar Award', 'https://www.theworlds50best.com/bars/best-in-north-america/awards/sustainable-bar.html'),
     ('schmuck.ny', 'North America''s 50 Best Bars', 2026, NULL, 'Best New Opening Award', 'https://www.theworlds50best.com/bars/best-in-north-america/awards/best-new-opening.html'),
     ('jewelnola', 'North America''s 50 Best Bars', 2026, NULL, 'Industry Icon Award (Chris Hannah)', 'https://www.theworlds50best.com/bars/best-in-north-america/awards/industry-icon.html'),
-    ('handshake_bar', 'North America''s 50 Best Bars', 2026, NULL, 'Legend of the List Award', 'https://www.theworlds50best.com/bars/best-in-north-america/awards/legend-of-the-list.html')
+    ('handshake_bar', 'North America''s 50 Best Bars', 2026, NULL, 'Legend of the List Award', 'https://www.theworlds50best.com/bars/best-in-north-america/awards/legend-of-the-list.html'),
+    ('line.athens', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Europe', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/line.html'),
+    ('connaughtbar', 'Europe''s 50 Best Bars', 2026, NULL, 'Bartenders'' Bartender Award (Giorgio Bargiani)', 'https://www.theworlds50best.com/bars/best-in-europe/awards/bartenders-bartender.html'),
+    ('mirrorbarcarlton', 'Europe''s 50 Best Bars', 2026, NULL, 'Art of Hospitality Award', 'https://www.theworlds50best.com/bars/best-in-europe/awards/art-of-hospitality.html'),
+    ('pandaandsons', 'Europe''s 50 Best Bars', 2026, NULL, 'Best Cocktail Menu Award', 'https://www.theworlds50best.com/bars/best-in-europe/awards/best-cocktail-menu.html'),
+    ('waltzbar', 'Europe''s 50 Best Bars', 2026, NULL, 'Best New Opening Award', 'https://www.theworlds50best.com/bars/best-in-europe/awards/best-new-opening.html'),
+    ('devie.bar', 'Europe''s 50 Best Bars', 2026, NULL, 'Sustainable Bar Award', 'https://www.theworlds50best.com/bars/best-in-europe/awards/sutainable-bar-award.html'),
+    ('line.athens', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Greece', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/line.html'),
+    ('sips.barcelona', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Spain', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/sips.html'),
+    ('himkok.oslo', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Norway', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/himkok.html'),
+    ('barnouveau', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in France', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/bar-nouveau.html'),
+    ('moebiusmilano', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Italy', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/moebius-milano.html'),
+    ('mirrorbarcarlton', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Slovakia', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/mirror-bar.html'),
+    ('connaughtbar', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in the UK', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/connaught-bar.html'),
+    ('nouvellevague_tirana', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Albania', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/nouvelle-vague.html'),
+    ('waxonberlin', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Germany', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/wax-on.html'),
+    ('bird.cph', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Denmark', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/bird.html'),
+    ('alma__prague', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Czechia', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/alma-prague.html'),
+    ('tjoget', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Sweden', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/tjoget.html'),
+    ('tag.cocktails', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Poland', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/tag.html'),
+    ('super.lyan', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in the Netherlands', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/super-lyan.html'),
+    ('latebloomers.zurich', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Switzerland', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/late-bloomers.html'),
+    ('dunlin.bar', 'Europe''s 50 Best Bars', 2026, NULL, 'The Best Bar in Austria', 'https://www.theworlds50best.com/bars/best-in-europe/the-list/dunlin.html')
 ) AS v("handle", "award", "year", "position", "title", "source_url")
 JOIN "public"."profiles" p ON p.handle = v.handle AND p.kind = 'bar'
 -- Same award already there under slightly different wording ("The Best Bar
@@ -1432,7 +1527,343 @@ Sources: https://www.servicebardc.com/menu', 'Martini', NULL, NULL, NULL, NULL),
 Sources: https://www.servicebardc.com/menu', 'Old Fashioned', NULL, NULL, NULL, NULL),
     ('servicebardc', NULL, 'Sweater Weather', 'Whisky with chai, apple, honey, sherry and Angostura bitters.', 'An autumnal spiced drink that 50 Best cites as typical of the bar''s whimsical but serious originals.
 
-Sources: https://www.theworlds50best.com/bars/best-in-north-america/the-list/service-bar.html', NULL, NULL, NULL, NULL, NULL);
+Sources: https://www.theworlds50best.com/bars/best-in-north-america/the-list/service-bar.html', NULL, NULL, NULL, NULL, NULL),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 'Clarified milk punch of reposado tequila, house tepache, passion fruit cordial, coffee distillate and lime.', 'Built on the old five-part punch formula but with Mexican flavours: in-house fermented pineapple tepache stretches the tequila and a drop of coffee distillate adds spice. Papadopoulos says it started as a Mexican answer to Athens'' passion for the Porn Star Martini, and the whole drink is milk-clarified and served over a clear cube.
+
+Created by Stelios Papadopoulos.
+
+Method: Pour the other ingredients into a container with the milk, leave for at least an hour, then strain through cheesecloth. Pour over a clear ice cube.
+
+Spec from The Spirits Business (spec from Stelios Papadopoulos) (https://www.thespiritsbusiness.com/2026/09/cocktail-stories-mayans-punch-barro-negro/).', 'Porn Star Martini', NULL, NULL, 'Large Cube', 'Build'),
+    ('barronegroathens', NULL, 'Los Abuelos', 'Olive oil fat-washed blanco tequila with mezcal, herbal liqueur, fennel and lime, with an aromatic salt rim.', 'Papadopoulos calls it a Mediterranean Margarita: the tequila is fat-washed with olive oil and paired with fennel so the drink lands between a Margarita and a Gimlet. 50 Best names it as one of the bar''s standout signatures.
+
+Ingredients from Barro Negro menu (ingredients only) (https://www.barronegroathens.com/menu). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('barronegroathens', NULL, 'Margarita', 'Espolon Blanco tequila, lime and a house orange liqueur distilled from Greek citrus, served with salt.', 'The drink the bar was built on: Papadopoulos set out to serve the best-balanced Margarita in Greece. Instead of a commercial triple sec the team makes its own orange liqueur, distilling Greek oranges and pink grapefruit in Crete with mastic resin.
+
+Ingredients from Barro Negro menu (ingredients only) (https://www.barronegroathens.com/menu). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('barronegroathens', NULL, 'Paloma', 'Espolon Blanco tequila, lime and Greek Vikos pink grapefruit soda with salt.', 'The bar''s Paloma sparked what Athens calls the pink phenomenon, a Greek craze Papadopoulos compares to the gin and tonic. It is made with a local grapefruit soda from Vikos, with whom the bar runs a Pink Phenomenon collaboration, and the bar has hosted Greece''s first Paloma week.
+
+Ingredients from Barro Negro menu (ingredients only) (https://www.barronegroathens.com/menu). No measures have been published.', 'Paloma', NULL, NULL, NULL, NULL),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 'Blanco tequila with cold brew, Belvedere Dirty Brew coffee, cocoa, vanilla, mint and Fernet-Branca, poured nitro from a tap.', 'Served straight from a nitrogen tap rather than shaken, which gives it a thick, creamy head the team likens to a pint of Guinness. Swapping vodka for tequila and adding mint and Fernet gives the Espresso Martini a Mexico City accent.
+
+Method: Served nitrogenated from a tap.
+
+Ingredients from Barro Negro menu (ingredients only) (https://www.barronegroathens.com/menu). No measures have been published.', 'Espresso Martini', NULL, NULL, NULL, 'Build'),
+    ('bird.cph', NULL, 'Buckthorn Margarita', 'A Margarita made with a sea buckthorn-infused vermouth.', 'A Nordic twist on the Margarita that brings in sea buckthorn, a tart berry from Danish coasts, through an infused vermouth. 50 Best cites it as an example of the menu''s Danish ingredients in a citrus-light, sugar-light house style.
+
+Ingredients from Europe''s 50 Best Bars (partial ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/bird.html). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('bird.cph', NULL, 'Drenched Se7entifive', 'A highball of gin, jasmine and lemon vermouth topped with crémant sparkling wine.', 'One of the bar''s Hi Balls, a floral spin on the French 75 that takes its lemon note from a vermouth rather than fresh juice, in keeping with the bar''s batched, citrus-light approach.
+
+Ingredients from 50 Best Discovery (ingredients only) (https://www.the50.com/discovery/Establishments/Denmark/Copenhagen/Bird.html). No measures have been published.', 'French 75', NULL, NULL, NULL, NULL),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 'Gin with citron water, citron liqueur, lemon and limoncello.', 'A four-citrus drink that tries to put the flavour of southern Italy''s lemons into one glass by layering citron, lemon and limoncello over gin. 50 Best picks it as the best showcase of the team''s balance.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/lantiquario.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('lantiquario_napoli', NULL, 'Banana Split', 'Milk-washed vanilla vodka with strawberry, banana and cocoa.', 'A dessert in liquid form from the bar''s modern list: the sundae flavours are milk-washed so the drink stays clear and silky. 50 Best rates the contemporary creations as worthy of the same attention as the classics.
+
+Method: Milk-washed.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/lantiquario.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('lantiquario_napoli', NULL, 'Negroni Trio', 'The bar''s signature set of three Negronis, served together on a custom silver tower.', 'A piece of table theatre that fits the bar''s grand-hotel style: three versions of Italy''s best-known aperitivo arrive at once on a bespoke silver stand. 50 Best calls it the house signature.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/lantiquario.html', 'Negroni', NULL, NULL, NULL, NULL),
+    ('lantiquario_napoli', NULL, 'Mulata Daiquiri', '1920s Cuban classic of rum, lime juice, cacao liqueur and sugar.', 'Listed among the bar''s classics, which reach back to Havana''s golden age of cocktails. Italian food site Dissapore singled it out when reviewing the menu and Frezza''s classics-first approach, where guests can also have their Martini made to order.
+
+Ingredients from Dissapore (ingredients only) (https://www.dissapore.com/bere/15-cocktail-bar-italiani-senza-rivali/). No measures have been published.', 'Daiquiri', NULL, NULL, NULL, NULL),
+    ('freniefrizioni', NULL, 'The Regular', 'Dorito-infused tequila with Cointreau, pico de gallo and grapefruit soda.', 'One of the characters on the Bar Stereotypes menu, which turns familiar bar-goer types into drinks. The regular gets a savoury, snack-bar take on a Paloma, with tequila infused with Doritos and a fresh pico de gallo note.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/freni-e-frizioni.html). No measures have been published.', 'Paloma', NULL, NULL, NULL, NULL),
+    ('freniefrizioni', NULL, 'The Nerd', 'Rum and cachaça with blueberry, caramel and soy, finished with a condensed milk wash.', 'Another Bar Stereotypes character: a sweet-savoury mix where soy and caramel meet blueberry, smoothed by a condensed-milk wash. It shows the technical side the bar has built under Riccardo Rossi behind its party atmosphere.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/freni-e-frizioni.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('freniefrizioni', NULL, 'Tex Mezc', 'Old Fashioned-style stir of mezcal and bourbon with Cynar, agave syrup, Angostura and mint.', 'A 2013 signature that joins American bourbon and Mexican mezcal in one glass, which the team framed as a hopeful gesture across the US-Mexico border. It made the bar''s own book of its 50 best-selling signature drinks.
+
+Method: Pour the agave syrup into an Old Fashioned glass, add ice and the other ingredients and stir for about 15 seconds. Top up with ice.
+
+Spec from Freni e Frizioni, The Hottest Drinks (https://www.freniefrizioni.com/wp-content/uploads/2026/06/THE-HOTTEST-DRINKS.pdf).', 'Old Fashioned', 2013, 'Rocks', 'Cubes', 'Stir'),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 'Shaken twist on the Milano-Torino with Carpano Antica Formula, Martini Riserva Bitter, Nardini Mezzo e Mezzo and liquorice bitters.', 'A 2017 tribute to Turin, home of vermouth pioneer Antonio Benedetto Carpano and the punk band Negazione. It reworks the Milano-Torino aperitivo that inspired the bar''s founding, and it is one of the 50 best-sellers collected in the bar''s book.
+
+Method: Shake all ingredients with ice and double strain into a chilled coupette.
+
+Spec from Freni e Frizioni, The Hottest Drinks (https://www.freniefrizioni.com/wp-content/uploads/2026/06/THE-HOTTEST-DRINKS.pdf).', 'Milano Torino', 2017, 'Coupette', NULL, 'Shake'),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 'The house signature from the 1930s: Cuban rum, Dubonnet-style quinquina and orange curaçao, now with a touch of sherry and Campari.', 'Created by founder Miguel Boadas around the bar''s 1933 opening as an equal-parts mix of Cuban rum, Dubonnet and curaçao, and thrown rather than stirred. When Simone Caporale took over he kept it on the menu but tuned it for modern palates with a little sherry and Campari.
+
+Created by Miguel Boadas in 1933.
+
+Method: Throw all ingredients with ice, then strain into a chilled glass.
+
+Spec adapted from Difford''s Guide (Simon Difford''s interpretation) (https://www.diffordsguide.com/cocktails/recipe/18982/boadas).', NULL, 1933, 'Martini', NULL, NULL),
+    ('boadascocktails', NULL, 'Dry Martini', 'A classic gin Dry Martini, thrown between tins in the bar''s founding style and served in small, brim-full glasses.', 'Boadas is credited with keeping the Cuban throwing technique alive through the second half of the 20th century, and the thrown Martini is the drink most guests come for. Caporale has called the house Martini sacred, and the throw aerates it while keeping a silky texture.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/boadas.html, https://drinksint.com/caporale-takes-over-boadas-cocktails/', 'Martini', NULL, NULL, NULL, NULL),
+    ('boadascocktails', NULL, 'Hotel Nacional', 'Cuban-era classic of rum, lime and apricot liqueur, one of the Havana drinks on the Boadas Classics list.', 'Part of the menu section devoted to the Cuban recipes Miguel Boadas brought from Havana, which 50 Best singles out as the bar''s standouts. It honours the founder''s years at El Floridita.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/boadas.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('tag.cocktails', NULL, 'G-Funk', 'Rum with mango, roasted coconut, orange water and a hops tincture.', 'From the Trueschool menu, where each drink channels a rap genre. This one takes its cue from the laid-back tempo of 1990s West Coast rap, aiming for a sunny, mellow sip with a bitter hop edge.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/tag.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('tag.cocktails', NULL, 'Grime', 'Tequila with wasabi, shiitake mushroom and molasses.', 'The Trueschool menu''s most intense drink, matched to the dark, bass-heavy London sound of grime. Wasabi heat, earthy shiitake and bittersweet molasses give tequila a gritty edge.
+
+Ingredients from Europe''s 50 Best Bars (ingredients only) (https://www.theworlds50best.com/bars/best-in-europe/the-list/tag.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('tag.cocktails', NULL, 'Arugula Martini', 'A Martini twist built around peppery arugula (rocket).', 'Drinks International picked it out as one of the creations at the centre of Tag''s playful, rotating menus, a green, savoury spin on the classic.
+
+Sources: https://drinksint.com/the-post-soviet-cocktail-revival/', 'Martini', NULL, NULL, NULL, NULL),
+    ('tag.cocktails', NULL, 'Rhubarb Mojito', 'A Mojito that replaces mint with rhubarb and a eucalyptus distillate.', 'Drinks International cites it as typical of the bar''s approach: keep a familiar classic''s shape but swap its defining flavour, here trading mint for rhubarb and a eucalyptus distillate.
+
+Ingredients from Drinks International (partial ingredients only) (https://drinksint.com/the-post-soviet-cocktail-revival/). No measures have been published.', 'Mojito', NULL, NULL, NULL, NULL),
+    ('madridangelita', NULL, 'Dry Sbagliato', 'A dry Sbagliato built from a house Negroni powder that is reconstituted at the table with dry sparkling wine.', 'The headline drink of the Raíces menu marking the bar''s tenth anniversary. The Negroni is turned into a solid powder so the sparkling wine brings it back to life, giving an aromatic, bone-dry take on the Sbagliato.
+
+Ingredients from The Spirits Business (ingredients only) (https://www.thespiritsbusiness.com/2026/03/angelita-fuses-prosecco-with-negroni-powder/). No measures have been published.', 'Sbagliato', 2026, NULL, NULL, NULL),
+    ('madridangelita', NULL, 'Bloody Mary', 'Angelita''s Bloody Mary, made with the essence of tomatoes grown in the family garden in Zamora.', '50 Best calls it the bar''s iconic drink. It changes with the tomato harvest from the Villalóns'' own garden, the clearest example of the bar''s farm-to-glass approach, and the bar also bottles non-alcoholic tomato drinks from the same produce.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/angelita.html, https://madrid-angelita.es/es/drinks/', 'Bloody Mary', NULL, NULL, NULL, NULL),
+    ('madridangelita', NULL, 'La Huerta', 'Bombay Sapphire gin with vegetables and roots from the bar''s own garden.', 'Named after the family garden that supplies most of the bar''s produce, it is one of the highlights the bar picked from the Raíces menu, turning garden vegetables and roots into a gin drink with no citrus or ice.
+
+Ingredients from The Spirits Business (ingredients only) (https://www.thespiritsbusiness.com/2026/03/angelita-fuses-prosecco-with-negroni-powder/). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('madridangelita', NULL, 'Resina y Sombra', 'Salmiana mezcal with pine, black lemon and chanterelle mushrooms.', 'A forest-floor drink from the Raíces menu that pairs smoky mezcal with resinous pine and earthy chanterelles, showing the menu''s habit of borrowing kitchen ideas such as stocks and ferments.
+
+Ingredients from The Spirits Business (ingredients only) (https://www.thespiritsbusiness.com/2026/03/angelita-fuses-prosecco-with-negroni-powder/). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('madridangelita', NULL, 'Chitina', 'Brugal 1888 rum with crickets, fig leaf and barley.', 'One of the more daring drinks on the Raíces menu, using crickets as a flavour ingredient alongside fig leaf and barley. It reflects the bar''s habit of turning unconventional ingredients into cocktail components.
+
+Ingredients from The Spirits Business (ingredients only) (https://www.thespiritsbusiness.com/2026/03/angelita-fuses-prosecco-with-negroni-powder/). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 'Cognac with blackberry, berry liqueur, espresso and sugar.', 'A fruity take on the Espresso Martini that swaps vodka for cognac for a deeper, warmer base, part of the menu''s blackberry chapter. 50 Best singles it out as the best example of the bar''s precise, seasonal style.
+
+Ingredients from Dunlin Bar menu (ingredients only) (https://dunlin-bar.at/wp-content/uploads/dunlin/karte-2026.pdf). No measures have been published.', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('dunlin.bar', NULL, 'Mezcaloni', 'Mezcal with the bar''s own clementine bitter and peach vermouth.', 'A fruity Negroni twist with a light smoky edge, built from two house products made from fermented fruit: a clementine bitter and a peach vermouth, both Dunlin Style.
+
+Ingredients from Dunlin Bar menu (ingredients only) (https://dunlin-bar.at/wp-content/uploads/dunlin/karte-2026.pdf). No measures have been published.', 'Negroni', NULL, NULL, NULL, NULL),
+    ('dunlin.bar', NULL, 'Milky Clementine Highball', 'The bar''s own clementine wine with vanilla and milky oolong tea, carbonated.', 'Built on a wine the bar ferments from fresh clementines with its own yeast culture. Milky oolong gives a creamy, velvety texture without any dairy, and the drink is force-carbonated for a lively finish.
+
+Method: Carbonated.
+Clementine wine: Made like grape wine, but fresh clementines are fermented with the bar''s own yeast culture in temperature-controlled tanks.
+
+Ingredients from Dunlin Bar menu (ingredients only) (https://dunlin-bar.at/wp-content/uploads/dunlin/karte-2026.pdf). No measures have been published.', NULL, NULL, 'Highball', NULL, 'Build'),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 'Tequila with acid, clementine and agave, with a chilli salt rim; also offered alcohol-free.', 'A spicy, fruity Margarita from the menu''s clementine chapter that uses an acid in place of fresh lime, and one of the bar''s drinks that can be made without alcohol.
+
+Ingredients from Dunlin Bar menu (ingredients only) (https://dunlin-bar.at/wp-content/uploads/dunlin/karte-2026.pdf). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('dunlin.bar', NULL, 'Dunlin Sgroppino', 'The bar''s own honey and ginger wine, carbonated, with house lemon sorbet.', 'A riff on the Venetian sorbet drink using a wine the bar ferments from regional honey and fresh ginger. The wine is carbonated for a fine bead, and homemade lemon sorbet adds acidity and creaminess.
+
+Method: The wine is carbonated before serving.
+Honey and ginger wine: Regional honey is fermented with fresh ginger and the bar''s own yeast culture in temperature-controlled tanks.
+
+Ingredients from Dunlin Bar menu (ingredients only) (https://dunlin-bar.at/wp-content/uploads/dunlin/karte-2026.pdf). No measures have been published.', NULL, NULL, 'Coupette', NULL, 'Build'),
+    ('waxonberlin', NULL, 'Go Apes', 'Rum with clarified banana, a coffee distillate and soda, served as a clear highball.', '50 Best picks it out as the example of Wax On''s approach: rotovap and clarification used to make a drink that looks like plain soda but tastes of banana and coffee. It fits the bar''s habit of batching signatures for the tap so they come out fast and consistent.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/wax-on.html', NULL, NULL, NULL, NULL, NULL),
+    ('waxonberlin', NULL, 'Old Fashioned (peanut butter and strawberry)', 'The house Old Fashioned, built with bourbon, bitters, peanut butter and strawberry.', 'A peanut-butter-and-jam take on the Old Fashioned that The Berliner compared to a praline. It shows how the bar layers unexpected flavours onto a familiar spirit-forward template while keeping prices low through batching.
+
+Sources: https://www.the-berliner.com/food/wax-on-cocktail-weserstrasse-best-bar-in-germany/', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('waxonberlin', NULL, 'House Sour', 'A sour made with soy yoghurt for a tangy, creamy texture.', 'The house sour has been singled out by reviewers in 2023 and again in late 2025, which suggests it has become a fixture. Using yoghurt (now soy yoghurt) in place of egg or cream gives both body and a lactic sharpness.
+
+Sources: https://www.theinfatuation.com/berlin/reviews/wax-on, https://www.the-berliner.com/food/wax-on-cocktail-weserstrasse-best-bar-in-germany/', NULL, NULL, NULL, NULL, NULL),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 'A Daiquiri riff of aged Cuban rum, umeshu, peach liqueur, lime, elderflower liqueur and sesame distillate.', 'Sam Orrock created it for a Ron Santiago de Cuba (Casa del Daiquiri) Daiquiri Week feature. Japanese plum and a few drops of house sesame distillate give the classic a nutty, stone-fruit depth, and vegan foam replaces egg white.
+
+Created by Sam Orrock in 2024.
+
+Method: Dry shake all ingredients, then shake with ice and fine strain.
+
+Spec from Ponto Brasil & Latino (via Ron Santiago de Cuba) (https://www.brasil-latino.de/BLOG/2024/08/13/playa-de-neukoelln-by-sam-orrock-wax-on-berlin/).', 'Daiquiri', 2024, NULL, NULL, 'dry shake and shake'),
+    ('waxonberlin', NULL, 'Rusty Nail', 'Woodford Reserve bourbon with ginger, honey and a house clove infusion.', 'Described in 2024 as Sam Orrock''s own signature, made as part of a Woodford Reserve collaboration. Despite the name it drinks like an Old Fashioned, with pipettes of house infusions used to push the spice notes.
+
+Created by Sam Orrock.
+
+Sources: https://ceecee.cc/en/www-der-gehobenen-barkultur-wax-on-macht-gemeinsame-sache-mit-woodford-reserved-an-der-weserstrasse/', NULL, NULL, NULL, NULL, NULL),
+    ('alma__prague', NULL, 'No Espresso Martini', 'Johnnie Walker Black Label with fino sherry, blackberry, bay leaf, ghee and cold brew, served as a digestif.', 'A whisky-based rethink of the Espresso Martini that 50 Best and visiting writers both single out. Ghee and fino sherry give it a savoury, velvety body instead of the usual vodka and coffee liqueur sweetness.
+
+Sources: https://www.almaprague.cz/en/drinks, https://www.theworlds50best.com/bars/best-in-europe/the-list/alma-prague.html', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('alma__prague', NULL, 'Peach Blossom Negroni Sbagliato', 'Bombay Sapphire Premier Cru, Antica Formula, Campari, white wine and peach blossom, carbonated.', 'Swaps the Sbagliato''s prosecco for still white wine carbonated in-house and adds foraged peach blossom, tying a classic aperitivo to the bar''s seasonal Czech sourcing.
+
+Sources: https://www.almaprague.cz/en/drinks', 'Sbagliato', NULL, NULL, NULL, NULL),
+    ('alma__prague', NULL, 'Bird Cherry Vieux Carré', 'Highland Park 12 with cognac, bird cherry, Cocchi Americano and Bénédictine.', 'A New Orleans classic rebuilt with Scotch and bird cherry, a wild Central European fruit, in place of rye and sweet vermouth. It reflects the menu''s focus on old preservation methods and local foraged produce.
+
+Sources: https://www.almaprague.cz/en/drinks', 'Vieux Carré', NULL, NULL, NULL, NULL),
+    ('alma__prague', NULL, 'Gooseberry Paloma', 'Don Julio Blanco with Cocchi Rosa, red gooseberry and Padrón pepper, carbonated.', 'Replaces grapefruit with tart red gooseberry and adds a green, peppery edge from Padrón. Like the other highballs it is carbonated in-house rather than topped with soda.
+
+Sources: https://www.almaprague.cz/en/drinks', 'Paloma', NULL, NULL, NULL, NULL),
+    ('alma__prague', NULL, 'Frozen Martini 3.0', 'Grey Goose and Dolin Dry with bugleweed, Pineau des Charentes and Alma''s own quince brandy.', 'The third version of the bar''s frozen Martini, served very cold and bringing in a house quince eau-de-vie and a foraged herb. It shows the lab-meets-local approach that 50 Best highlights.
+
+Sources: https://www.almaprague.cz/en/drinks', 'Martini', NULL, NULL, NULL, NULL),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 'A clear Negroni of white bitter, Martini Riserva Ambrato vermouth and butterfly-pea-infused gin, turned violet with yuzu sake.', 'The bar''s signature: butterfly pea flower turns the clear Negroni blue, and the acidity of yuzu sake shifts it to violet, a nod to the purple of ACF Fiorentina. It is lighter and more citrusy than the classic, fitting the bar''s low-and-slow aperitivo style, and has been on the menu since the early days.
+
+Created by Martina Bonci in 2022.
+
+Spec from Le Cocktail Connoisseur (https://lecocktailconnoisseur.com/2022/05/12/martina-bonci-gucci-in-giardino-25-florence/).', 'Negroni', 2022, NULL, NULL, NULL),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 'Casamigos blanco tequila with Italicus bergamot rosolio, Ancho Reyes Verde, mint and lemon, with a salt and pea rim.', 'Bonci describes it as a cross between a Margarita and a Tommy''s Margarita, with a green chile liqueur for heat and bergamot for lift. The pea-powder rim is an unusual savoury touch, and it remains on the signature list.
+
+Created by Martina Bonci.
+
+Spec from Le Cocktail Connoisseur (https://lecocktailconnoisseur.com/2022/05/12/martina-bonci-gucci-in-giardino-25-florence/).', 'Margarita', NULL, NULL, NULL, NULL),
+    ('gucciosteria', NULL, 'Queen Bee', 'Banana-infused Michter''s bourbon and mango-infused vodka with a pineapple and Greek yoghurt milk wash, honey, lemon and propolis.', 'Bonci''s own drink and a personal favourite, named for the idea that a bar works like a hive. The yoghurt milk wash gives a silky texture, and it arrives with a honeycomb garnish.
+
+Created by Martina Bonci.
+
+Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.coqtail.com/en/martina-bonci-gucci-giardino-beehive-pairing/', NULL, NULL, NULL, NULL, NULL),
+    ('gucciosteria', NULL, 'Level 256', 'Roku gin with Lillet Blanc, blue curaçao, lemon and Peychaud''s bitters, finished with absinthe vapour.', 'A tribute to 1980s arcade games, named after the Pac-Man level that crashes because of a bug, with a small Pac-Man perched on the ice. It shows the playful side of a list that is otherwise built on Italian aperitivo.
+
+Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.coqtail.com/en/martina-bonci-gucci-giardino-beehive-pairing/', NULL, NULL, NULL, NULL, NULL),
+    ('gucciosteria', NULL, 'Gucci Spritz', 'Cocchi Rosa with pink grapefruit liqueur and Angostura, topped with Bellavista Franciacorta.', 'The house spritz, made with Italian sparkling wine rather than prosecco. Spritzes are central to the bar''s terrace aperitivo on the piazza, which is what 50 Best leads with.
+
+Sources: https://www.gucciosteria.com/en/florence/giardino/menu/signature-cocktails/, https://www.theworlds50best.com/bars/best-in-europe/the-list/gucci-giardino.html', NULL, NULL, NULL, NULL, NULL),
+    ('gorillabarskg', NULL, 'Simba the Lion', 'A milk punch of reposado tequila, a house burnt-butter liqueur, passion fruit and Oreo ice cream.', 'The best-seller of the pop-up-book Zoo menu and one of the three drinks Plakidas recommends. Milk-punch clarification turns rich dessert flavours into a clear, easy-drinking serve.
+
+Sources: https://howtobar.com/en/welcome-to-the-zoo-a-cocktail-safari-from-gorillas-thessaloniki/, https://www.theworlds50best.com/bars/best-in-europe/the-list/gorilla.html', NULL, 2025, NULL, NULL, NULL),
+    ('gorillabarskg', NULL, 'Po the Panda', 'A bitter-and-soda style drink with bitter cooked over charred bamboo, umeshu and a toasted rice and fig soda.', 'A reworking of the Italian bitter and soda themed on the Kung Fu Panda character, using charred bamboo and toasted rice for smoky, grainy depth. It was one of the Zoo menu''s three recommended serves.
+
+Sources: https://howtobar.com/en/welcome-to-the-zoo-a-cocktail-safari-from-gorillas-thessaloniki/, https://www.theworlds50best.com/bars/best-in-europe/the-list/gorilla.html', NULL, 2025, NULL, NULL, NULL),
+    ('gorillabarskg', NULL, 'The Keeper', 'A strong bourbon drink with white miso, oinomelo (Greek honeyed wine) and pineapple.', 'The zookeeper stop on the Zoo menu (dedicated to Steve Irwin), mixing umami miso with a traditional Greek honey-wine. 50 Best names it among the menu''s highlights.
+
+Sources: https://howtobar.com/en/welcome-to-the-zoo-a-cocktail-safari-from-gorillas-thessaloniki/, https://www.theworlds50best.com/bars/best-in-europe/the-list/gorilla.html', NULL, 2025, NULL, NULL, NULL),
+    ('gorillabarskg', NULL, 'Do Not Ask for Extra Bar Food', 'Bourbon and Metaxa distilled with tsoureki (Greek Easter bread), with a fermented mango and banana cordial.', 'A signature shared by bartender Nikitas Stoilis in 2022 that distils a Greek sweet bread into the spirit base. It shows the bar''s lab techniques applied to very local flavours.
+
+Created by Nikitas Stoilis.
+
+Spec from Le Cocktail Connoisseur (https://lecocktailconnoisseur.com/2022/04/14/nikitas-stoilis-gorilla-bar-thessaloniki/).', NULL, NULL, NULL, NULL, NULL),
+    ('tjoget', NULL, 'Beets by Tjoget', 'Sous-vide beetroot vodka shaken with coconut syrup, lemon, fresh ginger and nutmeg.', 'Tjoget''s house signature since about 2014, pitched to guests as a Nordic Piña Colada, and named as a joke on Beats by Dre. Staff say it would sell just as well off the menu because guests know it from social media.
+
+Method: Shake hard with ice and double strain.
+Beetroot vodka: Vacuum-seal 700 ml Absolut Vodka with 250 g rinsed, chopped red beetroot and cook sous vide at 57°C for four hours, then strain and rebottle.
+
+Spec from The Spirits Business (https://www.thespiritsbusiness.com/2026/08/cocktail-stories-beets-by-tjoget/).', NULL, 2014, 'Coupette', NULL, 'Shake'),
+    ('tjoget', NULL, 'Polo Lounge Martini', 'A vodka Martini with vodka fat-washed with brown butter and sage, and Cocchi Americano.', 'Inspired by the brown butter and sage pasta served at the Polo Lounge in Los Angeles, it puts a savoury, nutty edge on a vodka Martini. It is one of the ''Tjoget classics'' on the permanent list.
+
+Method: Stir until ice cold and strain.
+
+Spec from Spirited Drinks (https://www.spiriteddrinks.com/polo-lounge-martini-tjoget-stockholm-cocktail/).', 'Martini', NULL, 'Martini', NULL, 'Stir'),
+    ('tjoget', NULL, 'Onassis', 'Ocho blanco tequila with manzanilla sherry, Conference pear, honey, lime, pistachio and feta whey.', 'A ''Tjoget classic'' that brings Mediterranean flavours to a tequila sour, using whey from feta for a salty, creamy texture.
+
+Sources: https://www.tjoget.com/', NULL, NULL, NULL, NULL, NULL),
+    ('tjoget', NULL, 'Mango Garibaldi', 'Campari with white cacao, mango juice, coconut and lime.', 'A seasonal take on the Italian Garibaldi (Campari and orange) that swaps orange for mango and coconut, and one of the seasonal drinks 50 Best recommends.
+
+Sources: https://www.tjoget.com/, https://www.theworlds50best.com/bars/best-in-europe/the-list/tjoget.html', NULL, NULL, NULL, NULL, NULL),
+    ('tjoget', NULL, 'Sash Bamboo', 'Tanqueray gin with Carpano Bianco, manzanilla and fino sherry, and banana.', 'A seasonal riff on the sherry-and-vermouth Bamboo that adds gin and a soft banana note. It reflects the bar''s love of sherry, which runs through the menu.
+
+Sources: https://www.tjoget.com/, https://www.theworlds50best.com/bars/best-in-europe/the-list/tjoget.html', 'Bamboo', NULL, NULL, NULL, NULL),
+    ('super.lyan', NULL, 'Three Sisters Hi-Ball', 'Woodford Reserve bourbon and Jack Daniel''s Rye topped with a butterbean and squash soda.', 'Inspired by the Westpoort docks, it blends the ''three sisters'' crops of squash, corn and beans and clarifies them with brewing techniques into a soda. 50 Best picks it as the example of the Boroughs of Amsterdam menu.
+
+Sources: https://www.superlyan.com/, https://www.theworlds50best.com/bars/best-in-europe/the-list/super-lyan.html', NULL, NULL, NULL, NULL, NULL),
+    ('super.lyan', NULL, 'Espresso Martini 61''', 'Rye vodka with a kvass liqueur made from rye bread and IPA malt, plus espresso on the current menu.', 'One of the Lyan All Stars, built around a house kvass of rye bread and malt that gives the roasted, earthy depth usually expected from coffee. 50 Best describes it as coffee-free, while the current menu lists espresso.
+
+Sources: https://www.superlyan.com/, https://www.theworlds50best.com/bars/best-in-europe/the-list/super-lyan.html', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('super.lyan', NULL, '020 Martinez', 'Ketel One genever with a Dutch house vermouth, smoked dulse and orange bitters.', 'Named after Amsterdam''s dialling code, it rebuilds the Martinez around Dutch genever and adds smoked seaweed for a savoury, coastal note.
+
+Sources: https://www.superlyan.com/', 'Martinez', NULL, NULL, NULL, NULL),
+    ('super.lyan', NULL, 'Nieuwe-tini', 'Ketel One vodka with barley-treated sake, vermouth and crème fraîche whey.', 'A silky, boozy Martini variation from the Boroughs menu that uses dairy whey for texture instead of dilution alone.
+
+Sources: https://www.superlyan.com/', 'Martini', NULL, NULL, NULL, NULL),
+    ('super.lyan', NULL, 'Beeswax Old Fashioned', 'Maker''s Mark and Millstone Dutch rye with beeswax, flamed orange, raw sugar and bitters.', 'A long-running Lyan All Star that pairs American bourbon with Dutch rye and uses beeswax for a rounded, honeyed texture.
+
+Sources: https://www.superlyan.com/', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('foco.bcn', NULL, 'Old Fashioned', 'Bourbon with maple-glazed doughnut, toasted milk and walnut.', 'Turns the Old Fashioned into a breakfast-pastry drink while keeping it stirred and spirit-forward. 50 Best uses it as the example of how Foco hides new techniques behind familiar names.
+
+Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf, https://www.theworlds50best.com/bars/best-in-europe/the-list/foco.html', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('foco.bcn', NULL, 'Amaretto Sour', 'Scotch whisky with a mulled cherry cordial and an apple and almond ''champagne''.', 'A sour that keeps the amaretto flavour without the liqueur, getting almond from a sparkling apple-almond component and depth from spiced cherry. 50 Best singles it out alongside the Old Fashioned.
+
+Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf, https://www.theworlds50best.com/bars/best-in-europe/the-list/foco.html', NULL, NULL, NULL, NULL, NULL),
+    ('foco.bcn', NULL, 'Espresso Martini', 'Ketel One vodka with salted hazelnut, aerated espresso and vanilla foam.', 'Foco has kept an Espresso Martini on its list and keeps changing the technique: an earlier version used cold brew extracted with spirit instead of water, and Menu 20 uses aerated espresso.
+
+Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf, https://www.theworlds50best.com/discovery/Establishments/Spain/Barcelona/Foco.html', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('foco.bcn', NULL, 'Dry Manhattan', 'Johnnie Walker Black Label with a stripped banana and Chardonnay shrub and Empirical''s The Plum, I Suppose.', 'Replaces vermouth with a fruit-and-wine shrub and a plum-pit spirit from Copenhagen''s Empirical, keeping a dry Manhattan''s structure with Scotch at the base. It can also be made alcohol-free.
+
+Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf, https://www.theworlds50best.com/bars/best-in-europe/the-list/foco.html', 'Manhattan', NULL, NULL, NULL, NULL),
+    ('foco.bcn', NULL, 'Naked + Famous', 'Mezcal with pumpkin and brown butter, sparkling natural wine and Chartreuse.', 'A take on the modern classic Naked and Famous that adds autumnal pumpkin and brown butter and lengthens it with sparkling natural wine.
+
+Sources: https://www.focobcn.com/s/FOCO_Menu_20_English_Digital.pdf', 'Naked and Famous', NULL, NULL, NULL, NULL),
+    ('camparinoingalleria', NULL, 'Campari Seltz', 'Campari served ice-cold and lengthened with seltz (soda water), the bar''s founding serve.', 'The drink Camparino was built around in 1915: the bar''s cellar system delivered a steady stream of chilled soda so every Campari and soda came out cold and lively. It is still the house icon at the Bar di Passo counter, and head bartender Tommaso Cecca serves the Campari frozen to about minus 17 degrees before adding the seltz.
+
+Method: Pour the frozen Campari and top with the seltz.
+
+Spec from Le Cocktail Connoisseur (Tommaso Cecca) (https://lecocktailconnoisseur.com/2020/02/27/tommaso-cecca-milan-camparino-in-galleria/).', NULL, 1915, NULL, NULL, 'Build'),
+    ('camparinoingalleria', NULL, 'Campari Shakerato', 'Campari alone, shaken hard over ice until cold and foamy, then strained.', 'A single-ingredient drink that the bar presents as the purest form of the Italian aperitivo: all the texture comes from the shake. It is one of the historic Campari serves listed on both the Bar di Passo and Sala Spiritello menus, and Cecca names a perfect shakerato as part of his ideal bar.
+
+Ingredients from Camparino in Galleria menu (https://www.camparino.com/app/uploads/2026/07/Menu_Sala-Spiritello_Tutti-Frutti_ENG.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('camparinoingalleria', NULL, 'Compadre', 'Campari, Montelobos mezcal, red vermouth, chinotto, agave and Angostura, stirred and served over a large cube.', 'A mezcal Negroni that has become one of the drinks most associated with the Sala Spiritello upstairs. Chinotto and a bergamot mist bring a bitter citrus edge to the smoke of the mezcal, and head bartender Tommaso Cecca has shared the spec for Negroni Week.
+
+Created by Tommaso Cecca.
+
+Method: Stir everything in a mixing glass with 8 to 10 ice cubes for 12 to 15 seconds, then pour over a single large cube.
+
+Spec from Spirited Drinks (Tommaso Cecca) (https://www.spiriteddrinks.com/negroni-variations-from-milans-camparino-in-galleria-the-home-of-campari/).', 'Negroni', NULL, 'Rocks', 'Large Cube', 'Stir'),
+    ('camparinoingalleria', NULL, 'Lacto Garibaldi', 'Campari with lacto-fermented orange, a sharper take on the Campari and orange juice Garibaldi.', 'Part of the anthology menu created for the bar''s century, with one drink per decade. Fermenting the orange peels with lactic bacteria gives the juice more depth and tang than the fresh orange of the classic Garibaldi.
+
+Ingredients from Camparino in Galleria menu (https://www.camparino.com/app/uploads/2026/07/Menu_Sala-Spiritello_Tutti-Frutti_ENG.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 'Vodka and an oyster-shell distillate with a dill and raspberry sorbet, topped with cava.', 'The drink 50 Best singles out: the bar distils discarded oyster shells for a saline base, and the cava slowly melts the sorbet so the drink shifts from bright and fruity to briny as you sip. It shows off the rotovap work done in the downstairs lab.
+
+Ingredients from Aldea menu (https://aldeabar.com/wp-content/uploads/2025/03/Aldea_CARTA.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('aldea.bcn', NULL, 'Boteco', 'Bourbon with passion fruit, maple and shiitake mushroom.', 'An earthy, savoury-sweet bourbon drink that 50 Best uses to show how the lab balances umami and fruit: shiitake gives it depth while passion fruit and maple keep it bright. It opens the bar''s menu.
+
+Ingredients from Aldea menu (https://aldeabar.com/wp-content/uploads/2025/03/Aldea_CARTA.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('aldea.bcn', NULL, 'Juntos', 'Tequila with grilled bell pepper, bergamot, lapsang souchong tea, chilli and lime.', 'Aldea''s take on a Margarita, with smoky lapsang tea and roasted pepper in place of orange liqueur, which 50 Best recommends as the drink to start with. Roasted peppers are one of the unlikely ingredients the bar runs through its rotovap.
+
+Ingredients from Aldea menu (https://aldeabar.com/wp-content/uploads/2025/03/Aldea_CARTA.pdf). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('aldea.bcn', NULL, 'Piedra Santa', 'Rum with banana, miso, caramel and toasted barley.', 'A rich, savoury rum drink where miso cuts through banana and caramel, flagged by 50 Best as one of the bolder picks on the list. It is typical of the bar''s habit of pairing a sweet base with an umami counterweight.
+
+Ingredients from Aldea menu (https://aldeabar.com/wp-content/uploads/2025/03/Aldea_CARTA.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('the_clumsies', NULL, 'Aegean Negroni', 'The Clumsies'' own Old Tom gin, Ambrato vermouth and Campari with fennel seed and Cretan dittany.', 'The bar''s best-known drink, a herbal Negroni that swaps in Greek botanicals: dittany is a wild Cretan herb and fennel adds an anise lift. The menu notes Time Out named it the world''s best cocktail in 2019, and 50 Best still points to it in 2026.
+
+Ingredients from The Clumsies menu (https://www.theclumsies.gr/catalogue/clumsies-menu-2023-en.pdf?v=6). No measures have been published.', 'Negroni', NULL, NULL, NULL, NULL),
+    ('the_clumsies', NULL, 'Mediterranean Gimlet', 'London dry gin with a ''Greek salad'' cordial of slow-cooked tomato water, cucumber, red pepper, olive and oregano.', 'A Gimlet that tastes of a Greek salad, built on a savoury cordial rather than lime cordial. 50 Best describes it finished with a dehydrated sourdough garnish; its write-up names Star of Bombay gin, while the bar''s menu lists Tanqueray London Dry.
+
+Greek salad cordial: Slow-cooked tomato water with cucumber, red pepper, olives and oregano (per 50 Best).
+
+Ingredients from The Clumsies menu (https://www.theclumsies.gr/catalogue/clumsies-menu-2023-en.pdf?v=6). No measures have been published.', 'Gimlet', NULL, NULL, NULL, NULL),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 'Bombay Sapphire gin, mastiha and an oil made from herb and cheese trimmings, topped with Indian tonic and orange bitters.', 'Named after the bar''s founding motto, it is the Spirits of the City menu''s portrait of Athens photographer Kosmas Koumianos. The menu frames it as a minimal lowball highball, with the herb and cheese oil turning kitchen waste into flavour.
+
+Ingredients from The Clumsies signature menu (https://www.theclumsies.gr/catalogue/clumsies-cocktail-menu-2023.pdf?v=8). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('the_clumsies', NULL, 'Kykeon', 'Metaxa 12 Stars with malted barley, peach amaretto and pennyroyal.', 'Named after the ancient Greek barley drink, it is the menu''s portrait of actress Panagiota Vlanti, who compares theatre to a ripe peach. One euro from every Kykeon goes to a therapeutic education programme for people with disabilities.
+
+Ingredients from The Clumsies signature menu (https://www.theclumsies.gr/catalogue/clumsies-cocktail-menu-2023.pdf?v=8). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('14delarosa', NULL, 'Martini', 'The house Martini of gin and dry vermouth, stirred and served ice-cold.', '50 Best names the Martini first among the bar''s standout drinks. It sums up the bar''s approach: no gimmicks, just a classic executed precisely by bartenders in white jackets.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/14-de-la-rosa.html', 'Martini', NULL, NULL, NULL, NULL),
+    ('14delarosa', NULL, 'Gimlet', 'The bar''s Gimlet of gin and lime.', 'Both 50 Best and Condé Nast Traveler pick out the Gimlet as a drink that steals the show here, a benchmark for the classics-first style Dean Shury brought from London.
+
+Sources: https://www.theworlds50best.com/bars/best-in-europe/the-list/14-de-la-rosa.html, https://www.cntraveler.com/bars/barcelona/14-de-la-rosa', 'Gimlet', NULL, NULL, NULL, NULL),
+    ('14delarosa', NULL, 'Adonis', 'Sherry and sweet vermouth, finished with a mist of orange blossom water.', 'Sherry runs through most of the bar''s cocktails even though it is not a big part of Barcelona drinking. Difford''s Guide recommends this Adonis, lifted by an orange blossom mist inspired by the orange trees on the street.
+
+Sources: https://www.diffordsguide.com/bars/nz1jv7/14-de-la-rosa, https://www.theworlds50best.com/bars/best-in-europe/the-list/14-de-la-rosa.html', NULL, NULL, NULL, NULL, NULL),
+    ('14delarosa', NULL, 'Final Word', 'Mezcal with cherry, celery, lime, cacao and Chartreuse.', 'A signature twist on the Last Word noted by 50 Best, adding smoky mezcal, a savoury celery note and cacao to the equal-parts classic.
+
+Ingredients from The 50 Discovery (https://www.theworlds50best.com/discovery/Establishments/Spain/Barcelona/14-de-la-Rosa.html). No measures have been published.', 'Last Word', NULL, NULL, NULL, NULL),
+    ('forbina_bar', NULL, 'National Theatre', 'The Macallan 12 Sherry Oak with peach liqueur, orange wine, hinoki and honey.', 'A tribute to the theatre across the street and the one drink on the 2026 menu that sits outside its five-act structure. It is served in a cut-crystal Moser glass set inside a detailed 3D-printed model of the National Theatre, and at 790 Kč it is the priciest drink on the list.
+
+Ingredients from iLuxus (Forbína press) (https://iluxus.cz/2026/09/01/forbina-predstavuje-nove-koktejlove-menu-inspirovala-se-nejznamejsimi-divadelnimi-hrami/). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('forbina_bar', NULL, 'A Midsummer Night''s Dream', 'A Gimlet variation with Greek retsina wine, hibiscus and strawberries.', 'Head bartender Jan Vlasák calls it one of the most visual serves on the 2026 menu: it arrives on a wooden stand covered in moss and glowing crystals, evoking Shakespeare''s enchanted forest. It is also offered in a non-alcoholic version.
+
+Ingredients from iLuxus (Forbína press) (https://iluxus.cz/2026/09/01/forbina-predstavuje-nove-koktejlove-menu-inspirovala-se-nejznamejsimi-divadelnimi-hrami/). No measures have been published.', 'Gimlet', 2026, NULL, NULL, NULL),
+    ('forbina_bar', NULL, 'Saturnin', 'Becherovka Lemond, plum liqueur and plum wine, clarified with vanilla pudding.', 'The opening drink of the 2026 menu, based on the Czech comic novel and play Saturnin. It nods to a character''s doughnut theory, so it is served in a doughnut-shaped porcelain vessel, and the milk-style clarification uses vanilla pudding.
+
+Clarification: The mix is clarified using vanilla pudding.
+
+Ingredients from iLuxus (Forbína press) (https://iluxus.cz/2026/09/01/forbina-predstavuje-nove-koktejlove-menu-inspirovala-se-nejznamejsimi-divadelnimi-hrami/). No measures have been published.', NULL, 2026, NULL, NULL, NULL),
+    ('forbina_bar', NULL, 'Swan Lake', 'Vodka with jasmine, peach and lemon sorbet, served in a swan-shaped glass.', 'The best-selling drink of Forbína''s first menu, according to bar manager Peter Plieštik. Vodka nods to Tchaikovsky, jasmine and peach stand for love and passion, and the lemon sorbet for its sour moments; it comes in a glass called Odeta by Czech designer Martin Jakobsen.
+
+Ingredients from CzechCrunch (Forbína press) (https://cc.cz/koktejl-labuti-jezero-je-tu-jemny-a-voni-po-romantickem-jasminu-bar-forbina-se-inspiruje-divadlem/). No measures have been published.', NULL, NULL, 'Custom', NULL, NULL),
+    ('forbina_bar', NULL, 'The Magic Circus', 'Roku gin with vanilla, grapefruit and bitters, served under a miniature circus tent.', 'The Laterna Magika drink from the first menu: the tent lifts away in front of the guest, and the glass''s backlight can be switched between a happy and a sad mode, like the two clowns of the show. 50 Best lists it as The Wonderful Circus.
+
+Ingredients from Europe''s 50 Best Bars 2026 (https://www.theworlds50best.com/bars/best-in-europe/the-list/forbina-bar.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('latebloomers.zurich', NULL, 'Papara', 'Retsina, tequila and mezcal with tomato, cucumber, feta, pepper, onion and caper.', 'A savoury drink that reads like a Greek salad in a glass, and the one 50 Best highlights. Retsina''s pine-resin note ties the agave spirits to the vegetables and feta.
+
+Ingredients from Late Bloomers menu (https://latebloomersthebar.com/img/Winter.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 'Tequila and mezcal with chilli, lime, purple corn and tortilla syrup.', 'The first signature on the menu, a spicy Margarita that leans into corn: purple corn and a tortilla syrup give it an earthy, toasty sweetness.
+
+Ingredients from Late Bloomers menu (https://latebloomersthebar.com/img/Winter.pdf). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 'Rum with tonka, mastiha and mahlepi, a salty foam and 3 Cents pineapple soda.', 'A Piña Colada rethought around tsoureki, the Greek Easter bread: mastiha and mahlepi are the spices that flavour it. It sits in the bar''s section of house takes on classics.
+
+Ingredients from Late Bloomers menu (https://latebloomersthebar.com/img/Winter.pdf). No measures have been published.', 'Piña Colada', NULL, NULL, NULL, NULL),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 'Hepple gin with goat cheese, kaffir lime, lemon and a vegan foam.', 'A savoury gin sour built around goat cheese, with kaffir lime for lift and a plant-based foam in place of egg white, in keeping with the bar''s low-waste approach.
+
+Ingredients from Late Bloomers menu (https://latebloomersthebar.com/img/Winter.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('ritacocktails', NULL, 'Arco', 'Monkey Shoulder whisky and Patrón Silver tequila with St-Germain, pear distillate, jasmine syrup and lemon.', 'The drink 50 Best says to order from the design-themed menu. It is named after the Arco floor lamp by Achille and Pier Giacomo Castiglioni, and its coupe carries a garnish that echoes the lamp''s arching shape.
+
+Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, 'Coupette', NULL, NULL),
+    ('ritacocktails', NULL, 'Mezzadro', 'Acquavite bianca, Campari, red wine and cassis in an aperitif-style drink.', 'Opens the aperitif section of the design menu and shares its name with the Castiglioni brothers'' tractor-seat Mezzadro stool. A bitter, fruity serve in the Milanese aperitivo tradition the bar helped popularise.
+
+Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('ritacocktails', NULL, 'Ultrafragola', 'Altamura vodka with strawberry foam, cream and meringue.', 'A creamy, dessert-like drink from the bold section, named after Ettore Sottsass''s wavy Ultrafragola mirror. It plays on strawberries and cream.
+
+Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('ritacocktails', NULL, 'Moka Express', 'WhistlePig 10 rye and Eminente 7 rum with moka coffee, cocoa, vanilla and salted caramel syrup, for two.', 'A sharing drink named after the Bialetti stovetop coffee maker, one of the best-known pieces of Italian design. It turns the moka pot''s coffee into a rich after-dinner cocktail for two people.
+
+Ingredients from Rita cocktail menu (https://www.ritacocktails.com/menu/cocktails/). No measures have been published.', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO "seed_lines" VALUES
     ('barkumiko', NULL, 'Bright One', 0, 0.5, 'oz', 'Lemon Juice', NULL, 'fresh', false),
@@ -1916,7 +2347,274 @@ INSERT INTO "seed_lines" VALUES
     ('librarybartoronto', NULL, 'Midnight Snow', 2, 0.5, 'oz', 'Blueberry Syrup', NULL, 'store-bought', false),
     ('librarybartoronto', NULL, 'Midnight Snow', 3, 0.25, 'tsp', 'Lime Juice', NULL, NULL, false),
     ('librarybartoronto', NULL, 'Midnight Snow', 4, 1, 'oz', 'Espresso', NULL, NULL, false),
-    ('librarybartoronto', NULL, 'Midnight Snow', 5, NULL, NULL, 'Fleur de sel and freeze-dried raspberry powder', NULL, 'garnish', false);
+    ('librarybartoronto', NULL, 'Midnight Snow', 5, NULL, NULL, 'Fleur de sel and freeze-dried raspberry powder', NULL, 'garnish', false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 0, 30, 'ml', 'Reposado Tequila', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 1, 30, 'ml', 'Tepache', NULL, 'house-made fermented pineapple', false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 2, 25, 'ml', 'Passion Fruit Cordial', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 3, 5, 'ml', 'Coffee Distillate', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 4, 5, 'ml', 'Lime Juice', NULL, 'fresh', false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 5, 25, 'ml', 'Milk', NULL, 'for clarifying', false),
+    ('barronegroathens', NULL, 'Mayans'' Punch', 6, NULL, NULL, 'Edible flower', NULL, 'garnish', false),
+    ('barronegroathens', NULL, 'Los Abuelos', 0, NULL, NULL, 'Elala Blanco Tequila', 'Blanco Tequila', 'olive oil fat-washed', false),
+    ('barronegroathens', NULL, 'Los Abuelos', 1, NULL, NULL, 'Bruxo X Mezcal', 'Mezcal', NULL, false),
+    ('barronegroathens', NULL, 'Los Abuelos', 2, NULL, NULL, 'Herbal Liqueur', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Los Abuelos', 3, NULL, NULL, 'Fennel', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Los Abuelos', 4, NULL, NULL, 'Aromatic Salt', NULL, 'rim', false),
+    ('barronegroathens', NULL, 'Margarita', 0, NULL, NULL, 'Espolon Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('barronegroathens', NULL, 'Margarita', 1, NULL, NULL, 'Orange Liqueur', NULL, 'house ''Med'' orange liqueur', false),
+    ('barronegroathens', NULL, 'Margarita', 2, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Margarita', 3, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Paloma', 0, NULL, NULL, 'Espolon Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('barronegroathens', NULL, 'Paloma', 1, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('barronegroathens', NULL, 'Paloma', 2, NULL, NULL, 'Vikos', 'Pink Grapefruit Soda', NULL, false),
+    ('barronegroathens', NULL, 'Paloma', 3, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 0, NULL, NULL, 'Volcan De Mi Tierra Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 1, NULL, NULL, 'Cocoa', NULL, NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 2, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 3, NULL, NULL, 'Brew Coffee', NULL, NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 4, NULL, NULL, 'Belvedere', 'Dirty Brew Coffee', NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 5, NULL, NULL, 'Mint', NULL, NULL, false),
+    ('barronegroathens', NULL, 'CDMX Espresso Martini', 6, NULL, NULL, 'Fernet-Branca', 'Fernet', NULL, false),
+    ('bird.cph', NULL, 'Buckthorn Margarita', 0, NULL, NULL, 'Vermouth', NULL, 'sea buckthorn-infused', false),
+    ('bird.cph', NULL, 'Drenched Se7entifive', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('bird.cph', NULL, 'Drenched Se7entifive', 1, NULL, NULL, 'Jasmine', NULL, NULL, false),
+    ('bird.cph', NULL, 'Drenched Se7entifive', 2, NULL, NULL, 'Lemon Vermouth', NULL, NULL, false),
+    ('bird.cph', NULL, 'Drenched Se7entifive', 3, NULL, NULL, 'Crémant Sparkling Wine', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 0, NULL, NULL, 'Gin', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 1, NULL, NULL, 'Citron Water', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 2, NULL, NULL, 'Citron Liqueur', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 3, NULL, NULL, 'Lemon', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Un Grande Limone', 4, NULL, NULL, 'Limoncello', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Banana Split', 0, NULL, NULL, 'Vanilla Vodka', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Banana Split', 1, NULL, NULL, 'Strawberry', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Banana Split', 2, NULL, NULL, 'Banana', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Banana Split', 3, NULL, NULL, 'Cocoa', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Banana Split', 4, NULL, NULL, 'Milk', NULL, 'milk wash', false),
+    ('lantiquario_napoli', NULL, 'Mulata Daiquiri', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Mulata Daiquiri', 1, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Mulata Daiquiri', 2, NULL, NULL, 'Cacao Liqueur', NULL, NULL, false),
+    ('lantiquario_napoli', NULL, 'Mulata Daiquiri', 3, NULL, NULL, 'Sugar', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Regular', 0, NULL, NULL, 'Tequila', NULL, 'Dorito-infused', false),
+    ('freniefrizioni', NULL, 'The Regular', 1, NULL, NULL, 'Cointreau', 'Orange Liqueur', NULL, false),
+    ('freniefrizioni', NULL, 'The Regular', 2, NULL, NULL, 'Pico de Gallo', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Regular', 3, NULL, NULL, 'Grapefruit Soda', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 1, NULL, NULL, 'Cachaça', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 2, NULL, NULL, 'Blueberry', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 3, NULL, NULL, 'Caramel', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 4, NULL, NULL, 'Soy Sauce', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'The Nerd', 5, NULL, NULL, 'Condensed Milk', NULL, 'milk wash', false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 0, 30, 'ml', 'Del Maguey Vida Mezcal', 'Mezcal', NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 1, 30, 'ml', 'Bulleit Bourbon', 'Bourbon', NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 2, 10, 'ml', 'Cynar', 'Artichoke Amaro', NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 3, 10, 'ml', 'Agave Syrup', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 4, 3, 'dash', 'Angostura', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 5, NULL, NULL, 'Mint Leaves', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'Tex Mezc', 6, NULL, NULL, 'Mint sprig and lemon zest', NULL, 'garnish', false),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 0, 40, 'ml', 'Carpano Antica Formula Sweet Vermouth', 'Sweet Vermouth', NULL, false),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 1, 40, 'ml', 'Martini Riserva Speciale Bitter', 'Red Bitter', NULL, false),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 2, 10, 'ml', 'Nardini', 'Mezzo E Mezzo Aperitivo', NULL, false),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 3, 2, 'dash', 'Liquorice Bitters', NULL, NULL, false),
+    ('freniefrizioni', NULL, 'Sorriso Amaro', 4, NULL, NULL, 'Lemon zest', NULL, 'garnish', false),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 0, 1.67, 'oz', 'Aged Caribbean Blended Rum', NULL, '1 2/3 fl oz; aged 6-10 years', false),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 1, 0.5, 'oz', 'Dubonnet or Byrrh', 'Red Quinquina', '1/2 fl oz', false),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 2, 0.17, 'oz', 'Grand Marnier Cognac', 'Cognac Orange Liqueur', '1/6 fl oz', false),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 3, 0.04, 'oz', 'Italian Red Bitter Liqueur', NULL, '1/24 fl oz', false),
+    ('boadascocktails', NULL, 'Boadas Cocktail', 4, NULL, NULL, 'Skewered maraschino cherry', NULL, 'garnish', false),
+    ('boadascocktails', NULL, 'Hotel Nacional', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('boadascocktails', NULL, 'Hotel Nacional', 1, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('boadascocktails', NULL, 'Hotel Nacional', 2, NULL, NULL, 'Apricot Liqueur', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'G-Funk', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'G-Funk', 1, NULL, NULL, 'Mango', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'G-Funk', 2, NULL, NULL, 'Roasted Coconut', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'G-Funk', 3, NULL, NULL, 'Orange Water', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'G-Funk', 4, NULL, NULL, 'Hops Tincture', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Grime', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Grime', 1, NULL, NULL, 'Wasabi', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Grime', 2, NULL, NULL, 'Shiitake Mushroom', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Grime', 3, NULL, NULL, 'Molasses', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Rhubarb Mojito', 0, NULL, NULL, 'Rhubarb', NULL, NULL, false),
+    ('tag.cocktails', NULL, 'Rhubarb Mojito', 1, NULL, NULL, 'Eucalyptus Distillate', NULL, NULL, false),
+    ('madridangelita', NULL, 'Dry Sbagliato', 0, NULL, NULL, 'Negroni Powder', NULL, 'house-made', false),
+    ('madridangelita', NULL, 'Dry Sbagliato', 1, NULL, NULL, 'Dry Sparkling Wine', NULL, 'Prosecco, per The Spirits Business', false),
+    ('madridangelita', NULL, 'La Huerta', 0, NULL, NULL, 'Bombay Sapphire Gin', 'Gin', NULL, false),
+    ('madridangelita', NULL, 'La Huerta', 1, NULL, NULL, 'Garden Vegetables', NULL, NULL, false),
+    ('madridangelita', NULL, 'La Huerta', 2, NULL, NULL, 'Roots', NULL, NULL, false),
+    ('madridangelita', NULL, 'Resina y Sombra', 0, NULL, NULL, 'The Lost Explorer Salmiana Mezcal', 'Salmiana Mezcal', NULL, false),
+    ('madridangelita', NULL, 'Resina y Sombra', 1, NULL, NULL, 'Pine', NULL, NULL, false),
+    ('madridangelita', NULL, 'Resina y Sombra', 2, NULL, NULL, 'Black Lemon', NULL, NULL, false),
+    ('madridangelita', NULL, 'Resina y Sombra', 3, NULL, NULL, 'Chanterelle Mushrooms', NULL, NULL, false),
+    ('madridangelita', NULL, 'Chitina', 0, NULL, NULL, 'Brugal 1888 Rum', 'Rum', NULL, false),
+    ('madridangelita', NULL, 'Chitina', 1, NULL, NULL, 'Crickets', NULL, NULL, false),
+    ('madridangelita', NULL, 'Chitina', 2, NULL, NULL, 'Fig Leaf', NULL, NULL, false),
+    ('madridangelita', NULL, 'Chitina', 3, NULL, NULL, 'Barley', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 0, NULL, NULL, 'Cognac', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 1, NULL, NULL, 'Blackberry', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 2, NULL, NULL, 'Berry Liqueur', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 3, NULL, NULL, 'Espresso', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Blackberry Espressotini', 4, NULL, NULL, 'Sugar', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Mezcaloni', 0, NULL, NULL, 'Clementine Bitter', NULL, 'house-made (Dunlin Style)', false),
+    ('dunlin.bar', NULL, 'Mezcaloni', 1, NULL, NULL, 'Peach Vermouth', NULL, 'house-made (Dunlin Style)', false),
+    ('dunlin.bar', NULL, 'Mezcaloni', 2, NULL, NULL, 'Mezcal', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Milky Clementine Highball', 0, NULL, NULL, 'Clementine Wine', NULL, 'house-fermented', false),
+    ('dunlin.bar', NULL, 'Milky Clementine Highball', 1, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Milky Clementine Highball', 2, NULL, NULL, 'Milky Oolong Tea', NULL, 'no milk in the drink', false),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 1, NULL, NULL, 'Acid', NULL, 'listed as Säure', false),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 2, NULL, NULL, 'Clementine', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 3, NULL, NULL, 'Agave Syrup', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Clementine Margarita', 4, NULL, NULL, 'Chilli Salt', NULL, NULL, false),
+    ('dunlin.bar', NULL, 'Dunlin Sgroppino', 0, NULL, NULL, 'Honey and Ginger Wine', NULL, 'house-fermented, carbonated', false),
+    ('dunlin.bar', NULL, 'Dunlin Sgroppino', 1, NULL, NULL, 'Lemon Sorbet', NULL, 'house-made', false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 0, 35, 'ml', 'Ron Santiago de Cuba 11 Años Aged Rum', 'Aged Rum', NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 1, 15, 'ml', 'Umeshu', NULL, NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 2, 15, 'ml', 'Peach Liqueur', NULL, NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 3, 25, 'ml', 'Lime Juice', NULL, NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 4, 2, 'ml', 'Elderflower Liqueur', NULL, NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 5, 10, 'drop', 'Sesame Distillate', NULL, NULL, false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 6, NULL, NULL, 'Vegan Egg White Substitute', NULL, 'amount not given', false),
+    ('waxonberlin', NULL, 'Playa de Neukölln', 7, NULL, NULL, 'Orange zest', NULL, 'garnish', false),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 0, 30, 'ml', 'Luxardo Bitter Bianco', 'White Bitter', NULL, false),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 1, 30, 'ml', 'Martini Riserva Ambrato Vermouth', 'Vermouth', NULL, false),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 2, 30, 'ml', 'Peter in Florence Gin', 'Gin', 'infused with butterfly pea flowers', false),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 3, 5, 'ml', 'Yuzu Sake', NULL, NULL, false),
+    ('gucciosteria', NULL, 'Mémoire di Negroni', 4, 2, 'dash', 'Grapefruit Bitters', NULL, NULL, false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 0, 25, 'ml', 'Mint Syrup', NULL, 'homemade', false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 1, 30, 'ml', 'Lemon Juice', NULL, NULL, false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 2, 45, 'ml', 'Casamigos Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 3, 15, 'ml', 'Italicus Rosolio di Bergamotto', 'Bergamot Liqueur', NULL, false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 4, 5, 'ml', 'Ancho Reyes Verde', 'Green Chile Liqueur', NULL, false),
+    ('gucciosteria', NULL, 'Chi si ferma è perduto', 5, NULL, NULL, 'Rim of salt and pea powder', NULL, 'garnish', false),
+    ('gorillabarskg', NULL, 'Do Not Ask for Extra Bar Food', 0, 60, 'ml', 'Bourbon and Metaxa', NULL, 'distilled with tsoureki', false),
+    ('gorillabarskg', NULL, 'Do Not Ask for Extra Bar Food', 1, 45, 'ml', 'Mango and Banana Cordial', NULL, 'fermented', false),
+    ('tjoget', NULL, 'Beets by Tjoget', 0, 50, 'ml', 'Beetroot Vodka', NULL, 'house infusion, see prep', false),
+    ('tjoget', NULL, 'Beets by Tjoget', 1, 30, 'ml', 'Coconut Syrup', NULL, 'made with Giffard', false),
+    ('tjoget', NULL, 'Beets by Tjoget', 2, 20, 'ml', 'Lemon Juice', NULL, NULL, false),
+    ('tjoget', NULL, 'Beets by Tjoget', 3, 3, 'ml', 'Ginger Juice', NULL, NULL, false),
+    ('tjoget', NULL, 'Beets by Tjoget', 4, 2, 'dash', 'Nutmeg Tincture', NULL, NULL, false),
+    ('tjoget', NULL, 'Polo Lounge Martini', 0, 50, 'ml', 'Absolut Elyx Vodka', 'Vodka', 'fat-washed with brown butter and sage', false),
+    ('tjoget', NULL, 'Polo Lounge Martini', 1, 20, 'ml', 'Cocchi Americano', NULL, NULL, false),
+    ('tjoget', NULL, 'Polo Lounge Martini', 2, NULL, NULL, 'Sage leaf', NULL, 'garnish', false),
+    ('camparinoingalleria', NULL, 'Campari Seltz', 0, 90, 'ml', 'Campari', 'Bitter Aperitivo', 'frozen to -17°C', false),
+    ('camparinoingalleria', NULL, 'Campari Seltz', 1, 120, 'ml', 'Seltz', NULL, 'soda water', false),
+    ('camparinoingalleria', NULL, 'Campari Shakerato', 0, NULL, NULL, 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 0, 1.2, 'oz', 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 1, 0.7, 'oz', 'Montelobos Mezcal Espadin', 'Mezcal', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 2, 0.5, 'oz', 'Quaglia Chinotto', 'Chinotto', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 3, 0.5, 'oz', '1757 Vermouth di Torino Rosso', 'Red Vermouth', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 4, 2, 'dash', 'Angostura', 'Bitters', NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 5, 0.2, 'oz', 'Agave Syrup', NULL, NULL, false),
+    ('camparinoingalleria', NULL, 'Compadre', 6, NULL, NULL, 'Kaffir lime leaf and bergamot essence', NULL, 'garnish', false),
+    ('camparinoingalleria', NULL, 'Lacto Garibaldi', 0, NULL, NULL, 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('camparinoingalleria', NULL, 'Lacto Garibaldi', 1, NULL, NULL, 'Lacto-fermented Orange', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 0, NULL, NULL, 'Vodka', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 1, NULL, NULL, 'Oyster Shell Distillate', NULL, 'house-distilled', false),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 2, NULL, NULL, 'Dill', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 3, NULL, NULL, 'Raspberry', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Coral Reef Club', 4, NULL, NULL, 'Cava', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Boteco', 0, NULL, NULL, 'Bourbon', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Boteco', 1, NULL, NULL, 'Passion Fruit', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Boteco', 2, NULL, NULL, 'Shiitake', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Boteco', 3, NULL, NULL, 'Maple', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 1, NULL, NULL, 'Grilled Bell Pepper', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 2, NULL, NULL, 'Bergamot', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 3, NULL, NULL, 'Lapsang Souchong Tea', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 4, NULL, NULL, 'Chilli', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Juntos', 5, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Piedra Santa', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Piedra Santa', 1, NULL, NULL, 'Banana', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Piedra Santa', 2, NULL, NULL, 'Miso', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Piedra Santa', 3, NULL, NULL, 'Caramel', NULL, NULL, false),
+    ('aldea.bcn', NULL, 'Piedra Santa', 4, NULL, NULL, 'Toasted Barley', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Aegean Negroni', 0, NULL, NULL, 'The Clumsies Old Tom Gin', 'Old Tom Gin', NULL, false),
+    ('the_clumsies', NULL, 'Aegean Negroni', 1, NULL, NULL, 'Ambrato Vermouth', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Aegean Negroni', 2, NULL, NULL, 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('the_clumsies', NULL, 'Aegean Negroni', 3, NULL, NULL, 'Fennel Seeds', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Aegean Negroni', 4, NULL, NULL, 'Dittany', NULL, 'diktamo', false),
+    ('the_clumsies', NULL, 'Mediterranean Gimlet', 0, NULL, NULL, 'Tanqueray London Dry Gin', 'London Dry Gin', NULL, false),
+    ('the_clumsies', NULL, 'Mediterranean Gimlet', 1, NULL, NULL, 'Greek Salad Cordial', NULL, 'house-made', false),
+    ('the_clumsies', NULL, 'Mediterranean Gimlet', 2, NULL, NULL, 'Dehydrated leaven', NULL, 'garnish', false),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 0, NULL, NULL, 'Bombay Sapphire Gin', 'Gin', NULL, false),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 1, NULL, NULL, 'Mastiha', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 2, NULL, NULL, 'Herb and Cheese Waste Oil', NULL, 'house-made', false),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 3, NULL, NULL, 'Schweppes', 'Indian Tonic', NULL, false),
+    ('the_clumsies', NULL, 'Perfect Imperfection', 4, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Kykeon', 0, NULL, NULL, 'Metaxa 12 Stars Greek Brandy', 'Greek Brandy', NULL, false),
+    ('the_clumsies', NULL, 'Kykeon', 1, NULL, NULL, 'Malted Barley', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Kykeon', 2, NULL, NULL, 'Peach Amaretto', NULL, NULL, false),
+    ('the_clumsies', NULL, 'Kykeon', 3, NULL, NULL, 'Pennyroyal', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 0, NULL, NULL, 'Mezcal', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 1, NULL, NULL, 'Cherry', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 2, NULL, NULL, 'Celery', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 3, NULL, NULL, 'Lime Juice', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 4, NULL, NULL, 'Cacao', NULL, NULL, false),
+    ('14delarosa', NULL, 'Final Word', 5, NULL, NULL, 'Chartreuse', NULL, NULL, false),
+    ('forbina_bar', NULL, 'National Theatre', 0, NULL, NULL, 'The Macallan 12 Sherry Oak Single Malt Scotch', 'Single Malt Scotch Whisky', NULL, false),
+    ('forbina_bar', NULL, 'National Theatre', 1, NULL, NULL, 'Peach Liqueur', NULL, NULL, false),
+    ('forbina_bar', NULL, 'National Theatre', 2, NULL, NULL, 'Orange Wine', NULL, NULL, false),
+    ('forbina_bar', NULL, 'National Theatre', 3, NULL, NULL, 'Hinoki', NULL, NULL, false),
+    ('forbina_bar', NULL, 'National Theatre', 4, NULL, NULL, 'Honey', NULL, NULL, false),
+    ('forbina_bar', NULL, 'A Midsummer Night''s Dream', 0, NULL, NULL, 'Retsina', NULL, NULL, false),
+    ('forbina_bar', NULL, 'A Midsummer Night''s Dream', 1, NULL, NULL, 'Hibiscus', NULL, NULL, false),
+    ('forbina_bar', NULL, 'A Midsummer Night''s Dream', 2, NULL, NULL, 'Strawberry', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Saturnin', 0, NULL, NULL, 'Becherovka Lemond', 'Herbal Liqueur', NULL, false),
+    ('forbina_bar', NULL, 'Saturnin', 1, NULL, NULL, 'Plum Liqueur', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Saturnin', 2, NULL, NULL, 'Plum Wine', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Swan Lake', 0, NULL, NULL, 'Vodka', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Swan Lake', 1, NULL, NULL, 'Jasmine', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Swan Lake', 2, NULL, NULL, 'Peach', NULL, NULL, false),
+    ('forbina_bar', NULL, 'Swan Lake', 3, NULL, NULL, 'Lemon Sorbet', NULL, NULL, false),
+    ('forbina_bar', NULL, 'The Magic Circus', 0, NULL, NULL, 'Roku Gin', 'Gin', NULL, false),
+    ('forbina_bar', NULL, 'The Magic Circus', 1, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('forbina_bar', NULL, 'The Magic Circus', 2, NULL, NULL, 'Grapefruit', NULL, NULL, false),
+    ('forbina_bar', NULL, 'The Magic Circus', 3, NULL, NULL, 'Bitters', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 0, NULL, NULL, 'Retsina', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 1, NULL, NULL, 'Arsenal Tequila', 'Tequila', NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 2, NULL, NULL, 'Mezcal', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 3, NULL, NULL, 'Tomato', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 4, NULL, NULL, 'Cucumber', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 5, NULL, NULL, 'Feta', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 6, NULL, NULL, 'Pepper', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 7, NULL, NULL, 'Onion', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Papara', 8, NULL, NULL, 'Caper', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 0, NULL, NULL, 'Tequila', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 1, NULL, NULL, 'Mezcal', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 2, NULL, NULL, 'Chilli', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 3, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 4, NULL, NULL, 'Purple Corn', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Inception Margarita', 5, NULL, NULL, 'Tortilla Syrup', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 0, NULL, NULL, 'Rum', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 1, NULL, NULL, 'Tonka', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 2, NULL, NULL, 'Mastiha', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 3, NULL, NULL, 'Mahlepi', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 4, NULL, NULL, 'Salty Foam', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'Tsoureki Colada', 5, NULL, NULL, '3 Cents', 'Pineapple Soda', NULL, false),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 0, NULL, NULL, 'Hepple Gin', 'Gin', NULL, false),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 1, NULL, NULL, 'Goat Cheese', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 2, NULL, NULL, 'Kaffir Lime', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 3, NULL, NULL, 'Lemon', NULL, NULL, false),
+    ('latebloomers.zurich', NULL, 'The G.O.A.T', 4, NULL, NULL, 'Vegan Foam', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Arco', 0, NULL, NULL, 'Monkey Shoulder Blended Malt Scotch', 'Blended Malt Scotch Whisky', NULL, false),
+    ('ritacocktails', NULL, 'Arco', 1, NULL, NULL, 'Patrón Silver Tequila', 'Tequila', NULL, false),
+    ('ritacocktails', NULL, 'Arco', 2, NULL, NULL, 'St-Germain', 'Elderflower Liqueur', NULL, false),
+    ('ritacocktails', NULL, 'Arco', 3, NULL, NULL, 'Pear Distillate', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Arco', 4, NULL, NULL, 'Jasmine Syrup', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Arco', 5, NULL, NULL, 'Lemon Juice', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Arco', 6, NULL, NULL, 'Foamer', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Mezzadro', 0, NULL, NULL, 'Acquavite Bianca', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Mezzadro', 1, NULL, NULL, 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('ritacocktails', NULL, 'Mezzadro', 2, NULL, NULL, 'Red Wine', NULL, '''red juicy wine'' on the menu', false),
+    ('ritacocktails', NULL, 'Mezzadro', 3, NULL, NULL, 'Cassis', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Ultrafragola', 0, NULL, NULL, 'Altamura Vodka', 'Vodka', NULL, false),
+    ('ritacocktails', NULL, 'Ultrafragola', 1, NULL, NULL, 'Strawberry Foam', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Ultrafragola', 2, NULL, NULL, 'Cream', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Ultrafragola', 3, NULL, NULL, 'Meringues', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Moka Express', 0, NULL, NULL, 'WhistlePig 10 Rye', 'Rye Whiskey', NULL, false),
+    ('ritacocktails', NULL, 'Moka Express', 1, NULL, NULL, 'Eminente 7 Cuban Rum', 'Cuban Rum', NULL, false),
+    ('ritacocktails', NULL, 'Moka Express', 2, NULL, NULL, 'Moka Coffee', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Moka Express', 3, NULL, NULL, 'Cocoa and Vanilla', NULL, NULL, false),
+    ('ritacocktails', NULL, 'Moka Express', 4, NULL, NULL, 'Salted Caramel Syrup', NULL, NULL, false);
 
 
 -- --- Glassware this adds (the picker had no Nick & Nora or martini glass) ---

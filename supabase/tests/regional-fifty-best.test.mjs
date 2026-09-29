@@ -1,5 +1,5 @@
-// Asia's and North America's 50 Best Bars 2026 (20260929900000_regional_fifty_best.sql):
-// every bar on both lists has a public profile and its place, and running the
+// Asia's, North America's and Europe's 50 Best Bars 2026
+// (20260929900000_regional_fifty_best.sql): every bar on the three lists has a public profile and its place, and running the
 // seed again adds nothing.
 //
 //   supabase start && supabase db reset
@@ -27,8 +27,8 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 before(() => db.connect());
 after(() => db.end());
 
-describe("Asia's and North America's 50 Best Bars 2026", () => {
-  for (const award of ["Asia's 50 Best Bars", "North America's 50 Best Bars"]) {
+describe("Asia's, North America's and Europe's 50 Best Bars 2026", () => {
+  for (const award of ["Asia's 50 Best Bars", "North America's 50 Best Bars", "Europe's 50 Best Bars"]) {
     test(`${award}: places 1 to 50, each on a public bar profile`, async () => {
       const { rows } = await db.query(
         `SELECT a.position FROM public.profile_awards a JOIN public.profiles p ON p.id = a.profile_id
@@ -58,9 +58,12 @@ describe("Asia's and North America's 50 Best Bars 2026", () => {
                                (SELECT count(*) FROM public.items)::int AS items,
                                (SELECT count(*) FROM public.recipes)::int AS recipes`)
       ).rows[0];
-    const before = await count();
     await db.query('BEGIN');
     try {
+      // Other test files write to these tables at the same time; hold them
+      // still so the counts only see this run.
+      await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
+      const before = await count();
       await db.query(readFileSync(MIGRATION, 'utf8'));
       assert.deepEqual(await count(), before);
     } finally {
