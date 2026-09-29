@@ -11,18 +11,22 @@ import { DiscoverArea } from '@/components/screens/home/DiscoverArea';
 import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
+import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
 
 /**
- * Discover, the first tab in home mode: where (near me, a city, anywhere),
- * the best of a drink there, the top bars there, then the drinks you can
- * see, marking the ones your shelf can make. ponytail: until bars can
- * publish releases (the publishing proposal), the last part is the shared
+ * Discover, the first tab in home mode: drinks for your taste, then where
+ * (near me, a city, anywhere), the best of a drink there, the top bars there
+ * and the most creative drinks, then the drinks you can see, marking the ones
+ * your shelf can make and how well each fits your taste. ponytail: until bars
+ * can publish releases (the publishing proposal), the last part is the shared
  * library; releases become a section when they exist.
  */
 export function DiscoverScreen() {
@@ -44,6 +48,15 @@ export function DiscoverScreen() {
   const split = mapAvailable && breakpoint !== 'phone';
   const drink = pick.drink ? { id: pick.drink.id, name: pick.drink.name } : null;
   const sheet = adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null;
+
+  const { data: me } = useMyTaste();
+  const catalog = useFlavorCatalog();
+  // Match percentages only once your taste comes from enough rankings.
+  const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const matchFor = (id: string) => {
+    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
+    return profile ? `${matchPercent(scored, profile)}% match` : null;
+  };
 
   // Phones: the map fills the screen, with the results in a sheet over it.
   if (mapAvailable && !split && view === 'map') {
@@ -81,9 +94,11 @@ export function DiscoverScreen() {
           <View style={styles.header}>
             <ScreenHeaderSpacer />
             <Display>Discover</Display>
+            <ForYou />
             <DiscoverArea area={area} onChange={setArea} />
             <DiscoverBest area={area} pick={pick} />
             <TopBars area={area} />
+            <MostCreative />
             {signedIn ? (
               <View style={styles.add}>
                 <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
@@ -105,7 +120,7 @@ export function DiscoverScreen() {
             href={itemHref('Cocktail', item.id)}
             imageUrl={item.imageUrl}
             glass={item.glass}
-            caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
+            caption={[bar.canMakeIds.has(item.id) ? 'You can make this' : null, matchFor(item.id)].filter(Boolean).join(' · ') || undefined}
           />
         )}
       />
