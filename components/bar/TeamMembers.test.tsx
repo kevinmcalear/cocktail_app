@@ -7,6 +7,10 @@ const mockMutate = jest.fn();
 jest.mock('@/hooks/useBarDetail', () => ({
   useSetMemberRole: () => ({ mutate: mockMutate, isPending: false, error: null }),
 }));
+jest.mock('@/hooks/useBarInvites', () => ({
+  useBarInvites: (_barId: string, enabled: boolean) => ({ data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30 }] : [] }),
+  useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
+}));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' } }) }));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
 
@@ -22,11 +26,12 @@ const asBartender = [
 
 beforeEach(() => mockMutate.mockClear());
 
-test('an admin can change other members’ roles and add people, but not their own role', async () => {
+test('an admin can change other members’ roles and invite people, but not their own role', async () => {
   await renderWithTamagui(<TeamMembers barId="bar" members={asAdmin} myRole={40} />);
   expect(screen.getByLabelText('Role for jo@example.test')).toBeTruthy();
   expect(screen.queryByLabelText('Role for me@example.test')).toBeNull();
-  expect(screen.getByText('Add to team')).toBeTruthy();
+  expect(screen.getByText('Invite')).toBeTruthy();
+  expect(screen.getByText('new@example.test')).toBeTruthy();
 
   await fireEvent.press(screen.getAllByText('Bartender')[1]);
   expect(mockMutate).toHaveBeenCalledWith({ email: 'jo@example.test', roleLevel: 30 });
@@ -35,7 +40,8 @@ test('an admin can change other members’ roles and add people, but not their o
 test('a bartender sees the team read-only', async () => {
   await renderWithTamagui(<TeamMembers barId="bar" members={asBartender} myRole={30} />);
   expect(screen.queryByRole('group')).toBeNull();
-  expect(screen.queryByText('Add to team')).toBeNull();
+  expect(screen.queryByText('Invite')).toBeNull();
+  expect(screen.queryByText('new@example.test')).toBeNull();
   expect(screen.getByText('Admin')).toBeTruthy();
   expect(screen.getByText('me@example.test (you)')).toBeTruthy();
 });
