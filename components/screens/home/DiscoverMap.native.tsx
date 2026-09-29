@@ -1,8 +1,9 @@
 import { Camera, Map, Marker, type CameraRef, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
-import { fontFamilies, radius, type } from '@/constants/tokens';
+import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { MAP_STYLE, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -79,13 +80,18 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 {
                   minWidth: look.minWidth,
                   height: look.height,
-                  paddingHorizontal: look.paddingHorizontal,
+                  paddingLeft: look.paddingLeft,
+                  paddingRight: look.paddingRight,
+                  gap: look.gap,
                   borderColor: look.borderColor,
                   backgroundColor: look.backgroundColor,
                   zIndex: selected ? 2 : 1,
                 },
               ]}
             >
+              {look.logo ? (
+                <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
+              ) : null}
               {look.label ? <Text style={[styles.label, { color: look.color }]}>{look.label}</Text> : null}
             </View>
           </Marker>
@@ -97,6 +103,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  pin: { borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  pin: { flexDirection: 'row', borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
   label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
 });

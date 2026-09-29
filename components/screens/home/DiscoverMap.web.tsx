@@ -4,7 +4,7 @@ import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { fontFamilies, radius, type } from '@/constants/tokens';
+import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { MAP_STYLE, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -16,13 +16,34 @@ type MapLibre = typeof import('maplibre-gl');
 /** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
 function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
   const look = pinLook(pin, selected, accent);
-  el.textContent = look.label;
+  // Only rebuild what's inside when it changes, so logos don't reload on every render.
+  const key = `${look.logo ?? ''}|${look.label}`;
+  if (el.dataset.key !== key) {
+    el.dataset.key = key;
+    const parts: (HTMLElement | string)[] = [];
+    if (look.logo) {
+      const img = document.createElement('img');
+      img.src = look.logo;
+      img.alt = '';
+      Object.assign(img.style, {
+        width: `${look.logoSize}px`,
+        height: `${look.logoSize}px`,
+        borderRadius: `${radius.pill}px`,
+        objectFit: 'cover',
+        background: backbar.light.surface,
+      });
+      parts.push(img);
+    }
+    if (look.label) parts.push(look.label);
+    el.replaceChildren(...parts);
+  }
   el.setAttribute('aria-label', `${pin.name}${look.label ? `, score ${look.label}` : ', early'}`);
   el.setAttribute('aria-pressed', String(selected));
   Object.assign(el.style, {
     minWidth: `${look.minWidth}px`,
     height: `${look.height}px`,
-    padding: `0 ${look.paddingHorizontal}px`,
+    padding: `0 ${look.paddingRight}px 0 ${look.paddingLeft}px`,
+    gap: `${look.gap}px`,
     borderRadius: `${radius.pill}px`,
     border: `2px solid ${look.borderColor}`,
     background: look.backgroundColor,

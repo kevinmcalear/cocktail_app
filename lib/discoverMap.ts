@@ -23,6 +23,8 @@ export interface MapPin {
   /** For the /p/<handle> link. */
   handle: string;
   name: string;
+  /** The bar's logo, when it has one. */
+  logo: string | null;
   place: string;
   latitude: number;
   longitude: number;
@@ -41,6 +43,7 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
       id: r.venue_profile_id,
       handle: r.handle,
       name: r.display_name,
+      logo: r.avatar_url ?? null,
       place: [r.locality, r.city].filter(Boolean).join(', '),
       latitude: r.latitude!,
       longitude: r.longitude!,
@@ -55,15 +58,25 @@ export function pinLabel(pin: MapPin): string {
   return pin.score === null ? '' : formatScore(pin.score);
 }
 
-/** How a pin looks on either map: the score in a pill (a dot while early), ink by default, the accent when selected. */
+/**
+ * How a pin looks on either map: the bar's logo (when it has one) and its
+ * score in a pill, or a dot while early. Ink by default, the accent when selected.
+ */
 export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
   const label = pinLabel(pin);
+  const logoSize = 26;
+  // A lone logo needs room for its 2px ring.
+  const height = label ? 30 : pin.logo ? logoSize + 4 : 18;
   return {
     label,
-    minWidth: label ? 44 : 18,
-    height: label ? 30 : 18,
-    paddingHorizontal: label ? space.sm : 0,
-    borderColor: backbar.dark.ink,
+    logo: pin.logo,
+    logoSize,
+    minWidth: label ? 44 : height,
+    height,
+    paddingLeft: label ? (pin.logo ? 2 : space.sm) : 0,
+    paddingRight: label ? space.sm : 0,
+    gap: space.xs,
+    borderColor: selected ? accent.fill : backbar.dark.ink,
     backgroundColor: selected ? accent.fill : pin.score === null ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
   };
