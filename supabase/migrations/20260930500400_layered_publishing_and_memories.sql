@@ -213,7 +213,7 @@ END;
 $$;
 
 -- The public projection, now on the effective mode. Same columns and order as
--- 20260930000100; publish_mode is the effective one.
+-- 20260930500100; publish_mode is the effective one.
 CREATE OR REPLACE VIEW "public"."published_items" WITH ("security_invoker" = false) AS
 WITH "blocked" AS (
     SELECT "b"."blocked_id" AS "user_id" FROM "public"."user_blocks" "b" WHERE "b"."blocker_id" = "auth"."uid"()
@@ -302,7 +302,7 @@ CREATE POLICY "items_select" ON "public"."items" FOR SELECT TO "authenticated"
     );
 
 -- The same rule for specs: the view runs as its owner, so it has to apply it
--- itself. Same columns, order and types as 20260930000100; only the WHERE
+-- itself. Same columns, order and types as 20260930500100; only the WHERE
 -- clause changes, for items with no bar.
 CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
  SELECT "r"."id",

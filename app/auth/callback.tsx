@@ -18,7 +18,9 @@ export default function AuthCallback() {
       router.replace('/auth/reset-password');
       return;
     }
-    router.replace('/(tabs)');
+    // Mostly sign-up confirmations: the age check first. It passes straight
+    // on when the account has already answered it.
+    router.replace('/age-check');
   }, [session, passwordRecovery, authLoading, router]);
 
   return (

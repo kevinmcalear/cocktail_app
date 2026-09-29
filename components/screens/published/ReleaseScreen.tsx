@@ -8,6 +8,7 @@ import { useRelease } from '@/hooks/usePublished';
 import { dayLabel } from '@/lib/collection';
 import { plural } from '@/lib/menus';
 
+import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { BarLink } from './PublishedDrinkScreen';
 import { PublicMissing, PublicShell } from './PublicShell';
@@ -51,10 +52,14 @@ export function ReleaseScreen({ id }: { id: string }) {
           <Body tone="muted">None of this release’s drinks are public right now.</Body>
         )}
       </View>
+      <View style={styles.report}>
+        <ReportAction subject={release.name} targets={[{ label: release.name, target: { kind: 'release', releaseId: release.id } }]} />
+      </View>
     </PublicShell>
   );
 }
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  report: { alignItems: 'flex-start' },
 });

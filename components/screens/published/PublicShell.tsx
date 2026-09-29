@@ -8,6 +8,8 @@ import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 
+import { NotAvailable } from '../safety/NotAvailable';
+
 interface PublicShellProps {
   title: string;
   imageUrl: string | null;
@@ -70,11 +72,14 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
   );
 }
 
-/** While a public page loads, or when what it points at isn't public. */
-export function PublicMissing({ loading, what }: { loading: boolean; what: string }) {
+/** While a public page loads, or, when what it points at isn't public, Not available. */
+export function PublicMissing({ loading, what }: { loading: boolean; what: 'drink' | 'release' }) {
+  if (!loading) return <NotAvailable what={what} />;
   return (
-    <PublicShell title={loading ? 'Loading' : `No ${what} here`} imageUrl={null}>
-      <Body tone="muted">{loading ? '' : `This ${what} isn’t public, or it isn’t there any more.`}</Body>
+    <PublicShell title="Loading" imageUrl={null}>
+      <Body tone="muted" accessibilityLabel={`Loading ${what}`}>
+        {''}
+      </Body>
     </PublicShell>
   );
 }

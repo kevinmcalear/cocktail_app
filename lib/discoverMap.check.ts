@@ -11,11 +11,12 @@ const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
 
 // --- pins: ranked then early, rows without coordinates left off ---
 const pins = pinsFrom({
-  ranked: [row({ venue_profile_id: 'a', position: 1, score: 9.14, is_early: false })],
+  ranked: [row({ venue_profile_id: 'a', position: 1, score: 9.14, is_early: false, avatar_url: 'https://x/a.png' })],
   early: [row({ venue_profile_id: 'b' }), row({ venue_profile_id: 'c', latitude: null, longitude: null })],
 });
 assert.deepEqual(pins.map((p) => [p.id, p.position, p.score]), [['a', 1, 9.14], ['b', null, null]]);
 assert.equal(pins[0].place, 'Brunswick, Melbourne');
+assert.deepEqual(pins.map((p) => p.logo), ['https://x/a.png', null]);
 assert.equal(pinLabel(pins[0]), '9.1');
 assert.equal(pinLabel(pins[1]), '');
 assert.deepEqual(pinsFrom(undefined), []);

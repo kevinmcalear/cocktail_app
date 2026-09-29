@@ -7,8 +7,10 @@ import { BackbarTheme, Caption, GlassButton, Headline, Segmented, Title, useBrea
 import { layout, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
+import { countryName } from '@/lib/countries';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
 
+import { ReportAction } from '../safety/ReportSheet';
 import { AreaRankList, ListNote, MyRankList } from './RankingLists';
 
 export interface RankingsScreenProps {
@@ -20,18 +22,10 @@ export interface RankingsScreenProps {
 
 type Place = Pick<RankVenue, 'postcode' | 'city' | 'country_code' | 'locality'>;
 
-function countryName(code: string): string {
-  try {
-    return new Intl.DisplayNames(undefined, { type: 'region' }).of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
-
 function scopeLabel(place: Place, scope: RankScope): string {
   if (scope === 'postcode') return [place.postcode, place.locality].filter(Boolean).join(' ');
   if (scope === 'city') return place.city ?? '';
-  return countryName(place.country_code ?? '');
+  return countryName(place.country_code);
 }
 
 /** "Your martinis" and "Best martini" in an area around a place. */
@@ -97,6 +91,14 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
         <ListNote>{`Not enough rankers yet ${scope ? `in ${where}` : 'anywhere'}. A bar's ${rankedAs.name} shows here once ${MIN_RANKERS} people have ranked it there.`}</ListNote>
       )}
       <Caption tone="muted">Each score is 0 to 10, from people comparing drinks two at a time. Updated every hour.</Caption>
+      {best?.length ? (
+        <View style={styles.report}>
+          <ReportAction
+            subject={`a ${rankedAs.name} ranking`}
+            targets={best.map((r) => ({ label: `${r.display_name}'s ${rankedAs.name}`, target: { kind: 'ranking', itemId: rankedAs.id, profileId: r.venue_profile_id } }))}
+          />
+        </View>
+      ) : null}
     </View>
   );
 
@@ -132,4 +134,5 @@ const styles = StyleSheet.create({
   column: { flex: 1, minWidth: 0 },
   section: { gap: space.sm },
   back: { position: 'absolute' },
+  report: { alignItems: 'flex-start' },
 });
