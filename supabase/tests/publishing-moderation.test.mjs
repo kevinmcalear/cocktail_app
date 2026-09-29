@@ -361,7 +361,7 @@ describe('releases', () => {
   });
 
   test('once published, the release and its drink list are public', async () => {
-    const { error } = await users.admin.client.from('releases').update({ published_at: new Date(Date.now() - 1000).toISOString() }).eq('id', ids.release);
+    const { error } = await users.admin.client.from('releases').update({ published_at: new Date(Date.now() - 60_000).toISOString() }).eq('id', ids.release);
     assert.ifError(error);
     assert.equal((await ids_of(anon.from('releases').select('id').eq('id', ids.release))).size, 1);
     const { data } = await anon.from('release_items').select('item_id').eq('release_id', ids.release).order('sort_order');

@@ -6,12 +6,13 @@ This is step 7 of the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKd
 
 | # | Piece | Migration |
 |---|---|---|
-| 4a | Blocks and moderation holds | `20260926170000_blocks_and_moderation_holds.sql` (first, because the public read paths filter on it) |
-| 1, 2 | Publish modes, releases, the public projection | `20260926170100_publishing.sql` |
-| 3 | Collections, home menus, the age check | `20260926170200_collections_and_age_check.sql` |
-| 4b | Reports and moderator tools | `20260926170300_reports.sql` |
+| 4a | Blocks and moderation holds | `20260930000000_blocks_and_moderation_holds.sql` (first, because the public read paths filter on it) |
+| 1, 2 | Publish modes, releases, the public projection | `20260930000100_publishing.sql` |
+| 3 | Collections, home menus, the age check | `20260930000200_collections_and_age_check.sql` |
+| 4b | Reports and moderator tools | `20260930000300_reports.sql` |
+| 5 | Layered publishing, memories, private personal drinks (Kevin's decisions of 2026-09-29) | `20260930000400_layered_publishing_and_memories.sql` |
 
-Tests: `supabase/tests/publishing-moderation.test.mjs` (47 tests). With the existing suites that's 184, all passing on the isolated stack.
+Tests: `supabase/tests/publishing-moderation.test.mjs` (47 tests) and `supabase/tests/layered-publishing.test.mjs` (9). With every other suite that's 263, all passing on an isolated stack with the migrations renumbered after production's latest (20260929400000).
 
 **Not in this proposal:** comments (reports accept a comment id so they're ready for it); the "can make" function; share cards and shopping lists (app work over these tables); an admin moderation screen (moderators work through two RPCs for now); any app UI.
 
@@ -167,6 +168,24 @@ A bar's drinks aren't one person's content, so a block doesn't hide them, even w
 
 Moderators are the existing catalog admins (`private.app_admins`).
 
+## 5. Decisions of 2026-09-29: layered publishing, memories, private personal drinks
+
+Kevin answered questions 1, 3, 6 and 7. The fifth migration applies the answers on top of sections 1 to 4.
+
+**Layered publishing.** A drink's publish mode is the first of: its own setting (`items.publish_mode`, now nullable: NULL inherits), the most open setting among its own bar's menus that set one (`menus.publish_mode`, NULL inherits), the bar's default (`bars.default_publish_mode`, `private` unless set), then `private`.
+
+- A bar can be open by default, publish one menu as descriptions, and keep a single drink private.
+- It reaches down to the ingredient. A bar's house-made ingredient follows the same rule, and its own recipe is public only when its effective mode is `spec`. A drink's published spec still names the ingredient either way.
+- A menu only publishes its own bar's drinks. Personal and catalogue drinks have no bar default or menus, so only their own setting counts.
+- Setting a bar default or a menu mode needs the `publish` capability. Opening up needs a public profile, and home menus can't be published.
+- `private.effective_publish_mode(item)` gives the answer to triggers and policies. `published_items` works it out inline, and its `publish_mode` column is now the effective mode.
+
+**Memories.** `collected_items` keeps a copy of what the collector saw (`name`, `bar_name`, `image_url`), filled in from the published drink when collected, plus the collector's own `had_on` and `note`. If the bar makes the drink private or deletes it, the row stays with `item_id` NULL or unpublished, a memory without the spec. The spec only ever comes from the live, published drink. Collectors can update `had_on` and `note` and nothing else. The app shows these under "Past drinks", or with the old menu they came from.
+
+**Personal drinks are private until published.** A person's own cocktail, beer or wine (no bar, `created_by` set) is readable by its creator and catalog admins, and by everyone else only once published. This applies in `items_select` and in `app_recipe_presentation`'s filter, since the view runs as its owner. Ingredients people add stay shared, because other people's recipes use them.
+
+**The age check** stays as in section 3 (birth date at sign-up, only the outcome kept, no retry after an under-age answer). The app gates collecting, publishing your own drinks and ranking on it, and shows signed-out web visitors a simple drinking-age gate before public drink pages.
+
 ## What signed-out visitors see
 
 Everything below is read through the API with the anon key. Nothing else is reachable signed out.
@@ -225,13 +244,13 @@ Bold tables and views are new in this proposal.
 
 ## Open questions for Kevin
 
-1. **Age check approach.** Self-declared birth date plus country at sign-up, keeping only the outcome, with no retry after an under-age answer. Enough, or do we want a store-level age rating only, or a verification provider later? Where else should it apply: publishing your own drinks, rankings, public profiles? And do signed-out web visitors get a client-side "are you of age" gate before public drink pages?
+1. **Age check approach.** *Decided 2026-09-29: birth date at sign-up, as proposed; the app gates collecting, publishing and ranking, and signed-out web gets a simple gate (section 5).*
 2. **Drinking ages.** The country list in `private.drinking_age` is a short starting point and needs a legal check. Countries that ban alcohol aren't handled; do we rely on store region availability for those?
-3. **What's public by default?** Every drink starts `private`. Should a bar's current menu be published at `description` by default once it has a public profile, or always opt-in per drink?
+3. **What's public by default?** *Decided 2026-09-29: layered. A bar default, overridden per menu, per drink and per ingredient (section 5).*
 4. **Public spec level.** "Full spec" shows the generic ingredient, amount and unit; the specific brand and preparation notes stay at the bar's own levels. Should a bar be able to publish brands and prep notes too (a third mode, or a per-bar setting)?
 5. **Price in public.** `published_items` leaves out `price`. Show menu prices on public pages?
-6. **Collections: live or snapshot?** A collected drink that the bar later unpublishes disappears from the collector's view. Keep it (copy on collect, credited), or respect the bar's decision?
-7. **Personal drinks are readable by every signed-in user today** (bar-less `items`, `created_by` set). Production has none yet, but home mode will create many. Make them private to their creator unless published, like home menus in this PR? That's a one-line `items_select` change, left out here because shared recipes may rely on today's rule.
+6. **Collections: live or snapshot?** *Decided 2026-09-29: memories. The collector keeps the name, bar, picture, date and note; the spec only while the bar publishes it (section 5).*
+7. **Personal drinks are readable by every signed-in user today** *Decided 2026-09-29: private until published (section 5).*
 8. **Blocking bars.** Blocks are between people. Do we want "mute this bar" as well?
 9. **Blocks in both directions.** A block hides the blocker from the blocked person too (standard, but it lets them infer the block). OK?
 10. **Moderators.** Catalog admins moderate. A separate `moderators` role, and a moderation screen, before launch? Should moderators be notified of new reports (a webhook or email)?
