@@ -1,5 +1,5 @@
 // Asia's, North America's and Europe's 50 Best Bars 2026
-// (20260930300000_regional_fifty_best.sql): every bar on the three lists has a public profile and its place, and running the
+// (20260930620000_regional_fifty_best.sql): every bar on the three lists has a public profile and its place, and running the
 // seed again adds nothing.
 //
 //   supabase start && supabase db reset
@@ -20,7 +20,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run regional 50 Best tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260930300000_regional_fifty_best.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930620000_regional_fifty_best.sql', import.meta.url);
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
 
@@ -58,16 +58,24 @@ describe("Asia's, North America's and Europe's 50 Best Bars 2026", () => {
                                (SELECT count(*) FROM public.items)::int AS items,
                                (SELECT count(*) FROM public.recipes)::int AS recipes`)
       ).rows[0];
-    await db.query('BEGIN');
-    try {
-      // Other test files write to these tables at the same time; hold them
-      // still so the counts only see this run.
-      await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
-      const before = await count();
-      await db.query(readFileSync(MIGRATION, 'utf8'));
-      assert.deepEqual(await count(), before);
-    } finally {
-      await db.query('ROLLBACK');
+    // Retried because holding these tables can deadlock with another test
+    // file's open transaction; Postgres then cancels one side.
+    for (let attempt = 1; ; attempt++) {
+      await db.query('BEGIN');
+      try {
+        // Other test files write to these tables at the same time; hold them
+        // still so the counts only see this run.
+        await db.query("SET LOCAL lock_timeout = '10s'");
+        await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
+        const before = await count();
+        await db.query(readFileSync(MIGRATION, 'utf8'));
+        assert.deepEqual(await count(), before);
+        break;
+      } catch (e) {
+        if (attempt >= 3 || !['40P01', '55P03'].includes(e.code)) throw e;
+      } finally {
+        await db.query('ROLLBACK');
+      }
     }
   });
 });
