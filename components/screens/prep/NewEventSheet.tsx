@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
+import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 
 interface MenuOption {
   id: string;
@@ -34,6 +35,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   const create = useCreateEvent();
   const defaults = tomorrowAt7();
   const [name, setName] = useState('');
+  const nameRef = useRef<TextInput>(null);
   const [date, setDate] = useState(defaults.date);
   const [time, setTime] = useState(defaults.time);
   const [covers, setCovers] = useState('');
@@ -63,12 +65,12 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
       <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
         <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Title>New event</Title>
-            <Field label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus />
+            <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
             <View style={styles.pair}>
               <View style={styles.flex}>
                 <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-10-03" autoCapitalize="none" />
