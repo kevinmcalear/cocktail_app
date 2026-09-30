@@ -57,7 +57,7 @@ describe('YouScreen', () => {
   });
 
   test('shows every drink with its score, favourites, each bar’s average, and what you made', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, isPublic: true, isModerated: false };
+    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, isPublic: true, sharesRankings: false, isModerated: false };
     mockHad = [
       drink('a', 'Bolo Tie', 10),
       drink('b', 'Penicillin', 6.6),

@@ -123,7 +123,13 @@ function You({ inTabs }: { inTabs?: boolean }) {
             ) : (
               <BarTallies drinks={drinks} whose="Your" />
             )}
-            {drinks.length && tab !== 'made' ? <Caption tone="muted">Only you can see what you’ve had and your scores.</Caption> : null}
+            {drinks.length && tab !== 'made' ? (
+              <Caption tone="muted">
+                {shown && profile?.sharesRankings
+                  ? 'Shown on your public profile, apart from drinks a bar hasn’t published. Change it in Edit profile.'
+                  : 'Only you can see what you’ve had and your scores. You can show them on a public profile.'}
+              </Caption>
+            ) : null}
           </View>
         </View>
       </ScrollView>

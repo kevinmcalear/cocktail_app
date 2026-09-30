@@ -69,6 +69,8 @@ export interface ProfileDraft {
   handle: string;
   bio: string;
   isPublic: boolean;
+  /** Show the drinks you've had, with your scores, on the public profile. */
+  sharesRankings: boolean;
 }
 
 /** "@Juniper.Jo " → "juniper.jo": what gets saved, and what the HANDLE rule checks. */
