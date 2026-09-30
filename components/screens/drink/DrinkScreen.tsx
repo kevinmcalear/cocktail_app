@@ -99,7 +99,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
-  const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
+  const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
+  const canBatch = access.amounts && lines.some((l) => l.value !== null);
 
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glass = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -189,6 +190,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         canEdit={canEdit}
         glass={glass?.icon_key || glass?.name || null}
         wide={wide}
+        lines={access.names ? lines : []}
+        showLines={access.amounts}
+        serviceStyle={item.service_style}
         preview={preview}
       />
       {preview ? null : <FamilyTree itemId={item.id} />}

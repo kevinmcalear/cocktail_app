@@ -132,6 +132,7 @@ export function useCocktail(id?: string | string[]) {
                         amount,
                         unit,
                         preparation_notes,
+                        at_service,
                         display_ingredient_id,
                         display_ingredient (
                             id,

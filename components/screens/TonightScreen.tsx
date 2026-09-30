@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
@@ -34,6 +34,8 @@ export function TonightScreen() {
   const [now] = useState(() => Date.now());
   const onNow = groupMenus(venueMenus.filter((m) => m.barId === active?.id), now).on;
   const openMenus = () => router.push('/menus/all');
+  // The station sheet is for a bar iPad or a browser: phones get the drink page's Service section.
+  const showStation = !!active && drinks.length > 0 && (wide || Platform.OS === 'web');
 
   const empty = !venuesLoading && !isLoading && drinks.length === 0;
 
@@ -57,7 +59,12 @@ export function TonightScreen() {
             <ScreenHeaderSpacer />
             <View style={styles.titleRow}>
               <Display>Tonight</Display>
-              {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+              <View style={styles.titleActions}>
+                {showStation ? (
+                  <GlassButton icon="square.grid.2x2" label="Station" accessibilityLabel="Station sheet: tonight's drinks as service cards" onPress={() => router.push('/station' as never)} />
+                ) : null}
+                {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+              </View>
             </View>
             <Caption tone="muted">{today()}</Caption>
             {onNow.map((m) => (
@@ -87,6 +94,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.sm, paddingBottom: space.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  titleActions: { flexDirection: 'row', gap: space.sm },
   emptyButton: { alignSelf: 'flex-start', marginTop: space.sm },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

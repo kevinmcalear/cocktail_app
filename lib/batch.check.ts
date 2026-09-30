@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume } from './batch';
+import { buildBatch, clampServes, classifyMethod, formatVolume, isGarnishUnit, leaveOutFor } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -70,6 +70,23 @@ const s = buildBatch(sour, ['dry shake and shake'], 6, { unit: 'oz' });
 assert.deepEqual(s.lines.map((l) => l.leaveOut), [null, null, 'garnish', 'dairy', 'garnish', null]);
 assert.deepEqual(s.lines.map((l) => l.amount), ['12 oz', '4 oz', '6 each', '4 oz', '6 twists', '']);
 assert.equal(Math.round(s.totalMl), Math.round(12 * 29.57 + 120), 'only bottled volume counts');
+
+// The bar's decision beats the guess (recipes.at_service): lime in the bottle
+// for a pre-diluted bottled daiquiri, and a syrup added at the station.
+const decided = specLines([
+  { ...row('rum', 'White rum', 60, 'ml'), at_service: false },
+  { ...row('lime', 'Lime juice', 22.5, 'ml'), at_service: false },
+  { ...row('syr', 'Simple syrup', 15, 'ml'), at_service: true },
+]);
+const dec = buildBatch(decided, ['Shake'], 10);
+assert.deepEqual(dec.lines.map((l) => l.leaveOut), [null, null, 'station']);
+assert.equal(dec.total, '825 ml', 'the lime counts once the bar says it goes in');
+assert.match(dec.note, /Batch the White rum and Lime juice only\..*Add Simple syrup at the station\./);
+assert.equal(leaveOutFor('Lime juice', 'ml', null), 'citrus', 'undecided lines keep the guess');
+assert.equal(leaveOutFor('Lime juice', 'ml', true), 'citrus', 'a decided station line keeps the reason its name gives');
+assert.equal(leaveOutFor('Simple syrup', 'ml', true), 'station');
+assert.equal(leaveOutFor('Lemon', 'twist', false), null);
+assert.ok(isGarnishUnit('twist') && !isGarnishUnit('ml'));
 
 // Formatting and serves.
 assert.equal(formatVolume(22.5, 'ml'), '22.5 ml');

@@ -4,12 +4,16 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DrinkImage, LockedSection, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useSetLineService, useSetServiceStyle } from '@/hooks/useServiceSpec';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { pictureTag, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
+import { isServiceStyle } from '@/lib/service';
 import { SERVICE_OPENS_AT, serviceShots, shotCaption, shotList, type ServiceShot } from '@/lib/servicePhotos';
+import type { SpecLine } from '@/lib/spec';
 
 import { PhotoViewer } from './PhotoViewer';
+import { ServiceSpec } from './ServiceSpec';
 import { ShotList } from './ShotList';
 
 interface ServiceSectionProps {
@@ -22,27 +26,48 @@ interface ServiceSectionProps {
   /** Glassware icon for empty tiles. */
   glass: string | null;
   wide: boolean;
+  /** The spec as this role sees it, for what's batched and what's added at the station. */
+  lines: SpecLine[];
+  /** This role sees amounts (and so the batch split). */
+  showLines: boolean;
+  serviceStyle: string | null | undefined;
   /** /dev/drink only: a simulated role. */
   preview?: { role: number };
 }
 
 /**
- * How the drink should look when it goes out: side, top, garnish and hand-off
- * photos. Editors with the photos capability get a shot list of the angles
- * still to photograph. Venue drinks open it at Employee; guests see it locked.
+ * How the drink goes out: what's poured from the batch and what's added at
+ * the station, then the side, top, garnish and hand-off photos. Editors set
+ * the service spec here and, with the photos capability, get a shot list of
+ * the angles still to photograph. Venue drinks open it at Employee; guests
+ * see it locked.
  */
-export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wide, preview }: ServiceSectionProps) {
+export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wide, lines, showLines, serviceStyle, preview }: ServiceSectionProps) {
   const realRole = useEffectiveRole(barId);
   const { data: capabilities } = useCapabilities(preview ? null : barId);
+  const setLine = useSetLineService(itemId);
+  const setStyle = useSetServiceStyle(itemId);
   const [open, setOpen] = useState<ServiceShot | null>(null);
   const shots = serviceShots(links);
   const canAdd = !preview && canEdit && (!barId || !!capabilities?.includes('photos'));
+  const canSetSpec = !preview && canEdit && lines.length > 0;
   // Nothing to show and nothing this person can add: leave the page alone.
-  if (!canAdd && !shots.some((shot) => shot.picture)) return null;
+  if (!canAdd && !canSetSpec && !lines.length && !shots.some((shot) => shot.picture)) return null;
   const unlocked = !barId || (preview?.role ?? realRole) >= SERVICE_OPENS_AT;
 
   return (
     <LockedSection title="Service" unlocked={unlocked} opensAt={roleLabel(SERVICE_OPENS_AT)}>
+      {lines.length ? (
+        <ServiceSpec
+          lines={lines}
+          style={isServiceStyle(serviceStyle) ? serviceStyle : null}
+          showLines={showLines}
+          canEdit={canSetSpec}
+          onSetLine={(key, atService) => setLine.mutate({ key, atService })}
+          onSetStyle={(style) => setStyle.mutate(style)}
+        />
+      ) : null}
+      {setLine.error || setStyle.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
       <Body tone="muted">How it should look when it goes out.</Body>
       <View style={styles.grid}>
         {shots.map((shot) => (
