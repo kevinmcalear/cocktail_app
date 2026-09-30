@@ -135,7 +135,7 @@ export default function IngredientDetailScreen() {
                 <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
-                {canViewDetails && recipe.length > 0 && (
+                {canViewDetails && (recipe.length > 0 || canEdit) && (
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="flask" size={24} color={theme.color?.get() as string} />
@@ -156,7 +156,7 @@ export default function IngredientDetailScreen() {
                     </GlassView>
                 )}
 
-                {canViewDetails && recipe.length > 0 && (
+                {canViewDetails && (recipe.length > 0 || canEdit) && (
                     <PrepCard itemId={ingredient.id} itemName={ingredient.name} barId={ingredient.bar_id} canEditItem={canEdit} recipe={recipe.map((r) => ({ id: r.id, name: r.ingredient?.name || "Unknown", amount: r.amount, unit: r.unit }))} />
                 )}
 

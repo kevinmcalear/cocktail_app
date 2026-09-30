@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { isGarnishUnit } from '@/lib/batch';
 import { supabase } from '@/lib/supabase';
 
 export interface PrepStep {
@@ -75,22 +76,31 @@ export interface UsedInPrep {
   name: string;
 }
 
-/** The other house-made ingredients this one goes into (drinks are listed by useIngredient). */
+export interface PrepUsedIn {
+  /** The other house-made ingredients this one goes into (drinks are listed by useIngredient). */
+  preps: UsedInPrep[];
+  /** It goes on a drink as a garnish (a twist, a wheel, a sprig), so it can carry a prep card of its own. */
+  garnish: boolean;
+}
+
+/** Where this ingredient goes: into other preps, and whether it's a garnish on a drink. */
 export function usePrepUsedIn(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['prep-used-in', itemId],
     enabled: !!itemId,
-    queryFn: async (): Promise<UsedInPrep[]> => {
+    queryFn: async (): Promise<PrepUsedIn> => {
       const { data, error } = await supabase
         .from('app_recipe_presentation')
-        .select('parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
+        .select('unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
         .eq('display_ingredient_id', itemId!);
       if (error) throw error;
       const seen = new Map<string, UsedInPrep>();
-      for (const row of (data ?? []) as unknown as { parent: { id: string; name: string; item_type: string } | null }[]) {
+      let garnish = false;
+      for (const row of (data ?? []) as unknown as { unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
         if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name });
+        if (isGarnishUnit(row.unit)) garnish = true;
       }
-      return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+      return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish };
     },
   });
 }
