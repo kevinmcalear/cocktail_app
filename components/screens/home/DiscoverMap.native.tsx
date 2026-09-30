@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
-import { MAP_STYLE, pinLook, viewportFrom } from '@/lib/discoverMap';
+import { MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -73,7 +73,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           >
             <View
               role="button"
-              aria-label={`${pin.name}${look.label ? `, score ${look.label}` : ', early'}`}
+              aria-label={pinDescription(pin)}
               aria-selected={selected}
               style={[
                 styles.pin,

@@ -32,6 +32,8 @@ export interface MapPin {
   score: number | null;
   position: number | null;
   rankers: number;
+  /** On the drinks layer: how many of the bar's drinks match. */
+  drinks?: number;
 }
 
 /** Pins for the rows that have coordinates: ranked first, then early. */
@@ -53,9 +55,16 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
     }));
 }
 
-/** What's written on a pin: the score, or nothing while early. */
+/** What's written on a pin: how many drinks match, the score, or nothing while early. */
 export function pinLabel(pin: MapPin): string {
+  if (pin.drinks) return String(pin.drinks);
   return pin.score === null ? '' : formatScore(pin.score);
+}
+
+/** What a screen reader says for a pin. */
+export function pinDescription(pin: MapPin): string {
+  if (pin.drinks) return `${pin.name}, ${pin.drinks} ${pin.drinks === 1 ? 'drink' : 'drinks'}`;
+  return pin.score === null ? `${pin.name}, early` : `${pin.name}, score ${formatScore(pin.score)}`;
 }
 
 /**
@@ -77,7 +86,7 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
     paddingRight: label ? space.sm : 0,
     gap: space.xs,
     borderColor: selected ? accent.fill : backbar.dark.ink,
-    backgroundColor: selected ? accent.fill : pin.score === null ? backbar.light.muted : backbar.light.ink,
+    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
   };
 }
