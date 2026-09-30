@@ -21,7 +21,9 @@ export function useBars() {
                         name,
                         logo_url,
                         primary_color,
-                        secondary_color
+                        secondary_color,
+                        display_face,
+                        ground_tint
                     )
                 `)
                 .eq('user_id', userId);

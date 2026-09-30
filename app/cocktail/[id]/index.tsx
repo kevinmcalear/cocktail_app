@@ -17,7 +17,6 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
-import { useRedesign } from "@/lib/flags";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 
 export default function CocktailDetailsScreen() {
@@ -57,11 +56,10 @@ export default function CocktailDetailsScreen() {
         setShowPhotoSheet(false);
     };
 
-    const redesign = useRedesign();
     // Not yours to read (another bar's drink): its public page, if it's published.
     if ((error as { code?: string } | null)?.code === "PGRST116") return <Redirect href={`/d/${id}`} />;
-    // The redesign replaces the read view; editing still uses the editor below.
-    if (redesign && !isEditing && !error) {
+    // The drink page is the read view; editing still uses the editor below.
+    if (!isEditing && !error) {
         return cocktail ? (
             <DrinkScreen
                 item={cocktail}

@@ -15,7 +15,7 @@ Expo SDK 57 (RN 0.86, React 19.2, React Compiler), Expo Router, Tamagui 2.7 (`ta
 - **Verify the real thing before asking for review:** web at phone and desktop widths, plus the iOS simulator and Android when native code or layout changes. Put screenshots in the PR. Local recipes: [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation.
 - **Public repo:** no emails, user data, secrets or unfixed security details in code, commits or PR text.
-- **The redesign ships behind a flag.** New screens render when `useRedesign()` (`lib/flags.ts`) is true; everyone else keeps the current screen until the new one is finished. Remove the old screen and the branch in the PR that makes the new one the default.
+- **One app, no old UI.** The Back Bar redesign is the app; the old screens and the redesign flag were removed in step 9. New screens build from `components/ds`. A large change that must reach people gradually can use a PostHog flag, but remove the old path in the PR that makes the new one the default.
 - **Parallel work:** foundation pieces (tokens, shared components, navigation) go in order in one session. Independent screens can be built in parallel worktrees once those land.
 
 ## Enforced by CI

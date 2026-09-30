@@ -1,7 +1,6 @@
 // Fallback used by type checking and Jest. The app loads DiscoverMap.native.tsx
-// (Apple Maps on iOS, Google Maps on Android, through expo-maps) or
-// DiscoverMap.web.tsx (MapLibre GL with OpenFreeMap tiles) instead; keep the
-// props in sync.
+// (MapLibre Native) or DiscoverMap.web.tsx (MapLibre GL JS) instead, both with
+// OpenFreeMap tiles; keep the props in sync.
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Camera, MapPin, Viewport } from '@/lib/discoverMap';
@@ -22,14 +21,10 @@ export interface DiscoverMapProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Whether this build can draw a map (Android needs a Google Maps key). */
+/** Whether this build can draw a map. */
 export const mapAvailable: boolean = false;
 
 export function DiscoverMap(_props: DiscoverMapProps) {
   return null;
 }
 
-/** The map data credit, where the map itself can't show it (web phones). Native maps carry their own. */
-export function MapCredit() {
-  return null;
-}

@@ -8,12 +8,16 @@ export interface Award {
   source_url: string | null;
 }
 
-/** "No. 6" over "The World's 50 Best Bars 2025", or the title over the awards body and year. */
+/**
+ * "No. 6" over "The World's 50 Best Bars 2025", or the title over the awards
+ * body and year. A place on one of a body's several lists keeps the place up
+ * top and names the list after the year: "No. 3" over "Food & Wine Global
+ * Tastemakers 2025 · Top U.S. Bars".
+ */
 export function awardLines(a: Pick<Award, 'award' | 'year' | 'position' | 'title'>): { headline: string; detail: string } {
-  return {
-    headline: a.title ?? `No. ${a.position}`,
-    detail: `${a.award} ${a.year}`,
-  };
+  const body = `${a.award} ${a.year}`;
+  if (a.position !== null && a.title !== null) return { headline: `No. ${a.position}`, detail: `${body} · ${a.title}` };
+  return { headline: a.title ?? `No. ${a.position}`, detail: body };
 }
 
 /** "James Beard Awards" to "JBA", for an awards body without a logo: capitalised words, "The" left out, three at most. */
