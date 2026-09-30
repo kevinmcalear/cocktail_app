@@ -12,7 +12,8 @@ import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
-import { DiscoverMap, MapCredit } from './DiscoverMap';
+import { DiscoverMap } from './DiscoverMap';
+import { MapCredit } from './MapCredit';
 
 interface DiscoverMapPaneProps {
   area: Area;
