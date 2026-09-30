@@ -99,6 +99,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (canEdit && !menu.barId ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
             {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
             {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+            {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
           </View>
           {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" />}
         </View>

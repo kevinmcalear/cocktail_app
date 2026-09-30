@@ -2,7 +2,7 @@
 // The example is the Ethyl study's: £12.00 on the menu, £1.90 to make, 20% VAT.
 import assert from 'node:assert/strict';
 
-import { exTax, formatPct, margin, priceForTarget, targetStatus } from './costing';
+import { exTax, formatPct, margin, menuSummary, priceForTarget, targetStatus } from './costing';
 
 const uk = { taxRate: 20, pricesIncludeTax: true };
 const us = { taxRate: 8.875, pricesIncludeTax: false };
@@ -29,5 +29,24 @@ assert.deepEqual(targetStatus(190, 1200, 82, uk), { onTarget: false, priceMinor:
 assert.deepEqual(targetStatus(190, null, 82, uk), { onTarget: false, priceMinor: 1270 }, 'no price yet: say what it would take');
 assert.equal(targetStatus(190, 1200, null, uk), null);
 assert.equal(formatPct(81.04), '81.0%');
+
+// A menu: two priced and on target, one under, one with no price yet, one incomplete.
+const summary = menuSummary(
+  [
+    { costMinor: 190, priceMinor: 1200, missing: 0 },
+    { costMinor: 172, priceMinor: 1300, missing: 0 },
+    { costMinor: 291, priceMinor: 1400, missing: 0 },
+    { costMinor: 138, priceMinor: null, missing: 0 },
+    { costMinor: 240, priceMinor: 1200, missing: 1 },
+  ],
+  82,
+  uk
+);
+assert.equal(summary.priced, 4);
+assert.equal(summary.averageGp!.toFixed(1), '79.0');
+assert.equal(summary.underTarget, 3, 'the mai tai at 75.1%, the incomplete one at 76%, and 81.0% is under 82 too');
+assert.equal(summary.incomplete, 1);
+assert.equal(menuSummary([], 82, uk).averageGp, null);
+assert.equal(menuSummary([{ costMinor: 190, priceMinor: 1200, missing: 0 }], null, uk).underTarget, 0);
 
 console.log('costing: ok');
