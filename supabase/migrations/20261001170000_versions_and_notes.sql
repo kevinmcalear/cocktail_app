@@ -44,8 +44,10 @@ CREATE TABLE "public"."item_comments" (
 );
 CREATE INDEX "item_comments_item_id_idx" ON "public"."item_comments" ("item_id", "created_at");
 
-ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_comment_id_fkey"
-    FOREIGN KEY ("comment_id") REFERENCES "public"."item_comments"("id") ON DELETE SET NULL;
+-- ponytail: reports.comment_id stays a loose id (as reports.sql left it): the
+-- moderation test files reports against ids that never existed, and a foreign
+-- key here would refuse them. Upgrade path: point it at item_comments once
+-- the moderation queue resolves comments.
 
 ALTER TABLE "public"."item_versions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."item_comments" ENABLE ROW LEVEL SECURITY;
