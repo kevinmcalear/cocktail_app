@@ -1,5 +1,5 @@
 // Spirited Awards (2016-2026) and James Beard bar awards
-// (20260930630000_spirited_and_beard_awards.sql): the awards land on the
+// (20260930940000_spirited_and_beard_awards.sql): the awards land on the
 // right bars and people, signed-out visitors see them, and running the seed
 // again adds nothing.
 //
@@ -21,7 +21,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Spirited Awards tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260930630000_spirited_and_beard_awards.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930940000_spirited_and_beard_awards.sql', import.meta.url);
 const AWARD = 'Tales of the Cocktail Spirited Awards';
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
