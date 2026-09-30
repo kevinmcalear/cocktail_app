@@ -13,7 +13,9 @@ import { PicturePager } from './PicturePager';
 import { ZoomablePicture } from './ZoomablePicture';
 
 /** An item picture, or a bundled image (require) on /dev/drink. */
-export type ShownPicture = Omit<ItemPicture, 'url'> & { url: string | number };
+// Credits are optional: a bundled preview or a menu cover has none.
+export type ShownPicture = Omit<ItemPicture, 'url' | 'credit' | 'sourceUrl'> &
+  Partial<Pick<ItemPicture, 'credit' | 'sourceUrl'>> & { url: string | number };
 
 interface PictureViewerProps {
   pictures: ShownPicture[];
