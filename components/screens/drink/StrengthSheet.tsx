@@ -50,6 +50,8 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
   const [draft, setDraft] = useState(dilutionPct === null ? '' : String(dilutionPct));
   const value = Number(draft);
   const valid = draft.trim() !== '' && Number.isFinite(value) && value >= 0 && value <= 100;
+  // With no ABV on any line the strength isn't known; the server leaves it empty too.
+  const known = strength.unknownAbv < strength.lines.length;
   const source =
     dilutionPct !== null
       ? 'measured for this drink'
@@ -82,14 +84,14 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
                 <Body style={styles.name}>Before dilution</Body>
                 <Spec tone="muted">{formatAmount(strength.totalMl, 'ml')}</Spec>
                 <Spec tone="accent" style={styles.ethanol}>
-                  {formatAbv(strength.abv)}
+                  {known ? formatAbv(strength.abv) : 'no ABV'}
                 </Spec>
               </View>
               <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
                 <Body style={styles.name}>In the glass</Body>
                 <Spec tone="muted">{formatAmount(strength.serveMl, 'ml')}</Spec>
                 <Spec tone="accent" style={styles.ethanol}>
-                  {formatAbv(strength.serveAbv)}
+                  {known ? formatAbv(strength.serveAbv) : 'no ABV'}
                 </Spec>
               </View>
             </View>

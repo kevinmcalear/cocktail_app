@@ -143,6 +143,22 @@ describe('strength is worked out on save', () => {
     await service.from('recipes').delete().eq('id', line.id);
   });
 
+  test('with no ABV on any ingredient, no strength is claimed', async () => {
+    const mix = (await insert('items', { name: `Sour mix ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+    await insert('recipes', { recipe_item_id: mix, ingredient_item_id: ids.lime, amount: 30, unit: 'ml', sort_order: 1 });
+    let s = await strength(mix);
+    near(s.serve_ml, 30, 'the serve is still known');
+    assert.equal(s.abv, null, 'not 0%');
+    assert.equal(s.serve_abv, null);
+    await service.from('items').update({ abv: 0 }).eq('id', ids.lime);
+    s = await strength(mix);
+    near(s.abv, 0, 'a stated 0% is a real answer');
+    near(s.serve_abv, 0);
+    await service.from('items').update({ abv: null }).eq('id', ids.lime);
+    assert.equal((await strength(mix)).abv, null, 'and it empties again');
+    await service.from('items').delete().eq('id', mix);
+  });
+
   test('a house-made ingredient with a recipe gets its own ABV', async () => {
     const wash = (await insert('items', { name: `Rum wash ${run}`, item_type: 'ingredient', bar_id: ids.bar })).id;
     await insert('recipes', { recipe_item_id: wash, ingredient_item_id: ids.rum, amount: 700, unit: 'ml', sort_order: 1 });
