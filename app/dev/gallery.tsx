@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, BrandProvider, Caption, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { GallerySections } from '@/components/ds/gallery/GallerySections';
 import { backbar, layout, radius, SAMPLE_BRANDS, space, type BackbarScheme } from '@/constants/tokens';
-import { useFlagStore, useRedesign } from '@/lib/flags';
 
 type BrandKey = 'none' | keyof typeof SAMPLE_BRANDS;
 const BRAND_LABELS: Record<BrandKey, string> = { none: 'No venue', littleRye: 'Little Rye', paleMoth: 'Pale Moth' };
@@ -46,15 +45,10 @@ function ColumnBody() {
 
 /**
  * Every token and shared component, in both themes, for two sample venues.
- * Hidden: not linked from the app, but it opens in every build, because its
- * switch is how you turn the redesign preview on for yourself in production.
- * ponytail: anyone who finds /dev/gallery can preview unfinished screens (their
- * own view only; RLS still guards the data). Gate it on catalog admin once the
- * client can ask the server who that is.
+ * Hidden: not linked from the app, but it opens in every build so designers
+ * can check tokens and components on a real device.
  */
 export default function Gallery() {
-  const redesign = useRedesign();
-  const setOverride = useFlagStore((s) => s.setRedesignOverride);
   const [brand, setBrand] = useState<BrandKey>('littleRye');
   const [scheme, setScheme] = useState<BackbarScheme>('dark');
   const wide = useBreakpoint() === 'desktop';
@@ -74,8 +68,6 @@ export default function Gallery() {
           setBrand={setBrand}
           scheme={scheme}
           setScheme={setScheme}
-          redesign={redesign}
-          setRedesign={(on) => setOverride(on)}
         />
         <ScrollView style={{ backgroundColor: backbar[scheme].ground }} contentContainerStyle={[styles.columns, { paddingHorizontal: wide ? gutter : 0, paddingBottom: insets.bottom + space.xxxl }]}>
           {wide ? (
@@ -100,11 +92,9 @@ interface ControlsProps {
   setBrand: (b: BrandKey) => void;
   scheme: BackbarScheme;
   setScheme: (s: BackbarScheme) => void;
-  redesign: boolean;
-  setRedesign: (on: boolean) => void;
 }
 
-function Controls({ gutter, top, wide, brand, setBrand, scheme, setScheme, redesign, setRedesign }: ControlsProps) {
+function Controls({ gutter, top, wide, brand, setBrand, scheme, setScheme }: ControlsProps) {
   const ds = useDs();
   return (
     <View style={[styles.controls, { paddingTop: top + space.lg, paddingHorizontal: gutter, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }]}>
@@ -121,10 +111,6 @@ function Controls({ gutter, top, wide, brand, setBrand, scheme, setScheme, redes
           <Choice label="Prep (light)" selected={scheme === 'light'} onPress={() => setScheme('light')} />
         </View>
       )}
-      <View style={styles.row} role="radiogroup" accessibilityLabel="Redesigned screens">
-        <Choice label="Redesign on" selected={redesign} onPress={() => setRedesign(true)} />
-        <Choice label="Redesign off" selected={!redesign} onPress={() => setRedesign(false)} />
-      </View>
     </View>
   );
 }

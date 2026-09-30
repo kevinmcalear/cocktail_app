@@ -53,13 +53,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       package: appId,
-      // Discover's map on Android is Google Maps (expo-maps), which needs a
-      // Maps SDK for Android key restricted to this package. Set
-      // GOOGLE_MAPS_ANDROID_API_KEY as an EAS secret; unset, Android shows the
-      // list only (components/screens/home/DiscoverMap.native.tsx).
-      ...(process.env.GOOGLE_MAPS_ANDROID_API_KEY
-        ? { config: { ...config.android?.config, googleMaps: { apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY } } }
-        : {}),
     },
     // Over-the-air JS updates from EAS Update. A new store binary is needed
     // whenever the app version (and so the runtime) changes.
