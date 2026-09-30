@@ -3,12 +3,14 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
 import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
 const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
+const LOGO = 40;
 const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 
 interface RowProps {
@@ -17,11 +19,13 @@ interface RowProps {
   detail: string;
   score: number;
   scoreDetail?: string;
+  /** The bar's logo (initials when null). Undefined leaves the logo out. */
+  logo?: string | null;
   /** Makes the row a link, e.g. to the bar's profile. */
   onPress?: () => void;
 }
 
-function Row({ position, title, detail, score, scoreDetail, onPress }: RowProps) {
+function Row({ position, title, detail, score, scoreDetail, logo, onPress }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -29,6 +33,7 @@ function Row({ position, title, detail, score, scoreDetail, onPress }: RowProps)
       <DsText variant="title" tone="accent" style={styles.position}>
         {position}
       </DsText>
+      {logo !== undefined ? <UserAvatar uri={logo} name={title} size={LOGO} /> : null}
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{title}</Headline>
         <Caption tone="muted" numberOfLines={1}>
@@ -85,7 +90,7 @@ function placeOf(r: { locality: string | null; city: string | null; distance_km?
   return r.distance_km == null ? place : `${place} · ${formatDistance(r.distance_km, imperial())}`;
 }
 
-type AreaRow = AreaRanking & { distance_km?: number | null };
+type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string | null };
 
 /** Bars in an area, best first. Each opens the bar's profile. */
 export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; scoreDetail?: (r: AreaRow) => string }) {
@@ -100,6 +105,7 @@ export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` 
           detail={placeOf(r)}
           score={r.score}
           scoreDetail={scoreDetail(r)}
+          logo={r.avatar_url}
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
         />
       ))}
@@ -125,6 +131,7 @@ export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
           style={[styles.row, { borderBottomColor: ds.c.line }]}
         >
+          <UserAvatar uri={r.avatar_url} name={r.display_name} size={LOGO} />
           <View style={styles.flex}>
             <Headline numberOfLines={1}>{r.display_name}</Headline>
             <Caption tone="muted" numberOfLines={1}>

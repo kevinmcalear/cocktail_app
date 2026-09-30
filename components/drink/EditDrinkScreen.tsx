@@ -11,6 +11,7 @@ import { DrinkFormFields, drinkColumns, useDrinkFormState } from '@/components/d
 import { imageIdFor, pickDrinkPhotos, setItemImages } from '@/components/drink/drinkImages';
 import { GenerateImageButton } from '@/components/GenerateImageButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { plainDbMessage } from '@/lib/dbError';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { supabase } from '@/lib/supabase';
 
@@ -118,7 +119,7 @@ export function EditDrinkScreen({ kind: kindName, isInline, idProp, onClose, onS
       ]);
     } catch (error) {
       console.error('Update error:', error);
-      Alert.alert('Error', `Failed to update ${kind.label.toLowerCase()}.`);
+      Alert.alert('Error', plainDbMessage(error) ?? `Failed to update ${kind.label.toLowerCase()}.`);
     } finally {
       setSaving(false);
     }
