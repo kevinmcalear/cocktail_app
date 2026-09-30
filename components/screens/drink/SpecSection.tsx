@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
+import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
@@ -58,6 +60,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
   const specUnit = useSettingsStore((s) => s.specUnit);
   const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
   const unit: SpecUnit = specUnit;
+  const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
   const opensAt = (level: number | undefined) => (level ? roleLabel(level) : 'a higher role');
 
   if (!lines.length) {
@@ -100,11 +103,13 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
             optional={l.optional}
             note={l.note ?? undefined}
             detail={access.amounts ? (lineDetail(l, unit) ?? undefined) : undefined}
+            onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             scale={scale}
             onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
           />
         ))}
       </View>
+      {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}
       {!access.prep && levels ? (
         <LockedSection title="Prep notes" unlocked={false} opensAt={opensAt(levels.prep)}>
           {null}

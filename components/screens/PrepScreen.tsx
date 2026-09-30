@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { BackBarLink } from '@/components/backbar/BackBarLink';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -63,6 +64,7 @@ export function PrepScreen() {
   const venueMenus = ((dropdowns?.menus ?? []) as MenuRow[]).filter((m) => m.bar_id === barId);
 
   const [segment, setSegment] = useState<Segment>('make');
+  const [tools, setTools] = useState(false);
   const [source, setSource] = useState<PrepSource>({ kind: 'tonight' });
   const [servesOverride, setServesOverride] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
@@ -125,7 +127,10 @@ export function PrepScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          <BackBarLink />
+          <View style={styles.links}>
+            <BackBarLink />
+            <Button label="Tools" icon="percent" variant="secondary" onPress={() => setTools(true)} />
+          </View>
           <Display>Prep</Display>
           {canPrep ? <Segmented options={SEGMENTS} value={segment} onChange={setSegment} accessibilityLabel="Prep, Order or Count" /> : null}
           {canPrep && segment !== 'count' ? (
@@ -134,6 +139,7 @@ export function PrepScreen() {
           {content}
         </View>
       </ScrollView>
+      {tools ? <ToolsSheet visible onClose={() => setTools(false)} /> : null}
       {barId && creating ? (
         <NewEventSheet
           visible
@@ -150,4 +156,5 @@ export function PrepScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: space.lg, maxWidth: 760, width: '100%' },
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

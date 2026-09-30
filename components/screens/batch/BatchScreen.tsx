@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Caption, GlassButton, LockedSection, Spec, Surface, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, GlassButton, LockedSection, Spec, Surface, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { layout, space } from '@/constants/tokens';
 import { buildBatch, LEAVE_OUT_LABEL, MAX_SERVES, MIN_SERVES, type BatchMethod, type BottleSize, type VolumeUnit } from '@/lib/batch';
 import type { SpecLine } from '@/lib/spec';
@@ -24,6 +25,8 @@ export interface BatchScreenProps {
   dilutionPct?: number | null;
   /** items.service_style: bottled, carbonated and draught drinks get water in the bottle too. */
   serviceStyle?: string | null;
+  /** The drink's ABV before dilution, to prefill the dilution calculator. */
+  abv?: number | null;
 }
 
 function methodLine(method: BatchMethod, water: { pct: number } | null): string {
@@ -64,7 +67,8 @@ export function BatchScreen(props: BatchScreenProps) {
   );
 }
 
-function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServes = 8, dilutionPct, serviceStyle }: BatchScreenProps) {
+function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServes = 8, dilutionPct, serviceStyle, abv }: BatchScreenProps) {
+  const [tools, setTools] = useState(false);
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -125,6 +129,8 @@ function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServ
       <Surface>
         <Body>{batch.note}</Body>
       </Surface>
+      <Button label="Dilution calculator" icon="drop.fill" variant="secondary" onPress={() => setTools(true)} style={styles.tools} />
+      {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={abv} /> : null}
     </View>
   );
 
@@ -174,4 +180,5 @@ const styles = StyleSheet.create({
   wide: { flexDirection: 'row', gap: space.xxl, maxWidth: 1040, width: '100%', alignSelf: 'center' },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   total: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm },
+  tools: { alignSelf: 'flex-start' },
 });

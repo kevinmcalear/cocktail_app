@@ -11,6 +11,8 @@ import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { gramsPer100ml, leadTimeLabel, shelfLifeLabel, timerLabel, totals, totalsLine, type RecipeLine } from '@/lib/scale';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 
+import { ToolsSheet } from '@/components/tools/ToolsSheet';
+
 import { MakeSheet } from './MakeSheet';
 import { PrepEditSheet } from './PrepEditSheet';
 
@@ -45,6 +47,7 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
   const { data: used } = usePrepUsedIn(itemId);
   const usedIn = used?.preps ?? [];
   const [making, setMaking] = useState(false);
+  const [proofing, setProofing] = useState(false);
   const [editing, setEditing] = useState(false);
   const canEdit = barId ? !!capabilities?.includes('prep') || canEditItem : canEditItem;
   const accent = venues.find((v) => v.id === barId)?.accent ?? active?.accent ?? undefined;
@@ -132,7 +135,9 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
       <View style={styles.actions}>
         {recipe.length ? <Button label="Make" icon="flask" onPress={() => setMaking(true)} /> : null}
         {canEdit ? <Button label={prep ? 'Edit prep card' : 'Add prep card'} variant="secondary" onPress={() => setEditing(true)} /> : null}
+        <Button label="Proof" icon="percent" variant="ghost" onPress={() => setProofing(true)} />
       </View>
+      {proofing ? <ToolsSheet visible onClose={() => setProofing(false)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
       <MakeSheet visible={making} onClose={() => setMaking(false)} itemName={itemName} recipe={recipe} card={card} accent={accent} />
       {editing ? <PrepEditSheet visible onClose={() => setEditing(false)} itemId={itemId} itemName={itemName} current={card} /> : null}
     </Surface>
