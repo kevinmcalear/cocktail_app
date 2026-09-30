@@ -1,0 +1,138 @@
+diff --git a/node_modules/@tamagui/button/dist/cjs/Button.cjs b/node_modules/@tamagui/button/dist/cjs/Button.cjs
+index 3a467df..7137d65 100644
+--- a/node_modules/@tamagui/button/dist/cjs/Button.cjs
++++ b/node_modules/@tamagui/button/dist/cjs/Button.cjs
+@@ -130,13 +130,12 @@ const Frame = (0, import_web.styled)(import_web.View, {
+       "...size": import_stacks.getElevation,
+       ":number": import_stacks.getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"
+diff --git a/node_modules/@tamagui/button/dist/cjs/Button.native.js b/node_modules/@tamagui/button/dist/cjs/Button.native.js
+index 83c1067..eae8687 100644
+--- a/node_modules/@tamagui/button/dist/cjs/Button.native.js
++++ b/node_modules/@tamagui/button/dist/cjs/Button.native.js
+@@ -132,13 +132,12 @@ var Frame = (0, import_web.styled)(import_web.View, {
+       "...size": import_stacks.getElevation,
+       ":number": import_stacks.getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"
+diff --git a/node_modules/@tamagui/button/dist/esm/Button.mjs b/node_modules/@tamagui/button/dist/esm/Button.mjs
+index a37f6fe..d434ed5 100644
+--- a/node_modules/@tamagui/button/dist/esm/Button.mjs
++++ b/node_modules/@tamagui/button/dist/esm/Button.mjs
+@@ -102,13 +102,12 @@ const Frame = styled(View, {
+       "...size": getElevation,
+       ":number": getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"
+diff --git a/node_modules/@tamagui/button/dist/esm/Button.native.js b/node_modules/@tamagui/button/dist/esm/Button.native.js
+index 0f5f335..f400692 100644
+--- a/node_modules/@tamagui/button/dist/esm/Button.native.js
++++ b/node_modules/@tamagui/button/dist/esm/Button.native.js
+@@ -102,13 +102,12 @@ var Frame = styled(View, {
+       "...size": getElevation,
+       ":number": getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"
+diff --git a/node_modules/@tamagui/button/dist/jsx/Button.mjs b/node_modules/@tamagui/button/dist/jsx/Button.mjs
+index a37f6fe..d434ed5 100644
+--- a/node_modules/@tamagui/button/dist/jsx/Button.mjs
++++ b/node_modules/@tamagui/button/dist/jsx/Button.mjs
+@@ -102,13 +102,12 @@ const Frame = styled(View, {
+       "...size": getElevation,
+       ":number": getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"
+diff --git a/node_modules/@tamagui/button/dist/jsx/Button.native.js b/node_modules/@tamagui/button/dist/jsx/Button.native.js
+index 83c1067..eae8687 100644
+--- a/node_modules/@tamagui/button/dist/jsx/Button.native.js
++++ b/node_modules/@tamagui/button/dist/jsx/Button.native.js
+@@ -132,13 +132,12 @@ var Frame = (0, import_web.styled)(import_web.View, {
+       "...size": import_stacks.getElevation,
+       ":number": import_stacks.getElevation
+     },
+-    disabled: {
+-      true: {
+-        pointerEvents: "none",
+-        // @ts-ignore
+-        "aria-disabled": true
++    disabled: function (val) {
++      // patch-package: always emit aria-disabled as a boolean. RN Android
++      // (0.86) never re-enables a view once accessibilityState is dropped, so a
++      // Button that went disabled and back stayed dead to touches.
++      return val ? { pointerEvents: "none", "aria-disabled": true } : { pointerEvents: "auto", "aria-disabled": false };
+       }
+-    }
+   },
+   defaultVariants: {
+     unstyled: process.env.TAMAGUI_HEADLESS === "1"

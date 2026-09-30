@@ -136,10 +136,16 @@ describe('generic ingredients', () => {
       assert.equal(byName.campari?.category, 'Aperitivo (Red Bitter)');
       assert.equal(byName.gin?.category, 'Gin');
     }
-    const { rows: counts } = await db.query(`
-      SELECT count(*) FILTER (WHERE generic_id IS NOT NULL)::int AS with_generic, count(*)::int AS n
-      FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL AND name !~ ' [0-9a-f]{8}$'`);
-    assert.ok(counts[0].with_generic / counts[0].n >= 0.4, `expected most shared bottles filled in, got ${counts[0].with_generic} of ${counts[0].n}`);
+    // Counted against the backfill's own list. A share of every shared
+    // ingredient falls each time a seed adds bottles the list doesn't name.
+    const listed = [...readFileSync(MIGRATION, 'utf8').split('INSERT INTO "known_ingredients" VALUES')[1].split(';')[0]
+      .matchAll(/\('((?:[^']|'')+)', '(?:[^']|'')+', /g)].map((m) => m[1].replaceAll("''", "'").toLowerCase());
+    const { rows: counts } = await db.query(
+      `SELECT count(*) FILTER (WHERE generic_id IS NOT NULL)::int AS with_generic, count(*)::int AS n
+       FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL AND lower(name) = ANY($1)`,
+      [listed]
+    );
+    assert.ok(counts[0].n > 0 && counts[0].with_generic === counts[0].n, `expected every listed bottle filled in, got ${counts[0].with_generic} of ${counts[0].n}`);
   });
 
   test('running the backfill again changes nothing', async () => {

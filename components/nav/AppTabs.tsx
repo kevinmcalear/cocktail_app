@@ -24,9 +24,10 @@ function Tabs() {
   const ds = useDs();
   const home = useMode().mode === 'home';
   // Both modes share the first tab (Tonight or Discover). The rest swap, the
-  // way an account switch swaps an app's tabs.
+  // way an account switch swaps an app's tabs. Android's Material bar hides
+  // unselected labels past three tabs; "labeled" keeps every tab named.
   return (
-    <NativeTabs tintColor={ds.accentText} minimizeBehavior="onScrollDown">
+    <NativeTabs tintColor={ds.accentText} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="index">
         {home ? (
           <NativeTabs.Trigger.Icon sf={{ default: 'safari', selected: 'safari.fill' }} md="explore" />
@@ -61,6 +62,9 @@ function Tabs() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="menus" hidden />
       <NativeTabs.Trigger name="search" role="search">
+        {/* iOS draws the system magnifying glass from role="search" and ignores
+            md; Android has no search role, so without this the tab is blank. */}
+        <NativeTabs.Trigger.Icon md="search" />
         <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>

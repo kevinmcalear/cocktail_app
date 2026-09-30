@@ -4,6 +4,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
+import { sortEditions, type MenuEdition } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
@@ -93,6 +94,23 @@ export function useProfileAwards(profileId: string | null | undefined) {
         .eq('profile_id', profileId!);
       if (error) throw error;
       return sortAwards((data ?? []) as Award[]);
+    },
+  });
+}
+
+/** Every cocktail menu a bar has put out, newest first. */
+export function useMenuEditions(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-menu-editions', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<MenuEdition[]> => {
+      const { data, error } = await supabase
+        .from('profile_menu_editions')
+        .select('id, name, year, month, theme, drinks, source_url')
+        .eq('profile_id', profileId!)
+        .limit(200);
+      if (error) throw error;
+      return sortEditions((data ?? []) as MenuEdition[]);
     },
   });
 }
