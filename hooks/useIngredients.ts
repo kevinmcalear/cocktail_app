@@ -100,6 +100,7 @@ export function useIngredient(id?: string | string[]) {
                     cocktail:app_item_presentation!new_recipes_recipe_item_id_fkey(
                         id, 
                         name,
+                        item_type,
                         item_images (
                             sort_order,
                             is_generated,
@@ -114,7 +115,8 @@ export function useIngredient(id?: string | string[]) {
             if (!usedInError && usedInData) {
                 const uniqueCocktails = new Map();
                 usedInData.forEach((item: any) => {
-                    if (item.cocktail && !uniqueCocktails.has(item.cocktail.id)) {
+                    // Preps this goes into are listed on the prep card, not here.
+                    if (item.cocktail?.item_type === 'cocktail' && !uniqueCocktails.has(item.cocktail.id)) {
                         uniqueCocktails.set(item.cocktail.id, item);
                     }
                 });
