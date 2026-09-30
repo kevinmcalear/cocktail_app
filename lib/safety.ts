@@ -15,13 +15,14 @@ export type ReportReason =
   | 'fake_rankings'
   | 'other';
 
-export type ReportKind = 'profile' | 'item' | 'release' | 'ranking';
+export type ReportKind = 'profile' | 'item' | 'release' | 'ranking' | 'comment';
 
 /** What a report is about: exactly the columns the reports table checks for its kind. */
 export type ReportTarget =
   | { kind: 'profile'; profileId: string }
   | { kind: 'item'; itemId: string }
   | { kind: 'release'; releaseId: string }
+  | { kind: 'comment'; commentId: string }
   /** A bar's place on a list: itemId is the list ("Martini"), profileId the bar. */
   | { kind: 'ranking'; itemId: string; profileId: string };
 
@@ -48,6 +49,7 @@ export interface ReportRow {
   profile_id?: string;
   item_id?: string;
   release_id?: string;
+  comment_id?: string;
 }
 
 /** Insert columns for a report. */
@@ -63,6 +65,8 @@ export function reportRow(target: ReportTarget, reason: ReportReason, details: s
       return { ...base, release_id: target.releaseId };
     case 'ranking':
       return { ...base, item_id: target.itemId, profile_id: target.profileId };
+    case 'comment':
+      return { ...base, comment_id: target.commentId };
   }
 }
 
