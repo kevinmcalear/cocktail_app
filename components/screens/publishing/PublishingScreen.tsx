@@ -10,6 +10,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 
 import { PublishChoice } from './PublishChoice';
+import { ReleaseList } from './ReleaseList';
 
 /**
  * A venue's publishing settings: the bar's default, each menu's setting, and
@@ -107,6 +108,7 @@ function PublishingPage({ barId }: { barId: string }) {
                   ))}
                 </View>
               </View>
+              {canPublish ? <ReleaseList barId={barId} /> : null}
             </>
           ) : null}
         </View>

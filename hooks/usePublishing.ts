@@ -53,10 +53,13 @@ export interface BarPublishing {
   menus: { id: string; name: string; publish_mode: PublishMode | null }[];
   /** Drinks (not ingredients) by what the public sees. */
   counts: Record<PublishMode, number>;
+  /** The venue's drinks by name, with what the public sees of each. */
+  drinks: { id: string; name: string; mode: PublishMode }[];
 }
 
 interface BarItem {
   id: string;
+  name: string;
   item_type: string;
   publish_mode: PublishMode | null;
 }
@@ -71,7 +74,7 @@ export function useBarPublishing(barId: string) {
         supabase.from('bars').select('default_publish_mode').eq('id', barId).single(),
         supabase.from('profiles').select('id, handle').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
         supabase.from('menus').select('id, name, publish_mode, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
-        supabase.from('items').select('id, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
+        supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
       ]);
       for (const r of [bar, profile, menus, items]) if (r.error) throw r.error;
       const barDefault = (bar.data as { default_publish_mode: PublishMode }).default_publish_mode;
@@ -79,14 +82,16 @@ export function useBarPublishing(barId: string) {
       const menusOf = new Map<string, (PublishMode | null)[]>();
       for (const m of menuRows) for (const d of m.menu_drinks) menusOf.set(d.item_id, [...(menusOf.get(d.item_id) ?? []), m.publish_mode]);
       const counts: Record<PublishMode, number> = { private: 0, description: 0, spec: 0 };
-      for (const i of (items.data ?? []) as BarItem[]) {
-        counts[effectivePublish({ own: i.publish_mode, menuModes: menusOf.get(i.id) ?? [], barDefault }).mode] += 1;
-      }
+      const drinks = ((items.data ?? []) as BarItem[])
+        .map((i) => ({ id: i.id, name: i.name, mode: effectivePublish({ own: i.publish_mode, menuModes: menusOf.get(i.id) ?? [], barDefault }).mode }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      for (const d of drinks) counts[d.mode] += 1;
       return {
         barDefault,
         profile: (profile.data as { id: string; handle: string | null } | null) ?? null,
         menus: menuRows.map(({ id, name, publish_mode }) => ({ id, name, publish_mode })),
         counts,
+        drinks,
       };
     },
   });
