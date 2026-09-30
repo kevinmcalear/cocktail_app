@@ -130,6 +130,11 @@ export interface DatabaseItem {
     serve_abv?: number | null;
     /** 'calculated' when the spec sets abv; 'manual' keeps a typed figure. */
     abv_source?: 'manual' | 'calculated';
+    /** Glassware: to the brim, and what the liquid fills once the ice is in. */
+    capacity_ml?: number | null;
+    iced_capacity_ml?: number | null;
+    /** Cocktails: ice in the glass per serve. */
+    ice_per_serve_g?: number | null;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;

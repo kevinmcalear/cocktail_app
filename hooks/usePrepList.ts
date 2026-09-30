@@ -11,6 +11,14 @@ interface RecipeRow {
   display_ingredient: { id: string; name: string } | null;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  item_type: string;
+  ice_per_serve_g: number | null;
+  ice: { name: string } | null;
+}
+
 export interface PrepData {
   drinks: { id: string; name: string; recipe: SpecLine[] }[];
   houseMade: Record<string, HouseMade>;
@@ -49,16 +57,19 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
     queryFn: async (): Promise<PrepData> => {
       const { data: menuRows, error: menuError } = await supabase
         .from('menu_drinks')
-        .select('item:items!item_id(id, name, item_type)')
+        .select('item:items!item_id(id, name, item_type, ice_per_serve_g, ice:items!items_ice_id_fkey(name))')
         .in('menu_id', key);
       if (menuError) throw menuError;
-      const drinkItems = new Map<string, string>();
-      for (const row of (menuRows ?? []) as unknown as { item: { id: string; name: string; item_type: string } | null }[]) {
-        if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item.name);
+      const drinkItems = new Map<string, MenuItem>();
+      for (const row of (menuRows ?? []) as unknown as { item: MenuItem | null }[]) {
+        if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item);
       }
       const drinkIds = [...drinkItems.keys()];
       const drinkRecipes = await recipesFor(drinkIds);
-      const drinks = drinkIds.map((id) => ({ id, name: drinkItems.get(id)!, recipe: toLines(drinkRecipes, id) }));
+      const drinks = drinkIds.map((id) => {
+        const item = drinkItems.get(id)!;
+        return { id, name: item.name, recipe: toLines(drinkRecipes, id), iceType: item.ice?.name ?? null, icePerServeG: item.ice_per_serve_g };
+      });
 
       // Walk down: any ingredient with its own recipe or prep row is house-made.
       const houseMade: Record<string, HouseMade> = {};

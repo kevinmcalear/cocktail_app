@@ -52,6 +52,20 @@ const list = buildPrepList({
   },
 });
 
+assert.deepEqual(list.ice, [], 'no ice per serve set, nothing to order');
+const iced = buildPrepList({
+  startsAt,
+  now: startsAt,
+  servesPerDrink: 140,
+  drinks: [
+    { id: 'p', name: 'Penicillin', recipe: [], iceType: 'Cubes', icePerServeG: 140 },
+    { id: 'm', name: 'Mai Tai', recipe: [], iceType: 'Crushed', icePerServeG: 180 },
+  ],
+  houseMade: {},
+  purchasing: {},
+});
+assert.deepEqual(iced.ice.map((i) => [i.type, Math.round(i.grams)]), [['Crushed', 25200], ['Cubes', 19600]], 'ice per serve times serves, by type');
+
 const hgs = list.make.find((m) => m.id === 'hgs')!;
 assert.equal(hgs.needed, '900 ml');
 assert.equal(hgs.batches, '2 batches of 750 ml');

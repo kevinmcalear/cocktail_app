@@ -6,6 +6,7 @@
  * Pure: hooks/usePrepList.ts fetches the rows and hands them here.
  */
 
+import { iceForEvent, type IceNeed } from '@/lib/glass';
 import { formatQuantity, sameKind, scale, toQuantity, type Quantity } from '@/lib/quantity';
 
 export interface SpecLine {
@@ -31,8 +32,8 @@ export interface Purchasing {
 }
 
 export interface PrepInput {
-  /** One serve of each drink on the menu. */
-  drinks: { id: string; name: string; recipe: SpecLine[] }[];
+  /** One serve of each drink on the menu, with its ice per serve when set. */
+  drinks: { id: string; name: string; recipe: SpecLine[]; iceType?: string | null; icePerServeG?: number | null }[];
   servesPerDrink: number;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
@@ -69,6 +70,8 @@ export interface BuyLine {
 export interface PrepList {
   make: MakeLine[];
   order: { supplier: string; lines: BuyLine[] }[];
+  /** The ice to have in, by type, from each drink's ice per serve. */
+  ice: IceNeed[];
 }
 
 const NO_SUPPLIER = 'No supplier yet';
@@ -156,7 +159,11 @@ export function buildPrepList(input: PrepInput): PrepList {
   const order = [...bySupplier.entries()]
     .sort(([a], [b]) => (a === NO_SUPPLIER ? 1 : b === NO_SUPPLIER ? -1 : a.localeCompare(b)))
     .map(([supplier, lines]) => ({ supplier, lines: lines.sort((a, b) => a.name.localeCompare(b.name)) }));
-  return { make, order };
+  const ice = iceForEvent(
+    input.drinks.map((d) => ({ name: d.name, iceType: d.iceType ?? null, icePerServeG: d.icePerServeG ?? null })),
+    input.servesPerDrink
+  );
+  return { make, order, ice };
 }
 
 /**

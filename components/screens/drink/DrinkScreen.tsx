@@ -8,12 +8,9 @@ import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headl
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
-import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { classifyMethod } from '@/lib/batch';
-import { drinkStrength, formatAbv, formatAmount } from '@/lib/drinkMath';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -23,7 +20,7 @@ import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
-import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
+import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
@@ -32,7 +29,9 @@ import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
+import { GlassSheet } from './GlassSheet';
 import { StrengthSheet } from './StrengthSheet';
+import { useDrinkFacts } from './useDrinkFacts';
 
 export interface DrinkScreenProps {
   item: DatabaseItem;
@@ -45,15 +44,6 @@ export interface DrinkScreenProps {
   /** /dev/drink only: a bundled hero image, a simulated role, and where Batch goes. */
   preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
 }
-
-interface Named {
-  id: string;
-  name: string;
-  icon_key?: string | null;
-}
-
-// Stored spelling in older rows; shown correctly.
-const ORIGIN_LABEL: Record<string, string> = { Varient: 'Variant' };
 
 function KeepAwake() {
   useKeepAwake();
@@ -99,7 +89,6 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const { width, height } = useWindowDimensions();
   const serviceMode = useSettingsStore((s) => s.serviceMode);
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
-  const { data: dropdowns } = useDropdowns();
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   // Saving to your Collection (home mode) needs a confirmed age.
@@ -108,33 +97,18 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   const canBatch = access.amounts && lines.some((l) => l.value !== null);
   const [strengthOpen, setStrengthOpen] = useState(false);
+  const [glassOpen, setGlassOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
   const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
-  const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
-  const glass = find(dropdowns?.glassware as Named[], item.glassware_id);
-  const methods = (item.item_methods ?? [])
-    .map((m) => find(dropdowns?.methods as Named[], m.method_item_id)?.name)
-    .filter((n): n is string => !!n);
-  // Strength: the server's figures for every role; the line-by-line sheet
-  // needs the amounts, so it only opens for roles that see them.
-  const method = classifyMethod(methods);
-  const strength = access.amounts && !preview ? drinkStrength(lines, method, { dilutionPct: item.dilution_pct, defaults: dilutionDefaults }) : null;
-  const abv = formatAbv(item.abv);
-  const openStrength = strength ? () => setStrengthOpen(true) : undefined;
-  const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
-  const facts: Fact[] = ([
-    glass && { label: 'Glass', value: glass.name },
-    find(dropdowns?.iceTypes as Named[], item.ice_id) && { label: 'Ice', value: find(dropdowns?.iceTypes as Named[], item.ice_id)!.name },
-    find(dropdowns?.families as Named[], item.family_id) && { label: 'Family', value: find(dropdowns?.families as Named[], item.family_id)!.name },
-    abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: openStrength, accessibilityHint: strengthHint } : null,
-    item.serve_ml != null
-      ? { label: 'Serve', value: formatAmount(item.serve_ml, 'ml'), sub: strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', onPress: openStrength, accessibilityHint: strengthHint }
-      : null,
-    item.serve_abv != null ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: openStrength, accessibilityHint: strengthHint } : null,
-  ] as (Fact | null | undefined)[]).filter((f): f is Fact => !!f);
-  const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
+  const { facts, tags, glass, ice, method, strength } = useDrinkFacts(item, {
+    lines,
+    amounts: access.amounts && !preview,
+    dilutionDefaults,
+    openStrength: () => setStrengthOpen(true),
+    openGlass: preview ? undefined : () => setGlassOpen(true),
+  });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
   // The hero (first) picture's credit shows under the name.
@@ -244,6 +218,20 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       )}
       {controls}
       {ageGate.sheet}
+      {glassOpen ? (
+        <GlassSheet
+          visible
+          onClose={() => setGlassOpen(false)}
+          itemId={item.id}
+          name={item.name}
+          glass={glass}
+          iceName={ice?.name ?? null}
+          serveMl={item.serve_ml ?? null}
+          icePerServeG={item.ice_per_serve_g ?? null}
+          canEditDrink={canEdit}
+          accent={venue?.accent ?? undefined}
+        />
+      ) : null}
       {strength ? (
         <StrengthSheet
           visible={strengthOpen}

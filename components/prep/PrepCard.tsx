@@ -42,12 +42,16 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
   const { active, venues } = useActiveVenue();
   const { data: capabilities } = useCapabilities(barId);
   const { data: card, isPending } = useItemPrep(itemId);
-  const { data: usedIn = [] } = usePrepUsedIn(itemId);
+  const { data: used } = usePrepUsedIn(itemId);
+  const usedIn = used?.preps ?? [];
   const [making, setMaking] = useState(false);
   const [editing, setEditing] = useState(false);
   const canEdit = barId ? !!capabilities?.includes('prep') || canEditItem : canEditItem;
   const accent = venues.find((v) => v.id === barId)?.accent ?? active?.accent ?? undefined;
   if (isPending || !card) return null;
+  // A bought ingredient with nothing to prep stays a plain page, unless it's a
+  // garnish an editor can give a recipe, steps and a yield.
+  if (!recipe.length && !card.prep && !card.steps.length && !(canEdit && used?.garnish)) return null;
 
   const prep = card.prep;
   const t = totals(recipe);
@@ -92,7 +96,13 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
           ))}
         </View>
       ) : (
-        <Body tone="muted">{canEdit ? 'No prep card yet. Add the yield and how long it keeps.' : 'No prep card yet.'}</Body>
+        <Body tone="muted">
+          {canEdit
+            ? used?.garnish && !recipe.length
+              ? 'A garnish can carry its own prep card: the yield, the steps and how long it keeps, so it lands on the prep list.'
+              : 'No prep card yet. Add the yield and how long it keeps.'
+            : 'No prep card yet.'}
+        </Body>
       )}
       {card.steps.length ? (
         <View style={styles.steps}>

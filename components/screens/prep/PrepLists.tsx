@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, Spec, Tag, useDs } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
+import { formatIce } from '@/lib/glass';
 import type { PrepList } from '@/lib/prep';
 
 function when(date: Date): string {
@@ -51,6 +52,20 @@ export function PrepLists({ list }: { list: PrepList }) {
           </View>
         ))}
       </Section>
+
+      {list.ice.length ? (
+        <Section title="Ice" count={list.ice.length}>
+          {list.ice.map((i) => (
+            <View key={i.type} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+              <View style={styles.rowMain}>
+                <Body style={styles.name}>{i.type}</Body>
+                <Caption tone="muted">for {i.forDrinks.join(', ')}</Caption>
+              </View>
+              <Spec tone="accent" align="right">{formatIce(i.grams)}</Spec>
+            </View>
+          ))}
+        </Section>
+      ) : null}
 
       <Section title="To order" count={orderCount}>
         {orderCount === 0 ? <Body tone="muted">Nothing to order.</Body> : null}
