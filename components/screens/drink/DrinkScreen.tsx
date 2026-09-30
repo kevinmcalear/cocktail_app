@@ -1,9 +1,9 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
-import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -139,6 +139,15 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkTags tags={tags} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
+      {!preview && heroPic?.credit ? (
+        <Caption
+          tone="muted"
+          role={heroPic.sourceUrl ? 'link' : undefined}
+          onPress={heroPic.sourceUrl ? () => void Linking.openURL(heroPic.sourceUrl!) : undefined}
+        >
+          Photo: {heroPic.credit}
+        </Caption>
+      ) : null}
       <View style={styles.actions}>
         <GlassButton
           accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}

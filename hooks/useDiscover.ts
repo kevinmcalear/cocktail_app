@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { useAuth } from '@/ctx/AuthContext';
 import type { RankVenue } from '@/hooks/useRankings';
+import { viewerScoped } from '@/lib/authCache';
 import { citiesFrom, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
@@ -135,8 +137,10 @@ export interface VenueScore {
 
 /** A bar's score for its profile. Null when nobody has ranked a drink there yet. */
 export function useVenueScore(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['venue-score', profileId],
+    queryKey: ['venue-score', profileId, viewer.key],
+    meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<VenueScore | null> => {
       const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId });
