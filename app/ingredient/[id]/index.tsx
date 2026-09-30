@@ -10,6 +10,7 @@ import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
+import { KindOfLink } from "@/components/ingredient/BrandAndKindFields";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -26,6 +27,7 @@ interface IngredientDetail {
     name: string;
     description: string | null;
     bar_id: string | null;
+    generic?: { id: string; name: string } | null;
     item_images?: ItemImageLink[];
 }
 
@@ -125,6 +127,8 @@ export default function IngredientDetailScreen() {
                         </Paragraph>
                     </GlassView>
                 )}
+
+                {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
                 <AllergenSection itemId={ingredient.id} houseMade={recipe.length > 0} canEditItem={canEdit} />
