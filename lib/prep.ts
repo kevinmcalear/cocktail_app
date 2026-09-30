@@ -128,6 +128,12 @@ function afterStock(id: string, quantities: Quantity[], onHand: Quantity | undef
   return { quantities: left, have: `have ${formatQuantity(onHand)}`, toPar };
 }
 
+/** Bottles counted on the shelf or set as par, read through the pack size ("2 btl" of a 750 ml pack is 1.5 L). */
+function inPack(q: Quantity | undefined, pack: Quantity | null): Quantity | undefined {
+  if (!q || !pack || q.kind !== 'count' || !/^(btl|bottles?)$/i.test(q.unit)) return q;
+  return { kind: pack.kind, value: q.value * pack.value, unit: pack.unit };
+}
+
 export function buildPrepList(input: PrepInput): PrepList {
   const needs = new Map<string, Need>();
   for (const drink of input.drinks) {
@@ -186,11 +192,11 @@ export function buildPrepList(input: PrepInput): PrepList {
   const bySupplier = new Map<string, BuyLine[]>();
   for (const [id, need] of needs) {
     if (input.houseMade[id]) continue;
-    const stocked = afterStock(id, need.quantities, input.onHand?.[id], input.par?.[id]);
-    if (stocked.have !== null && !stocked.quantities.length) continue;
-    if (stocked.toPar) need.forDrinks.add('back to par');
     const p = input.purchasing[id];
     const pack = p ? toQuantity(p.packAmount, p.packUnit) : null;
+    const stocked = afterStock(id, need.quantities, inPack(input.onHand?.[id], pack), inPack(input.par?.[id], pack));
+    if (stocked.have !== null && !stocked.quantities.length) continue;
+    if (stocked.toPar) need.forDrinks.add('back to par');
     const neededQ = stocked.quantities.find((q) => pack && sameKind(q, pack));
     const packs = pack && neededQ ? Math.ceil(neededQ.value / pack.value) : null;
     const line: BuyLine = {
