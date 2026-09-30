@@ -25,19 +25,20 @@ function Section({ title, count, children }: { title: string; count: number; chi
   );
 }
 
-/** What to make (with start-by times) and what to order, grouped by supplier. */
-export function PrepLists({ list }: { list: PrepList }) {
+/** What to make (with start-by times) and what to order, grouped by supplier; `show` picks one. */
+export function PrepLists({ list, show = 'both' }: { list: PrepList; show?: 'make' | 'order' | 'both' }) {
   const ds = useDs();
   const orderCount = list.order.reduce((n, g) => n + g.lines.length, 0);
   return (
     <View style={styles.lists}>
+      {show === 'order' ? null : (
       <Section title="To make" count={list.make.length}>
         {list.make.length === 0 ? <Body tone="muted">Nothing house-made on this menu.</Body> : null}
         {list.make.map((m) => (
           <View key={m.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
             <View style={styles.rowMain}>
               <Body style={styles.name}>{m.name}</Body>
-              <Caption tone="muted">{['for ' + m.forDrinks.join(', '), m.leadTimeNote].filter(Boolean).join(' · ')}</Caption>
+              <Caption tone="muted">{['for ' + m.forDrinks.join(', '), m.have, m.leadTimeNote].filter(Boolean).join(' · ')}</Caption>
               {m.startBy ? (
                 <Tag
                   label={m.late ? `Start now · was due ${when(m.startBy)}` : `Start by ${when(m.startBy)}`}
@@ -52,7 +53,10 @@ export function PrepLists({ list }: { list: PrepList }) {
           </View>
         ))}
       </Section>
+      )}
 
+      {show === 'make' ? null : (
+      <>
       {list.ice.length ? (
         <Section title="Ice" count={list.ice.length}>
           {list.ice.map((i) => (
@@ -76,7 +80,10 @@ export function PrepLists({ list }: { list: PrepList }) {
             </Caption>
             {group.lines.map((l) => (
               <View key={l.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                <Body style={styles.rowMain}>{l.name}</Body>
+                <View style={styles.rowMain}>
+                  <Body>{l.name}</Body>
+                  {l.have ? <Caption tone="muted">{l.have}</Caption> : null}
+                </View>
                 <View style={styles.rowAmount}>
                   <Spec tone="accent" align="right">{l.packs ?? l.needed}</Spec>
                   {l.packs ? <Caption tone="muted" align="right">{l.needed}</Caption> : null}
@@ -86,6 +93,8 @@ export function PrepLists({ list }: { list: PrepList }) {
           </View>
         ))}
       </Section>
+      </>
+      )}
     </View>
   );
 }
