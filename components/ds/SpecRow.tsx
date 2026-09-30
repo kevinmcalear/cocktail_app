@@ -16,6 +16,8 @@ export interface SpecRowProps {
   houseMade?: boolean;
   optional?: boolean;
   note?: string;
+  /** A second reading of the amount: "52.6 ml · 21.1 ml ethanol". */
+  detail?: string;
   /** Service mode reads bigger (1.25). */
   scale?: number;
   onPress?: () => void;
@@ -25,9 +27,9 @@ export interface SpecRowProps {
  * One line of a spec, readable across the bar: the amount in its own aligned
  * column in the accent, then the ingredient.
  */
-export function SpecRow({ amount, ingredient, houseMade, optional, note, scale = 1, onPress }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, houseMade, optional, note, detail, scale = 1, onPress }: SpecRowProps) {
   const ds = useDs();
-  const spoken = [amount, ingredient, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
+  const spoken = [amount, ingredient, detail, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const Row = onPress ? PressableScale : View;
   return (
@@ -44,6 +46,7 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, scale =
       </Spec>
       <View style={styles.name}>
         <Body style={big(type.body)}>{ingredient}</Body>
+        {detail ? <Caption tone="muted">{detail}</Caption> : null}
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {houseMade || optional ? (
           <View style={styles.tags}>

@@ -26,10 +26,10 @@ assert.ok(Math.abs(r.reduce((s, x) => s + x.share, 0) - 1) < 1e-9);
 assert.equal(ratio(lines.slice(3)), null, 'no ratio from fewer than two measured lines');
 
 // Weighed specs (Ethyl imports): grams convert to ml by a rough density.
-assert.equal(gramsPerMl('London dry gin', 43), 0.95, 'a spirit by its ABV');
+assert.ok(Math.abs(gramsPerMl('London dry gin', 43) - 0.9405) < 1e-9, 'a spirit by its ABV');
 assert.equal(gramsPerMl('Simple syrup', null), 1.23);
 assert.equal(gramsPerMl('Lime juice', null), 1.04);
-assert.equal(gramsPerMl('Dry vermouth', 17), 1);
+assert.ok(Math.abs(gramsPerMl('Dry vermouth', 17) - 0.9779) < 1e-9);
 const ing = (id: string, name: string, abv: number | null = null) => ({ display_ingredient_id: id, display_ingredient: { id, name, abv } });
 const weighed = specLines([
   { id: 'g', sort_order: 1, amount: 57, unit: 'g', ...ing('gin', 'Gin', 40) },
@@ -37,7 +37,8 @@ const weighed = specLines([
   { id: 'l', sort_order: 3, amount: 0.0208, unit: 'kg', ...ing('lime', 'Lime juice') },
 ]);
 assert.equal(weighed[0].amount, '57 g');
-assert.ok(Math.abs(weighed[0].ml! - 60) < 1e-9, '57 g of gin is 60 ml');
+assert.equal(weighed[0].abv, 40, 'the ABV rides along for the ethanol maths');
+assert.ok(Math.abs(weighed[0].ml! - 60.1) < 0.1, '57 g of gin is about 60 ml');
 assert.ok(Math.abs(weighed[1].ml! - 20) < 1e-9, '24.6 g of syrup is 20 ml');
 assert.ok(Math.abs(weighed[2].ml! - 20) < 1e-9, '0.0208 kg of lime is 20 ml');
 assert.deepEqual(ratio(weighed)?.map((x) => Math.round(x.share * 100)), [60, 20, 20], 'every weighed line is on the ratio bar');

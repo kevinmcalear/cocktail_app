@@ -103,6 +103,7 @@ function SideNavBody() {
           <>
             <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus/all')} />
             <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
+            <NavRow label="Station" icon="square.grid.2x2" current={pathname.startsWith('/station')} onPress={() => go('station')} />
           </>
         ) : null}
       </View>

@@ -11,7 +11,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useBarEditor } from '@/hooks/useBarEditor';
 import type { EditorChromeState } from '@/lib/editorChrome';
 import { roleLabel } from '@/lib/roles';
-
+import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
 interface BarInlineEditorProps {
     barId: string;
     onClose?: () => void;
@@ -259,7 +259,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
                 </YStack>
             </Card>
 
-            <Button icon={<IconSymbol name="globe" size={18} color={theme.color?.get() as string} />} onPress={() => router.push(`/settings/bar/${barId}/publishing`)}>Publishing: who outside the venue sees your drinks</Button>
+            <VenueSettingsLinks barId={barId} />
             <TeamMembers barId={barId} members={editor.members} myRole={editor.roleLevel} />
 
             <YStack gap="$3">

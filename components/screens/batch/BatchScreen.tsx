@@ -20,14 +20,25 @@ export interface BatchScreenProps {
   accent?: string;
   onClose: () => void;
   initialServes?: number;
+  /** The drink's dilution (lib/drinkMath.ts); the stirred default without one. */
+  dilutionPct?: number | null;
+  /** items.service_style: bottled, carbonated and draught drinks get water in the bottle too. */
+  serviceStyle?: string | null;
 }
 
-const METHOD_LINE: Record<BatchMethod, string> = {
-  stirred: 'Stirred · 20% water in the bottle',
-  shaken: 'Shaken · citrus fresh, shaken to order',
-  built: 'Built · bubbles to order',
-  unknown: 'Method not set · no water added',
-};
+function methodLine(method: BatchMethod, water: { pct: number } | null): string {
+  const pct = water ? `${Number(water.pct.toFixed(1))}% water in the bottle` : null;
+  switch (method) {
+    case 'stirred':
+      return `Stirred · ${pct ?? 'no water added'}`;
+    case 'shaken':
+      return `Shaken · ${pct ?? 'citrus fresh, shaken to order'}`;
+    case 'built':
+      return `Built · ${pct ?? 'bubbles to order'}`;
+    default:
+      return `Method not set · ${pct ?? 'no water added'}`;
+  }
+}
 
 const UNITS = [
   { value: 'ml', label: 'ml' },
@@ -53,7 +64,7 @@ export function BatchScreen(props: BatchScreenProps) {
   );
 }
 
-function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServes = 8 }: BatchScreenProps) {
+function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServes = 8, dilutionPct, serviceStyle }: BatchScreenProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -61,7 +72,7 @@ function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServ
   const [serves, setServes] = useState(initialServes);
   const [unit, setUnit] = useState<VolumeUnit>('ml');
   const [bottleSize, setBottleSize] = useState<BottleSize>(750);
-  const batch = buildBatch(lines, methodNames, serves, { unit, bottleSize });
+  const batch = buildBatch(lines, methodNames, serves, { unit, bottleSize, dilutionPct, serviceStyle });
   const hasAmounts = lines.some((l) => l.value !== null);
 
   const header = (
@@ -77,7 +88,7 @@ function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServ
   const controls = (
     <View style={styles.column}>
       <Title>{name}</Title>
-      <Caption tone="muted">{METHOD_LINE[batch.method]}</Caption>
+      <Caption tone="muted">{methodLine(batch.method, batch.water)}</Caption>
       <ServesField value={serves} onChange={setServes} />
       <ServesRuler value={serves} min={MIN_SERVES} max={MAX_SERVES} onChange={setServes} />
       <Caption tone="muted">
@@ -97,7 +108,7 @@ function BatchPage({ name, lines, methodNames, lockedUntil, onClose, initialServ
         {batch.lines.map((l) => (
           <BatchRow key={l.key} ingredient={l.ingredient} amount={l.amount} sub={l.sub} tag={l.leaveOut ? LEAVE_OUT_LABEL[l.leaveOut] : null} />
         ))}
-        {batch.water ? <BatchRow ingredient="Filtered water" amount={batch.water.amount} sub="20% dilution for a stirred drink" /> : null}
+        {batch.water ? <BatchRow ingredient="Filtered water" amount={batch.water.amount} sub={`${Number(batch.water.pct.toFixed(1))}% dilution, poured straight from the bottle`} /> : null}
       </View>
       <View
         accessible

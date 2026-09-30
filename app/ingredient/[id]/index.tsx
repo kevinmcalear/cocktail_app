@@ -83,7 +83,7 @@ export default function IngredientDetailScreen() {
                 onToggleFavorite={() => {}}
                 onToggleStudyPile={() => {}}
             >
-                <YStack style={styles.container} justifyContent="center" alignItems="center">
+                <YStack flex={1} justifyContent="center" alignItems="center">
                     {error ? (
                         <ErrorState title="Couldn't load this ingredient" onRetry={() => void refetch()} />
                     ) : (
@@ -209,9 +209,6 @@ export default function IngredientDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     card: {
         borderRadius: 20,
         padding: 20,

@@ -1,11 +1,16 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Tag, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 
 export interface Fact {
   label: string;
   value: string;
+  /** A small line under the value: "calculated", "after 25% water". */
+  sub?: string;
+  /** Tapping opens more (the strength sheet). */
+  onPress?: () => void;
+  accessibilityHint?: string;
 }
 
 /** Origin and method, as tags above the name. */
@@ -29,19 +34,25 @@ export function DrinkFacts({ facts, columns }: { facts: Fact[]; columns: number 
   if (!facts.length) return null;
   return (
     <View style={styles.grid} role="list">
-      {facts.map((f) => (
-        <View
-          key={f.label}
-          role="listitem"
-          accessibilityLabel={`${f.label}: ${f.value}`}
-          style={[styles.fact, { backgroundColor: ds.c.raised, width: `${100 / columns - 2}%` }]}
-        >
-          <Caption tone="muted">{f.label}</Caption>
-          <DsText variant="headline" numberOfLines={2}>
-            {f.value}
-          </DsText>
-        </View>
-      ))}
+      {facts.map((f) => {
+        const Cell = f.onPress ? PressableScale : View;
+        return (
+          <Cell
+            key={f.label}
+            role={f.onPress ? 'button' : 'listitem'}
+            accessibilityLabel={`${f.label}: ${f.value}${f.sub ? `, ${f.sub}` : ''}`}
+            accessibilityHint={f.accessibilityHint}
+            onPress={f.onPress}
+            style={[styles.fact, { backgroundColor: ds.c.raised, width: `${100 / columns - 2}%` }]}
+          >
+            <Caption tone="muted">{f.label}</Caption>
+            <DsText variant="headline" numberOfLines={2}>
+              {f.value}
+            </DsText>
+            {f.sub ? <Caption tone="muted">{f.sub}</Caption> : null}
+          </Cell>
+        );
+      })}
     </View>
   );
 }
