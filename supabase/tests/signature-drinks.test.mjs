@@ -1,4 +1,4 @@
-// Signature drinks and the classics' specs (20260930610000_signature_drinks.sql):
+// Signature drinks and the classics' specs (20260930910000_signature_drinks.sql):
 // credited to their bar, readable with their specs by anyone signed in, and
 // safe to run twice.
 //
@@ -21,7 +21,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run signature drink tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260930610000_signature_drinks.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930910000_signature_drinks.sql', import.meta.url);
 const run = randomUUID().slice(0, 8);
 const PASSWORD = `pw-${randomUUID()}`;
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
