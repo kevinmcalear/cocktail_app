@@ -32,7 +32,6 @@ export default function SearchScreen() {
           flex={1}
           backgroundColor="$background"
           paddingTop={insets.top + 12}
-          paddingBottom={tabBarInset}
           paddingHorizontal={12}
           gap={8}
         >
@@ -47,7 +46,12 @@ export default function SearchScreen() {
             Search
           </Text>
           {isFocused ? (
-            <CommandSearch items={items} autoFocus={Platform.OS === 'web'} showFooter={false} />
+            <CommandSearch
+              items={items}
+              autoFocus={Platform.OS === 'web'}
+              showFooter={false}
+              bottomInset={tabBarInset}
+            />
           ) : null}
         </YStack>
       </Pressable>

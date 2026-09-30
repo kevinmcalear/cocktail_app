@@ -14,13 +14,38 @@ export function parseAuthParams(url: string): Record<string, string> {
   return out;
 }
 
-// ponytail: self-check — `npx tsx lib/parseAuthParams.ts`
-if (typeof require !== 'undefined' && require.main === module) {
-  const a = parseAuthParams('cocktailapp://auth/reset-password?code=abc&type=recovery');
-  console.assert(a.code === 'abc' && a.type === 'recovery', 'query');
-  const b = parseAuthParams('https://x.app/auth/callback#access_token=tok&refresh_token=ref');
-  console.assert(b.access_token === 'tok' && b.refresh_token === 'ref', 'hash');
-  const c = parseAuthParams('https://x.app/auth?token_hash=th&type=email#error=denied');
-  console.assert(c.token_hash === 'th' && c.type === 'email' && c.error === 'denied', 'both');
-  console.log('parseAuthParams ok');
+export type AuthLinkState = {
+  url: string | null;
+  error: string | null;
+  /** code, or token_hash with its type, is present: needs a user gesture to exchange */
+  hasCredential: boolean;
+};
+
+function humanizeAuthError(params: Record<string, string>): string | null {
+  const raw = params.error_description || params.error;
+  if (!raw) return null;
+  const text = decodeURIComponent(raw.replace(/\+/g, ' '));
+  if (/otp_expired|invalid|expired/i.test(params.error_code || text)) {
+    return 'This email link is invalid or has already been used. Request a new one — and open it in your browser (mail app previews often burn the link).';
+  }
+  return text;
+}
+
+/**
+ * What an email link can do. A token_hash is useless without its `type`
+ * (verifyOtp needs both), and links do arrive without it: an unquoted `&` in
+ * a shell or a mail client's rewrite cuts the URL before `type=`. Call that a
+ * broken link up front instead of letting the Continue tap exchange nothing.
+ */
+export function inspectAuthUrl(url: string | null | undefined): AuthLinkState {
+  if (!url) return { url: null, error: null, hasCredential: false };
+  const params = parseAuthParams(url);
+  const hasCode = !!params.code;
+  const hasTokenHash = !!params.token_hash;
+  const hasType = !!params.type;
+  let error = humanizeAuthError(params);
+  if (!error && hasTokenHash && !hasType && !hasCode) {
+    error = 'This link arrived incomplete. Open it from your email again.';
+  }
+  return { url, error, hasCredential: hasCode || (hasTokenHash && hasType) };
 }
