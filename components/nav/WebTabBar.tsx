@@ -11,10 +11,10 @@ import { useMode } from '@/hooks/useMode';
 export type WebTab = { name: string; label: string; icon: IconName };
 
 export const VENUE_TABS: WebTab[] = [
-  { name: 'index', label: 'Tonight', icon: 'house.fill' },
+  { name: 'index', label: 'Tonight', icon: 'moon.stars' },
   { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
   { name: 'prep', label: 'Prep', icon: 'flask' },
-  { name: 'test', label: 'Study', icon: 'book' },
+  { name: 'test', label: 'Study', icon: 'rectangle.stack' },
 ];
 
 export const HOME_TABS: WebTab[] = [
