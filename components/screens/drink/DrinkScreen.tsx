@@ -24,6 +24,7 @@ import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
+import { CostSection } from './CostSection';
 import { FamilyTree } from './FamilyTree';
 import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
@@ -190,6 +191,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         serviceStyle={item.service_style}
         preview={preview}
       />
+      {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
       {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
