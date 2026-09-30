@@ -522,7 +522,7 @@ export function CommandSearch({
       }
       if (item.category === 'Menu') {
         setSelectedMenuId(item.id.replace('menu-', ''));
-        router.push('/(tabs)/menus' as any);
+        router.push(`/menus/${encodeURIComponent(item.id.replace('menu-', ''))}` as any);
       } else {
         router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
       }
@@ -558,7 +558,7 @@ export function CommandSearch({
         return;
       }
       if (r.kind === 'menu') setSelectedMenuId(r.id);
-      router.push(r.href as any);
+      router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as any);
       onSelect?.();
     },
     [items, onItemSelect, onSelect, router, setSelectedMenuId]
