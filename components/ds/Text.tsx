@@ -1,6 +1,6 @@
-import { Text as RNText, type TextProps } from 'react-native';
+import { Platform, Text as RNText, type TextProps } from 'react-native';
 
-import { displayFaces, fontFamilies, type, type TypeStyle } from '@/constants/tokens';
+import { displayFaces, fontFamilies, textSlack, type, type TypeStyle } from '@/constants/tokens';
 
 import { useDs } from './theme';
 
@@ -27,6 +27,17 @@ const FAMILY: Record<TypeStyle, string> = {
   caption: fontFamilies.bodyMedium,
 };
 
+// iOS lays text out in a box exactly the size of its frame. Yoga rounds that
+// frame to the pixel grid in float32, and a paragraph on a fractional offset
+// (below a 1/3 pt hairline, say) that crosses y = 1024, 2048... comes out a
+// hair shorter than the text it measured. TextKit then fits one line fewer and
+// clips the rest onto the last line: one line running off the edge, with the
+// full height still reserved. A sliver of padding makes the height fractional,
+// and Yoga rounds a fractional text height up, so the box always fits.
+// ponytail: an app-side guard for react/yoga#2011; drop it once React Native
+// ships that fix.
+const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
+
 /**
  * Text in one of the six Back Bar styles. Display and title use the venue's
  * display face; everything else is fixed so every venue stays legible.
@@ -48,6 +59,7 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
       {...rest}
       style={[
         type[variant],
+        SLACK,
         {
           fontFamily,
           color: color ?? toneColor,
