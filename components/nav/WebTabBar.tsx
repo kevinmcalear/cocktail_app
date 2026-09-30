@@ -28,12 +28,14 @@ const BAR_HEIGHT = 56;
 
 /**
  * Space to leave under scrolling content so the floating tab bar (the web one,
- * or the system one on iOS and Android) doesn't cover the last row.
+ * or the system one on iOS) doesn't cover the last row. Android's system bar
+ * is docked: screens already end above it, so they only need a little air.
  */
 export function useTabBarInset() {
   const bottom = useSafeAreaInsets().bottom;
   const wide = useIsWideWeb();
   if (Platform.OS === 'web') return wide ? space.xl : bottom + BAR_HEIGHT + space.xl;
+  if (Platform.OS === 'android') return space.xl;
   return bottom + NATIVE_BAR_HEIGHT + space.lg;
 }
 
