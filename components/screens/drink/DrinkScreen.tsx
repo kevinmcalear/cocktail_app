@@ -113,6 +113,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
+  // The hero (first) picture's credit shows under the name.
+  const heroPic = itemPictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : itemPictures;
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
 
