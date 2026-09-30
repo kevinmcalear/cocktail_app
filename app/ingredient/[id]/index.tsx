@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
 import { AllergenSection } from "@/components/allergens/AllergenSection";
+import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
@@ -153,6 +154,10 @@ export default function IngredientDetailScreen() {
                             ))}
                         </View>
                     </GlassView>
+                )}
+
+                {canViewDetails && recipe.length > 0 && (
+                    <PrepCard itemId={ingredient.id} itemName={ingredient.name} barId={ingredient.bar_id} canEditItem={canEdit} recipe={recipe.map((r) => ({ id: r.id, name: r.ingredient?.name || "Unknown", amount: r.amount, unit: r.unit }))} />
                 )}
 
                 {/* Used In Section (Horizontal Scroll) */}
