@@ -78,8 +78,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
     const [description, setDescription] = useState("");
     const [brandMaker, setBrandMaker] = useState("");
-    const [genericId, setGenericId] = useState<string | null>(null);
-    const [genericName, setGenericName] = useState("");
+    const [generic, setGeneric] = useState<{ id: string; name: string } | null>(null);
     const [abv, setAbv] = useState("");
 
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -155,7 +154,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     );
 
     const draftLoadedRef = useRef<string | null>(null);
-    const currentStateStr = JSON.stringify({ name, description, brandMaker, genericId, genericName, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
+    const currentStateStr = JSON.stringify({ name, description, brandMaker, generic, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -195,8 +194,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 setName(data.name || "");
                 setDescription(data.description || "");
                 setBrandMaker(data.brandMaker || "");
-                setGenericId(data.genericId || null);
-                setGenericName(data.genericName || "");
+                setGeneric(data.generic || null);
                 setAbv(data.abv || "");
                 setSelectedCategories(data.selectedCategories || []);
                 setRecipeItems(withoutSelfRecipeRefs(data.recipeItems || [], currentDraftId));
@@ -219,7 +217,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             setSaving(true);
             const safeRecipeItems = withoutSelfRecipeRefs(recipeItems, currentDraftId);
             if (safeRecipeItems.length !== recipeItems.length) setRecipeItems(safeRecipeItems);
-            const draftData = { name, description, brandMaker, genericId, genericName, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
+            const draftData = { name, description, brandMaker, generic, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'ingredient', draftData });
             
             let updatedDraftId = currentDraftId;
@@ -343,7 +341,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     description: description.trim() || null,
                     item_type: 'ingredient',
                     brand_maker: capitalize(brandMaker) || null,
-                    generic_id: genericId,
+                    generic_id: generic?.id ?? null,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -581,11 +579,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                         <BrandAndKindFields
                             brandMaker={brandMaker}
                             onBrandMaker={setBrandMaker}
-                            generic={genericId ? { id: genericId, name: genericName } : null}
-                            onGeneric={(g) => {
-                                setGenericId(g?.id ?? null);
-                                setGenericName(g?.name ?? "");
-                            }}
+                            generic={generic}
+                            onGeneric={setGeneric}
                             ingredients={mergedIngredients}
                             excludeId={currentDraftId}
                         />

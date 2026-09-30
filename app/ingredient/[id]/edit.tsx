@@ -81,8 +81,7 @@ export default function EditIngredientScreen({
     const [description, setDescription] = useState("");
     const [localImages, setLocalImages] = useState<{ id?: string; url: string; isNew?: boolean }[]>([]);
     const [brandMaker, setBrandMaker] = useState("");
-    const [genericId, setGenericId] = useState<string | null>(null);
-    const [genericName, setGenericName] = useState("");
+    const [generic, setGeneric] = useState<{ id: string; name: string } | null>(null);
     const [abv, setAbv] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const categoryPickerRef = useRef<BottomSheetModal>(null);
@@ -139,6 +138,7 @@ export default function EditIngredientScreen({
         name,
         description,
         brandMaker,
+        generic,
         abv,
         selectedCategories,
         recipeItems,
@@ -184,8 +184,7 @@ export default function EditIngredientScreen({
         setName(data.ingredient.name || "");
         setDescription(data.ingredient.description || "");
         setBrandMaker(data.ingredient.brand_maker || "");
-        setGenericId(data.ingredient.generic_id || null);
-        setGenericName(data.ingredient.generic?.name || "");
+        setGeneric(data.ingredient.generic ?? null);
         setAbv(data.ingredient.abv?.toString() || "");
         setBarId(data.ingredient.bar_id || null);
         setHideFromSearch(data.ingredient.hide_from_search === true);
@@ -337,7 +336,7 @@ export default function EditIngredientScreen({
                     name: capitalize(name),
                     description: description.trim() || null,
                     brand_maker: capitalize(brandMaker) || null,
-                    generic_id: genericId,
+                    generic_id: generic?.id ?? null,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -550,11 +549,8 @@ export default function EditIngredientScreen({
                         <BrandAndKindFields
                             brandMaker={brandMaker}
                             onBrandMaker={setBrandMaker}
-                            generic={genericId ? { id: genericId, name: genericName } : null}
-                            onGeneric={(g) => {
-                                setGenericId(g?.id ?? null);
-                                setGenericName(g?.name ?? "");
-                            }}
+                            generic={generic}
+                            onGeneric={setGeneric}
                             ingredients={pickerIngredients}
                             excludeId={id}
                         />

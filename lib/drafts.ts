@@ -34,7 +34,7 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
             description: data.description?.trim() || null,
             item_type: 'ingredient',
             brand_maker: capitalize(data.brandMaker) || null,
-            generic_id: data.genericId || null,
+            generic_id: data.generic?.id || null,
             abv: data.abv ? parseFloat(data.abv) : null,
             bar_id: data.barId || null,
             override_visibility_level: data.overrideVisibility ? parseInt(data.overrideVisibility) : null,
