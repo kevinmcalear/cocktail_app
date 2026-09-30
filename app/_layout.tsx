@@ -194,6 +194,7 @@ function RootLayoutNav() {
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="station" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="you" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />

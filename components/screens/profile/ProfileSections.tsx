@@ -1,4 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
@@ -118,6 +119,26 @@ export function BarScore({ profileId }: { profileId: string }) {
   );
 }
 
+/** The numbers under a profile's name. */
+export function Stats({ children }: { children: ReactNode }) {
+  return (
+    <View role="list" style={styles.stats}>
+      {children}
+    </View>
+  );
+}
+
+export function Stat({ value, label }: { value: number | string; label: string }) {
+  return (
+    <View role="listitem" accessible accessibilityLabel={`${value} ${label}`} style={styles.stat}>
+      <Spec align="center">{value}</Spec>
+      <Caption tone="muted" align="center">
+        {label}
+      </Caption>
+    </View>
+  );
+}
+
 /** Rankings and the shelf arrive with their own steps (7c, and the home bar). */
 export function ComingSoon({ text }: { text: string }) {
   const ds = useDs();
@@ -136,5 +157,7 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   score: { alignItems: 'center' },
+  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
+  stat: { alignItems: 'center', minWidth: 72 },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });
