@@ -24,7 +24,8 @@ ALTER TABLE "public"."items" ADD COLUMN "service_style" "text"
     CONSTRAINT "items_service_style_check"
     CHECK ("service_style" IS NULL OR "service_style" IN ('a_la_minute', 'batched', 'bottled', 'carbonated', 'draught'));
 
--- Same columns, order and types as 20260930500400, plus at_service at the end.
+-- Same columns, order and types as 20260930960000 (which falls back to the
+-- ingredient's generic), plus at_service at the end.
 CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
  SELECT "r"."id",
     "r"."created_at",
@@ -32,8 +33,8 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
         CASE
             WHEN ("c"."bar_id" IS NULL) THEN "r"."ingredient_item_id"
             WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN "r"."ingredient_item_id"
-            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN COALESCE("r"."parent_ingredient_id", "r"."ingredient_item_id")
-            WHEN ("ps"."id" IS NOT NULL) THEN COALESCE("r"."parent_ingredient_id", "r"."ingredient_item_id")
+            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN COALESCE(COALESCE("r"."parent_ingredient_id", "s"."generic_id"), "r"."ingredient_item_id")
+            WHEN ("ps"."id" IS NOT NULL) THEN COALESCE(COALESCE("r"."parent_ingredient_id", "s"."generic_id"), "r"."ingredient_item_id")
             ELSE NULL::"uuid"
         END AS "display_ingredient_id",
         CASE
@@ -55,10 +56,10 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
         END AS "preparation_notes",
     "r"."is_optional",
         CASE
-            WHEN ("c"."bar_id" IS NULL) THEN "r"."parent_ingredient_id"
-            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN "r"."parent_ingredient_id"
-            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN "r"."parent_ingredient_id"
-            WHEN ("ps"."id" IS NOT NULL) THEN "r"."parent_ingredient_id"
+            WHEN ("c"."bar_id" IS NULL) THEN COALESCE("r"."parent_ingredient_id", "s"."generic_id")
+            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_specific_brand_level", "b"."default_specific_brand_level")) THEN COALESCE("r"."parent_ingredient_id", "s"."generic_id")
+            WHEN ("ub"."user_id" IS NOT NULL AND "public"."effective_bar_role"("ub"."role_level") >= COALESCE("c"."override_generic_ingredient_level", "b"."default_generic_ingredient_level")) THEN COALESCE("r"."parent_ingredient_id", "s"."generic_id")
+            WHEN ("ps"."id" IS NOT NULL) THEN COALESCE("r"."parent_ingredient_id", "s"."generic_id")
             ELSE NULL::"uuid"
         END AS "parent_ingredient_id",
         CASE
@@ -73,8 +74,9 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
             WHEN ("ps"."id" IS NOT NULL) THEN "r"."at_service"
             ELSE NULL::boolean
         END AS "at_service"
-   FROM (((("public"."recipes" "r"
+   FROM ((((("public"."recipes" "r"
      JOIN "public"."items" "c" ON (("r"."recipe_item_id" = "c"."id")))
+     LEFT JOIN "public"."items" "s" ON (("s"."id" = "r"."ingredient_item_id")))
      LEFT JOIN "public"."bars" "b" ON (("c"."bar_id" = "b"."id")))
      LEFT JOIN "public"."user_bars" "ub" ON ((("ub"."bar_id" = "c"."bar_id") AND ("ub"."user_id" = "auth"."uid"())
         AND NOT EXISTS (
@@ -95,7 +97,7 @@ CREATE OR REPLACE VIEW "public"."app_recipe_presentation" AS
 
 ALTER VIEW "public"."app_recipe_presentation" SET ("security_invoker" = false);
 
--- Same columns as 20260929700000, plus service_style at the end.
+-- Same columns as 20260930960000, plus service_style at the end.
 CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker" = true) AS
  SELECT c.id,
     c.name,
@@ -118,6 +120,7 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
     c.origin_bar_profile_id,
     c.created_by,
     c.creator_profile_id,
+    c.generic_id,
     c.service_style
    FROM public.items c
      LEFT JOIN public.bars b ON c.bar_id = b.id
