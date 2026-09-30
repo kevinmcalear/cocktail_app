@@ -11,6 +11,7 @@ import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
+import { KindOfLink } from "@/components/ingredient/BrandAndKindFields";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -27,6 +28,7 @@ interface IngredientDetail {
     name: string;
     description: string | null;
     bar_id: string | null;
+    generic?: { id: string; name: string } | null;
     item_images?: ItemImageLink[];
 }
 
@@ -82,7 +84,7 @@ export default function IngredientDetailScreen() {
                 onToggleFavorite={() => {}}
                 onToggleStudyPile={() => {}}
             >
-                <YStack style={styles.container} justifyContent="center" alignItems="center">
+                <YStack flex={1} justifyContent="center" alignItems="center">
                     {error ? (
                         <ErrorState title="Couldn't load this ingredient" onRetry={() => void refetch()} />
                     ) : (
@@ -125,6 +127,8 @@ export default function IngredientDetailScreen() {
                         </Paragraph>
                     </GlassView>
                 )}
+
+                {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
                 <PriceSection itemId={ingredient.id} />
@@ -206,9 +210,6 @@ export default function IngredientDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     card: {
         borderRadius: 20,
         padding: 20,
