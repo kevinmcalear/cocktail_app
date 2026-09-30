@@ -1,4 +1,4 @@
-// Sharing a home menu (supabase/migrations/20260930501000_share_home_menus.sql).
+// Sharing a home menu (supabase/migrations/20260930930000_share_home_menus.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -194,5 +194,51 @@ describe('sharing a home menu', () => {
     assert.ifError(res.error);
     assert.equal(res.data[0].shared_at, null);
     assert.equal(await read(anon), null);
+  });
+});
+
+// A shared menu's name and section names are public text, so the content
+// filter (20260930600000) screens them. The word comes from the filter's own
+// list, so this file doesn't spell one out.
+describe('screening what a shared menu shows', () => {
+  let word;
+  const refused = (res, field) => {
+    assert.equal(res.error?.code, 'P0001');
+    assert.equal(res.error?.message, `That ${field} has a word we don't allow. Please change it.`);
+  };
+  const newMenu = async (name, sections) => {
+    const menu = await users.owner.client.from('menus').insert({ name, bar_id: null }).select('id').single();
+    assert.ifError(menu.error);
+    const saved = await saveMenu(menu.data.id, name, sections);
+    assert.ifError(saved.error);
+    return menu.data.id;
+  };
+  const saveMenu = (menuId, name, sections) =>
+    users.owner.client.rpc('save_menu', { p_menu_id: menuId, p_name: name, p_cover_url: null, p_cover_position: 50, p_sections: sections });
+
+  before(async () => {
+    word = (await db.query("SELECT word FROM private.screened_words WHERE kind = 'word' ORDER BY word LIMIT 1")).rows[0].word;
+  });
+
+  test('a private home menu may say anything; sharing it is refused until it is changed', async () => {
+    const menuId = await newMenu(`${word} night ${run}`, [{ name: 'Stirred', item_ids: [] }]);
+    refused(await share(users.owner.client, menuId, true), 'menu name');
+    const renamed = await saveMenu(menuId, `Quiet night ${run}`, [{ name: `${word} corner`, item_ids: [] }]);
+    assert.ifError(renamed.error);
+    refused(await share(users.owner.client, menuId, true), 'section name');
+    assert.ifError((await saveMenu(menuId, `Quiet night ${run}`, [{ name: 'Nightcaps', item_ids: [] }])).error);
+    const ok = await share(users.owner.client, menuId, true);
+    assert.ifError(ok.error);
+    assert.ok(ok.data[0].shared_at);
+  });
+
+  test('once shared, a new name or section with a listed word is refused and nothing changes', async () => {
+    const menuId = await newMenu(`Porch party ${run}`, [{ name: 'Sours', item_ids: [] }]);
+    assert.ifError((await share(users.owner.client, menuId, true)).error);
+    refused(await saveMenu(menuId, `${word} party ${run}`, [{ name: 'Sours', item_ids: [] }]), 'menu name');
+    refused(await saveMenu(menuId, `Porch party ${run}`, [{ name: `${word} sours`, item_ids: [] }]), 'section name');
+    const menu = await read(anon, menuId);
+    assert.equal(menu.name, `Porch party ${run}`);
+    assert.deepEqual(menu.sections.map((s) => s.name), ['Sours']);
   });
 });
