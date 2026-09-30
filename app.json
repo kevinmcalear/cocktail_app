@@ -64,6 +64,7 @@
       "expo-secure-store",
       "expo-status-bar",
       "expo-localization",
+      "@maplibre/maplibre-react-native",
       [
         "expo-build-properties",
         {

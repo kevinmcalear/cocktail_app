@@ -19,6 +19,8 @@ interface AdaptiveSheetModalProps {
     title?: string;
     children: React.ReactNode;
     maxHeight?: ViewStyle["maxHeight"];
+    /** Called once the sheet is on screen. */
+    onShow?: () => void;
 }
 
 export function AdaptiveSheetModal({
@@ -27,6 +29,7 @@ export function AdaptiveSheetModal({
     title,
     children,
     maxHeight = "70%",
+    onShow,
 }: AdaptiveSheetModalProps) {
     const theme = useTheme();
     const insets = useSafeAreaInsets();
@@ -38,6 +41,7 @@ export function AdaptiveSheetModal({
             transparent
             animationType={isWeb ? "fade" : "slide"}
             onRequestClose={onClose}
+            onShow={onShow}
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}

@@ -22,6 +22,9 @@ interface Branding {
   slug: string;
   logo_url: string | null;
   primary_color: string | null;
+  /** Set on the brand screen; the name and logo stand in when they're empty. */
+  short_name: string | null;
+  icon_url: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -73,7 +76,7 @@ function manifest(branding: Branding, url: URL): Response {
   const body = {
     id: `/v/${branding.slug}`,
     name: branding.name,
-    short_name: branding.name,
+    short_name: branding.short_name ?? branding.name,
     start_url: `${site}/v/${branding.slug}`,
     scope: `${site}/`,
     display: "standalone",
@@ -95,18 +98,19 @@ function manifest(branding: Branding, url: URL): Response {
 }
 
 /**
- * The venue's logo centred on a square, padded with the logo's own
+ * The venue's home-screen icon (or its logo) centred on a square, padded with its own
  * background (its corner pixel) or white if the logo is transparent.
  * Opaque, as iOS fills transparency with black. Venues without a logo get
  * the network icon.
  */
 async function icon(branding: Branding, size: number): Promise<Response> {
   if (!ICON_SIZES.has(size)) return new Response("Unsupported size", { status: 400, headers: corsHeaders });
-  if (!branding.logo_url) {
+  const source = branding.icon_url ?? branding.logo_url;
+  if (!source) {
     return Response.redirect(`${FALLBACK_SITE}/icon-${size === 180 ? 192 : size}.png`, 302);
   }
 
-  const res = await fetch(branding.logo_url);
+  const res = await fetch(source);
   if (!res.ok) throw new Error(`Logo fetch failed: ${res.status}`);
   const logo = await Image.decode(new Uint8Array(await res.arrayBuffer()));
 

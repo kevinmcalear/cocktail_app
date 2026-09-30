@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, groupMenuCredits, parseProfileRef, type MenuDrinkRow } from './profiles';
+import { barsCrediting, groupMenuCredits, handleFromName, normalizeHandle, parseProfileRef, profileDraftErrors, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -43,3 +43,16 @@ assert.equal(barsCrediting(credits.filter((c) => !c.current)), 0);
 assert.deepEqual(groupMenuCredits([]), []);
 
 console.log('profiles: ok');
+
+// Your own profile: handles are saved normalised, and the form says what's wrong in the table's own limits.
+assert.equal(normalizeHandle('  @Juniper.Jo '), 'juniper.jo');
+assert.equal(handleFromName('Jo Juniper'), 'jo.juniper');
+assert.equal(handleFromName('Zoë  O’Brien!'), 'zoe.o.brien');
+assert.equal(handleFromName('Al'), '', 'too short for a handle');
+assert.equal(handleFromName('大'), '');
+assert.equal(handleFromName('x'.repeat(40)).length, 30);
+const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', isPublic: true };
+assert.deepEqual(profileDraftErrors(draft), {});
+assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501) })), ['name', 'handle', 'bio']);
+assert.ok(profileDraftErrors({ ...draft, handle: 'jo.' }).handle, 'no trailing dot');
+assert.ok(profileDraftErrors({ ...draft, name: 'x'.repeat(81) }).name);

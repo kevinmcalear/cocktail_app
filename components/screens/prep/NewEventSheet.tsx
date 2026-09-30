@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
+import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 
 interface MenuOption {
   id: string;
@@ -34,6 +35,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   const create = useCreateEvent();
   const defaults = tomorrowAt7();
   const [name, setName] = useState('');
+  const nameRef = useRef<TextInput>(null);
   const [date, setDate] = useState(defaults.date);
   const [time, setTime] = useState(defaults.time);
   const [covers, setCovers] = useState('');
@@ -63,54 +65,58 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
       <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Title>New event</Title>
-            <Field label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus />
-            <View style={styles.pair}>
-              <View style={styles.flex}>
-                <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-10-03" autoCapitalize="none" />
+        {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
+        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.avoider}>
+          <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
+            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <Title>New event</Title>
+              <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
+              <View style={styles.pair}>
+                <View style={styles.flex}>
+                  <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-10-03" autoCapitalize="none" />
+                </View>
+                <View style={styles.flex}>
+                  <Field label="Starts" value={time} onChangeText={setTime} placeholder="19:00" autoCapitalize="none" />
+                </View>
               </View>
-              <View style={styles.flex}>
-                <Field label="Starts" value={time} onChangeText={setTime} placeholder="19:00" autoCapitalize="none" />
+              <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
+              <Caption tone="muted">Menu</Caption>
+              <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>
+                {menus.length === 0 ? <Body tone="muted">No menus at this venue yet.</Body> : null}
+                {menus.map((m) => {
+                  const selected = m.id === menuId;
+                  return (
+                    <PressableScale
+                      key={m.id}
+                      role="radio"
+                      aria-selected={selected}
+                      accessibilityLabel={m.name}
+                      onPress={() => setMenuId(m.id)}
+                      style={[styles.menu, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}
+                    >
+                      <Caption color={selected ? ds.c.ground : ds.c.ink}>{m.name}</Caption>
+                    </PressableScale>
+                  );
+                })}
               </View>
-            </View>
-            <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
-            <Caption tone="muted">Menu</Caption>
-            <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>
-              {menus.length === 0 ? <Body tone="muted">No menus at this venue yet.</Body> : null}
-              {menus.map((m) => {
-                const selected = m.id === menuId;
-                return (
-                  <PressableScale
-                    key={m.id}
-                    role="radio"
-                    aria-selected={selected}
-                    accessibilityLabel={m.name}
-                    onPress={() => setMenuId(m.id)}
-                    style={[styles.menu, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}
-                  >
-                    <Caption color={selected ? ds.c.ground : ds.c.ink}>{m.name}</Caption>
-                  </PressableScale>
-                );
-              })}
-            </View>
-            {error ? <Caption tone="accent">{error}</Caption> : null}
-            <View style={styles.actions}>
-              <Button label="Cancel" variant="ghost" onPress={onClose} />
-              <Button label={create.isPending ? 'Saving…' : 'Create event'} onPress={submit} disabled={create.isPending} />
-            </View>
-          </ScrollView>
-        </Pressable>
+              {error ? <Caption tone="accent">{error}</Caption> : null}
+              <View style={styles.actions}>
+                <Button label="Cancel" variant="ghost" onPress={onClose} />
+                <Button label={create.isPending ? 'Saving…' : 'Create event'} onPress={submit} disabled={create.isPending} />
+              </View>
+            </ScrollView>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
+  scrim: { flex: 1 },
+  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
   sheet: { width: '100%', maxWidth: 560, maxHeight: '90%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
   body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
   pair: { flexDirection: 'row', gap: space.md },

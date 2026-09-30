@@ -35,30 +35,6 @@ export function ProfileScreen({ profileRef }: { profileRef: string | string[] | 
   );
 }
 
-/**
- * For routes with no old screen: shown while the redesign flag is off (or
- * still loading from PostHog), instead of redirecting away and losing the link.
- */
-export function NotInPreview() {
-  return (
-    <BackbarTheme>
-      <PreviewOnlyNote />
-    </BackbarTheme>
-  );
-}
-
-function PreviewOnlyNote() {
-  const ds = useDs();
-  const gutter = useGutter();
-  return (
-    <View style={[styles.screen, styles.center, { backgroundColor: ds.c.ground, padding: gutter }]}>
-      <Body tone="muted" align="center">
-        Profiles are part of the new design, which isn’t switched on for you yet.
-      </Body>
-    </View>
-  );
-}
-
 function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined }) {
   const ds = useDs();
   const router = useRouter();
@@ -185,7 +161,6 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   body: { gap: space.xl },
