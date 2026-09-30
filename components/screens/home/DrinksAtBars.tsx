@@ -1,0 +1,101 @@
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { Button, Caption, Headline, PressableScale, useDs } from '@/components/ds';
+import { DrinkRow } from '@/components/screens/DrinkRow';
+import { ListNote } from '@/components/screens/rankings/RankingLists';
+import { UserAvatar } from '@/components/ui/UserAvatar';
+import { space } from '@/constants/tokens';
+import { drinkCount, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { itemHref } from '@/lib/itemRoutes';
+
+const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
+
+/** Drinks, each with the bar that makes it; the first `limit`, then "Show all". */
+export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; limit?: number }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? drinks : drinks.slice(0, limit);
+  return (
+    <View role="list">
+      {shown.map((d) => {
+        const bar = barsById.get(d.barId);
+        return (
+          <DrinkRow
+            key={d.id}
+            name={d.name}
+            href={itemHref('Cocktail', d.id)}
+            imageUrl={d.imageUrl}
+            glass={null}
+            caption={bar ? [bar.name, place(bar)].filter(Boolean).join(' · ') : undefined}
+            note={d.description ?? undefined}
+          />
+        );
+      })}
+      {drinks.length > shown.length ? (
+        <View style={styles.more}>
+          <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Bars, with their logo and where they are, opening the bar's page. */
+export function BarList({ bars }: { bars: DiscoverBar[] }) {
+  const ds = useDs();
+  const router = useRouter();
+  return (
+    <View role="list">
+      {bars.map((b) => (
+        <PressableScale
+          key={b.id}
+          role="link"
+          accessibilityLabel={`${b.name}${place(b) ? `, ${place(b)}` : ''}`}
+          onPress={() => router.push(`/p/${b.handle || b.id}`)}
+          style={[styles.bar, { borderBottomColor: ds.c.line }]}
+        >
+          <UserAvatar uri={b.logo} name={b.name} size={40} />
+          <View style={styles.flex}>
+            <Headline numberOfLines={1}>{b.name}</Headline>
+            {place(b) ? <Caption tone="muted">{place(b)}</Caption> : null}
+          </View>
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+interface DrinksHereProps {
+  title: string;
+  drinks: DiscoverDrink[];
+  barsById: ReadonlyMap<string, DiscoverBar>;
+  isLoading: boolean;
+  signedIn: boolean;
+  /** What to say when nothing matches. */
+  empty: string;
+}
+
+/** "Martinis near you": the drinks at bars that match, with how many bars pour them. */
+export function DrinksHere({ title, drinks, barsById, isLoading, signedIn, empty }: DrinksHereProps) {
+  const barCount = new Set(drinks.map((d) => d.barId)).size;
+  let body;
+  if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
+  else if (isLoading) body = <ListNote>Loading…</ListNote>;
+  else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
+  else body = <DrinkAtBarList drinks={drinks} barsById={barsById} />;
+  return (
+    <View style={styles.section}>
+      <Caption tone="muted">{drinks.length ? `${drinkCount(drinks.length)} at ${barCount} ${barCount === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
+      <Headline role="heading">{title}</Headline>
+      {body}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: { gap: space.xs },
+  more: { alignItems: 'flex-start', paddingTop: space.sm },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  flex: { flex: 1, minWidth: 0 },
+});

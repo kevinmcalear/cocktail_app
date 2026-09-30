@@ -48,6 +48,8 @@ export function EmailLinkGate({
   const nativeUrl = Linking.useLinkingURL();
 
   useEffect(() => {
+    // A fresh link replaces whatever the last tap found wrong with the old one.
+    setError(null);
     if (Platform.OS === 'web') {
       getIncomingAuthUrl().then((url) => setLink(inspectAuthUrl(url)));
     } else {
