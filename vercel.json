@@ -81,6 +81,10 @@
       "destination": "/menus/[id]/card"
     },
     {
+      "source": "/menus/:id/costing",
+      "destination": "/menus/[id]/costing"
+    },
+    {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
     },

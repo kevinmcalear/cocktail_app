@@ -58,3 +58,31 @@ export function targetStatus(costMinor: number, priceMinor: number | null | unde
 export function formatPct(n: number): string {
   return `${n.toFixed(1)}%`;
 }
+
+export interface MenuCostLine {
+  costMinor: number | null;
+  priceMinor: number | null;
+  /** Lines on the drink still without a price. */
+  missing: number;
+}
+
+export interface MenuCostSummary {
+  /** Mean GP over the drinks that have a cost and a price. */
+  averageGp: number | null;
+  underTarget: number;
+  /** Drinks whose cost is still incomplete. */
+  incomplete: number;
+  priced: number;
+}
+
+/** The footer of a menu costing: average GP, how many drinks miss the target, how many are incomplete. */
+export function menuSummary(rows: MenuCostLine[], targetGp: number | null | undefined, tax: TaxRule): MenuCostSummary {
+  const margins = rows.map((r) => (r.costMinor == null ? null : margin(r.costMinor, r.priceMinor, tax)));
+  const gps = margins.filter((m): m is Margin => !!m).map((m) => m.gp);
+  return {
+    averageGp: gps.length ? gps.reduce((a, b) => a + b, 0) / gps.length : null,
+    underTarget: targetGp == null ? 0 : margins.filter((m) => m && m.gp < targetGp).length,
+    incomplete: rows.filter((r) => r.costMinor == null || r.missing > 0).length,
+    priced: gps.length,
+  };
+}

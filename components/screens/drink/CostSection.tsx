@@ -58,14 +58,16 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
   const router = useRouter();
   const tax = { taxRate, pricesIncludeTax };
   const money = (minor: number | null | undefined) => formatMoney(minor, currency) ?? (minor == null ? 'no price' : String(minor));
-  const m = margin(cost.total_minor, priceMinor, tax);
-  const target = targetStatus(cost.total_minor, priceMinor, targetGp, tax);
+  // Every line unpriced: no cost yet, so no margin either.
+  const known = !(cost.total_minor === 0 && cost.missing > 0);
+  const m = known ? margin(cost.total_minor, priceMinor, tax) : null;
+  const target = known ? targetStatus(cost.total_minor, priceMinor, targetGp, tax) : null;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(currency ? moneyFieldValue(priceMinor, currency) : '');
   const [ask, setAsk] = useState(targetGp == null ? '' : String(targetGp));
   const setPrice = useSetMenuPrice(itemId);
   const askN = Number(ask);
-  const askPrice = ask.trim() && Number.isFinite(askN) ? priceForTarget(cost.total_minor, askN, tax) : null;
+  const askPrice = known && ask.trim() && Number.isFinite(askN) ? priceForTarget(cost.total_minor, askN, tax) : null;
   const draftMinor = currency ? parseMoney(draft, currency) : null;
 
   if (!currency) {
@@ -83,7 +85,7 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
     <View style={styles.block}>
       <View style={styles.headline}>
         <Spec tone="accent" style={styles.big}>
-          {money(cost.total_minor)}
+          {known ? money(cost.total_minor) : 'No cost yet'}
         </Spec>
         <Caption tone="muted">cost per serve at today’s prices{cost.missing ? `, ${cost.missing} ${cost.missing === 1 ? 'line' : 'lines'} still without a price` : ''}</Caption>
       </View>
