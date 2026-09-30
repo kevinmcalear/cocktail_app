@@ -1,6 +1,7 @@
 import { palette } from "@/constants/palette";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from "@/hooks/useIsWideWeb";
+import { useRedesign } from "@/lib/flags";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { BottomTabBarProps } from "expo-router/js-tabs";
 import { PlatformPressable, useLinkBuilder } from "expo-router/react-navigation";
@@ -20,12 +21,16 @@ const tabBarBottom = (safeBottom: number) => Math.max(safeBottom, 20);
 
 /**
  * Bottom padding a tab screen's scroll content needs so its last row clears the
- * floating tab bar (0 on wide web, which uses the sidebar instead).
+ * floating tab bar (0 on wide web, which uses the sidebar instead). The redesign's
+ * native tabs (NativeTabs) already count their bar in the bottom safe area, so
+ * adding this bar's height on top left a band of dead space above it.
  */
 export function useFloatingTabBarInset() {
     const insets = useSafeAreaInsets();
     const isWideWeb = useIsWideWeb();
-    return isWideWeb ? 0 : tabBarBottom(insets.bottom) + TAB_BAR_HEIGHT + 24;
+    const nativeTabs = useRedesign() && Platform.OS !== "web";
+    if (isWideWeb) return 0;
+    return nativeTabs ? insets.bottom : tabBarBottom(insets.bottom) + TAB_BAR_HEIGHT + 24;
 }
 
 function TabBarSurface({ scheme, children }: { scheme: "light" | "dark"; children: ReactNode }) {

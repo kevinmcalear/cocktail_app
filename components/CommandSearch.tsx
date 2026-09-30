@@ -36,6 +36,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -713,11 +714,7 @@ export function CommandSearch({
   const filterChrome = (
     <YStack gap={6}>
       <XStack alignItems="center" gap={8}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flex: 1 }}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
           <XStack gap={8} paddingBottom={2} alignItems="center">
             {availableFilters.map((f) => {
               const selected = filter === f;
@@ -784,7 +781,7 @@ export function CommandSearch({
       </XStack>
 
       {appliedPills.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <XStack gap={8} paddingBottom={2}>
             {appliedPills.map((p) => (
               <Pressable
@@ -826,9 +823,9 @@ export function CommandSearch({
         setPanelWidth((prev) => (prev === w ? prev : w));
       }}
     >
-      {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. */}
+      {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. Without onDismiss, both just close the keyboard. */}
       <Pressable
-        onPress={onDismiss}
+        onPress={onDismiss ?? Keyboard.dismiss}
         role={onDismiss ? 'button' : undefined}
         aria-label={onDismiss ? 'Dismiss search' : undefined}
         style={{
@@ -839,7 +836,7 @@ export function CommandSearch({
         }}
       >
         <Pressable
-          onPress={onDismiss ? (e) => e.stopPropagation() : undefined}
+          onPress={onDismiss ? (e) => e.stopPropagation() : Keyboard.dismiss}
           style={{
             width: '100%',
             maxWidth: chromeCentered ? HOME_CHROME_MAX : undefined,
@@ -950,6 +947,7 @@ export function CommandSearch({
         data={rows}
         keyExtractor={(row) => row.id}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: padH,
