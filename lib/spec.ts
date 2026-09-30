@@ -18,6 +18,8 @@ export interface PresentationRecipe {
   display_ingredient_id?: string | null;
   ingredient_item_id?: string | null;
   parent_ingredient_id?: string | null;
+  /** In the batch (false) or added at the station (true); null when undecided or masked with the amounts. */
+  at_service?: boolean | null;
   /** The ingredient this role may see (brand or generic), embedded by the query; masked to null otherwise. */
   display_ingredient?: { id?: string; name?: string; abv?: number | null } | null;
 }
@@ -36,6 +38,8 @@ export interface SpecLine {
   /** The raw number and unit (for scaling a batch); null when locked or missing. */
   value: number | null;
   unit: string | null;
+  /** The bar's decision: added at the station (true) or in the batch (false). Null: not decided, or hidden with the amounts. */
+  atService: boolean | null;
 }
 
 // ponytail: approximate volumes for proportions only, never shown as numbers.
@@ -84,6 +88,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       ml: n === null || Number.isNaN(n) ? null : toMl(n, r.unit, gramsPerMl(resolved?.name, resolved?.abv)),
       value: n === null || Number.isNaN(n) ? null : n,
       unit: r.unit?.trim() || null,
+      atService: typeof r.at_service === 'boolean' ? r.at_service : null,
     };
   });
 }

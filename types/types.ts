@@ -93,6 +93,8 @@ export interface DatabaseRecipe {
     is_optional: boolean | null;
     parent_ingredient_id: string | null;
     sort_order: number | null;
+    /** Added at the station (true) or in the batch (false); null until decided. */
+    at_service?: boolean | null;
     ingredient?: DatabaseItem; // The actual ingredient item
 }
 
@@ -119,6 +121,8 @@ export interface DatabaseItem {
     icon_key?: string | null;
     icon_url?: string | null;
     hide_from_search?: boolean;
+    /** How it's served: a_la_minute, batched, bottled, carbonated or draught. */
+    service_style?: string | null;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;
@@ -152,6 +156,7 @@ export interface AppRecipePresentation {
     is_optional: boolean | null;
     parent_ingredient_id: string | null; // Redacted to null if insufficient role
     ingredient_item_id: string | null; // The specific ingredient; redacted to null if insufficient role
+    at_service?: boolean | null; // Redacted to null with the amounts
     display_ingredient?: DatabaseItem | null; // Computed relationship: the item behind display_ingredient_id
     ingredient?: DatabaseItem; // The joined Display Ingredient
 }
