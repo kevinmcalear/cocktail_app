@@ -53,6 +53,7 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
     c.origin_bar_profile_id,
     c.created_by,
     c.creator_profile_id,
+    c.generic_id,
     c.service_style,
     c.density_g_ml,
     c.dilution_pct,
