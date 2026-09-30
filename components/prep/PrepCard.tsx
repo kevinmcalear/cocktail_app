@@ -79,7 +79,13 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
       {facts.length ? (
         <View style={styles.facts} role="list">
           {facts.map((f) => (
-            <View key={f.label} role="listitem" accessibilityLabel={`${f.label}: ${f.value}`} style={[styles.fact, { backgroundColor: ds.c.raised }]}>
+            <View
+              key={f.label}
+              role="listitem"
+              accessibilityLabel={`${f.label}: ${f.value}`}
+              // A short figure shares a row; a sentence ("Cool before bottling") takes the whole one.
+              style={[styles.fact, { backgroundColor: ds.c.raised, flexBasis: f.value.length > 12 ? '100%' : '30%' }]}
+            >
               <Caption tone="muted">{f.label}</Caption>
               <Spec>{f.value}</Spec>
             </View>
@@ -129,7 +135,7 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  fact: { flexBasis: '30%', flexGrow: 1, flexShrink: 1, maxWidth: '100%', padding: space.sm, borderRadius: radius.control, gap: 2 },
+  fact: { flexGrow: 1, flexShrink: 1, maxWidth: '100%', padding: space.sm, borderRadius: radius.control, gap: 2 },
   steps: { gap: space.xs },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   number: { width: 20, paddingTop: 2 },
