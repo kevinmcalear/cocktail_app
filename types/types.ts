@@ -123,6 +123,15 @@ export interface DatabaseItem {
     hide_from_search?: boolean;
     /** How it's served: a_la_minute, batched, bottled, carbonated or draught. */
     service_style?: string | null;
+    /** Ingredients: grams per ml, when measured. */
+    density_g_ml?: number | null;
+    /** Drinks: a measured dilution, in percent, overriding the method's default. */
+    dilution_pct?: number | null;
+    /** Calculated on the server from the spec: the serve after dilution and its ABV. */
+    serve_ml?: number | null;
+    serve_abv?: number | null;
+    /** 'calculated' when the spec sets abv; 'manual' keeps a typed figure. */
+    abv_source?: 'manual' | 'calculated';
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;
