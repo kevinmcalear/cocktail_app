@@ -14,6 +14,7 @@ import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
+import { saveDrinkSpec } from "@/hooks/useVersions";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { setItemImages } from "@/components/drink/drinkImages";
 
@@ -357,38 +358,21 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 .eq("id", id);
             if (error) throw error;
 
-            const keptIds = recipeItems.map((r) => r.id).filter(Boolean);
-            if (keptIds.length > 0) {
-                await supabase.from("recipes").delete().eq("recipe_item_id", id).not("id", "in", `(${keptIds.join(",")})`);
-            } else {
-                await supabase.from("recipes").delete().eq("recipe_item_id", id);
-            }
-
-            for (const [index, item] of recipeItems.entries()) {
-                const payload = {
-                    recipe_item_id: id,
+            // Lines and method go through save_drink_spec: one transaction, and a
+            // version of the spec written with it (History on the drink page).
+            await saveDrinkSpec(
+                id,
+                recipeItems.map((item) => ({
+                    id: item.id ?? null,
                     ingredient_item_id: item.ingredient_id,
                     amount: parseFloat(item.amount) || null,
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
-                    sort_order: index,
-                };
-                if (item.id) {
-                    await supabase.from("recipes").update(payload).eq("id", item.id);
-                } else {
-                    await supabase.from("recipes").insert(payload);
-                }
-            }
-
-            await supabase.from("item_methods").delete().eq("item_id", id);
-            if (methodId) {
-                await supabase.from("item_methods").insert({
-                    item_id: id,
-                    method_item_id: methodId,
-                    sort_order: 0,
-                });
-            }
+                })),
+                methodId,
+                null
+            );
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });

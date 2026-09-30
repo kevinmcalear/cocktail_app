@@ -31,6 +31,7 @@ import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
 import { GlassSheet } from './GlassSheet';
+import { HistorySection } from './HistorySection';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkFacts } from './useDrinkFacts';
 
@@ -192,6 +193,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         preview={preview}
       />
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
+      {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
       {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
