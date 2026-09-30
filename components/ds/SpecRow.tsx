@@ -21,13 +21,15 @@ export interface SpecRowProps {
   /** Service mode reads bigger (1.25). */
   scale?: number;
   onPress?: () => void;
+  /** Tapping the amount alone: the conversions sheet. */
+  onPressAmount?: () => void;
 }
 
 /**
  * One line of a spec, readable across the bar: the amount in its own aligned
  * column in the accent, then the ingredient.
  */
-export function SpecRow({ amount, ingredient, houseMade, optional, note, detail, scale = 1, onPress }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount }: SpecRowProps) {
   const ds = useDs();
   const spoken = [amount, ingredient, detail, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
@@ -41,9 +43,17 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, detail,
       haptic={onPress ? false : undefined}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      <Spec tone="accent" style={[styles.amount, { width: 96 * scale }, big(type.spec)]}>
-        {amount}
-      </Spec>
+      {onPressAmount && amount ? (
+        <PressableScale role="button" accessibilityLabel={`${amount}, read in other units`} haptic={false} onPress={onPressAmount} style={[styles.amount, { width: 96 * scale }]}>
+          <Spec tone="accent" style={big(type.spec)}>
+            {amount}
+          </Spec>
+        </PressableScale>
+      ) : (
+        <Spec tone="accent" style={[styles.amount, { width: 96 * scale }, big(type.spec)]}>
+          {amount}
+        </Spec>
+      )}
       <View style={styles.name}>
         <Body style={big(type.body)}>{ingredient}</Body>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}

@@ -39,6 +39,7 @@ export default function BatchRoute() {
       lines={lines}
       methodNames={methodNames}
       dilutionPct={strength?.dilutionPct ?? null}
+      abv={strength?.abv ?? null}
       serviceStyle={cocktail.service_style ?? null}
       lockedUntil={access.names && access.amounts ? null : amountsOpenAt}
       accent={venues.find((v) => v.id === cocktail.bar_id)?.accent ?? undefined}
