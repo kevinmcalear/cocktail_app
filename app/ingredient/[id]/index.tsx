@@ -5,6 +5,7 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
+import { AllergenSection } from "@/components/allergens/AllergenSection";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
@@ -125,6 +126,7 @@ export default function IngredientDetailScreen() {
                 )}
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
+                <AllergenSection itemId={ingredient.id} houseMade={recipe.length > 0} canEditItem={canEdit} />
                 <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
