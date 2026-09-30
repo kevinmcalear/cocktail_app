@@ -46,3 +46,8 @@ console.log('awards checks passed');
 assert.equal(awardInitials('James Beard Awards'), 'JBA');
 assert.equal(awardInitials('The Good Food Guide'), 'GFG');
 assert.equal(awardInitials("Gourmet Traveller's Bar of the Year"), 'GTB');
+
+assert.deepEqual(awardLines({ award: 'Food & Wine Global Tastemakers', year: 2025, position: 3, title: 'Top U.S. Bars' }), {
+  headline: 'No. 3',
+  detail: 'Food & Wine Global Tastemakers 2025 · Top U.S. Bars',
+});
