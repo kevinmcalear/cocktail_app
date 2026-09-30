@@ -1,11 +1,11 @@
 import type { ItemImageLink } from '@/lib/itemImages';
 
-/** One row in search and the menu builders: a drink, ingredient, menu or category. */
+/** A card in search, the Library and the menu pickers. */
 export interface SearchItem {
   id: string;
   name: string;
   description?: string | null;
-  category?: "Cocktail" | "Beer" | "Wine" | "Ingredient" | "Category" | "Menu";
+  category?: 'Cocktail' | 'Beer' | 'Wine' | 'Ingredient' | 'Category' | 'Menu';
   isDraft?: boolean;
   /** How far a draft has got, for its badge. */
   draftProgress?: { percentage: number; color: string; label: string; badgeBg: string; badgeText: string };
@@ -32,4 +32,6 @@ export interface SearchItem {
   glassware_id?: string | null;
   family_id?: string | null;
   ice_id?: string | null;
+  /** A public drink (not in the library): the bar or bartender it's credited to. */
+  fromBar?: string;
 }

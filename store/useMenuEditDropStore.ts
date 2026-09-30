@@ -1,4 +1,4 @@
-import type { SearchItem } from '@/lib/searchItem';
+import type { SearchItem } from '@/types/search';
 import {
   isSectionDrinkItem,
   itemAllowedInSection,

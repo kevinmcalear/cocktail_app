@@ -62,3 +62,42 @@ export function groupMenuCredits(rows: MenuDrinkRow[]): MenuCredit[] {
 export function barsCrediting(credits: MenuCredit[]): number {
   return new Set(credits.filter((c) => c.current && c.barId).map((c) => c.barId)).size;
 }
+
+/** What a person types for their own profile. */
+export interface ProfileDraft {
+  name: string;
+  handle: string;
+  bio: string;
+  isPublic: boolean;
+}
+
+/** "@Juniper.Jo " → "juniper.jo": what gets saved, and what the HANDLE rule checks. */
+export const normalizeHandle = (raw: string): string => raw.trim().replace(/^@/, '').toLowerCase();
+
+/** A starting handle from a name: "Jo Juniper" → "jo.juniper". Empty when nothing usable is left. */
+export function handleFromName(name: string): string {
+  const handle = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '.')
+    .slice(0, 30)
+    .replace(/^[._]+|[._]+$/g, '');
+  return HANDLE.test(handle) ? handle : '';
+}
+
+/**
+ * What's wrong with a draft, field by field, in the same limits as the
+ * profiles table's CHECKs. An empty object means it can be saved.
+ */
+export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string } {
+  const errors: { name?: string; handle?: string; bio?: string } = {};
+  const name = d.name.trim();
+  if (!name) errors.name = 'Add the name people will see.';
+  else if (name.length > 80) errors.name = 'Keep your name to 80 characters.';
+  if (!HANDLE.test(normalizeHandle(d.handle))) {
+    errors.handle = 'Use 3 to 30 letters, numbers, dots or underscores, starting and ending with a letter or number.';
+  }
+  if (d.bio.trim().length > 500) errors.bio = 'Keep your bio to 500 characters.';
+  return errors;
+}

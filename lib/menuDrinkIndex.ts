@@ -1,4 +1,4 @@
-import type { SearchItem } from './searchItem';
+import type { SearchItem } from '@/types/search';
 import { calculateDraftProgress } from './draftProgress';
 import { capitalize } from './stringUtils';
 

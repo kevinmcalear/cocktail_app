@@ -1,5 +1,5 @@
 import { CommandFilter, CommandSearch } from '@/components/CommandSearch';
-import type { SearchItem } from '@/lib/searchItem';
+import type { SearchItem } from '@/types/search';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { useMenuEditDropStore } from '@/store/useMenuEditDropStore';

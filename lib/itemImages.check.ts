@@ -32,4 +32,10 @@ assert.equal(heroPicture([top, { ...sketch, angle: 'hero' as const }])?.url, 'sk
 assert.deepEqual(orderedPictures([top, photoB]).map((p) => p.url), ['b.jpg']);
 assert.equal(heroPicture([top]), null);
 
+// A borrowed photo keeps its credit and source; others have none.
+const borrowed = { is_generated: false, images: { url: 'c.jpg', credit: 'Imbibe', source_url: 'https://imbibemagazine.com/x' } };
+assert.equal(heroPicture([borrowed])?.credit, 'Imbibe');
+assert.equal(heroPicture([borrowed])?.sourceUrl, 'https://imbibemagazine.com/x');
+assert.equal(heroPicture([photoB])?.credit, null);
+
 console.log('itemImages.check: ok');

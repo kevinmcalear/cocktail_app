@@ -38,7 +38,7 @@ type BarLogoResponse = {
     secondaryColor?: string;
 };
 
-async function extractColors(barId: string, uri: string, base64: string) {
+export async function extractColors(barId: string, uri: string, base64: string) {
     const local = await extractBrandColorsFromUri(uri);
     if (local) return local;
 
@@ -49,7 +49,7 @@ async function extractColors(barId: string, uri: string, base64: string) {
     });
 }
 
-async function uploadLogo(barId: string, base64: string) {
+export async function uploadLogo(barId: string, base64: string) {
     return invokeFunction<BarLogoResponse>('upload-bar-logo', {
         bar_id: barId,
         image_base64: base64,

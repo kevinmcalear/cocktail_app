@@ -36,7 +36,7 @@ import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
 import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
-import type { SearchItem } from "@/lib/searchItem";
+import type { SearchItem } from "@/types/search";
 import { SearchPopover } from "@/components/SearchPopover";
 import type { EditorChromeState } from "@/lib/editorChrome";
 

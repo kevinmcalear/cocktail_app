@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { Button, Card, Input, Label, ScrollView, Text, XStack, YStack, useTheme } from 'tamagui';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
@@ -89,6 +90,7 @@ function ColorField({
 
 export function BarInlineEditor({ barId, onClose, onChromeState, embedded = false }: BarInlineEditorProps) {
     const theme = useTheme();
+    const router = useRouter();
     const editor = useBarEditor(barId);
     const saveRef = useRef(editor.handleSave);
     const discardRef = useRef(editor.discardChanges);
@@ -201,9 +203,7 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
 
             <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
                 <YStack gap="$4">
-                    <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
-                        Brand Colors
-                    </Text>
+                    <XStack justifyContent="space-between" alignItems="center"><Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>Brand Colors</Text><Button size="$2" chromeless role="link" aria-label="Brand and look: accent, display face, dark ground and home-screen icon" onPress={() => router.push(`/settings/bar/${barId}/brand` as never)}>Brand and look</Button></XStack>
                     <ColorField
                         label="Primary"
                         value={editor.primaryColor}

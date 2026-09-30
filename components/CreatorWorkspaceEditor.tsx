@@ -11,7 +11,7 @@ import AddIngredientScreen from '@/app/add-ingredient';
 import EditIngredientScreen from '@/app/ingredient/[id]/edit';
 import CreateMenuWizard from '@/app/menus/create/index';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
-import type { SearchItem } from '@/lib/searchItem';
+import type { SearchItem } from '@/types/search';
 
 interface CreatorWorkspaceEditorProps {
     editing: EditingState;
