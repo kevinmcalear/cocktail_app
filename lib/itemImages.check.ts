@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { heroPicture, orderedPictures, pictureTag } from './itemImages';
+import { heroPicture, orderedPictures, pictureLabel, pictureTag } from './itemImages';
 
 const sketch = { sort_order: 0, is_generated: true, images: { url: 'sketch.png' } };
 const photoB = { sort_order: 2, is_generated: false, images: { url: 'b.jpg' } };
@@ -26,6 +26,13 @@ assert.equal(pictureTag(null), null);
 // A sketch is never "out of date" to the viewer: the server redraws it.
 assert.equal(pictureTag(orderedPictures([{ ...sketch, outdated_since: 'x' }])[0]), 'Sketch');
 
+// Labels say the position and the tag in words, never by colour alone.
+const pictures = orderedPictures([sketch, photoB, photoA]);
+assert.deepEqual(
+  pictures.map((p, i) => pictureLabel(p, i, pictures.length)),
+  ['Photo 1 of 3, may be out of date', 'Photo 2 of 3', 'Photo 3 of 3, sketch']
+);
+assert.equal(pictureLabel(pictures[1], 0, 1), 'Photo');
 // Service angles never become the hero or join the hero carousel.
 const top = { angle: 'top' as const, is_generated: false, images: { url: 'top.jpg' } };
 assert.equal(heroPicture([top, { ...sketch, angle: 'hero' as const }])?.url, 'sketch.png');

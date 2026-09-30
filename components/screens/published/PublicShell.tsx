@@ -42,7 +42,9 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
-  const hero = <DrinkHero name={title} imageUrl={imageUrl} generated={generated} glass={glass ?? null} height={heroHeight} fade={!wide} />;
+  // Public pages show one picture: the drink's hero or the release cover.
+  const pictures = imageUrl ? [{ url: imageUrl, isSketch: !!generated, isOutdated: false }] : [];
+  const hero = <DrinkHero name={title} pictures={pictures} glass={glass ?? null} height={heroHeight} fade={!wide} />;
   const body = <View style={[styles.body, { paddingHorizontal: gutter }]}>{children}</View>;
 
   return (

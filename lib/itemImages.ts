@@ -63,9 +63,16 @@ export function heroPicture(links: ItemImageLink[] | null | undefined): ItemPict
 }
 
 /** The small label shown on a picture, if any. */
-export function pictureTag(picture: ItemPicture | null | undefined): string | null {
+export function pictureTag(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'> | null | undefined): string | null {
   if (!picture) return null;
   if (picture.isSketch) return 'Sketch';
   if (picture.isOutdated) return 'May be out of date';
   return null;
+}
+
+/** What a screen reader hears for one of an item's pictures: "Photo 2 of 4, sketch". */
+export function pictureLabel(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'>, index: number, total: number): string {
+  const tag = pictureTag(picture);
+  const position = total > 1 ? `Photo ${index + 1} of ${total}` : 'Photo';
+  return tag ? `${position}, ${tag.toLowerCase()}` : position;
 }
