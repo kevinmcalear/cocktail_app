@@ -166,6 +166,8 @@ type CommandSearchProps = {
   hideChrome?: boolean;
   autoFocus?: boolean;
   showFooter?: boolean;
+  /** Space under the results for a tab bar they scroll behind. */
+  bottomInset?: number;
   onSelect?: () => void;
   /** Pick mode: select item instead of navigating (e.g. add to menu). */
   onItemSelect?: (item: SearchItem) => void;
@@ -192,6 +194,7 @@ export function CommandSearch({
   hideChrome = false,
   autoFocus = false,
   showFooter = true,
+  bottomInset = 0,
   onSelect,
   onItemSelect,
   onItemDragStart,
@@ -946,12 +949,7 @@ export function CommandSearch({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: padH,
-          paddingVertical: 8,
-          paddingBottom: 16,
-          flexGrow: 1,
-        }}
+        contentContainerStyle={{ paddingHorizontal: padH, paddingVertical: 8, paddingBottom: 16 + bottomInset, flexGrow: 1 }}
         ListEmptyComponent={
           <YStack padding="$5" alignItems="center" gap="$3">
             <Text color="$color11" fontSize={14}>
