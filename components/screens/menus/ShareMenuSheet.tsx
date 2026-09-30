@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 
@@ -9,6 +9,9 @@ import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail } from '@/types/menus';
 
 import { MenuSheet } from './MenuSheet';
+
+// The server's refusal when you have no public profile yet (guard_menu_share).
+const NEEDS_PROFILE = /public profile/;
 
 /**
  * Share a home menu: a link anyone can open (/m/<id>), or the guest card to
@@ -78,6 +81,18 @@ export function ShareMenuSheet({ menu, onClose }: { menu: Pick<MenuDetail, 'id' 
         }}
       />
       {error ? <Body tone="accent">{error}</Body> : null}
+      {error && NEEDS_PROFILE.test(error) ? (
+        <Button
+          label="Set up your public profile"
+          icon="person.crop.circle"
+          variant="secondary"
+          onPress={() => {
+            onClose();
+            // Settings › Public profile, from #137. Cast until that route is on this branch's typed routes.
+            router.push('/settings/profile' as Href);
+          }}
+        />
+      ) : null}
       {menu.sharedAt ? <Caption tone="muted">Stop sharing and the link stops working. Share again and the same link works again.</Caption> : null}
     </MenuSheet>
   );
