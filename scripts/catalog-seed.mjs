@@ -279,10 +279,14 @@ UPDATE "public"."items" "i"
 SET "generic_id" = "g"."id"
 FROM "seed_alias" "a"
 JOIN "seed_items" "s" ON "s"."item_type" = "a"."item_type" AND "s"."name" = "a"."name"
+-- The generic may already exist under one of its aliases ("Sugar Cubes" for
+-- "Sugar Cube"), because we do not insert a second row for the same thing.
 JOIN LATERAL (
     SELECT "g"."id"
-    FROM "public"."items" "g"
-    WHERE "g"."bar_id" IS NULL AND "g"."item_type" = 'ingredient' AND lower("g"."name") = lower("s"."generic_name")
+    FROM "seed_alias" "ga"
+    JOIN "public"."items" "g"
+      ON "g"."bar_id" IS NULL AND "g"."item_type" = 'ingredient' AND lower("g"."name") = lower("ga"."alias")
+    WHERE "ga"."item_type" = 'ingredient' AND "ga"."name" = "s"."generic_name"
     ORDER BY ("g"."name" = "s"."generic_name") DESC, "g"."created_at"
     LIMIT 1
 ) "g" ON true
