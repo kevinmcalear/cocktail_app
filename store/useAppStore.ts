@@ -19,8 +19,6 @@ interface AppState {
     /** First selected venue (not personal); used for role checks. */
     selectedBarId: string | null;
     setSelectedBarId: (id: string | null) => void;
-    selectedMenuId: string | null;
-    setSelectedMenuId: (id: string | null) => void;
     recentlyCreatedItem: {
         type: 'cocktail' | 'ingredient';
         id: string;
@@ -67,8 +65,6 @@ export const useAppStore = create<AppState>((set) => ({
             selectedBarId: id,
             selectedContextIds: id ? [id] : [PERSONAL_CONTEXT],
         }),
-    selectedMenuId: null,
-    setSelectedMenuId: (id) => set({ selectedMenuId: id }),
     recentlyCreatedItem: null,
     setRecentlyCreatedItem: (item) => set({ recentlyCreatedItem: item }),
 }));

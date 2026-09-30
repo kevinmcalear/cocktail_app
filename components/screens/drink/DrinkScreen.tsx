@@ -1,15 +1,15 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
-import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
@@ -20,6 +20,7 @@ import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
+import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
 import { FamilyTree } from './FamilyTree';
 import { FlavorSection } from './FlavorSection';
@@ -112,13 +113,15 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   ].filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
   const links = item.item_images as ItemImageLink[] | undefined;
-  const heroPic = heroPicture(links);
-  const imageUrl = preview ? (preview.heroSource ?? null) : (heroPic?.url ?? null);
+  const itemPictures = orderedPictures(links);
+  // The hero (first) picture's credit shows under the name.
+  const heroPic = itemPictures[0] ?? null;
+  const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : itemPictures;
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
 
   // Controls over the photo use dark glass and light ink; on wide screens the
   // right-hand ones sit over the page instead.
-  const onPhoto = !!imageUrl;
+  const onPhoto = pictures.length > 0;
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
@@ -140,6 +143,15 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkTags tags={tags} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
+      {!preview && heroPic?.credit ? (
+        <Caption
+          tone="muted"
+          role={heroPic.sourceUrl ? 'link' : undefined}
+          onPress={heroPic.sourceUrl ? () => void Linking.openURL(heroPic.sourceUrl!) : undefined}
+        >
+          Photo: {heroPic.credit}
+        </Caption>
+      ) : null}
       <View style={styles.actions}>
         <GlassButton
           accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
@@ -155,7 +167,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
             onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
           />
         ) : null}
-        {preview ? null : <RankActions item={item} picture={heroPic} />}
+        {preview ? null : <RankActions item={item} picture={itemPictures[0] ?? null} />}
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
@@ -184,14 +196,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   );
 
   const hero = (
-    <DrinkHero
-      name={item.name}
-      imageUrl={imageUrl}
-      generated={!preview && !!heroPic?.isSketch}
-      glass={glass?.icon_key || glass?.name || null}
-      height={heroHeight}
-      fade={!wide}
-    />
+    <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} height={heroHeight} fade={!wide} />
   );
 
   return (

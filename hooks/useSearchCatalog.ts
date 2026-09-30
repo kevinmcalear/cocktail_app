@@ -1,4 +1,4 @@
-import { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/types/search';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
@@ -24,6 +24,24 @@ const DRAFT_CATEGORY: Record<string, SearchItem['category']> = {
 function searchImage(links: ItemImageLink[] | null | undefined): Pick<SearchItem, 'image' | 'imageIsSketch'> {
   const hero = heroPicture(links);
   return hero ? { image: { uri: hero.url }, imageIsSketch: hero.isSketch } : {};
+}
+
+/** A drink from a useCocktails-shaped row, as a search card. */
+export function toCocktailSearchItem(c: any): SearchItem {
+  return {
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    category: 'Cocktail',
+    recipes: c.recipes,
+    item_images: c.item_images,
+    ...searchImage(c.item_images),
+    item_categories: c.item_categories,
+    method_id: c.item_methods?.[0]?.method_item_id ?? null,
+    glassware_id: c.glassware_id,
+    family_id: c.family_id,
+    ice_id: c.ice_id,
+  };
 }
 
 function draftSearchId(entityType: string, id: string) {
@@ -68,20 +86,7 @@ export function useSearchCatalog(contextIds?: string[]) {
   const items = useMemo(() => {
     const mappedCocktails: SearchItem[] = (cocktailsData || [])
       .filter((c: any) => inSelectedContext(c.bar_id, selectedContextIds))
-      .map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        description: c.description,
-        category: 'Cocktail' as const,
-        recipes: c.recipes,
-        item_images: c.item_images,
-        ...searchImage(c.item_images),
-        item_categories: c.item_categories,
-        method_id: c.item_methods?.[0]?.method_item_id ?? null,
-        glassware_id: c.glassware_id,
-        family_id: c.family_id,
-        ice_id: c.ice_id,
-      }));
+      .map(toCocktailSearchItem);
 
     const mappedBeers: SearchItem[] = (beersData || [])
       .filter((b: any) => inSelectedContext(b.bar_id, selectedContextIds))

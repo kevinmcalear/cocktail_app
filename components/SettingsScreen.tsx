@@ -1,8 +1,7 @@
-import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
-import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
@@ -20,7 +19,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
@@ -66,7 +65,7 @@ export function SettingsScreen() {
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
-  const tabBarInset = useFloatingTabBarInset();
+  const tabBarInset = useTabBarInset();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -92,8 +91,6 @@ export function SettingsScreen() {
   };
   const { data: userBars, isLoading: barsLoading } = useBars();
   const {
-    isTestingEnabled,
-    setTesting,
     themeMode,
     setThemeMode,
     defaultSearchContext,
@@ -597,31 +594,6 @@ export function SettingsScreen() {
     </Section>
   );
 
-  const testingPanel = (
-    <Section title="Testing" minWidth={240}>
-      <XStack alignItems="center" justifyContent="space-between" gap="$3">
-        <XStack alignItems="center" gap="$2.5" flex={1}>
-          <CustomIcon name="TabTest" size={20} color={color} />
-          <YStack flex={1}>
-            <Text fontSize={15} fontWeight="600" color="$color">
-              Enable Testing
-            </Text>
-            <Text fontSize={12} color="$color11">
-              Show the Quiz tab in navigation
-            </Text>
-          </YStack>
-        </XStack>
-        <Switch
-          value={isTestingEnabled}
-          onValueChange={setTesting}
-          trackColor={{
-            false: theme.borderColor?.get() as string,
-            true: theme.color8?.get() as string,
-          }}
-        />
-      </XStack>
-    </Section>
-  );
 
   const linkRow = (label: string, onPress: () => void) => (
     <Pressable role="link" onPress={onPress}>
@@ -755,7 +727,6 @@ export function SettingsScreen() {
           {unitsPanel}
           {searchFilterPanel}
           {viewAsPanel}
-          {testingPanel}
           {accountPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable

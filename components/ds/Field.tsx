@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
@@ -10,6 +11,7 @@ interface FieldProps extends Omit<TextInputProps, 'style'> {
   /** Shown under the field; errors say what's wrong and how to fix it. */
   hint?: string;
   error?: string;
+  ref?: Ref<TextInput>;
 }
 
 /** A labelled text input in the Back Bar style. */

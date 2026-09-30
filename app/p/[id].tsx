@@ -1,16 +1,14 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { NotInPreview, ProfileScreen } from '@/components/screens/profile/ProfileScreen';
-import { useRedesign } from '@/lib/flags';
+import { ProfileScreen } from '@/components/screens/profile/ProfileScreen';
 
-/** A public profile, by id or handle: /p/<uuid> or /p/juniper.jo. Redesign only. */
+/** A public profile, by id or handle: /p/<uuid> or /p/juniper.jo. */
 export default function ProfileRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const redesign = useRedesign();
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      {redesign ? <ProfileScreen profileRef={id} /> : <NotInPreview />}
+      <ProfileScreen profileRef={id} />
     </>
   );
 }

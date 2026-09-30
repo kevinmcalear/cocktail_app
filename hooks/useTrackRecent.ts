@@ -44,7 +44,7 @@ export function recentEntry(
       : draftRoute
         ? `${draftRoute}?draftId=${id}`
         : kind === 'menu'
-          ? '/(tabs)/menus'
+          ? `/menus/${encodeURIComponent(id)}`
           : kind === 'quiz'
             ? '/(tabs)/test'
             : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);

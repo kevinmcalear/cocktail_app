@@ -15,6 +15,8 @@ import { accentFill, readableAccent } from '@/lib/color';
 interface Brand {
   accent: string;
   displayFace: DisplayFace;
+  /** A venue's tint for the dark ground; callers pass only readable ones (lib/brand). */
+  groundTint?: string;
 }
 
 const BACKBAR_FONTS = {
@@ -34,11 +36,15 @@ const BrandContext = createContext<Brand>({ accent: DEFAULT_ACCENT, displayFace:
 const SchemeContext = createContext<BackbarScheme | null>(null);
 
 /** The active venue's accent and display face. Step 2 feeds this from `bars`. */
-export function BrandProvider({ accent, displayFace, children }: Partial<Brand> & { children: ReactNode }) {
+export function BrandProvider({ accent, displayFace, groundTint, children }: Partial<Brand> & { children: ReactNode }) {
   const parent = useContext(BrandContext);
   const value = useMemo(
-    () => ({ accent: accent ?? parent.accent, displayFace: displayFace ?? parent.displayFace }),
-    [accent, displayFace, parent]
+    () => ({
+      accent: accent ?? parent.accent,
+      displayFace: displayFace ?? parent.displayFace,
+      groundTint: groundTint ?? parent.groundTint,
+    }),
+    [accent, displayFace, groundTint, parent]
   );
   return <BrandContext.Provider value={value}>{children}</BrandContext.Provider>;
 }
@@ -77,9 +83,9 @@ export interface Ds {
 export function useDs(): Ds {
   const appScheme = useColorScheme();
   const scheme = useContext(SchemeContext) ?? appScheme;
-  const { accent, displayFace } = useContext(BrandContext);
+  const { accent, displayFace, groundTint } = useContext(BrandContext);
   return useMemo(() => {
-    const c = backbar[scheme];
+    const c = scheme === 'dark' && groundTint ? { ...backbar.dark, ground: groundTint } : backbar[scheme];
     return {
       scheme,
       c,
@@ -87,5 +93,5 @@ export function useDs(): Ds {
       accentFill: accentFill(accent, backbar.dark.ground, backbar.light.surface),
       displayFace,
     };
-  }, [scheme, accent, displayFace]);
+  }, [scheme, accent, displayFace, groundTint]);
 }

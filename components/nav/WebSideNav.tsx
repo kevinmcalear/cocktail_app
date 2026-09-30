@@ -1,27 +1,30 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { WEB_SIDEBAR_WIDTH } from '@/components/WebSidebar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useMode } from '@/hooks/useMode';
 import { currentProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
 
+import { CreateSheet } from './CreateSheet';
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { VenueSwitcher } from './VenueSwitcher';
 import { HOME_TABS, VENUE_TABS } from './WebTabBar';
 
+/** How wide the side nav is on wide web. */
+export const WEB_SIDEBAR_WIDTH = 240;
+
 const hrefFor = (name: string) => (name === 'index' ? '/' : `/${name}`) as Href;
 
-function NavRow({ label, icon, current, hint, onPress }: { label: string; icon: IconName; current: boolean; hint?: string; onPress: () => void }) {
+function NavRow({ label, icon, current, hint, role = 'link', onPress }: { label: string; icon: IconName; current: boolean; hint?: string; role?: 'link' | 'button'; onPress: () => void }) {
   const ds = useDs();
   return (
     <PressableScale
-      role="link"
+      role={role}
       {...currentProps(current)}
       accessibilityLabel={label}
       onPress={onPress}
@@ -46,7 +49,7 @@ function NavRow({ label, icon, current, hint, onPress }: { label: string; icon: 
 
 /**
  * The redesign's sidebar for wide web, where the tab bar is hidden: the venue
- * chip, search, and the current mode's tabs (the same ones as the phone bar).
+ * chip, New, search, and the current mode's tabs (the same ones as the phone bar).
  */
 export function WebSideNav() {
   return (
@@ -62,6 +65,7 @@ function SideNavBody() {
   const pathname = usePathname();
   const { mode } = useMode();
   const go = (name: string) => router.navigate(hrefFor(name));
+  const [creating, setCreating] = useState(false);
 
   // ponytail: ⌘K lives on the always-mounted sidebar, like the legacy one.
   useEffect(() => {
@@ -81,6 +85,8 @@ function SideNavBody() {
       <View style={styles.venue}>
         <VenueSwitcher />
       </View>
+      <NavRow label="New" icon="plus" role="button" current={false} onPress={() => setCreating(true)} />
+      {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
       <NavRow
         label="Search"
         icon="magnifyingglass"
