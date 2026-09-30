@@ -14,6 +14,7 @@ import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec'
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
+import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
@@ -190,6 +191,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       />
       {preview ? null : <FamilyTree itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
+      {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
     </View>
   );
 
