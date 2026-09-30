@@ -49,7 +49,7 @@ function Page({ menuId }: { menuId: string }) {
   const currency = settings?.currency ?? null;
   const drinks = (rows ?? []).filter((r) => r.itemType === 'cocktail');
   const summary = menuSummary(
-    drinks.map((r) => ({ costMinor: r.cost?.total_minor ?? null, priceMinor: r.priceMinor, missing: r.cost?.missing ?? 0 })),
+    drinks.map((r) => ({ costMinor: r.cost && !(r.cost.total_minor === 0 && r.cost.missing > 0) ? r.cost.total_minor : null, priceMinor: r.priceMinor, missing: r.cost?.missing ?? 0 })),
     targetGp,
     tax
   );
@@ -127,7 +127,8 @@ function Row({ row, wide, tax, targetGp, currency, money }: { row: MenuCostRow; 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(moneyFieldValue(row.priceMinor, currency));
   const set = useSetMenuPrice(row.id);
-  const costMinor = row.cost?.total_minor ?? null;
+  // A drink whose every line is unpriced has no cost yet, not a cost of nothing.
+  const costMinor = row.cost && !(row.cost.total_minor === 0 && row.cost.missing > 0) ? row.cost.total_minor : null;
   const m = costMinor == null ? null : margin(costMinor, row.priceMinor, tax);
   const target = costMinor == null ? null : targetStatus(costMinor, row.priceMinor, targetGp, tax);
   const under = !!m && targetGp != null && m.gp < targetGp;
