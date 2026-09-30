@@ -11,6 +11,7 @@ This is step 7 of the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKd
 | 3 | Collections, home menus, the age check | `20260930500200_collections_and_age_check.sql` |
 | 4b | Reports and moderator tools | `20260930500300_reports.sql` |
 | 5 | Layered publishing, memories, private personal drinks (Kevin's decisions of 2026-09-29) | `20260930500400_layered_publishing_and_memories.sql` |
+| 4c | Content filtering: a short list of slurs and clear abuse refused in public text (profiles, positions, published drinks, releases), step 11a | `20260930600000_content_filter.sql`, tested in `supabase/tests/content-filter.test.mjs` |
 
 Tests: `supabase/tests/publishing-moderation.test.mjs` (47 tests) and `supabase/tests/layered-publishing.test.mjs` (9). With every other suite that's 263, all passing on an isolated stack. The migrations were renumbered on 2026-09-29 to `20260930500000` onwards, after production's latest (`20260930100000`) and clear of open branches' `20260930200000` and `300000`, so they apply in order with a plain `supabase db push`.
 
