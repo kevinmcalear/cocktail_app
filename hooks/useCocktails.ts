@@ -7,6 +7,67 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
+/** Columns for a drink list or search card (app_item_presentation). */
+export const COCKTAIL_LIST_COLUMNS = `
+    id,
+    name,
+    description,
+    bar_id,
+    glassware_id,
+    family_id,
+    ice_id,
+    item_methods!item_methods_item_id_fkey (
+        method_item_id
+    ),
+    recipes:app_recipe_presentation!recipe_item_id (
+        sort_order,
+        created_at,
+        display_ingredient_id,
+        amount,
+        unit,
+        preparation_notes,
+        display_ingredient (
+            id,
+            name,
+            item_categories (
+                category_id
+            )
+        )
+    ),
+    item_images (
+        id,
+        angle,
+        sort_order,
+        image_id,
+        is_generated,
+        outdated_since,
+        images (
+            id,
+            url,
+            palette
+        )
+    ),
+    item_categories (
+        category_id
+    )
+`;
+
+/** Maps the secure recipes payload to the shapes the UI expects. */
+type ListRecipe = { sort_order?: number | null; created_at?: string; display_ingredient_id?: string | null };
+
+export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null): DatabaseItem[] {
+    const processed = data?.map((cocktail) => ({
+        ...cocktail,
+        recipes: sortRecipesByOrder(
+            cocktail.recipes?.map((recipe) => ({
+                ...recipe,
+                ingredient: resolvePresentationIngredient(recipe),
+            }))
+        ),
+    }));
+    return (processed ?? []) as unknown as DatabaseItem[];
+}
+
 export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
@@ -17,53 +78,11 @@ export function useCocktails(options?: { allContexts?: boolean }) {
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
-                .select(`
-                    id,
-                    name,
-                    description,
-                    bar_id,
-                    glassware_id,
-                    family_id,
-                    ice_id,
-                    item_methods!item_methods_item_id_fkey (
-                        method_item_id
-                    ),
-                    recipes:app_recipe_presentation!recipe_item_id (
-                        sort_order,
-                        created_at,
-                        display_ingredient_id,
-                        amount,
-                        unit,
-                        preparation_notes,
-                        display_ingredient (
-                            id,
-                            name,
-                            item_categories (
-                                category_id
-                            )
-                        )
-                    ),
-                    item_images (
-                        id,
-                        angle,
-                        sort_order,
-                        image_id,
-                        is_generated,
-                        outdated_since,
-                        images (
-                            id,
-                            url,
-                            palette
-                        )
-                    ),
-                    item_categories (
-                        category_id
-                    )
-                `)
+                .select(COCKTAIL_LIST_COLUMNS)
                 .eq('item_type', 'cocktail')
                 // Drinks credited to another bar or person with no venue behind them (a
                 // bar's signatures, a bartender's originals) stay on that public profile,
-                // out of the Library.
+                // out of the Library. Search lists them apart, under "From bars" (usePublicDrinks).
                 .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
             if (!options?.allContexts) {
@@ -74,18 +93,7 @@ export function useCocktails(options?: { allContexts?: boolean }) {
 
             if (error) throw error;
             
-            // Map the secure recipes payload to match the expected UI shapes
-            const processedData = data?.map(cocktail => ({
-                ...cocktail,
-                recipes: sortRecipesByOrder(
-                    cocktail.recipes?.map((recipe: any) => ({
-                        ...recipe,
-                        ingredient: resolvePresentationIngredient(recipe),
-                    }))
-                )
-            }));
-
-            return processedData as unknown as DatabaseItem[];
+            return withListRecipes(data);
         }
     });
 }
