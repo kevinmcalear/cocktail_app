@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, DsText, PressableScale, Title, useDs } from '@/components/ds';
@@ -14,32 +14,42 @@ interface MenuSheetProps {
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
+  /** Called once the sheet is on screen. */
+  onShow?: () => void;
 }
 
 /** The Menus screens' sheet: slides over the screen, closes on the scrim. */
-export function MenuSheet({ visible, onClose, title, subtitle, children, footer }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onShow={onShow}>
       <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]}>
         <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View role="dialog" aria-modal accessibilityLabel={title} style={[styles.sheet, { backgroundColor: ds.c.surface }]}>
-          <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />
-          <View style={styles.header}>
-            <View style={styles.flex}>
-              <Title>{title}</Title>
-              {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+        {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). The negative
+            offset lets the keyboard cover the footer's home-indicator padding instead of leaving a gap. */}
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', android: 'height' })}
+          keyboardVerticalOffset={footer ? -insets.bottom : 0}
+          style={styles.avoider}
+        >
+          <View role="dialog" aria-modal accessibilityLabel={title} style={[styles.sheet, { backgroundColor: ds.c.surface }]}>
+            <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />
+            <View style={styles.header}>
+              <View style={styles.flex}>
+                <Title>{title}</Title>
+                {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+              </View>
+              <PressableScale accessibilityLabel="Close" onPress={onClose} style={styles.close}>
+                <IconSymbol name="xmark" size={18} color={ds.c.muted} />
+              </PressableScale>
             </View>
-            <PressableScale accessibilityLabel="Close" onPress={onClose} style={styles.close}>
-              <IconSymbol name="xmark" size={18} color={ds.c.muted} />
-            </PressableScale>
+            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              {children}
+            </ScrollView>
+            {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
           </View>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
-          {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -93,7 +103,8 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
+  scrim: { flex: 1 },
+  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
   sheet: {
     width: '100%',
     maxWidth: 560,

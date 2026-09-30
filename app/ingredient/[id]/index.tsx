@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
 import { WhereItLives } from "@/components/backbar/WhereItLives";
+import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -14,7 +15,6 @@ import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
-import { useRedesign } from "@/lib/flags";
 import { PictureTag } from "@/components/ui/PictureTag";
 import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
 import { heroPicture, orderedPictures, pictureTag, type ItemImageLink } from "@/lib/itemImages";
@@ -66,7 +66,6 @@ export default function IngredientDetailScreen() {
     // Shared ingredients have no venue, and the recipe view returns them in full.
     const venueRole = useEffectiveRole(ingredient?.bar_id ?? null);
     const canViewDetails = !ingredient?.bar_id || venueRole > 30;
-    const redesign = useRedesign();
 
     if (loading || !ingredient) {
         return (
@@ -125,7 +124,8 @@ export default function IngredientDetailScreen() {
                     </GlassView>
                 )}
 
-                {redesign ? <WhereItLives itemId={ingredient.id} itemName={ingredient.name} /> : null}
+                <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
+                <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
                 {canViewDetails && recipe.length > 0 && (

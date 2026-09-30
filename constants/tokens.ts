@@ -47,6 +47,14 @@ export type BackbarColors = { [K in keyof (typeof backbar)['dark']]: string };
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
+/** Dark grounds a venue can pick from for its brand (all keep body text above 7:1). */
+export const GROUND_TINTS = [
+  { label: 'Walnut', hex: '#1A1410' },
+  { label: 'Forest', hex: '#0F1812' },
+  { label: 'Ink', hex: '#0F131C' },
+  { label: 'Plum', hex: '#181019' },
+] as const;
+
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
   littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'instrument' as const },

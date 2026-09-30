@@ -26,14 +26,22 @@ function DrinkLine({ drink, centered }: { drink: MenuDrink; centered: boolean })
   );
 }
 
+interface MenuSectionsProps {
+  sections: Pick<MenuSectionDetail, 'id' | 'name' | 'drinks'>[];
+  variant: 'page' | 'card';
+  /** Where a `page` row opens; null leaves the row still. Default: the drink's own page. */
+  hrefFor?: (drink: MenuDrink) => string | null;
+}
+
 /**
  * A menu's sections, set like the printed menu. `page`: rows that open each
  * drink. `card`: centred and still, for the share card and print.
  */
-export function MenuSections({ sections, variant }: { sections: MenuSectionDetail[]; variant: 'page' | 'card' }) {
+export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) {
   const ds = useDs();
   const router = useRouter();
   const card = variant === 'card';
+  const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : itemHref(CATEGORY[d.kind], d.id));
   return (
     <View style={styles.sections}>
       {sections
@@ -46,23 +54,27 @@ export function MenuSections({ sections, variant }: { sections: MenuSectionDetai
               </Caption>
               {card ? null : <Caption tone="muted">{s.drinks.length}</Caption>}
             </View>
-            {s.drinks.map((d) =>
-              card ? (
-                <View key={d.id} style={styles.cardRow}>
-                  <DrinkLine drink={d} centered />
-                </View>
-              ) : (
+            {s.drinks.map((d) => {
+              const to = href(d);
+              if (!to) {
+                return (
+                  <View key={d.id} style={card ? styles.cardRow : [styles.row, { borderBottomColor: ds.c.line }]}>
+                    <DrinkLine drink={d} centered={card} />
+                  </View>
+                );
+              }
+              return (
                 <PressableScale
                   key={d.id}
                   role="link"
                   accessibilityLabel={[d.name, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
-                  onPress={() => router.push(itemHref(CATEGORY[d.kind], d.id) as never)}
+                  onPress={() => router.push(to as never)}
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
                   <DrinkLine drink={d} centered={false} />
                 </PressableScale>
-              )
-            )}
+              );
+            })}
           </View>
         ))}
     </View>

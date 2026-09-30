@@ -45,6 +45,14 @@
       "destination": "/p/[id]"
     },
     {
+      "source": "/settings/bar/:id/publishing",
+      "destination": "/settings/bar/[id]/publishing"
+    },
+    {
+      "source": "/settings/bar/:id/releases/:releaseId",
+      "destination": "/settings/bar/[id]/releases/[releaseId]"
+    },
+    {
       "source": "/rankings/:itemId",
       "destination": "/rankings/[itemId]"
     },
@@ -69,12 +77,20 @@
       "destination": "/study/[deck]"
     },
     {
+      "source": "/settings/bar/:id/brand",
+      "destination": "/settings/bar/[id]/brand"
+    },
+    {
       "source": "/d/:id",
       "destination": "/d/[id]"
     },
     {
       "source": "/r/:id",
       "destination": "/r/[id]"
+    },
+    {
+      "source": "/m/:id",
+      "destination": "/m/[id]"
     }
   ]
 }

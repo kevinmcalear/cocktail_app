@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
-import { cacheActionOnAuth, resetUserQueries } from './authCache';
+import { cacheActionOnAuth, isUserQuery, resetUserQueries, viewerScoped } from './authCache';
 
 // --- what happens when auth settles ---
 assert.equal(cacheActionOnAuth(undefined, null), 'clear', 'opened signed out');
@@ -47,3 +47,20 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+
+// --- reads a signed-out page shows: public only while signed out ---
+assert.deepEqual(viewerScoped(null), { key: 'signed-out', meta: { public: true } });
+assert.deepEqual(viewerScoped(undefined), { key: 'signed-out', meta: { public: true } });
+assert.deepEqual(viewerScoped('a'), { key: 'a', meta: { public: false } });
+{
+  const client = new QueryClient();
+  for (const viewer of [viewerScoped(null), viewerScoped('a')]) {
+    client.getQueryCache().build(client, { queryKey: ['profile', 'x', viewer.key], meta: viewer.meta });
+  }
+  client.removeQueries({ predicate: isUserQuery });
+  assert.deepEqual(
+    client.getQueryCache().getAll().map((q) => q.queryKey),
+    [['profile', 'x', 'signed-out']],
+    'signing out forgets the signed-in read and keeps the signed-out one'
+  );
+}

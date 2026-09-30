@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { areaFromViewport, cameraFor, cameraForArea, pinLabel, pinsFrom } from './discoverMap';
+import { areaFromViewport, cameraFor, cameraForArea, pinLabel, pinLook, pinsFrom, viewportFrom } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -20,6 +20,24 @@ assert.deepEqual(pins.map((p) => p.logo), ['https://x/a.png', null]);
 assert.equal(pinLabel(pins[0]), '9.1');
 assert.equal(pinLabel(pins[1]), '');
 assert.deepEqual(pinsFrom(undefined), []);
+
+// --- pin look: a scored pill, an early dot, the accent when selected ---
+const accent = { fill: '#D0643B', text: '#FFFFFF' };
+assert.equal(pinLook(pins[0], false, accent).label, '9.1');
+assert.equal(pinLook(pins[0], false, accent).minWidth, 44);
+assert.equal(pinLook(pins[0], false, accent).logo, 'https://x/a.png');
+assert.equal(pinLook(pins[0], false, accent).paddingLeft, 2, 'the logo sits close to the pill edge');
+assert.equal(pinLook(pins[1], false, accent).height, 18);
+assert.equal(pinLook({ ...pins[1], logo: 'https://x/b.png' }, false, accent).height, 30, 'a lone logo leaves room for its ring');
+assert.notEqual(pinLook(pins[0], false, accent).backgroundColor, pinLook(pins[1], false, accent).backgroundColor);
+assert.equal(pinLook(pins[1], true, accent).backgroundColor, accent.fill);
+assert.equal(pinLook(pins[1], true, accent).color, accent.text);
+assert.equal(pinLook(pins[1], true, accent).borderColor, accent.fill);
+
+// --- viewport from MapLibre's centre and [west, south, east, north] bounds ---
+assert.deepEqual(viewportFrom({ lat: 40.72, lng: -73.99 }, [-74.01, 40.7, -73.97, 40.74]), {
+  latitude: 40.72, longitude: -73.99, latitudeDelta: 40.74 - 40.7, longitudeDelta: -73.97 - -74.01,
+});
 
 // --- camera: fits the pins, a city view for one, nothing for none ---
 assert.equal(cameraFor([]), null);
