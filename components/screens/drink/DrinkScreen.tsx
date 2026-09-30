@@ -23,6 +23,7 @@ import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
 import { FamilyTree } from './FamilyTree';
+import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
@@ -171,6 +172,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
+      <FloorSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
       {item.notes ? (
