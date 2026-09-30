@@ -56,6 +56,7 @@ export function useIngredient(id?: string | string[]) {
                 .from('app_item_presentation')
                 .select(`
                     *,
+                    generic:generic_id ( id, name ),
                     item_images (
                         sort_order,
                         image_id,

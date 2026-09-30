@@ -14,6 +14,7 @@ import {
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
+import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
@@ -77,6 +78,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
     const [description, setDescription] = useState("");
     const [brandMaker, setBrandMaker] = useState("");
+    const [genericId, setGenericId] = useState<string | null>(null);
+    const [genericName, setGenericName] = useState("");
     const [abv, setAbv] = useState("");
 
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -152,7 +155,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     );
 
     const draftLoadedRef = useRef<string | null>(null);
-    const currentStateStr = JSON.stringify({ name, description, brandMaker, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
+    const currentStateStr = JSON.stringify({ name, description, brandMaker, genericId, genericName, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
     const cleanStateStrRef = useRef<string>(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
@@ -192,6 +195,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 setName(data.name || "");
                 setDescription(data.description || "");
                 setBrandMaker(data.brandMaker || "");
+                setGenericId(data.genericId || null);
+                setGenericName(data.genericName || "");
                 setAbv(data.abv || "");
                 setSelectedCategories(data.selectedCategories || []);
                 setRecipeItems(withoutSelfRecipeRefs(data.recipeItems || [], currentDraftId));
@@ -214,7 +219,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             setSaving(true);
             const safeRecipeItems = withoutSelfRecipeRefs(recipeItems, currentDraftId);
             if (safeRecipeItems.length !== recipeItems.length) setRecipeItems(safeRecipeItems);
-            const draftData = { name, description, brandMaker, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
+            const draftData = { name, description, brandMaker, genericId, genericName, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'ingredient', draftData });
             
             let updatedDraftId = currentDraftId;
@@ -338,6 +343,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     description: description.trim() || null,
                     item_type: 'ingredient',
                     brand_maker: capitalize(brandMaker) || null,
+                    generic_id: genericId,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -572,23 +578,17 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     />
 
                     <YStack gap="$3" marginTop="$2">
-                        <YStack gap="$2">
-                            <Label color="$color11">Brand / Maker</Label>
-                            <Input
-                                value={brandMaker}
-                                onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
-                                onBlur={() => setBrandMaker(capitalize(brandMaker))}
-                                placeholderTextColor="$color11"
-                                placeholder="e.g. Campari, Buffalo Trace"
-                                size="$4"
-                                backgroundColor="transparent"
-                                borderWidth={0}
-                                borderBottomWidth={1}
-                                borderColor="$borderColor"
-                                focusStyle={{ borderColor: "$color8" }}
-                                paddingHorizontal={0}
-                            />
-                        </YStack>
+                        <BrandAndKindFields
+                            brandMaker={brandMaker}
+                            onBrandMaker={setBrandMaker}
+                            generic={genericId ? { id: genericId, name: genericName } : null}
+                            onGeneric={(g) => {
+                                setGenericId(g?.id ?? null);
+                                setGenericName(g?.name ?? "");
+                            }}
+                            ingredients={mergedIngredients}
+                            excludeId={currentDraftId}
+                        />
 
                         <YStack gap="$2">
                             <Label color="$color11">ABV (%)</Label>

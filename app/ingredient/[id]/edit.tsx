@@ -16,6 +16,7 @@ import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { setItemImages } from "@/components/drink/drinkImages";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
+import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
@@ -80,6 +81,8 @@ export default function EditIngredientScreen({
     const [description, setDescription] = useState("");
     const [localImages, setLocalImages] = useState<{ id?: string; url: string; isNew?: boolean }[]>([]);
     const [brandMaker, setBrandMaker] = useState("");
+    const [genericId, setGenericId] = useState<string | null>(null);
+    const [genericName, setGenericName] = useState("");
     const [abv, setAbv] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const categoryPickerRef = useRef<BottomSheetModal>(null);
@@ -181,6 +184,8 @@ export default function EditIngredientScreen({
         setName(data.ingredient.name || "");
         setDescription(data.ingredient.description || "");
         setBrandMaker(data.ingredient.brand_maker || "");
+        setGenericId(data.ingredient.generic_id || null);
+        setGenericName(data.ingredient.generic?.name || "");
         setAbv(data.ingredient.abv?.toString() || "");
         setBarId(data.ingredient.bar_id || null);
         setHideFromSearch(data.ingredient.hide_from_search === true);
@@ -332,6 +337,7 @@ export default function EditIngredientScreen({
                     name: capitalize(name),
                     description: description.trim() || null,
                     brand_maker: capitalize(brandMaker) || null,
+                    generic_id: genericId,
                     abv: abv ? parseFloat(abv) : null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
@@ -541,23 +547,17 @@ export default function EditIngredientScreen({
                     />
 
                     <YStack gap="$3" marginTop="$2">
-                        <YStack gap="$2">
-                            <Label color="$color11">Brand / Maker</Label>
-                            <Input
-                                value={brandMaker}
-                                onChangeText={(val) => handleCapitalizedChange(val, brandMaker, setBrandMaker)}
-                                onBlur={() => setBrandMaker(capitalize(brandMaker))}
-                                placeholderTextColor="$color11"
-                                placeholder="e.g. Campari, Buffalo Trace"
-                                size="$4"
-                                backgroundColor="transparent"
-                                borderWidth={0}
-                                borderBottomWidth={1}
-                                borderColor="$borderColor"
-                                focusStyle={{ borderColor: "$color8" }}
-                                paddingHorizontal={0}
-                            />
-                        </YStack>
+                        <BrandAndKindFields
+                            brandMaker={brandMaker}
+                            onBrandMaker={setBrandMaker}
+                            generic={genericId ? { id: genericId, name: genericName } : null}
+                            onGeneric={(g) => {
+                                setGenericId(g?.id ?? null);
+                                setGenericName(g?.name ?? "");
+                            }}
+                            ingredients={pickerIngredients}
+                            excludeId={id}
+                        />
 
                         <YStack gap="$2">
                             <Label color="$color11">ABV (%)</Label>
