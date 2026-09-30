@@ -35,3 +35,15 @@ export function cacheActionOnAuth(
 export function resetUserQueries(client: QueryClient): Promise<void> {
   return client.resetQueries({ predicate: isUserQuery });
 }
+
+/**
+ * For reads a signed-out page shows (a public profile and its sections), by
+ * viewer: public while signed out, so opening the page signed out doesn't
+ * clear the fetch it's waiting on, and user-scoped when signed in, so what a
+ * signed-in viewer could read (their own private profile) is forgotten on
+ * sign-out. Put `key` last in the query key so the two never share a cache
+ * entry.
+ */
+export function viewerScoped(userId: string | null | undefined): { key: string; meta: { public: boolean } } {
+  return { key: userId ?? 'signed-out', meta: { public: !userId } };
+}

@@ -13,7 +13,6 @@
 
 - [docs/store-submission.md](docs/store-submission.md): App Store and Play submission notes
 - [lib/roles.ts](lib/roles.ts): role levels and what each can see
-- [lib/flags.ts](lib/flags.ts): the redesign flag
 - [constants/palette.ts](constants/palette.ts): colours until the token file lands
 - [supabase/migrations](supabase/migrations): schema and RLS
 - [supabase/functions](supabase/functions): edge functions (AI images, glassware ID, account deletion, venue web app)

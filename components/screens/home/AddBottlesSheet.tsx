@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { FlatList, Modal, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -6,6 +6,7 @@ import { Body, Button, Headline, PressableScale, Title, useDs, useGutter } from 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space, type } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
+import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 
 interface AddBottlesSheetProps {
   visible: boolean;
@@ -21,25 +22,33 @@ export function AddBottlesSheet({ visible, bottles, onShelf, onToggle, onClose }
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const searchRef = useRef<TextInput>(null);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q ? bottles.filter((b) => b.name.toLowerCase().includes(q)) : bottles;
   }, [bottles, query]);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+      onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef)}
+    >
       <View style={[styles.sheet, { backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
         <View style={[styles.head, { paddingHorizontal: gutter }]}>
           <Title>Add bottles</Title>
           <Button label="Done" variant="secondary" onPress={onClose} />
         </View>
         <TextInput
+          ref={searchRef}
           value={query}
           onChangeText={setQuery}
           placeholder="Search gin, Campari, lemons…"
           placeholderTextColor={ds.c.muted}
           autoCorrect={false}
-          autoFocus
+          autoFocus={MODAL_AUTOFOCUS}
           accessibilityLabel="Search ingredients"
           style={[styles.search, { marginHorizontal: gutter, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: ds.c.line }]}
         />

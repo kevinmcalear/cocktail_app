@@ -1,4 +1,4 @@
-import type { ImageAngle, ItemImageLink, ItemPicture } from './itemImages';
+import { toPicture, type ImageAngle, type ItemImageLink, type ItemPicture } from './itemImages';
 
 export type ServiceAngle = Exclude<ImageAngle, 'hero'>;
 
@@ -41,9 +41,7 @@ export function serviceShots(links: ItemImageLink[] | null | undefined): Service
   return SERVICE_ANGLES.map(({ angle, label, brief }) => {
     const mine = usable.filter((link) => link.angle === angle);
     const best = [...mine].sort((a, b) => rank(a) - rank(b) || Number(b.sort_order ?? 0) - Number(a.sort_order ?? 0))[0];
-    const picture: ItemPicture | null = best
-      ? { url: best.images!.url!, isSketch: !!best.is_generated, isOutdated: !best.is_generated && !!best.outdated_since }
-      : null;
+    const picture: ItemPicture | null = best ? toPicture(best) : null;
     const status: ShotStatus = !picture ? 'missing' : picture.isSketch ? 'sketch' : picture.isOutdated ? 'outdated' : 'photo';
     const photoLinkIds = mine.filter((link) => !link.is_generated && link.id).map((link) => link.id!);
     return { angle, label, brief, picture, status, photoLinkIds };
