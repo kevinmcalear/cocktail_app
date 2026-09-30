@@ -21,13 +21,13 @@ export type LeaveOut = 'citrus' | 'dairy' | 'bubbles' | 'garnish';
 export interface BatchLine {
   key: string;
   ingredient: string;
-  /** Scaled and formatted: "1.44 L", "3 dashes", "24 twists", or "" with no amount. */
+  /** Scaled and formatted: "1.44 L", "975 g", "3 dashes", "24 twists", or "" with no amount. */
   amount: string;
   /** A second reading, e.g. "24 dashes" under a dash line shown in ml. */
   sub: string | null;
   /** Null when it goes in the bottle. */
   leaveOut: LeaveOut | null;
-  /** Scaled volume in ml; null for counts, weights and missing amounts. */
+  /** Scaled volume in ml (weights by density); null for counts and missing amounts. */
   ml: number | null;
 }
 
@@ -59,6 +59,7 @@ const VOLUME_ML: Record<string, number> = {
   dash: 0.8, dashes: 0.8, drop: 0.05, drops: 0.05,
   bsp: 5, barspoon: 5, tsp: 5, tbsp: 15,
 };
+const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'wheel', 'slice', 'cube', 'wedge']);
 const PLURAL: Record<string, string> = { dash: 'dashes', pinch: 'pinches', leaf: 'leaves', each: 'each' };
@@ -102,6 +103,13 @@ export function formatVolume(ml: number, unit: VolumeUnit): string {
   return `${Math.round(ml * 2) / 2} ml`;
 }
 
+/** Weighed lines stay in weight, whatever the volume unit: "975 g", "1.95 kg". */
+export function formatWeight(g: number): string {
+  if (g >= 1000) return `${trim(g / 1000, 2)} kg`;
+  if (g < 10) return `${trim(g, 1)} g`;
+  return `${Math.round(g * 2) / 2} g`;
+}
+
 function formatCount(n: number, unit: string): string {
   const v = trim(n, 1);
   return `${v} ${n === 1 ? unit : (PLURAL[unit] ?? (unit.endsWith('s') ? unit : `${unit}s`))}`;
@@ -119,6 +127,8 @@ function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine 
   const base = { key: line.key, ingredient, leaveOut: out };
   if (line.value === null) return { ...base, amount: '', sub: null, ml: null };
   const n = line.value * serves;
+  const perG = GRAMS[u];
+  if (perG !== undefined) return { ...base, amount: formatWeight(n * perG), sub: null, ml: line.ml === null ? null : line.ml * serves };
   const perMl = VOLUME_ML[u];
   if (perMl === undefined) return { ...base, amount: formatCount(n, u || 'each'), sub: null, ml: null };
   const ml = n * perMl;
