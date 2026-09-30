@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 
@@ -88,8 +88,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: Pick<MenuDetail, 'id' 
           variant="secondary"
           onPress={() => {
             onClose();
-            // Settings › Public profile, from #137. Cast until that route is on this branch's typed routes.
-            router.push('/settings/profile' as Href);
+            router.push('/settings/profile');
           }}
         />
       ) : null}
