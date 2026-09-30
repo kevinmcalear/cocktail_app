@@ -70,7 +70,7 @@ export function DiscoverScreen() {
           area={area}
           onArea={setArea}
           drink={drink}
-          bottomInset={bottom - space.xl}
+          bottomInset={bottom}
           top={
             <GlassSurface style={styles.mapTop}>
               <View style={styles.flex}>

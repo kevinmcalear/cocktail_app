@@ -23,7 +23,7 @@ interface DiscoverMapPaneProps {
   mode: 'sheet' | 'side';
   /** Controls over the top of the map (phones: where, and back to the list). */
   top?: ReactNode;
-  /** Room for the tab bar under the sheet. */
+  /** The floating tab bar's height: the sheet runs behind it, so its content is padded by this much. */
   bottomInset?: number;
 }
 
@@ -158,13 +158,12 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
         {searchHere}
       </View>
       <BottomSheet
-        snapPoints={[layout.minTapTarget * 4, '50%', '88%']}
-        bottomInset={bottomInset}
+        snapPoints={[layout.minTapTarget * 4 + bottomInset, '50%', '88%']}
         backgroundStyle={{ backgroundColor: ds.c.surface }}
         handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
         accessibilityLabel="Results"
       >
-        <BottomSheetScrollView contentContainerStyle={styles.sheet}>
+        <BottomSheetScrollView contentContainerStyle={[styles.sheet, { paddingBottom: bottomInset }]}>
           {selected ? <SelectedBar pin={selected} onClose={() => setSelectedId(null)} /> : null}
           <Title role="heading">{title}</Title>
           {layers}
@@ -190,5 +189,5 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   cardActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
   score: { alignItems: 'flex-end' },
-  sheet: { paddingHorizontal: space.lg, paddingBottom: space.xxxl, gap: space.md },
+  sheet: { paddingHorizontal: space.lg, gap: space.md },
 });
