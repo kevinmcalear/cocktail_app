@@ -27,7 +27,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Back bar']);
+  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Back bar', 'Station']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 

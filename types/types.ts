@@ -101,6 +101,8 @@ export interface DatabaseRecipe {
 export interface DatabaseItem {
     id: string;
     name: string;
+    /** Ingredients: what this is a kind of ("Tanqueray" is a kind of "Gin"). */
+    generic_id?: string | null;
     item_type: EntityType;
     description: string | null;
     created_at: string;
