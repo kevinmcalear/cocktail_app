@@ -5,9 +5,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
+import { DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
+import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
+import { drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
@@ -20,6 +23,11 @@ interface DiscoverMapPaneProps {
   onArea: (area: Area) => void;
   /** The drink picked on Discover, for "Best Martini" pins. */
   drink: { id: string; name: string } | null;
+  /** Drinks at bars matching Discover's search and style, in the area: the default layer. */
+  results: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string };
+  /** The style or spirit picked; the phone sheet can change it. */
+  kind: string | null;
+  onKind: (kind: string | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
   mode: 'sheet' | 'side';
   /** Controls over the top of the map (phones: where, and back to the list). */
@@ -41,7 +49,9 @@ function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
             {pin.place || 'Bar'}
           </Caption>
         </View>
-        {pin.score === null ? (
+        {pin.drinks ? (
+          <Caption tone="muted">{drinkCount(pin.drinks)}</Caption>
+        ) : pin.score === null ? (
           <Caption tone="muted">{pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
         ) : (
           <View style={styles.score}>
@@ -65,19 +75,20 @@ function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
  * area, drink or layer changes, but never after "Search this area", so the
  * view the person chose stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
   const ds = useDs();
-  const [layer, setLayer] = useState<'drink' | 'bars'>('drink');
-  const byDrink = layer === 'drink' && !!drink;
+  const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
+  const byDrinks = layer === 'drinks';
+  const byDrink = layer === 'best' && !!drink;
   const drinkRows = useDiscoverRankings(byDrink ? drink.id : null, area);
   const barRows = useTopBars(area);
-  const rows = byDrink ? drinkRows : barRows;
-  const pins = pinsFrom(rows.data);
+  const rows = byDrinks ? { data: undefined, isLoading: results.isLoading } : byDrink ? drinkRows : barRows;
+  const pins = byDrinks ? drinkPins(results.drinks, results.barsById) : pinsFrom(rows.data);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = pins.find((p) => p.id === selectedId) ?? null;
 
   // Refit when what's shown changes, not when the person searched the view they're on.
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), byDrink ? drink.id : 'bars']);
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : kind, results.title]);
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   if (fitKey !== null && fit?.key !== fitKey && !rows.isLoading) {
@@ -93,13 +104,14 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
     onArea(areaFromViewport(v));
   };
 
-  const title = `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
-  const layers = drink ? (
+  const title = byDrinks ? results.title : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
+  const layers = (
     <View role="radiogroup" accessibilityLabel="Show on the map" style={styles.chips}>
-      <Chip label={`Best ${drink.name}`} selected={byDrink} onPress={() => setLayer('drink')} />
-      <Chip label="Top bars" selected={!byDrink} onPress={() => setLayer('bars')} />
+      <Chip label="Drinks" selected={byDrinks} onPress={() => setLayer('drinks')} />
+      {drink ? <Chip label={`Best ${drink.name}`} selected={byDrink} onPress={() => setLayer('best')} /> : null}
+      <Chip label="Top bars" selected={layer === 'bars'} onPress={() => setLayer('bars')} />
     </View>
-  ) : null;
+  );
   const searchHere = offer ? (
     <View style={styles.center}>
       <GlassButton accessibilityLabel="Search this area" label="Search this area" icon="magnifyingglass" onPress={() => searchArea(offer)} />
@@ -108,8 +120,16 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
 
   const ranked = rows.data?.ranked ?? [];
   const early = rows.data?.early ?? [];
+  // A tapped bar narrows the drinks to its own.
+  const barDrinks = selected ? results.drinks.filter((d) => d.barId === selected.id) : results.drinks;
   const list = rows.isLoading ? (
     <ListNote>Loading…</ListNote>
+  ) : byDrinks ? (
+    barDrinks.length ? (
+      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} />
+    ) : (
+      <ListNote>{`No drinks ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
+    )
   ) : ranked.length ? (
     <AreaRankList rows={ranked} scoreDetail={byDrink ? undefined : (r) => peopleCount(r.rankers)} />
   ) : early.length ? (
@@ -139,7 +159,7 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
       <View style={styles.fill}>
         {map}
         <View pointerEvents="box-none" style={[styles.overlay, styles.overlayTop]}>
-          {layers ? <GlassSurface style={styles.glassRow}>{layers}</GlassSurface> : null}
+          <GlassSurface style={styles.glassRow}>{layers}</GlassSurface>
           {searchHere}
         </View>
         {selected ? (
@@ -168,6 +188,7 @@ export function DiscoverMapPane({ area, onArea, drink, mode, top, bottomInset = 
           {selected ? <SelectedBar pin={selected} onClose={() => setSelectedId(null)} /> : null}
           <Title role="heading">{title}</Title>
           {layers}
+          {byDrinks ? <DiscoverKinds kind={kind} onChange={onKind} /> : null}
           {list}
           <MapCredit />
         </BottomSheetScrollView>
