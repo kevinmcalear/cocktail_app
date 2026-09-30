@@ -5,6 +5,8 @@ assert.equal(DEFAULT_UNIT, 'ml');
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'ml'));
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'oz'));
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'dash'));
+assert.equal(RECIPE_UNITS.find((u) => u.value === 'g')?.group, 'weight');
+assert.equal(isKnownUnit('kg'), true);
 assert.equal(unitLabel('bsp'), 'barspoon');
 assert.equal(unitLabel('ml'), 'ml');
 assert.equal(unitLabel(null), 'ml');

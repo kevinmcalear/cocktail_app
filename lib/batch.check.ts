@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume, isGarnishUnit, leaveOutFor } from './batch';
+import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, isGarnishUnit, leaveOutFor } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -56,6 +56,22 @@ const p = buildBatch(paloma, ['Build'], 12);
 assert.deepEqual(p.lines.map((l) => l.leaveOut), [null, 'citrus', 'bubbles']);
 assert.equal(p.total, '600 ml');
 assert.match(p.note, /Top with Grapefruit soda to order; never batch the bubbles/);
+
+// Weighed specs (Ethyl imports): amounts stay in grams, volume counts toward the bottle.
+const grow = (id: string, name: string, amount: number, unit: string, abv: number | null = null) => ({ ...row(id, name, amount, unit), display_ingredient: { id, name, abv } });
+const weighedMartini = specLines([grow('gin', 'Gin', 57, 'g', 40), grow('dry', 'Dry vermouth', 15, 'g', 17), grow('syr', 'Sugar syrup', 2.46, 'g')]);
+const wm = buildBatch(weighedMartini, ['Stir'], 24);
+assert.deepEqual(wm.lines.map((l) => l.amount), ['1.37 kg', '360 g', '59 g'], 'scaled in grams, not as counts');
+assert.deepEqual(buildBatch(weighedMartini, ['Stir'], 24, { unit: 'oz' }).lines.map((l) => l.amount), ['1.37 kg', '360 g', '59 g'], 'weights ignore the ml/oz toggle');
+assert.ok(Math.abs(wm.lines[0].ml! - 1440) < 1e-9, '1.37 kg of gin is 1.44 L');
+assert.equal(wm.water?.amount, '369.5 ml', '20% of 1440 + 360 + 48 ml');
+assert.equal(wm.total, '2.22 L');
+assert.equal(wm.bottles, 3);
+const weighedSour = buildBatch(specLines([grow('rum', 'White rum', 28.5, 'g', 40), grow('lime', 'Lime juice', 0.0208, 'kg')]), ['Shake'], 10);
+assert.deepEqual(weighedSour.lines.map((l) => [l.amount, l.leaveOut]), [['285 g', null], ['208 g', 'citrus']]);
+assert.equal(weighedSour.total, '300 ml', 'only the rum goes in the bottle');
+assert.equal(formatWeight(4.25), '4.3 g');
+assert.equal(formatWeight(32.5 * 30), '975 g');
 
 // Egg, garnish counts, cordials and missing amounts.
 const sour = specLines([

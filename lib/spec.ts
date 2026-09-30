@@ -21,7 +21,7 @@ export interface PresentationRecipe {
   /** In the batch (false) or added at the station (true); null when undecided or masked with the amounts. */
   at_service?: boolean | null;
   /** The ingredient this role may see (brand or generic), embedded by the query; masked to null otherwise. */
-  display_ingredient?: { id?: string; name?: string } | null;
+  display_ingredient?: { id?: string; name?: string; abv?: number | null } | null;
 }
 
 export interface SpecLine {
@@ -33,7 +33,7 @@ export interface SpecLine {
   ingredientId: string | null;
   note: string | null;
   optional: boolean;
-  /** Amount in ml, for the ratio bar; null when it can't be converted. */
+  /** Amount in ml, for the ratio bar and batch bottle; weights convert by density. Null when it can't be converted. */
   ml: number | null;
   /** The raw number and unit (for scaling a batch); null when locked or missing. */
   value: number | null;
@@ -54,14 +54,28 @@ const ML_PER_UNIT: Record<string, number> = {
   tbsp: 15,
 };
 
-function toMl(amount: number, unit: string | null | undefined): number | null {
-  const per = unit ? ML_PER_UNIT[unit.trim().toLowerCase()] : undefined;
+const G_PER_UNIT: Record<string, number> = { g: 1, kg: 1000 };
+
+// ponytail: rough densities (g/ml) so weighed specs land on the ratio bar and
+// in a batch bottle. Upgrade path: a density column on the ingredient.
+export function gramsPerMl(name: string | null | undefined, abv: number | null | undefined): number {
+  if (abv != null && abv >= 30) return 0.95;
+  if (/syrup|cordial/i.test(name ?? '')) return 1.23;
+  if (/juice/i.test(name ?? '')) return 1.04;
+  return 1;
+}
+
+function toMl(amount: number, unit: string | null | undefined, density: number): number | null {
+  const u = unit?.trim().toLowerCase() ?? '';
+  const grams = G_PER_UNIT[u];
+  if (grams) return (amount * grams) / density;
+  const per = ML_PER_UNIT[u];
   return per ? amount * per : null;
 }
 
 export function specLines(recipes: PresentationRecipe[] | null | undefined): SpecLine[] {
   return sortRecipesByOrder([...(recipes ?? [])]).map((r, i) => {
-    const resolved = resolvePresentationIngredient(r) as { id?: string; name?: string } | null;
+    const resolved = resolvePresentationIngredient(r) as { id?: string; name?: string; abv?: number | null } | null;
     const n = r.amount === null || r.amount === undefined || r.amount === '' ? null : Number(r.amount);
     const amount = n === null || Number.isNaN(n) ? null : [String(r.amount), r.unit].filter(Boolean).join(' ');
     return {
@@ -71,7 +85,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       ingredientId: resolved?.id ?? r.display_ingredient_id ?? null,
       note: r.preparation_notes?.trim() || null,
       optional: !!r.is_optional,
-      ml: n === null || Number.isNaN(n) ? null : toMl(n, r.unit),
+      ml: n === null || Number.isNaN(n) ? null : toMl(n, r.unit, gramsPerMl(resolved?.name, resolved?.abv)),
       value: n === null || Number.isNaN(n) ? null : n,
       unit: r.unit?.trim() || null,
       atService: typeof r.at_service === 'boolean' ? r.at_service : null,
