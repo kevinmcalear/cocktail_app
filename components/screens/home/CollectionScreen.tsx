@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
+import { Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -10,13 +10,15 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 
+import { CollectionCollected } from './CollectionCollected';
 import { CollectionMenus } from './CollectionMenus';
 
 /**
- * Collection, in home mode: the menus you build for home, and the drinks
- * you've saved with the heart on a drink page. ponytail: saves are per device (useFavorites) and there are no bar
- * releases yet; both move to the collections tables in the publishing
- * proposal, and releases get their own section here.
+ * Collection, in home mode: the menus you build for home, what you collected
+ * from bars (releases, drinks, and past drinks you keep as memories), and the
+ * drinks you hearted. ponytail: hearts are still per device (useFavorites)
+ * and separate from collecting; fold them in once collecting covers every
+ * drink you can read, not only published ones.
  */
 export function CollectionScreen() {
   const ds = useDs();
@@ -24,53 +26,46 @@ export function CollectionScreen() {
   const bottom = useTabBarInset();
   const { favorites } = useFavorites();
   const bar = useMyBar();
-  const saved = useMemo(() => {
+  const hearted = useMemo(() => {
     const ids = new Set(favorites);
     return bar.drinks.filter((d) => ids.has(d.id));
   }, [favorites, bar.drinks]);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FlatList
-        data={saved}
-        keyExtractor={(d) => d.id}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <ScreenHeaderSpacer />
-            <Display>Collection</Display>
-            <CollectionMenus canMakeIds={bar.canMakeIds} />
-            <View style={styles.drinks}>
-              <Headline role="heading">Drinks</Headline>
-              <Caption tone="muted">{saved.length ? `${saved.length} saved` : 'Drinks you save, all in one place'}</Caption>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}>
+        <View style={styles.content}>
+          <ScreenHeaderSpacer />
+          <Display>Collection</Display>
+          <CollectionMenus canMakeIds={bar.canMakeIds} />
+          <CollectionCollected />
+          {hearted.length ? (
+            <View style={styles.section}>
+              <Headline role="heading">Hearted</Headline>
+              <Caption tone="muted">{`${hearted.length} saved with the heart on a drink page`}</Caption>
+              <View role="list">
+                {hearted.map((item) => (
+                  <View role="listitem" key={item.id}>
+                    <DrinkRow
+                      name={item.name}
+                      href={itemHref('Cocktail', item.id)}
+                      imageUrl={item.imageUrl}
+                      glass={item.glass}
+                      caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
+                    />
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        }
-        ListEmptyComponent={
-          bar.isLoading ? null : (
-            <View style={styles.empty}>
-              <Headline>Nothing saved yet</Headline>
-              <Body tone="muted">Tap the heart on any drink to keep it here.</Body>
-            </View>
-          )
-        }
-        renderItem={({ item }) => (
-          <DrinkRow
-            name={item.name}
-            href={itemHref('Cocktail', item.id)}
-            imageUrl={item.imageUrl}
-            glass={item.glass}
-            caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
-          />
-        )}
-      />
+          ) : null}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { gap: space.xs, paddingBottom: space.lg },
-  drinks: { gap: space.xs, paddingTop: space.xl },
-  empty: { gap: space.sm, paddingVertical: space.xl },
+  content: { gap: space.xl, paddingBottom: space.lg },
+  section: { gap: space.xs },
 });

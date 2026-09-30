@@ -4,7 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/ctx/AuthContext';
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { uploadMenuCover } from '@/hooks/useMenuEditor';
-import { MENU_DRINK_COLUMNS, menuKeys, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { fetchPublished } from '@/hooks/usePublished';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
@@ -48,18 +49,32 @@ export function useSaveMenu(menuId: string) {
   });
 }
 
+/** A home menu's night: the date and how many are coming. */
+export interface HomeNight {
+  menuDate: string | null;
+  guestCount: number | null;
+}
+
 /**
- * A new draft menu: a venue's (or yours, with no venue), with its first
- * layout. Returns the new menu's id.
+ * A new draft menu: a venue's (or yours, with no venue, maybe with a date and
+ * a guest count), with its first layout. Returns the new menu's id.
  */
 export function useCreateMenu() {
   const invalidate = useInvalidateMenus();
   const userId = useAuth().user?.id ?? null;
   return useMutation({
-    mutationFn: async ({ barId, layout }: { barId: string | null; layout: MenuLayout }): Promise<string> => {
+    mutationFn: async ({ barId, layout, night }: { barId: string | null; layout: MenuLayout; night?: HomeNight }): Promise<string> => {
       const { data, error } = await supabase
         .from('menus')
-        .insert({ name: layout.name.trim(), bar_id: barId, created_by: userId, cover_url: layout.coverUrl, cover_position: layout.coverPosition })
+        .insert({
+          name: layout.name.trim(),
+          bar_id: barId,
+          created_by: userId,
+          cover_url: layout.coverUrl,
+          cover_position: layout.coverPosition,
+          menu_date: night?.menuDate ?? null,
+          guest_count: night?.guestCount ?? null,
+        })
         .select('id')
         .single();
       if (error) throw readable(error);
@@ -99,6 +114,19 @@ export function useEndMenu() {
   const invalidate = useInvalidateMenus();
   return useMutation({
     mutationFn: (menuId: string) => rpc('end_menu', { p_menu_id: menuId }),
+    onSuccess: invalidate,
+    onError: () => {},
+  });
+}
+
+/** Changes a home menu's date or guest count. */
+export function useSetHomeNight() {
+  const invalidate = useInvalidateMenus();
+  return useMutation({
+    mutationFn: async ({ menuId, night }: { menuId: string; night: HomeNight }) => {
+      const { error } = await supabase.from('menus').update({ menu_date: night.menuDate, guest_count: night.guestCount }).eq('id', menuId);
+      if (error) throw readable(error);
+    },
     onSuccess: invalidate,
     onError: () => {},
   });
@@ -190,8 +218,9 @@ export function useMenuLayouts(barId: string | null) {
 }
 
 /**
- * The drinks a menu can use: the venue's cocktails, beer and wine (or yours
- * plus the shared classics, for a menu with no venue), newest first.
+ * The drinks a menu can use: the venue's cocktails, beer and wine (or, for a
+ * menu with no venue, the drinks you collected from bars, then yours and the
+ * shared classics), newest first.
  */
 export function useMenuLibrary(barId: string | null | undefined, enabled = true) {
   const userId = useAuth().user?.id ?? null;
@@ -212,7 +241,14 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
         ? await query.eq('bar_id', barId)
         : await query.is('bar_id', null).or(`created_by.eq.${userId},is_catalog.eq.true`);
       if (error) throw error;
-      return ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
+      const own = ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
+      if (barId) return own;
+      // At home, the drinks you collected from bars too, while they're published.
+      const collected = await supabase.from('collected_items').select('item_id').not('item_id', 'is', null).order('collected_at', { ascending: false });
+      if (collected.error) throw collected.error;
+      const ids = collected.data.map((c) => c.item_id as string).filter((id) => !own.some((d) => d.id === id));
+      const fromBars = (await fetchPublished(ids)).map(publishedMenuDrink).filter((d): d is MenuDrink => !!d);
+      return [...fromBars, ...own];
     },
   });
 }

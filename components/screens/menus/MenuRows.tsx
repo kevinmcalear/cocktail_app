@@ -5,13 +5,14 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { menuDateLine, menuStatus, plural } from '@/lib/menus';
+import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
 function metaLine(menu: MenuSummary, now: number): string {
-  return [plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now)].filter(Boolean).join(' · ');
+  // A home menu has a night instead of dates on a venue's calendar.
+  return [homeMenuLine(menu, now), plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now)].filter(Boolean).join(' · ');
 }
 
 /** A menu that's on now: its cover, name, and how long it's been on. */

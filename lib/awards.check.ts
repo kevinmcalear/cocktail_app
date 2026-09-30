@@ -1,7 +1,7 @@
 // Checks for lib/awards.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { awardLines, groupAwards, sortAwards, type Award } from './awards';
+import { awardInitials, awardLines, groupAwards, sortAwards, type Award } from './awards';
 
 const W50 = "The World's 50 Best Bars";
 
@@ -76,3 +76,12 @@ assert.equal(groups[2].best, null);
 assert.deepEqual(groupAwards([]), []);
 
 console.log('awards checks passed');
+
+assert.equal(awardInitials('James Beard Awards'), 'JBA');
+assert.equal(awardInitials('The Good Food Guide'), 'GFG');
+assert.equal(awardInitials("Gourmet Traveller's Bar of the Year"), 'GTB');
+
+assert.deepEqual(awardLines({ award: 'Food & Wine Global Tastemakers', year: 2025, position: 3, title: 'Top U.S. Bars' }), {
+  headline: 'No. 3',
+  detail: 'Food & Wine Global Tastemakers 2025 · Top U.S. Bars',
+});

@@ -12,14 +12,24 @@ import { TasteQuestions } from './TasteQuestions';
 
 const CARD_WIDTH = 168;
 
+interface RailCardProps {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  badge: string;
+  reason: string;
+  /** Where it opens: the drink page unless it says otherwise. */
+  href?: string;
+}
+
 /** One drink in a rail: picture, name, and a line on why it's here. */
-function RailCard({ id, name, imageUrl, badge, reason }: { id: string; name: string; imageUrl: string | null; badge: string; reason: string }) {
+export function RailCard({ id, name, imageUrl, badge, reason, href }: RailCardProps) {
   const router = useRouter();
   return (
     <PressableScale
       role="link"
       accessibilityLabel={`${name}. ${badge}. ${reason}`}
-      onPress={() => router.push(itemHref('Cocktail', id) as never)}
+      onPress={() => router.push((href ?? itemHref('Cocktail', id)) as never)}
       style={styles.card}
     >
       <DrinkImage source={imageUrl} accessibilityLabel={name} hideTag />
@@ -32,7 +42,7 @@ function RailCard({ id, name, imageUrl, badge, reason }: { id: string; name: str
   );
 }
 
-function Rail({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+export function Rail({ title, note, children }: { title: string; note: string; children: ReactNode }) {
   return (
     <View style={styles.section}>
       <Title role="heading">{title}</Title>

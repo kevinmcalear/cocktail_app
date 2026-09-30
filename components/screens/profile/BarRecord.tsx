@@ -1,11 +1,14 @@
+import { Image } from 'expo-image';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
-import { groupAwards } from '@/lib/awards';
+import { awardInitials, groupAwards } from '@/lib/awards';
 import { menuDate, type MenuEdition } from '@/lib/menuEditions';
+
+import { AWARD_LOGOS } from './awardLogos';
 
 const FIRST_MENUS = 6;
 
@@ -31,7 +34,16 @@ export function Awards({ profileId }: { profileId: string }) {
       <View role="list">
         {shown.map((g) => (
           <View key={g.award} role="listitem" style={[styles.award, { borderBottomColor: ds.c.line }]}>
-            <View style={styles.head}>
+            <View style={styles.awardHead}>
+              <View style={[styles.logo, { backgroundColor: ds.c.paper, borderColor: ds.c.line }]} aria-hidden>
+                {AWARD_LOGOS[g.award] ? (
+                  <Image source={AWARD_LOGOS[g.award]} style={styles.logoImg} contentFit="contain" accessible={false} />
+                ) : (
+                  <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
+                    {awardInitials(g.award)}
+                  </DsText>
+                )}
+              </View>
               <DsText variant="headline" style={styles.flex}>
                 {g.award}
               </DsText>
@@ -122,6 +134,9 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   award: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  awardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  logoImg: { width: '100%', height: '100%' },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },

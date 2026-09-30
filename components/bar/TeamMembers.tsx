@@ -5,6 +5,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
 import { useBarInvites, useRemoveInvite } from '@/hooks/useBarInvites';
 import { pressedProps } from '@/lib/a11yState';
+import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 
@@ -13,9 +14,7 @@ const ADMIN = 40;
 /** add_user_to_bar_by_email's errors in words. Its own messages (P0001) are written for people. */
 function roleError(error: unknown): string | null {
   if (!error) return null;
-  const e = error as { code?: string; message?: string };
-  if (e.code === 'P0001' && e.message) return e.message;
-  return "Couldn't save that. Check your connection and try again.";
+  return plainDbMessage(error) ?? "Couldn't save that. Check your connection and try again.";
 }
 
 function RolePills({ label, value, choices, disabled, onPick }: {
