@@ -67,12 +67,12 @@ export function formatCredit(artist, license) {
   return `${a.slice(0, Math.max(1, 120 - suffix.length)).trimEnd()}${suffix}`.slice(0, 120);
 }
 
-export function productTokens(name, maker = null) {
+export function productTokens(name, maker = '') {
   const raw = `${maker || ''} ${name || ''}`.toLowerCase().split(/[^a-z0-9]+/);
   return [...new Set(raw.filter((w) => w.length >= 4 && !STOP.has(w)))];
 }
 
-export function titleMatchesProduct(fileTitle, name, maker = null) {
+export function titleMatchesProduct(fileTitle, name, maker = '') {
   const title = String(fileTitle || '').toLowerCase();
   const tokens = productTokens(name, maker);
   return tokens.length > 0 && tokens.some((t) => title.includes(t));
