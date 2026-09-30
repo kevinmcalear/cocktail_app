@@ -1,5 +1,5 @@
-// Spirited Awards (2016-2026) and James Beard bar awards
-// (20260930940000_spirited_and_beard_awards.sql): the awards land on the
+// Spirited Awards (2016-2026), James Beard bar awards and CLASS Bar Awards
+// (20260930940000_bar_awards.sql): the awards land on the
 // right bars and people, signed-out visitors see them, and running the seed
 // again adds nothing.
 //
@@ -21,7 +21,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Spirited Awards tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20260930940000_spirited_and_beard_awards.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20260930940000_bar_awards.sql', import.meta.url);
 const AWARD = 'Tales of the Cocktail Spirited Awards';
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
@@ -50,6 +50,18 @@ describe('Spirited Awards', () => {
          AND a.year IN (2012, 2024, 2025) ORDER BY a.year`
     );
     assert.deepEqual(rows.map((r) => `${r.year} ${r.handle}`), ['2012 pdtnyc', '2024 jewelnola', '2025 barkumiko']);
+  });
+
+  test('CLASS Bar of the Year goes to the right bars, in the years it was given', async () => {
+    const { rows } = await db.query(
+      `SELECT a.year, p.handle FROM public.profile_awards a JOIN public.profiles p ON p.id = a.profile_id
+       WHERE a.award = 'CLASS Bar Awards' AND a.title = 'Bar of the Year' AND a.year >= 2024 ORDER BY a.year`
+    );
+    assert.deepEqual(rows.map((r) => `${r.year} ${r.handle}`), ['2024 satans_whiskers', '2025 satans_whiskers', '2026 satans_whiskers']);
+    const { rows: years } = await db.query(
+      "SELECT DISTINCT year FROM public.profile_awards WHERE award = 'CLASS Bar Awards' ORDER BY year"
+    );
+    assert.deepEqual(years.map((r) => r.year), [2017, 2018, 2019, 2020, 2022, 2023, 2024, 2025, 2026]);
   });
 
   test('every year from 2016 has Spirited Awards winners, with a source', async () => {

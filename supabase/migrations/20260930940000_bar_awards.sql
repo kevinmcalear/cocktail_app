@@ -1,15 +1,20 @@
--- Bar awards: the Tales of the Cocktail Spirited Awards (2016-2026) and the
--- James Beard Awards' bar categories (Outstanding Bar Program from 2012,
--- Outstanding Bar, Best New Bar and Outstanding Professional in Cocktail
--- Service), every award won by a bar or a bartender, on the bar's or the
--- person's profile.
+-- Bar awards, on the bar's or the person's profile:
+--   the Tales of the Cocktail Spirited Awards (2016-2026), every award won by a
+--   bar or a bartender;
+--   the James Beard Awards' bar categories (Outstanding Bar Program from 2012,
+--   Outstanding Bar, Best New Bar, Outstanding Professional in Cocktail
+--   Service);
+--   the CLASS Bar Awards (UK; 2017-2020 and 2022-2026, none in 2016 or 2021),
+--   every award won by a bar or a bar person. Awards to companies and
+--   chains are left out, and staff awards (Emerging Bartender, Front of House,
+--   Bar Back) go on the person or their bar only when either is here.
 --
--- 1. Winning bars that weren't here yet (41), as public, unclaimed venue
+-- 1. Winning bars that weren't here yet (64), as public, unclaimed venue
 --    profiles, same rules as the earlier seeds: a bar already here (same name
 --    within 150 m, or the handle taken) is left alone. Closed bars are kept
 --    and marked closed (profiles.is_closed, from the decade seed), with their
 --    last address.
--- 2. Winners who weren't here yet (26), as public, unclaimed person
+-- 2. Winners who weren't here yet (40), as public, unclaimed person
 --    profiles: professional details only, in our words, no photos, same as
 --    the bar people seeds. People who have died are left out.
 -- 3. The awards, as Tales words each category that year, with the winners
@@ -74,7 +79,30 @@ FROM (VALUES
     ('julephou', 'Julep', 'Alba Huerta opened Julep in November 2014 in a century-old building on Washington Avenue, building the bar around the drinking history of the American South and juleps in particular. Its recipes fill her 2018 book Julep: Southern Cocktails Refashioned, and it was Houston''s first national James Beard winner. Outstanding Bar Program at the 2022 James Beard Awards.', 'https://www.julephouston.com/', 'Washington Avenue', '1919 Washington Avenue', '77007', 'Houston', 'Texas', 'US', 29.76753, -95.3779, false, NULL),
     ('loma_bar', 'Loma', 'Classic cocktail bar in Providence''s Federal Hill opened in late 2024 by bartender Leishla Maldonado with brothers Osman and Yefri Cortave. The small room is styled like a 1960s-70s Latin American living room with Latin jazz and boleros, pairing numbered house cocktails with monthly featured spirits and a strong zero-proof list. Best New Bar at the 2026 James Beard Awards.', 'https://www.lomabar.com/', 'Federal Hill', '112 Spruce Street', '02903', 'Providence', 'Rhode Island', 'US', 41.82428, -71.4276, false, NULL),
     ('scotchlodge', 'Scotch Lodge', 'Tommy Klus, who built the collection at Multnomah Whiskey Library, opened this 48-seat subterranean bar in May 2019 in the former Biwa space in Portland''s Buckman neighborhood. Billed as a cocktail bar with a scotch problem, it pours around 300 whiskies, many as half pours, beside seasonal cocktails and chef Tim Artale''s food. Outstanding Bar at the 2026 James Beard Awards.', 'https://www.scotchlodge.com/', 'Buckman', '215 SE 9th Ave, Suite 102', '97214', 'Portland', 'Oregon', 'US', 45.52135, -122.65695, false, NULL),
-    ('violethourchicago', 'The Violet Hour', 'Toby Maloney and partners from One Off Hospitality opened The Violet Hour in Wicker Park in 2007 behind an unmarked door in an ever-changing mural facade, with candlelit salons and a long marble bar. It helped start Chicago''s craft cocktail boom, introduced the Juliet & Romeo, Art of Choke and Paper Plane, and closed in June 2025 after damage to its building. Outstanding Bar Program at the 2015 James Beard Awards.', 'https://www.theviolethour.com/', 'Wicker Park', '1520 N Damen Ave', '60622', 'Chicago', 'Illinois', 'US', 41.90897, -87.67782, true, 2025)
+    ('violethourchicago', 'The Violet Hour', 'Toby Maloney and partners from One Off Hospitality opened The Violet Hour in Wicker Park in 2007 behind an unmarked door in an ever-changing mural facade, with candlelit salons and a long marble bar. It helped start Chicago''s craft cocktail boom, introduced the Juliet & Romeo, Art of Choke and Paper Plane, and closed in June 2025 after damage to its building. Outstanding Bar Program at the 2015 James Beard Awards.', 'https://www.theviolethour.com/', 'Wicker Park', '1520 N Damen Ave', '60622', 'Chicago', 'Illinois', 'US', 41.90897, -87.67782, true, 2025),
+    ('barglue', 'Bar Glue', 'Small, owner-run cocktail bar in Anchor Courtyard on Liverpool''s Albert Dock, opened in late August 2024 by Nathan Price, Mike Bower and Hatt Bower on the site of the Burnt Milk Hotel, where Price and Mike Bower had been bar manager and general manager. Built around community and hospitality, it pairs approachable drinks with rotovap, clarification and force-carbonation work and hosts guest bars from around the world. New Bar of the Year at the 2025 CLASS Bar Awards.', 'https://www.barglue.com/', 'Royal Albert Dock', '34 Anchor Courtyard, Albert Dock', 'L3 4AS', 'Liverpool', 'England', 'GB', 53.39948, -2.99087, false, NULL),
+    ('belowstairsbar', 'Below Stairs', 'Table-service cocktail bar opened in late 2017 by Manacháin (Mannie) Monaghan in the basement of Consort House on South Parade, Leeds. Its menus build each drink around a feeling, memory or sensory idea, and sustainability runs through the business, from sourcing and energy to waste, with the team giving talks on it to other bars. Sustainable Practices Award at the 2025 CLASS Bar Awards.', 'https://www.belowstairsbar.com/', 'City Centre', 'Consort House, 12 South Parade', 'LS1 5QS', 'Leeds', 'England', 'GB', 53.79889, -1.5479, false, NULL),
+    ('blinkerbar', 'Blinker', 'Walk-in cocktail bar on Spring Gardens at the top of King Street, opened in May 2022 by Dan Berger, formerly head of bars at The Ned and bars manager for the Gordon Ramsay Group. Named after the forgotten rye, grapefruit and raspberry classic, it runs a monthly menu built on four in-season British flavours alongside Martini and Old Fashioned lists and small-format cocktails. Bar Employer of the Year at the 2025 CLASS Bar Awards.', 'https://www.blinkerbar.co.uk/', 'City Centre', '64-72 Spring Gardens', 'M2 2BQ', 'Manchester', 'England', 'GB', 53.47989, -2.24131, false, NULL),
+    ('cahootslondon', 'Cahoots', 'Immersive Soho cocktail bar from Inception Group beneath Kingly Court, themed as a forgotten Underground station used as a 1940s air raid shelter, with a replica tube carriage, live swing and bartenders in braces. Its wartime-themed list is presented as black market hooch, and the brand has since added a ground-floor Ticket Hall pub and a Postal Office bar in Borough Yards. Social Media Presence of the Year at the 2020 CLASS Bar Awards.', 'https://www.cahoots.co.uk/underground/', 'Soho', '13 Kingly Court, Carnaby', 'W1B 5PW', 'London', 'England', 'GB', 51.51244, -0.13852, false, NULL),
+    ('crazypedros', 'Crazy Pedro''s', 'Late-night pizza and tequila bar on Bridge Street, dreamed up by Lyndon Higginson and run by the team behind Liars Club, with a second site on Short Street in the Northern Quarter. Both open until 4am, serving slices with left-field toppings such as a hot dog pizza, frozen and spicy Margaritas, and what it bills as Manchester''s largest mezcal and tequila selection. Social Media Presence of the Year at the 2019 CLASS Bar Awards.', 'https://crazypedros.co.uk/', 'City Centre', '55-57 Bridge Street', 'M3 3BQ', 'Manchester', 'England', 'GB', 53.48127, -2.24983, false, NULL),
+    ('gunghobar', 'Gungho!', 'Neon-lit cocktail bar on Preston Street, opened in December 2017 by bartender Julien Barnett with a near zero-waste aim, built from reclaimed timber and scaffolding. It replaced imported citrus and egg white with ''hacked'' apple-based juices and a resin-thickened foam, foraged locally, and split its list into revised disco drinks, seasonal cocktails and plant-based ''Apothecary'' sodas. Sustainable Practices Award at the 2024 CLASS Bar Awards.', 'https://www.instagram.com/gunghobar/', 'Preston Street', '36 Preston Street', 'BN1 2HP', 'Brighton', 'England', 'GB', 50.82377, -0.15104, false, NULL),
+    ('heypalu', 'Hey Palu', 'Italian aperitivo bar on Bread Street, founded in 2019 by husband-and-wife Alex Palumbo and Rachel Bailey Palumbo and inspired by Alex''s Italian upbringing. Negronis, classic and spun, are the main draw, alongside ingredient-led twists on modern classics and what the bar calls the largest collection of amaro outside Italy. Best Bar in Scotland & Northern Ireland at the 2023 CLASS Bar Awards.', 'https://www.heypalu.com/', 'Old Town', '49 Bread Street', 'EH3 9AH', 'Edinburgh', 'Scotland', 'GB', 55.94592, -3.20282, false, NULL),
+    ('kikis.lounge', 'Kiki Lounge', 'Tropical cocktail bar in Douglas created during the pandemic by Jamie Lewis and Drew Fleming as an escape from the island''s closed borders, in the spirit of Trader Vic''s and Don the Beachcomber. It moved to North Quay in 2023 and runs on a ''Local First'' policy: Manx suppliers, house rum delivered in refillable jerry cans, and citrus husks, banana skins and pineapple waste turned into syrups and cordials. Sustainability and Community Impact Award at the 2026 CLASS Bar Awards.', 'https://www.kikis.im/', 'North Quay', '32 North Quay', 'IM1 4LB', 'Douglas', NULL, 'IM', 54.14785, -4.47984, false, NULL),
+    ('mrfoggsgb', 'Mr Fogg''s Residence', 'Mayfair cocktail bar opened by Inception Group in May 2013, tucked down Bruton Lane behind Berkeley Square and imagined as the Victorian home of Jules Verne''s globetrotter Phileas Fogg. Its wood-panelled Drawing Room is crammed with curios from his travels, the list is split by the rooms of his house, and it launched a family of Mr Fogg''s bars across London. Social Media Presence of the Year at the 2018 CLASS Bar Awards.', 'https://www.mr-foggs.com/mr-foggs-residence/', 'Mayfair', '15 Bruton Lane', 'W1J 6JD', 'London', 'England', 'GB', 51.50981, -0.14414, false, NULL),
+    ('pineappleclubbrum', 'The Pineapple Club', 'Cocktail bar and bottle shop in Birmingham''s Victorian Great Western Arcade, opened in September 2020 by Samuel Boulton''s Vanguard Bars team, with the Japanese-themed Shibuya Underground in its basement. Its menus championed independent producers, and it built a staff-first culture, hiring people out of long-term unemployment. It closed in February 2023, citing energy bills that had risen eightfold. Bar Employer of the Year at the 2022 CLASS Bar Awards.', 'https://www.pineapplebrum.co.uk/', 'Great Western Arcade', '16 Great Western Arcade', 'B2 5HU', 'Birmingham', 'England', 'GB', 52.4819, -1.89714, true, 2023),
+    ('rattlebag.belfast', 'Rattlebag', 'Late-night cocktail bar on Ann Street, part of Beannchor''s Bullitt Hotel, which opened on 13 March 2020 only to shut for lockdown within days. Behind heavy wooden doors and a curtained hallway, it pours classic-inspired drinks built on house ingredients and techniques to an electronica soundtrack, and in 2026 became one of seven bars worldwide raised to 2 PINs by the Pinnacle Guide. Best Bar in Northern Ireland at the 2025 and 2026 CLASS Bar Awards.', 'https://www.rattlebag.co.uk/', 'Cathedral Quarter', '61-63 Ann Street', 'BT1 4QG', 'Belfast', 'Northern Ireland', 'GB', 54.59968, -5.92491, false, NULL),
+    ('uglybutterflybyah', 'Ugly Butterfly', 'Chef Adam Handling''s restaurant and bar, opened in St Ives in 2021 around a ''Why Waste?'' ethos: whole produce used in full and drinks built on Cornish growers, foraged coastal botanicals and fruit from the Eden Project''s biomes. After its St Ives landlord ended the lease in June 2025 it moved to The Headland hotel above Fistral Beach in Newquay, with a modern British cocktail list. Sustainable Practices Award at the 2023 CLASS Bar Awards.', 'https://www.uglybutterfly.co.uk/', 'Fistral Beach', 'The Headland, Headland Road', 'TR7 1EW', 'Newquay', 'England', 'GB', 50.42053, -5.09702, false, NULL),
+    ('barthreelondon', 'Bar Three', 'Basement cocktail bar beneath Blixen restaurant in Spitalfields, opened in March 2018 by brothers Max and Noel Venning of Three Sheets with restaurateurs Clive Watson and Justin Gilbert. Its short menu sorted drinks by weight (free, light, medium, full) rather than by spirit, served in a pared-back, minimalist style. The Vennings later stepped away and the bar has since closed. New Bar of the Year at the 2019 CLASS Bar Awards.', 'https://www.instagram.com/barthreelondon/', 'Spitalfields', 'Basement, 65a Brushfield Street (beneath Blixen)', 'E1 6AA', 'London', 'England', 'GB', 51.51921, -0.07523, true, NULL),
+    ('blackrockbars', 'Black Rock', 'Basement whisky bar on Christopher Street near Liverpool Street, opened in March 2016 by Tom Aske and Tristan Stephenson, the team behind the Worship Street Whistling Shop. Its centrepiece is an 18ft, 185-year-old split oak trunk that serves as the only table, with glass-covered channels that age cocktails in the wood, and the whiskies are arranged by flavour. Specialist Bar of the Year at the CLASS Bar Awards four years running, 2017 to 2020.', 'https://www.blackrock.bar/', 'Shoreditch', '9 Christopher Street', 'EC2A 2BS', 'London', 'England', 'GB', 51.52142, -0.08459, false, NULL),
+    ('bonvedinburgh', 'The Bon Vivant', 'Candlelit restaurant bar on Thistle Street in Edinburgh''s New Town, opened in September 2008 by Stuart McCluskey in a former karaoke pub. It paired tapas-style bites with a long by-the-glass wine list and a changing cocktail menu, and spawned a group that grew to include The Bon Vivant''s Companion and The Devil''s Advocate. It closed in December 2025. Restaurant Bar of the Year at the 2018 and 2019 CLASS Bar Awards.', 'https://www.instagram.com/bonvedinburgh/', 'New Town', '55 Thistle Street', 'EH2 1DY', 'Edinburgh', 'Scotland', 'GB', 55.95395, -3.19971, true, 2025),
+    ('couchstirchleyb30', 'Couch', 'Neighbourhood cocktail bar on Pershore Road in Stirchley, south Birmingham, opened in 2019 by Katie Rouse and Jacob Clarke. Known for an inclusive, unfussy welcome and themed menus built on pop culture and nostalgia, it was ranked No. 1 on the Top 50 Cocktail Bars UK list in 2026. Best Bar in the Midlands & East Anglia at the 2025 CLASS Bar Awards (Rouse was Bartender of the Year), then Best Bar in the Midlands and Drinks Menu of the Year in 2026.', 'https://www.instagram.com/couchstirchleyb30/', 'Stirchley', '1466 Pershore Road', 'B30 2NT', 'Birmingham', 'England', 'GB', 52.42579, -1.92183, false, NULL),
+    ('filthyxiii', 'Filthy XIII', 'Bristol neighbourhood cocktail bar on Cheltenham Road, opened in 2019 by Ben Alcock, founder of Her Majesty''s Secret Service (HMSS) in Clifton, and named after the Filthy Thirteen army unit. A stripped-back, hip-hop-soundtracked room pouring spritzes from the taps, classics and house drinks, it is known as a bartenders'' bar. Best Bar in the West at the 2024 and 2025 CLASS Bar Awards.', 'https://www.instagram.com/filthyxiii/', 'St Andrew''s', '208 Cheltenham Road', 'BS6 5QU', 'Bristol', 'England', 'GB', 51.46935, -2.5931, false, NULL),
+    ('hachabar', 'Hacha', 'London''s first self-styled agaveria, opened on Kingsland Road in Dalston in April 2019 by Deano Moncrieffe and Emma Murphy, with a rotating back bar of about 25 agave spirits and Oaxacan-inspired food. Its crystal-clear Mirror Margarita became a bottled brand, and sister bars ran in Brixton and Bermondsey. The Dalston bar closed on 25 April 2026. Cocktail of the Year at the 2020 CLASS Bar Awards and Specialist Bar of the Year in 2022 and 2023.', 'https://hachabar.com/', 'Dalston', '378 Kingsland Road', 'E8 4AA', 'London', 'England', 'GB', 51.541, -0.07599, true, 2026),
+    ('hideout_bath', 'The Hideout', 'Stone-walled cellar bar in Lilliput Court, off Bath''s historic lanes, that sums itself up as cocktails, whisky and hip-hop. It stocks around 300 whiskies, including independent bottlings and its own casks, runs tastings in a room next door and pairs long-running signatures with seasonal, hip-hop-themed cocktails. Best Bar in the West at the 2026 CLASS Bar Awards.', 'https://hideoutbath.co.uk/', 'City Centre', '1 Lilliput Court', 'BA1 1ND', 'Bath', 'England', 'GB', 51.38066, -2.35843, false, NULL),
+    ('drinkmanolo', 'Manolo', 'Caribbean-inspired cocktail lounge on Slater Street in Liverpool''s Ropewalks, opened on 1 September 2022 by GSG Hospitality in the former home of Santa Chupitos, the group''s first venue. Mostly table service for about two dozen guests, it serves carefully reworked classics and ''vacation drinks'', and was Newcomer of the Year on the 2023 Top 50 Cocktail Bars list. Social Media Presence of the Year at the 2024 CLASS Bar Awards.', 'https://www.manolobar.co.uk/', 'Ropewalks', '41 Slater Street', 'L1 4BX', 'Liverpool', 'England', 'GB', 53.40169, -2.98031, false, NULL),
+    ('passingfancies.bar', 'Passing Fancies', 'Birmingham cocktail bar opened in autumn 2022 by Matt Arnold, Eve Green and Tommy Matthews in a glass-walled unit at Digbeth''s Custard Factory, pairing lab-driven, ingredient-led drinks with small plates cooked by the bar team. It left Digbeth in July 2025 and reopened in April 2026 at The Goodsyard in the Jewellery Quarter. At the CLASS Bar Awards: New Bar of the Year and Best Bar in the Midlands & East Anglia 2023, the regional title again and Cocktail of the Year 2024.', 'https://www.passingfanciesbar.co.uk/', 'Jewellery Quarter', 'The Goodsyard, Pitsford Street', 'B18 6FG', 'Birmingham', 'England', 'GB', 52.48929, -1.91504, false, NULL),
+    ('p_u_b_l_i_c', 'Public', 'Table-service cocktail bar in the former gents'' toilets beneath Sheffield''s Victorian Town Hall on Surrey Street, opened in 2017 by the team behind Picture House Social. The tiny, booth-lined room has a vinyl-only music policy, seasonal menus tied to Sheffield and its producers, and ambitious food from a very small kitchen. Bar Food Menu of the Year at the 2019 CLASS Bar Awards.', 'https://www.publicpublic.co.uk/', 'City Centre', '23-55 Surrey Street', 'S1 2LG', 'Sheffield', 'England', 'GB', 53.38064, -1.46975, false, NULL),
+    ('terroirtapas', 'Terroir Tapas', 'Low-waste tapas restaurant and cocktail bar opened in 2017 by James Fowler on Southbourne Grove in Bournemouth. It printed no menus, grew herbs in-house, sourced produce from nearby farms and built drinks from kitchen by-products, and it later earned a Michelin Green Star. It closed in February 2024, citing rising costs. Sustainable Practices Award at the 2019 and 2020 CLASS Bar Awards.', 'https://www.instagram.com/terroirtapas/', 'Southbourne', '81 Southbourne Grove', 'BH6 3QX', 'Bournemouth', 'England', 'GB', 50.72601, -1.81413, true, 2024)
 ) AS v("handle", "name", "bio", "website", "locality", "address_line", "postcode", "city", "region", "country_code",
        "latitude", "longitude", "is_closed", "closed_year")
 -- Not a second copy of a bar someone already added (add_venue's rule).
@@ -116,7 +144,21 @@ FROM (VALUES
     ('shannonmustipher', 'Shannon Mustipher', 'Spirits educator, cocktail consultant and rum specialist who launched the Caribbean rum bar programme at Glady''s in Brooklyn in 2014. She founded Women Who Tiki, is a founding member of the Cane Club Collective, and wrote Tiki: Modern Tropical Cocktails, an IACP award winner. Pioneer Award at the 2020 Spirited Awards.', 'https://www.instagram.com/shannonmustipher/', NULL),
     ('travis.nass', 'Travis Nass', 'Phoenix bartender and former president of the U.S. Bartenders'' Guild Phoenix chapter who co-founded Another Round Another Rally with Amanda Gunderson in 2018 and serves as its COO. The nonprofit provides hospitality workers with emergency aid, scholarships and reimbursement grants. He is an Arizona Culinary Hall of Fame inductee. Best U.S. Bar Mentor (with Amanda Gunderson) at the 2026 Spirited Awards.', 'https://anotherroundanotherrally.org/', 'Phoenix'),
     ('yayo_nava', 'Yayo Nava', 'Mexico City bartender Eduardo "Yayo" Nava worked at Licorería Limantour and Café Paraíso and as a hospitality manager, brand ambassador and bar consultant. In 2024 he opened Bar Mauro with Ricardo Nava in Roma Norte, an aperitivo bar that won the Campari One To Watch Award at The World''s 50 Best Bars 2025. International Bartender of the Year at the 2026 Spirited Awards.', 'https://www.instagram.com/barmauromx/', 'Mexico City'),
-    ('kingcocktail', 'Dale DeGroff', 'Bartender and author known as King Cocktail. After building Joe Baum''s classic cocktail bar at Aurora, he led the Rainbow Room bar from 1987 to 1999, reviving fresh classics and helping spark the craft cocktail movement. He wrote The Craft of the Cocktail, is founding president of the Museum of the American Cocktail and a partner in Beverage Alcohol Resource. Who''s Who of Food & Beverage in America at the 2015 James Beard Awards.', 'https://www.instagram.com/kingcocktail/', 'Westerly, Rhode Island')
+    ('kingcocktail', 'Dale DeGroff', 'Bartender and author known as King Cocktail. After building Joe Baum''s classic cocktail bar at Aurora, he led the Rainbow Room bar from 1987 to 1999, reviving fresh classics and helping spark the craft cocktail movement. He wrote The Craft of the Cocktail, is founding president of the Museum of the American Cocktail and a partner in Beverage Alcohol Resource. Who''s Who of Food & Beverage in America at the 2015 James Beard Awards.', 'https://www.instagram.com/kingcocktail/', 'Westerly, Rhode Island'),
+    ('jakefburger', 'Jake Burger', 'Bartender, bar owner and gin maker who made his name in Leeds'' early 2000s cocktail scene, opening Jake''s Bar there with business partner Ged Feltham. He opened The Portobello Star in Notting Hill in 2008, co-founded Portobello Road Gin in 2011 and leads the Ginstitute gin experience at the Portobello Road Distillery. Lifetime Achievement at the 2017 CLASS Bar Awards.', 'https://www.instagram.com/jakefburger/', 'London'),
+    ('alexjslawrence', 'Alex Lawrence', 'Bartender who rose to head bartender at Dandelyan, Ryan Chetiyawardana''s bar on London''s South Bank, as it was named World''s Best Bar in 2018. He then became global bar director of the Mr Lyan group, and in 2023 was made managing director and a co-owner of its venues. He is also a co-founder of Aberdeen''s Porter''s Gin. Bartender of the Year at the 2018 CLASS Bar Awards.', 'https://www.instagram.com/alexjslawrence/', 'London'),
+    ('mcgurkdeclan', 'Declan McGurk', 'Bartender who spent seven years at the American Bar at The Savoy in London, as bar manager and later director of bars, a run in which the bar was named World''s Best Bar in 2017. He left The Savoy in 2020 to join The Boatyard Distillery in County Fermanagh, where he is commercial director, leading the gin and vodka maker''s global development. Bar Manager of the Year at the 2019 CLASS Bar Awards.', 'https://www.instagram.com/mcgurkdeclan/', NULL),
+    ('alessandropalazzi', 'Alessandro Palazzi', 'Italian bartender, behind the bar since the 1970s, who has managed Dukes Bar at the Dukes London hotel in St James''s since 2007. He carries on the bar''s famous Dukes Martini tradition with his own twists, including an English dry vermouth he developed with Sacred distillery in north London. Lifetime Achievement at the 2019 CLASS Bar Awards.', NULL, 'London'),
+    ('pippaguy', 'Pippa Guy', 'Bartender who in 2017 became the first woman in about a century to be named senior bartender at the American Bar at The Savoy in London, following Ada Coleman, and helped create its menus. She left The Savoy in 2019 and moved to New York in 2020 to work with the team behind Crown Shy. She wrote the cocktail book Let''s Get Fizzical. Bartender of the Year at the 2020 CLASS Bar Awards.', 'https://www.instagram.com/pippaguy/', NULL),
+    ('miakumari', 'Mia Kumari', 'British bartender who worked at the American Bar at The Savoy before joining Satan''s Whiskers in Bethnal Green, London, which she left in February 2025. She built her name on the cocktail competition circuit, winning the Amaro Montenegro UK final and the IWSC''s 2023 Emerging Talent in Bartending trophy. Bartender of the Year at the 2023 CLASS Bar Awards.', NULL, NULL),
+    ('matt_bhx', 'Matt Arnold', 'Bartender and co-founder, with Tommy Matthews and Eve Green, of Passing Fancies in Birmingham, which opened in 2022 and serves ingredient-led cocktails. He won Diageo World Class Great Britain in 2023 and again in 2026, the first bartender to take the GB title twice. Bartender of the Year at the 2024 CLASS Bar Awards.', 'https://www.instagram.com/matt_bhx/', 'Birmingham'),
+    ('sophiebratt', 'Sophie Bratt', 'London bar manager whose career spans The Roof Gardens, Sexy Fish, Harvey Nichols, OXO Tower and Nobu Hotel London Portman Square, where she ran the Nobu Bar until the end of 2024. After a spell as bars manager at The Roof Gardens, she was named head of bars at The Standard, London in 2026, overseeing Sweeties, Double Standard, Decimo and Isla. Bar Manager of the Year at the 2024 CLASS Bar Awards.', NULL, 'London'),
+    ('katierouse1', 'Katie Rouse', 'Birmingham bartender and co-owner, with Jacob Clarke, of Couch, the neighbourhood cocktail bar in Stirchley that opened in 2019 and has built a national reputation, winning Best Bar in the Midlands at the CLASS Bar Awards. She has spoken publicly about bartenders sharing rather than guarding their creative process. Bartender of the Year at the 2025 CLASS Bar Awards.', NULL, 'Birmingham'),
+    ('hsharmancox', 'Hannah Sharman-Cox', 'Drinks events founder who created London Cocktail Week with Siobhan Payne while working with Simon Difford at Difford''s Guide, and has run it since the start; in 2025 the pair agreed to buy it outright. They also founded DrinkUp London, the HANDS London consultancy and, with Dan Dove, the Pinnacle Guide bar ranking. Outstanding Contribution Award at the 2024 CLASS Bar Awards, shared with Siobhan Payne.', 'https://www.instagram.com/hsharmancox/', 'London'),
+    ('siobhanpayne', 'Siobhan Payne', 'Drinks events founder who created London Cocktail Week with Hannah Sharman-Cox while working with Simon Difford at Difford''s Guide, and has run it since the start; in 2025 the pair agreed to buy it outright. They also founded DrinkUp London, the HANDS London consultancy and, with Dan Dove, the Pinnacle Guide bar ranking. Outstanding Contribution Award at the 2024 CLASS Bar Awards, shared with Hannah Sharman-Cox.', NULL, 'London'),
+    ('gento.torigata', 'Gento Torigata', 'Japanese bartender who worked at Jigger & Pony in Singapore before moving to London in 2021 to work at Erik Lorincz''s Kwant in Mayfair. In 2025 he opened his first solo bar, Waltz, on Scrutton Street in Shoreditch, a Japanese cocktail bar named after Bill Evans'' Waltz for Debby and known for its highball ritual. Bartender of the Year at the 2026 CLASS Bar Awards.', 'https://www.instagram.com/gento.torigata/', 'London'),
+    ('sotiris.konomi', 'Sotiris Konomi', 'Greek bartender with about a decade in London restaurant and hotel bars who managed The Spy Bar at Raffles London at The OWO for two years. In 2026 he was promoted to beverage manager for the whole hotel, overseeing The Guards Bar, the Drawing Room, its restaurants, events and wine while keeping the title Head of Spies. Bar Manager of the Year at the 2026 CLASS Bar Awards.', 'https://www.instagram.com/sotiris.konomi/', 'London'),
+    ('clairewarner', 'Claire Warner', 'Drinks industry figure with about 25 years as a bartender, global brand ambassador, consultant, educator and spirits judge. She co-founded the non-alcoholic aperitif brand Æcorn with Seedlip founder Ben Branson, has served as head of luxury advocacy at Diageo, and campaigns for wellbeing in hospitality and for bars'' role in social connection. Outstanding Contribution Award at the 2026 CLASS Bar Awards.', NULL, 'London')
 ) AS v("handle", "name", "bio", "website", "city")
 -- Not a second profile for someone already here under the same name.
 WHERE NOT EXISTS (SELECT 1 FROM "public"."profiles" p WHERE p.kind = 'person' AND lower(p.display_name) = lower(v.name))
@@ -334,6 +376,157 @@ FROM (VALUES
     ('david.wondrich', 'person', 'Tales of the Cocktail Spirited Awards', 2026, 'Helen David Lifetime Achievement Award', 'https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/'),
     ('bamboobar.bkk', 'bar', 'Tales of the Cocktail Spirited Awards', 2026, 'Timeless International Award', 'https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/'),
     ('bryantslounge', 'bar', 'Tales of the Cocktail Spirited Awards', 2026, 'Timeless U.S. Award', 'https://talesofthecocktail.org/tales-of-the-cocktail-foundation-announces-2026-spirited-awards-winners/'),
+    ('dandelyan', 'bar', 'CLASS Bar Awards', 2017, 'Drinks Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('aidan.bowie', 'person', 'CLASS Bar Awards', 2017, 'Bartender of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('swiftsoho', 'bar', 'CLASS Bar Awards', 2017, 'New Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('bobby.hiddleston', 'person', 'CLASS Bar Awards', 2017, 'Bar Manager of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('americanbarsavoy', 'bar', 'CLASS Bar Awards', 2017, 'Emerging Bartender of the Year (Dominic Whisson)', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('theoriolebar', 'bar', 'CLASS Bar Awards', 2017, 'Front of House Star of the Year (Ivana Popovic)', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('theoriolebar', 'bar', 'CLASS Bar Awards', 2017, 'Bar Back Star of the Year (Ivano Filippi)', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('theoriolebar', 'bar', 'CLASS Bar Awards', 2017, 'Bar Food Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('nightjar', 'bar', 'CLASS Bar Awards', 2017, 'Best Social Media Initiative', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('terminisoho', 'bar', 'CLASS Bar Awards', 2017, 'Cocktail of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('blackrockbars', 'bar', 'CLASS Bar Awards', 2017, 'Specialist Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('hawksmoorrestaurants', 'bar', 'CLASS Bar Awards', 2017, 'Restaurant Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('jakefburger', 'person', 'CLASS Bar Awards', 2017, 'Lifetime Achievement', 'https://drinksint.com/news/fullstory.php/aid/6870/Dandelyan_scoops_four_gongs_at_relaunched_Class_Bar_Awards.html'),
+    ('dandelyan', 'bar', 'CLASS Bar Awards', 2018, 'Bar of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('coupettelondon', 'bar', 'CLASS Bar Awards', 2018, 'New Bar of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('coupettelondon', 'bar', 'CLASS Bar Awards', 2018, 'Cocktail of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('americanbarsavoy', 'bar', 'CLASS Bar Awards', 2018, 'Hotel Bar of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('blackrockbars', 'bar', 'CLASS Bar Awards', 2018, 'Specialist Bar of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('bonvedinburgh', 'bar', 'CLASS Bar Awards', 2018, 'Restaurant Bar of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('scoutldn', 'bar', 'CLASS Bar Awards', 2018, 'Bar Food Menu of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('dandelyan', 'bar', 'CLASS Bar Awards', 2018, 'Drinks Menu of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('alexjslawrence', 'person', 'CLASS Bar Awards', 2018, 'Bartender of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('mrfoggsgb', 'bar', 'CLASS Bar Awards', 2018, 'Social Media Presence of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('martin.siska', 'person', 'CLASS Bar Awards', 2018, 'Bar Manager of the Year', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('maura.milia', 'person', 'CLASS Bar Awards', 2018, 'Front of House Star of the Year', 'https://italspirits.com/class-bar-award-winners-2018/'),
+    ('tony.conigliaro', 'person', 'CLASS Bar Awards', 2018, 'Lifetime Achievement', 'https://www.hot-dinners.com/Gastroblog/Latest-news/london-bars-dandelyan-and-coupette-big-winners-at-class-bar-awards-2018'),
+    ('threesheetsbars', 'bar', 'CLASS Bar Awards', 2019, 'Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('barthreelondon', 'bar', 'CLASS Bar Awards', 2019, 'New Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('max.venning', 'person', 'CLASS Bar Awards', 2019, 'Bartender of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('mcgurkdeclan', 'person', 'CLASS Bar Awards', 2019, 'Bar Manager of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('americanbarsavoy', 'bar', 'CLASS Bar Awards', 2019, 'Hotel Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('dandelyan', 'bar', 'CLASS Bar Awards', 2019, 'Drinks Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('coupettelondon', 'bar', 'CLASS Bar Awards', 2019, 'Cocktail of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('blackrockbars', 'bar', 'CLASS Bar Awards', 2019, 'Specialist Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('calloohcallaybar', 'bar', 'CLASS Bar Awards', 2019, 'Emerging Bartender of the Year (Amber Blood)', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('coral.anderson', 'person', 'CLASS Bar Awards', 2019, 'Front of House Star', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('terroirtapas', 'bar', 'CLASS Bar Awards', 2019, 'Sustainable Practices Award', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('p_u_b_l_i_c', 'bar', 'CLASS Bar Awards', 2019, 'Bar Food Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('bonvedinburgh', 'bar', 'CLASS Bar Awards', 2019, 'Restaurant Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('crazypedros', 'bar', 'CLASS Bar Awards', 2019, 'Social Media Presence of the Year', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('alessandropalazzi', 'person', 'CLASS Bar Awards', 2019, 'Lifetime Achievement', 'https://drinksint.com/news/fullstory.php/aid/8199/Venning_brothers_star_at_CLASS_Bar_Awards_2019.html'),
+    ('swiftsoho', 'bar', 'CLASS Bar Awards', 2020, 'Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('kwantmayfair', 'bar', 'CLASS Bar Awards', 2020, 'New Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('americanbarsavoy', 'bar', 'CLASS Bar Awards', 2020, 'Hotel Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('pippaguy', 'person', 'CLASS Bar Awards', 2020, 'Bartender of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('artesianbar', 'bar', 'CLASS Bar Awards', 2020, 'Drinks Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('anna.sebastian', 'person', 'CLASS Bar Awards', 2020, 'Bar Manager of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('hachabar', 'bar', 'CLASS Bar Awards', 2020, 'Cocktail of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('blackrockbars', 'bar', 'CLASS Bar Awards', 2020, 'Specialist Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('sexyfishlondon', 'bar', 'CLASS Bar Awards', 2020, 'Back Bar Star of the Year (Geovanni Marenco Rodriguez)', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('terroirtapas', 'bar', 'CLASS Bar Awards', 2020, 'Sustainable Practices Award', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('tayer_elementary', 'bar', 'CLASS Bar Awards', 2020, 'Bar Food Menu of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('monica.berg', 'person', 'CLASS Bar Awards', 2020, 'Bar Innovator(s) of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('alex.kratena', 'person', 'CLASS Bar Awards', 2020, 'Bar Innovator(s) of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('hawksmoorrestaurants', 'bar', 'CLASS Bar Awards', 2020, 'Restaurant Bar of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('cahootslondon', 'bar', 'CLASS Bar Awards', 2020, 'Social Media Presence of the Year', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('officialcafepacifico', 'bar', 'CLASS Bar Awards', 2020, 'Lifetime Achievement (Tomas Estes)', 'https://drinksint.com/news/fullstory.php/aid/8712/Women_star_at_2020_Class_Bar_Awards.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2022, 'Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2022, 'New Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('abarwithshapesforaname', 'bar', 'CLASS Bar Awards', 2022, 'Cocktail of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('remy.savage', 'person', 'CLASS Bar Awards', 2022, 'Bartender of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('monica.berg', 'person', 'CLASS Bar Awards', 2022, 'Bar Innovators of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('alex.kratena', 'person', 'CLASS Bar Awards', 2022, 'Bar Innovators of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('tayer_elementary', 'bar', 'CLASS Bar Awards', 2022, 'Bar Food Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('connaughtbar', 'bar', 'CLASS Bar Awards', 2022, 'Hotel Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('maura.milia', 'person', 'CLASS Bar Awards', 2022, 'Bar Manager of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('hachabar', 'bar', 'CLASS Bar Awards', 2022, 'Specialist Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('lab22cardiff', 'bar', 'CLASS Bar Awards', 2022, 'Drinks Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('pineappleclubbrum', 'bar', 'CLASS Bar Awards', 2022, 'Bar Employer of the Year', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('theoriolebar', 'bar', 'CLASS Bar Awards', 2022, 'Front of House Star of the Year (Jacopo Correnti)', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('mixellany', 'person', 'CLASS Bar Awards', 2022, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('jared.brown', 'person', 'CLASS Bar Awards', 2022, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/682/_New_bars_shine_as_the_Class_Bar_Awards_returns_.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2023, 'Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2023, 'Best Bar in the North', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('passingfancies.bar', 'bar', 'CLASS Bar Awards', 2023, 'Best Bar in the Midlands & East Anglia', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('passingfancies.bar', 'bar', 'CLASS Bar Awards', 2023, 'New Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('lab22cardiff', 'bar', 'CLASS Bar Awards', 2023, 'Best Bar in Wales & West', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2023, 'Best Bar in London & the South East', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('heypalu', 'bar', 'CLASS Bar Awards', 2023, 'Best Bar in Scotland & Northern Ireland', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('connaughtbar', 'bar', 'CLASS Bar Awards', 2023, 'Hotel Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('hachabar', 'bar', 'CLASS Bar Awards', 2023, 'Specialist Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('swiftsoho', 'bar', 'CLASS Bar Awards', 2023, 'Cocktail of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('lyanessbar', 'bar', 'CLASS Bar Awards', 2023, 'Drinks Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('tayer_elementary', 'bar', 'CLASS Bar Awards', 2023, 'Bar Food Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('uglybutterflybyah', 'bar', 'CLASS Bar Awards', 2023, 'Sustainable Practices Award', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('miakumari', 'person', 'CLASS Bar Awards', 2023, 'Bartender of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('james.wheeler', 'person', 'CLASS Bar Awards', 2023, 'Bar Manager of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('iain.mcpherson', 'person', 'CLASS Bar Awards', 2023, 'Bar Innovator of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('couchstirchleyb30', 'bar', 'CLASS Bar Awards', 2023, 'Emerging Bartender of the Year (Courtney Francis)', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('thedonovanbar', 'bar', 'CLASS Bar Awards', 2023, 'Front of House Star of the Year (Cristiana Pirinu)', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('ian.burrell', 'person', 'CLASS Bar Awards', 2023, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/1024/Class_Bar_Awards_winners_announced.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2024, 'Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in London & the South East', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('passingfancies.bar', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in the Midlands & East Anglia', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in the North', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('pandaandsons', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in Scotland & Northern Ireland', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('lab22cardiff', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in Wales', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('filthyxiii', 'bar', 'CLASS Bar Awards', 2024, 'Best Bar in the West', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('kwantmayfair', 'bar', 'CLASS Bar Awards', 2024, 'New Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('connaughtbar', 'bar', 'CLASS Bar Awards', 2024, 'Hotel Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('passingfancies.bar', 'bar', 'CLASS Bar Awards', 2024, 'Cocktail of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('pandaandsons', 'bar', 'CLASS Bar Awards', 2024, 'Drinks Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('kwantmayfair', 'bar', 'CLASS Bar Awards', 2024, 'Bar Food Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('gunghobar', 'bar', 'CLASS Bar Awards', 2024, 'Sustainable Practices Award', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('drinkmanolo', 'bar', 'CLASS Bar Awards', 2024, 'Social Media Presence of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('matt_bhx', 'person', 'CLASS Bar Awards', 2024, 'Bartender of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('iain.mcpherson', 'person', 'CLASS Bar Awards', 2024, 'Bar Innovator of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('sophiebratt', 'person', 'CLASS Bar Awards', 2024, 'Bar Manager of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('hsharmancox', 'person', 'CLASS Bar Awards', 2024, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('siobhanpayne', 'person', 'CLASS Bar Awards', 2024, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2025, 'Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in London & the South East', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in the North', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('couchstirchleyb30', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in the Midlands & East Anglia', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('pandaandsons', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in Scotland', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('rattlebag.belfast', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in Northern Ireland', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('lab22cardiff', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in Wales', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('filthyxiii', 'bar', 'CLASS Bar Awards', 2025, 'Best Bar in the West', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('barglue', 'bar', 'CLASS Bar Awards', 2025, 'New Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('connaughtbar', 'bar', 'CLASS Bar Awards', 2025, 'Hotel Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('threesheetssoho', 'bar', 'CLASS Bar Awards', 2025, 'Cocktail of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('lyanessbar', 'bar', 'CLASS Bar Awards', 2025, 'Drinks Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('passingfancies.bar', 'bar', 'CLASS Bar Awards', 2025, 'Bar Food Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('blinkerbar', 'bar', 'CLASS Bar Awards', 2025, 'Bar Employer of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('belowstairsbar', 'bar', 'CLASS Bar Awards', 2025, 'Sustainable Practices Award', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('katierouse1', 'person', 'CLASS Bar Awards', 2025, 'Bartender of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('iain.mcpherson', 'person', 'CLASS Bar Awards', 2025, 'Bar Innovator of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('michele.mariotti', 'person', 'CLASS Bar Awards', 2025, 'Bar Manager of the Year', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2025, 'Front of House Star of the Year (Keila Urzaiz de Calignon)', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('mike.aikman', 'person', 'CLASS Bar Awards', 2025, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('jason.scott', 'person', 'CLASS Bar Awards', 2025, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2026, 'Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('satans_whiskers', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in London & the South East', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('schofields.bar', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in the North', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('couchstirchleyb30', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in the Midlands', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('pandaandsons', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in Scotland', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('rattlebag.belfast', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in Northern Ireland', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('lab22cardiff', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in Wales', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('hideout_bath', 'bar', 'CLASS Bar Awards', 2026, 'Best Bar in the West', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('waltzbar', 'bar', 'CLASS Bar Awards', 2026, 'New Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('lyanessbar', 'bar', 'CLASS Bar Awards', 2026, 'Hotel Bar of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('lyanessbar', 'bar', 'CLASS Bar Awards', 2026, 'Cocktail of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('couchstirchleyb30', 'bar', 'CLASS Bar Awards', 2026, 'Drinks Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('sidehustlelondon', 'bar', 'CLASS Bar Awards', 2026, 'Bar Food Menu of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('kikis.lounge', 'bar', 'CLASS Bar Awards', 2026, 'Sustainability and Community Impact Award', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('gento.torigata', 'person', 'CLASS Bar Awards', 2026, 'Bartender of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('iain.mcpherson', 'person', 'CLASS Bar Awards', 2026, 'Bar Innovator(s) of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('sotiris.konomi', 'person', 'CLASS Bar Awards', 2026, 'Bar Manager of the Year', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('lyanessbar', 'bar', 'CLASS Bar Awards', 2026, 'Front of House Star of the Year (Lucy Thomas)', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('sidehustlelondon', 'bar', 'CLASS Bar Awards', 2026, 'Emerging Bartender of the Year (Mathilde Rouge)', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
+    ('clairewarner', 'person', 'CLASS Bar Awards', 2026, 'Outstanding Contribution Award', 'https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html'),
     ('pdtnyc', 'bar', 'James Beard Awards', 2012, 'Outstanding Bar Program', 'https://villagevoice.com/2012/05/08/a-few-words-with-some-james-beard-award-winners'),
     ('aviarycocktails', 'bar', 'James Beard Awards', 2013, 'Outstanding Bar Program', 'https://www.foxnews.com/food-drink/2013-james-beard-restaurant-and-chef-award-winners'),
     ('nomadbarnyc', 'bar', 'James Beard Awards', 2014, 'Outstanding Bar Program', 'https://www.foxnews.com/food-drink/2014-james-beard-restaurant-and-chef-award-winners.amp'),
@@ -1053,7 +1246,340 @@ Created by Sam Ross in 2008.
 
 Method: Shake with ice and strain into a coupe.
 
-Spec from Punch (https://punchdrink.com/recipes/paper-plane/).', NULL, 2008, 'Coupette', NULL, 'Shake');
+Spec from Punch (https://punchdrink.com/recipes/paper-plane/).', NULL, 2008, 'Coupette', NULL, 'Shake'),
+    ('barglue', NULL, 'W.I.N.E', 'Tequila highball from Nathan Price, reworked from the clarified cordial Paloma twist that won him Patrón Perfectionists.', 'CLASS describes it as an update on the drink with which Price, then at the Burnt Milk Hotel on the same site, won the 2024 Patrón Perfectionists competition, his first ever cocktail competition. It was a finalist for Cocktail of the Year at the 2025 CLASS Bar Awards.
+
+Created by Nathan Price.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/2090/Stick_together_-_Bar_Glue_on_community_and_a_more_cohesive_industry_.html, https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html', 'Paloma', NULL, NULL, NULL, NULL),
+    ('barglue', NULL, 'Bibi', 'Absolut vodka and Rhum J.M Volcanique with cacao, honeycomb and espresso.', 'One of the opening-menu drinks CLASS singled out in its 9/10 review, a rum-spiked take on the coffee cocktail that shows Glue''s aim of drinks that feel familiar but carry a story.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1658/Review:_Glue,_Liverpool.html). No measures have been published.', 'Espresso Martini', 2024, NULL, NULL, NULL),
+    ('barglue', NULL, 'Under the Bridge', 'Bacardi Carta Blanca with Suze, lime and grapefruit and apple, finished with a sugar-glass garnish.', 'A bright, bitter-edged rum sour from the opening menu, noted by CLASS for its eye-catching sugar-glass garnish.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1658/Review:_Glue,_Liverpool.html). No measures have been published.', NULL, 2024, NULL, NULL, NULL),
+    ('barglue', NULL, 'Happy Meal', 'A playful signature from the Glue menu; its ingredients are not published.', 'Named by both CLASS and Top 50 Cocktail Bars as a menu highlight, and one of three drinks the owners chose to sum up their aim of making drinks that a casual guest and a visiting bartender both love.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/2090/Stick_together_-_Bar_Glue_on_community_and_a_more_cohesive_industry_.html, https://www.top50cocktailbars.com/Bars/UK/Merseyside/Bar-Glue.html', NULL, NULL, NULL, NULL, NULL),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 'Clarified long drink of La Hechicera and Havana Club 3 rum with raspberry, vanilla, maple, coconut, distilled bread and cream soda.', 'Built to taste like a slice of Victoria sponge cake, it is one of the ''Little Treats'' on the 2025/26 Small Joys menu and, like most of the list, is also offered as an alcohol-free version.
+
+Method: Clarified; served long.
+
+Ingredients from Below Stairs menu (https://www.belowstairsbar.com/_files/ugd/e27c88_74c6bfe6680a45229e45353ae8bb9b83.pdf). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('belowstairsbar', NULL, 'Bread & Butter', 'Buttered-bread-infused vodka stirred with a little barrel-sweetened sugar, salt, Nixta corn liqueur and Pineau des Charentes.', 'The house infuses vodka with actual buttered bread, then serves it stirred and very cold in a cocktail glass, a savoury Martini-style drink about a humble comfort food.
+
+Method: Stir and strain.
+
+Ingredients from Below Stairs menu (https://www.belowstairsbar.com/_files/ugd/e27c88_74c6bfe6680a45229e45353ae8bb9b83.pdf). No measures have been published.', NULL, 2025, 'Martini', NULL, 'Stir'),
+    ('belowstairsbar', NULL, 'Pina Collider', 'Havana Club 3 rum and a rum made from discarded banana peel, with pineapple, coconut and black sesame.', 'The bar''s reworked Piña Colada, listed among its classics, adds a rum made from discarded banana peel and a nutty note of black sesame.
+
+Ingredients from Below Stairs menu (https://www.belowstairsbar.com/_files/ugd/e27c88_74c6bfe6680a45229e45353ae8bb9b83.pdf). No measures have been published.', 'Piña Colada', NULL, NULL, NULL, NULL),
+    ('belowstairsbar', NULL, 'Clean Sheets', 'Discarded Chardonnay vodka flavoured with chamomile and lavender, with tonka and acids, served up under a meringue layer.', 'Meant to taste calm and fresh-laundry soft without turning soapy, it is topped with a meringue ''pillow'' and has an alcohol-free twin on the menu.
+
+Method: Served straight up.
+
+Ingredients from Below Stairs menu (https://www.belowstairsbar.com/_files/ugd/e27c88_74c6bfe6680a45229e45353ae8bb9b83.pdf). No measures have been published.', NULL, 2025, NULL, NULL, NULL),
+    ('belowstairsbar', NULL, 'Barmalade', 'Finlandia vodka with house marmalade, house bergamot soda, yellow Chartreuse and Jack Daniel''s rye.', 'Singled out by Top 50 Cocktail Bars from the earlier ''State of Things'' menu, which grouped drinks by sugar, salt, acid and fat; it leans on house-made marmalade and soda.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Yorkshire/below-stairs.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('blinkerbar', NULL, 'The Blinker', 'The bar''s namesake: Sazerac rye from a Blinker barrel select with raspberry and pink grapefruit.', 'The bar is named after this pre-Prohibition three-ingredient rye sour, and its seasonal-produce approach grew from it. The house version uses a Sazerac Rye barrel selected for the bar.
+
+Ingredients from Blinker menu (https://www.blinkerbar.co.uk/menus/26.08.26_Blinker_Menu_September26_website.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('blinkerbar', NULL, 'Snaquiri', 'A mini Daiquiri of Bacardi Carta Blanca, citric and sugar, served in proper glassware at shot size.', 'Berger introduced pre-batched small cocktails as a better alternative to rounds of shots; after first serving them in shot glasses the team moved them into proper glassware, and guests now order them as quick sips or as a side to a beer.
+
+Created by Dan Berger.
+
+Method: Pre-batched.
+
+Ingredients from Blinker menu (https://www.blinkerbar.co.uk/menus/26.08.26_Blinker_Menu_September26_website.pdf). No measures have been published.', 'Daiquiri', NULL, NULL, NULL, 'Build'),
+    ('blinkerbar', NULL, 'English Old Fashioned', 'Cotswolds single malt with salted honey, toasted oats and orange bitters.', 'Part of the bar''s standing Old Fashioned list, it swaps bourbon for English single malt and leans on British pantry flavours, in keeping with Blinker''s local-produce focus.
+
+Ingredients from Blinker menu (https://www.blinkerbar.co.uk/menus/26.08.26_Blinker_Menu_September26_website.pdf). No measures have been published.', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('blinkerbar', NULL, 'Applewood Old Fashioned', 'Aberfeldy 12 year old with toasted applewood and a honey Old Fashioned reduction.', 'Named by Top 50 Cocktail Bars as a highlight of an earlier menu, it shows the house habit of pre-making an Old Fashioned reduction and layering in a toasted-wood note.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Greater-Manchester/blinker.html). No measures have been published.', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('cahootslondon', NULL, 'Meet Me Under the Station Clock', 'A large gin-based sharing punch ladled out of a giant station clock for groups.', 'The bar''s early showpiece serve: a big-ticket group drink presented from a railway clock, playing on the tube-station theme. It was the headline sharing cocktail in early reviews.
+
+Sources: https://adventurebagging.co.uk/2015/03/cahoots-london-secret-underground-bar/', NULL, NULL, NULL, NULL, NULL),
+    ('cahootslondon', NULL, 'Cahooch', 'Mount Gay Black Barrel rum and Bulleit bourbon stirred with Cointreau Noir and Martini Rosso vermouth.', 'A house drink named after the bar and cited by 50 Best Discovery as an example of its list: a split-base, Manhattan-style stirred drink built from rum and bourbon.
+
+Ingredients from 50 Best Discovery (https://www.theworlds50best.com/discovery/Establishments/UK/London/Cahoots.html). No measures have been published.', 'Manhattan', NULL, NULL, NULL, NULL),
+    ('cahootslondon', NULL, 'Kingly Court Gimlet', 'Kaffir lime leaf-infused Oxley gin with Singani 63, kalamansi and lemon sherbet and lemongrass oil.', 'Named after the bar''s address, it is the house take on the Gimlet on the current Underground menu, pushing the lime note with kaffir lime leaf, kalamansi and lemongrass.
+
+Ingredients from Cahoots (https://www.cahoots.co.uk/underground/menus/). No measures have been published.', 'Gimlet', NULL, NULL, NULL, NULL),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 'Tonka bean-infused Buffalo Trace with Angel''s Envy bourbon, a house vermouth blend, Luxardo Maraschino and Cointreau Noir.', 'The lead drink in the menu''s spirit-forward ''Blackmarket Staples'' section, named for the Scoundrels whose invented backstory runs through the bar; a rich, bourbon-based stirred drink in the Manhattan family.
+
+Ingredients from Cahoots (https://www.cahoots.co.uk/underground/menus/). No measures have been published.', 'Manhattan', NULL, NULL, NULL, NULL),
+    ('crazypedros', NULL, 'OG Green', 'Patrón Silver Margarita with lime, agave and Pedro''s house green verdita of coriander, mint, jalapeño and pineapple.', 'The house signature among its Margaritas, built on a blended green verdita that adds herb, chilli heat and fruit to a Tommy''s-style base.
+
+Ingredients from Crazy Pedro''s menu (https://crazypedros.co.uk/files/DrinksMenu.pdf). No measures have been published.', 'Tommy''s Margarita', NULL, NULL, NULL, NULL),
+    ('crazypedros', NULL, 'Frozen Margarita', 'El Tequileño Blanco, triple sec and lime blended frozen, in classic or rotating flavours such as strawberry or yuzu and white chocolate.', 'The drink the bar is built around: its own site tells guests to grab a Frozen Margarita and a slice. Flavours rotate, and past versions such as a peach and black pepper frozen Marg drew press attention, often garnished with sweets or sprinkles.
+
+Method: Frozen (blended).
+
+Ingredients from Crazy Pedro''s menu (https://crazypedros.co.uk/files/DrinksMenu.pdf). No measures have been published.', 'Margarita', NULL, NULL, NULL, 'Blitz'),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 'Habanero-infused El Tequileño Blanco with triple sec, lime and watermelon, with a salt and Tajín rim.', 'One of the bar''s spicy Margaritas, balancing a habanero tequila infusion with sweet watermelon and a chilli-lime Tajín finish.
+
+Ingredients from Crazy Pedro''s menu (https://crazypedros.co.uk/files/DrinksMenu.pdf). No measures have been published.', 'Margarita', NULL, NULL, NULL, NULL),
+    ('crazypedros', NULL, 'Maize Runner', 'El Tequileño Reposado with Nixta corn liqueur, pineapple, aloe vera, citrus and salt.', 'A corn-forward agave sour from the current list that pairs reposado tequila with a Mexican corn liqueur and aloe vera for a savoury, tropical profile.
+
+Ingredients from Crazy Pedro''s menu (https://crazypedros.co.uk/files/DrinksMenu.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 'Montanya rum with apple-based ''hacked'' lime and a waste-pineapple prep, topped with a meadowsweet, oat and fig leaf mousse instead of coconut cream.', 'Julien Barnett rebuilt the Piña Colada without imported coconut or citrus, cutting an estimated 5,500 food miles: pineapple rinds come from a local juice bar, foraged pineapple weed is fermented into a shrub, and a foraged fig leaf and oat mousse stands in for coconut. CLASS published the full spec in 2024.
+
+Created by Julien Barnett in 2024.
+
+Method: Build in the glass, fill with ice and stir until diluted by about 20%. Top up with ice and dispense a 2cm layer of mousse.
+Wasted pineapple prep: Save pineapple rinds from a local juice bar, keeping any flesh as an oleo saccharum; infuse the cleanest rinds in redistilled rum heads and tails. Blend the oleo with Damoiseau Arrangés Ananas and rest for a month. Salt-ferment foraged pineapple weed, then infuse it in vinegar, water and beet sugar syrup for a month. Blend the parts in an 8:1:3 ratio and add 20% sea buckthorn juice.
+Hacked lime juice: Juice unpopular apple varieties and reacidify them to mimic lime juice.
+Meadowsweet, fig leaf and oat mousse: Salt-ferment foraged fig leaves for at least two weeks and make a meadowsweet cordial with beet sugar syrup. Blend oats into water with a little walnut oil, then charge equal parts oat milk and cordial with some fig leaf ferment, coconut oil and a whipping powder in a cream whipper, gassing twice.
+
+Spec from CLASS (https://classbarmag.com/news/fullstory.php/aid/1524/How_to_make_Gungho_s_Sustainable_Pi_F1a_Colada.html).', 'Piña Colada', 2024, 'Wine', 'Cubes', 'Stir'),
+    ('gunghobar', NULL, 'Basil Grande', 'Reyka vodka with overripe strawberry maceration, Averna, Cynar, hacked ''lemon'' juice and basil, under a green Chartreuse foam.', 'A ''Revised Disco Drink'', the bar''s section of disco-era cocktails reworked for modern tastes; it uses overripe fruit and the house apple-based lemon substitute, and Barnett named it as a drink whose recipe the bar shared publicly.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Sussex/gungho.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 'Teeling Single Grain whiskey with Akashi-Tai umeshu, foraged plum maceration, Sipello aperitivo, foraged gooseberry shrub and Maldon salt.', 'An example of the seasonal section, where each drink is named for the local fruit or plant it showcases; both the plums and gooseberries were foraged.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Sussex/gungho.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('gunghobar', NULL, 'Mushroom', 'Mushroom with pickled notes, Scotch whisky, Japanese umeshu plum liqueur, lavender and soda.', 'From the bar''s first menu in December 2017, which named each drink after a single seasonal ingredient and set the template for its produce-led approach.
+
+Created by Julien Barnett in 2017.
+
+Ingredients from Bite Sussex (https://www.bitesussex.com/post/q-a-with-julien-barnett-of-gungho-bar). No measures have been published.', NULL, 2017, NULL, NULL, NULL),
+    ('heypalu', NULL, 'Negroni', 'The classic equal-parts gin, Campari and sweet vermouth, served at the front of the list and as part of a Negroni flight.', 'Negronis are the bar''s chief draw; CLASS''s 2025 survey of cocktails in the UK''s best bars singled out Hey Palu''s list, where the classic sits in a flight next to seasonal twists.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1898/The_Top_50_Cocktails_in_the_UK_s_Best_Bars__2025_.html, https://classbarmag.com/news/fullstory.php/aid/1037/Hear_all_about_the_CBA_s_Best_Bar_in_Scotland.html', 'Negroni', NULL, NULL, NULL, NULL),
+    ('heypalu', NULL, 'Wild Strawberry Negroni', 'Scottish gin with bitter bianco, wild strawberry vermouth and orange bitters.', 'A lighter, fruit-led white-style Negroni that sits in the bar''s Negroni flight beside the classic.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1037/Hear_all_about_the_CBA_s_Best_Bar_in_Scotland.html). No measures have been published.', 'White Negroni', 2023, NULL, NULL, NULL),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 'Blood orange sorbet with amaro, vanilla and prosecco, finished with black lava salt.', 'A take on the Venetian sorbet-and-prosecco Sgroppino and one of the bar''s best-known aperitivo serves, recommended in CLASS''s bartenders'' guide to Edinburgh.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1037/Hear_all_about_the_CBA_s_Best_Bar_in_Scotland.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('heypalu', NULL, 'Yuzu Margarita', 'The bar''s tequila Margarita made with yuzu.', 'One of the ingredient-led spins on modern classics that CLASS picked out on the list, it was a finalist for Cocktail of the Year at the 2026 CLASS Bar Awards. The exact build is not published.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1037/Hear_all_about_the_CBA_s_Best_Bar_in_Scotland.html, https://classbarmag.com/news/fullstory.php/aid/2240/The_winners_of_the_CLASS_Bar_Awards_2026_revealed.html', 'Margarita', NULL, NULL, NULL, NULL),
+    ('kikis.lounge', NULL, 'Queenie Martini', 'Seaweed and Manx butter-washed Tanqueray No. Ten stirred with queenie shell-infused vermouth, finished with queenie roe oil and lemon oil.', 'A tribute to the Isle of Man''s prized queen scallop: the gin is fat-washed with Manx butter and foraged seaweed, the vermouth infused with cracked queenie shells, and a few drops of oil made from the scallop''s roe add aroma without brininess.
+
+Created by Drew Fleming in 2024.
+
+Method: Stir the gin and vermouth until well chilled and strain into a frozen Nick & Nora. Add four drops of roe oil and express lemon peel over the top.
+Seaweed butter-washed gin: Fat-wash the gin with Manx butter enriched with foraged seaweed.
+Queenie roe oil: Made from queenie scallop meat and a neutral oil.
+
+Spec from CLASS (https://classbarmag.com/news/fullstory.php/aid/1345/How_to_make_Kiki_Lounge_s_Queenie_Martini.html).', 'Martini', 2024, 'Nick & Nora', NULL, 'Stir'),
+    ('kikis.lounge', NULL, 'Art & Reality', 'Mezcal, Ancho Reyes and apricot brandy with pink grapefruit, lime and a banana skin cordial, over crushed ice in a hand-painted mug.', 'A tropical Paloma twist that uses leftover banana skins for its cordial, part of the bar''s zero-waste approach. Each ceramic mug is hand-painted by a member of the team.
+
+Created by Freddy Whittle in 2023.
+
+Method: Whip shake all ingredients with crushed ice and pour over crushed ice.
+Banana skin cordial: Macerate equal parts chopped banana skin and caster sugar, shake hard, rest for 24 hours, then strain and bottle.
+
+Spec from CLASS (https://classbarmag.com/news/fullstory.php/aid/1134/How_to_make_Kiki_Lounge_s_Art___Reality.html).', 'Paloma', 2023, 'Ceramic', 'Crushed', 'Shake'),
+    ('kikis.lounge', NULL, 'Chi-Chi', 'Milk-punch take on the Piña Colada with Boatyard vodka, Lillet Blanc, lacto-fermented pineapple, pineapple and coconut syrup, lime and coconut milk, on the rocks.', 'The bar''s signature Chi Chi is clarified as a milk punch and uses fermented pineapple waste for its cordial, one of the zero-waste practices behind its sustainability awards.
+
+Method: Clarified as a milk punch.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1460/Kiki_Lounge_unveils_new_modernist_tropical_cocktail_menu.html). No measures have been published.', 'Piña Colada', 2024, NULL, 'Cubes', NULL),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 'Aperitivo-style Margarita of Maguey Puebla mezcal and Olmeca Altos with Campari, elderflower liqueur and acid-adjusted grapefruit.', 'An update of co-founder Jamie Lewis''s decade-old aperitivo Margarita, reworked with a split agave base for the 2024 Menu Zine Issue 3.
+
+Created by Jamie Lewis in 2024.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1460/Kiki_Lounge_unveils_new_modernist_tropical_cocktail_menu.html). No measures have been published.', 'Margarita', 2024, NULL, NULL, NULL),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 'Beefeater gin with pineapple, cucumber, lime and tonic.', 'One of the ''Greatest Hits'' that has stayed on the list since the bar''s early years, a long, easy tropical gin and tonic.
+
+Ingredients from CLASS (https://classbarmag.com/news/fullstory.php/aid/1460/Kiki_Lounge_unveils_new_modernist_tropical_cocktail_menu.html). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 'Dewar''s 12 Scotch with Lillet Rosé, cherry wine, pineapple, yuzu sherbet and foamer bitters.', 'The first drink on the Residence''s current ''Many Rooms'' signature menu and named for the host himself: a fruity, foamy Scotch sour lifted by rosé aperitif and cherry wine.
+
+Ingredients from Mr Fogg''s (https://www.mr-foggs.com/mr-foggs-residence/menus/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 'Dalmore 12 Scotch stirred with Carpano Antica, Martini Riserva Bitter, Drambuie, demerara and orange bitters.', 'A rich Scotch Boulevardier-style drink from the Study section of the menu, which can be ordered with a Mr Fogg''s hip flask to take home, fitting the traveller theme.
+
+Ingredients from Mr Fogg''s (https://www.mr-foggs.com/mr-foggs-residence/menus/). No measures have been published.', 'Boulevardier', NULL, NULL, NULL, NULL),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 'Sharing coffee cocktail for up to five of Aberfeldy 12, Rémy Martin VSOP, Frangelico, vanilla and espresso under almond milk and tiramisu foam.', 'One of the Residence''s showpiece group serves from the Dining Room section, a big-format coffee drink in the Victorian-parlour style the bar is known for.
+
+Ingredients from Mr Fogg''s (https://www.mr-foggs.com/mr-foggs-residence/menus/). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 'Dewar''s 12 Scotch and Bacardi spiced rum with Casoni figs and cherries liqueur and chocolate and orange bitters.', 'One of the ''Fogg''s Favourites'' served across every Mr Fogg''s venue, a Scotch and rum Old Fashioned with dried-fruit and chocolate notes.
+
+Ingredients from Mr Fogg''s (https://www.mr-foggs.com/mr-foggs-residence/menus/). No measures have been published.', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 'Crazy Gin with mango, lemon vermouth, chutney spices and lime.', 'From the late-2022 ''Faces of our Industry'' menu, which built each drink around an independent Midlands or UK producer, here an Indian-owned gin brand, and told their story on the menu.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Warwickshire/the-pineapple-club.html). No measures have been published.', NULL, 2022, NULL, NULL, NULL),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 'Discarded vodka with honeybush, caramelised banana, raspberry and avocado leaf, and pineapple.', 'Another drink from the producer-focused ''Faces of our Industry'' menu, built on a vodka made from by-products and layering fruit with tea and leaf notes.
+
+Ingredients from Top 50 Cocktail Bars (https://www.top50cocktailbars.com/Bars/UK/Warwickshire/the-pineapple-club.html). No measures have been published.', NULL, 2022, NULL, NULL, NULL),
+    ('pineappleclubbrum', NULL, 'The Last Sip', 'Floral, fruity mix of violet, lavender and raspberry topped with prosecco.', 'A limited-edition drink created by bar manager Klára Kopčiková with Birmingham Royal Ballet for its Romeo and Juliet season, served for two weeks in October 2021; Boulton said it hid a surprise extra ingredient.
+
+Created by Klára Kopčiková in 2021.
+
+Ingredients from Great Western Arcade (https://greatwesternarcade.co.uk/brb-x-the-pineapple-club). No measures have been published.', NULL, 2021, NULL, NULL, NULL),
+    ('rattlebag.belfast', NULL, 'House Martini', 'Boatyard Double gin or vodka with a pine distillate, dry vermouth and an olive.', 'The house Martini adds a pine distillate for a resinous edge, a small example of the bar''s habit of layering its own preparations onto classics.
+
+Ingredients from Rattlebag menu (https://rattlebag.ams3.digitaloceanspaces.com/uploads/2026/03/RTBG_Menu_MAR26_V1_WEB-1.pdf). No measures have been published.', 'Martini', NULL, NULL, NULL, NULL),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 'Shortcross poitín with Drambuie, Amaro Montenegro, lemon and brown sugar, clarified as a milk punch.', 'Built on Irish poitín from a Northern Irish distillery, it shows the bar''s local leaning; manager Chris Wareing has said the team has also used Irish whiskey in its milk punch.
+
+Method: Clarified milk punch.
+
+Ingredients from Rattlebag menu (https://rattlebag.ams3.digitaloceanspaces.com/uploads/2026/03/RTBG_Menu_MAR26_V1_WEB-1.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 'Boatyard Double gin with bubblegum, dry vermouth, lemon and pastis.', 'A playful take on the classic reviver that swaps the usual orange liqueur and Lillet for a bubblegum element and dry vermouth.
+
+Ingredients from Rattlebag menu (https://rattlebag.ams3.digitaloceanspaces.com/uploads/2026/03/RTBG_Menu_MAR26_V1_WEB-1.pdf). No measures have been published.', 'Corpse Reviver #2', NULL, NULL, NULL, NULL),
+    ('rattlebag.belfast', NULL, 'Zombie', 'Highland Park 12 single malt with house zombie mix and juice, tiki bitters and pastis.', 'An unusual Scotch-based Zombie: the bar replaces the traditional blend of rums with an Orkney single malt while keeping the tiki spice and anise.
+
+Ingredients from Rattlebag menu (https://rattlebag.ams3.digitaloceanspaces.com/uploads/2026/03/RTBG_Menu_MAR26_V1_WEB-1.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 'Cherry-infused Macallan 12 with Carpano Antica Formula, Noilly Prat dry vermouth, cherry bitters and a maraschino cherry.', 'Adam Handling''s own favourite drink and the title of his cocktail book: a Perfect Manhattan twist served as a signature on every menu across his restaurant collection.
+
+Ingredients from Ugly Butterfly (https://www.uglybutterfly.co.uk/s/Sample-Ugly-Butterfly-Cocktail-List.pdf). No measures have been published.', 'Manhattan', NULL, NULL, NULL, NULL),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 'Sea salt-infused Sapling gin with Asterley Bros. Schofield''s dry vermouth, malt vinegar and lemon, with an optional fresh oyster.', 'A coastal Martini that nods to the British seaside chip shop with salt and malt vinegar; guests can add a fresh oyster on the side.
+
+Spec from Ugly Butterfly (https://www.uglybutterfly.co.uk/s/Sample-Ugly-Butterfly-Cocktail-List.pdf).', 'Martini', NULL, NULL, NULL, NULL),
+    ('uglybutterflybyah', NULL, 'Off the Path', 'Two Drifters white rum with toasted coconut, foraged gorse cordial, malic acid and saline.', 'A Daiquiri built without imported citrus: malic acid provides the sourness and a cordial of foraged gorse flowers, which smell of coconut, adds a wild local note alongside a Devon-made rum.
+
+Ingredients from Ugly Butterfly (https://www.uglybutterfly.co.uk/s/Sample-Ugly-Butterfly-Cocktail-List.pdf). No measures have been published.', 'Daiquiri', NULL, NULL, NULL, NULL),
+    ('uglybutterflybyah', NULL, 'House Blend', 'Tarquin''s Cornish Dry Gin with Italicus, lavender whey, lime sherbet, salted honey and Empress Grey tea.', 'Opens the current list as a tribute to British tea culture, pairing a Cornish gin with an Earl Grey-style tea and adding a lavender whey for texture.
+
+Ingredients from Ugly Butterfly (https://www.uglybutterfly.co.uk/s/Sample-Ugly-Butterfly-Cocktail-List.pdf). No measures have been published.', NULL, NULL, NULL, NULL, NULL),
+    ('barthreelondon', NULL, 'Whisky + Milk', 'Clarified, milk-washed bourbon drink of Woodford Reserve with Earl Grey tea and cedar.', 'One of the heavier drinks at the bottom of the menu, made by milk-washing the Earl Grey mix so it came out clear, nutty and silky. Time Out singled it out as a standout on its review of the bar.
+
+Sources: http://www.mattthelist.com/2018/02/10/bar-three-spitalfields/, https://www.timeout.com/london/bars-and-pubs/bar-three', NULL, 2018, NULL, NULL, NULL),
+    ('barthreelondon', NULL, 'Tequila Highball', 'Clear, fizzy highball of Ocho blanco tequila with green tea, petitgrain, honey and soda.', 'A light, sparkling opener from the long-drinks section that Time Out said could win over people who dislike tequila. The green tea, honey and essential-oil notes were prepped ahead so the drink was simply poured and served.
+
+Sources: http://www.mattthelist.com/2018/02/10/bar-three-spitalfields/, https://www.timeout.com/london/bars-and-pubs/bar-three', NULL, 2018, NULL, NULL, NULL),
+    ('barthreelondon', NULL, 'Stone Wall', 'Somerset brandy with pear, lemon, perry and egg white.', 'A West Country take on a sour built around fermented pear in two forms, cider brandy and perry. It was one of the drinks The Spirits Business highlighted when it named Bar Three among 2018''s most exciting openings.
+
+Sources: https://www.thespiritsbusiness.com/2019/01/the-most-exciting-bar-openings-of-2018/9/', NULL, 2018, NULL, NULL, NULL),
+    ('barthreelondon', NULL, 'Rhubarb Spritz', 'Beefeater gin, rhubarb, Aperol, vanilla and soda.', 'A light, seasonal spritz from the opening menu that shows the Vennings'' habit of folding one or two house-made fruit components into a simple long drink.
+
+Sources: https://www.thespiritsbusiness.com/2019/01/the-most-exciting-bar-openings-of-2018/9/', NULL, 2018, NULL, NULL, NULL),
+    ('blackrockbars', NULL, 'Cherry River', 'Trunk-aged cocktail of American whiskey and cherries, poured by tap from the oak table.', 'One of the two cocktails aged inside the bar''s 18ft oak trunk, whose channels are lined with charred American and toasted European oak and hold about 17 litres each. Guests watch it run down the table and out of a tap at the end, which made the drink the room''s signature.
+
+Sources: https://thenudge.com/london-bars/black-rock/, https://www.hot-dinners.com/Gastroblog/Latest-news/whisky-bar-black-rock-comes-to-shoreditch-from-the-people-behind-worship-street', NULL, NULL, NULL, NULL, NULL),
+    ('blackrockbars', NULL, 'Black Rock Old Fashioned', 'Few bourbon and Few rye with blueberry, charcoal and peppermint bitters.', 'Listed under ''From the Table'' on the current menu, the section for drinks tied to the oak-trunk table. It swaps the usual sugar and orange for blueberry and a cool peppermint finish.
+
+Sources: https://www.blackrock.bar/_files/ugd/d80d46_13efb476190243b68e76a2baef75c1a5.pdf', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('blackrockbars', NULL, 'Perfect Scotch Old Fashioned', 'Woven Black Rock Blend Scotch with PX sherry and bitters.', 'Built on a blended Scotch made for the bar by Woven, with PX sherry doing the sweetening instead of sugar. It sits alongside the Black Rock Old Fashioned in the ''From the Table'' section of the menu.
+
+Sources: https://www.blackrock.bar/_files/ugd/d80d46_13efb476190243b68e76a2baef75c1a5.pdf', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('blackrockbars', NULL, '40 Shades', 'Irish whiskey highball with green apple and fennel pollen.', 'On the list from the 2016 opening, when it was made with Black Bush and Granny Smith apple; by 2018 it used Powers pot still whiskey. A light, green, anise-edged way into Irish whiskey.
+
+Sources: https://www.hot-dinners.com/Gastroblog/Latest-news/whisky-bar-black-rock-comes-to-shoreditch-from-the-people-behind-worship-street, https://thenudge.com/london-bars/black-rock/', NULL, 2016, NULL, NULL, NULL),
+    ('blackrockbars', NULL, 'Heavy Jelly', 'Port Charlotte 10 and Classic Laddie with bacon, 10-year-old port, a foamer and truffle bitters.', 'A savoury, smoky showcase for Bruichladdich''s peated and unpeated malts from the current rocks section, leaning on bacon and truffle to push the whisky''s richness.
+
+Sources: https://www.blackrock.bar/_files/ugd/d80d46_13efb476190243b68e76a2baef75c1a5.pdf', NULL, NULL, NULL, NULL, NULL),
+    ('bonvedinburgh', NULL, 'Ginger Tommy', 'Blanco tequila, Domaine de Canton ginger liqueur, lime, agave syrup and orange bitters, with orange zest.', 'Listed as the bar''s signature cocktail: a Tommy''s Margarita with a ginger liqueur added for warmth and orange bitters and zest to tie it together.
+
+Sources: https://www.socialandcocktail.co.uk/bars/the-bon-vivant-2/', 'Tommy''s Margarita', NULL, NULL, NULL, NULL),
+    ('couchstirchleyb30', NULL, 'Smoking Ban', 'Cherry-smoked Drambuie with Madeira and tobacco.', 'From ''The Pub'', the menu that won Drinks Menu of the Year at the 2026 CLASS Bar Awards, where each drink riffs on a piece of British pub life. This one turns the 2007 indoor smoking ban into a smoky, fortified sipper.
+
+Sources: https://birminghamwire.co.uk/guide/the-best-bars-pubs-and-restaurants-to-try-in-stirchley/', NULL, NULL, NULL, NULL, NULL),
+    ('couchstirchleyb30', NULL, 'Communal Crisps', 'BBQ butter-washed rum with black pepper vermouth and paprika.', 'Another drink from ''The Pub'' menu, playing on the shared bag of crisps at the pub table by building barbecue and paprika seasoning into a stirred rum drink.
+
+Sources: https://birminghamwire.co.uk/guide/the-best-bars-pubs-and-restaurants-to-try-in-stirchley/', NULL, NULL, NULL, NULL, NULL),
+    ('couchstirchleyb30', NULL, 'Viennetta', 'Dessert-style cocktail heavy on crème de menthe, named after the ice-cream dessert.', 'CLASS used it as proof that Couch doesn''t take itself too seriously. It was a finalist for Cocktail of the Year at the 2025 CLASS Bar Awards.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1704/On_the_Couch:_how_a_local_bar_became_nationally_known_.html, https://classbarmag.com/news/fullstory.php/aid/1857/bars_from_across_the_uk_star_at_the_class_bar_awards_2025_.html', NULL, NULL, NULL, NULL, NULL),
+    ('couchstirchleyb30', NULL, 'Digging Holes', 'Mezcal with tomato wine and samphire.', 'From the ''Couch Scrapbook'' menu, which the team built from their own nostalgia. CLASS picked it out as an example of drinks as complex as a destination bar''s, served in a neighbourhood room.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1704/On_the_Couch:_how_a_local_bar_became_nationally_known_.html', NULL, NULL, NULL, NULL, NULL),
+    ('couchstirchleyb30', NULL, 'Dirty Pop', 'Discarded Grape vodka with cherry whey and fizzy lemon and lime.', 'A bright, fizzy drink from the ''Couch Scrapbook'' menu that uses whey and a vodka made from grape by-products of winemaking, in the playful style the bar is known for.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1704/On_the_Couch:_how_a_local_bar_became_nationally_known_.html', NULL, NULL, NULL, NULL, NULL),
+    ('filthyxiii', NULL, 'Absinthe Frappe', 'Hendrick''s Absinthe with melon and mint over crushed ice.', 'A light, frozen-style take on the old New Orleans absinthe serve, softened with melon. CLASS notes it was nominated for Cocktail of the Year at the CLASS Bar Awards.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Somerset/filthy-xiii.html, https://classbarmag.com/news/fullstory.php/aid/1511/Best_in_the_West:_How_Ben_Alcock_s_Filthy_XIII_and_HMSS_became_Bristol_landmarks_.html', NULL, NULL, NULL, NULL, NULL),
+    ('filthyxiii', NULL, 'Lychee Martini', 'Bombay Sapphire gin with lychee, Sauternes and fizz.', 'A sparkling, sweet-wine-lifted version of the lychee martini, typical of the bar''s Asian-leaning twists on familiar crowd-pleasers.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Somerset/filthy-xiii.html', NULL, NULL, NULL, NULL, NULL),
+    ('filthyxiii', NULL, 'Scotch & Champagne', 'Glenmorangie 10 with Moët & Chandon Impérial and soda.', 'Takes the whisky-and-sparkling mix popular in Chinese nightlife and dresses it up with single malt and Champagne. Top 50 Cocktail Bars called it one of the most exciting drinks on the list.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Somerset/filthy-xiii.html', NULL, NULL, NULL, NULL, NULL),
+    ('filthyxiii', NULL, 'Umeshu Ice', 'Hennessy VS with umeshu plum liqueur and soda.', 'A simple, sessionable highball that pairs Cognac with Japanese plum liqueur, in line with the bar''s light, easy-drinking style.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Somerset/filthy-xiii.html', NULL, NULL, NULL, NULL, NULL),
+    ('hachabar', NULL, 'Mirror Margarita', 'Crystal-clear Margarita of blanco tequila, triple sec, cane syrup and an acid mix in place of lime juice, over ice.', 'Moncrieffe swapped lime juice for an acid solution so the drink looks like a glass of water yet tastes like a Margarita; at opening it was dispensed on tap and finished with a citrus mist. It won Cocktail of the Year at the 2020 CLASS Bar Awards, sold in bottles through lockdown and became its own brand in 2021.
+
+Created by Deano Moncrieffe in 2019.
+
+Method: Stir all ingredients with ice and strain into an ice-filled glass, ideally over a large cube.
+
+Spec adapted from Difford''s Guide (https://www.diffordsguide.com/cocktails/recipe/7604/mirror-margarita).', 'Margarita', 2019, 'Rocks', 'Large Cube', 'Stir'),
+    ('hachabar', NULL, 'Hacha Tequila Sunrise', 'Tequila with clarified orange juice, hibiscus and pomegranate shrub.', 'Hacha''s reworking of the 1970s Tequila Sunrise for its opening menu, clarifying the orange juice and replacing grenadine with hibiscus and a pomegranate shrub for a cleaner, tarter drink.
+
+Created by Deano Moncrieffe in 2019.
+
+Sources: https://www.hot-dinners.com/201903188180/Gastroblog/Latest-news/hacha-in-dalston-is-a-tequila-and-mezcal-bar-with-mexican-sharing-plates', NULL, 2019, NULL, NULL, NULL),
+    ('hachabar', NULL, 'Batanga', 'Añejo tequila with house-made cola and a Guinness float, served straight up.', 'Turns the Mexican tequila-and-cola highball into a short drink presented like an Espresso Martini, with a Guinness layer on top in place of coffee crema.
+
+Created by Deano Moncrieffe in 2019.
+
+Sources: https://www.hot-dinners.com/201903188180/Gastroblog/Latest-news/hacha-in-dalston-is-a-tequila-and-mezcal-bar-with-mexican-sharing-plates', NULL, 2019, NULL, NULL, NULL),
+    ('hideout_bath', NULL, 'Hideout Old Fashioned', 'Bourbon, rye and corn whiskey blend (Evan Williams, Elijah Craig Rye, Mellow Corn) with maple and bitters.', 'The bar''s best-known drink and a fixture of its signatures list. CLASS names it the favourite; the house whiskey blend has changed over time (The Pinnacle Guide lists Evan Williams and WhistlePig).
+
+Sources: https://hideoutbath.co.uk/cocktails, https://classbarmag.com/news/fullstory.php/aid/2404/The_CLASS_Crawl:_Bath_edition.html', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('hideout_bath', NULL, 'Tom & Jerry', 'Cognac (Hennessy VS) with Coco Pops and condensed milk.', 'Not the Victorian eggnog of the same name but a sweet, nostalgic cereal-milk drink that has stayed on the signatures list for years. The Pinnacle Guide lists an earlier version made with Monkey Shoulder.
+
+Sources: https://hideoutbath.co.uk/cocktails, https://classbarmag.com/news/fullstory.php/aid/2404/The_CLASS_Crawl:_Bath_edition.html', NULL, NULL, NULL, NULL, NULL),
+    ('hideout_bath', NULL, 'Tokyo Drift', 'Boatyard Double Gin with pomegranate and hibiscus, topped with soda.', 'The long, refreshing option CLASS recommends at the bar. Like much of the menu, the name nods to pop and hip-hop culture.
+
+Sources: https://hideoutbath.co.uk/cocktails, https://classbarmag.com/news/fullstory.php/aid/2404/The_CLASS_Crawl:_Bath_edition.html', NULL, NULL, NULL, NULL, NULL),
+    ('hideout_bath', NULL, 'So Fresh, So Clean', 'East London rum with green apple oleo and aromatised wine.', 'Named after the OutKast track, it is one of the guest favourites kept on the signatures list, with apple oleo saccharum giving a crisp, clean profile.
+
+Sources: https://hideoutbath.co.uk/cocktails, https://www.thepinnacleguide.com/the-hideout/', NULL, NULL, NULL, NULL, NULL),
+    ('drinkmanolo', NULL, 'Cosmopolitan', 'Lemon vodka, lime, cranberry and orange, served up.', 'Top 50 Cocktail Bars singled out the house Cosmopolitan for its 17 ingredients, a sign of how much prep sits behind the bar''s simple-looking classics.
+
+Sources: https://www.manolobar.co.uk/wp-content/uploads/2023/07/manolo_menu.pdf, https://www.top50cocktailbars.com/Bars/UK/Merseyside/manolo.html', 'Cosmopolitan', NULL, NULL, NULL, NULL),
+    ('drinkmanolo', NULL, 'Piña Colada', 'Rum, pineapple, coconut and ice cream, served in a frozen pineapple.', 'The flagship of the ''vacation drinks'' section, made richer with ice cream and served in a frozen pineapple to set the holiday mood the bar is built around.
+
+Sources: https://www.manolobar.co.uk/wp-content/uploads/2023/07/manolo_menu.pdf, https://www.top50cocktailbars.com/Bars/UK/Merseyside/manolo.html', 'Piña Colada', NULL, NULL, NULL, NULL),
+    ('drinkmanolo', NULL, 'Espresso Martini', 'Añejo tequila with espresso and sugar.', 'Manolo''s own version swaps vodka for aged tequila, one of the house takes on modern classics promised at opening.
+
+Sources: https://www.manolobar.co.uk/wp-content/uploads/2023/07/manolo_menu.pdf, https://confidentials.com/liverpool/manolo-cocktail-bar-slater-street', 'Espresso Martini', NULL, NULL, NULL, NULL),
+    ('drinkmanolo', NULL, 'Gentleman''s Whiskey & Coke', 'Whiskey with house-made Manolo cola and spice, carbonated.', 'An upgrade of the bar-call staple, with the cola made in house and the whole drink force-carbonated.
+
+Sources: https://www.manolobar.co.uk/wp-content/uploads/2023/07/manolo_menu.pdf', NULL, NULL, NULL, NULL, NULL),
+    ('drinkmanolo', NULL, 'Bacon & Maple Old Fashioned', 'Smoked bacon-infused bourbon with maple syrup and bitters.', 'A savoury-sweet Old Fashioned from the originals section, pairing a smoked-bacon bourbon with maple syrup in place of plain sugar.
+
+Sources: https://www.manolobar.co.uk/wp-content/uploads/2023/07/manolo_menu.pdf', 'Old Fashioned', NULL, NULL, NULL, NULL),
+    ('passingfancies.bar', NULL, 'Adult Ribena', 'Clarified blueberry Sidecar riff with cognac, fortified kumquat and acidified honey from the bar''s roof.', 'Matt Arnold built it from the first drink he and bar manager Charlie made together, then clarified it with Pectinex enzyme and a centrifuge spin at 3200rpm; the team thought it tasted like a grown-up Ribena. It became a best-seller and won Cocktail of the Year at the 2024 CLASS Bar Awards.
+
+Created by Matt Arnold.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1197/Fine_drinks_and_high_jinks_-_the_making_of_Passing_Fancies_.html, https://classbarmag.com/news/fullstory.php/aid/1403/London,_Birmingham_and_Edinburgh_star_at_the_CLASS_Bar_Awards_2024.html', 'Sidecar', NULL, NULL, NULL, NULL),
+    ('passingfancies.bar', NULL, 'Short & Stout', 'Scotch with Guinness (stout) caramel and walnut.', 'The heaviest drink on the opening menu, which lists each cocktail by three flavour cues and gets richer further down. It is still one of the signatures the bar takes on residencies.
+
+Sources: https://classbarmag.com/news/fullstory.php/aid/1197/Fine_drinks_and_high_jinks_-_the_making_of_Passing_Fancies_.html, https://birminghamwire.co.uk/24-stories-hosts-residency-with-award-winning-cocktail-bar-passing-fancies/', NULL, NULL, NULL, NULL, NULL),
+    ('passingfancies.bar', NULL, 'Metric Margarita', 'Mezcal with ''faux agave'' and salt.', 'A signature Margarita variation built around a house-made agave substitute, offered at the bar''s 2026 residency with an upgrade to Don Julio 1942.
+
+Sources: https://birminghamwire.co.uk/24-stories-hosts-residency-with-award-winning-cocktail-bar-passing-fancies/', 'Margarita', NULL, NULL, NULL, NULL),
+    ('passingfancies.bar', NULL, 'The Custard Factory', 'Rémy Martin VSOP with apple and custard.', 'From the Jewellery Quarter menu of ten drinks named after Birmingham landmarks, this one salutes the bar''s first home in Digbeth with a playful, nostalgic dessert profile.
+
+Sources: https://www.passingfanciesbar.co.uk/fancies', NULL, 2026, NULL, NULL, NULL),
+    ('passingfancies.bar', NULL, 'Spaghetti Junction', 'Tomato with salt-and-pepper Tokaji and basil.', 'Named after Birmingham''s famous motorway interchange on the 2026 menu, it treats tomato as the star, balancing savoury depth with sweet Hungarian wine and basil.
+
+Sources: https://www.passingfanciesbar.co.uk/fancies', NULL, 2026, NULL, NULL, NULL),
+    ('p_u_b_l_i_c', NULL, '159 Norfolk Street', 'White chocolate-washed Tanqueray gin with Cocchi Americano, fino sherry and rose water.', 'Named after an address on Sheffield''s Norfolk Street, it is a stirred aperitif where fat-washing the gin with white chocolate adds texture without heaviness.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Yorkshire/public.html', NULL, NULL, NULL, NULL, NULL),
+    ('p_u_b_l_i_c', NULL, 'Chipping Forecast', 'Dandelion-infused Ketel One vodka with burdock, Sheffield honey and elderflower vinegar.', 'From the ''Public Holiday'' menu concept, it reworks the flavours of dandelion and burdock, the old northern soft drink, with local honey, showing the bar''s habit of tying drinks to place.
+
+Sources: https://www.theworlds50best.com/discovery/Establishments/UK/Sheffield/Public.html', NULL, NULL, NULL, NULL, NULL),
+    ('p_u_b_l_i_c', NULL, 'El Platino', '12-year-old Scotch finished with a few drops of truffle oil.', 'An early-menu drink where tiny drops of truffle oil float on the surface of aged Scotch, adding an earthy aroma to each sip.
+
+Sources: https://www.ourfaveplaces.co.uk/where-to-go/public/', NULL, NULL, NULL, NULL, NULL),
+    ('p_u_b_l_i_c', NULL, 'Public Highball', 'Scotch highball made with a house blend, served with a large ice stirrer.', 'The bar''s own house-blended whisky served long, a simple showcase for the blend that featured on its early menus.
+
+Sources: https://www.ourfaveplaces.co.uk/where-to-go/public/', NULL, NULL, NULL, NULL, NULL),
+    ('p_u_b_l_i_c', NULL, 'Public Bellini', 'House-made peach purée topped with Prosecco.', 'A straightforward house version of the Venetian classic, listed by Top 50 Cocktail Bars among the bar''s notable drinks.
+
+Sources: https://www.top50cocktailbars.com/Bars/UK/Yorkshire/public.html', 'Bellini', NULL, NULL, NULL, NULL),
+    ('terroirtapas', NULL, 'Future Fashioned', 'Cider brandy with beetroot molasses, sonic-aged in Dorset charred oak.', 'An Old Fashioned twist that uses an ultrasonic machine to speed-age the drink: five minutes with Dorset charred oak was said to match about seven weeks in a barrel, with long-reduced beetroot standing in for sugar.
+
+Sources: https://web.archive.org/web/20201020054620/https://terroirtapas.com/menu-item/furure-fashioned/, https://web.archive.org/web/20201030133124/https://terroirtapas.com/fdm-menu-section/cocktails/', 'Old Fashioned', 2019, NULL, NULL, NULL),
+    ('terroirtapas', NULL, 'Margarita', 'Tequila blend with fermented tomato water.', 'The water left over from the kitchen''s pan con tomate is fermented to supply the sour element, so the drink runs on a kitchen by-product instead of fresh lime. Fowler used it as the example of the bar and kitchen sharing ingredients.
+
+Created by James Fowler in 2017.
+
+Sources: https://web.archive.org/web/20201030133124/https://terroirtapas.com/fdm-menu-section/cocktails/, https://www.restaurantonline.co.uk/Article/2019/07/23/The-new-wave-bars-combining-cocktails-with-food/', 'Margarita', 2017, NULL, NULL, NULL),
+    ('terroirtapas', NULL, 'House Martini', 'House organic gin from Conker Spirit with homemade vermouth, fig leaf oil and pickles.', 'Made with a gin distilled for the bar by Dorset''s Conker and delivered in bulk in reusable packaging, plus a vermouth made from wine left over on the taps and a drop of fig leaf oil from a local garden.
+
+Sources: https://web.archive.org/web/20201030125001/https://terroirtapas.com/menu-item/house-martini/, https://web.archive.org/web/20201030133124/https://terroirtapas.com/fdm-menu-section/cocktails/', 'Martini', 2017, NULL, NULL, NULL);
 
 INSERT INTO "seed_lines" VALUES
     ('allegory_dc', NULL, 'Eyes of Flame', 0, 21, 'ml', 'Siete Misterios Mezcal', 'Mezcal', NULL, false),
@@ -1739,7 +2265,232 @@ INSERT INTO "seed_lines" VALUES
     ('violethourchicago', NULL, 'Paper Plane', 0, 0.75, 'oz', 'Bourbon', NULL, NULL, false),
     ('violethourchicago', NULL, 'Paper Plane', 1, 0.75, 'oz', 'Nonino Quintessentia', 'Amaro', NULL, false),
     ('violethourchicago', NULL, 'Paper Plane', 2, 0.75, 'oz', 'Aperol', NULL, NULL, false),
-    ('violethourchicago', NULL, 'Paper Plane', 3, 0.75, 'oz', 'Lemon Juice', NULL, NULL, false);
+    ('violethourchicago', NULL, 'Paper Plane', 3, 0.75, 'oz', 'Lemon Juice', NULL, NULL, false),
+    ('barglue', NULL, 'Bibi', 0, NULL, NULL, 'Absolut Vodka', 'Vodka', NULL, false),
+    ('barglue', NULL, 'Bibi', 1, NULL, NULL, 'Rhum J.M Volcanique', 'Rhum Agricole', NULL, false),
+    ('barglue', NULL, 'Bibi', 2, NULL, NULL, 'Cacao', NULL, NULL, false),
+    ('barglue', NULL, 'Bibi', 3, NULL, NULL, 'Honeycomb', NULL, NULL, false),
+    ('barglue', NULL, 'Bibi', 4, NULL, NULL, 'Espresso', NULL, NULL, false),
+    ('barglue', NULL, 'Under the Bridge', 0, NULL, NULL, 'Bacardi Carta Blanca White Rum', 'White Rum', NULL, false),
+    ('barglue', NULL, 'Under the Bridge', 1, NULL, NULL, 'Suze', 'Gentian Aperitif', NULL, false),
+    ('barglue', NULL, 'Under the Bridge', 2, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('barglue', NULL, 'Under the Bridge', 3, NULL, NULL, 'Grapefruit and Apple', NULL, NULL, false),
+    ('barglue', NULL, 'Under the Bridge', 4, NULL, NULL, 'Sugar glass', NULL, 'garnish', false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 0, NULL, NULL, 'La Hechicera Rum', 'Rum', NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 1, NULL, NULL, 'Havana Club 3 Year Old Rum', 'Rum', NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 2, NULL, NULL, 'Raspberry', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 3, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 4, NULL, NULL, 'Maple', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 5, NULL, NULL, 'Coconut', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 6, NULL, NULL, 'Distilled Bread', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Licking the Spoon', 7, NULL, NULL, 'Cream Soda', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Bread & Butter', 0, NULL, NULL, 'Niche Buttered Bread Vodka', 'Buttered Bread Vodka', 'house buttered-bread infusion', false),
+    ('belowstairsbar', NULL, 'Bread & Butter', 1, NULL, NULL, 'Nixta', 'Corn Liqueur', NULL, false),
+    ('belowstairsbar', NULL, 'Bread & Butter', 2, NULL, NULL, 'Pineau Des Charentes', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Bread & Butter', 3, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Pina Collider', 0, NULL, NULL, 'Havana Club 3 Year Old Rum', 'Rum', NULL, false),
+    ('belowstairsbar', NULL, 'Pina Collider', 1, NULL, NULL, 'Discarded Banana Peel Rum', 'Banana Peel Rum', NULL, false),
+    ('belowstairsbar', NULL, 'Pina Collider', 2, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Pina Collider', 3, NULL, NULL, 'Coconut', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Pina Collider', 4, NULL, NULL, 'Black Sesame', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Clean Sheets', 0, NULL, NULL, 'Discarded Chardonnay Vodka', 'Chardonnay Vodka', NULL, false),
+    ('belowstairsbar', NULL, 'Clean Sheets', 1, NULL, NULL, 'Tonka', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Clean Sheets', 2, NULL, NULL, 'Niche', 'Lavender and Chamomile', NULL, false),
+    ('belowstairsbar', NULL, 'Clean Sheets', 3, NULL, NULL, 'Acids', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Clean Sheets', 4, NULL, NULL, 'Meringue layer', NULL, 'garnish', false),
+    ('belowstairsbar', NULL, 'Barmalade', 0, NULL, NULL, 'Finlandia Vodka', 'Vodka', NULL, false),
+    ('belowstairsbar', NULL, 'Barmalade', 1, NULL, NULL, 'Marmalade', NULL, 'house-made', false),
+    ('belowstairsbar', NULL, 'Barmalade', 2, NULL, NULL, 'Bergamot Soda', NULL, 'house-made', false),
+    ('belowstairsbar', NULL, 'Barmalade', 3, NULL, NULL, 'Chartreuse', NULL, NULL, false),
+    ('belowstairsbar', NULL, 'Barmalade', 4, NULL, NULL, 'Jack Daniel''s Rye', 'Rye Whiskey', NULL, false),
+    ('blinkerbar', NULL, 'The Blinker', 0, NULL, NULL, 'Sazerac Rye (Blinker barrel select)', 'Rye Whiskey', NULL, false),
+    ('blinkerbar', NULL, 'The Blinker', 1, NULL, NULL, 'Raspberry', NULL, NULL, false),
+    ('blinkerbar', NULL, 'The Blinker', 2, NULL, NULL, 'Pink Grapefruit', NULL, NULL, false),
+    ('blinkerbar', NULL, 'Snaquiri', 0, NULL, NULL, 'Bacardi Carta Blanca White Rum', 'White Rum', NULL, false),
+    ('blinkerbar', NULL, 'Snaquiri', 1, NULL, NULL, 'Citric', NULL, NULL, false),
+    ('blinkerbar', NULL, 'Snaquiri', 2, NULL, NULL, 'Sugar', NULL, NULL, false),
+    ('blinkerbar', NULL, 'English Old Fashioned', 0, NULL, NULL, 'Cotswolds Single Malt Whisky', 'English Single Malt Whisky', NULL, false),
+    ('blinkerbar', NULL, 'English Old Fashioned', 1, NULL, NULL, 'Salted Honey', NULL, NULL, false),
+    ('blinkerbar', NULL, 'English Old Fashioned', 2, NULL, NULL, 'Toasted Oats', NULL, NULL, false),
+    ('blinkerbar', NULL, 'English Old Fashioned', 3, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('blinkerbar', NULL, 'Applewood Old Fashioned', 0, NULL, NULL, 'Aberfeldy 12 Year Old Scotch', 'Scotch Whisky', NULL, false),
+    ('blinkerbar', NULL, 'Applewood Old Fashioned', 1, NULL, NULL, 'Toasted Applewood', NULL, NULL, false),
+    ('blinkerbar', NULL, 'Applewood Old Fashioned', 2, NULL, NULL, 'Honey Old Fashioned Reduction', NULL, 'house-made', false),
+    ('cahootslondon', NULL, 'Cahooch', 0, NULL, NULL, 'Mount Gay Black Barrel Rum', 'Rum', NULL, false),
+    ('cahootslondon', NULL, 'Cahooch', 1, NULL, NULL, 'Bulleit Bourbon', 'Bourbon', NULL, false),
+    ('cahootslondon', NULL, 'Cahooch', 2, NULL, NULL, 'Cointreau Noir', 'Orange Liqueur', NULL, false),
+    ('cahootslondon', NULL, 'Cahooch', 3, NULL, NULL, 'Martini Rosso Sweet Vermouth', 'Sweet Vermouth', NULL, false),
+    ('cahootslondon', NULL, 'Kingly Court Gimlet', 0, NULL, NULL, 'Oxley Gin', 'Gin', 'kaffir lime leaf-infused', false),
+    ('cahootslondon', NULL, 'Kingly Court Gimlet', 1, NULL, NULL, 'Singani 63', 'Singani', NULL, false),
+    ('cahootslondon', NULL, 'Kingly Court Gimlet', 2, NULL, NULL, 'Kalamansi and Lemon Sherbet', NULL, 'house-made', false),
+    ('cahootslondon', NULL, 'Kingly Court Gimlet', 3, NULL, NULL, 'Lemongrass Oil', NULL, NULL, false),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 0, NULL, NULL, 'Buffalo Trace Bourbon', 'Bourbon', 'tonka bean-infused', false),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 1, NULL, NULL, 'Angel''s Envy Bourbon', 'Bourbon', NULL, false),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 2, NULL, NULL, 'Vermouth Blend', NULL, 'house blend', false),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 3, NULL, NULL, 'Luxardo', 'Maraschino Liqueur', NULL, false),
+    ('cahootslondon', NULL, 'Scoundrel''s Letter', 4, NULL, NULL, 'Cointreau Noir', 'Orange Liqueur', NULL, false),
+    ('crazypedros', NULL, 'OG Green', 0, NULL, NULL, 'Patrón Silver Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('crazypedros', NULL, 'OG Green', 1, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('crazypedros', NULL, 'OG Green', 2, NULL, NULL, 'Agave', NULL, NULL, false),
+    ('crazypedros', NULL, 'OG Green', 3, NULL, NULL, 'Green Verdita', NULL, 'house-made: coriander, mint, jalapeño, pineapple', false),
+    ('crazypedros', NULL, 'Frozen Margarita', 0, NULL, NULL, 'El Tequileño Blanco Tequila', 'Blanco Tequila', NULL, false),
+    ('crazypedros', NULL, 'Frozen Margarita', 1, NULL, NULL, 'Triple Sec', NULL, NULL, false),
+    ('crazypedros', NULL, 'Frozen Margarita', 2, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('crazypedros', NULL, 'Frozen Margarita', 3, NULL, NULL, 'Flavour of Choice', NULL, 'e.g. strawberry, rocket lolly, yuzu and white chocolate', true),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 0, NULL, NULL, 'El Tequileño Blanco Tequila', 'Blanco Tequila', 'habanero-infused', false),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 1, NULL, NULL, 'Triple Sec', NULL, NULL, false),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 2, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 3, NULL, NULL, 'Watermelon', NULL, NULL, false),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 4, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('crazypedros', NULL, 'Spicy Watermelon Margarita', 5, NULL, NULL, 'Tajín', NULL, NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 0, NULL, NULL, 'El Tequileño Reposado Tequila', 'Reposado Tequila', NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 1, NULL, NULL, 'Nixta', 'Corn Liqueur', NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 2, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 3, NULL, NULL, 'Aloe Vera', NULL, NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 4, NULL, NULL, 'Citrus', NULL, NULL, false),
+    ('crazypedros', NULL, 'Maize Runner', 5, NULL, NULL, 'Salt', NULL, NULL, false),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 0, 15, 'ml', 'Montanya Rum', 'Rum', NULL, false),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 1, 20, 'ml', 'Hacked Lime Juice', NULL, 'reacidified apple juice', false),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 2, 60, 'ml', 'Wasted Pineapple Prep', NULL, 'waste pineapple oleo, pineapple weed shrub, Damoiseau Arrangés Ananas, Goldstone redistilled heads and tails,…', false),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 3, NULL, NULL, 'Meadowsweet, Fig Leaf and Oat Mousse', NULL, 'a 2cm layer', false),
+    ('gunghobar', NULL, 'Sustainable Piña Colada', 4, NULL, NULL, 'Dried pineapple leaves, by-product wheat straws and a powder of oat pulp and…', NULL, 'garnish', false),
+    ('gunghobar', NULL, 'Basil Grande', 0, NULL, NULL, 'Reyka Vodka', 'Vodka', NULL, false),
+    ('gunghobar', NULL, 'Basil Grande', 1, NULL, NULL, 'Overripe Strawberry Maceration', NULL, 'house-made', false),
+    ('gunghobar', NULL, 'Basil Grande', 2, NULL, NULL, 'Averna', 'Amaro', NULL, false),
+    ('gunghobar', NULL, 'Basil Grande', 3, NULL, NULL, 'Cynar', 'Amaro', NULL, false),
+    ('gunghobar', NULL, 'Basil Grande', 4, NULL, NULL, 'Hacked Lemon Juice', NULL, 'apple-based lemon substitute', false),
+    ('gunghobar', NULL, 'Basil Grande', 5, NULL, NULL, 'Basil', NULL, NULL, false),
+    ('gunghobar', NULL, 'Basil Grande', 6, NULL, NULL, 'Chartreuse', NULL, NULL, false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 0, NULL, NULL, 'Teeling Single Grain Irish Whiskey', 'Single Grain Irish Whiskey', NULL, false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 1, NULL, NULL, 'Akashi-Tai', 'Umeshu', NULL, false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 2, NULL, NULL, 'Foraged Plum Maceration', NULL, 'house-made', false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 3, NULL, NULL, 'Sipello', 'Aperitivo', NULL, false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 4, NULL, NULL, 'Foraged Gooseberry Shrub', NULL, 'house-made', false),
+    ('gunghobar', NULL, 'Plum/Gooseberry', 5, NULL, NULL, 'Maldon', 'Sea Salt', NULL, false),
+    ('gunghobar', NULL, 'Mushroom', 0, NULL, NULL, 'Scotch Whisky', NULL, NULL, false),
+    ('gunghobar', NULL, 'Mushroom', 1, NULL, NULL, 'Umeshu', NULL, NULL, false),
+    ('gunghobar', NULL, 'Mushroom', 2, NULL, NULL, 'Lavender', NULL, NULL, false),
+    ('gunghobar', NULL, 'Mushroom', 3, NULL, NULL, 'Soda', NULL, NULL, false),
+    ('heypalu', NULL, 'Wild Strawberry Negroni', 0, NULL, NULL, 'Scottish Gin', NULL, NULL, false),
+    ('heypalu', NULL, 'Wild Strawberry Negroni', 1, NULL, NULL, 'Bitter Bianco', NULL, NULL, false),
+    ('heypalu', NULL, 'Wild Strawberry Negroni', 2, NULL, NULL, 'Wild Strawberry Vermouth', NULL, NULL, false),
+    ('heypalu', NULL, 'Wild Strawberry Negroni', 3, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 0, NULL, NULL, 'Blood Orange Sorbet', NULL, NULL, false),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 1, NULL, NULL, 'Amaro', NULL, NULL, false),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 2, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 3, NULL, NULL, 'Prosecco', NULL, NULL, false),
+    ('heypalu', NULL, 'Blood Orange Sgroppino', 4, NULL, NULL, 'Black Lava Salt', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Queenie Martini', 0, 75, 'ml', 'Tanqueray No. Ten Gin', 'Gin', 'seaweed and butter washed', false),
+    ('kikis.lounge', NULL, 'Queenie Martini', 1, 15, 'ml', 'Dry Vermouth', NULL, 'infused with cracked queenie shells', false),
+    ('kikis.lounge', NULL, 'Queenie Martini', 2, 4, 'drop', 'Queenie Roe Oil', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Queenie Martini', 3, NULL, NULL, 'Lemon Oil', NULL, 'expressed from fresh peel', false),
+    ('kikis.lounge', NULL, 'Queenie Martini', 4, NULL, NULL, 'Lemon oil', NULL, 'garnish', false),
+    ('kikis.lounge', NULL, 'Art & Reality', 0, 22.5, 'ml', 'Mezcal Verde', 'Mezcal', NULL, false),
+    ('kikis.lounge', NULL, 'Art & Reality', 1, 15, 'ml', 'Ancho Reyes', 'Chile Liqueur', NULL, false),
+    ('kikis.lounge', NULL, 'Art & Reality', 2, 12.5, 'ml', 'Joseph Cartron Apricot Brandy', 'Apricot Brandy', NULL, false),
+    ('kikis.lounge', NULL, 'Art & Reality', 3, 30, 'ml', 'Pink Grapefruit Juice', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Art & Reality', 4, 25, 'ml', 'Banana Skin Cordial', NULL, 'house-made', false),
+    ('kikis.lounge', NULL, 'Art & Reality', 5, 15, 'ml', 'Lime Juice', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Art & Reality', 6, NULL, NULL, 'Seasonal flowers', NULL, 'garnish', false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 0, NULL, NULL, 'Boatyard Vodka', 'Vodka', NULL, false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 1, NULL, NULL, 'Lillet Blanc', 'Aperitif Wine', NULL, false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 2, NULL, NULL, 'Lacto-fermented Pineapple', NULL, 'house-made', false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 3, NULL, NULL, 'Pineapple and Coconut Syrup', NULL, 'made with Bristol Syrup Co.', false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 4, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Chi-Chi', 5, NULL, NULL, 'Coconut Milk', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 0, NULL, NULL, 'Maguey Puebla Mezcal', 'Mezcal', NULL, false),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 1, NULL, NULL, 'Olmeca Altos Tequila', 'Tequila', NULL, false),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 2, NULL, NULL, 'Campari', 'Bitter Aperitivo', NULL, false),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 3, NULL, NULL, 'Elderflower Liqueur', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Ernest + Rita 2.0', 4, NULL, NULL, 'Acid-adjusted Grapefruit', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 0, NULL, NULL, 'Beefeater Gin', 'Gin', NULL, false),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 1, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 2, NULL, NULL, 'Cucumber', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 3, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('kikis.lounge', NULL, 'Cos Tonight BBY I Wanna Get Kiki Wit U', 4, NULL, NULL, 'Tonic', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 0, NULL, NULL, 'Dewar''s 12 Year Old Scotch', 'Scotch Whisky', NULL, false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 1, NULL, NULL, 'Lillet Rosé', 'Aperitif Wine', NULL, false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 2, NULL, NULL, 'Cherry Wine', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 3, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 4, NULL, NULL, 'Yuzu Sherbet', NULL, 'house-made', false),
+    ('mrfoggsgb', NULL, 'Fogg''s Ascent', 5, NULL, NULL, 'Foamer Bitters', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 0, NULL, NULL, 'Dalmore 12 Year Old Scotch', 'Scotch Whisky', NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 1, NULL, NULL, 'Carpano Antica Formula Sweet Vermouth', 'Sweet Vermouth', NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 2, NULL, NULL, 'Martini Riserva Speciale Bitter', 'Bitter Aperitivo', NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 3, NULL, NULL, 'Drambuie Scotch', 'Scotch Liqueur', NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 4, NULL, NULL, 'Demerara Syrup', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Wayfarer''s Dram', 5, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 0, NULL, NULL, 'Aberfeldy 12 Year Old Scotch', 'Scotch Whisky', NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 1, NULL, NULL, 'Rémy Martin VSOP Cognac', 'Cognac', NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 2, NULL, NULL, 'Frangelico', 'Hazelnut Liqueur', NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 3, NULL, NULL, 'Vanilla', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 4, NULL, NULL, 'Espresso', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'The Royal Coffee Maker', 5, NULL, NULL, 'Almond Milk and Tiramisu Foam', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 0, NULL, NULL, 'Dewar''s 12 Year Old Scotch', 'Scotch Whisky', NULL, false),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 1, NULL, NULL, 'Bacardi Caribbean Spiced Rum', 'Spiced Rum', NULL, false),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 2, NULL, NULL, 'Casoni', 'Figs and Cherries Liqueur', NULL, false),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 3, NULL, NULL, 'Chocolate Bitters', NULL, NULL, false),
+    ('mrfoggsgb', NULL, 'Old Fashioned Adventurer', 4, NULL, NULL, 'Orange Bitters', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 0, NULL, NULL, 'Crazy Gin', 'Gin', NULL, false),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 1, NULL, NULL, 'Mango', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 2, NULL, NULL, 'Lemon Vermouth', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 3, NULL, NULL, 'Chutney Spices', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Lassi Wanders', 4, NULL, NULL, 'Lime', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 0, NULL, NULL, 'Discarded Vodka', 'Vodka', NULL, false),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 1, NULL, NULL, 'Honeybush', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 2, NULL, NULL, 'Caramelised Banana', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 3, NULL, NULL, 'Raspberry and Avocado Leaf', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'Second Iteration', 4, NULL, NULL, 'Pineapple', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'The Last Sip', 0, NULL, NULL, 'Violet', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'The Last Sip', 1, NULL, NULL, 'Lavender', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'The Last Sip', 2, NULL, NULL, 'Raspberry', NULL, NULL, false),
+    ('pineappleclubbrum', NULL, 'The Last Sip', 3, NULL, 'top', 'Prosecco', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'House Martini', 0, NULL, NULL, 'Boatyard Double Gin', 'Gin or Vodka', NULL, false),
+    ('rattlebag.belfast', NULL, 'House Martini', 1, NULL, NULL, 'Pine Distillate', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'House Martini', 2, NULL, NULL, 'Dry Vermouth', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'House Martini', 3, NULL, NULL, 'Olive', NULL, 'garnish', false),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 0, NULL, NULL, 'Shortcross', 'Poitín', NULL, false),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 1, NULL, NULL, 'Drambuie Scotch', 'Scotch Liqueur', NULL, false),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 2, NULL, NULL, 'Amaro Montenegro', 'Amaro', NULL, false),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 3, NULL, NULL, 'Lemon', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Milk Punch', 4, NULL, NULL, 'Brown Sugar', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 0, NULL, NULL, 'Boatyard Double Gin', 'Gin', NULL, false),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 1, NULL, NULL, 'Bubblegum', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 2, NULL, NULL, 'Dry Vermouth', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 3, NULL, NULL, 'Lemon', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Corpse Reviver #2', 4, NULL, NULL, 'Pastis', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Zombie', 0, NULL, NULL, 'Highland Park 12 Single Malt Scotch', 'Single Malt Scotch Whisky', NULL, false),
+    ('rattlebag.belfast', NULL, 'Zombie', 1, NULL, NULL, 'Zombie Mix #1', NULL, 'house-made', false),
+    ('rattlebag.belfast', NULL, 'Zombie', 2, NULL, NULL, 'Zombie Juice', NULL, 'house-made', false),
+    ('rattlebag.belfast', NULL, 'Zombie', 3, NULL, NULL, 'Tiki Bitters', NULL, NULL, false),
+    ('rattlebag.belfast', NULL, 'Zombie', 4, NULL, NULL, 'Pastis', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 0, NULL, NULL, 'Macallan 12 Year Old Single Malt Scotch', 'Single Malt Scotch Whisky', 'cherry-infused', false),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 1, NULL, NULL, 'Carpano Antica Formula Sweet Vermouth', 'Sweet Vermouth', NULL, false),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 2, NULL, NULL, 'Noilly Prat Dry Vermouth', 'Dry Vermouth', NULL, false),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 3, NULL, NULL, 'Cherry Bitters', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Perfect, Three Cherries', 4, NULL, NULL, 'Maraschino cherry', NULL, 'garnish', false),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 0, NULL, NULL, 'Sapling Climate Positive Gin', 'Gin', 'sea salt-infused', false),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 1, NULL, NULL, 'Asterley Bros. Schofield''s Dry Vermouth', 'Dry Vermouth', NULL, false),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 2, NULL, NULL, 'Malt Vinegar', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 3, NULL, NULL, 'Lemon', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Salt & Malt', 4, 1, NULL, 'Oyster', NULL, 'on the side', true),
+    ('uglybutterflybyah', NULL, 'Off the Path', 0, NULL, NULL, 'Two Drifters Pure White Rum', 'White Rum', NULL, false),
+    ('uglybutterflybyah', NULL, 'Off the Path', 1, NULL, NULL, 'Toasted Coconut', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Off the Path', 2, NULL, NULL, 'Foraged Gorse Cordial', NULL, 'house-made', false),
+    ('uglybutterflybyah', NULL, 'Off the Path', 3, NULL, NULL, 'Malic Acid', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'Off the Path', 4, NULL, NULL, 'Saline', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'House Blend', 0, NULL, NULL, 'Tarquin''s Cornish Dry Gin', 'Gin', NULL, false),
+    ('uglybutterflybyah', NULL, 'House Blend', 1, NULL, NULL, 'Italicus', 'Bergamot Liqueur', NULL, false),
+    ('uglybutterflybyah', NULL, 'House Blend', 2, NULL, NULL, 'Lavender Whey', NULL, 'house-made', false),
+    ('uglybutterflybyah', NULL, 'House Blend', 3, NULL, NULL, 'Lime Sherbet', NULL, 'house-made', false),
+    ('uglybutterflybyah', NULL, 'House Blend', 4, NULL, NULL, 'Salted Honey', NULL, NULL, false),
+    ('uglybutterflybyah', NULL, 'House Blend', 5, NULL, NULL, 'Empress Grey Tea', NULL, NULL, false),
+    ('hachabar', NULL, 'Mirror Margarita', 0, 50, 'ml', 'Blanco Tequila', NULL, NULL, false),
+    ('hachabar', NULL, 'Mirror Margarita', 1, 15, 'ml', 'Sugar Syrup ''rich''', NULL, '2:1', false),
+    ('hachabar', NULL, 'Mirror Margarita', 2, 5, 'ml', 'Triple Sec', NULL, 'Difford''s shows Cointreau L''Unique', false),
+    ('hachabar', NULL, 'Mirror Margarita', 3, 5, 'ml', 'Acidic Mixer', NULL, 'acid solution replacing lime juice', false),
+    ('hachabar', NULL, 'Mirror Margarita', 4, 4, 'drop', 'Difford''s', 'Margarita Bitters', NULL, true),
+    ('hachabar', NULL, 'Mirror Margarita', 5, NULL, NULL, 'Grapefruit zest twist, expressed over the drink', NULL, 'garnish', false);
 
 
 -- --- Glassware this adds (the picker had no Nick & Nora or martini glass) ---
