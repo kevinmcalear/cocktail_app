@@ -69,6 +69,12 @@ export function useIngredient(id?: string | string[]) {
 
             if (ingError) throw ingError;
 
+            // What it's a kind of. A second read: the self-referencing key is
+            // ambiguous to embed through the view.
+            const generic = ingredient.generic_id
+                ? (await supabase.from('app_item_presentation').select('id, name').eq('id', ingredient.generic_id).maybeSingle()).data
+                : null;
+
             // 2. Fetch Recipe (sub-ingredients)
             const { data: rawRecipe, error: recipeError } = await supabase
                 .from('app_recipe_presentation')
@@ -122,7 +128,7 @@ export function useIngredient(id?: string | string[]) {
             }
 
             return {
-                ingredient,
+                ingredient: { ...ingredient, generic },
                 recipe: recipe || [],
                 usedIn
             };

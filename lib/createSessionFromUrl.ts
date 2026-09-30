@@ -30,5 +30,7 @@ export async function createSessionFromUrl(url: string): Promise<Session | null>
     return data.session;
   }
 
-  return null;
+  // Nothing to exchange. Never resolve quietly here: the gate would count it
+  // as done and leave the person on a button that did nothing.
+  throw new Error('This link has nothing to sign in with. Open it from your email again.');
 }

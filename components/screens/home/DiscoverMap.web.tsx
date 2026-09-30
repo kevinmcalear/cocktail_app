@@ -5,7 +5,7 @@ import { useEffect, useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
-import { MAP_STYLE, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
+import { MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -37,7 +37,7 @@ function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: Disco
     if (look.label) parts.push(look.label);
     el.replaceChildren(...parts);
   }
-  el.setAttribute('aria-label', `${pin.name}${look.label ? `, score ${look.label}` : ', early'}`);
+  el.setAttribute('aria-label', pinDescription(pin));
   el.setAttribute('aria-pressed', String(selected));
   Object.assign(el.style, {
     minWidth: `${look.minWidth}px`,

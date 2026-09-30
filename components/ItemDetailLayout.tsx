@@ -422,7 +422,7 @@ export function ItemDetailLayout({
             <ScrollView 
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingVertical: 32, paddingBottom: insets.bottom + 40 }}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
             >
                 <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 24 }]}>
                     <View style={{ flex: 1, paddingRight: 16 }}>
@@ -455,7 +455,7 @@ export function ItemDetailLayout({
     ) : (
         <Animated.ScrollView
             style={[styles.scrollContainer, { zIndex: 1 }]}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" // picker Modals render inside these scroll views; with the default, the first tap in one only hid the keyboard
             onScroll={scrollHandler}
             scrollEventThrottle={16}
             bounces={false}
@@ -504,7 +504,7 @@ export function ItemDetailLayout({
                 style={[styles.contentSurface, { backgroundColor: theme.background?.get() as string, height: modalHeight - 29 }]}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
             >
                 {isEditing ? (
                     // Editing has up to four actions, which leave no room for the

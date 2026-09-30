@@ -136,6 +136,7 @@ export function useCocktail(id?: string | string[]) {
                         display_ingredient (
                             id,
                             name,
+                            abv,
                             item_images (
                                 images (
                                     url

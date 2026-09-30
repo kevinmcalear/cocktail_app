@@ -96,6 +96,9 @@ const MAPPING = {
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
   'flag': 'outlined-flag',
+  // Tab icons: the same Material glyphs NativeTabs uses on Android.
+  'moon.stars': 'nightlife',
+  'rectangle.stack': 'style',
 } satisfies IconMapping;
 
 /**

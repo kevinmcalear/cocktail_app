@@ -11,10 +11,10 @@ import { useMode } from '@/hooks/useMode';
 export type WebTab = { name: string; label: string; icon: IconName };
 
 export const VENUE_TABS: WebTab[] = [
-  { name: 'index', label: 'Tonight', icon: 'house.fill' },
+  { name: 'index', label: 'Tonight', icon: 'moon.stars' },
   { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
   { name: 'prep', label: 'Prep', icon: 'flask' },
-  { name: 'test', label: 'Study', icon: 'book' },
+  { name: 'test', label: 'Study', icon: 'rectangle.stack' },
 ];
 
 export const HOME_TABS: WebTab[] = [
@@ -27,19 +27,18 @@ export const HOME_TABS: WebTab[] = [
 const BAR_HEIGHT = 56;
 
 /**
- * Space to leave under scrolling content so the floating tab bar (the web one,
- * or the system one on iOS and Android) doesn't cover the last row.
+ * Space to leave under scrolling content so the tab bar doesn't cover the last
+ * row, plus a little air. Only the web bar needs its height added. The system
+ * bar (NativeTabs) is already counted in the bottom safe area on iOS, and on
+ * Android it sits below the screen, so adding a bar height there left a band of
+ * dead space above it.
  */
 export function useTabBarInset() {
   const bottom = useSafeAreaInsets().bottom;
   const wide = useIsWideWeb();
   if (Platform.OS === 'web') return wide ? space.xl : bottom + BAR_HEIGHT + space.xl;
-  return bottom + NATIVE_BAR_HEIGHT + space.lg;
+  return (Platform.OS === 'ios' ? bottom : 0) + space.lg;
 }
-
-// ponytail: the system tab bar's height can't be measured (a NativeTabs
-// limitation), so this is iOS 26's floating bar plus a little air.
-const NATIVE_BAR_HEIGHT = 64;
 
 /**
  * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,

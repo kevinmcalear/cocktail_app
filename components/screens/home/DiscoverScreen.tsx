@@ -2,32 +2,42 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, GlassButton, GlassSurface, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, Field, GlassButton, GlassSurface, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { DiscoverArea } from '@/components/screens/home/DiscoverArea';
 import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
+import { DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
+import { DiscoverSearchResults } from '@/components/screens/home/DiscoverSearchResults';
+import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
 import { NewFromBars } from '@/components/screens/home/NewFromBars';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { useNearMe } from '@/hooks/useNearMe';
+import { findDrinks } from '@/lib/discover';
+import { kindLabel, STYLES } from '@/lib/drinkStyles';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
-import type { Area } from '@/lib/nearMe';
+import { areaLabel, NEAR_ME_KM, type Area } from '@/lib/nearMe';
 
 /**
- * Discover, the first tab in home mode: drinks for your taste, then where
- * (near me, a city, anywhere), the best of a drink there, the top bars there
- * and the most creative drinks, then the drinks you can see, marking the ones
- * your shelf can make and how well each fits your taste. New from bars (live
- * releases and published drinks) comes first.
+ * Discover, the first tab in home mode, in the order people use it: search
+ * drinks or bars, say where (near me, a city, anywhere) and what (a style
+ * like Martinis, or a spirit like Gin), then the drinks bars pour there, the
+ * best-ranked of a drink, the top bars, drinks for your taste and new
+ * releases, and last the drinks you can make yourself. Typing swaps the
+ * browsing sections for search results. The map (full screen on phones,
+ * beside the list on wide screens) pins the bars pouring those drinks;
+ * opening it from "Anywhere" asks where you are, so it starts near you.
  */
 export function DiscoverScreen() {
   const ds = useDs();
@@ -38,9 +48,26 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const breakpoint = useBreakpoint();
   const [area, setArea] = useState<Area>({ kind: 'anywhere' });
+  const [kind, setKind] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
   const [view, setView] = useState<'list' | 'map'>('list');
-  const pick = useDrinkPick();
+  const { locate } = useNearMe();
+  const searching = search.trim().length > 0;
+  // Search stands alone: a style picked while browsing doesn't narrow it.
+  const results = useDiscoverResults({ kind: searching ? null : kind, search, area });
+  const title = `${searching ? `"${search.trim()}"` : kind ? kindLabel(kind) : 'Drinks'} ${areaLabel(area)}`;
+  const pick = useDrinkPick(search.trim() || STYLES.find((s) => s.id === kind)?.classics[0] || '');
+  const pickKind = (k: string | null) => {
+    setKind(k);
+    setSearch('');
+  };
+  const openMap = async () => {
+    setView('map');
+    if (area.kind !== 'anywhere') return;
+    const found = await locate();
+    if (found.status === 'ready') setArea({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
+  };
   const openBar = (ref: string) => {
     setAdding(false);
     router.push(`/p/${ref}`);
@@ -70,6 +97,9 @@ export function DiscoverScreen() {
           area={area}
           onArea={setArea}
           drink={drink}
+          results={{ ...results, title }}
+          kind={kind}
+          onKind={setKind}
           bottomInset={bottom}
           top={
             <GlassSurface style={styles.mapTop}>
@@ -84,9 +114,35 @@ export function DiscoverScreen() {
     );
   }
 
+  const browse = (
+    <>
+      <DiscoverKinds kind={kind} onChange={setKind} />
+      <DrinksHere
+        title={title}
+        drinks={results.drinks}
+        barsById={results.barsById}
+        isLoading={results.isLoading}
+        signedIn={signedIn}
+        empty={`No ${kind ? kindLabel(kind).toLowerCase() : 'drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
+      />
+      <DiscoverBest area={area} pick={pick} />
+      <TopBars area={area} />
+      <ForYou />
+      <NewFromBars />
+      <MostCreative />
+      {signedIn ? (
+        <View style={styles.add}>
+          <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
+          <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setAdding(true)} />
+        </View>
+      ) : null}
+    </>
+  );
+
   const list = (
       <FlatList
-        data={bar.drinks}
+        data={searching ? findDrinks(bar.drinks, search) : bar.drinks}
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(d) => d.id}
         style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
@@ -94,18 +150,31 @@ export function DiscoverScreen() {
           <View style={styles.header}>
             <ScreenHeaderSpacer />
             <Display>Discover</Display>
-            <NewFromBars />
-            <ForYou />
+            <Field
+              label="Search drinks or bars"
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Martini, gin, yuzu, a bar or a city"
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
             <DiscoverArea area={area} onChange={setArea} />
-            <DiscoverBest area={area} pick={pick} />
-            <TopBars area={area} />
-            <MostCreative />
-            {signedIn ? (
-              <View style={styles.add}>
-                <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
-                <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setAdding(true)} />
-              </View>
-            ) : null}
+            {searching ? (
+              <DiscoverSearchResults
+                search={search}
+                area={area}
+                drinks={results.drinks}
+                bars={results.bars}
+                barsById={results.barsById}
+                isLoading={results.isLoading}
+                signedIn={signedIn}
+                onKind={pickKind}
+              />
+            ) : (
+              browse
+            )}
             <View style={styles.library}>
               <Headline role="heading">Make it yourself</Headline>
               <Caption tone="muted">
@@ -133,7 +202,7 @@ export function DiscoverScreen() {
       <View style={[styles.screen, styles.row, { backgroundColor: ds.c.ground }]}>
         {list}
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={area} onArea={setArea} drink={drink} />
+          <DiscoverMapPane mode="side" area={area} onArea={setArea} drink={drink} results={{ ...results, title }} kind={kind} onKind={setKind} />
         </View>
         {sheet}
       </View>
@@ -145,7 +214,7 @@ export function DiscoverScreen() {
       {list}
       {mapAvailable ? (
         <View pointerEvents="box-none" style={[styles.toggle, { bottom: bottom - space.md }]}>
-          <GlassButton accessibilityLabel="Show the map" label="Map" icon="map.fill" onPress={() => setView('map')} />
+          <GlassButton accessibilityLabel="Show the map" label="Map" icon="map.fill" onPress={() => void openMap()} />
         </View>
       ) : null}
       {sheet}
