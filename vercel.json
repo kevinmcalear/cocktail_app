@@ -53,6 +53,10 @@
       "destination": "/settings/bar/[id]/dilution"
     },
     {
+      "source": "/settings/bar/:id/pricing",
+      "destination": "/settings/bar/[id]/pricing"
+    },
+    {
       "source": "/settings/bar/:id/releases/:releaseId",
       "destination": "/settings/bar/[id]/releases/[releaseId]"
     },

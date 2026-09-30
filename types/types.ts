@@ -137,6 +137,8 @@ export interface DatabaseItem {
     iced_capacity_ml?: number | null;
     /** Cocktails: ice in the glass per serve. */
     ice_per_serve_g?: number | null;
+    /** The menu price in minor units of the bar's currency. */
+    price_minor?: number | null;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;

@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
 import { AllergenSection } from "@/components/allergens/AllergenSection";
+import { PriceSection } from "@/components/costs/PriceSection";
 import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
@@ -109,7 +110,6 @@ export default function IngredientDetailScreen() {
             onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
-
                 {/* Info Card */}
                 {(!recipe.length || canViewDetails) && (ingredient.description || recipe.length > 0) && (
                     <GlassView style={styles.card} intensity={10}>
@@ -131,6 +131,7 @@ export default function IngredientDetailScreen() {
                 {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
+                <PriceSection itemId={ingredient.id} />
                 <AllergenSection itemId={ingredient.id} houseMade={recipe.length > 0} canEditItem={canEdit} />
                 <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
 
@@ -174,7 +175,6 @@ export default function IngredientDetailScreen() {
                         >
                             {usedIn.map((item: any) => {
                                 const hero = heroPicture(item.cocktail.item_images);
-                                
                                 return (
                                     <TouchableOpacity 
                                         key={item.id} 
