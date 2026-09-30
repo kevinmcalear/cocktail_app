@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
 import { useBars } from '@/hooks/useBars';
+import type { DisplayFace } from '@/constants/tokens';
+import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -10,6 +12,9 @@ export interface Venue {
   logoUrl: string | null;
   /** The venue's primary colour, if it's a valid hex; otherwise null. */
   accent: string | null;
+  displayFace: DisplayFace;
+  /** The dark-mode ground tint, only when text still reads on it. */
+  groundTint: string | null;
   roleLevel: number;
 }
 
@@ -33,6 +38,8 @@ export function useActiveVenue() {
         name: bar.name,
         logoUrl: bar.logo_url,
         accent: isHexColor(bar.primary_color) ? bar.primary_color : null,
+        displayFace: faceFromDb(bar.display_face),
+        groundTint: usableGroundTint(bar.ground_tint),
         roleLevel: row.role_level ?? 0,
       });
     }

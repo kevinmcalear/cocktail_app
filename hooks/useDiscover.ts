@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { useAuth } from '@/ctx/AuthContext';
 import type { RankVenue } from '@/hooks/useRankings';
+import { viewerScoped } from '@/lib/authCache';
 import { citiesFrom, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
@@ -76,6 +78,20 @@ function asRows(data: unknown): DiscoverRow[] {
 }
 
 /**
+ * Each bar's logo (its profile avatar), for the lists and the map. Logos are
+ * decoration, so a failed read leaves them out rather than failing the list.
+ * ponytail: a second read after the RPC. Upgrade path: return avatar_url
+ * from discover_top_bars and discover_drink_rankings (needs a migration).
+ */
+async function withLogos(rows: DiscoverRow[]): Promise<DiscoverRow[]> {
+  if (!rows.length) return rows;
+  const ids = rows.map((r) => r.venue_profile_id);
+  const { data } = await supabase.from('profiles').select('id, avatar_url').in('id', ids);
+  const logos = new Map((data ?? []).map((p) => [p.id, p.avatar_url]));
+  return rows.map((r) => ({ ...r, avatar_url: logos.get(r.venue_profile_id) ?? null }));
+}
+
+/**
  * "Best Martini near you / in New York / anywhere": ranked bars, then early
  * ones (below the ranker minimum, no score). Works signed out.
  */
@@ -88,7 +104,7 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...params, p_limit: 20 });
       if (error) throw error;
-      return splitEarly(asRows(data));
+      return splitEarly(await withLogos(asRows(data)));
     },
   });
 }
@@ -106,7 +122,7 @@ export function useTopBars(area: Area) {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 50 });
       if (error) throw error;
-      return splitEarly(asRows(data));
+      return splitEarly(await withLogos(asRows(data)));
     },
   });
 }
@@ -121,8 +137,10 @@ export interface VenueScore {
 
 /** A bar's score for its profile. Null when nobody has ranked a drink there yet. */
 export function useVenueScore(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['venue-score', profileId],
+    queryKey: ['venue-score', profileId, viewer.key],
+    meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<VenueScore | null> => {
       const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId });

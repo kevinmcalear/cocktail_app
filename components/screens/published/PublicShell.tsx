@@ -8,6 +8,8 @@ import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 
+import { NotAvailable } from '../safety/NotAvailable';
+
 interface PublicShellProps {
   title: string;
   imageUrl: string | null;
@@ -40,7 +42,9 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
-  const hero = <DrinkHero name={title} imageUrl={imageUrl} generated={generated} glass={glass ?? null} height={heroHeight} fade={!wide} />;
+  // Public pages show one picture: the drink's hero or the release cover.
+  const pictures = imageUrl ? [{ url: imageUrl, isSketch: !!generated, isOutdated: false }] : [];
+  const hero = <DrinkHero name={title} pictures={pictures} glass={glass ?? null} height={heroHeight} fade={!wide} />;
   const body = <View style={[styles.body, { paddingHorizontal: gutter }]}>{children}</View>;
 
   return (
@@ -70,11 +74,14 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
   );
 }
 
-/** While a public page loads, or when what it points at isn't public. */
-export function PublicMissing({ loading, what }: { loading: boolean; what: string }) {
+/** While a public page loads, or, when what it points at isn't public, Not available. */
+export function PublicMissing({ loading, what }: { loading: boolean; what: 'drink' | 'release' | 'menu' }) {
+  if (!loading) return <NotAvailable what={what} />;
   return (
-    <PublicShell title={loading ? 'Loading' : `No ${what} here`} imageUrl={null}>
-      <Body tone="muted">{loading ? '' : `This ${what} isn’t public, or it isn’t there any more.`}</Body>
+    <PublicShell title="Loading" imageUrl={null}>
+      <Body tone="muted" accessibilityLabel={`Loading ${what}`}>
+        {''}
+      </Body>
     </PublicShell>
   );
 }

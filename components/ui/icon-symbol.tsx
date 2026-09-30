@@ -67,6 +67,8 @@ const MAPPING = {
   'circle.lefthalf.filled': 'brightness-6',
   'rectangle.portrait.and.arrow.right': 'logout',
   'magnifyingglass': 'search',
+  'plus.magnifyingglass': 'zoom-in',
+  'minus.magnifyingglass': 'zoom-out',
   'arrow.up': 'arrow-upward',
   'arrow.up.and.down': 'swap-vert',
   'square.grid.2x2': 'grid-view',
@@ -93,6 +95,7 @@ const MAPPING = {
   'sun.max.fill': 'wb-sunny',
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
+  'flag': 'outlined-flag',
 } satisfies IconMapping;
 
 /**

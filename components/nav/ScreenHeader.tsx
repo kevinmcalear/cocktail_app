@@ -7,11 +7,13 @@ import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
+import { CreateButton } from './CreateSheet';
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
- * The top of every redesigned tab: the venue you're in, and you. "You" lives
- * here rather than in the tab bar, which keeps the tabs for the work.
+ * The top of every redesigned tab: the venue you're in, New (make something
+ * or pick up a draft), and you. "You" lives here rather than in the tab bar,
+ * which keeps the tabs for the work.
  */
 export function ScreenHeader() {
   const router = useRouter();
@@ -22,15 +24,20 @@ export function ScreenHeader() {
     <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       {/* Wide web has the chip in the sidebar (WebSideNav). */}
       {wide ? <View /> : <VenueSwitcher />}
-      <PressableScale accessibilityLabel="You: profile and settings" onPress={() => router.push('/settings')} style={styles.avatar}>
-        <CurrentUserAvatar size={32} />
-      </PressableScale>
+      <View style={styles.end}>
+        {/* Wide web has New in the sidebar. */}
+        {wide ? null : <CreateButton />}
+        <PressableScale accessibilityLabel="You: profile and settings" onPress={() => router.push('/settings')} style={styles.avatar}>
+          <CurrentUserAvatar size={32} />
+        </PressableScale>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   avatar: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });
 

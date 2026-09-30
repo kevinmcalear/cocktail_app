@@ -36,7 +36,7 @@ import { inSelectedContext, PERSONAL_CONTEXT } from "@/lib/barContextFilter";
 import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import type { MenuItem, MenuSection } from "@/components/CurrentMenuList";
 import { MenuNotionEditor } from "@/components/menu/MenuNotionEditor";
-import { SearchItem } from "@/components/SearchList";
+import type { SearchItem } from "@/types/search";
 import { SearchPopover } from "@/components/SearchPopover";
 import type { EditorChromeState } from "@/lib/editorChrome";
 
@@ -171,7 +171,6 @@ export default function CreateMenuWizard({
         !!(activeMenuIdProp && menuLoaded) || !!trackedDraft,
         activeMenuIdProp && menuLoaded
             ? recentEntry('menu', activeMenuIdProp, menuName || 'Untitled Menu', {
-                  href: '/(tabs)/menus',
                   barId: barId ?? null,
                   imageUrl: coverUrl || null,
               })
@@ -709,7 +708,6 @@ export default function CreateMenuWizard({
 
             useRecentActivityStore.getState().push(
                 recentEntry('menu', menuId, menuName || 'Untitled Menu', {
-                    href: '/(tabs)/menus',
                     barId: barId ?? null,
                     imageUrl: coverUrl || null,
                 })

@@ -10,6 +10,7 @@ import { layout, space } from '@/constants/tokens';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { barsCrediting } from '@/lib/profiles';
 
+import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { ClaimProfile } from './ClaimProfile';
 import { Positions } from './Positions';
 import { Awards, BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
@@ -34,30 +35,6 @@ export function ProfileScreen({ profileRef }: { profileRef: string | string[] | 
   );
 }
 
-/**
- * For routes with no old screen: shown while the redesign flag is off (or
- * still loading from PostHog), instead of redirecting away and losing the link.
- */
-export function NotInPreview() {
-  return (
-    <BackbarTheme>
-      <PreviewOnlyNote />
-    </BackbarTheme>
-  );
-}
-
-function PreviewOnlyNote() {
-  const ds = useDs();
-  const gutter = useGutter();
-  return (
-    <View style={[styles.screen, styles.center, { backgroundColor: ds.c.ground, padding: gutter }]}>
-      <Body tone="muted" align="center">
-        Profiles are part of the new design, which isn’t switched on for you yet.
-      </Body>
-    </View>
-  );
-}
-
 function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined }) {
   const ds = useDs();
   const router = useRouter();
@@ -66,27 +43,33 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const breakpoint = useBreakpoint();
   const { data: profile, isLoading, error } = useProfile(profileRef);
 
-  const back = (
-    <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
+  const controls = (
+    <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
         accessibilityLabel="Back"
         icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
+      {profile ? <ProfileSafety profile={profile} /> : null}
     </View>
   );
 
   let body;
   if (profile) body = <ProfileBody profile={profile} columns={breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4} />;
   else if (isLoading) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
-  else body = <Body tone="muted">{error ? "Couldn't load this profile. Check your connection and try again." : "There's no public profile here. It may be private or the link may be wrong."}</Body>;
+  else
+    body = (
+      <BlockedProfileNote profileRef={profileRef}>
+        <Body tone="muted">{error ? "Couldn't load this profile. Check your connection and try again." : "There's no public profile here. It may be private or the link may be wrong."}</Body>
+      </BlockedProfileNote>
+    );
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.readable}>{body}</View>
       </ScrollView>
-      {back}
+      {controls}
     </View>
   );
 }
@@ -178,9 +161,8 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
-  controls: { position: 'absolute' },
+  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },

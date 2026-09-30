@@ -1,15 +1,13 @@
-import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
-import { CustomIcon } from '@/components/ui/CustomIcons';
+import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
-import { usePendingClaims } from '@/hooks/useProfiles';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
-import { useRedesign } from '@/lib/flags';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +19,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
@@ -67,10 +65,7 @@ export function SettingsScreen() {
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
-  const tabBarInset = useFloatingTabBarInset();
-  // Only moderators can read other people's claims (RLS), so this is 0 for everyone else.
-  const claimCount = usePendingClaims().data?.length ?? 0;
-  const redesign = useRedesign();
+  const tabBarInset = useTabBarInset();
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -96,8 +91,6 @@ export function SettingsScreen() {
   };
   const { data: userBars, isLoading: barsLoading } = useBars();
   const {
-    isTestingEnabled,
-    setTesting,
     themeMode,
     setThemeMode,
     defaultSearchContext,
@@ -601,31 +594,6 @@ export function SettingsScreen() {
     </Section>
   );
 
-  const testingPanel = (
-    <Section title="Testing" minWidth={240}>
-      <XStack alignItems="center" justifyContent="space-between" gap="$3">
-        <XStack alignItems="center" gap="$2.5" flex={1}>
-          <CustomIcon name="TabTest" size={20} color={color} />
-          <YStack flex={1}>
-            <Text fontSize={15} fontWeight="600" color="$color">
-              Enable Testing
-            </Text>
-            <Text fontSize={12} color="$color11">
-              Show the Quiz tab in navigation
-            </Text>
-          </YStack>
-        </XStack>
-        <Switch
-          value={isTestingEnabled}
-          onValueChange={setTesting}
-          trackColor={{
-            false: theme.borderColor?.get() as string,
-            true: theme.color8?.get() as string,
-          }}
-        />
-      </XStack>
-    </Section>
-  );
 
   const linkRow = (label: string, onPress: () => void) => (
     <Pressable role="link" onPress={onPress}>
@@ -642,7 +610,7 @@ export function SettingsScreen() {
     <Section title="Account" minWidth={240}>
       {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
       {linkRow('Terms of use', () => router.push('/legal/terms'))}
-      {redesign && claimCount ? linkRow(`Profile claims (${claimCount} waiting)`, () => router.push('/p/review-claims')) : null}
+      <SafetyLinks row={linkRow} />
       <Separator />
       <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
         <XStack alignItems="center" justifyContent="space-between">
@@ -759,7 +727,6 @@ export function SettingsScreen() {
           {unitsPanel}
           {searchFilterPanel}
           {viewAsPanel}
-          {testingPanel}
           {accountPanel}
           <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
             <Pressable

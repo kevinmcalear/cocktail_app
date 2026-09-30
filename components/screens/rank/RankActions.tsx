@@ -7,6 +7,7 @@ import { signatureBarOf, useBarProfile, useMyRankList, useRankTarget } from '@/h
 import type { ItemPicture } from '@/lib/itemImages';
 import { rankedAs as rankedAsOf } from '@/lib/ranking';
 
+import { useAgeGate } from '../safety/AgeGate';
 import { RankSheet } from './RankSheet';
 
 interface RankActionsProps {
@@ -24,10 +25,12 @@ export function RankActions({ item, picture }: RankActionsProps) {
   const rankedAs = target ? rankedAsOf(target) : null;
   const { data: list, isError: listFailed } = useMyRankList(open ? rankedAs?.id : null);
   const toRankings = () => router.push(`/rankings/${item.id}`);
+  // Ranking needs a confirmed age.
+  const ageGate = useAgeGate();
 
   return (
     <>
-      {signedIn ? <GlassButton accessibilityLabel={`Rank ${item.name} against others you've had`} label="Rank it" icon="list.number" onPress={() => setOpen(true)} /> : null}
+      {signedIn ? <GlassButton accessibilityLabel={`Rank ${item.name} against others you've had`} label="Rank it" icon="list.number" onPress={() => ageGate.gate(() => setOpen(true))} /> : null}
       <GlassButton accessibilityLabel={`Rankings for ${rankedAs?.name ?? item.name}`} label="Rankings" icon="trophy" onPress={toRankings} />
       {open && rankedAs ? (
         <RankSheet
@@ -43,6 +46,7 @@ export function RankActions({ item, picture }: RankActionsProps) {
           }}
         />
       ) : null}
+      {ageGate.sheet}
     </>
   );
 }

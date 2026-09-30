@@ -1,4 +1,4 @@
-import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,6 @@ import { SAMPLE_IMAGES, SAMPLE_LEVELS, sampleDrink } from '@/components/ds/galle
 import { BatchScreen } from '@/components/screens/batch/BatchScreen';
 import { DrinkScreen } from '@/components/screens/drink/DrinkScreen';
 import { radius, space } from '@/constants/tokens';
-import { useRedesign } from '@/lib/flags';
 import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
 
 /**
@@ -19,12 +18,10 @@ import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
  * /dev/gallery.
  */
 export default function DrinkPreview() {
-  const redesign = useRedesign();
   const params = useLocalSearchParams<{ batch?: string }>();
   const [role, setRole] = useState(30);
   const [photo, setPhoto] = useState(true);
   const [batch, setBatch] = useState<BatchSampleKey | null>(params.batch && params.batch in BATCH_SAMPLES ? (params.batch as BatchSampleKey) : null);
-  if (!__DEV__ && !redesign) return <Redirect href="/" />;
   if (batch) {
     return (
       <View style={styles.flex}>

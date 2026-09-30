@@ -1,4 +1,4 @@
-import type { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/types/search';
 import {
   isSectionDrinkItem,
   itemAllowedInSection,

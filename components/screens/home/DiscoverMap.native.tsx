@@ -1,107 +1,109 @@
-import Constants from 'expo-constants';
-import { AppleMaps, GoogleMaps } from 'expo-maps';
-import { useEffect, useRef } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Camera, Map, Marker, type CameraRef, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import { Image } from 'expo-image';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
-import { backbar } from '@/constants/tokens';
-import { pinLabel, type Viewport } from '@/lib/discoverMap';
+import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
+import { MAP_STYLE, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
-/**
- * Android draws Google Maps, which needs an API key in the build
- * (GOOGLE_MAPS_ANDROID_API_KEY, see app.config.ts). Without one the map
- * would be blank, so Discover keeps to the list there.
- */
-export const mapAvailable = Platform.OS === 'ios' || !!Constants.expoConfig?.android?.config?.googleMaps?.apiKey;
-
-const viewportOf = (e: { coordinates: { latitude?: number; longitude?: number }; latitudeDelta: number; longitudeDelta: number }): Viewport | null =>
-  e.coordinates.latitude === undefined || e.coordinates.longitude === undefined
-    ? null
-    : { latitude: e.coordinates.latitude, longitude: e.coordinates.longitude, latitudeDelta: e.latitudeDelta, longitudeDelta: e.longitudeDelta };
+/** MapLibre Native needs no API key, so every native build has a map. */
+export const mapAvailable = true;
 
 /**
- * Native map through expo-maps: Apple Maps on iOS (score labels as
- * annotations), Google Maps on Android (markers with the score as title).
- * Follows the app's light or dark scheme.
+ * The native map: MapLibre Native with the same OpenFreeMap style and the
+ * same pins as the web map (DiscoverMap.web.tsx), so it looks the same on a
+ * phone as in the browser.
  */
-export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, style }: DiscoverMapProps) {
-  const apple = useRef<AppleMaps.MapView>(null);
-  const google = useRef<GoogleMaps.MapView>(null);
-  // Camera moves we make ourselves don't count as the person moving the map.
-  const quietUntil = useRef(0);
+export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
+  const cameraRef = useRef<CameraRef>(null);
+  // Where the map starts; later cameras move it (below).
+  const [start] = useState(camera);
+  // On iOS a pin tap also reaches the map's own tap handler just after, which
+  // would clear the selection at once; skip map taps that closely follow a pin tap.
+  const pinTappedAt = useRef(0);
 
   // Move only when asked to (a new camera), never on every re-render, so the
   // person's own panning isn't undone.
   useEffect(() => {
-    if (!camera) return;
-    quietUntil.current = Date.now() + 1500;
-    const position = { coordinates: { latitude: camera.latitude, longitude: camera.longitude }, zoom: camera.zoom };
-    apple.current?.setCameraPosition(position);
-    google.current?.setCameraPosition({ ...position, duration: 400 });
-  }, [camera]);
+    if (!camera || camera === start) return;
+    cameraRef.current?.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
+  }, [camera, start]);
 
-  const onMove = (e: Parameters<NonNullable<AppleMaps.MapProps['onCameraMove']>>[0]) => {
-    if (Date.now() < quietUntil.current) return;
-    const v = viewportOf(e);
-    if (v) onViewportChange(v);
+  // Only the person's own moves count for "search this area".
+  const onMoved = (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+    const { userInteraction, center, bounds } = e.nativeEvent;
+    if (userInteraction) onViewportChange(viewportFrom({ lng: center[0], lat: center[1] }, bounds));
   };
-  const initial = camera ? { coordinates: { latitude: camera.latitude, longitude: camera.longitude }, zoom: camera.zoom } : undefined;
 
-  if (Platform.OS === 'ios') {
-    return (
-      <AppleMaps.View
-        ref={apple}
-        style={[styles.fill, style]}
-        colorScheme={scheme === 'dark' ? AppleMaps.MapColorScheme.DARK : AppleMaps.MapColorScheme.LIGHT}
-        cameraPosition={initial}
-        uiSettings={{ compassEnabled: false, togglePitchEnabled: false, myLocationButtonEnabled: false }}
-        properties={{ pointsOfInterest: { including: [] }, selectionEnabled: false }}
-        annotations={pins.map((p) => {
-          const selected = p.id === selectedId;
-          return {
-            id: p.id,
-            coordinates: { latitude: p.latitude, longitude: p.longitude },
-            title: p.name,
-            text: pinLabel(p) || '·',
-            // Ink pins read on both map schemes; early ones are muted; the selected one takes the accent.
-            backgroundColor: selected ? accent.fill : p.score === null ? backbar.light.muted : backbar.light.ink,
-            textColor: selected ? accent.text : backbar.dark.ink,
-          };
-        })}
-        onAnnotationClick={(a) => onSelect(a.id ?? null)}
-        onMarkerClick={(m) => onSelect(m.id ?? null)}
-        onMapClick={() => onSelect(null)}
-        onCameraMove={onMove}
-      />
-    );
-  }
   return (
-    <GoogleMaps.View
-      ref={google}
+    <Map
       style={[styles.fill, style]}
-      colorScheme={scheme === 'dark' ? GoogleMaps.MapColorScheme.DARK : GoogleMaps.MapColorScheme.LIGHT}
-      cameraPosition={initial}
-      uiSettings={{ compassEnabled: false, mapToolbarEnabled: false, myLocationButtonEnabled: false }}
-      markers={pins.map((p) => ({
-        id: p.id,
-        coordinates: { latitude: p.latitude, longitude: p.longitude },
-        title: p.name,
-        snippet: p.score === null ? 'Early' : pinLabel(p),
-        zIndex: p.id === selectedId ? 2 : 1,
-      }))}
-      onMarkerClick={(m) => onSelect(m.id ?? null)}
-      onMapClick={() => onSelect(null)}
-      onCameraMove={onMove}
-    />
+      mapStyle={MAP_STYLE[scheme]}
+      // OpenStreetMap asks for a visible credit: on the map when there's room,
+      // in the results sheet on phones (MapCredit).
+      attribution={!compact}
+      attributionPosition={{ bottom: 8, right: 8 }}
+      logo={false}
+      compass={false}
+      touchRotate={false}
+      touchPitch={false}
+      onPress={() => {
+        if (Date.now() - pinTappedAt.current > 400) onSelect(null);
+      }}
+      onRegionDidChange={onMoved}
+    >
+      <Camera
+        ref={cameraRef}
+        initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom } : { center: [0, 20], zoom: 1.5 }}
+      />
+      {pins.map((pin) => {
+        const selected = pin.id === selectedId;
+        const look = pinLook(pin, selected, accent);
+        return (
+          <Marker
+            key={pin.id}
+            id={pin.id}
+            lngLat={[pin.longitude, pin.latitude]}
+            onPress={() => {
+              pinTappedAt.current = Date.now();
+              onSelect(pin.id);
+            }}
+          >
+            <View
+              role="button"
+              aria-label={`${pin.name}${look.label ? `, score ${look.label}` : ', early'}`}
+              aria-selected={selected}
+              style={[
+                styles.pin,
+                {
+                  minWidth: look.minWidth,
+                  height: look.height,
+                  paddingLeft: look.paddingLeft,
+                  paddingRight: look.paddingRight,
+                  gap: look.gap,
+                  borderColor: look.borderColor,
+                  backgroundColor: look.backgroundColor,
+                  zIndex: selected ? 2 : 1,
+                },
+              ]}
+            >
+              {look.logo ? (
+                <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
+              ) : null}
+              {look.label ? <Text style={[styles.label, { color: look.color }]}>{look.label}</Text> : null}
+            </View>
+          </Marker>
+        );
+      })}
+    </Map>
   );
-}
-
-/** Apple and Google maps show their own legal notices. */
-export function MapCredit() {
-  return null;
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  pin: { flexDirection: 'row', borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
+  label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
 });

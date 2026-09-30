@@ -1,5 +1,5 @@
 // Layered publishing, memories, and private personal drinks
-// (supabase/migrations/20260930000400_layered_publishing_and_memories.sql).
+// (supabase/migrations/20260930500400_layered_publishing_and_memories.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -244,7 +244,7 @@ describe('memories', () => {
     assert.deepEqual(byStranger.data, []);
   });
 
-  // 20260930000700_release_memories.sql
+  // 20260930500700_release_memories.sql
   test('a collected release keeps its name and bar after the bar takes it down, and after it is deleted', async () => {
     const release = await serviceInsert('releases', { bar_id: ids.closedBar, name: `Garden release ${run}`, release_date: '2026-09-27' });
     await serviceInsert('release_items', { release_id: release.id, bar_id: ids.closedBar, item_id: ids.items.onMenu });
@@ -269,7 +269,7 @@ describe('memories', () => {
   });
 });
 
-// 20260930000800_home_menus_hold_published_drinks.sql
+// 20260930500800_home_menus_hold_published_drinks.sql
 describe('home menus', () => {
   test('a home menu holds a drink another bar published, but not one it keeps private', async () => {
     const client = users.collector.client;

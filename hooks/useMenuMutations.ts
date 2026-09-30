@@ -119,6 +119,24 @@ export function useEndMenu() {
   });
 }
 
+/**
+ * Shares a home menu with a link (/m/<id>), or stops sharing it. The server
+ * sets the time, and refuses without a public profile. No drink's visibility
+ * changes: the link shows only drinks that are already public.
+ */
+export function useShareMenu() {
+  const invalidate = useInvalidateMenus();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ menuId, shared }: { menuId: string; shared: boolean }) => {
+      const { error } = await supabase.from('menus').update({ shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId);
+      if (error) throw readable(error);
+    },
+    onSuccess: () => Promise.all([invalidate(), queryClient.invalidateQueries({ queryKey: ['published', 'menu'] })]),
+    onError: () => {},
+  });
+}
+
 /** Changes a home menu's date or guest count. */
 export function useSetHomeNight() {
   const invalidate = useInvalidateMenus();

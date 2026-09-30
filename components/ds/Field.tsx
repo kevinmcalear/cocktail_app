@@ -1,3 +1,4 @@
+import type { Ref, ComponentRef } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
@@ -5,7 +6,8 @@ import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { Caption } from './Text';
 import { useDs } from './theme';
 
-interface FieldProps extends Omit<TextInputProps, 'style'> {
+interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
+  ref?: Ref<ComponentRef<typeof TextInput>>;
   label: string;
   /** Shown under the field; errors say what's wrong and how to fix it. */
   hint?: string;

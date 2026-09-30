@@ -27,7 +27,6 @@ import { DialogHost } from '@/components/DialogHost';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
-import { WebSidebar } from '@/components/WebSidebar';
 import { WebSideNav } from '@/components/nav/WebSideNav';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -36,7 +35,6 @@ import { BRAND } from '@/constants/brand';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
-import { useRedesign } from '@/lib/flags';
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
@@ -79,9 +77,10 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === 'auth';
     // Privacy, terms and account-deletion pages must open without signing in,
     // and venue staff links (/v/<slug>) have their own branded sign-in. The
-    // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>)
-    // and releases (/r/<id>) are public.
-    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r') return;
+    // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>),
+    // releases (/r/<id>), public profiles (/p/<handle>) and shared home menus
+    // (/m/<id>) are public.
+    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
@@ -97,7 +96,8 @@ function RootLayoutNav() {
     if (!session && !inAuthGroup) {
       router.replace('/auth/login');
     } else if (session && inAuthGroup && !stayInAuth) {
-      router.replace('/(tabs)');
+      // A new account (no email confirmation needed) does the age check first.
+      router.replace(authScreen === 'sign-up' ? '/age-check' : '/(tabs)');
     }
   }, [session, loading, segments, passwordRecovery]);
 
@@ -105,7 +105,6 @@ function RootLayoutNav() {
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
   const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v';
-  const redesign = useRedesign();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -125,7 +124,7 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? (redesign ? <WebSideNav /> : <WebSidebar />) : null}
+        {showWebSidebar ? <WebSideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -133,6 +132,7 @@ function RootLayoutNav() {
             <Stack.Screen name="v/[slug]" options={{ headerShown: false }} />
             <Stack.Screen name="d/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen
               name="menus/create/index"
               options={{ presentation: "modal", headerShown: false }}
@@ -189,17 +189,19 @@ function RootLayoutNav() {
               name="ingredient/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
-            <Stack.Screen name="test" options={{ headerShown: false }} />
             {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/publishing" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>

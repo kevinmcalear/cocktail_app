@@ -1,0 +1,42 @@
+import { useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+
+import { Button } from '@/components/ds';
+import { space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
+
+import { SafetyPage } from './SafetyPage';
+
+const WHY = {
+  drink: 'It may have been made private or removed, or a moderator may have hidden it.',
+  release: 'The bar may not have published it yet or may have taken it down, or a moderator may have hidden it.',
+  menu: 'Whoever made it may have stopped sharing it or made their profile private, or a moderator may have hidden it.',
+};
+
+/**
+ * Where a link lands when it points at something you can't see: a drink
+ * that's private, hidden by a moderator, deleted, or from someone you've
+ * blocked, a release that isn't live, or a menu that isn't shared. It
+ * doesn't say which, so it gives nothing away about other people's content
+ * or blocks.
+ */
+export function NotAvailable({ what }: { what: keyof typeof WHY }) {
+  const router = useRouter();
+  const signedIn = !!useAuth().user;
+  const blocked = signedIn && what !== 'release' ? ' Or it’s from someone you’ve blocked.' : '';
+  return (
+    <SafetyPage title="Not available" intro={`This ${what} isn’t available to you. ${WHY[what]}${blocked}`} backTo="/">
+      <View style={styles.actions}>
+        {signedIn ? (
+          <Button label="Discover drinks" onPress={() => router.replace('/')} />
+        ) : (
+          <Button label="Sign in to find more" onPress={() => router.replace('/auth/login')} />
+        )}
+      </View>
+    </SafetyPage>
+  );
+}
+
+const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+});

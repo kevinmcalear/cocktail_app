@@ -43,8 +43,6 @@ export interface Collection {
   releases: CollectedRelease[];
 }
 
-export type AgeCheck = 'confirmed' | 'under_age' | 'unknown';
-
 const collectionKey = (userId: string | null) => ['collection', userId] as const;
 
 export function useCollection() {
@@ -95,35 +93,6 @@ export function useCollection() {
         })),
       };
     },
-  });
-}
-
-/** Whether the signed-in person has confirmed their age. Signed out: unknown. */
-export function useAgeCheck() {
-  const userId = useAuth().user?.id ?? null;
-  return useQuery({
-    queryKey: ['age-check', userId],
-    enabled: !!userId,
-    staleTime: Infinity,
-    queryFn: async (): Promise<AgeCheck> => {
-      const { data, error } = await supabase.rpc('get_my_age_check');
-      if (error) throw error;
-      return (data as AgeCheck | null) ?? 'unknown';
-    },
-  });
-}
-
-/** confirm_age: resolves the drinking age applied, or null when under age. */
-export function useConfirmAge() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ birthDate, countryCode }: { birthDate: string; countryCode: string }) => {
-      const { data, error } = await supabase.rpc('confirm_age', { p_birth_date: birthDate, p_country_code: countryCode });
-      if (error) throw new Error(error.message);
-      return data as number | null;
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['age-check'] }),
-    onError: () => {},
   });
 }
 
