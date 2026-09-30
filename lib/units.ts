@@ -4,23 +4,26 @@ export const DEFAULT_UNIT = 'ml';
 export type RecipeUnit = {
   value: string;
   label: string;
-  group: 'volume' | 'count';
+  group: 'volume' | 'weight' | 'count';
 };
 
-/** Standard bar units: metric (intl) + US + garnish/count. */
+/** Standard bar units: metric (intl) + US + weight + garnish/count. */
 export const RECIPE_UNITS: RecipeUnit[] = [
-  // Volume — metric / international
+  // Volume: metric / international
   { value: 'ml', label: 'ml', group: 'volume' },
   { value: 'cl', label: 'cl', group: 'volume' },
-  // Volume — US
+  // Volume: US
   { value: 'oz', label: 'oz', group: 'volume' },
-  // Volume — bar-specific
+  // Volume: bar-specific
   { value: 'dash', label: 'dash', group: 'volume' },
   { value: 'drop', label: 'drop', group: 'volume' },
   { value: 'bsp', label: 'barspoon', group: 'volume' },
   { value: 'tsp', label: 'tsp', group: 'volume' },
   { value: 'tbsp', label: 'tbsp', group: 'volume' },
   { value: 'splash', label: 'splash', group: 'volume' },
+  // Weight (specs weighed on a scale, e.g. Ethyl imports)
+  { value: 'g', label: 'g', group: 'weight' },
+  { value: 'kg', label: 'kg', group: 'weight' },
   // Count / garnish
   { value: 'each', label: 'each', group: 'count' },
   { value: 'pinch', label: 'pinch', group: 'count' },
