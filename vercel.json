@@ -79,6 +79,10 @@
     {
       "source": "/r/:id",
       "destination": "/r/[id]"
+    },
+    {
+      "source": "/m/:id",
+      "destination": "/m/[id]"
     }
   ]
 }

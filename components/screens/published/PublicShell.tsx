@@ -73,7 +73,7 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
 }
 
 /** While a public page loads, or, when what it points at isn't public, Not available. */
-export function PublicMissing({ loading, what }: { loading: boolean; what: 'drink' | 'release' }) {
+export function PublicMissing({ loading, what }: { loading: boolean; what: 'drink' | 'release' | 'menu' }) {
   if (!loading) return <NotAvailable what={what} />;
   return (
     <PublicShell title="Loading" imageUrl={null}>
