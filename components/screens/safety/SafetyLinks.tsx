@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 
 import { useIsModerator } from '@/hooks/useModeration';
 import { usePendingClaims } from '@/hooks/useProfiles';
-import { useRedesign } from '@/lib/flags';
 
 /**
  * Settings › Account rows for how you appear to others and staying safe:
@@ -13,11 +12,9 @@ import { useRedesign } from '@/lib/flags';
  */
 export function SafetyLinks({ row }: { row: (label: string, onPress: () => void) => ReactNode }) {
   const router = useRouter();
-  const redesign = useRedesign();
   const isModerator = useIsModerator();
   // Only moderators can read other people's claims (RLS), so this is 0 for everyone else.
   const claimCount = usePendingClaims().data?.length ?? 0;
-  if (!redesign) return null;
   return (
     <>
       {row('Public profile', () => router.push('/settings/profile'))}

@@ -1,7 +1,7 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
 import { heroPicture } from '@/lib/itemImages';
 import { itemHref } from '@/lib/itemRoutes';
-import { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/types/search';
 import { SpecPillButton } from '@/components/SpecPillButton';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
@@ -223,7 +223,6 @@ export function CommandSearch({
   const recent = useRecentActivityStore((s) => s.items);
   const storeContextIds = useAppStore((s) => s.selectedContextIds);
   const selectedContextIds = lockedContextId ? [lockedContextId] : storeContextIds;
-  const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const { data: dropdowns } = useDropdowns();
   const { drafts } = useDrafts();
   // Other bars' drinks, while typing. Not when picking for a menu or a venue's section.
@@ -490,14 +489,13 @@ export function CommandSearch({
         return;
       }
       if (item.category === 'Menu') {
-        setSelectedMenuId(item.id.replace('menu-', ''));
         router.push(`/menus/${encodeURIComponent(item.id.replace('menu-', ''))}` as any);
       } else {
         router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
       }
       onSelect?.();
     },
-    [onItemSelect, onSelect, router, setSelectedMenuId]
+    [onItemSelect, onSelect, router]
   );
 
   const openRecent = useCallback(
@@ -526,11 +524,10 @@ export function CommandSearch({
         onSelect?.();
         return;
       }
-      if (r.kind === 'menu') setSelectedMenuId(r.id);
       router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as any);
       onSelect?.();
     },
-    [items, onItemSelect, onSelect, router, setSelectedMenuId]
+    [items, onItemSelect, onSelect, router]
   );
 
   const activate = useCallback(

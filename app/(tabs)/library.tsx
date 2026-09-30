@@ -1,9 +1,6 @@
-import { Redirect } from 'expo-router';
-
 import { LibraryScreen } from '@/components/screens/LibraryScreen';
-import { useRedesign } from '@/lib/flags';
 
-/** Redesign-only tab. */
+/** The Library tab, in venue mode. */
 export default function Library() {
-  return useRedesign() ? <LibraryScreen /> : <Redirect href="/" />;
+  return <LibraryScreen />;
 }

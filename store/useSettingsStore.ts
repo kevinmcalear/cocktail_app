@@ -23,15 +23,12 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
 ];
 
 interface SettingsState {
-    isTestingEnabled: boolean;
     themeMode: ThemeMode;
     defaultSearchContext: DefaultSearchContext;
     defaultUnit: string;
     /** Behind the bar: keep the screen awake on specs and use larger spec type. */
     serviceMode: boolean;
     toggleServiceMode: () => void;
-    toggleTesting: () => void;
-    setTesting: (enabled: boolean) => void;
     setThemeMode: (mode: ThemeMode) => void;
     setDefaultSearchContext: (value: DefaultSearchContext) => void;
     setDefaultUnit: (unit: string) => void;
@@ -40,14 +37,11 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
-            isTestingEnabled: false,
             themeMode: 'system',
             defaultSearchContext: DEFAULT_SEARCH_ALL,
             defaultUnit: DEFAULT_UNIT,
             serviceMode: false,
             toggleServiceMode: () => set((state) => ({ serviceMode: !state.serviceMode })),
-            toggleTesting: () => set((state) => ({ isTestingEnabled: !state.isTestingEnabled })),
-            setTesting: (enabled) => set({ isTestingEnabled: enabled }),
             setThemeMode: (mode) => set({ themeMode: mode }),
             setDefaultSearchContext: (value) => set({ defaultSearchContext: value }),
             setDefaultUnit: (unit) => set({ defaultUnit: unit }),

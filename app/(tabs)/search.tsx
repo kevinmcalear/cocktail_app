@@ -1,5 +1,5 @@
 import { CommandSearch } from '@/components/CommandSearch';
-import { useFloatingTabBarInset } from '@/components/LiquidTabBar';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { Stack, useIsFocused } from 'expo-router';
 import { Keyboard, Platform, Pressable } from 'react-native';
@@ -15,7 +15,7 @@ import { Text, YStack } from 'tamagui';
  */
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const tabBarInset = useFloatingTabBarInset();
+  const tabBarInset = useTabBarInset();
   const isFocused = useIsFocused();
   const { items } = useSearchCatalog();
 

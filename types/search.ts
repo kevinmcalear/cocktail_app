@@ -7,7 +7,8 @@ export interface SearchItem {
   description?: string | null;
   category?: 'Cocktail' | 'Beer' | 'Wine' | 'Ingredient' | 'Category' | 'Menu';
   isDraft?: boolean;
-  draftProgress?: any;
+  /** How far a draft has got, for its badge. */
+  draftProgress?: { percentage: number; color: string; label: string; badgeBg: string; badgeText: string };
   price?: string | null;
   recipes?: {
     display_ingredient_id?: string | null;
@@ -25,7 +26,8 @@ export interface SearchItem {
   item_categories?: {
     category_id: string;
   }[];
-  image?: any;
+  /** The picture, as an image source. */
+  image?: { uri?: string } | null;
   method_id?: string | null;
   glassware_id?: string | null;
   family_id?: string | null;

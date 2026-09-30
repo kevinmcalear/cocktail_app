@@ -1,4 +1,4 @@
-import { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/types/search';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
