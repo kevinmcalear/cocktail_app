@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'tamagui';
 
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
@@ -52,31 +52,34 @@ export function UnitPicker({ value, onChange, size = 'sm', onOpenChange }: UnitP
       </Pressable>
 
       <AdaptiveSheetModal visible={open} onClose={() => setVisible(false)} title="Unit">
-        {options.map((u) => {
-          const selected = u.value === current;
-          return (
-            <Pressable
-              key={u.value}
-              onPress={() => {
-                onChange(u.value);
-                setVisible(false);
-              }}
-              style={[
-                styles.option,
-                { borderBottomColor: theme.borderColor?.get() as string },
-              ]}
-            >
-              <Text color="$color" fontSize={16} fontWeight={selected ? '700' : '500'}>
-                {u.label}
-              </Text>
-              {selected ? (
-                <Text color="$color8" fontSize={14} fontWeight="600">
-                  Selected
+        {/* Scrolls: the list outgrows the sheet's 70% cap on a phone. */}
+        <ScrollView style={styles.list}>
+          {options.map((u) => {
+            const selected = u.value === current;
+            return (
+              <Pressable
+                key={u.value}
+                onPress={() => {
+                  onChange(u.value);
+                  setVisible(false);
+                }}
+                style={[
+                  styles.option,
+                  { borderBottomColor: theme.borderColor?.get() as string },
+                ]}
+              >
+                <Text color="$color" fontSize={16} fontWeight={selected ? '700' : '500'}>
+                  {u.label}
                 </Text>
-              ) : null}
-            </Pressable>
-          );
-        })}
+                {selected ? (
+                  <Text color="$color8" fontSize={14} fontWeight="600">
+                    Selected
+                  </Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </AdaptiveSheetModal>
     </>
   );
@@ -95,6 +98,9 @@ const styles = StyleSheet.create({
   triggerMd: {
     minWidth: 64,
     paddingVertical: 10,
+  },
+  list: {
+    flexShrink: 1,
   },
   option: {
     flexDirection: 'row',
