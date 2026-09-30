@@ -1,14 +1,19 @@
 import { useKeepAwake } from 'expo-keep-awake';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useEffectiveRole } from '@/hooks/useViewAs';
+import { classifyMethod } from '@/lib/batch';
+import { drinkStrength, formatAbv, formatAmount } from '@/lib/drinkMath';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -27,6 +32,7 @@ import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
+import { StrengthSheet } from './StrengthSheet';
 
 export interface DrinkScreenProps {
   item: DatabaseItem;
@@ -101,18 +107,33 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   const canBatch = access.amounts && lines.some((l) => l.value !== null);
+  const [strengthOpen, setStrengthOpen] = useState(false);
+  const role = useEffectiveRole(item.bar_id);
+  const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
+  const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glass = find(dropdowns?.glassware as Named[], item.glassware_id);
   const methods = (item.item_methods ?? [])
     .map((m) => find(dropdowns?.methods as Named[], m.method_item_id)?.name)
     .filter((n): n is string => !!n);
-  const facts: Fact[] = [
+  // Strength: the server's figures for every role; the line-by-line sheet
+  // needs the amounts, so it only opens for roles that see them.
+  const method = classifyMethod(methods);
+  const strength = access.amounts && !preview ? drinkStrength(lines, method, { dilutionPct: item.dilution_pct, defaults: dilutionDefaults }) : null;
+  const abv = formatAbv(item.abv);
+  const openStrength = strength ? () => setStrengthOpen(true) : undefined;
+  const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
+  const facts: Fact[] = ([
     glass && { label: 'Glass', value: glass.name },
     find(dropdowns?.iceTypes as Named[], item.ice_id) && { label: 'Ice', value: find(dropdowns?.iceTypes as Named[], item.ice_id)!.name },
     find(dropdowns?.families as Named[], item.family_id) && { label: 'Family', value: find(dropdowns?.families as Named[], item.family_id)!.name },
-    item.abv ? { label: 'ABV', value: `${item.abv}%` } : null,
-  ].filter((f): f is Fact => !!f);
+    abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: openStrength, accessibilityHint: strengthHint } : null,
+    item.serve_ml != null
+      ? { label: 'Serve', value: formatAmount(item.serve_ml, 'ml'), sub: strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', onPress: openStrength, accessibilityHint: strengthHint }
+      : null,
+    item.serve_abv != null ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: openStrength, accessibilityHint: strengthHint } : null,
+  ] as (Fact | null | undefined)[]).filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
@@ -223,6 +244,20 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       )}
       {controls}
       {ageGate.sheet}
+      {strength ? (
+        <StrengthSheet
+          visible={strengthOpen}
+          onClose={() => setStrengthOpen(false)}
+          itemId={item.id}
+          name={item.name}
+          strength={strength}
+          method={method}
+          dilutionPct={item.dilution_pct ?? null}
+          canEdit={canEdit}
+          defaultsHref={item.bar_id && role >= 40 ? (`/settings/bar/${item.bar_id}/dilution` as Href) : null}
+          accent={venue?.accent ?? undefined}
+        />
+      ) : null}
     </View>
   );
 }

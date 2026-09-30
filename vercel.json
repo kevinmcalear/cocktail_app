@@ -49,6 +49,10 @@
       "destination": "/settings/bar/[id]/publishing"
     },
     {
+      "source": "/settings/bar/:id/dilution",
+      "destination": "/settings/bar/[id]/dilution"
+    },
+    {
       "source": "/settings/bar/:id/releases/:releaseId",
       "destination": "/settings/bar/[id]/releases/[releaseId]"
     },
