@@ -118,7 +118,9 @@ $$;
 
 -- Work the strength out and store it. Runs as its owner so it reads every
 -- line and ingredient the spec has, whoever triggered it. Only items with a
--- spec change; a typed ABV stays unless it was calculated or empty.
+-- spec change; a typed ABV stays unless it was calculated or empty. An
+-- ingredient with no ABV counts as 0%, but when none of them has one the
+-- strength is left empty.
 CREATE FUNCTION "private"."refresh_drink_strength"("p_item" "uuid") RETURNS void
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -129,10 +131,11 @@ DECLARE
     v_dilution numeric;
     v_serve numeric;
     v_abv numeric;
+    v_known boolean;
 BEGIN
     IF pg_trigger_depth() > 4 THEN RETURN; END IF;
-    SELECT sum(l.ml), sum(l.ml * coalesce(i.abv, 0) / 100)
-      INTO v_total, v_ethanol
+    SELECT sum(l.ml), sum(l.ml * coalesce(i.abv, 0) / 100), bool_or(i.abv IS NOT NULL)
+      INTO v_total, v_ethanol, v_known
       FROM public.recipes r
       JOIN public.items i ON i.id = r.ingredient_item_id
       CROSS JOIN LATERAL (SELECT private.line_ml(r.amount, r.unit, private.density_g_ml(i.name, i.abv, i.density_g_ml)) AS ml) l
@@ -146,6 +149,14 @@ BEGIN
     END IF;
     v_dilution := private.drink_dilution_pct(p_item);
     v_serve := v_total * (1 + v_dilution / 100);
+    -- No measured ingredient has an ABV on file: the strength isn't known, and
+    -- 0% would be wrong. Keep the serve size, leave the strength empty.
+    IF v_known IS NOT TRUE THEN
+        UPDATE public.items SET serve_ml = round(v_serve, 1), serve_abv = NULL,
+            abv = CASE WHEN abv_source = 'calculated' THEN NULL ELSE abv END
+          WHERE id = p_item AND item_type IN ('cocktail', 'ingredient');
+        RETURN;
+    END IF;
     v_abv := round(v_ethanol / v_total * 100, 1);
     UPDATE public.items
        SET serve_ml = round(v_serve, 1),
