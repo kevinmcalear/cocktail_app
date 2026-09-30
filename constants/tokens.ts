@@ -88,6 +88,13 @@ export const type = {
 
 export type TypeStyle = keyof typeof type;
 
+/**
+ * Bottom padding, in points, under every text style on iOS, so a paragraph
+ * never draws a line short. Why: components/ds/Text.tsx. Checked by
+ * components/ds/textSlack.check.ts.
+ */
+export const textSlack = 0.01;
+
 /** `mark`: shapes drawn inside a card that can be only a few points tall, like zones on the back bar plan. */
 export const radius = { mark: 4, control: 12, card: 22, sheet: 36, pill: 999 } as const;
 
