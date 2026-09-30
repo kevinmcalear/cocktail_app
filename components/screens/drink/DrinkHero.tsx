@@ -33,6 +33,8 @@ export function DrinkHero({ name, pictures, glass, palette, height, fade }: Drin
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
   const glow = palette?.[0] ? withAlpha(palette[0], ds.scheme === 'dark' ? 0.35 : 0.22) : null;
+  // Not 'transparent': that is transparent black, and iOS blends through it as a grey band.
+  const clear = withAlpha(ds.c.ground, 0);
   const total = pictures.length;
   const shown = pictures[Math.min(index, total - 1)];
   const tag = pictureTag(shown);
@@ -73,7 +75,7 @@ export function DrinkHero({ name, pictures, glass, palette, height, fade }: Drin
       )}
       {fade ? (
         <LinearGradient
-          colors={[withAlpha(ds.c.ground, 0.35), 'transparent', glow ?? 'transparent', ds.c.ground]}
+          colors={[withAlpha(ds.c.ground, 0.35), clear, glow ?? clear, ds.c.ground]}
           locations={[0, 0.25, 0.7, 1]}
           style={styles.overlay}
         />
