@@ -175,7 +175,6 @@ export default function IngredientDetailScreen() {
                         >
                             {usedIn.map((item: any) => {
                                 const hero = heroPicture(item.cocktail.item_images);
-                                
                                 return (
                                     <TouchableOpacity 
                                         key={item.id} 
