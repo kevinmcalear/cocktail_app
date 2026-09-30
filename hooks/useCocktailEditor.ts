@@ -9,6 +9,7 @@ import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { isHeroLink } from "@/lib/itemImages";
+import { plainDbMessage } from "@/lib/dbError";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
@@ -394,8 +395,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             setIsDirty(false);
             isLoaded.current = false;
             return true;
-        } catch {
-            Alert.alert("Error", "Failed to update cocktail.");
+        } catch (error) {
+            Alert.alert("Error", plainDbMessage(error) ?? "Failed to update cocktail.");
             return false;
         } finally {
             setSaving(false);
