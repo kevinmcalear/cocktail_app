@@ -1,7 +1,7 @@
 // Checks for lib/awards.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { awardLines, sortAwards } from './awards';
+import { awardInitials, awardLines, sortAwards } from './awards';
 
 const W50 = "The World's 50 Best Bars";
 
@@ -42,3 +42,7 @@ assert.deepEqual(
 );
 
 console.log('awards checks passed');
+
+assert.equal(awardInitials('James Beard Awards'), 'JBA');
+assert.equal(awardInitials('The Good Food Guide'), 'GFG');
+assert.equal(awardInitials("Gourmet Traveller's Bar of the Year"), 'GTB');

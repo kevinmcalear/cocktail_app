@@ -16,6 +16,16 @@ export function awardLines(a: Pick<Award, 'award' | 'year' | 'position' | 'title
   };
 }
 
+/** "James Beard Awards" to "JBA", for an awards body without a logo: capitalised words, "The" left out, three at most. */
+export function awardInitials(award: string): string {
+  return award
+    .split(/\s+/)
+    .filter((w) => /^[A-Z0-9]/.test(w) && w !== 'The')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 3);
+}
+
 // The lists that carry the most weight first; anything else after them.
 const PRESTIGE = [
   "The World's 50 Best Bars",
