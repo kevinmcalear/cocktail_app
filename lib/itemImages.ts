@@ -14,13 +14,16 @@ export interface ItemImageLink {
   sort_order?: number | null;
   is_generated?: boolean | null;
   outdated_since?: string | null;
-  images?: { url?: string | null } | null;
+  images?: { url?: string | null; credit?: string | null; source_url?: string | null } | null;
 }
 
 export interface ItemPicture {
   url: string;
   isSketch: boolean;
   isOutdated: boolean;
+  /** Who a borrowed photo belongs to, and the page it came from. */
+  credit: string | null;
+  sourceUrl: string | null;
 }
 
 /** Whether a link is one of the item's hero pictures (not a service angle). */
@@ -41,11 +44,18 @@ export function orderedPictures(links: ItemImageLink[] | null | undefined): Item
         Number(!!a.is_generated) - Number(!!b.is_generated) ||
         Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
     )
-    .map((link) => ({
-      url: link.images!.url!,
-      isSketch: !!link.is_generated,
-      isOutdated: !link.is_generated && !!link.outdated_since,
-    }));
+    .map(toPicture);
+}
+
+/** A link with a file, as the app shows it. */
+export function toPicture(link: ItemImageLink): ItemPicture {
+  return {
+    url: link.images!.url!,
+    isSketch: !!link.is_generated,
+    isOutdated: !link.is_generated && !!link.outdated_since,
+    credit: link.images!.credit ?? null,
+    sourceUrl: link.images!.source_url ?? null,
+  };
 }
 
 export function heroPicture(links: ItemImageLink[] | null | undefined): ItemPicture | null {
@@ -53,9 +63,16 @@ export function heroPicture(links: ItemImageLink[] | null | undefined): ItemPict
 }
 
 /** The small label shown on a picture, if any. */
-export function pictureTag(picture: ItemPicture | null | undefined): string | null {
+export function pictureTag(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'> | null | undefined): string | null {
   if (!picture) return null;
   if (picture.isSketch) return 'Sketch';
   if (picture.isOutdated) return 'May be out of date';
   return null;
+}
+
+/** What a screen reader hears for one of an item's pictures: "Photo 2 of 4, sketch". */
+export function pictureLabel(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'>, index: number, total: number): string {
+  const tag = pictureTag(picture);
+  const position = total > 1 ? `Photo ${index + 1} of ${total}` : 'Photo';
+  return tag ? `${position}, ${tag.toLowerCase()}` : position;
 }

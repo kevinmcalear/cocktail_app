@@ -17,6 +17,8 @@ export interface MenuSummary {
   /** A home menu's night and how many are coming. */
   menuDate: string | null;
   guestCount: number | null;
+  /** A home menu shared with a link (/m/<id>) since then; null when it isn't. */
+  sharedAt: string | null;
   itemIds: string[];
   /** The event this menu is for (a takeover), if any. */
   event: { id: string; name: string; startsAt: string } | null;

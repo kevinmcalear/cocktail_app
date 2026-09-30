@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Button, Text, useTheme, XStack, YStack } from "tamagui";
+import { Button, Text, useTheme, XStack, YStack, type TamaguiElement } from "tamagui";
 
 import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
+import { focusInModal, MODAL_AUTOFOCUS } from "@/lib/modalAutoFocus";
 import { capitalize } from "@/lib/stringUtils";
 
 export type IngredientPickerItem = {
@@ -39,6 +40,7 @@ export function IngredientPickerSheet({
 }: IngredientPickerSheetProps) {
     const theme = useTheme();
     const [search, setSearch] = useState("");
+    const searchRef = useRef<TamaguiElement>(null);
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
@@ -54,16 +56,23 @@ export function IngredientPickerSheet({
     };
 
     return (
-        <AdaptiveSheetModal visible={visible} onClose={handleClose} title={title} maxHeight="80%">
+        <AdaptiveSheetModal
+            visible={visible}
+            onClose={handleClose}
+            title={title}
+            maxHeight="80%"
+            onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef)}
+        >
             <View style={{ paddingHorizontal: 24 }}>
                 {/* key remounts so autoFocus runs each open */}
                 {visible ? (
                     <SearchBar
                         key="ingredient-picker-search"
+                        ref={searchRef}
                         placeholder="Search ingredients..."
                         value={search}
                         onChangeText={setSearch}
-                        autoFocus
+                        autoFocus={MODAL_AUTOFOCUS}
                         style={{ marginBottom: 16 }}
                     />
                 ) : null}

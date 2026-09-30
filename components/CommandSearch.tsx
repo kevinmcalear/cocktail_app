@@ -1,7 +1,7 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
 import { heroPicture } from '@/lib/itemImages';
 import { itemHref } from '@/lib/itemRoutes';
-import { SearchItem } from '@/components/SearchList';
+import type { SearchItem } from '@/types/search';
 import { SpecPillButton } from '@/components/SpecPillButton';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
@@ -25,6 +25,9 @@ import {
   type SectionDrinkType,
 } from '@/lib/sectionAllowedTypes';
 import { capitalize } from '@/lib/stringUtils';
+import { usePublicDrinks } from '@/hooks/usePublicDrinks';
+import { caretCanMove, chunk, gridColumns, timeAgo } from '@/lib/commandSearchGrid';
+import { matchesQuery, withPublicDrinks } from '@/lib/publicDrinks';
 import { useAppStore } from '@/store/useAppStore';
 import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -33,6 +36,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -67,16 +71,6 @@ function toTree(cats: { id: string; name: string; parent_id: string | null }[]):
 
 function toggleId(list: string[], id: string) {
   return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
-}
-
-/** True when a left/right arrow would move the caret inside a non-empty text field. */
-function caretCanMove(e: KeyboardEvent) {
-  const t = e.target as HTMLInputElement | null;
-  if (!t || t.tagName !== 'INPUT' || !t.value) return false;
-  const start = t.selectionStart ?? 0;
-  const end = t.selectionEnd ?? 0;
-  if (start !== end) return true;
-  return e.key === 'ArrowLeft' ? start > 0 : end < t.value.length;
 }
 
 export const COMMAND_FILTERS = ['All', 'Menus', 'Cocktails', 'Beer', 'Wine', 'Ingredients'] as const;
@@ -130,14 +124,6 @@ type ListRow =
   | { type: 'header'; id: string; label: string }
   | { type: 'grid'; id: string; cells: Selectable[] };
 
-function timeAgo(at: number) {
-  const s = Math.max(0, Math.floor((Date.now() - at) / 1000));
-  if (s < 60) return `${s}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
-}
-
 function categoryIcon(category?: SearchItem['category'] | RecentActivity['kind']) {
   switch (category) {
     case 'Menu':
@@ -162,19 +148,6 @@ function categoryIcon(category?: SearchItem['category'] | RecentActivity['kind']
 function itemImageUrl(item: SearchItem): string | null {
   if (item.image?.uri) return item.image.uri as string;
   return heroPicture(item.item_images)?.url ?? null;
-}
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
-
-function gridColumns(width: number) {
-  if (width >= 720) return 6;
-  if (width >= 520) return 5;
-  if (width >= 400) return 4;
-  return 3;
 }
 
 type CommandSearchProps = {
@@ -250,9 +223,11 @@ export function CommandSearch({
   const recent = useRecentActivityStore((s) => s.items);
   const storeContextIds = useAppStore((s) => s.selectedContextIds);
   const selectedContextIds = lockedContextId ? [lockedContextId] : storeContextIds;
-  const setSelectedMenuId = useAppStore((s) => s.setSelectedMenuId);
   const { data: dropdowns } = useDropdowns();
   const { drafts } = useDrafts();
+  // Other bars' drinks, while typing. Not when picking for a menu or a venue's section.
+  const showPublic = !onItemSelect && !lockedContextId && !!query.trim();
+  const { data: publicDrinks } = usePublicDrinks(showPublic);
 
   const color = theme.color?.get() as string;
   const muted = theme.color11?.get() as string;
@@ -371,20 +346,13 @@ export function CommandSearch({
   }, []);
 
   const filtered = useMemo(() => {
-    let result = items;
+    let result = withPublicDrinks(items, showPublic ? publicDrinks ?? [] : []);
     if (filter !== 'All') {
       const cat = FILTER_TO_CATEGORY[filter];
       result = result.filter((i) => i.category === cat);
     }
     const q = query.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) ||
-          i.description?.toLowerCase().includes(q) ||
-          i.recipes?.some((r) => r.ingredient?.name?.toLowerCase().includes(q))
-      );
-    }
+    if (q) result = result.filter((i) => matchesQuery(i, q));
 
     if (attrs.method.length) {
       result = result.filter((i) => i.method_id && attrs.method.includes(i.method_id));
@@ -411,8 +379,8 @@ export function CommandSearch({
       );
     }
 
-    return result.sort((a, b) => a.name.localeCompare(b.name));
-  }, [items, filter, query, attrs]);
+    return [...result].sort((a, b) => a.name.localeCompare(b.name));
+  }, [items, showPublic, publicDrinks, filter, query, attrs]);
 
   const recentFiltered = useMemo(() => {
     const draftIds = new Set(drafts.map((d: any) => d.id));
@@ -458,16 +426,16 @@ export function CommandSearch({
       pushGrid('recent', cells);
     }
 
-    // Group catalog by type — section headers replace right-side type labels
-    for (const cat of SECTION_ORDER) {
-      if (filter !== 'All' && FILTER_TO_CATEGORY[filter] !== cat) continue;
-      const group = filtered.filter((i) => i.category === cat).slice(0, perSection);
+    // Group catalog by type — section headers replace right-side type labels.
+    // Other bars' drinks come last, under their own header.
+    const sections = [
+      ...SECTION_ORDER.map((cat) => ({ id: cat!, label: SECTION_LABEL[cat!] || cat!, has: (i: SearchItem) => i.category === cat && !i.fromBar })),
+      { id: 'FromBars', label: 'From bars', has: (i: SearchItem) => !!i.fromBar },
+    ];
+    for (const { id: cat, label, has } of sections) {
+      const group = filtered.filter(has).slice(0, perSection);
       if (group.length === 0) continue;
-      listRows.push({
-        type: 'header',
-        id: `h-${cat}`,
-        label: SECTION_LABEL[cat!] || cat!,
-      });
+      listRows.push({ type: 'header', id: `h-${cat}`, label });
       const cells: Selectable[] = group.map((item) => {
         const cell: Selectable = {
           kind: 'item',
@@ -481,7 +449,7 @@ export function CommandSearch({
     }
 
     return { rows: listRows, selectable: selectables };
-  }, [query, recentFiltered, filtered, filter, cols]);
+  }, [query, recentFiltered, filtered, cols]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -521,14 +489,13 @@ export function CommandSearch({
         return;
       }
       if (item.category === 'Menu') {
-        setSelectedMenuId(item.id.replace('menu-', ''));
-        router.push('/(tabs)/menus' as any);
+        router.push(`/menus/${encodeURIComponent(item.id.replace('menu-', ''))}` as any);
       } else {
         router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
       }
       onSelect?.();
     },
-    [onItemSelect, onSelect, router, setSelectedMenuId]
+    [onItemSelect, onSelect, router]
   );
 
   const openRecent = useCallback(
@@ -557,11 +524,10 @@ export function CommandSearch({
         onSelect?.();
         return;
       }
-      if (r.kind === 'menu') setSelectedMenuId(r.id);
-      router.push(r.href as any);
+      router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as any);
       onSelect?.();
     },
-    [items, onItemSelect, onSelect, router, setSelectedMenuId]
+    [items, onItemSelect, onSelect, router]
   );
 
   const activate = useCallback(
@@ -630,7 +596,8 @@ export function CommandSearch({
   const mod = isApplePlatform() ? '⌘' : 'Ctrl';
 
   const drinkFromCell = (cell: Selectable): SearchItem | null => {
-    if (cell.kind === 'item') return isSectionDrinkItem(cell.item) ? cell.item : null;
+    // Another bar's drink isn't dragged onto your menu.
+    if (cell.kind === 'item') return isSectionDrinkItem(cell.item) && !cell.item.fromBar ? cell.item : null;
     const r = cell.recent;
     if (r.kind === 'menu' || r.kind === 'ingredient' || r.kind === 'quiz') return null;
     const id = r.kind === 'beer' ? `beer-${r.id}` : r.kind === 'wine' ? `wine-${r.id}` : r.id;
@@ -653,8 +620,8 @@ export function CommandSearch({
       cell.kind === 'recent'
         ? categoryIcon(cell.recent.kind)
         : categoryIcon(cell.item.category);
-    const meta =
-      cell.kind === 'recent' ? timeAgo(cell.recent.at) : undefined;
+    const meta = cell.kind === 'recent' ? timeAgo(cell.recent.at) : cell.item.fromBar;
+    const metaLine = meta ? <Text fontSize={9} color="$color11" numberOfLines={1}>{meta}</Text> : null;
     const dragItem = onItemDragStart ? drinkFromCell(cell) : null;
 
     return (
@@ -683,7 +650,7 @@ export function CommandSearch({
           ? { onHoverIn: () => setActiveIndex(selIndex) }
           : {})}
         role="button"
-        aria-label={isDraft ? `${title} (draft)` : title}
+        aria-label={isDraft ? `${title} (draft)` : meta && cell.kind === 'item' ? `${title}, ${meta}` : title}
         style={[
           styles.card,
           {
@@ -726,6 +693,7 @@ export function CommandSearch({
             >
               {title}
             </Text>
+            {cell.kind === 'item' && metaLine}
           </YStack>
         )}
         {!!imageUrl && (
@@ -733,11 +701,7 @@ export function CommandSearch({
             <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
               {title}
             </Text>
-            {!!meta && (
-              <Text fontSize={9} color="$color11" numberOfLines={1}>
-                {meta}
-              </Text>
-            )}
+            {metaLine}
           </YStack>
         )}
       </Pressable>
@@ -747,11 +711,7 @@ export function CommandSearch({
   const filterChrome = (
     <YStack gap={6}>
       <XStack alignItems="center" gap={8}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flex: 1 }}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
           <XStack gap={8} paddingBottom={2} alignItems="center">
             {availableFilters.map((f) => {
               const selected = filter === f;
@@ -818,7 +778,7 @@ export function CommandSearch({
       </XStack>
 
       {appliedPills.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <XStack gap={8} paddingBottom={2}>
             {appliedPills.map((p) => (
               <Pressable
@@ -860,9 +820,9 @@ export function CommandSearch({
         setPanelWidth((prev) => (prev === w ? prev : w));
       }}
     >
-      {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. */}
+      {/* Outer press dismisses (home gutters); inner stops that for the chrome itself. Without onDismiss, both just close the keyboard. */}
       <Pressable
-        onPress={onDismiss}
+        onPress={onDismiss ?? Keyboard.dismiss}
         role={onDismiss ? 'button' : undefined}
         aria-label={onDismiss ? 'Dismiss search' : undefined}
         style={{
@@ -873,7 +833,7 @@ export function CommandSearch({
         }}
       >
         <Pressable
-          onPress={onDismiss ? (e) => e.stopPropagation() : undefined}
+          onPress={onDismiss ? (e) => e.stopPropagation() : Keyboard.dismiss}
           style={{
             width: '100%',
             maxWidth: chromeCentered ? HOME_CHROME_MAX : undefined,
@@ -984,6 +944,7 @@ export function CommandSearch({
         data={rows}
         keyExtractor={(row) => row.id}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: padH,

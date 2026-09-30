@@ -1,8 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useState } from "react";
+import { useState, type Ref } from "react";
 import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 import { ScrollView, TouchableOpacity, View, ViewStyle } from "react-native";
-import { Button, Input, Text, useTheme, XStack, YStack, styled } from "tamagui";
+import { Button, Input, Text, useTheme, XStack, YStack, styled, type TamaguiElement } from "tamagui";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 
 const StyledBottomSheetTextInput = styled(BottomSheetTextInput, {
@@ -34,6 +34,8 @@ interface SearchBarProps {
     onSuggestionPress?: (suggestion: SearchChip) => void;
     isBottomSheet?: boolean;
     autoFocus?: boolean;
+    /** The plain input (not the bottom-sheet one), e.g. to focus it when a Modal opens. */
+    ref?: Ref<TamaguiElement>;
 }
 
 export function SearchBar({ 
@@ -48,6 +50,7 @@ export function SearchBar({
     onSuggestionPress,
     isBottomSheet = false,
     autoFocus = false,
+    ref,
 }: SearchBarProps) {
     const theme = useTheme();
     const [isFocused, setIsFocused] = useState(false);
@@ -80,6 +83,7 @@ export function SearchBar({
                         />
                     ) : (
                         <Input
+                            ref={ref}
                             flex={1}
                             unstyled
                             size="$4"
