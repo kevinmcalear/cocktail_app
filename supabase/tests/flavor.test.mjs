@@ -120,6 +120,10 @@ async function usage(barId) {
  * wake another worker that claims them first, so the call proves nothing.
  */
 async function work(...itemIds) {
+  // The seed migrations queue a job for every drink they add, and the worker
+  // takes the oldest first. Put that backlog off so one call only has these
+  // drinks to score; draining thousands first ran it out of time (546).
+  await db.query("UPDATE private.item_flavor_jobs SET run_after = now() + interval '1 day' WHERE status = 'pending' AND NOT item_id = ANY($1)", [itemIds]);
   await db.query('UPDATE private.item_flavor_jobs SET run_after = now() WHERE item_id = ANY($1)', [itemIds]);
   const res = await fetch(WORKER_URL, { method: 'POST', headers: { 'x-flavor-worker-secret': WORKER_SECRET } });
   assert.equal(res.status, 200, `worker answered ${res.status}`);
