@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { HouseMade, Purchasing, SpecLine } from '@/lib/prep';
+import type { Quantity } from '@/lib/quantity';
+import { onHandByItem, parByItem, type OnHandRow, type ParQuantity } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
 interface RecipeRow {
@@ -21,6 +23,9 @@ interface MenuItem {
 
 export interface PrepData {
   drinks: { id: string; name: string; recipe: SpecLine[] }[];
+  /** From the last stock count and the back bar map's pars (empty below the locations capability). */
+  onHand: Record<string, Quantity>;
+  par: Record<string, ParQuantity>;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
 }
@@ -130,7 +135,16 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
           };
         }
       }
-      return { drinks, houseMade, purchasing };
+      // The shelf: the last count at each spot, and par per item. Both come
+      // back empty below the locations capability (RLS), and the list then
+      // assumes the bar starts from zero, as before.
+      const [stockRes, parRes] = await Promise.all([
+        supabase.rpc('stock_on_hand', { p_bar: barId! }),
+        supabase.from('item_locations').select('item_id, par_amount, par_unit, item:items!item_id(name)').eq('bar_id', barId!),
+      ]);
+      const onHand = onHandByItem((stockRes.data ?? []) as OnHandRow[]);
+      const par = parByItem((parRes.data ?? []) as unknown as { item_id: string; par_amount: number | null; par_unit: string | null; item: { name: string } | null }[]);
+      return { drinks, houseMade, purchasing, onHand, par };
     },
   });
 }
