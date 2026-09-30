@@ -106,7 +106,8 @@ function Page({ menuId }: { menuId: string }) {
   );
 }
 
-const COLS = { drink: 3, num: 1.2 } as const;
+/** Column weights: the drink column narrows on phones so the money columns don't wrap. */
+const COLS = { drink: 3, drinkPhone: 1.6, num: 1.2 } as const;
 
 function Header({ wide, pricesIncludeTax }: { wide: boolean; pricesIncludeTax: boolean }) {
   const ds = useDs();
@@ -114,7 +115,7 @@ function Header({ wide, pricesIncludeTax }: { wide: boolean; pricesIncludeTax: b
   return (
     <View role="row" style={[styles.row, styles.header, { borderBottomColor: ds.c.lineStrong }]}>
       {cells.map((c, i) => (
-        <Caption key={c} tone="muted" role="columnheader" align={i === 0 ? 'left' : 'right'} style={{ flex: i === 0 ? COLS.drink : COLS.num, letterSpacing: 1 }}>
+        <Caption key={c} tone="muted" role="columnheader" align={i === 0 ? 'left' : 'right'} style={{ flex: i === 0 ? (wide ? COLS.drink : COLS.drinkPhone) : COLS.num, letterSpacing: 1 }}>
           {c.toUpperCase()}
         </Caption>
       ))}
@@ -140,7 +141,7 @@ function Row({ row, wide, tax, targetGp, currency, money }: { row: MenuCostRow; 
   );
   return (
     <View role="row" accessibilityLabel={`${row.name}: cost ${money(costMinor)}, price ${money(row.priceMinor)}, GP ${m ? formatPct(m.gp) : 'no price'}${under ? ', under target' : ''}`} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <View style={{ flex: COLS.drink, gap: space.xs }}>
+      <View style={{ flex: wide ? COLS.drink : COLS.drinkPhone, gap: space.xs }}>
         <Body>{row.name}</Body>
         {row.cost?.missing ? <Tag label={`${row.cost.missing} without a price`} tone="warning" /> : null}
         {editing ? (
