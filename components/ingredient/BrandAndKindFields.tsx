@@ -50,7 +50,7 @@ export function BrandAndKindFields({ brandMaker, onBrandMaker, generic, onGeneri
                 <Label color="$color11">Kind of</Label>
                 <XStack alignItems="center" gap="$3" borderBottomWidth={1} borderColor="$borderColor" paddingVertical="$2">
                     <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)} role="button" aria-label="Choose the generic ingredient">
-                        <Text color={generic ? "$color" : "$color11"}>
+                        <Text color={generic ? "$color" : "$color11"} textAlign="left">
                             {generic?.name || "e.g. Gin, Sweet Vermouth (what this is a kind of)"}
                         </Text>
                     </TouchableOpacity>
