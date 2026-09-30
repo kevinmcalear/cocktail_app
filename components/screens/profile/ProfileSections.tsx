@@ -1,19 +1,15 @@
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
-import { useProfileAwards, type MenuCreditWithProfile, type Original } from '@/hooks/useProfiles';
-import { awardInitials, awardLines } from '@/lib/awards';
+import type { MenuCreditWithProfile, Original } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { peopleCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
-import { AWARD_LOGOS } from './awardLogos';
 
 /** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
@@ -98,74 +94,6 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
   );
 }
 
-const AWARDS_SHOWN = 4;
-
-/** List places and titled awards, newest first; each opens the list it's from. Long lists start folded. */
-export function Awards({ profileId }: { profileId: string }) {
-  const ds = useDs();
-  const [all, setAll] = useState(false);
-  const { data: awards = [] } = useProfileAwards(profileId);
-  if (!awards.length) return null;
-  const shown = all ? awards : awards.slice(0, AWARDS_SHOWN);
-  return (
-    <View style={styles.menus}>
-      <Caption tone="muted" style={styles.cap}>
-        Awards
-      </Caption>
-      <View role="list">
-        {shown.map((a) => {
-          const { headline, detail } = awardLines(a);
-          const logo = AWARD_LOGOS[a.award];
-          const row = (
-            <>
-              <View style={[styles.logo, { backgroundColor: ds.c.paper, borderColor: ds.c.line }]} aria-hidden>
-                {logo ? (
-                  <Image source={logo} style={styles.logoImg} contentFit="contain" accessible={false} />
-                ) : (
-                  <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
-                    {awardInitials(a.award)}
-                  </DsText>
-                )}
-              </View>
-              <View style={styles.flex}>
-                <DsText variant="headline" numberOfLines={2}>
-                  {headline}
-                </DsText>
-                <Caption tone="muted" numberOfLines={2}>
-                  {detail}
-                </Caption>
-              </View>
-            </>
-          );
-          const source = a.source_url;
-          return source ? (
-            <PressableScale
-              key={a.id}
-              role="link"
-              accessibilityLabel={`${headline}, ${detail}. Open the list`}
-              onPress={() => void Linking.openURL(source)}
-              style={[styles.menu, { borderBottomColor: ds.c.line }]}
-            >
-              {row}
-            </PressableScale>
-          ) : (
-            <View key={a.id} role="listitem" accessible accessibilityLabel={`${headline}, ${detail}`} style={[styles.menu, { borderBottomColor: ds.c.line }]}>
-              {row}
-            </View>
-          );
-        })}
-      </View>
-      {awards.length > AWARDS_SHOWN ? (
-        <PressableScale role="button" aria-expanded={all} onPress={() => setAll((v) => !v)} style={styles.more}>
-          <DsText variant="caption" style={styles.underline}>
-            {all ? 'Show fewer' : `Show all ${awards.length} awards`}
-          </DsText>
-        </PressableScale>
-      ) : null}
-    </View>
-  );
-}
-
 /**
  * A bar's score: its drinks' scores averaged, weighted by how many people
  * ranked each. Early (under MIN_RANKERS people) says so, without a number.
@@ -207,10 +135,6 @@ const styles = StyleSheet.create({
   menus: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  logoImg: { width: '100%', height: '100%' },
   score: { alignItems: 'center' },
-  more: { minHeight: 44, justifyContent: 'center' },
-  underline: { textDecorationLine: 'underline' },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });
