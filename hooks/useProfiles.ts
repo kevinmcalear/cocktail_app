@@ -18,6 +18,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   website: string | null;
+  instagram: string | null;
   locality: string | null;
   city: string | null;
   country_code: string | null;
@@ -32,7 +33,7 @@ export interface Profile {
   shares_rankings: boolean;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 

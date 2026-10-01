@@ -12,6 +12,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ navigate: mockNavigate, push: mockPush }),
 }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: { id: 'caretakers', name: 'Caretakers' } }) }));
+let mockRole = 40;
+jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
 jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null }));
@@ -20,14 +23,18 @@ const mockPush = jest.fn();
 
 const links = () => screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
 
-beforeEach(() => mockNavigate.mockClear());
+beforeEach(() => {
+  mockNavigate.mockClear();
+  mockRole = 40;
+  mockMode = 'venue';
+});
 
 test('venue mode lists search and the venue tabs, marking the current one', async () => {
   mockMode = 'venue';
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Back bar', 'Station']);
+  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Off menu', 'Back bar', 'Station', 'My team']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -35,6 +42,8 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   expect(mockNavigate).toHaveBeenLastCalledWith('/back-bar');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/menus/all');
+  await fireEvent.press(screen.getByRole('link', { name: 'Off menu' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/off-menu');
 });
 
 test('Menus stays marked on a menu page', async () => {
@@ -42,6 +51,19 @@ test('Menus stays marked on a menu page', async () => {
   mockPathname = '/menus/abc';
   await renderWithTamagui(<WebSideNav />);
   expect(screen.getByRole('link', { name: 'Menus', selected: true })).toBeTruthy();
+});
+
+test('an employee opens My team from the sidebar', async () => {
+  mockRole = 20;
+  await renderWithTamagui(<WebSideNav />);
+  await fireEvent.press(screen.getByRole('link', { name: 'My team' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/team');
+});
+
+test('a guest does not see My team', async () => {
+  mockRole = 10;
+  await renderWithTamagui(<WebSideNav />);
+  expect(screen.queryByRole('link', { name: 'My team' })).toBeNull();
 });
 
 test('home mode lists the home tabs and navigates to their routes', async () => {

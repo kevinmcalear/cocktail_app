@@ -12,9 +12,10 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
-import { barsCrediting } from '@/lib/profiles';
+import { barsCrediting, profileLinks } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
+import { BarClassics } from './BarClassics';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
@@ -107,7 +108,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const onMenus = barsCrediting(credits);
   const unclaimed = isUnclaimed(profile);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
-  const website = profile.website && /^https?:\/\//i.test(profile.website) ? profile.website : null;
+  const links = profileLinks(profile);
 
   return (
     <View style={styles.body}>
@@ -128,11 +129,11 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
-        {website ? (
-          <DsText variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(website)}>
-            {website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}
+        {links.map((link) => (
+          <DsText key={link.href} variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(link.href)}>
+            {link.label}
           </DsText>
-        ) : null}
+        ))}
       </View>
 
       <Stats>
@@ -142,6 +143,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       </Stats>
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
+      {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
 

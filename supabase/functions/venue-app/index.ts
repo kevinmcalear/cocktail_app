@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
+import { drinksBucketUrl } from "../_shared/drinksUrl.ts";
 import { corsHeaders } from "../_shared/http.ts";
 
 /**
@@ -105,14 +106,14 @@ function manifest(branding: Branding, url: URL): Response {
  */
 async function icon(branding: Branding, size: number): Promise<Response> {
   if (!ICON_SIZES.has(size)) return new Response("Unsupported size", { status: 400, headers: corsHeaders });
-  const source = branding.icon_url ?? branding.logo_url;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const source = drinksBucketUrl(branding.icon_url ?? branding.logo_url ?? "", supabaseUrl);
   if (!source) {
     return Response.redirect(`${FALLBACK_SITE}/icon-${size === 180 ? 192 : size}.png`, 302);
   }
 
-  const res = await fetch(source);
-  if (!res.ok) throw new Error(`Logo fetch failed: ${res.status}`);
-  const logo = await Image.decode(new Uint8Array(await res.arrayBuffer()));
+  const bytes = await fetchLogo(source, supabaseUrl);
+  const logo = await Image.decode(bytes);
 
   const corner = logo.getPixelAt(1, 1);
   const background = (corner & 0xff) < 250 ? 0xffffffff : corner;
@@ -130,6 +131,51 @@ async function icon(branding: Branding, size: number): Promise<Response> {
   return new Response(png, {
     headers: { ...corsHeaders, "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" },
   });
+}
+
+const MAX_LOGO_BYTES = 8_000_000;
+
+/** Follows at most one redirect, and only to another drinks-bucket URL. */
+async function fetchLogo(source: string, supabaseUrl: string): Promise<Uint8Array> {
+  let current = source;
+  for (let hop = 0; hop < 2; hop++) {
+    const res = await fetch(current, { redirect: "manual" });
+    if (res.status >= 300 && res.status < 400) {
+      const next = res.headers.get("location");
+      if (!next) throw new Error("Logo redirect had no location");
+      const absolute = new URL(next, current).href;
+      if (!drinksBucketUrl(absolute, supabaseUrl)) throw new Error("Logo redirect left the drinks bucket");
+      current = absolute;
+      continue;
+    }
+    if (!res.ok) throw new Error(`Logo fetch failed: ${res.status}`);
+    return await readCapped(res);
+  }
+  throw new Error("Too many logo redirects");
+}
+
+async function readCapped(res: Response): Promise<Uint8Array> {
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("Logo response had no body");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_LOGO_BYTES) {
+      await reader.cancel();
+      throw new Error("Logo is too large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
 }
 
 function notFound(): Response {

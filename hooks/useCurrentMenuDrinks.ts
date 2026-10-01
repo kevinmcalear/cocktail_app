@@ -7,12 +7,14 @@ import { useQuery } from '@tanstack/react-query';
 export function useCurrentMenuDrinks(menuIds: string[]) {
   const key = [...menuIds].sort();
   return useQuery({
-    queryKey: [...DROPDOWNS_QUERY_KEY, 'current_menu_drinks', key],
+    queryKey: [...DROPDOWNS_QUERY_KEY, 'current_menu_drinks', 'with-pictures', key],
     enabled: key.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('menu_drinks')
-        .select('menu_id, sort_order, item:items!item_id(id, name, item_type)')
+        .select(
+          'menu_id, sort_order, item:items!item_id(id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, outdated_since, images(url)))'
+        )
         .in('menu_id', key)
         .order('sort_order', { ascending: true });
       if (error) throw error;

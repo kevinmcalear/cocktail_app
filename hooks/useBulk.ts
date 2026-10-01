@@ -1,0 +1,235 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { useDropdowns, DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { saveDrinkSpec } from '@/hooks/useVersions';
+import { plainDbMessage } from '@/lib/dbError';
+import type { BringWrite, CatalogItem, NamedItem } from '@/lib/paste';
+import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
+import { capitalize } from '@/lib/stringUtils';
+import { supabase } from '@/lib/supabase';
+
+function useRefreshSpecs() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['cocktails'] }),
+      queryClient.invalidateQueries({ queryKey: ['cocktail'] }),
+      queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
+      queryClient.invalidateQueries({ queryKey: ['ingredient'] }),
+      queryClient.invalidateQueries({ queryKey: ['menu-library'] }),
+      queryClient.invalidateQueries({ queryKey: ['swap-source'] }),
+      queryClient.invalidateQueries({ queryKey: ['item-versions'] }),
+      queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY }),
+    ]);
+}
+
+function toCatalog(rows: unknown): CatalogItem[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const item = row as Record<string, unknown>;
+    if (typeof item.id !== 'string' || typeof item.name !== 'string') return [];
+    return [{ id: item.id, name: item.name, genericId: typeof item.generic_id === 'string' ? item.generic_id : null, barId: typeof item.bar_id === 'string' ? item.bar_id : null }];
+  });
+}
+
+function toNamed(rows: unknown): NamedItem[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const item = row as Record<string, unknown>;
+    return typeof item.id === 'string' && typeof item.name === 'string' ? [{ id: item.id, name: item.name }] : [];
+  });
+}
+
+/** Ingredients, methods and glassware the paste and the swap can match against. */
+export function useSpecCatalog() {
+  const { data, isLoading } = useDropdowns();
+  const catalog = useMemo(() => toCatalog(data?.ingredients), [data?.ingredients]);
+  const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
+  const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);
+  return { catalog, methods, glasses, isLoading };
+}
+
+async function inChunks<T>(ids: string[], load: (chunk: string[]) => Promise<T[]>): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += 80) out.push(...(await load(ids.slice(i, i + 80))));
+  return out;
+}
+
+interface SwapSource {
+  drinks: SwapDrink[];
+  names: Record<string, string>;
+}
+
+/** This venue's drinks and house recipes, with the spec lines a swap rewrites. */
+export function useSwapSource(barId: string | null) {
+  return useQuery({
+    queryKey: ['swap-source', barId],
+    enabled: !!barId,
+    queryFn: async (): Promise<SwapSource> => {
+      const items = await supabase.from('app_item_presentation').select('id, name, item_type').eq('bar_id', barId!).in('item_type', ['cocktail', 'ingredient']);
+      if (items.error) throw items.error;
+      const rows = items.data ?? [];
+      const ids = rows.map((row) => row.id);
+      if (!ids.length) return { drinks: [], names: {} };
+      const lineRows = await inChunks(ids, async (chunk) => {
+        const res = await supabase
+          .from('app_recipe_presentation')
+          .select('id, recipe_item_id, ingredient_item_id, parent_ingredient_id, amount, unit, preparation_notes, is_optional, sort_order')
+          .in('recipe_item_id', chunk);
+        if (res.error) throw res.error;
+        return res.data ?? [];
+      });
+      const methodRows = await inChunks(ids, async (chunk) => {
+        const res = await supabase.from('item_methods').select('item_id, method_item_id, sort_order').in('item_id', chunk);
+        if (res.error) throw res.error;
+        return res.data ?? [];
+      });
+      const names: Record<string, string> = {};
+      for (const row of rows) names[row.id] = row.name;
+      const missing = [...new Set(lineRows.map((line) => line.ingredient_item_id).filter((id): id is string => !!id && !names[id]))];
+      if (missing.length) {
+        const extra = await inChunks(missing, async (chunk) => {
+          const res = await supabase.from('app_item_presentation').select('id, name').in('id', chunk);
+          if (res.error) throw res.error;
+          return res.data ?? [];
+        });
+        for (const row of extra) names[row.id] = row.name;
+      }
+      const byDrink = new Map<string, SwapLine[]>();
+      for (const line of lineRows) {
+        const list = byDrink.get(line.recipe_item_id) ?? [];
+        list.push({
+          id: line.id,
+          ingredientId: line.ingredient_item_id,
+          genericId: line.parent_ingredient_id,
+          amount: line.amount,
+          unit: line.unit,
+          notes: line.preparation_notes,
+          optional: !!line.is_optional,
+        });
+        byDrink.set(line.recipe_item_id, list);
+      }
+      const methodOf = new Map<string, { id: string; order: number }>();
+      for (const row of methodRows) {
+        const order = row.sort_order ?? 0;
+        const current = methodOf.get(row.item_id);
+        if (!current || order < current.order) methodOf.set(row.item_id, { id: row.method_item_id, order });
+      }
+      const drinks: SwapDrink[] = rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        itemType: row.item_type === 'ingredient' ? 'ingredient' : 'cocktail',
+        methodId: methodOf.get(row.id)?.id ?? null,
+        lines: byDrink.get(row.id) ?? [],
+      }));
+      const lineOrder = new Map(lineRows.map((line) => [line.id, line.sort_order ?? 0]));
+      for (const drink of drinks) drink.lines.sort((a, b) => (lineOrder.get(a.id) ?? 0) - (lineOrder.get(b.id) ?? 0));
+      return { drinks, names };
+    },
+  });
+}
+
+export interface SwapResult {
+  undone: { itemId: string; version: number }[];
+  error: string | null;
+}
+
+/** Rewrites each drink through save_drink_spec. A failure stops the rest and keeps what finished, so it can be undone. */
+export function useApplySwap() {
+  const refresh = useRefreshSpecs();
+  return useMutation({
+    mutationFn: async (input: { drinks: SwapDrink[]; findId: string; replaceId: string; mode: SwapMode; note: string }): Promise<SwapResult> => {
+      const undone: SwapResult['undone'] = [];
+      try {
+        for (const drink of input.drinks) {
+          const version = await saveDrinkSpec(drink.id, swappedLines(drink, input.findId, input.replaceId, input.mode), drink.methodId, input.note);
+          undone.push({ itemId: drink.id, version: version - 1 });
+        }
+        return { undone, error: null };
+      } catch (error) {
+        const message = plainDbMessage(error) ?? 'Couldn’t finish the swap.';
+        return { undone, error: undone.length ? `Changed ${undone.length}, then stopped. ${message}` : message };
+      }
+    },
+    onSuccess: () => void refresh(),
+  });
+}
+
+export function useUndoSwap() {
+  const refresh = useRefreshSpecs();
+  return useMutation({
+    mutationFn: async (undone: { itemId: string; version: number }[]) => {
+      for (const row of undone) {
+        const { error } = await supabase.rpc('restore_drink_version', { p_item: row.itemId, p_version: row.version });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => void refresh(),
+  });
+}
+
+/** Creates the new bottles, then the drinks, each spec saved as a version. */
+export function useBringIn(barId: string | null) {
+  const refresh = useRefreshSpecs();
+  return useMutation({
+    mutationFn: async (write: BringWrite): Promise<{ added: number; error: string | null }> => {
+      const ids = new Map<string, string>();
+      let added = 0;
+      try {
+        for (const create of write.creates) {
+          const { data, error } = await supabase
+            .from('items')
+            .insert({ name: capitalize(create.name), item_type: 'ingredient', bar_id: barId, generic_id: create.genericId })
+            .select('id')
+            .single();
+          if (error) throw error;
+          ids.set(create.key, data.id);
+          added += 1;
+        }
+        for (const item of write.items) {
+          const { data, error } = await supabase
+            .from('items')
+            .insert({
+              name: capitalize(item.name),
+              item_type: item.kind,
+              bar_id: barId,
+              notes: item.notes,
+              glassware_id: item.glassId,
+            })
+            .select('id')
+            .single();
+          if (error) throw error;
+          const lines = item.lines.map((line) => {
+            const ingredientId = line.ingredientKey.startsWith('new:') ? ids.get(line.ingredientKey.slice(4)) : line.ingredientKey.slice(3);
+            if (!ingredientId) throw new Error(`Couldn’t find ${line.ingredientKey}.`);
+            return { ingredient_item_id: ingredientId, amount: line.amount, unit: line.unit, preparation_notes: null, is_optional: false };
+          });
+          await saveDrinkSpec(data.id, lines, item.methodId, 'Brought in');
+          added += 1;
+        }
+        return { added, error: null };
+      } catch (error) {
+        const message = plainDbMessage(error) ?? 'Couldn’t bring that in.';
+        return { added, error: added ? `Brought in ${added}, then stopped. ${message}` : message };
+      }
+    },
+    onSuccess: () => void refresh(),
+  });
+}
+
+/** Sets a price only where the drink doesn't have one yet. */
+export function useSetMissingPrices() {
+  const refresh = useRefreshSpecs();
+  return useMutation({
+    mutationFn: async (updates: { id: string; price: string }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase.from('items').update({ price: update.price }).eq('id', update.id).is('price', null);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => void refresh(),
+  });
+}

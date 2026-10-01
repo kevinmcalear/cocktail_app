@@ -1,12 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Accordion, Card, Paragraph, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
@@ -14,6 +9,7 @@ import { buildIngredientImageMap, CocktailIngredientList } from "@/components/co
 import { SpecBadgeRow } from "@/components/cocktail/SpecBadgeRow";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import { PrepCalcButton } from "@/components/tools/ToolsSheet";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { useCocktailDraftEditor } from "@/hooks/useCocktailDraftEditor";
 import type { useCocktailEditor } from "@/hooks/useCocktailEditor";
@@ -347,6 +343,7 @@ export function CocktailDetailContent({
                     ) : (
                         cocktail.recipes?.map((recipe: any, index: number) => renderViewIngredient(recipe, index))
                     )}
+                    {isEditing && editor ? <PrepCalcButton name={editor.name} /> : null}
                 </YStack>
             ) : null}
 

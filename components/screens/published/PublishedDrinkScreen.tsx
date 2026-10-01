@@ -62,6 +62,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
     drink.abv ? { label: 'ABV', value: `${drink.abv}%` } : null,
   ].filter((f): f is Fact => !!f);
   const lines = specLines(data.recipes);
+  const measured = lines.some((l) => l.amount);
   const who = bar?.name ?? 'The bar';
 
   return (
@@ -79,7 +80,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
             <Caption tone="muted">{`As ${who} shares it: the ingredients, not the brands.`}</Caption>
             <View>
               {lines.map((l) => (
-                <SpecRow key={l.key} amount={l.amount ?? ''} ingredient={l.ingredient ?? 'House ingredient'} optional={l.optional} />
+                <SpecRow key={l.key} amount={l.amount ?? ''} alignAmount={measured} ingredient={l.ingredient ?? 'House ingredient'} optional={l.optional} />
               ))}
             </View>
           </>
