@@ -49,6 +49,8 @@ function readable(error: { code?: string; message: string; details?: string | nu
     return new Error('That handle is taken. Try another.');
   }
   if (error.code === '23505') return new Error('You already have a profile. Reload to edit it.');
+  // The content filter's own sentence ("That name has a word we don't allow").
+  if (error.message.startsWith('That ') || error.message.startsWith('You already have a claim')) return new Error(error.message);
   return new Error('Couldn’t save your profile. Check the fields and try again.');
 }
 

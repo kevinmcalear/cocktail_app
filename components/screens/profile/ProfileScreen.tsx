@@ -14,6 +14,7 @@ import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Positions } from './Positions';
+import { WorkedMenus } from './WorkedMenus';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'shelf';
@@ -127,6 +128,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
 
       <Positions profile={profile} />
+
+      {profile.kind === 'person' ? <WorkedMenus profileId={profile.id} /> : null}
 
       <MenuCredits credits={credits} names={names} />
 

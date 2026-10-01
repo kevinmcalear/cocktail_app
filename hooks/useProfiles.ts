@@ -297,6 +297,63 @@ export interface Position {
 
 const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
 
+export interface PublicPerson {
+  id: string;
+  handle: string;
+  display_name: string;
+  city: string | null;
+  is_claimed: boolean;
+}
+
+/** Public people by name, so someone can find a profile we already have. */
+export function usePublicPeople(search: string) {
+  const term = search.replace(/[%_\\]/g, '').trim();
+  return useQuery({
+    queryKey: ['public-people', term],
+    enabled: term.length >= 2,
+    queryFn: async (): Promise<PublicPerson[]> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, handle, display_name, city, is_claimed')
+        .eq('kind', 'person')
+        .eq('is_public', true)
+        .ilike('display_name', `%${term}%`)
+        .order('display_name')
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as PublicPerson[];
+    },
+  });
+}
+
+export interface WorkedMenu {
+  id: string;
+  name: string;
+  year: number | null;
+  bar: { id: string; handle: string; display_name: string; is_closed: boolean };
+}
+
+/** Menus a person says they worked on, including at a bar that has closed. */
+export function useWorkedMenus(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
+  return useQuery({
+    queryKey: ['profile-worked-menus', profileId, viewer.key],
+    meta: viewer.meta,
+    enabled: !!profileId,
+    queryFn: async (): Promise<WorkedMenu[]> => {
+      const { data, error } = await supabase
+        .from('profile_worked_menus')
+        .select('id, name, year, bar:profiles!bar_profile_id(id, handle, display_name, is_closed)')
+        .eq('person_profile_id', profileId!)
+        .limit(50);
+      if (error) throw error;
+      return ((data ?? []) as unknown as WorkedMenu[]).sort(
+        (a, b) => (b.year ?? 0) - (a.year ?? 0) || a.name.localeCompare(b.name)
+      );
+    },
+  });
+}
+
 /** Where a person works, or who works at a bar: current first, then by name. */
 export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null | undefined) {
   const viewer = viewerScoped(useAuth().user?.id);
