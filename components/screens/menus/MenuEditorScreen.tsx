@@ -12,6 +12,7 @@ import { useMenu } from '@/hooks/useMenus';
 import type { MenuDetail } from '@/types/menus';
 
 import { AddDrinkSheet } from './AddDrinkSheet';
+import { PasteMenuSheet } from './PasteMenuSheet';
 import { EditorDesktop } from './EditorDesktop';
 import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput } from './EditorParts';
 import { GoLiveSheet } from './GoLiveSheet';
@@ -93,6 +94,15 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
   const index = section ? editor.layout.sections.indexOf(section) : -1;
   return (
     <>
+      {sheet?.kind === 'paste' ? (
+        <PasteMenuSheet
+          into={section}
+          library={editor.library}
+          already={editor.layout.sections[editor.layout.sections.length - 1]?.drinks.map((drink) => drink.id)}
+          onClose={() => editor.setSheet(null)}
+          onApply={(groups) => editor.applyPaste(sheet.key, groups)}
+        />
+      ) : null}
       {sheet?.kind === 'add' ? (
         <AddDrinkSheet
           section={section}
