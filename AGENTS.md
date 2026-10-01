@@ -23,7 +23,8 @@ Expo SDK 57 (RN 0.86, React 19.2, React Compiler), Expo Router, Tamagui 2.7 (`ta
 - `npm run typecheck`: zero type errors, and it must stay that way.
 - `npm run lint`: zero errors. React Compiler warnings are tolerated but don't add new ones.
 - `npm run check:design`: a ratchet (`scripts/design-ratchet.mjs`). A file may not gain raw hex/rgb colours, raw font sizes, raw corner radii, `any`, or direct Supabase calls in `app/` or `components/`. New `.tsx` files stay under 300 lines, and files already over that may not grow. When you fix violations, run `npm run check:design -- --update` to lock the gain in.
-- `npm run test:unit` (node checks and script tests), `npm run test:security` (RLS, against local Supabase), `npm run build:web`.
+- `npm run test:unit` (node checks and script tests), `npm run test:jest -- --ci`, `npm run test:security` (RLS, against local Supabase), `npm run test:policy` (PR class), `npm run build:web`.
+- `deno check` on each `supabase/functions/*/index.ts` (CI does this). Edge functions do not ship with the app; deploy is separate and human-gated.
 
 ## Writing code (the "ponytail" rule)
 
@@ -43,7 +44,8 @@ Lazy means efficient, not careless. Before writing code, stop at the first rung 
 ## Code conventions
 
 - **Data:** Supabase queries live in TanStack Query hooks in `hooks/`, never in screens or components. Use the generated types in `types/`. Cursor pagination for long lists. Query results must be plain JSON (arrays and objects, no `Set`, `Map` or `Date`): the query cache is persisted to storage, and anything else comes back broken after a reload.
-- **UI:** redesigned screens build from `components/ds` (tokens in `constants/tokens.ts`, gallery at `/dev/gallery`); existing screens use Tamagui with `constants/palette.ts` until they're replaced. Reuse before making new components. Use `role`/`aria-*` for accessibility, not the legacy `accessibilityRole`/`accessibilityState` (they don't reach the DOM on web).
+- **UI:** new screens build from `components/ds` (tokens in `constants/tokens.ts`, gallery at `/dev/gallery`). Cocktail read pages use `components/screens/drink`. Cocktail edit, and beer and wine detail, still use Tamagui plus `constants/palette.ts` (`ItemDetailLayout`). Do not start a third drink page. Reuse before making new components. Use `role`/`aria-*` for accessibility, not the legacy `accessibilityRole`/`accessibilityState` (they don't reach the DOM on web).
+- **Web against local Supabase:** `EXPO_NO_DOTENV=1` and the env from `supabase status`, or the dev server uses `.env` and talks to production. Full recipe in [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Platform differences:** small ones use `Platform.OS` / `Platform.select`; structural ones use `.web.tsx` / `.native.tsx` files.
 - **Native projects:** `ios/` and `android/` are generated (Expo prebuild) and ignored. Native config goes in `app.config.ts` and config plugins.
 - **Web head:** never import `expo-router/head`; use `components/WebHead`, which renders nothing on native.

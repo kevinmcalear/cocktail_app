@@ -10,7 +10,7 @@
 
 ## CI covers
 
-<!-- typecheck, lint, check:design, test:unit, test:security, build:web: anything new? -->
+<!-- typecheck, lint, check:design, test:unit, test:jest, test:policy, test:security, build:web, deno check on edge functions: anything new? -->
 
 ## How to check it yourself
 
