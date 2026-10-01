@@ -20,6 +20,7 @@ import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
 import { Positions } from './Positions';
+import { WorkedMenus } from './WorkedMenus';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'shelf' | 'had' | 'bars';
@@ -150,6 +151,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
 
       <Positions profile={profile} />
+
+      {profile.kind === 'person' ? <WorkedMenus profileId={profile.id} /> : null}
 
       <MenuCredits credits={credits} names={names} />
 

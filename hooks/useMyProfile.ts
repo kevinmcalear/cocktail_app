@@ -60,6 +60,8 @@ function readable(error: { code?: string; message: string; details?: string | nu
   if (error.code === '23514' && /instagram/.test(`${error.message} ${error.details ?? ''}`)) {
     return new Error('Use up to 30 letters, numbers, dots or underscores. Dots can’t sit at the start, the end, or next to each other.');
   }
+  // The content filter's own sentence ("That name has a word we don't allow").
+  if (error.message.startsWith('That ') || error.message.startsWith('You already have a claim')) return new Error(error.message);
   return new Error('Couldn’t save your profile. Check the fields and try again.');
 }
 

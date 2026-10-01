@@ -16,6 +16,8 @@ export interface RankVenue {
   postcode: string | null;
   city: string | null;
   country_code: string | null;
+  /** Set when the bar has shut. Still a valid place to have worked or made a drink. */
+  is_closed?: boolean;
 }
 
 export interface RankEntry {
@@ -142,7 +144,7 @@ export function useRankTarget(itemId: string | null | undefined) {
   });
 }
 
-const VENUE_COLUMNS = 'id, display_name, locality, postcode, city, country_code';
+const VENUE_COLUMNS = 'id, display_name, locality, postcode, city, country_code, is_closed';
 
 /**
  * A bar's public profile: where its drinks can be ranked, and its area. Null

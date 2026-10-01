@@ -22,6 +22,7 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
     { id: 'ml', label: 'ml' },
     { id: 'oz', label: 'oz' },
     { id: 'cl', label: 'cl' },
+    { id: 'g', label: 'g' },
 ];
 
 interface SettingsState {
