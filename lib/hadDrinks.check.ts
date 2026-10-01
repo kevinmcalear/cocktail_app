@@ -1,7 +1,7 @@
 // Checks for lib/hadDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { favourites, hadStats, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
+import { favourites, fromSharedRow, hadStats, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
 
 const bellamy = { id: 'v1', handle: 'bar.bellamy', display_name: 'Bar Bellamy', avatar_url: null, locality: 'Carlton', city: 'Melbourne' };
 const shapes = { id: 'v2', handle: null, display_name: 'Shapes', avatar_url: 'https://x/logo.png', locality: null, city: 'London' };
@@ -46,6 +46,15 @@ assert.equal(whereLine(home), 'At home');
 assert.equal(toHadDrink(row({ id: 'c', item: null, list: { name: 'Daiquiri' } })).name, 'Daiquiri');
 assert.equal(toHadDrink(row({ id: 'd', item: null })).name, 'A drink');
 assert.equal(whereLine(toHadDrink(row({ id: 'e', venue: shapes }))), 'Shapes, London');
+
+// Someone else's drinks (get_profile_drinks) come out the same shape.
+const shared = fromSharedRow({
+  id: 's1', item_id: 'i1', name: 'House Martini', list_name: 'Martini', image_url: 'https://x/photo.jpg', image_is_generated: null,
+  venue_id: 'v1', venue_handle: 'bar.bellamy', venue_name: 'Bar Bellamy', venue_avatar_url: null, venue_locality: 'Carlton', venue_city: 'Melbourne',
+  sentiment: 'loved', score: '8.4', had_on: '2026-08-14', created_at: '2026-09-01T10:00:00Z',
+});
+assert.deepEqual(shared, { ...martini, id: 's1', itemId: 'i1', createdAt: '2026-09-01T10:00:00Z' });
+assert.equal(fromSharedRow({ ...({} as Parameters<typeof fromSharedRow>[0]), id: 's2', item_id: 'i2', name: 'Negroni', venue_id: null, sentiment: 'fine', score: 5, created_at: '2026-09-01T10:00:00Z' }).venue, null);
 
 // --- Sorting, favourites, bars ---
 const drink = (id: string, score: number, over: Partial<HadRow> = {}): HadDrink =>

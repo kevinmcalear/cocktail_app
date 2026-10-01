@@ -3,34 +3,49 @@ import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, DsText, GlassButton, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, GlassButton, Headline, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
+import { useProfileDrinks } from '@/hooks/useRankings';
+import { hadStats } from '@/lib/hadDrinks';
 import { barsCrediting, profileLinks } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
+import { Favourites, SharedDrinks } from './HadDrinks';
 import { Positions } from './Positions';
 import { WorkedMenus } from './WorkedMenus';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
-type Tab = 'menus' | 'originals' | 'rankings' | 'shelf';
-const TABS = [
+type Tab = 'menus' | 'originals' | 'rankings' | 'shelf' | 'had' | 'bars';
+/** A person's page has the drinks they've had and how each bar did. */
+const PERSON_TABS = [
+  { value: 'had', label: 'Had' },
+  { value: 'bars', label: 'Bars' },
+  { value: 'originals', label: 'Originals' },
+  { value: 'shelf', label: 'Shelf' },
+] as const;
+/** Someone who keeps their drinks to themselves, or a profile nobody has claimed (a historic bartender). */
+const QUIET_TABS = PERSON_TABS.filter((t) => t.value !== 'had' && t.value !== 'bars');
+/** A bar's page leads with its menus. */
+const BAR_TABS = [
+  { value: 'menus', label: 'Menus' },
   { value: 'originals', label: 'Originals' },
   { value: 'rankings', label: 'Rankings' },
   { value: 'shelf', label: 'Shelf' },
 ] as const;
-/** A bar's page leads with its menus. */
-const BAR_TABS = [{ value: 'menus', label: 'Menus' }, ...TABS] as const;
 
 /**
  * A public profile: a person or a bar, the same kind of page. Who they are,
  * the drinks credited to them, and the bars that put those drinks on a menu
- * (the credit that matters most). Rankings and the shelf come later.
+ * (the credit that matters most). A person who chooses to can show the
+ * drinks they've had, with their scores. The shelf comes later.
  */
 export function ProfileScreen({ profileRef }: { profileRef: string | string[] | undefined }) {
   return (
@@ -82,7 +97,12 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
 const KIND: Record<Profile['kind'], string> = { person: 'Bartender', bar: 'Bar' };
 
 function ProfileBody({ profile, columns }: { profile: Profile; columns: number }) {
-  const [tab, setTab] = useState<Tab>(profile.kind === 'bar' ? 'menus' : 'originals');
+  const person = profile.kind === 'person';
+  const [tab, setTab] = useState<Tab>(!person ? 'menus' : profile.shares_rankings ? 'had' : 'originals');
+  const signedIn = !!useAuth().user;
+  const mine = useMyProfile().data?.id === profile.id;
+  const had = useProfileDrinks(profile.id, person && profile.shares_rankings);
+  const hadStat = hadStats(had.data ?? []);
   const { data: originals = [], isLoading } = useProfileOriginals(profile.id);
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   const names = new Map(originals.map((d) => [d.id, d.name]));
@@ -118,6 +138,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       </View>
 
       <Stats>
+        {had.data?.length ? <Stat value={hadStat.drinks} label={hadStat.drinks === 1 ? 'drink had' : 'drinks had'} /> : null}
         <Stat value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} />
         <Stat value={onMenus} label={onMenus === 1 ? 'bar menu' : 'bar menus'} />
       </Stats>
@@ -135,8 +156,17 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
 
       <MenuCredits credits={credits} names={names} />
 
-      <Segmented accessibilityLabel="Profile sections" options={profile.kind === 'bar' ? BAR_TABS : TABS} value={tab} onChange={setTab} />
-      {tab === 'menus' ? (
+      {had.data?.some((d) => d.sentiment === 'loved') ? (
+        <View style={styles.favourites}>
+          <Headline role="heading">Favourites</Headline>
+          <Favourites drinks={had.data} columns={columns} />
+        </View>
+      ) : null}
+
+      <Segmented accessibilityLabel="Profile sections" options={!person ? BAR_TABS : profile.shares_rankings || mine ? PERSON_TABS : QUIET_TABS} value={tab} onChange={setTab} />
+      {tab === 'had' || tab === 'bars' ? (
+        <SharedDrinks name={profile.display_name} tab={tab} shared={profile.shares_rankings} signedIn={signedIn} drinks={had.data} failed={!!had.error} />
+      ) : tab === 'menus' ? (
         <MenuHistory profileId={profile.id} name={profile.display_name} />
       ) : tab === 'originals' ? (
         isLoading ? (
@@ -166,4 +196,5 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
   link: { textDecorationLine: 'underline' },
+  favourites: { gap: space.md },
 });

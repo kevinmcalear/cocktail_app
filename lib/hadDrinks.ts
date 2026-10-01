@@ -75,6 +75,50 @@ export function toHadDrink(row: HadRow): HadDrink {
   };
 }
 
+/** A get_profile_drinks row: someone else's drink, already cut down to what may be shown. */
+export interface SharedHadRow {
+  id: string;
+  item_id: string;
+  name: string;
+  list_name: string | null;
+  image_url: string | null;
+  image_is_generated: boolean | null;
+  venue_id: string | null;
+  venue_handle: string | null;
+  venue_name: string | null;
+  venue_avatar_url: string | null;
+  venue_locality: string | null;
+  venue_city: string | null;
+  sentiment: Sentiment;
+  score: number | string;
+  had_on: string | null;
+  created_at: string;
+}
+
+export function fromSharedRow(row: SharedHadRow): HadDrink {
+  return {
+    id: row.id,
+    itemId: row.item_id,
+    name: row.name,
+    listName: row.list_name,
+    imageUrl: row.image_url,
+    isSketch: !!row.image_is_generated,
+    venue: row.venue_id
+      ? {
+          id: row.venue_id,
+          handle: row.venue_handle,
+          name: row.venue_name ?? 'A bar',
+          avatarUrl: row.venue_avatar_url,
+          place: [row.venue_locality, row.venue_city].filter(Boolean).join(', ') || null,
+        }
+      : null,
+    sentiment: row.sentiment,
+    score: Number(row.score),
+    hadOn: row.had_on,
+    createdAt: row.created_at,
+  };
+}
+
 export type HadSort = 'score' | 'recent';
 
 /** When it was had: the day they gave, else when they ranked it. */

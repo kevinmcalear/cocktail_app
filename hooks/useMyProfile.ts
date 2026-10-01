@@ -13,6 +13,8 @@ export interface MyProfile {
   bio: string | null;
   instagram: string | null;
   isPublic: boolean;
+  /** Shows the drinks you've had, with your scores, on your public profile. */
+  sharesRankings: boolean;
   /** A moderator hid it: nobody else sees it, whatever isPublic says. */
   isModerated: boolean;
 }
@@ -28,7 +30,7 @@ export function useMyProfile() {
     queryFn: async (): Promise<MyProfile | null> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, bio, instagram, is_public, moderated_at')
+        .select('id, handle, display_name, bio, instagram, is_public, shares_rankings, moderated_at')
         .eq('user_id', userId!)
         .maybeSingle();
       if (error) throw error;
@@ -40,6 +42,7 @@ export function useMyProfile() {
         bio: data.bio,
         instagram: data.instagram,
         isPublic: data.is_public,
+        sharesRankings: data.shares_rankings,
         isModerated: !!data.moderated_at,
       };
     },
@@ -77,6 +80,7 @@ export function useSaveMyProfile() {
         bio: draft.bio.trim() || null,
         instagram: normalizeInstagram(draft.instagram) || null,
         is_public: draft.isPublic,
+        shares_rankings: draft.sharesRankings,
       };
       const { error } = id
         ? await supabase.from('profiles').update(row).eq('id', id)

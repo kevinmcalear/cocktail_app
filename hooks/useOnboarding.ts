@@ -21,7 +21,7 @@ export function useSaveOnboardingName() {
       const { error: authError } = await updateProfile({ firstName, lastName, fullName: name });
       if (authError) throw new Error(SAVED);
       try {
-        await save.mutateAsync({ id: input.profileId, draft: { name, handle: input.handle, bio: '', instagram: '', isPublic: true } });
+        await save.mutateAsync({ id: input.profileId, draft: { name, handle: input.handle, bio: '', instagram: '', isPublic: true, sharesRankings: false } });
       } catch (e) {
         const message = e instanceof Error ? e.message : SAVED;
         throw new Error(message);
