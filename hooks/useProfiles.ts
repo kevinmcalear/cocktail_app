@@ -18,6 +18,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   website: string | null;
+  instagram: string | null;
   locality: string | null;
   city: string | null;
   country_code: string | null;
@@ -30,7 +31,7 @@ export interface Profile {
   closed_year: number | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -57,6 +58,16 @@ export interface Original extends LineageDrink {
   item_images: ItemImageLink[] | null;
 }
 
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`;
+
+/** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators. */
+async function creditedTo(profileId: string): Promise<string[]> {
+  const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId).limit(100);
+  if (co.error) throw co.error;
+  const coIds = (co.data ?? []).map((r) => r.item_id as string);
+  return [`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])];
+}
+
 /** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
 export function useProfileOriginals(profileId: string | null | undefined) {
   const viewer = viewerScoped(useAuth().user?.id);
@@ -65,15 +76,36 @@ export function useProfileOriginals(profileId: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
-      const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId!).limit(100);
-      if (co.error) throw co.error;
-      const coIds = (co.data ?? []).map((r) => r.item_id as string);
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
-        .or([`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])].join(','))
+        .select(ORIGINAL_COLUMNS)
+        .or((await creditedTo(profileId!)).join(','))
         .order('name')
         .limit(100);
+      if (error) throw error;
+      return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/**
+ * The drinks I've made: every drink I wrote up here (at a venue or on my
+ * own), plus the ones credited to my profile when I have one. My own view;
+ * other people see only what's credited (useProfileOriginals).
+ */
+export function useMyMadeDrinks(profileId: string | null | undefined) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['my-made', userId, profileId ?? null],
+    enabled: !!userId,
+    queryFn: async (): Promise<Original[]> => {
+      const { data, error } = await supabase
+        .from('items')
+        .select(ORIGINAL_COLUMNS)
+        .eq('item_type', 'cocktail')
+        .or([`created_by.eq.${userId}`, ...(profileId ? await creditedTo(profileId) : [])].join(','))
+        .order('name')
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
     },

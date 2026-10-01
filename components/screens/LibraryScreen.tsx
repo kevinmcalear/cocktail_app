@@ -2,10 +2,11 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
+import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -61,8 +62,10 @@ export function LibraryScreen() {
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading } = useSearchCatalog(contextIds);
   const [filter, setFilter] = useState<LibraryFilter>('Cocktail');
-  const { data: capabilities } = useCapabilities(activeId);
+  const { data: capabilities, isLoading: capsLoading } = useCapabilities(activeId);
   const canCost = !!capabilities?.includes('costs');
+  const canEdit = !!capabilities?.includes('edit_drinks');
+  const [swap, setSwap] = useState(false);
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
@@ -103,6 +106,13 @@ export function LibraryScreen() {
                 <Filter key={f.value} label={f.label} count={counts[f.value] ?? 0} selected={filter === f.value} onPress={() => setFilter(f.value)} />
               ))}
             </View>
+            {filter === 'Ingredient' && activeId ? (
+              canEdit ? (
+                <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} style={styles.swap} />
+              ) : capsLoading ? null : (
+                <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
+              )
+            ) : null}
           </View>
         }
         renderItem={({ item }) => {
@@ -125,6 +135,7 @@ export function LibraryScreen() {
         }}
         ListEmptyComponent={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>}
       />
+      {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
     </View>
   );
 }
@@ -134,5 +145,6 @@ const styles = StyleSheet.create({
   header: { gap: space.md, paddingBottom: space.sm },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   filter: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, justifyContent: 'center' },
+  swap: { alignSelf: 'flex-start' },
   tile: { flex: 1, gap: space.sm },
 });

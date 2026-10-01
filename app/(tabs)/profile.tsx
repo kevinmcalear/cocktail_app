@@ -1,16 +1,6 @@
-import { SettingsScreen } from '@/components/SettingsScreen';
-import { Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { YStack } from 'tamagui';
+import { YouScreen } from '@/components/screens/profile/YouScreen';
 
-/** Native profile tab = same consolidated settings screen as web. */
-export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <YStack flex={1} paddingTop={insets.top} backgroundColor="$background">
-      <Stack.Screen options={{ headerShown: false }} />
-      <SettingsScreen />
-    </YStack>
-  );
+/** The You tab, in home mode: your own profile. Settings are behind its gear. */
+export default function You() {
+  return <YouScreen inTabs />;
 }

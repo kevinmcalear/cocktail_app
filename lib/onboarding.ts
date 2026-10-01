@@ -73,7 +73,7 @@ export function nameError(name: string): string | null {
 
 /** The handle rule, once onboarding shows the field. */
 export function handleError(handle: string): string | undefined {
-  return profileDraftErrors({ name: 'Name', handle, bio: '', isPublic: true }).handle;
+  return profileDraftErrors({ name: 'Name', handle, bio: '', instagram: '', isPublic: true }).handle;
 }
 
 /** A job title for profile_positions (1 to 60 characters). */

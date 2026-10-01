@@ -25,7 +25,8 @@ interface RowProps {
   onPress?: () => void;
 }
 
-function Row({ position, title, detail, score, scoreDetail, logo, onPress }: RowProps) {
+/** A numbered row with a score at the end: a bar in an area list, a drink in your own. */
+export function RankRow({ position, title, detail, score, scoreDetail, logo, onPress }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -73,7 +74,7 @@ export function MyRankList({ entries, listName }: { entries: RankEntry[]; listNa
                 {BAND[e.sentiment]}
               </Caption>
             ) : null}
-            <Row position={i + 1} title={title} detail={detail || 'Ranked'} score={e.score} />
+            <RankRow position={i + 1} title={title} detail={detail || 'Ranked'} score={e.score} />
           </View>
         );
       })}
@@ -98,7 +99,7 @@ export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` 
   return (
     <View>
       {rows.map((r) => (
-        <Row
+        <RankRow
           key={r.venue_profile_id}
           position={r.position}
           title={r.display_name}

@@ -75,6 +75,7 @@ export function EditorSections({ editor, targetable }: { editor: LayoutEditor; t
           targeted={targetable && editor.targetKey === s.key}
           onTarget={targetable ? () => editor.setTargetKey(s.key) : undefined}
           onAdd={() => editor.setSheet({ kind: 'add', key: s.key })}
+          onPaste={() => editor.setSheet({ kind: 'paste', key: s.key })}
           onSettings={() => editor.setSheet({ kind: 'section', key: s.key })}
           home={home}
           onRemove={(id) => editor.remove(s.key, id)}
@@ -83,6 +84,7 @@ export function EditorSections({ editor, targetable }: { editor: LayoutEditor; t
         />
       ))}
       <Button label="Add a section" icon="plus" variant="secondary" onPress={editor.addSection} style={styles.addSection} />
+      <Button label="Paste a list" icon="doc.text" variant="secondary" onPress={() => editor.setSheet({ kind: 'paste', key: null })} style={styles.addSection} />
     </View>
   );
 }

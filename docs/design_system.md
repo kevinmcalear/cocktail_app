@@ -98,11 +98,11 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 
 ## Building a redesigned screen
 
-- Wrap it in `BackbarTheme` (fonts, the Back Bar colours, and the Tamagui sub-theme) and, once step 2 lands, the active venue's `BrandProvider`.
+- Wrap it in `BackbarTheme` (fonts, the Back Bar colours, and the Tamagui sub-theme). Tab screens already sit inside `VenueBrandProvider`. A drink page passes that venue's `BrandProvider`.
 - Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
 - Accessibility props: use `role` and `aria-*` (`aria-selected`, `aria-disabled`). The legacy `accessibilityRole`/`accessibilityState` props don't reach the DOM on web.
 - A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both are contrast-checked by `lib/color.ts`.
 
 ## The gallery
 
-`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a switch for the redesign preview. It's public but hidden (not linked anywhere) and opens in every build: its switch is how you turn the redesign on for yourself in production. Add new ds components to it in the same PR; agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a light/dark toggle. The redesign flag is gone. The gallery is public but hidden (not linked anywhere). Add new ds components to it in the same PR; agents verify against it and against the brief.

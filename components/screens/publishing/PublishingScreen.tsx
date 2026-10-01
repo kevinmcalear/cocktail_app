@@ -1,16 +1,56 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Surface, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Headline, Surface, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
+import { instagramProblem } from '@/lib/profiles';
 
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
+
+/** The bar’s Instagram, on the public page. Only someone who can publish here can change it. */
+function InstagramEditor({ profileId, initial }: { profileId: string; initial: string }) {
+  const save = useSaveProfileInstagram();
+  const [value, setValue] = useState(initial);
+  const [tried, setTried] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const problem = tried ? instagramProblem(value) : undefined;
+  return (
+    <View style={styles.ig}>
+      <Field
+        label="Instagram"
+        value={value}
+        onChangeText={(next) => {
+          setValue(next);
+          setTried(false);
+          setSaved(false);
+        }}
+        error={problem || (save.error ? save.error.message : undefined)}
+        hint={saved ? 'Saved. It shows on the public page.' : 'Optional. A name like @little.rye, or the link to the bar’s Instagram.'}
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="off"
+      />
+      <Button
+        label="Save Instagram"
+        variant="secondary"
+        disabled={save.isPending}
+        onPress={() => {
+          setTried(true);
+          if (instagramProblem(value)) return;
+          save.mutate({ id: profileId, raw: value }, { onSuccess: () => setSaved(true) });
+        }}
+      />
+    </View>
+  );
+}
 
 /**
  * A venue's publishing settings: the bar's default, each menu's setting, and
@@ -65,6 +105,7 @@ function PublishingPage({ barId }: { barId: string }) {
                       menu card. {data.counts.private} {data.counts.private === 1 ? 'stays' : 'stay'} private.
                     </Body>
                     <Button label="See the public page" variant="secondary" icon="globe" onPress={() => router.push(`/p/${data.profile!.handle ?? data.profile!.id}` as Href)} />
+                    {canPublish ? <InstagramEditor profileId={data.profile.id} initial={data.profile.instagram ?? ''} /> : null}
                   </>
                 ) : (
                   <Body>Nothing goes public until the venue has a public page. Find it on the map and claim it for this venue, then come back here.</Body>
@@ -129,6 +170,7 @@ const styles = StyleSheet.create({
   readable: { width: '100%', maxWidth: 720, alignSelf: 'center', gap: space.lg },
   controls: { position: 'absolute' },
   card: { gap: space.md },
+  ig: { gap: space.sm },
   group: { gap: space.sm },
   list: { gap: space.lg },
   menu: { gap: space.sm },

@@ -1,40 +1,48 @@
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Caption, Field, Segmented, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Spec, Title, useDs } from '@/components/ds';
+import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { ethanolIn, formatMl, readings, spiritToProof, waterToDilute } from '@/lib/calculators';
 import { priceForTarget } from '@/lib/costing';
 import { formatMoney, parseMoney } from '@/lib/money';
+import { matchPrepLines, mergePrepRecipe, type PrepLine, type PrepRecipeLine } from '@/lib/prepCalcs';
 
-export type Tool = 'dilute' | 'proof' | 'convert' | 'price';
+export type Tool = 'dilute' | 'proof' | 'convert' | 'price' | 'prep';
 
 const TOOLS = [
   { value: 'dilute', label: 'Dilute' },
   { value: 'proof', label: 'Proof' },
   { value: 'convert', label: 'Convert' },
   { value: 'price', label: 'Selling price' },
+  { value: 'prep', label: 'Prep' },
 ] as const;
 
 export interface ToolsSheetProps {
   visible: boolean;
   onClose: () => void;
   tool?: Tool;
-  /** Prefills: a volume and ABV for dilute and proof, an amount for convert. */
+  /** Prefills: a volume and ABV for dilute and proof, an amount for convert, a name for prep. */
   volumeMl?: number | null;
   abv?: number | null;
   amount?: { value: number; unit: string; name?: string | null; abv?: number | null; density?: number | null } | null;
+  prepName?: string | null;
+  /** Writes Prep's lines onto a recipe. The drink spec omits this and only shows the amounts. */
+  onPrepApply?: (lines: PrepLine[]) => void;
+  applying?: boolean;
   /** Light for prep work, dark on the drink page. */
   scheme?: 'light' | 'dark';
 }
 
 /**
  * The bar's calculators in one sheet: water to bring a spirit down, spirit
- * to bring a cordial up, an amount in every unit, and the menu price that
- * hits a GP. Each one also sits where its question comes up (Batch, the
- * prep card, the spec, Cost and margin); this holds them all for the odd job.
+ * to bring a cordial up, an amount in every unit, the menu price that hits
+ * a GP, and the batch for a syrup, foam or juice. Each one also sits where
+ * its question comes up; this holds them all for the odd job.
  */
 export function ToolsSheet(props: ToolsSheetProps) {
   const { active } = useActiveVenue();
@@ -52,7 +60,7 @@ export function ToolsSheet(props: ToolsSheetProps) {
 const num = (s: string) => (s.trim() ? Number(s) : NaN);
 const pct = (n: number) => `${Number(n.toFixed(1))}%`;
 
-function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount }: ToolsSheetProps) {
+function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount, prepName, onPrepApply, applying }: ToolsSheetProps) {
   const ds = useDs();
   const { active } = useActiveVenue();
   const { data: pricing } = usePricingSettings(active?.id);
@@ -70,7 +78,7 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount }: Too
   const currency = pricing?.currency ?? 'GBP';
 
   let result: string | null = null;
-  let note: string;
+  let note = '';
   if (tool === 'dilute') {
     const w = waterToDilute(num(volume), num(have), num(want));
     result = w === null ? null : formatMl(w);
@@ -83,7 +91,7 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount }: Too
     const list = readings(num(value), unit, amount ?? undefined);
     result = list.length ? list.map((r) => r.label).join(' · ') : null;
     note = list.length ? (amount?.name ? `${amount.name}${amount.density ? ', at its own density' : ', density guessed from the name and ABV'}.` : 'Weights at the density of water unless the amount came from a spec line.') : 'Enter an amount in ml, cl, oz, g, kg, a barspoon or a dash.';
-  } else {
+  } else if (tool === 'price') {
     const minor = parseMoney(cost, currency);
     const price = minor === null ? null : priceForTarget(minor, num(gp), { taxRate: num(tax) || 0, pricesIncludeTax: included });
     result = price === null ? null : (formatMoney(price, currency) ?? String(price));
@@ -97,8 +105,12 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount }: Too
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Caption tone="muted">Tools</Caption>
             <Title>{TOOLS.find((t) => t.value === tool)?.label}</Title>
-            <Segmented options={TOOLS} value={tool} onChange={setTool} accessibilityLabel="Calculator" />
-            {tool === 'dilute' || tool === 'proof' ? (
+            <View role="radiogroup" accessibilityLabel="Calculator" style={styles.picks}>
+              {TOOLS.map((t) => (
+                <Chip key={t.value} label={t.label} selected={tool === t.value} onPress={() => setTool(t.value)} />
+              ))}
+            </View>
+            {tool === 'prep' ? <PrepCalc name={prepName} onApply={onPrepApply} applying={applying} /> : tool === 'dilute' || tool === 'proof' ? (
               <>
                 <Field label="Volume you have (ml)" value={volume} onChangeText={setVolume} placeholder="700" keyboardType="decimal-pad" />
                 <Field label="Its ABV (%)" value={have} onChangeText={setHave} placeholder="40" keyboardType="decimal-pad" />
@@ -124,13 +136,13 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount }: Too
                 </Pressable>
               </>
             )}
-            <View style={[styles.result, { backgroundColor: ds.c.raised }]}>
+            {tool === 'prep' ? null : <View style={[styles.result, { backgroundColor: ds.c.raised }]}>
               <Caption tone="muted">{tool === 'dilute' ? 'Add water' : tool === 'proof' ? 'Add spirit' : tool === 'convert' ? 'Reads as' : 'Menu price'}</Caption>
               <Spec tone="accent" style={styles.big}>
                 {result ?? '…'}
               </Spec>
               <Body tone="muted">{note}</Body>
-            </View>
+            </View>}
           </ScrollView>
         </Pressable>
       </View>
@@ -143,9 +155,69 @@ const styles = StyleSheet.create({
   avoider: { width: '100%', maxWidth: 560, alignSelf: 'center' },
   sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', maxHeight: '92%' },
   body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
+  picks: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },
   check: { paddingVertical: space.sm },
   result: { borderRadius: radius.control, padding: space.lg, gap: space.xs },
   big: { fontSize: space.xl, lineHeight: space.xxl },
 });
+
+type SaveDraft = (args: { entityType: string; draftData: { name: string; barId: string | null; recipeItems: [] } }) => Promise<{ id: string }>;
+
+/** Opens the prep calculator. With `onApply`, "Add to recipe" writes the batch onto the ingredient. */
+export function PrepCalcButton<T extends PrepRecipeLine>({
+  name,
+  catalog,
+  recipe,
+  barId,
+  saveDraft,
+  onApply,
+}: {
+  name?: string | null;
+  catalog?: { id: string; name: string }[];
+  recipe?: { ingredient_id: string; name: string }[];
+  barId?: string | null;
+  saveDraft?: SaveDraft;
+  onApply?: (update: (prev: T[]) => T[]) => void;
+}) {
+  const scheme = useColorScheme();
+  const [open, setOpen] = useState(false);
+  const [applying, setApplying] = useState(false);
+  // Ids created this session, so a second tap doesn't draft the same ingredient again.
+  const made = useRef(new Map<string, { id: string; name: string }>());
+  const apply = onApply && saveDraft
+    ? async (lines: PrepLine[]) => {
+        const known = [
+          ...(recipe ?? []).map((r) => ({ id: r.ingredient_id, name: r.name })),
+          ...(catalog ?? []),
+          ...made.current.values(),
+        ];
+        setApplying(true);
+        try {
+          const ready: PrepRecipeLine[] = [];
+          for (const line of matchPrepLines(lines, known)) {
+            let id = line.ingredient_id;
+            if (!id) {
+              const draft = await saveDraft({ entityType: 'ingredient', draftData: { name: line.name, barId: barId ?? null, recipeItems: [] } });
+              id = draft.id;
+              made.current.set(line.name.trim().toLowerCase(), { id, name: line.name });
+            }
+            ready.push({ ingredient_id: id, name: line.name, amount: line.amount, unit: line.unit });
+          }
+          onApply((prev) => mergePrepRecipe(prev, ready));
+          setOpen(false);
+        } catch (e) {
+          Alert.alert('Couldn’t add these', e instanceof Error ? e.message : 'Try again.');
+        } finally {
+          setApplying(false);
+        }
+      }
+    : undefined;
+  return (
+    <>
+      <Button label="Ingredient calculator" variant="secondary" onPress={() => setOpen(true)} accessibilityHint="Amounts for a syrup, foam, juice or soda" />
+      {open ? <ToolsSheet visible onClose={() => setOpen(false)} tool="prep" prepName={name} scheme={scheme} onPrepApply={apply} applying={applying} /> : null}
+    </>
+  );
+}

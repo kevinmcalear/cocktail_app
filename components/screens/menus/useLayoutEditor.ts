@@ -20,9 +20,10 @@ import {
   type SectionRule,
 } from '@/lib/menuLayout';
 import { groupMenus, menuStatus } from '@/lib/menus';
+import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
-export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'golive' } | null;
+export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | null;
 
 /**
  * Everything the menu editor does, for its phone and desktop layouts: the
@@ -98,6 +99,7 @@ export function useLayoutEditor(menu: MenuDetail) {
       edit(next);
       setSheet({ kind: 'section', key: next.sections[next.sections.length - 1].key });
     },
+    applyPaste: (intoKey: string | null, groups: PlacedGroup[]) => edit(applyMenuPaste(layout, intoKey, groups)),
     updateSection: (key: string, rule: SectionRule) => edit(updateSection(layout, key, rule)),
     moveSection: (key: string, by: -1 | 1) => edit(moveSection(layout, key, by)),
     removeSection: (key: string) => edit(removeSection(layout, key)),

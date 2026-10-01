@@ -3,19 +3,20 @@ import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, DsText, GlassButton, Segmented, Spec, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, GlassButton, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
-import { barsCrediting } from '@/lib/profiles';
+import { barsCrediting, profileLinks } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
+import { BarClassics } from './BarClassics';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Positions } from './Positions';
 import { WorkedMenus } from './WorkedMenus';
-import { BarScore, ComingSoon, MenuCredits, OriginalsGrid } from './ProfileSections';
+import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'shelf';
 const TABS = [
@@ -88,7 +89,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const onMenus = barsCrediting(credits);
   const unclaimed = isUnclaimed(profile);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
-  const website = profile.website && /^https?:\/\//i.test(profile.website) ? profile.website : null;
+  const links = profileLinks(profile);
 
   return (
     <View style={styles.body}>
@@ -109,19 +110,20 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
-        {website ? (
-          <DsText variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(website)}>
-            {website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}
+        {links.map((link) => (
+          <DsText key={link.href} variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(link.href)}>
+            {link.label}
           </DsText>
-        ) : null}
+        ))}
       </View>
 
-      <View style={styles.stats} role="list">
+      <Stats>
         <Stat value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} />
         <Stat value={onMenus} label={onMenus === 1 ? 'bar menu' : 'bar menus'} />
-      </View>
+      </Stats>
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
+      {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
 
@@ -156,17 +158,6 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View role="listitem" accessible accessibilityLabel={`${value} ${label}`} style={styles.stat}>
-      <Spec align="center">{value}</Spec>
-      <Caption tone="muted" align="center">
-        {label}
-      </Caption>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
@@ -175,6 +166,4 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
   link: { textDecorationLine: 'underline' },
-  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxxl },
-  stat: { alignItems: 'center', minWidth: 88 },
 });

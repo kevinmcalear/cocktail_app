@@ -16,6 +16,7 @@ interface EditorSectionProps {
   targeted?: boolean;
   onTarget?: () => void;
   onAdd: () => void;
+  onPaste: () => void;
   onSettings: () => void;
   /** A home menu: the drink's line, not venue warnings about photos and prices. */
   home?: boolean;
@@ -35,7 +36,7 @@ function status(drink: MenuDrink, home?: boolean): { text: string; warn: boolean
 const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
 /** One section being edited: its rule, its drinks in order (drag to reorder), and adding more. */
-export function EditorSection({ section, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove }: EditorSectionProps) {
+export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onSettings, home, onRemove, onReorder, onMove }: EditorSectionProps) {
   const ds = useDs();
   // Web from tablet width up: buttons to move a drink, for keyboards and mice.
   const breakpoint = useBreakpoint();
@@ -121,6 +122,9 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onSettings, 
         <IconSymbol name="plus" size={16} color={ds.c.ink} />
         <DsText variant="caption">{`Add to ${section.name}`}</DsText>
       </PressableScale>
+      <PressableScale accessibilityLabel={`Paste drinks into ${section.name}`} onPress={onPaste} style={styles.paste}>
+        <DsText variant="caption" tone="muted">{`Paste into ${section.name}`}</DsText>
+      </PressableScale>
     </View>
   );
 }
@@ -135,4 +139,5 @@ const styles = StyleSheet.create({
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   off: { opacity: 0.3 },
   add: { marginTop: space.sm, minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  paste: { minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });
