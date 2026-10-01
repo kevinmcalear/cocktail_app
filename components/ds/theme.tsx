@@ -12,6 +12,8 @@ import { backbar, DEFAULT_ACCENT, fontFamilies, type BackbarColors, type Backbar
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { accentFill, readableAccent } from '@/lib/color';
 
+import { backbarThemeProps } from './backbarThemeProps';
+
 interface Brand {
   accent: string;
   displayFace: DisplayFace;
@@ -64,7 +66,7 @@ export function BackbarTheme({ scheme, children }: { scheme?: BackbarScheme; chi
   if (!fontsLoaded && Platform.OS !== 'web') return null;
   return (
     <SchemeContext.Provider value={resolved}>
-      <Theme name={resolved === 'dark' ? 'dark_backbar' : 'light_backbar'}>{children}</Theme>
+      <Theme {...backbarThemeProps(resolved)}>{children}</Theme>
     </SchemeContext.Provider>
   );
 }
