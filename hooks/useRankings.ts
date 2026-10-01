@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { SENTIMENTS, type Sentiment } from '@/lib/ranking';
 import { supabase } from '@/lib/supabase';
@@ -57,6 +58,51 @@ export function useMyRankList(rankedAsItemId: string | null | undefined) {
       if (error) throw error;
       const rows = (data ?? []) as unknown as RankEntry[];
       return rows.map((r) => ({ ...r, score: Number(r.score) })).sort((a, b) => SENTIMENTS.indexOf(a.sentiment) - SENTIMENTS.indexOf(b.sentiment));
+    },
+  });
+}
+
+const HAD_COLUMNS = `
+  id, item_id, sentiment, had_on, created_at, score,
+  item:items!item_id ( name, item_images ( angle, sort_order, is_generated, images ( url ) ) ),
+  list:items!ranked_as_item_id ( name ),
+  venue:profiles!venue_profile_id ( id, handle, display_name, avatar_url, locality, city )
+`;
+
+/**
+ * Every drink I've had and ranked, across all my lists, each with my score
+ * and where I had it: what my profile shows. Empty when signed out.
+ *
+ * ponytail: one unpaginated read. A person ranks dozens or hundreds of
+ * drinks, not thousands; page by created_at if someone gets there.
+ */
+export function useMyHadDrinks() {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['my-had', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<HadDrink[]> => {
+      const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
+      if (error) throw error;
+      return ((data ?? []) as unknown as HadRow[]).map(toHadDrink);
+    },
+  });
+}
+
+/**
+ * The drinks someone else has had, from their public profile. Empty unless
+ * they've chosen to show them (profiles.shares_rankings) and you're signed
+ * in; the server leaves out anything that isn't public (get_profile_drinks).
+ */
+export function useProfileDrinks(profileId: string | null | undefined, enabled: boolean) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['profile-drinks', profileId, userId],
+    enabled: enabled && !!profileId && !!userId,
+    queryFn: async (): Promise<HadDrink[]> => {
+      const { data, error } = await supabase.rpc('get_profile_drinks', { p_profile_id: profileId });
+      if (error) throw error;
+      return ((data ?? []) as SharedHadRow[]).map(fromSharedRow);
     },
   });
 }
@@ -161,6 +207,7 @@ export function useAddRankEntry() {
       // Your taste and For you follow your rankings.
       qc.invalidateQueries({ queryKey: ['my-taste'] });
       qc.invalidateQueries({ queryKey: ['my-ranked-ids'] });
+      qc.invalidateQueries({ queryKey: ['my-had'] });
     },
   });
 }

@@ -1,0 +1,176 @@
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
+import { space } from '@/constants/tokens';
+import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCapabilities } from '@/hooks/useCapabilities';
+import { takeBringIn } from '@/lib/bringInHandoff';
+import { compileBringIn, matchIngredient, normName, parseBringIn, type BringBlock } from '@/lib/paste';
+
+import { Choice } from '../menus/MenuSheet';
+
+type Mode = 'drinks' | 'ingredients';
+
+function lineKey(block: number, line: number): string {
+  return `${block}:${line}`;
+}
+
+/** What a pasted list will create, and the choices still open. */
+function Review({
+  blocks,
+  catalog,
+  venueId,
+  picks,
+  kinds,
+  onPick,
+  onKind,
+}: {
+  blocks: BringBlock[];
+  catalog: Parameters<typeof matchIngredient>[1];
+  venueId: string | null;
+  picks: Record<string, string>;
+  kinds: Record<string, string>;
+  onPick: (key: string, id: string) => void;
+  onKind: (key: string, value: string) => void;
+}) {
+  const shown = new Set<string>();
+  return (
+    <View style={{ gap: space.md }}>
+      {blocks.map((block, i) => (
+        <View key={`${block.name}-${i}`} style={{ gap: space.sm }}>
+          <Headline>{block.name || 'Needs a name'}</Headline>
+          {block.kind === 'bottle' ? <Bottle name={block.name} catalog={catalog} venueId={venueId} pickKey={lineKey(i, 0)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} /> : null}
+          {block.lines.map((line, j) => (
+            <Line key={lineKey(i, j)} name={line.name} amount={`${line.amount} ${line.unit}`} catalog={catalog} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
+          ))}
+          {block.notes.map((note) => (
+            <Caption key={note} tone="muted">
+              {note}
+            </Caption>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function Bottle(props: Omit<LineProps, 'amount'>) {
+  return <Line {...props} amount="" />;
+}
+
+interface LineProps {
+  name: string;
+  amount: string;
+  catalog: Parameters<typeof matchIngredient>[1];
+  venueId: string | null;
+  pickKey: string;
+  picks: Record<string, string>;
+  kinds: Record<string, string>;
+  shown: Set<string>;
+  onPick: (key: string, id: string) => void;
+  onKind: (key: string, value: string) => void;
+}
+
+function Line({ name, amount, catalog, venueId, pickKey, picks, kinds, shown, onPick, onKind }: LineProps) {
+  const match = matchIngredient(name, catalog, venueId);
+  const prefix = amount ? `${amount} ` : '';
+  if (match.kind === 'use') return <Caption>{`${prefix}${name}. In the library`}</Caption>;
+  if (match.kind === 'pick') {
+    return (
+      <View style={{ gap: space.sm }}>
+        <Caption>{`${prefix}${name}. Which one?`}</Caption>
+        {match.options.map((option) => (
+          <Choice key={option.id} label={option.name} selected={picks[pickKey] === option.id} onPress={() => onPick(pickKey, option.id)} />
+        ))}
+      </View>
+    );
+  }
+  const key = normName(match.name);
+  const kindField = !shown.has(key);
+  if (kindField) shown.add(key);
+  return (
+    <View style={{ gap: space.sm }}>
+      <Caption>{`${prefix}${match.name}. New`}</Caption>
+      {kindField ? (
+        <Field label={`Kind of ${match.name}`} value={key in kinds ? kinds[key] : (match.genericName ?? '')} onChangeText={(value) => onKind(key, value)} placeholder="Gin" autoCapitalize="words" />
+      ) : null}
+    </View>
+  );
+}
+
+function BringInBody() {
+  const ds = useDs();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  const { active } = useActiveVenue();
+  const barId = active?.id ?? null;
+  const caps = useCapabilities(barId);
+  const canEdit = !barId || !!caps.data?.includes('edit_drinks');
+  const { catalog, methods, glasses, isLoading } = useSpecCatalog();
+  const bring = useBringIn(barId);
+  const [mode, setMode] = useState<Mode>('drinks');
+  const [text, setText] = useState(() => takeBringIn()?.join('\n') ?? '');
+  const [picks, setPicks] = useState<Record<string, string>>({});
+  const [kinds, setKinds] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState<string | null>(null);
+  const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
+  const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses), [blocks, catalog, barId, picks, kinds, methods, glasses]);
+  const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
+
+  const save = async () => {
+    if (!compiled.write) return;
+    setMessage(null);
+    const result = await bring.mutateAsync(compiled.write);
+    if (result.error) setMessage(result.error);
+    else router.back();
+  };
+
+  return (
+    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxl, gap: space.lg }}>
+        <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <LockedSection title="Bring in" unlocked={canEdit || caps.isLoading} opensAt="Drink Creator">
+          <Segmented
+            accessibilityLabel="What you’re pasting"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'drinks', label: 'Drinks' },
+              { value: 'ingredients', label: 'Ingredients' },
+            ]}
+          />
+          <Field
+            label="The list"
+            value={text}
+            onChangeText={setText}
+            minLines={6}
+            placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
+          />
+          <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
+          {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
+          {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
+          {message ? <Caption tone="accent">{message}</Caption> : null}
+          <Button label={bring.isPending ? 'Bringing in…' : `Add ${count}`} onPress={save} disabled={!count || !!compiled.error || bring.isPending} />
+        </LockedSection>
+      </ScrollView>
+    </View>
+  );
+}
+
+export function BringInScreen() {
+  return (
+    <VenueBrandProvider>
+      <BringInBody />
+    </VenueBrandProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+});

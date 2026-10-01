@@ -7,6 +7,9 @@ export interface BarMember {
     user_id: string;
     email: string | null;
     role_level: number;
+    /** The name they signed up with, or the part of their email before @. */
+    display_name?: string | null;
+    joined_at?: string | null;
 }
 
 export function useBarDetail(barId: string) {
@@ -76,7 +79,38 @@ export function useSetMemberRole(barId: string) {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            await queryClient.invalidateQueries({ queryKey: ['bar-members', barId] });
             await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
+        },
+        onError: () => {},
+    });
+}
+
+/** The venue's roster. Names for everyone on the team; emails for admins. */
+export function useBarMembers(barId: string | null) {
+    return useQuery({
+        queryKey: ['bar-members', barId],
+        enabled: !!barId,
+        staleTime: 0,
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('get_bar_members', { p_bar_id: barId! });
+            if (error) throw error;
+            return (data ?? []) as BarMember[];
+        },
+    });
+}
+
+/** Takes someone off the venue. The database keeps the last Admin. */
+export function useRemoveMember(barId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (userId: string) => {
+            const { error } = await supabase.from('user_bars').delete().eq('bar_id', barId).eq('user_id', userId);
+            if (error) throw error;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+            await queryClient.invalidateQueries({ queryKey: ['bar-members', barId] });
         },
         onError: () => {},
     });

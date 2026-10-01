@@ -23,8 +23,8 @@ const TOKEN_FILES = ['constants/**', 'tamagui.config.ts', 'lib/color.ts', '**/*.
 
 const RAW_NUMBER = '/^(?!0$)[0-9.]/';
 const RULES = [
-  ['Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]', 'Raw hex colour: use a theme token ($color, $background, ...) or constants/palette.ts.'],
-  ['Literal[value=/^(?:rgba?|hsla?)\\(/i]', 'Raw rgb/hsl colour: use a theme token or constants/palette.ts.'],
+  ['Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]', 'Raw hex colour: use a theme token ($color, $background, ...) or constants/tokens.ts. Legacy editors only: constants/palette.ts.'],
+  ['Literal[value=/^(?:rgba?|hsla?)\\(/i]', 'Raw rgb/hsl colour: use a theme token or constants/tokens.ts. Legacy editors only: constants/palette.ts.'],
   [`Property[key.name="fontSize"][value.raw=${RAW_NUMBER}]`, 'Raw font size: use a type token ($1...$9) or a text style.'],
   [`JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > Literal[raw=${RAW_NUMBER}]`, 'Raw font size: use a type token ($1...$9) or a text style.'],
   [`Property[key.name=/^(?:br|borderRadius|border(?:Top|Bottom)(?:Left|Right)Radius)$/][value.raw=${RAW_NUMBER}]`, 'Raw corner radius: use a radius token.'],

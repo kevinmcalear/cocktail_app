@@ -218,6 +218,8 @@ The existing `items.origin` label (Classic, Original, Variant) stays; `riff_of_i
 
 **Personal score, like Beli:** the first answer (loved, fine, didn't like) picks a band (10 to 6.7, 6.6 to 3.4, 3.3 to 0). Comparisons place the drink inside the band by binary insertion; the app writes `rank_key` as the midpoint of its neighbours, so no other row moves. Score = top of band minus (band width × position ÷ count in band). The comparisons are kept as the raw answers, so the order can be rebuilt or the method changed later.
 
+**Showing them on a profile** (`20261001190000_shared_rankings.sql`, tested in `supabase/tests/shared-rankings.test.mjs`): `profiles.shares_rankings` is a person's opt-in, off by default. `get_profile_drinks(profile_id)` gives a signed-in reader that person's drinks with their scores, only while the profile is public, not on hold and sharing, its owner has confirmed their age, and neither side has blocked the other. It names a drink only when any signed-in person could already read its name (published, or a shared drink with no venue and no owner); a bar's unpublished drink shows as the list it was ranked in, or not at all. `rank_entries` stays the owner's alone, and signed-out visitors get nothing.
+
 ### Aggregation: pg_cron and materialized views
 
 Area rankings are computed on a schedule, not per request:
@@ -295,7 +297,7 @@ Screens from the brief. Bold tables are new in this proposal.
 - **Par is per location only** (Kevin, 2026-09-26). `item_locations.par_amount` is the only par; a bar's par for an item, house-made or bought, is the sum over its locations, and prep and order lists work from that. `item_prep` has no par.
 - **Guest staff expiry is per role only** (Kevin, 2026-09-26). `venue_roles.ends_at` ends access for everyone holding the role, which fits takeovers; there's no per-member end date. A one-off trial shift gets its own role.
 - **Bar profiles are public by default** (Kevin, 2026-09-26). A bar can opt out; person profiles stay private until published. So a guest venue can be credited on an event, and ranked, without a separate publish step.
-- **Person profiles stay private by default** (Kevin, 2026-09-26). A person's profile is private until they publish it; their rankings and home bar shelf are visible only to them. Only the area aggregates are public. Sharing rankings or shelves can be added later as an explicit opt-in.
+- **Person profiles stay private by default** (Kevin, 2026-09-26). A person's profile is private until they publish it; their rankings and home bar shelf are visible only to them. Only the area aggregates are public. Sharing rankings is an explicit opt-in (`profiles.shares_rankings`, see Rankings above); sharing shelves can be added the same way.
 - **Ranking defaults stay** (Kevin, 2026-09-26): a drink at a bar needs at least 20 rankers before it's shown (`private.ranking_min_rankers()`), scores are pulled toward the drink's average with a prior of 10 rankers, and the rankings refresh hourly (pg_cron, minute 7). Each is one constant or schedule to change later.
 - **Only catalog admins create unclaimed profiles** (Kevin, 2026-09-26): historic creators and venues that aren't on the platform. Users can't suggest them yet; that would need a moderation queue.
 - **One currency per bar** (Kevin, 2026-09-26). `bars.currency` replaces a currency on every cost row; costs need it set first.

@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import { useCocktails } from '@/hooks/useCocktails';
 import { useCurrentMenuDrinks } from '@/hooks/useCurrentMenuDrinks';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
@@ -19,10 +18,12 @@ interface NamedItem {
   icon_key?: string | null;
 }
 
-interface CocktailRow {
+interface MenuItem {
   id: string;
+  name: string;
+  item_type: string;
   glassware_id: string | null;
-  item_images?: ItemImageLink[] | null;
+  item_images?: ItemImageLink[] | ItemImageLink | null;
 }
 
 export interface TonightDrink {
@@ -45,31 +46,28 @@ export function useTonight(venueId: string | null) {
     [dropdowns?.menus, venueId]
   );
   const { data: rows, isLoading: drinksLoading } = useCurrentMenuDrinks(menus.map((m) => m.id));
-  const { data: cocktails } = useCocktails({ allContexts: true });
 
   const drinks = useMemo<TonightDrink[]>(() => {
     const glassIcon = new Map<string, string>();
     for (const g of (dropdowns?.glassware ?? []) as NamedItem[]) glassIcon.set(g.id, g.icon_key || g.name);
-    const cocktailById = new Map<string, CocktailRow>();
-    for (const c of (cocktails ?? []) as CocktailRow[]) cocktailById.set(c.id, c);
 
     const out: TonightDrink[] = [];
     for (const row of rows ?? []) {
-      const item = Array.isArray(row.item) ? row.item[0] : row.item;
+      const item = (Array.isArray(row.item) ? row.item[0] : row.item) as MenuItem | null;
       if (!item) continue;
       const category = CATEGORY[item.item_type] ?? 'Cocktail';
-      const cocktail = cocktailById.get(item.id);
+      const images = Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : null;
       out.push({
         id: item.id,
         name: item.name,
         category,
-        imageUrl: heroPicture(cocktail?.item_images)?.url ?? null,
-        glass: (cocktail?.glassware_id && glassIcon.get(cocktail.glassware_id)) || fallbackGlass(category),
+        imageUrl: heroPicture(images)?.url ?? null,
+        glass: (item.glassware_id && glassIcon.get(item.glassware_id)) || fallbackGlass(category),
         menuId: row.menu_id,
       });
     }
     return out;
-  }, [rows, cocktails, dropdowns?.glassware]);
+  }, [rows, dropdowns?.glassware]);
 
   return { menus, drinks, isLoading: dropdownsLoading || (menus.length > 0 && drinksLoading) };
 }

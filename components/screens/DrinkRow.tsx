@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, Headline, PressableScale, useDs } from '@/components/ds';
@@ -15,15 +16,19 @@ export interface DrinkRowProps {
   caption?: string;
   /** A second, longer line: a note of your own. */
   note?: string;
+  /** At the end of the row: a score. Say it in `caption` or `label` too, for screen readers. */
+  trailing?: ReactNode;
+  /** What a screen reader hears, when it should say more than the name, caption and note. */
+  label?: string;
 }
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note, trailing, label }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
-      accessibilityLabel={`${[name, caption, note].filter(Boolean).join('. ')}, open`}
+      accessibilityLabel={`${label ?? [name, caption, note].filter(Boolean).join('. ')}, open`}
       onPress={onPress ?? (() => href && router.push(href as never))}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
@@ -39,6 +44,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note }
           </Caption>
         ) : null}
       </View>
+      {trailing}
     </PressableScale>
   );
 }

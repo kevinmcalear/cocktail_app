@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, groupMenuCredits, handleFromName, normalizeHandle, parseProfileRef, profileDraftErrors, type MenuDrinkRow } from './profiles';
+import { barsCrediting, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -51,8 +51,30 @@ assert.equal(handleFromName('Zoë  O’Brien!'), 'zoe.o.brien');
 assert.equal(handleFromName('Al'), '', 'too short for a handle');
 assert.equal(handleFromName('大'), '');
 assert.equal(handleFromName('x'.repeat(40)).length, 30);
-const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', isPublic: true };
+const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, sharesRankings: false };
 assert.deepEqual(profileDraftErrors(draft), {});
-assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501) })), ['name', 'handle', 'bio']);
+assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501), instagram: 'a..b' })), ['name', 'handle', 'bio', 'instagram']);
 assert.ok(profileDraftErrors({ ...draft, handle: 'jo.' }).handle, 'no trailing dot');
 assert.ok(profileDraftErrors({ ...draft, name: 'x'.repeat(81) }).name);
+
+// Instagram: a name, an @name, or an instagram.com link. Blank is fine. The CHECK in the migration is the same rule.
+assert.equal(normalizeInstagram('  @Foo.Bar '), 'foo.bar');
+assert.equal(normalizeInstagram('https://www.instagram.com/Foo.Bar/?hl=en'), 'foo.bar');
+assert.equal(normalizeInstagram('instagram.com/otro___bar/'), 'otro___bar');
+assert.equal(normalizeInstagram(''), '');
+assert.equal(instagramProblem(''), undefined);
+assert.equal(instagramProblem('_ok'), undefined);
+assert.ok(instagramProblem('a..b'));
+assert.ok(instagramProblem('.ab'));
+assert.ok(instagramProblem('ab.'));
+assert.ok(instagramProblem('x'.repeat(31)));
+assert.deepEqual(profileLinks({ instagram: 'foo.bar', website: 'https://www.instagram.com/foo.bar/' }), [
+  { href: 'https://www.instagram.com/foo.bar/', label: 'instagram.com/foo.bar' },
+]);
+assert.deepEqual(profileLinks({ instagram: 'foo.bar', website: 'https://example.com/bar/' }), [
+  { href: 'https://www.instagram.com/foo.bar/', label: 'instagram.com/foo.bar' },
+  { href: 'https://example.com/bar/', label: 'example.com/bar' },
+]);
+assert.deepEqual(profileLinks({ instagram: null, website: 'https://www.instagram.com/still.here/' }), [
+  { href: 'https://www.instagram.com/still.here/', label: 'www.instagram.com/still.here' },
+]);

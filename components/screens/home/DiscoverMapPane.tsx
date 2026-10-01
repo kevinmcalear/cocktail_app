@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
+import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
@@ -12,6 +13,7 @@ import { layout, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
 import { drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
+import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
@@ -36,12 +38,20 @@ interface DiscoverMapPaneProps {
   bottomInset?: number;
 }
 
-/** The bar a pin stands for: its score (or early), and a way in. */
-function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
+/** How many of a bar's drinks the pin card shows before "Show all". */
+const PREVIEW_DRINKS = 3;
+
+/** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
+const SHEET_PEEK = layout.minTapTarget + space.xl;
+
+/** The bar a pin stands for, the drinks there on the drinks layer, and a way in. */
+function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; onClose: () => void }) {
   const router = useRouter();
+  const [all, setAll] = useState(false);
+  const shown = all ? drinks : drinks.slice(0, PREVIEW_DRINKS);
   return (
     <Surface raised style={styles.card}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.score === null ? `Early: ${peopleCount(pin.rankers)} ranked` : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
+      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
         <UserAvatar uri={pin.logo} name={pin.name} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
@@ -60,6 +70,10 @@ function SelectedBar({ pin, onClose }: { pin: MapPin; onClose: () => void }) {
           </View>
         )}
       </View>
+      {shown.map((d) => (
+        <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={null} note={d.description ?? undefined} />
+      ))}
+      {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} /> : null}
       <View style={styles.cardActions}>
         <Button label="Close" variant="ghost" onPress={onClose} />
         <Button label="Open bar" onPress={() => router.push(`/p/${pin.handle || pin.id}`)} />
@@ -125,7 +139,8 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
   const list = rows.isLoading ? (
     <ListNote>Loading…</ListNote>
   ) : byDrinks ? (
-    barDrinks.length ? (
+    // A selected pin already lists its drinks in the card.
+    selected ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} />
     ) : (
       <ListNote>{`No drinks ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
@@ -164,7 +179,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
         </View>
         {selected ? (
           <View pointerEvents="box-none" style={[styles.overlay, styles.overlayBottom]}>
-            <SelectedBar pin={selected} onClose={() => setSelectedId(null)} />
+            <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} />
           </View>
         ) : null}
       </View>
@@ -179,13 +194,13 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
         {searchHere}
       </View>
       <BottomSheet
-        snapPoints={[layout.minTapTarget * 4 + bottomInset, '50%', '88%']}
+        snapPoints={[SHEET_PEEK + bottomInset, '50%', '88%']}
         backgroundStyle={{ backgroundColor: ds.c.surface }}
         handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
         accessibilityLabel="Results"
       >
         <BottomSheetScrollView contentContainerStyle={[styles.sheet, { paddingBottom: bottomInset }]}>
-          {selected ? <SelectedBar pin={selected} onClose={() => setSelectedId(null)} /> : null}
+          {selected ? <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} /> : null}
           <Title role="heading">{title}</Title>
           {layers}
           {byDrinks ? <DiscoverKinds kind={kind} onChange={onKind} /> : null}

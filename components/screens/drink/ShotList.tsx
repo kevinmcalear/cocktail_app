@@ -2,13 +2,16 @@ import * as Device from 'expo-device';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, useBreakpoint, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
-import { radius, space } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, radius, space } from '@/constants/tokens';
+import { useWebImageDrop } from '@/hooks/useWebImageDrop';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useAddServicePhoto } from '@/hooks/useServicePhotos';
 import { showMessage } from '@/lib/dialogs';
-import { useWebImageDrop } from '@/hooks/useWebImageDrop';
-import type { ServiceShot } from '@/lib/servicePhotos';
+import type { ItemImageLink } from '@/lib/itemImages';
+import { serviceShots, shotList, type ServiceShot } from '@/lib/servicePhotos';
 
 const STATUS: Record<ServiceShot['status'], string> = {
   missing: 'No photo yet',
@@ -18,29 +21,52 @@ const STATUS: Record<ServiceShot['status'], string> = {
 };
 
 /**
- * The angles still to photograph, for people who can add photos. Each one
- * takes a photo or picks one from the library; on web, a photo can also be
- * dropped on its row.
+ * Edit mode only. Collapsed until someone asks to add service photos (side,
+ * top, garnish, hand-off). Angles that already have a current photo are left
+ * out; those show on the drink page.
  */
-export function ShotList({ itemId, shots }: { itemId: string; shots: ServiceShot[] }) {
+export function ShotList({ itemId, barId, links }: { itemId: string; barId: string | null; links: ItemImageLink[] | null | undefined }) {
+  const { data: capabilities } = useCapabilities(barId);
+  const shots = shotList(serviceShots(links));
+  const canAdd = !barId || !!capabilities?.includes('photos');
+  const [open, setOpen] = useState(false);
+  if (!canAdd || !shots.length) return null;
+  return (
+    <BackbarTheme>
+      <AddPhotos itemId={itemId} shots={shots} open={open} onToggle={() => setOpen((v) => !v)} />
+    </BackbarTheme>
+  );
+}
+
+function AddPhotos({ itemId, shots, open, onToggle }: { itemId: string; shots: ServiceShot[]; open: boolean; onToggle: () => void }) {
   const add = useAddServicePhoto(itemId);
-  if (!shots.length) {
-    return <Caption tone="muted">Every angle has a current photo.</Caption>;
-  }
+  const ds = useDs();
   return (
     <View style={styles.list}>
-      <Caption tone="muted" role="heading" style={styles.eyebrow}>
-        Shot list
-      </Caption>
-      {shots.map((shot) => (
-        <ShotRow
-          key={shot.angle}
-          shot={shot}
-          busy={add.isPending}
-          uploading={add.isPending && add.variables?.angle === shot.angle}
-          onPhoto={(uri) => add.mutate({ angle: shot.angle, uri, replaces: shot.photoLinkIds })}
-        />
-      ))}
+      <PressableScale
+        accessibilityLabel={open ? 'Hide service photos' : 'Add service photos'}
+        accessibilityHint="Side, top, garnish, and the hand-off"
+        aria-expanded={open}
+        onPress={onToggle}
+        style={styles.toggle}
+      >
+        <View style={styles.toggleCopy}>
+          <Body>Add service photos</Body>
+          <Caption tone="muted">Side, top, garnish, and the hand-off</Caption>
+        </View>
+        <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={16} color={ds.c.muted} />
+      </PressableScale>
+      {open
+        ? shots.map((shot) => (
+            <ShotRow
+              key={shot.angle}
+              shot={shot}
+              busy={add.isPending}
+              uploading={add.isPending && add.variables?.angle === shot.angle}
+              onPhoto={(uri) => add.mutate({ angle: shot.angle, uri, replaces: shot.photoLinkIds })}
+            />
+          ))
+        : null}
     </View>
   );
 }
@@ -89,8 +115,9 @@ function ShotRow({ shot, busy, uploading, onPhoto }: { shot: ServiceShot; busy: 
 }
 
 const styles = StyleSheet.create({
-  list: { gap: space.sm, marginTop: space.sm },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 1 },
+  list: { gap: space.sm },
+  toggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, minHeight: layout.minTapTarget },
+  toggleCopy: { flex: 1, gap: space.xs },
   row: { gap: space.xs, padding: space.md, borderWidth: 1, borderRadius: radius.control },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
 });

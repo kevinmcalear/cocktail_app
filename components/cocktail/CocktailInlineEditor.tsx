@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 
+import { ShotList } from "@/components/screens/drink/ShotList";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
@@ -111,6 +112,9 @@ export function CocktailInlineEditor({
                 }
                 onDropImages={editor.addImages}
             >
+                <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+                    <ShotList itemId={cocktail.id} barId={cocktail.bar_id ?? null} links={cocktail.item_images} />
+                </View>
                 <CocktailDetailContent
                     cocktail={cocktail}
                     isEditing

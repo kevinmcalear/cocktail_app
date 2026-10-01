@@ -58,4 +58,4 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 6. **Expo SDK 58**, once it's stable.
 7. **Home mode, then the public layer:** my bar, collections, profiles, credit and lineage, comparison rankings, moderation.
 8. **The gaps from steps 2 and 3:** venue brand settings with a live preview; the drink page's Service section.
-9. **Retire the old app:** port what only the old screens did (New and drafts, beer and wine study, the photo carousel, home menus, orphaned screens), then delete the old screens and the redesign flag.
+9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Cocktail edit, and beer and wine detail, still use the Tamagui layout until they are ported. Do not go looking for a redesign flag.
