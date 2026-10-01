@@ -407,7 +407,10 @@ describe('get_bar_members', () => {
     assert.ifError(error);
     assert.equal(data.length, Object.keys(ROLES).length);
     for (const label of Object.keys(ROLES)) {
-      assert.equal(data.find((m) => m.user_id === users[label].id).email, users[label].email);
+      const row = data.find((m) => m.user_id === users[label].id);
+      assert.equal(row.email, users[label].email);
+      assert.equal(row.display_name, users[label].email.split('@')[0]);
+      assert.ok(row.joined_at);
     }
   });
 
@@ -417,7 +420,10 @@ describe('get_bar_members', () => {
       assert.ifError(error);
       assert.equal(data.length, Object.keys(ROLES).length);
       for (const member of data) {
+        const owner = Object.values(users).find((u) => u.id === member.user_id);
         assert.equal(member.email, member.user_id === users[label].id ? users[label].email : null);
+        assert.equal(member.display_name, owner.email.split('@')[0]);
+        assert.ok(member.joined_at);
         assert.ok(Number.isInteger(member.role_level));
       }
     });
