@@ -11,6 +11,7 @@ import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Prof
 import { barsCrediting, profileLinks } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
+import { BarClassics } from './BarClassics';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Positions } from './Positions';
@@ -121,6 +122,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       </View>
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
+      {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
 

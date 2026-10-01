@@ -1,9 +1,9 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, DsText, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -86,6 +86,11 @@ export function MenusScreen() {
         <View style={styles.title}>
           <Display>Menus</Display>
           {summary ? <Caption tone="muted">{summary}</Caption> : null}
+          {barId ? (
+            <DsText variant="body" role="link" style={styles.offMenu} onPress={() => router.push('/off-menu' as Href)}>
+              Off-menu classics
+            </DsText>
+          ) : null}
         </View>
 
         {error ? <Body tone="muted">Couldn’t load the menus. Pull down or come back in a moment.</Body> : null}
@@ -151,6 +156,7 @@ const styles = StyleSheet.create({
   content: { width: '100%', alignSelf: 'center', gap: space.lg },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { gap: space.xs },
+  offMenu: { textDecorationLine: 'underline', alignSelf: 'flex-start' },
   group: { gap: space.sm },
   groupTitle: { letterSpacing: 1.5 },
 });

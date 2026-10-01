@@ -108,6 +108,7 @@ function SideNavBody() {
         {mode === 'venue' ? (
           <>
             <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus/all')} />
+            <NavRow label="Off menu" icon="list.number" current={pathname.startsWith('/off-menu')} onPress={() => go('off-menu')} />
             <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
             <NavRow label="Station" icon="square.grid.2x2" current={pathname.startsWith('/station')} onPress={() => go('station')} />
           </>
