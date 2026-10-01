@@ -19,6 +19,7 @@ import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import { PrepCalcButton } from "@/components/tools/ToolsSheet";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDrafts } from "@/hooks/useDrafts";
@@ -491,11 +492,7 @@ export default function EditIngredientScreen({
                         <Text fontSize={18} fontWeight="bold" color="$color">
                             Recipe
                         </Text>
-                        {recipeItems.length === 0 && (
-                            <Text color="$color11" fontSize={14} fontStyle="italic">
-                                Add ingredients if this is a pre-batched item. Leave empty for raw ingredients.
-                            </Text>
-                        )}
+                        <PrepCalcButton name={name} catalog={pickerIngredients} recipe={recipeItems} barId={barId} saveDraft={saveDraft} onApply={setRecipeItems} />
                         <SortableRecipeList
                             items={recipeItems}
                             onReorder={setRecipeItems}
