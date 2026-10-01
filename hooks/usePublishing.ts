@@ -49,7 +49,7 @@ export function useItemPublishing(itemId: string, barId: string | null) {
 export interface BarPublishing {
   barDefault: PublishMode;
   /** The venue's public page, which has to exist before anything goes public. */
-  profile: { id: string; handle: string | null } | null;
+  profile: { id: string; handle: string | null; instagram: string | null } | null;
   menus: { id: string; name: string; publish_mode: PublishMode | null }[];
   /** Drinks (not ingredients) by what the public sees. */
   counts: Record<PublishMode, number>;
@@ -72,7 +72,7 @@ export function useBarPublishing(barId: string) {
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items] = await Promise.all([
         supabase.from('bars').select('default_publish_mode').eq('id', barId).single(),
-        supabase.from('profiles').select('id, handle').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
+        supabase.from('profiles').select('id, handle, instagram').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
         supabase.from('menus').select('id, name, publish_mode, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
         supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
       ]);
@@ -88,7 +88,7 @@ export function useBarPublishing(barId: string) {
       for (const d of drinks) counts[d.mode] += 1;
       return {
         barDefault,
-        profile: (profile.data as { id: string; handle: string | null } | null) ?? null,
+        profile: (profile.data as { id: string; handle: string | null; instagram: string | null } | null) ?? null,
         menus: menuRows.map(({ id, name, publish_mode }) => ({ id, name, publish_mode })),
         counts,
         drinks,

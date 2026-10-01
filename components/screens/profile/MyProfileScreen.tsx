@@ -12,7 +12,7 @@ import { siteOrigin } from '@/lib/venueLink';
 import { SafetyPage } from '../safety/SafetyPage';
 
 const PUBLIC_MEANS =
-  'Anyone can see your name, handle and bio, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
+  'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
 const PRIVATE_MEANS = 'Only you see it. Drinks you’ve published and menus you’ve shared stop showing to anyone else while it’s private.';
 
 /** Settings › Public profile: make your profile, choose your handle, and say whether it's public. */
@@ -39,8 +39,8 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
   const suggestedName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
   const [draft, setDraft] = useState<ProfileDraft>(() =>
     profile
-      ? { name: profile.displayName, handle: profile.handle, bio: profile.bio ?? '', isPublic: profile.isPublic }
-      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', isPublic: true }
+      ? { name: profile.displayName, handle: profile.handle, bio: profile.bio ?? '', instagram: profile.instagram ?? '', isPublic: profile.isPublic }
+      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true }
   );
   const [tried, setTried] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -81,6 +81,16 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         hint={`${draft.bio.trim().length}/500`}
         multiline
         maxLength={500}
+      />
+      <Field
+        label="Instagram (optional)"
+        value={draft.instagram}
+        onChangeText={(instagram) => edit({ instagram })}
+        error={errors.instagram}
+        hint="Your name there, like @little.rye, or the link to your profile."
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="off"
       />
       <View style={styles.visibility}>
         <Headline role="heading">Who can see it</Headline>
