@@ -1,0 +1,112 @@
+diff --git a/node_modules/react-native-web/dist/cjs/exports/useWindowDimensions/index.js b/node_modules/react-native-web/dist/cjs/exports/useWindowDimensions/index.js
+index 503513d..3f9338f 100644
+--- a/node_modules/react-native-web/dist/cjs/exports/useWindowDimensions/index.js
++++ b/node_modules/react-native-web/dist/cjs/exports/useWindowDimensions/index.js
+@@ -16,26 +16,27 @@ exports.__esModule = true;
+ exports.default = useWindowDimensions;
+ var _Dimensions = _interopRequireDefault(require("../Dimensions"));
+ var _react = require("react");
++// Patched (patches/react-native-web+0.21.2.patch): see the note in
++// dist/exports/useWindowDimensions/index.js.
++var staticWindow = {
++  fontScale: 1,
++  height: 0,
++  scale: 1,
++  width: 0
++};
++function subscribe(onChange) {
++  _Dimensions.default.addEventListener('change', onChange);
++  return () => {
++    _Dimensions.default.removeEventListener('change', onChange);
++  };
++}
++function getSnapshot() {
++  return _Dimensions.default.get('window');
++}
++function getServerSnapshot() {
++  return staticWindow;
++}
+ function useWindowDimensions() {
+-  var _useState = (0, _react.useState)(() => _Dimensions.default.get('window')),
+-    dims = _useState[0],
+-    setDims = _useState[1];
+-  (0, _react.useEffect)(() => {
+-    function handleChange(_ref) {
+-      var window = _ref.window;
+-      if (window != null) {
+-        setDims(window);
+-      }
+-    }
+-    _Dimensions.default.addEventListener('change', handleChange);
+-    // We might have missed an update between calling `get` in render and
+-    // `addEventListener` in this handler, so we set it here. If there was
+-    // no change, React will filter out this update as a no-op.
+-    setDims(_Dimensions.default.get('window'));
+-    return () => {
+-      _Dimensions.default.removeEventListener('change', handleChange);
+-    };
+-  }, []);
+-  return dims;
++  return (0, _react.useSyncExternalStore)(subscribe, getSnapshot, getServerSnapshot);
+ }
+ module.exports = exports.default;
+\ No newline at end of file
+diff --git a/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js b/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js
+index 290ff81..6843e3c 100644
+--- a/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js
++++ b/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js
+@@ -11,26 +11,32 @@
+ 'use client';
+ 
+ import Dimensions from '../Dimensions';
+-import { useEffect, useState } from 'react';
++import { useSyncExternalStore } from 'react';
++
++// Patched (patches/react-native-web+0.21.2.patch). Upstream read the real
++// window with useState on the first client render, so hydration never matched
++// statically rendered HTML, which has no window (0 x 0). React then either
++// threw the tree away (error #418) or kept the HTML's stale attributes.
++// useSyncExternalStore hydrates with the static size and switches to the real
++// one in an ordinary update right after.
++var staticWindow = {
++  fontScale: 1,
++  height: 0,
++  scale: 1,
++  width: 0
++};
++function subscribe(onChange) {
++  Dimensions.addEventListener('change', onChange);
++  return () => {
++    Dimensions.removeEventListener('change', onChange);
++  };
++}
++function getSnapshot() {
++  return Dimensions.get('window');
++}
++function getServerSnapshot() {
++  return staticWindow;
++}
+ export default function useWindowDimensions() {
+-  var _useState = useState(() => Dimensions.get('window')),
+-    dims = _useState[0],
+-    setDims = _useState[1];
+-  useEffect(() => {
+-    function handleChange(_ref) {
+-      var window = _ref.window;
+-      if (window != null) {
+-        setDims(window);
+-      }
+-    }
+-    Dimensions.addEventListener('change', handleChange);
+-    // We might have missed an update between calling `get` in render and
+-    // `addEventListener` in this handler, so we set it here. If there was
+-    // no change, React will filter out this update as a no-op.
+-    setDims(Dimensions.get('window'));
+-    return () => {
+-      Dimensions.removeEventListener('change', handleChange);
+-    };
+-  }, []);
+-  return dims;
++  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+ }
+\ No newline at end of file
