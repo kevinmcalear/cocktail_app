@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { toHadDrink, type HadDrink, type HadRow } from '@/lib/hadDrinks';
+import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { SENTIMENTS, type Sentiment } from '@/lib/ranking';
 import { supabase } from '@/lib/supabase';
@@ -85,6 +85,24 @@ export function useMyHadDrinks() {
       const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
       if (error) throw error;
       return ((data ?? []) as unknown as HadRow[]).map(toHadDrink);
+    },
+  });
+}
+
+/**
+ * The drinks someone else has had, from their public profile. Empty unless
+ * they've chosen to show them (profiles.shares_rankings) and you're signed
+ * in; the server leaves out anything that isn't public (get_profile_drinks).
+ */
+export function useProfileDrinks(profileId: string | null | undefined, enabled: boolean) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['profile-drinks', profileId, userId],
+    enabled: enabled && !!profileId && !!userId,
+    queryFn: async (): Promise<HadDrink[]> => {
+      const { data, error } = await supabase.rpc('get_profile_drinks', { p_profile_id: profileId });
+      if (error) throw error;
+      return ((data ?? []) as SharedHadRow[]).map(fromSharedRow);
     },
   });
 }

@@ -71,6 +71,8 @@ export interface ProfileDraft {
   /** What they typed: @name, a bare name, or an instagram.com link. */
   instagram: string;
   isPublic: boolean;
+  /** Show the drinks you've had, with your scores, on the public profile. */
+  sharesRankings: boolean;
 }
 
 const INSTAGRAM = /^[a-z0-9._]+$/;

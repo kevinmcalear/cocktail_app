@@ -29,9 +29,11 @@ export interface Profile {
   /** A bar that has shut for good; closed_year when it's known. */
   is_closed: boolean;
   closed_year: number | null;
+  /** A person who shows the drinks they've had, with their scores. */
+  shares_rankings: boolean;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 

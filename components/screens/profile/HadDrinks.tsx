@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, PressableScale, Spec } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, DsText, PressableScale, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { favourites, sortHad, tallyBars, whereLine, type HadDrink, type HadSort } from '@/lib/hadDrinks';
@@ -109,6 +109,38 @@ export function BarTallies({ drinks, whose }: { drinks: HadDrink[]; whose: strin
       </View>
     </View>
   );
+}
+
+interface SharedDrinksProps {
+  /** Whose profile: "Jo". */
+  name: string;
+  tab: 'had' | 'bars';
+  /** They've chosen to show them. When they haven't, only they get these tabs. */
+  shared: boolean;
+  signedIn: boolean;
+  drinks: HadDrink[] | undefined;
+  failed: boolean;
+}
+
+/** The Had and Bars tabs on a person's public profile: their drinks when they show them, or a line saying why not. */
+export function SharedDrinks({ name, tab, shared, signedIn, drinks, failed }: SharedDrinksProps) {
+  const router = useRouter();
+  if (!shared) {
+    return (
+      <View style={styles.section}>
+        <Body tone="muted">Only you can see the drinks you’ve had. You can show them here, with your scores, from your profile settings.</Body>
+        <View style={styles.chips}>
+          <Button label="See them on You" variant="secondary" onPress={() => router.push('/you')} />
+          <Button label="Profile settings" variant="ghost" onPress={() => router.push('/settings/profile')} />
+        </View>
+      </View>
+    );
+  }
+  if (!signedIn) return <Body tone="muted">{`Sign in to see the drinks ${name} has had.`}</Body>;
+  if (failed) return <Body tone="muted">Couldn’t load their drinks. Check your connection and try again.</Body>;
+  if (!drinks) return <Caption tone="muted">Loading drinks…</Caption>;
+  if (!drinks.length) return <Body tone="muted">{`${name} hasn’t ranked a drink yet.`}</Body>;
+  return tab === 'had' ? <HadList drinks={drinks} /> : <BarTallies drinks={drinks} whose="Their" />;
 }
 
 const styles = StyleSheet.create({

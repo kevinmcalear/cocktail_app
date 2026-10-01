@@ -51,7 +51,7 @@ assert.equal(handleFromName('Zoë  O’Brien!'), 'zoe.o.brien');
 assert.equal(handleFromName('Al'), '', 'too short for a handle');
 assert.equal(handleFromName('大'), '');
 assert.equal(handleFromName('x'.repeat(40)).length, 30);
-const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true };
+const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, sharesRankings: false };
 assert.deepEqual(profileDraftErrors(draft), {});
 assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501), instagram: 'a..b' })), ['name', 'handle', 'bio', 'instagram']);
 assert.ok(profileDraftErrors({ ...draft, handle: 'jo.' }).handle, 'no trailing dot');
