@@ -82,6 +82,7 @@ function Group({
   editing: boolean;
   onSetLine?: (key: string, atService: boolean) => void;
 }) {
+  const showAmount = lines.some((l) => l.amount);
   return (
     <View style={styles.group}>
       <Caption tone="muted" style={styles.eyebrow}>
@@ -89,22 +90,24 @@ function Group({
       </Caption>
       {lines.length === 0 ? <Caption tone="muted">{empty}</Caption> : null}
       {lines.map((l) => (
-        <Line key={l.key} line={l} atStation={atStation} editing={editing} onFlip={onSetLine ? () => onSetLine(l.key, !atStation) : undefined} />
+        <Line key={l.key} line={l} atStation={atStation} editing={editing} showAmount={showAmount} onFlip={onSetLine ? () => onSetLine(l.key, !atStation) : undefined} />
       ))}
     </View>
   );
 }
 
 /** One line. While editing, the whole row is a switch that moves it to the other group. */
-function Line({ line, atStation, editing, onFlip }: { line: ServiceLine; atStation: boolean; editing: boolean; onFlip?: () => void }) {
+function Line({ line, atStation, editing, showAmount, onFlip }: { line: ServiceLine; atStation: boolean; editing: boolean; showAmount: boolean; onFlip?: () => void }) {
   const ds = useDs();
   const where = atStation ? 'at the station' : 'in the batch';
   const spoken = [line.amount, line.ingredient, where, line.guessed ? 'guessed' : null].filter(Boolean).join(', ');
   const content = (
     <>
-      <Spec tone="accent" style={styles.amount}>
-        {line.amount}
-      </Spec>
+      {showAmount ? (
+        <Spec tone="accent" style={styles.amount}>
+          {line.amount}
+        </Spec>
+      ) : null}
       <Body style={styles.name}>{line.ingredient}</Body>
       {editing ? <Tag label={atStation ? 'Move to batch' : 'Move to station'} /> : line.guessed ? <Tag label="Guess" /> : null}
     </>

@@ -81,6 +81,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
   }
 
   const shares = access.amounts ? ratio(lines) : null;
+  const measured = access.amounts && lines.some((l) => l.amount);
   return (
     <View style={styles.section}>
       <View style={styles.head}>
@@ -99,6 +100,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
           <SpecRow
             key={l.key}
             amount={access.amounts ? (l.amount ?? '') : ''}
+            alignAmount={measured}
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             optional={l.optional}
             note={l.note ?? undefined}
