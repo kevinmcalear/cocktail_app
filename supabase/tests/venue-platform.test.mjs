@@ -639,7 +639,7 @@ describe('profiles and credit', () => {
     assert.ok(personWithBar.error, 'a person claim carries no bar');
   });
 
-  test('someone who already has a profile cannot claim another, and approval says why if they got one since', async () => {
+  test('someone who already has a profile cannot claim another, and a pending claim blocks a second profile', async () => {
     const historic = (await serviceInsert('profiles', { kind: 'person', handle: `great${run}`, display_name: 'Great', is_public: true })).id;
 
     const withProfile = await makeUser('hasprofile');
@@ -647,14 +647,14 @@ describe('profiles and credit', () => {
     await serviceInsert('profiles', { kind: 'person', handle: `has${run}`, display_name: 'Has one', user_id: withProfile.id });
     assert.ok((await withProfile.client.from('profile_claims').insert({ profile_id: historic })).error);
 
-    // Claims first, makes a profile after: approval refuses in words.
+    // A claim comes first. A second profile is refused, so approval can still
+    // hand the existing one over. profiles.user_id is unique.
     const late = await makeUser('late');
     extraUserIds.push(late.id);
-    const { data: claim, error } = await late.client.from('profile_claims').insert({ profile_id: historic }).select('id').single();
-    assert.ifError(error);
-    await serviceInsert('profiles', { kind: 'person', handle: `late${run}`, display_name: 'Late', user_id: late.id });
-    const approve = await users.catalogAdmin.client.rpc('approve_profile_claim', { p_claim_id: claim.id });
-    assert.match(approve.error?.message ?? '', /already has a profile/);
+    const { error: claimError } = await late.client.from('profile_claims').insert({ profile_id: historic }).select('id').single();
+    assert.ifError(claimError);
+    const second = await service.from('profiles').insert({ kind: 'person', handle: `late${run}`, display_name: 'Late', user_id: late.id });
+    assert.match(second.error?.message ?? '', /claim waiting/);
   });
 
   test('signed-out visitors see whether a profile is claimed, not whose it is', async () => {
