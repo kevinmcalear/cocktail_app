@@ -115,3 +115,17 @@ FROM (
     HAVING count(DISTINCT r.parent_ingredient_id) = 1
 ) p
 WHERE i.id = p.ingredient_item_id AND i.item_type = 'ingredient' AND i.generic_id IS NULL AND p.parent_id <> i.id;
+
+-- Cocktail photos saved from another website. A credit is not a licence.
+-- Wikimedia bottle photos and generated sketches are not in this set.
+-- The file in the drinks bucket is removed with the Storage API; a direct
+-- delete from storage.objects is rejected.
+DELETE FROM "public"."images" img
+WHERE img.source_url IS NOT NULL
+  AND img.source_url !~* 'wikimedia\\.org'
+  AND EXISTS (
+      SELECT 1
+      FROM "public"."item_images" ii
+      JOIN "public"."items" i ON i.id = ii.item_id
+      WHERE ii.image_id = img.id AND i.item_type = 'cocktail'
+  );
