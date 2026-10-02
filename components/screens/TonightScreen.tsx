@@ -57,7 +57,9 @@ export function TonightScreen() {
             <ScreenHeaderSpacer />
             <View style={styles.titleRow}>
               <Display>Tonight</Display>
-              {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+              <View style={styles.titleActions}>
+                {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+              </View>
             </View>
             <Caption tone="muted">{today()}</Caption>
             {onNow.map((m) => (
@@ -87,6 +89,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.sm, paddingBottom: space.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  titleActions: { flexDirection: 'row', gap: space.sm },
   emptyButton: { alignSelf: 'flex-start', marginTop: space.sm },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

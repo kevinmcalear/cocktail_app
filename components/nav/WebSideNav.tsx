@@ -5,10 +5,13 @@ import { StyleSheet, View } from 'react-native';
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
+import { useEffectiveRole } from '@/hooks/useViewAs';
 import { currentProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
+import { canSeeTeam } from '@/lib/team';
 
 import { CreateSheet } from './CreateSheet';
 import { VenueBrandProvider } from './VenueBrandProvider';
@@ -64,6 +67,9 @@ function SideNavBody() {
   const router = useRouter();
   const pathname = usePathname();
   const { mode } = useMode();
+  const { active } = useActiveVenue();
+  const role = useEffectiveRole(active?.id ?? null);
+  const showTeam = mode === 'venue' && canSeeTeam(role);
   const go = (name: string) => router.navigate(hrefFor(name));
   const [creating, setCreating] = useState(false);
 
@@ -102,8 +108,14 @@ function SideNavBody() {
         {mode === 'venue' ? (
           <>
             <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus/all')} />
+            <NavRow label="Off menu" icon="list.number" current={pathname.startsWith('/off-menu')} onPress={() => go('off-menu')} />
             <NavRow label="Back bar" icon="map.fill" current={pathname.startsWith('/back-bar')} onPress={() => go('back-bar')} />
           </>
+        ) : null}
+        {showTeam ? (
+          <View style={styles.team}>
+            <NavRow label="My team" icon="person.2.fill" current={pathname.startsWith('/team')} onPress={() => go('team')} />
+          </View>
         ) : null}
       </View>
     </View>
@@ -114,6 +126,7 @@ const styles = StyleSheet.create({
   nav: { width: WEB_SIDEBAR_WIDTH, height: '100%', flexShrink: 0, padding: space.md, gap: space.sm, borderRightWidth: StyleSheet.hairlineWidth },
   venue: { paddingHorizontal: space.xs, paddingBottom: space.sm },
   tabs: { gap: 2 },
+  team: { marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
 });

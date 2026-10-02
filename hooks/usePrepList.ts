@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { HouseMade, Purchasing, SpecLine } from '@/lib/prep';
+import type { Quantity } from '@/lib/quantity';
+import { onHandByItem, parByItem, type OnHandRow, type ParQuantity } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
 interface RecipeRow {
@@ -11,8 +13,19 @@ interface RecipeRow {
   display_ingredient: { id: string; name: string } | null;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  item_type: string;
+  ice_per_serve_g: number | null;
+  ice_id: string | null;
+}
+
 export interface PrepData {
   drinks: { id: string; name: string; recipe: SpecLine[] }[];
+  /** From the last stock count and the back bar map's pars (empty below the locations capability). */
+  onHand: Record<string, Quantity>;
+  par: Record<string, ParQuantity>;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
 }
@@ -49,16 +62,25 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
     queryFn: async (): Promise<PrepData> => {
       const { data: menuRows, error: menuError } = await supabase
         .from('menu_drinks')
-        .select('item:items!item_id(id, name, item_type)')
+        .select('item:items!item_id(id, name, item_type, ice_per_serve_g, ice_id)')
         .in('menu_id', key);
       if (menuError) throw menuError;
-      const drinkItems = new Map<string, string>();
-      for (const row of (menuRows ?? []) as unknown as { item: { id: string; name: string; item_type: string } | null }[]) {
-        if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item.name);
+      const drinkItems = new Map<string, MenuItem>();
+      for (const row of (menuRows ?? []) as unknown as { item: MenuItem | null }[]) {
+        if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item);
       }
       const drinkIds = [...drinkItems.keys()];
-      const drinkRecipes = await recipesFor(drinkIds);
-      const drinks = drinkIds.map((id) => ({ id, name: drinkItems.get(id)!, recipe: toLines(drinkRecipes, id) }));
+      const iceIds = [...new Set([...drinkItems.values()].map((i) => i.ice_id).filter((id): id is string => !!id))];
+      const [drinkRecipes, iceRes] = await Promise.all([
+        recipesFor(drinkIds),
+        iceIds.length ? supabase.from('app_item_presentation').select('id, name').in('id', iceIds) : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (iceRes.error) throw iceRes.error;
+      const iceNames = new Map(((iceRes.data ?? []) as { id: string; name: string }[]).map((i) => [i.id, i.name]));
+      const drinks = drinkIds.map((id) => {
+        const item = drinkItems.get(id)!;
+        return { id, name: item.name, recipe: toLines(drinkRecipes, id), iceType: item.ice_id ? (iceNames.get(item.ice_id) ?? null) : null, icePerServeG: item.ice_per_serve_g };
+      });
 
       // Walk down: any ingredient with its own recipe or prep row is house-made.
       const houseMade: Record<string, HouseMade> = {};
@@ -113,7 +135,16 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
           };
         }
       }
-      return { drinks, houseMade, purchasing };
+      // The shelf: the last count at each spot, and par per item. Both come
+      // back empty below the locations capability (RLS), and the list then
+      // assumes the bar starts from zero, as before.
+      const [stockRes, parRes] = await Promise.all([
+        supabase.rpc('stock_on_hand', { p_bar: barId! }),
+        supabase.from('item_locations').select('item_id, par_amount, par_unit, item:items!item_id(name)').eq('bar_id', barId!),
+      ]);
+      const onHand = onHandByItem((stockRes.data ?? []) as OnHandRow[]);
+      const par = parByItem((parRes.data ?? []) as unknown as { item_id: string; par_amount: number | null; par_unit: string | null; item: { name: string } | null }[]);
+      return { drinks, houseMade, purchasing, onHand, par };
     },
   });
 }

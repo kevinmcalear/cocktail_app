@@ -78,6 +78,7 @@ function targetColumns(target: ReportTarget) {
     profile_id: target.kind === 'profile' || target.kind === 'ranking' ? target.profileId : null,
     item_id: target.kind === 'item' || target.kind === 'ranking' ? target.itemId : null,
     release_id: target.kind === 'release' ? target.releaseId : null,
+    comment_id: target.kind === 'comment' ? target.commentId : null,
   };
 }
 

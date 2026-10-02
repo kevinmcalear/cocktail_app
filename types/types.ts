@@ -93,6 +93,8 @@ export interface DatabaseRecipe {
     is_optional: boolean | null;
     parent_ingredient_id: string | null;
     sort_order: number | null;
+    /** Added at the station (true) or in the batch (false); null until decided. */
+    at_service?: boolean | null;
     ingredient?: DatabaseItem; // The actual ingredient item
 }
 
@@ -119,6 +121,24 @@ export interface DatabaseItem {
     icon_key?: string | null;
     icon_url?: string | null;
     hide_from_search?: boolean;
+    /** How it's served: a_la_minute, batched, bottled, carbonated or draught. */
+    service_style?: string | null;
+    /** Ingredients: grams per ml, when measured. */
+    density_g_ml?: number | null;
+    /** Drinks: a measured dilution, in percent, overriding the method's default. */
+    dilution_pct?: number | null;
+    /** Calculated on the server from the spec: the serve after dilution and its ABV. */
+    serve_ml?: number | null;
+    serve_abv?: number | null;
+    /** 'calculated' when the spec sets abv; 'manual' keeps a typed figure. */
+    abv_source?: 'manual' | 'calculated';
+    /** Glassware: to the brim, and what the liquid fills once the ice is in. */
+    capacity_ml?: number | null;
+    iced_capacity_ml?: number | null;
+    /** Cocktails: ice in the glass per serve. */
+    ice_per_serve_g?: number | null;
+    /** The menu price in minor units of the bar's currency. */
+    price_minor?: number | null;
 
     // Progressive Disclosure Overrides
     override_visibility_level: number | null;
@@ -152,6 +172,7 @@ export interface AppRecipePresentation {
     is_optional: boolean | null;
     parent_ingredient_id: string | null; // Redacted to null if insufficient role
     ingredient_item_id: string | null; // The specific ingredient; redacted to null if insufficient role
+    at_service?: boolean | null; // Redacted to null with the amounts
     display_ingredient?: DatabaseItem | null; // Computed relationship: the item behind display_ingredient_id
     ingredient?: DatabaseItem; // The joined Display Ingredient
 }

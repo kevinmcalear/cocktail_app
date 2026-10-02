@@ -18,6 +18,7 @@ import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
+import { ShotList } from "@/components/screens/drink/ShotList";
 
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -142,6 +143,11 @@ export default function CocktailDetailsScreen() {
                 }
                 onDropImages={isEditing ? editor.addImages : undefined}
             >
+                {isEditing ? (
+                    <View style={styles.servicePhotos}>
+                        <ShotList itemId={cocktail.id} barId={cocktail.bar_id ?? null} links={cocktail.item_images} />
+                    </View>
+                ) : null}
                 <CocktailDetailContent cocktail={cocktail} isEditing={isEditing} editor={isEditing ? editor : null} />
             </ItemDetailLayout>
 
@@ -173,5 +179,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 24,
+    },
+    servicePhotos: {
+        paddingHorizontal: 16,
+        paddingTop: 8,
     },
 });

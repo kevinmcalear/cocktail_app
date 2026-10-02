@@ -52,6 +52,42 @@ const list = buildPrepList({
   },
 });
 
+assert.deepEqual(list.ice, [], 'no ice per serve set, nothing to order');
+
+// After a count: what's on hand comes off, short items come back up to par,
+// and an item the menu doesn't use still gets restocked.
+const counted = buildPrepList({
+  startsAt,
+  now: startsAt,
+  servesPerDrink: 10,
+  drinks: [{ id: 'd', name: 'Daiquiri', recipe: [{ ingredientId: 'rum', name: 'White rum', amount: 60, unit: 'ml' }, { ingredientId: 'syr', name: 'Simple syrup', amount: 15, unit: 'ml' }] }],
+  houseMade: { syr: { yieldAmount: 1, yieldUnit: 'L', leadTimeMinutes: null, leadTimeNote: null, recipe: [{ ingredientId: 'sugar', name: 'Sugar', amount: 500, unit: 'g' }] } },
+  purchasing: { verm: { supplierName: null, packAmount: 750, packUnit: 'ml' } },
+  onHand: { rum: { kind: 'ml', value: 300, unit: 'ml' }, syr: { kind: 'ml', value: 800, unit: 'ml' }, verm: { kind: 'count', value: 1, unit: 'btl' }, sugar: { kind: 'g', value: 2000, unit: 'g' } },
+  par: { rum: { kind: 'ml', value: 1400, unit: 'ml', name: 'White rum' }, verm: { kind: 'count', value: 2, unit: 'btl', name: 'Dry vermouth' } },
+});
+const rum = counted.order.flatMap((g) => g.lines).find((l) => l.id === 'rum')!;
+assert.equal(rum.needed, '1.1 L', 'the menu needs 600 ml, par is 1.4 L, 300 ml on hand');
+assert.equal(rum.have, 'have 300 ml');
+const verm = counted.order.flatMap((g) => g.lines).find((l) => l.id === 'verm')!;
+assert.equal(verm.needed, '750 ml', 'not on the menu, but a bottle short of par, read through the 750 ml pack');
+assert.equal(verm.packs, '1 × 750 ml');
+assert.equal(verm.have, 'have 750 ml');
+assert.ok(!counted.make.some((m) => m.id === 'syr'), '150 ml needed, 800 ml on hand: nothing to make');
+assert.ok(!counted.order.flatMap((g) => g.lines).some((l) => l.id === 'sugar'), 'and so no sugar to order');
+const iced = buildPrepList({
+  startsAt,
+  now: startsAt,
+  servesPerDrink: 140,
+  drinks: [
+    { id: 'p', name: 'Penicillin', recipe: [], iceType: 'Cubes', icePerServeG: 140 },
+    { id: 'm', name: 'Mai Tai', recipe: [], iceType: 'Crushed', icePerServeG: 180 },
+  ],
+  houseMade: {},
+  purchasing: {},
+});
+assert.deepEqual(iced.ice.map((i) => [i.type, Math.round(i.grams)]), [['Crushed', 25200], ['Cubes', 19600]], 'ice per serve times serves, by type');
+
 const hgs = list.make.find((m) => m.id === 'hgs')!;
 assert.equal(hgs.needed, '900 ml');
 assert.equal(hgs.batches, '2 batches of 750 ml');

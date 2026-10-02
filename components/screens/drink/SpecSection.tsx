@@ -1,14 +1,25 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
+import { Choice } from '@/components/screens/batch/BatchParts';
+import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
+import { lineDetail } from '@/lib/drinkMath';
 import { ratio, specAccess, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
+import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
+
+const UNITS = [
+  { value: 'g', label: 'g' },
+  { value: 'ml', label: 'ml' },
+  { value: 'oz', label: 'oz' },
+] as const;
 
 interface SpecSectionProps {
   itemId: string;
@@ -45,6 +56,11 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
   const levels = preview?.levels ?? realLevels;
   const lines = specLines(recipes);
   const access = specAccess(role, levels ?? null, !!barId);
+  // Remembered per person: the unit each line is also read in, with its ethanol.
+  const specUnit = useSettingsStore((s) => s.specUnit);
+  const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
+  const unit: SpecUnit = specUnit;
+  const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
   const opensAt = (level: number | undefined) => (level ? roleLabel(level) : 'a higher role');
 
   if (!lines.length) {
@@ -65,9 +81,13 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
   }
 
   const shares = access.amounts ? ratio(lines) : null;
+  const measured = access.amounts && lines.some((l) => l.amount);
   return (
     <View style={styles.section}>
-      <Headline role="heading">Spec</Headline>
+      <View style={styles.head}>
+        <Headline role="heading">Spec</Headline>
+        {access.amounts ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
+      </View>
       {shares ? <RatioBar shares={shares} /> : null}
       {!access.amounts ? (
         <View style={styles.lockNote}>
@@ -80,14 +100,18 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
           <SpecRow
             key={l.key}
             amount={access.amounts ? (l.amount ?? '') : ''}
+            alignAmount={measured}
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             optional={l.optional}
             note={l.note ?? undefined}
+            detail={access.amounts ? (lineDetail(l, unit) ?? undefined) : undefined}
+            onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             scale={scale}
             onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
           />
         ))}
       </View>
+      {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}
       {!access.prep && levels ? (
         <LockedSection title="Prep notes" unlocked={false} opensAt={opensAt(levels.prep)}>
           {null}
@@ -99,6 +123,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

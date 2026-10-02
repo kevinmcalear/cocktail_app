@@ -1,14 +1,13 @@
-import { Image } from 'expo-image';
+import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
-import { menuDate, type MenuEdition } from '@/lib/menuEditions';
-
-import { AWARD_LOGOS } from './awardLogos';
+import { menuDate, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 
 const FIRST_MENUS = 6;
 
@@ -36,13 +35,9 @@ export function Awards({ profileId }: { profileId: string }) {
           <View key={g.award} role="listitem" style={[styles.award, { borderBottomColor: ds.c.line }]}>
             <View style={styles.awardHead}>
               <View style={[styles.logo, { backgroundColor: ds.c.paper, borderColor: ds.c.line }]} aria-hidden>
-                {AWARD_LOGOS[g.award] ? (
-                  <Image source={AWARD_LOGOS[g.award]} style={styles.logoImg} contentFit="contain" accessible={false} />
-                ) : (
-                  <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
-                    {awardInitials(g.award)}
-                  </DsText>
-                )}
+                <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
+                  {awardInitials(g.award)}
+                </DsText>
               </View>
               <DsText variant="headline" style={styles.flex}>
                 {g.award}
@@ -106,11 +101,16 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
 
 function EditionRow({ edition: m, current }: { edition: MenuEdition; current: boolean }) {
   const ds = useDs();
+  const signedIn = !!useAuth().user;
   const when = menuDate(m);
-  const source = m.source_url;
+  const drinkNames = m.drinks.map((d) => d.name).join(', ');
   return (
     <View role="listitem" style={[styles.edition, { borderBottomColor: ds.c.line }]}>
-      <View accessible accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, m.drinks.length ? `Drinks: ${m.drinks.join(', ')}` : null].filter(Boolean).join('. ')} style={styles.editionText}>
+      <View
+        accessible
+        accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, signedIn || !drinkNames ? null : `Drinks: ${drinkNames}`].filter(Boolean).join('. ')}
+        style={styles.editionText}
+      >
         <View style={styles.head}>
           <DsText variant="headline" style={styles.flex}>
             {m.name}
@@ -118,13 +118,23 @@ function EditionRow({ edition: m, current }: { edition: MenuEdition; current: bo
           <Caption tone={current ? 'ink' : 'muted'}>{when}</Caption>
         </View>
         {m.theme ? <Body tone="muted">{m.theme}</Body> : null}
-        {m.drinks.length ? <Caption tone="muted">{m.drinks.join(' · ')}</Caption> : null}
+        {!signedIn && m.drinks.length ? <Caption tone="muted">{m.drinks.map((d) => d.name).join(' · ')}</Caption> : null}
       </View>
-      {source ? (
-        <DsText variant="caption" tone="muted" role="link" accessibilityLabel={`Source for ${m.name}`} style={styles.link} onPress={() => Linking.openURL(source)}>
-          {`Source: ${source.replace(/^https?:\/\/(www\.)?/i, '').split('/')[0]}`}
-        </DsText>
-      ) : null}
+      {signedIn && m.drinks.length ? <DrinkNames drinks={m.drinks} /> : null}
+    </View>
+  );
+}
+
+/** Signed-in readers open the cocktail. The public drink page is only for a published spec, so signed-out readers get the names above. */
+function DrinkNames({ drinks }: { drinks: MenuEditionDrink[] }) {
+  const router = useRouter();
+  return (
+    <View style={styles.chips}>
+      {drinks.map((d) => (
+        <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(`/cocktail/${d.id}` as Href)}>
+          <Caption tone="muted">{d.name}</Caption>
+        </PressableScale>
+      ))}
     </View>
   );
 }
@@ -136,11 +146,9 @@ const styles = StyleSheet.create({
   award: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   awardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  logoImg: { width: '100%', height: '100%' },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   editionText: { gap: space.xs },
   start: { alignSelf: 'flex-start' },
-  link: { textDecorationLine: 'underline', alignSelf: 'flex-start' },
 });

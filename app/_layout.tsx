@@ -33,6 +33,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { BRAND } from '@/constants/brand';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
+import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
 import { initMonitoring } from '@/lib/monitoring';
@@ -88,23 +89,22 @@ function RootLayoutNav() {
       authScreen === 'callback' ||
       passwordRecovery;
 
-    if (passwordRecovery && authScreen !== 'reset-password') {
-      router.replace('/auth/reset-password');
-      return;
-    }
-
-    if (!session && !inAuthGroup) {
-      router.replace('/auth/login');
-    } else if (session && inAuthGroup && !stayInAuth) {
-      // A new account (no email confirmation needed) does the age check first.
-      router.replace(authScreen === 'sign-up' ? '/age-check' : '/(tabs)');
-    }
+    const to = authRedirect({
+      hasSession: !!session,
+      inAuthGroup,
+      authScreen,
+      stayInAuth,
+      passwordRecovery,
+      segment: segments[0],
+      needsOnboarding: needsOnboarding(session?.user.user_metadata),
+    });
+    if (to) router.replace(to);
   }, [session, loading, segments, passwordRecovery]);
 
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
-  const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v';
+  const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -192,15 +192,21 @@ function RootLayoutNav() {
             {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
+            <Stack.Screen name="team" options={{ headerShown: false }} />
+            <Stack.Screen name="bring-in" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="you" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/publishing" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/dilution" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/costing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>

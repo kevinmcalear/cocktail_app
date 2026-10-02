@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, LockedSection, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { BackBarLink } from '@/components/backbar/BackBarLink';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { CountScreen } from '@/components/screens/prep/CountScreen';
 import { NewEventSheet } from '@/components/screens/prep/NewEventSheet';
 import { PrepLists } from '@/components/screens/prep/PrepLists';
 import { PrepSources, ServesControl, type PrepSource } from '@/components/screens/prep/PrepSources';
@@ -23,6 +25,13 @@ interface MenuRow {
   bar_id: string | null;
   is_active: boolean;
 }
+
+const SEGMENTS = [
+  { value: 'make', label: 'Prep' },
+  { value: 'order', label: 'Order' },
+  { value: 'count', label: 'Count' },
+] as const;
+type Segment = (typeof SEGMENTS)[number]['value'];
 
 const DEFAULT_SERVES = 20;
 const DRINKS_PER_GUEST = 2;
@@ -54,6 +63,8 @@ export function PrepScreen() {
   const { data: dropdowns } = useDropdowns();
   const venueMenus = ((dropdowns?.menus ?? []) as MenuRow[]).filter((m) => m.bar_id === barId);
 
+  const [segment, setSegment] = useState<Segment>('make');
+  const [tools, setTools] = useState(false);
   const [source, setSource] = useState<PrepSource>({ kind: 'tonight' });
   const [servesOverride, setServesOverride] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
@@ -93,6 +104,7 @@ export function PrepScreen() {
         {null}
       </LockedSection>
     );
+  else if (segment === 'count') content = <CountScreen barId={barId} menuIds={menuIds} />;
   else if (menuIds.length === 0)
     content = (
       <Body tone="muted">
@@ -104,7 +116,7 @@ export function PrepScreen() {
     content = (
       <>
         <ServesControl serves={serves} onChange={setServesOverride} basis={basis} />
-        <PrepLists list={list} />
+        <PrepLists list={list} show={segment === 'order' ? 'order' : 'make'} />
       </>
     );
 
@@ -115,14 +127,19 @@ export function PrepScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          <BackBarLink />
+          <View style={styles.links}>
+            <BackBarLink />
+            <Button label="Tools" icon="percent" variant="secondary" onPress={() => setTools(true)} />
+          </View>
           <Display>Prep</Display>
-          {canPrep ? (
+          {canPrep ? <Segmented options={SEGMENTS} value={segment} onChange={setSegment} accessibilityLabel="Prep, Order or Count" /> : null}
+          {canPrep && segment !== 'count' ? (
             <PrepSources events={events} source={source} onSource={pick} canCreate={!!capabilities?.includes('menus')} onNewEvent={() => setCreating(true)} />
           ) : null}
           {content}
         </View>
       </ScrollView>
+      {tools ? <ToolsSheet visible onClose={() => setTools(false)} /> : null}
       {barId && creating ? (
         <NewEventSheet
           visible
@@ -139,4 +156,5 @@ export function PrepScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: space.lg, maxWidth: 760, width: '100%' },
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

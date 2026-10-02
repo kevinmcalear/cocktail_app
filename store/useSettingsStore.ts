@@ -6,6 +6,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
+export type SpecUnit = 'g' | 'ml' | 'oz';
+
 /** 'all' | 'personal' | bar uuid */
 export type DefaultSearchContext = string;
 
@@ -20,12 +22,16 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
     { id: 'ml', label: 'ml' },
     { id: 'oz', label: 'oz' },
     { id: 'cl', label: 'cl' },
+    { id: 'g', label: 'g' },
 ];
 
 interface SettingsState {
     themeMode: ThemeMode;
     defaultSearchContext: DefaultSearchContext;
     defaultUnit: string;
+    /** How a spec reads on the drink page: as written, or converted to g, ml or oz. */
+    specUnit: SpecUnit;
+    setSpecUnit: (unit: SpecUnit) => void;
     /** Behind the bar: keep the screen awake on specs and use larger spec type. */
     serviceMode: boolean;
     toggleServiceMode: () => void;
@@ -40,6 +46,8 @@ export const useSettingsStore = create<SettingsState>()(
             themeMode: 'system',
             defaultSearchContext: DEFAULT_SEARCH_ALL,
             defaultUnit: DEFAULT_UNIT,
+            specUnit: 'ml',
+            setSpecUnit: (unit) => set({ specUnit: unit }),
             serviceMode: false,
             toggleServiceMode: () => set((state) => ({ serviceMode: !state.serviceMode })),
             setThemeMode: (mode) => set({ themeMode: mode }),

@@ -4,7 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useAgeCheck } from '@/hooks/useAgeCheck';
+import { afterAgeCheck } from '@/lib/onboarding';
 
 import { AgeCheckForm, UnderAgeNote } from './AgeCheckForm';
 import { SafetyPage } from './SafetyPage';
@@ -15,13 +17,15 @@ import { SafetyPage } from './SafetyPage';
  */
 export function AgeCheckScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { data: status, isError } = useAgeCheck();
-  const onward = () => router.replace('/(tabs)');
+  const next = afterAgeCheck(user?.user_metadata);
+  const onward = () => router.replace(next);
 
   // Already answered (a second sign-in link, say): nothing to ask.
   useEffect(() => {
-    if (status === 'confirmed') router.replace('/(tabs)');
-  }, [status, router]);
+    if (status === 'confirmed') router.replace(next);
+  }, [status, next, router]);
 
   return (
     <SafetyPage title={status === 'under_age' ? 'Welcome' : 'One more thing'} noBack>

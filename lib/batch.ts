@@ -15,8 +15,8 @@ import type { SpecLine } from '@/lib/spec';
 export type BatchMethod = 'stirred' | 'shaken' | 'built' | 'unknown';
 export type VolumeUnit = 'ml' | 'oz';
 export type BottleSize = 750 | 1000;
-/** Why a line stays out of the bottle. */
-export type LeaveOut = 'citrus' | 'dairy' | 'bubbles' | 'garnish';
+/** Why a line stays out of the bottle. `station`: the bar said so, for no reason the name gives away. */
+export type LeaveOut = 'citrus' | 'dairy' | 'bubbles' | 'garnish' | 'station';
 
 export interface BatchLine {
   key: string;
@@ -35,8 +35,8 @@ export interface Batch {
   serves: number;
   method: BatchMethod;
   lines: BatchLine[];
-  /** Stirred only: filtered water for dilution. */
-  water: { ml: number; amount: string } | null;
+  /** Filtered water for dilution, when the bottle is poured straight (stirred, bottled, carbonated or on draught). */
+  water: { ml: number; amount: string; pct: number } | null;
   totalMl: number;
   total: string;
   bottles: number;
@@ -45,6 +45,7 @@ export interface Batch {
   note: string;
 }
 
+/** The default when the caller gives no dilution: a stirred drink's 20%. */
 export const DILUTION = 0.2;
 export const MIN_SERVES = 1;
 export const MAX_SERVES = 60;
@@ -64,11 +65,13 @@ const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'wheel', 'slice', 'cube', 'wedge']);
 const PLURAL: Record<string, string> = { dash: 'dashes', pinch: 'pinches', leaf: 'leaves', each: 'each' };
 
-// ponytail: name matching, so it's English-only and misses house names like
-// "Sour mix". Upgrade path: a batch flag on the ingredient.
+// Name matching, so it's English-only and misses house names like "Sour mix".
+// It's only the guess for lines nobody has decided yet: recipes.at_service
+// (set on the drink page's Service section) wins whenever it's set.
 const BUBBLES = /soda|tonic|sparkling|champagne|prosecco|cava|cr[eé]mant|ginger (beer|ale)|cola|seltzer|lemonade|\bbeer\b|cider|fizz/i;
 const CITRUS = /juice|\b(lemon|lime|grapefruit|yuzu|citrus)\b/i;
 const NOT_CITRUS = /cordial|syrup|liqueur|bitters|sherbet|oleo|cello|zest|peel|twist|wheel|wedge|acid/i;
+const WATER = /^(filtered |still |chilled |cold |mineral |spring |tap )?water$/i;
 const DAIRY = /\begg\b|egg white|yolk|aquafaba|\b(heavy|double|single|whipping) cream\b|^cream$|^milk$|whole milk/i;
 
 /** From the drink's method names ("Shake", "Stir", "shake and top", "Build"). */
@@ -80,12 +83,26 @@ export function classifyMethod(names: readonly string[]): BatchMethod {
   return 'unknown';
 }
 
-function leaveOutFor(name: string, unit: string): LeaveOut | null {
+/** A count unit (twist, wheel, each): a garnish, never a liquid. */
+export function isGarnishUnit(unit: string | null | undefined): boolean {
+  return GARNISH_UNITS.has((unit ?? '').toLowerCase());
+}
+
+/** The guess from the name and unit, for lines nobody has decided yet. */
+export function guessLeaveOut(name: string, unit: string): LeaveOut | null {
   if (GARNISH_UNITS.has(unit)) return 'garnish';
   if (unit === 'top' || BUBBLES.test(name)) return 'bubbles';
   if (DAIRY.test(name)) return 'dairy';
   if (CITRUS.test(name) && !NOT_CITRUS.test(name)) return 'citrus';
   return null;
+}
+
+/** The bar's decision first (recipes.at_service), then the guess. */
+export function leaveOutFor(name: string, unit: string, atService: boolean | null): LeaveOut | null {
+  const guess = guessLeaveOut(name, unit);
+  if (atService === false) return null;
+  if (atService === true) return guess ?? 'station';
+  return guess;
 }
 
 const trim = (n: number, digits: number) => String(Number(n.toFixed(digits)));
@@ -123,7 +140,7 @@ function list(names: string[]): string {
 function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine {
   const ingredient = line.ingredient ?? 'Hidden ingredient';
   const u = (line.unit ?? '').toLowerCase();
-  const out = leaveOutFor(ingredient, u);
+  const out = leaveOutFor(ingredient, u, line.atService);
   const base = { key: line.key, ingredient, leaveOut: out };
   if (line.value === null) return { ...base, amount: '', sub: null, ml: null };
   const n = line.value * serves;
@@ -139,32 +156,44 @@ function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine 
   return { ...base, amount: formatVolume(ml, unit), sub: null, ml };
 }
 
-function noteFor(method: BatchMethod, lines: BatchLine[], water: string | null): string {
+function noteFor(method: BatchMethod, lines: BatchLine[], water: { amount: string; pct: number } | null, poured: boolean): string {
   const bottled = lines.filter((l) => !l.leaveOut && l.ml !== null).map((l) => l.ingredient);
   const has = (why: LeaveOut) => lines.some((l) => l.leaveOut === why);
   const bubbles = lines.filter((l) => l.leaveOut === 'bubbles').map((l) => l.ingredient);
+  const station = lines.filter((l) => l.leaveOut === 'station').map((l) => l.ingredient);
   const fresh = has('citrus') ? ' Juice the citrus fresh on the day.' : '';
   const dairy = has('dairy') ? ' Add the egg or cream to order.' : '';
   const top = bubbles.length ? ` Top with ${list(bubbles)} to order; never batch the bubbles.` : '';
+  const added = station.length ? ` Add ${list(station)} at the station.` : '';
   const only = bottled.length ? `Batch the ${list(bottled)} only.` : 'Nothing here goes in a bottle.';
+  if (poured && water) {
+    return `Add ${water.amount} of filtered water (${trim(water.pct, 1)}% dilution), bottle it, and pour straight from the ${method === 'stirred' ? 'freezer' : 'bottle'}.${fresh}${dairy}${top}${added}`;
+  }
+  if (poured) return `Water is already in the spec, so bottle it as it is and pour straight from the ${method === 'stirred' ? 'freezer' : 'bottle'}.${fresh}${dairy}${top}${added}`;
   switch (method) {
     case 'stirred':
-      return `Add ${water} of filtered water (20% dilution), bottle it, and pour straight from the freezer.${fresh}${dairy}${top}`;
+      return `Add no water: the venue's dilution for a stirred drink is 0%. Bottle it and pour straight from the freezer.${fresh}${dairy}${top}${added}`;
     case 'shaken':
-      return `${only}${fresh}${dairy} Shake each serve to order with ice.${top}`;
+      return `${only}${fresh}${dairy} Shake each serve to order with ice.${top}${added}`;
     case 'built':
-      return `${only}${fresh}${dairy}${top || ' Build each serve over ice.'}`;
+      return `${only}${fresh}${dairy}${top || ' Build each serve over ice.'}${added}`;
     default:
-      return `Scaled straight, with no water added. Only stirred drinks get water in the bottle; set the drink's method to be sure.${fresh}${dairy}${top}`;
+      return `Scaled straight, with no water added. Only stirred drinks get water in the bottle; set the drink's method to be sure.${fresh}${dairy}${top}${added}`;
   }
 }
 
-/** Scale a spec by `serves` and work out the bottle. */
+/**
+ * Scale a spec by `serves` and work out the bottle. Water goes in when the
+ * bottle is poured straight (a stirred drink, or one served bottled,
+ * carbonated or on draught), at `dilutionPct` (the drink's figure from
+ * lib/drinkMath.ts; the stirred default without one), unless the spec
+ * already has water in it.
+ */
 export function buildBatch(
   spec: SpecLine[],
   methodNames: readonly string[],
   serves: number,
-  opts: { unit?: VolumeUnit; bottleSize?: BottleSize } = {}
+  opts: { unit?: VolumeUnit; bottleSize?: BottleSize; dilutionPct?: number | null; serviceStyle?: string | null } = {}
 ): Batch {
   const unit = opts.unit ?? 'ml';
   const bottleSize = opts.bottleSize ?? 750;
@@ -172,8 +201,11 @@ export function buildBatch(
   const method = classifyMethod(methodNames);
   const lines = spec.map((l) => scaleLine(l, n, unit));
   const bottledMl = lines.reduce((sum, l) => sum + (!l.leaveOut && l.ml !== null ? l.ml : 0), 0);
-  const waterMl = method === 'stirred' ? bottledMl * DILUTION : 0;
-  const water = method === 'stirred' ? { ml: waterMl, amount: formatVolume(waterMl, unit) } : null;
+  const poured = method === 'stirred' || opts.serviceStyle === 'bottled' || opts.serviceStyle === 'carbonated' || opts.serviceStyle === 'draught';
+  const preDiluted = spec.some((l) => l.atService !== true && WATER.test((l.ingredient ?? '').trim()));
+  const pct = opts.dilutionPct ?? (method === 'stirred' ? DILUTION * 100 : 0);
+  const waterMl = poured && !preDiluted ? (bottledMl * pct) / 100 : 0;
+  const water = waterMl > 0 ? { ml: waterMl, amount: formatVolume(waterMl, unit), pct } : null;
   const totalMl = bottledMl + waterMl;
   return {
     serves: n,
@@ -184,7 +216,7 @@ export function buildBatch(
     total: formatVolume(totalMl, unit),
     bottles: totalMl > 0 ? Math.ceil(totalMl / bottleSize) : 0,
     bottleSize,
-    note: noteFor(method, lines, water?.amount ?? null),
+    note: noteFor(method, lines, water, poured),
   };
 }
 
@@ -199,4 +231,5 @@ export const LEAVE_OUT_LABEL: Record<LeaveOut, string> = {
   dairy: 'To order',
   bubbles: 'To order',
   garnish: 'Per serve',
+  station: 'At the station',
 };

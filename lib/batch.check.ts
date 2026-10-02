@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight } from './batch';
+import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, isGarnishUnit, leaveOutFor } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -63,13 +63,13 @@ const weighedMartini = specLines([grow('gin', 'Gin', 57, 'g', 40), grow('dry', '
 const wm = buildBatch(weighedMartini, ['Stir'], 24);
 assert.deepEqual(wm.lines.map((l) => l.amount), ['1.37 kg', '360 g', '59 g'], 'scaled in grams, not as counts');
 assert.deepEqual(buildBatch(weighedMartini, ['Stir'], 24, { unit: 'oz' }).lines.map((l) => l.amount), ['1.37 kg', '360 g', '59 g'], 'weights ignore the ml/oz toggle');
-assert.ok(Math.abs(wm.lines[0].ml! - 1440) < 1e-9, '1.37 kg of gin is 1.44 L');
-assert.equal(wm.water?.amount, '369.5 ml', '20% of 1440 + 360 + 48 ml');
-assert.equal(wm.total, '2.22 L');
+assert.ok(Math.abs(wm.lines[0].ml! - 1443) < 1, '1.37 kg of gin is about 1.44 L');
+assert.equal(wm.water?.amount, '372 ml', '20% of 1443 + 368 + 48 ml');
+assert.equal(wm.total, '2.23 L');
 assert.equal(wm.bottles, 3);
 const weighedSour = buildBatch(specLines([grow('rum', 'White rum', 28.5, 'g', 40), grow('lime', 'Lime juice', 0.0208, 'kg')]), ['Shake'], 10);
 assert.deepEqual(weighedSour.lines.map((l) => [l.amount, l.leaveOut]), [['285 g', null], ['208 g', 'citrus']]);
-assert.equal(weighedSour.total, '300 ml', 'only the rum goes in the bottle');
+assert.equal(weighedSour.total, '300.5 ml', 'only the rum goes in the bottle');
 assert.equal(formatWeight(4.25), '4.3 g');
 assert.equal(formatWeight(32.5 * 30), '975 g');
 
@@ -86,6 +86,37 @@ const s = buildBatch(sour, ['dry shake and shake'], 6, { unit: 'oz' });
 assert.deepEqual(s.lines.map((l) => l.leaveOut), [null, null, 'garnish', 'dairy', 'garnish', null]);
 assert.deepEqual(s.lines.map((l) => l.amount), ['12 oz', '4 oz', '6 each', '4 oz', '6 twists', '']);
 assert.equal(Math.round(s.totalMl), Math.round(12 * 29.57 + 120), 'only bottled volume counts');
+
+// The bar's decision beats the guess (recipes.at_service): lime in the bottle
+// for a pre-diluted bottled daiquiri, and a syrup added at the station.
+const decided = specLines([
+  { ...row('rum', 'White rum', 60, 'ml'), at_service: false },
+  { ...row('lime', 'Lime juice', 22.5, 'ml'), at_service: false },
+  { ...row('syr', 'Simple syrup', 15, 'ml'), at_service: true },
+]);
+const dec = buildBatch(decided, ['Shake'], 10);
+assert.deepEqual(dec.lines.map((l) => l.leaveOut), [null, null, 'station']);
+assert.equal(dec.total, '825 ml', 'the lime counts once the bar says it goes in');
+assert.match(dec.note, /Batch the White rum and Lime juice only\..*Add Simple syrup at the station\./);
+assert.equal(leaveOutFor('Lime juice', 'ml', null), 'citrus', 'undecided lines keep the guess');
+assert.equal(leaveOutFor('Lime juice', 'ml', true), 'citrus', 'a decided station line keeps the reason its name gives');
+assert.equal(leaveOutFor('Simple syrup', 'ml', true), 'station');
+assert.equal(leaveOutFor('Lemon', 'twist', false), null);
+assert.ok(isGarnishUnit('twist') && !isGarnishUnit('ml'));
+
+// Dilution follows the drink: the venue's figure, and bottled drinks get water too.
+const m22 = buildBatch(martini, ['Stir'], 24, { dilutionPct: 22 });
+assert.equal(m22.water?.pct, 22);
+assert.equal(m22.water?.amount, '400 ml', '22% of 1.82 L');
+assert.match(m22.note, /\(22% dilution\)/);
+const bottledSour = buildBatch(daiquiri, ['Shake'], 10, { dilutionPct: 25, serviceStyle: 'bottled' });
+assert.equal(bottledSour.water?.amount, '187.5 ml', 'a bottled daiquiri is diluted in the bottle');
+assert.match(bottledSour.note, /pour straight from the bottle/);
+assert.equal(buildBatch(daiquiri, ['Shake'], 10, { dilutionPct: 25 }).water, null, 'shaken to order gets no water');
+const freezer = specLines([row('gin', 'Gin', 75, 'ml'), row('w', 'Filtered water', 18, 'ml')]);
+assert.equal(buildBatch(freezer, ['Stir'], 10).water, null, 'water already in the spec');
+assert.match(buildBatch(freezer, ['Stir'], 10).note, /already in the spec/);
+assert.equal(buildBatch(martini, ['Stir'], 24, { dilutionPct: 0 }).water, null);
 
 // Formatting and serves.
 assert.equal(formatVolume(22.5, 'ml'), '22.5 ml');

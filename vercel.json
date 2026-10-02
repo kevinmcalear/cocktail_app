@@ -49,6 +49,14 @@
       "destination": "/settings/bar/[id]/publishing"
     },
     {
+      "source": "/settings/bar/:id/dilution",
+      "destination": "/settings/bar/[id]/dilution"
+    },
+    {
+      "source": "/settings/bar/:id/pricing",
+      "destination": "/settings/bar/[id]/pricing"
+    },
+    {
       "source": "/settings/bar/:id/releases/:releaseId",
       "destination": "/settings/bar/[id]/releases/[releaseId]"
     },
@@ -71,6 +79,10 @@
     {
       "source": "/menus/:id/card",
       "destination": "/menus/[id]/card"
+    },
+    {
+      "source": "/menus/:id/costing",
+      "destination": "/menus/[id]/costing"
     },
     {
       "source": "/study/:deck",

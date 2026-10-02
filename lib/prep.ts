@@ -6,7 +6,9 @@
  * Pure: hooks/usePrepList.ts fetches the rows and hands them here.
  */
 
+import { iceForEvent, type IceNeed } from '@/lib/glass';
 import { formatQuantity, sameKind, scale, toQuantity, type Quantity } from '@/lib/quantity';
+import type { ParQuantity } from '@/lib/stock';
 
 export interface SpecLine {
   ingredientId: string;
@@ -31,11 +33,15 @@ export interface Purchasing {
 }
 
 export interface PrepInput {
-  /** One serve of each drink on the menu. */
-  drinks: { id: string; name: string; recipe: SpecLine[] }[];
+  /** One serve of each drink on the menu, with its ice per serve when set. */
+  drinks: { id: string; name: string; recipe: SpecLine[]; iceType?: string | null; icePerServeG?: number | null }[];
   servesPerDrink: number;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
+  /** What the last stock count found, per item (lib/stock.ts onHandByItem). */
+  onHand?: Record<string, Quantity>;
+  /** Par per item from the back bar map (lib/stock.ts parByItem): short items come back up to it. */
+  par?: Record<string, ParQuantity>;
   /** When service or the event starts; start-by times count back from it. */
   startsAt: Date;
   /** The current time, for marking what has to start within a day. */
@@ -46,6 +52,8 @@ export interface MakeLine {
   id: string;
   name: string;
   needed: string;
+  /** "have 800 ml", from the last count; null when never counted. */
+  have: string | null;
   /** "3 batches of 1.5 L", when the yield is known. */
   batches: string | null;
   startBy: Date | null;
@@ -62,6 +70,7 @@ export interface BuyLine {
   id: string;
   name: string;
   needed: string;
+  have: string | null;
   /** "5 × 700 ml", when the pack size is known. */
   packs: string | null;
 }
@@ -69,6 +78,8 @@ export interface BuyLine {
 export interface PrepList {
   make: MakeLine[];
   order: { supplier: string; lines: BuyLine[] }[];
+  /** The ice to have in, by type, from each drink's ice per serve. */
+  ice: IceNeed[];
 }
 
 const NO_SUPPLIER = 'No supplier yet';
@@ -92,6 +103,37 @@ function add(needs: Map<string, Need>, id: string, name: string, q: Quantity | n
   needs.set(id, need);
 }
 
+/**
+ * What to make or buy of one item once the shelf is counted: the larger of
+ * what the menu needs and its par, less what's on hand. Returns the adjusted
+ * quantities and a "have" label; null quantities mean nothing to get.
+ */
+function afterStock(id: string, quantities: Quantity[], onHand: Quantity | undefined, par: Quantity | undefined): { quantities: Quantity[]; have: string | null; toPar: boolean } {
+  const target = quantities.map((q) => ({ ...q }));
+  let toPar = false;
+  if (par) {
+    const same = target.find((q) => sameKind(q, par));
+    if (same && same.value < par.value) {
+      same.value = par.value;
+      toPar = true;
+    } else if (!same) {
+      target.push({ ...par });
+      toPar = true;
+    }
+  }
+  if (!onHand) return { quantities: target, have: null, toPar };
+  const left = target
+    .map((q) => (sameKind(q, onHand) ? { ...q, value: Math.max(0, q.value - onHand.value) } : q))
+    .filter((q) => q.value > 0);
+  return { quantities: left, have: `have ${formatQuantity(onHand)}`, toPar };
+}
+
+/** Bottles counted on the shelf or set as par, read through the pack size ("2 btl" of a 750 ml pack is 1.5 L). */
+function inPack(q: Quantity | undefined, pack: Quantity | null): Quantity | undefined {
+  if (!q || !pack || q.kind !== 'count' || !/^(btl|bottles?)$/i.test(q.unit)) return q;
+  return { kind: pack.kind, value: q.value * pack.value, unit: pack.unit };
+}
+
 export function buildPrepList(input: PrepInput): PrepList {
   const needs = new Map<string, Need>();
   for (const drink of input.drinks) {
@@ -100,6 +142,12 @@ export function buildPrepList(input: PrepInput): PrepList {
       add(needs, line.ingredientId, line.name, q && scale(q, input.servesPerDrink), drink.name);
     }
   }
+  // Short items from the count come back up to par even when no drink tonight uses them.
+  for (const [id, par] of Object.entries(input.par ?? {})) {
+    const have = input.onHand?.[id];
+    if (have && sameKind(have, par) && have.value < par.value && !needs.has(id)) add(needs, id, par.name, null, 'back to par');
+  }
+  const haveOf = new Map<string, string | null>();
 
   // Expand house-made ingredients level by level: their batches add their own
   // ingredients to what's needed. Depth-limited, so a cycle can't loop forever.
@@ -111,13 +159,19 @@ export function buildPrepList(input: PrepInput): PrepList {
     for (const [id, need] of pending) {
       expanded.add(id);
       const hm = input.houseMade[id];
+      const stocked = afterStock(id, need.quantities, input.onHand?.[id], input.par?.[id]);
+      need.quantities = stocked.quantities;
+      haveOf.set(id, stocked.have);
+      if (stocked.toPar) need.forDrinks.add('back to par');
       const yieldQ = toQuantity(hm.yieldAmount, hm.yieldUnit);
       const neededQ = need.quantities.find((q) => yieldQ && sameKind(q, yieldQ)) ?? need.quantities[0] ?? null;
       const batchCount = yieldQ && neededQ && sameKind(yieldQ, neededQ) ? Math.ceil(neededQ.value / yieldQ.value) : null;
       const startBy = hm.leadTimeMinutes ? new Date(input.startsAt.getTime() - hm.leadTimeMinutes * 60_000) : null;
+      if (stocked.have !== null && !need.quantities.length) continue;
       make.push({
         id,
         name: need.name,
+        have: stocked.have,
         needed: need.quantities.map(formatQuantity).join(' + ') || 'Amount not set',
         batches: batchCount && yieldQ ? `${batchCount} ${batchCount === 1 ? 'batch' : 'batches'} of ${formatQuantity(yieldQ)}` : null,
         startBy,
@@ -140,12 +194,16 @@ export function buildPrepList(input: PrepInput): PrepList {
     if (input.houseMade[id]) continue;
     const p = input.purchasing[id];
     const pack = p ? toQuantity(p.packAmount, p.packUnit) : null;
-    const neededQ = need.quantities.find((q) => pack && sameKind(q, pack));
+    const stocked = afterStock(id, need.quantities, inPack(input.onHand?.[id], pack), inPack(input.par?.[id], pack));
+    if (stocked.have !== null && !stocked.quantities.length) continue;
+    if (stocked.toPar) need.forDrinks.add('back to par');
+    const neededQ = stocked.quantities.find((q) => pack && sameKind(q, pack));
     const packs = pack && neededQ ? Math.ceil(neededQ.value / pack.value) : null;
     const line: BuyLine = {
       id,
       name: need.name,
-      needed: need.quantities.map(formatQuantity).join(' + ') || 'Amount not set',
+      have: stocked.have,
+      needed: stocked.quantities.map(formatQuantity).join(' + ') || 'Amount not set',
       packs: packs && pack ? `${packs} × ${formatQuantity(pack)}` : null,
     };
     const supplier = p?.supplierName ?? NO_SUPPLIER;
@@ -156,7 +214,11 @@ export function buildPrepList(input: PrepInput): PrepList {
   const order = [...bySupplier.entries()]
     .sort(([a], [b]) => (a === NO_SUPPLIER ? 1 : b === NO_SUPPLIER ? -1 : a.localeCompare(b)))
     .map(([supplier, lines]) => ({ supplier, lines: lines.sort((a, b) => a.name.localeCompare(b.name)) }));
-  return { make, order };
+  const ice = iceForEvent(
+    input.drinks.map((d) => ({ name: d.name, iceType: d.iceType ?? null, icePerServeG: d.icePerServeG ?? null })),
+    input.servesPerDrink
+  );
+  return { make, order, ice };
 }
 
 /**

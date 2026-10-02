@@ -18,6 +18,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   website: string | null;
+  instagram: string | null;
   locality: string | null;
   city: string | null;
   country_code: string | null;
@@ -28,9 +29,11 @@ export interface Profile {
   /** A bar that has shut for good; closed_year when it's known. */
   is_closed: boolean;
   closed_year: number | null;
+  /** A person who shows the drinks they've had, with their scores. */
+  shares_rankings: boolean;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -57,6 +60,16 @@ export interface Original extends LineageDrink {
   item_images: ItemImageLink[] | null;
 }
 
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`;
+
+/** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators. */
+async function creditedTo(profileId: string): Promise<string[]> {
+  const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId).limit(100);
+  if (co.error) throw co.error;
+  const coIds = (co.data ?? []).map((r) => r.item_id as string);
+  return [`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])];
+}
+
 /** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
 export function useProfileOriginals(profileId: string | null | undefined) {
   const viewer = viewerScoped(useAuth().user?.id);
@@ -65,15 +78,36 @@ export function useProfileOriginals(profileId: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
-      const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId!).limit(100);
-      if (co.error) throw co.error;
-      const coIds = (co.data ?? []).map((r) => r.item_id as string);
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`)
-        .or([`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])].join(','))
+        .select(ORIGINAL_COLUMNS)
+        .or((await creditedTo(profileId!)).join(','))
         .order('name')
         .limit(100);
+      if (error) throw error;
+      return (data ?? []) as unknown as Original[];
+    },
+  });
+}
+
+/**
+ * The drinks I've made: every drink I wrote up here (at a venue or on my
+ * own), plus the ones credited to my profile when I have one. My own view;
+ * other people see only what's credited (useProfileOriginals).
+ */
+export function useMyMadeDrinks(profileId: string | null | undefined) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['my-made', userId, profileId ?? null],
+    enabled: !!userId,
+    queryFn: async (): Promise<Original[]> => {
+      const { data, error } = await supabase
+        .from('items')
+        .select(ORIGINAL_COLUMNS)
+        .eq('item_type', 'cocktail')
+        .or([`created_by.eq.${userId}`, ...(profileId ? await creditedTo(profileId) : [])].join(','))
+        .order('name')
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as unknown as Original[];
     },
@@ -104,11 +138,7 @@ export function useMenuEditions(profileId: string | null | undefined) {
     queryKey: ['profile-menu-editions', profileId],
     enabled: !!profileId,
     queryFn: async (): Promise<MenuEdition[]> => {
-      const { data, error } = await supabase
-        .from('profile_menu_editions')
-        .select('id, name, year, month, theme, drinks, source_url')
-        .eq('profile_id', profileId!)
-        .limit(200);
+      const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
       if (error) throw error;
       return sortEditions((data ?? []) as MenuEdition[]);
     },
@@ -296,6 +326,63 @@ export interface Position {
 }
 
 const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
+
+export interface PublicPerson {
+  id: string;
+  handle: string;
+  display_name: string;
+  city: string | null;
+  is_claimed: boolean;
+}
+
+/** Public people by name, so someone can find a profile we already have. */
+export function usePublicPeople(search: string) {
+  const term = search.replace(/[%_\\]/g, '').trim();
+  return useQuery({
+    queryKey: ['public-people', term],
+    enabled: term.length >= 2,
+    queryFn: async (): Promise<PublicPerson[]> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, handle, display_name, city, is_claimed')
+        .eq('kind', 'person')
+        .eq('is_public', true)
+        .ilike('display_name', `%${term}%`)
+        .order('display_name')
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as PublicPerson[];
+    },
+  });
+}
+
+export interface WorkedMenu {
+  id: string;
+  name: string;
+  year: number | null;
+  bar: { id: string; handle: string; display_name: string; is_closed: boolean };
+}
+
+/** Menus a person says they worked on, including at a bar that has closed. */
+export function useWorkedMenus(profileId: string | null | undefined) {
+  const viewer = viewerScoped(useAuth().user?.id);
+  return useQuery({
+    queryKey: ['profile-worked-menus', profileId, viewer.key],
+    meta: viewer.meta,
+    enabled: !!profileId,
+    queryFn: async (): Promise<WorkedMenu[]> => {
+      const { data, error } = await supabase
+        .from('profile_worked_menus')
+        .select('id, name, year, bar:profiles!bar_profile_id(id, handle, display_name, is_closed)')
+        .eq('person_profile_id', profileId!)
+        .limit(50);
+      if (error) throw error;
+      return ((data ?? []) as unknown as WorkedMenu[]).sort(
+        (a, b) => (b.year ?? 0) - (a.year ?? 0) || a.name.localeCompare(b.name)
+      );
+    },
+  });
+}
 
 /** Where a person works, or who works at a bar: current first, then by name. */
 export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null | undefined) {

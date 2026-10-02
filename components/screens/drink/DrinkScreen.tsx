@@ -1,14 +1,16 @@
 import { useKeepAwake } from 'expo-keep-awake';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useDropdowns } from '@/hooks/useDropdowns';
+import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -18,14 +20,20 @@ import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
-import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
+import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { ClassicLink } from './ClassicLink';
+import { CostSection } from './CostSection';
 import { FamilyTree } from './FamilyTree';
+import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecSection } from './SpecSection';
+import { GlassSheet } from './GlassSheet';
+import { HistorySection } from './HistorySection';
+import { StrengthSheet } from './StrengthSheet';
+import { useDrinkFacts } from './useDrinkFacts';
 
 export interface DrinkScreenProps {
   item: DatabaseItem;
@@ -38,15 +46,6 @@ export interface DrinkScreenProps {
   /** /dev/drink only: a bundled hero image, a simulated role, and where Batch goes. */
   preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
 }
-
-interface Named {
-  id: string;
-  name: string;
-  icon_key?: string | null;
-}
-
-// Stored spelling in older rows; shown correctly.
-const ORIGIN_LABEL: Record<string, string> = { Varient: 'Variant' };
 
 function KeepAwake() {
   useKeepAwake();
@@ -92,26 +91,26 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const { width, height } = useWindowDimensions();
   const serviceMode = useSettingsStore((s) => s.serviceMode);
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
-  const { data: dropdowns } = useDropdowns();
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
-  const canBatch = access.amounts && specLines(item.recipes as PresentationRecipe[] | undefined).some((l) => l.value !== null);
+  const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
+  const canBatch = access.amounts && lines.some((l) => l.value !== null);
+  const [strengthOpen, setStrengthOpen] = useState(false);
+  const [glassOpen, setGlassOpen] = useState(false);
+  const role = useEffectiveRole(item.bar_id);
+  const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
+  const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
-  const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
-  const glass = find(dropdowns?.glassware as Named[], item.glassware_id);
-  const methods = (item.item_methods ?? [])
-    .map((m) => find(dropdowns?.methods as Named[], m.method_item_id)?.name)
-    .filter((n): n is string => !!n);
-  const facts: Fact[] = [
-    glass && { label: 'Glass', value: glass.name },
-    find(dropdowns?.iceTypes as Named[], item.ice_id) && { label: 'Ice', value: find(dropdowns?.iceTypes as Named[], item.ice_id)!.name },
-    find(dropdowns?.families as Named[], item.family_id) && { label: 'Family', value: find(dropdowns?.families as Named[], item.family_id)!.name },
-    item.abv ? { label: 'ABV', value: `${item.abv}%` } : null,
-  ].filter((f): f is Fact => !!f);
-  const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
+  const { facts, tags, glass, ice, method, strength } = useDrinkFacts(item, {
+    lines,
+    amounts: access.amounts && !preview,
+    dilutionDefaults,
+    openStrength: () => setStrengthOpen(true),
+    openGlass: preview ? undefined : () => setGlassOpen(true),
+  });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
   // The hero (first) picture's credit shows under the name.
@@ -171,6 +170,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
+      <FloorSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
       <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
       {item.notes ? (
@@ -187,8 +187,13 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         canEdit={canEdit}
         glass={glass?.icon_key || glass?.name || null}
         wide={wide}
+        lines={access.names ? lines : []}
+        showLines={access.amounts}
+        serviceStyle={item.service_style}
         preview={preview}
       />
+      {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
+      {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
       {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
@@ -217,6 +222,34 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       )}
       {controls}
       {ageGate.sheet}
+      {glassOpen ? (
+        <GlassSheet
+          visible
+          onClose={() => setGlassOpen(false)}
+          itemId={item.id}
+          name={item.name}
+          glass={glass}
+          iceName={ice?.name ?? null}
+          serveMl={item.serve_ml ?? null}
+          icePerServeG={item.ice_per_serve_g ?? null}
+          canEditDrink={canEdit}
+          accent={venue?.accent ?? undefined}
+        />
+      ) : null}
+      {strength ? (
+        <StrengthSheet
+          visible={strengthOpen}
+          onClose={() => setStrengthOpen(false)}
+          itemId={item.id}
+          name={item.name}
+          strength={strength}
+          method={method}
+          dilutionPct={item.dilution_pct ?? null}
+          canEdit={canEdit}
+          defaultsHref={item.bar_id && role >= 40 ? (`/settings/bar/${item.bar_id}/dilution` as Href) : null}
+          accent={venue?.accent ?? undefined}
+        />
+      ) : null}
     </View>
   );
 }

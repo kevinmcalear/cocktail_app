@@ -5,6 +5,9 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
+import { AllergenSection } from "@/components/allergens/AllergenSection";
+import { PriceSection } from "@/components/costs/PriceSection";
+import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
@@ -81,7 +84,7 @@ export default function IngredientDetailScreen() {
                 onToggleFavorite={() => {}}
                 onToggleStudyPile={() => {}}
             >
-                <YStack style={styles.container} justifyContent="center" alignItems="center">
+                <YStack flex={1} justifyContent="center" alignItems="center">
                     {error ? (
                         <ErrorState title="Couldn't load this ingredient" onRetry={() => void refetch()} />
                     ) : (
@@ -107,7 +110,6 @@ export default function IngredientDetailScreen() {
             onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
-
                 {/* Info Card */}
                 {(!recipe.length || canViewDetails) && (ingredient.description || recipe.length > 0) && (
                     <GlassView style={styles.card} intensity={10}>
@@ -129,10 +131,12 @@ export default function IngredientDetailScreen() {
                 {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
+                <PriceSection itemId={ingredient.id} />
+                <AllergenSection itemId={ingredient.id} houseMade={recipe.length > 0} canEditItem={canEdit} />
                 <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
 
                 {/* Recipe Section (Only if it has recipes / is a batch) */}
-                {canViewDetails && recipe.length > 0 && (
+                {canViewDetails && (recipe.length > 0 || canEdit) && (
                     <GlassView style={styles.card} intensity={10}>
                         <View style={styles.cardHeader}>
                             <IconSymbol name="flask" size={24} color={theme.color?.get() as string} />
@@ -153,6 +157,10 @@ export default function IngredientDetailScreen() {
                     </GlassView>
                 )}
 
+                {canViewDetails && (recipe.length > 0 || canEdit) && (
+                    <PrepCard itemId={ingredient.id} itemName={ingredient.name} barId={ingredient.bar_id} canEditItem={canEdit} recipe={recipe.map((r) => ({ id: r.id, name: r.ingredient?.name || "Unknown", amount: r.amount, unit: r.unit }))} />
+                )}
+
                 {/* Used In Section (Horizontal Scroll) */}
                 {usedIn.length > 0 && (
                     <View style={styles.horizontalSection}>
@@ -167,7 +175,6 @@ export default function IngredientDetailScreen() {
                         >
                             {usedIn.map((item: any) => {
                                 const hero = heroPicture(item.cocktail.item_images);
-                                
                                 return (
                                     <TouchableOpacity 
                                         key={item.id} 
@@ -202,9 +209,6 @@ export default function IngredientDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     card: {
         borderRadius: 20,
         padding: 20,

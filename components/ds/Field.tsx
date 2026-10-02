@@ -12,21 +12,25 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
   /** Shown under the field; errors say what's wrong and how to fix it. */
   hint?: string;
   error?: string;
+  /** A taller box, for pasting a list. */
+  minLines?: number;
 }
 
 /** A labelled text input in the Back Bar style. */
-export function Field({ label, hint, error, ...input }: FieldProps) {
+export function Field({ label, hint, error, minLines, ...input }: FieldProps) {
   const ds = useDs();
   return (
     <View style={styles.field}>
       <Caption tone="muted">{label}</Caption>
       <TextInput
         {...input}
+        multiline={minLines ? true : input.multiline}
         aria-label={label}
         placeholderTextColor={ds.c.faint}
         style={[
           styles.input,
           type.body,
+          minLines ? { minHeight: layout.minTapTarget * minLines, paddingVertical: space.md, textAlignVertical: 'top' } : null,
           { fontFamily: fontFamilies.body, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
         ]}
       />

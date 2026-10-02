@@ -1,3 +1,9 @@
+/** A cocktail on a menu edition: the bar's own drink, not a bare name. */
+export interface MenuEditionDrink {
+  id: string;
+  name: string;
+}
+
 /** One cocktail menu a bar put out, as stored in profile_menu_editions. */
 export interface MenuEdition {
   id: string;
@@ -5,7 +11,7 @@ export interface MenuEdition {
   year: number;
   month: number | null;
   theme: string | null;
-  drinks: string[];
+  drinks: MenuEditionDrink[];
   source_url: string | null;
 }
 

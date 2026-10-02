@@ -1,4 +1,4 @@
-import { consumeAiQuota, requireUser } from "../_shared/auth.ts";
+import { consumeAiQuota, refundAiQuota, requireUser } from "../_shared/auth.ts";
 import { describeImageAsJson, generateImage } from "../_shared/gemini.ts";
 import { HttpError, serveJson } from "../_shared/http.ts";
 
@@ -55,7 +55,7 @@ serveJson("identify-glassware", async (req) => {
         reason?: string;
     };
 
-    const suggestedName = (parsed.suggestedName || "Custom Glass").trim();
+    const suggestedName = (parsed.suggestedName || "Custom Glass").replace(/[\r\n]/g, " ").trim().slice(0, 80) || "Custom Glass";
     const confidence = typeof parsed.confidence === "number" ? parsed.confidence : 0;
     let matchedIcon: string | null = parsed.matchedIcon || null;
     if (matchedIcon && !GLASSWARE_ICON_KEYS.includes(matchedIcon)) matchedIcon = null;
@@ -63,16 +63,23 @@ serveJson("identify-glassware", async (req) => {
 
     let iconUrl: string | null = null;
     if (!matchedIcon) {
-        const icon = await generateImage(
-            `Minimal single-stroke line art icon of an empty ${suggestedName} cocktail glass, side profile silhouette. ` +
-                "Clean white strokes on solid black background. Simple 24px app icon style matching other bar glass icons. " +
-                "No liquid, no garnish, no text, no shading.",
-        );
-        const path = `glassware-icons/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${icon.ext}`;
-        const bucket = caller.admin.storage.from("drinks");
-        const { error } = await bucket.upload(path, icon.bytes, { contentType: icon.mimeType, cacheControl: "86400", upsert: false });
-        if (error) throw error;
-        iconUrl = bucket.getPublicUrl(path).data.publicUrl;
+        // Vision already took one unit. Drawing a new icon is a second paid call.
+        await consumeAiQuota(caller, "identify-glassware");
+        try {
+            const icon = await generateImage(
+                `Minimal single-stroke line art icon of an empty ${suggestedName} cocktail glass, side profile silhouette. ` +
+                    "Clean white strokes on solid black background. Simple 24px app icon style matching other bar glass icons. " +
+                    "No liquid, no garnish, no text, no shading.",
+            );
+            const path = `glassware-icons/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${icon.ext}`;
+            const bucket = caller.admin.storage.from("drinks");
+            const { error } = await bucket.upload(path, icon.bytes, { contentType: icon.mimeType, cacheControl: "86400", upsert: false });
+            if (error) throw error;
+            iconUrl = bucket.getPublicUrl(path).data.publicUrl;
+        } catch (err) {
+            await refundAiQuota(caller, "identify-glassware");
+            throw err;
+        }
     }
 
     return {

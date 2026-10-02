@@ -17,6 +17,9 @@ type AuthContextType = {
   updateProfile: (data: {
     firstName?: string;
     lastName?: string;
+    fullName?: string;
+    /** False on a new account until setup finishes. Existing accounts leave it unset. */
+    onboarded?: boolean;
     password?: string;
     avatarUrl?: string;
   }) => Promise<{ error: Error | null }>;
@@ -77,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: getAuthRedirectTo('/auth/callback') },
+      options: { emailRedirectTo: getAuthRedirectTo('/auth/callback'), data: { onboarded: false } },
     });
     return { session: data.session, error: asError(error) };
   };
@@ -112,17 +115,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async ({
     firstName,
     lastName,
+    fullName,
+    onboarded,
     password,
     avatarUrl,
   }: {
     firstName?: string;
     lastName?: string;
+    fullName?: string;
+    onboarded?: boolean;
     password?: string;
     avatarUrl?: string;
   }) => {
-    const updates: { data: Record<string, string>; password?: string } = { data: {} };
+    const updates: { data: Record<string, string | boolean>; password?: string } = { data: {} };
     if (firstName) updates.data.first_name = firstName;
-    if (lastName) updates.data.last_name = lastName;
+    if (lastName !== undefined) updates.data.last_name = lastName;
+    if (fullName) updates.data.full_name = fullName;
+    if (onboarded !== undefined) updates.data.onboarded = onboarded;
     if (avatarUrl) updates.data.avatar_url = avatarUrl;
     if (password) updates.password = password;
 

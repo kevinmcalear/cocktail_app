@@ -55,7 +55,7 @@
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find the best drinks and bars near you. It isn't saved.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
-          "motionUsagePermission": false
+          "motionUsagePermission": "Allow $(PRODUCT_NAME) to read motion so the map can show which way you're facing."
         }
       ],
       "expo-web-browser",

@@ -68,7 +68,47 @@ export interface ProfileDraft {
   name: string;
   handle: string;
   bio: string;
+  /** What they typed: @name, a bare name, or an instagram.com link. */
+  instagram: string;
   isPublic: boolean;
+  /** Show the drinks you've had, with your scores, on the public profile. */
+  sharesRankings: boolean;
+}
+
+const INSTAGRAM = /^[a-z0-9._]+$/;
+const INSTAGRAM_DOTS = /^\.|\.$|\.\./;
+
+/**
+ * "@Foo.Bar ", "https://www.instagram.com/Foo.Bar/?hl=en" → "foo.bar".
+ * Empty when they left it blank. Same shape as profiles.instagram.
+ */
+export function normalizeInstagram(raw: string): string {
+  const s = raw.trim().toLowerCase();
+  const fromUrl = s.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-z0-9._]+)/);
+  if (fromUrl?.[1]) return fromUrl[1].replace(/\.+$/, '');
+  return s.replace(/^@/, '').split(/[/?#]/)[0] ?? '';
+}
+
+/** What's wrong with an Instagram name, or nothing when it's blank or fine. Matches profiles_instagram_format. */
+export function instagramProblem(raw: string): string | undefined {
+  const handle = normalizeInstagram(raw);
+  if (!handle) return undefined;
+  if (handle.length > 30 || !INSTAGRAM.test(handle) || INSTAGRAM_DOTS.test(handle)) {
+    return 'Use up to 30 letters, numbers, dots or underscores. Dots can’t sit at the start, the end, or next to each other.';
+  }
+}
+
+export const instagramUrl = (handle: string) => `https://www.instagram.com/${handle}/`;
+
+/** Links under the name: Instagram, then a real website. An instagram.com website isn't shown twice. */
+export function profileLinks(p: { instagram: string | null; website: string | null }): { href: string; label: string }[] {
+  const links: { href: string; label: string }[] = [];
+  if (p.instagram) links.push({ href: instagramUrl(p.instagram), label: `instagram.com/${p.instagram}` });
+  const site = p.website?.trim() ?? '';
+  if (/^https?:\/\//i.test(site) && !(p.instagram && /instagram\.com\//i.test(site))) {
+    links.push({ href: site, label: site.replace(/^https?:\/\//i, '').replace(/\/$/, '') });
+  }
+  return links;
 }
 
 /** "@Juniper.Jo " → "juniper.jo": what gets saved, and what the HANDLE rule checks. */
@@ -90,8 +130,8 @@ export function handleFromName(name: string): string {
  * What's wrong with a draft, field by field, in the same limits as the
  * profiles table's CHECKs. An empty object means it can be saved.
  */
-export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string } {
-  const errors: { name?: string; handle?: string; bio?: string } = {};
+export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string; instagram?: string } {
+  const errors: { name?: string; handle?: string; bio?: string; instagram?: string } = {};
   const name = d.name.trim();
   if (!name) errors.name = 'Add the name people will see.';
   else if (name.length > 80) errors.name = 'Keep your name to 80 characters.';
@@ -99,5 +139,7 @@ export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: s
     errors.handle = 'Use 3 to 30 letters, numbers, dots or underscores, starting and ending with a letter or number.';
   }
   if (d.bio.trim().length > 500) errors.bio = 'Keep your bio to 500 characters.';
+  const instagram = instagramProblem(d.instagram);
+  if (instagram) errors.instagram = instagram;
   return errors;
 }

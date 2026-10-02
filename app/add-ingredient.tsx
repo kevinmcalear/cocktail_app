@@ -17,6 +17,7 @@ import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import { PrepCalcButton } from "@/components/tools/ToolsSheet";
 import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
@@ -508,12 +509,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                         <Text fontSize={18} fontWeight="bold" color="$color">
                             Recipe
                         </Text>
-                        {recipeItems.length === 0 && (
-                            <Text color="$color11" fontSize={14} fontStyle="italic">
-                                Add ingredients if this is a pre-batched item (e.g. syrups, infusions). Leave empty
-                                for raw ingredients.
-                            </Text>
-                        )}
+                        <PrepCalcButton name={name} catalog={mergedIngredients} recipe={recipeItems} barId={barId} saveDraft={saveDraft} onApply={setRecipeItems} />
                         <SortableRecipeList
                             items={recipeItems}
                             onReorder={setRecipeItems}
