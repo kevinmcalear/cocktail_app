@@ -103,7 +103,6 @@ function EditionRow({ edition: m, current }: { edition: MenuEdition; current: bo
   const ds = useDs();
   const signedIn = !!useAuth().user;
   const when = menuDate(m);
-  const source = m.source_url;
   const drinkNames = m.drinks.map((d) => d.name).join(', ');
   return (
     <View role="listitem" style={[styles.edition, { borderBottomColor: ds.c.line }]}>
@@ -122,11 +121,6 @@ function EditionRow({ edition: m, current }: { edition: MenuEdition; current: bo
         {!signedIn && m.drinks.length ? <Caption tone="muted">{m.drinks.map((d) => d.name).join(' · ')}</Caption> : null}
       </View>
       {signedIn && m.drinks.length ? <DrinkNames drinks={m.drinks} /> : null}
-      {source ? (
-        <DsText variant="caption" tone="muted" role="link" accessibilityLabel={`Source for ${m.name}`} style={styles.link} onPress={() => Linking.openURL(source)}>
-          {`Source: ${source.replace(/^https?:\/\/(www\.)?/i, '').split('/')[0]}`}
-        </DsText>
-      ) : null}
     </View>
   );
 }
@@ -157,5 +151,4 @@ const styles = StyleSheet.create({
   edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   editionText: { gap: space.xs },
   start: { alignSelf: 'flex-start' },
-  link: { textDecorationLine: 'underline', alignSelf: 'flex-start' },
 });
