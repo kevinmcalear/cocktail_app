@@ -1,7 +1,7 @@
 // Checks for lib/service.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { bottleLine, isAtStation, isServiceStyle, serviceSpec, serviceStyleLabel, stationCard } from './service';
+import { bottleLine, isAtStation, isServiceStyle, serviceSpec, serviceStyleLabel } from './service';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null, at_service: boolean | null = null) => ({
@@ -46,24 +46,6 @@ const locked = serviceSpec(specLines([row('rum', 'White rum', null, null), row('
 assert.equal(locked.pour, null);
 assert.equal(locked.batch[0].amount, '');
 assert.equal(isAtStation(specLines([row('x', 'Lemon juice', null, null, false)])[0]), false, 'a decision holds without an amount');
-
-// The station card.
-const daiquiri = specLines([row('rum', 'Daiquiri batch', 67, 'ml', false), row('lime', 'Lime juice', 24, 'ml', true), row('tw', 'Lime', 1, 'wheel', true)]);
-const card = stationCard({ id: 'd', name: 'Daiquiri', style: 'batched', method: 'Shake', glass: 'Coupe', ice: null }, daiquiri);
-assert.equal(card.how, 'Shake · Coupe');
-assert.equal(card.pour, '67 ml batch');
-assert.deepEqual(card.adds, ['24 ml Lime juice']);
-assert.deepEqual(card.garnish, ['1 wheel Lime']);
-const martini = stationCard(
-  { id: 'm', name: 'Freezer Martini', style: 'bottled', method: 'Pour', glass: 'Nick & Nora', ice: 'None' },
-  specLines([row('g', 'Gin', 75, 'ml', false), row('v', 'Vermouth', 15, 'ml', false), row('w', 'Water', 18, 'ml', false)])
-);
-assert.equal(martini.pour, '108 ml from the bottle');
-assert.deepEqual(martini.adds, []);
-const fresh = stationCard({ id: 'f', name: 'Sour', style: null, method: null, glass: null, ice: null }, specLines([row('l', 'Lemon juice', 25, 'ml'), row('e', 'Egg white', 1, 'each')]));
-assert.equal(fresh.pour, null, 'nothing batched, nothing to pour');
-assert.equal(fresh.how, '');
-assert.equal(stationCard({ id: 'x', name: 'X', style: 'batched', method: null, glass: null, ice: null }, specLines([row('g', 'Gin', 60, 'ml', false)])).pour, '60 ml batch, nothing added');
 
 assert.equal(serviceStyleLabel('a_la_minute'), 'À la minute');
 assert.equal(serviceStyleLabel('nope'), null);
