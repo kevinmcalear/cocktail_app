@@ -59,12 +59,26 @@ before(async () => {
   await serviceInsert('user_bars', { user_id: users.barAdmin.id, bar_id: ids.bar, role_level: 40 });
   ids.public = (await serviceInsert('profiles', barProfile('harbour', { bar_id: ids.bar, is_public: true }))).id;
   ids.hidden = (await serviceInsert('profiles', barProfile('hidden', { is_public: false }))).id;
-  for (const id of [ids.public, ids.hidden]) await serviceInsert('profile_menu_editions', edition(id, { drinks: ['Harbour Martini'] }));
+  for (const id of [ids.public, ids.hidden]) {
+    const menu = await serviceInsert('profile_menu_editions', edition(id));
+    const item = await serviceInsert('items', {
+      name: `Harbour Martini ${run}`,
+      item_type: 'cocktail',
+      origin: 'Original',
+      origin_bar_profile_id: id,
+    });
+    await serviceInsert('profile_menu_edition_drinks', { edition_id: menu.id, item_id: item.id, sort_order: 0 });
+    if (id === ids.public) {
+      ids.menu = menu.id;
+      ids.drink = item.id;
+    }
+  }
 });
 
 after(async () => {
   const like = `%${run}%`;
   await db.query('DELETE FROM public.profiles WHERE display_name LIKE $1 OR handle LIKE $1', [like]);
+  await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.app_admins WHERE user_id = $1', [users.appAdmin?.id]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
@@ -73,19 +87,37 @@ after(async () => {
 
 describe('reading', () => {
   test("signed-out visitors read a public bar's menus, not a hidden bar's", async () => {
-    const { data, error } = await anon.from('profile_menu_editions').select('profile_id, drinks').in('profile_id', [ids.public, ids.hidden]);
+    const { data, error } = await anon.from('profile_menu_editions').select('profile_id').in('profile_id', [ids.public, ids.hidden]);
     assert.ifError(error);
-    assert.deepEqual(data, [{ profile_id: ids.public, drinks: ['Harbour Martini'] }]);
+    assert.deepEqual(data, [{ profile_id: ids.public }]);
+    const menus = await anon.rpc('get_menu_editions', { p_profile_id: ids.public });
+    assert.ifError(menus.error);
+    assert.equal(menus.data.length, 1);
+    assert.equal(menus.data[0].drinks.length, 1);
+    assert.equal(menus.data[0].drinks[0].id, ids.drink);
+    assert.equal(menus.data[0].drinks[0].name, `Harbour Martini ${run}`);
+    const hidden = await anon.rpc('get_menu_editions', { p_profile_id: ids.hidden });
+    assert.ifError(hidden.error);
+    assert.deepEqual(hidden.data, []);
   });
 
   test('the hidden bar stays hidden from signed-in strangers too', async () => {
     const { data } = await users.stranger.client.from('profile_menu_editions').select('profile_id').eq('profile_id', ids.hidden);
     assert.deepEqual(data, []);
+    const hidden = await users.stranger.client.rpc('get_menu_editions', { p_profile_id: ids.hidden });
+    assert.ifError(hidden.error);
+    assert.deepEqual(hidden.data, []);
   });
 });
 
 describe('writing', () => {
   test("nobody but an app admin adds, edits or removes them, not even the bar's own admin", async () => {
+    const extra = await serviceInsert('items', {
+      name: `Second Harbour ${run}`,
+      item_type: 'cocktail',
+      origin: 'Original',
+      origin_bar_profile_id: ids.public,
+    });
     for (const who of [anon, users.stranger.client, users.barAdmin.client]) {
       const addMenu = await who.from('profile_menu_editions').insert(edition(ids.public, { name: `Sneaky ${run}` }));
       assert.ok(addMenu.error, 'menu insert refused');
@@ -93,9 +125,26 @@ describe('writing', () => {
       assert.deepEqual(edit.data ?? [], [], 'menu update touches nothing');
       const drop = await who.from('profile_menu_editions').delete().eq('profile_id', ids.public).select();
       assert.deepEqual(drop.data ?? [], [], 'menu delete touches nothing');
+      const addDrink = await who.from('profile_menu_edition_drinks').insert({ edition_id: ids.menu, item_id: extra.id, sort_order: 1 });
+      assert.ok(addDrink.error, 'drink insert refused');
     }
     const { rows } = await db.query('SELECT month FROM public.profile_menu_editions WHERE profile_id = $1', [ids.public]);
     assert.deepEqual(rows, [{ month: 5 }]);
+    const drinks = await db.query('SELECT item_id FROM public.profile_menu_edition_drinks WHERE edition_id = $1', [ids.menu]);
+    assert.deepEqual(drinks.rows.map((r) => r.item_id), [ids.drink]);
+  });
+
+  test("a menu drink has to be that bar's cocktail", async () => {
+    const elsewhere = await serviceInsert('items', {
+      name: `Elsewhere ${run}`,
+      item_type: 'cocktail',
+      origin: 'Original',
+      origin_bar_profile_id: ids.hidden,
+    });
+    const link = await service.from('profile_menu_edition_drinks').insert({ edition_id: ids.menu, item_id: elsewhere.id, sort_order: 1 });
+    assert.ok(link.error, 'another bar’s cocktail refused');
+    const { rows } = await db.query('SELECT item_id FROM public.profile_menu_edition_drinks WHERE edition_id = $1', [ids.menu]);
+    assert.deepEqual(rows.map((r) => r.item_id), [ids.drink]);
   });
 
   test('an app admin curates them', async () => {
@@ -105,6 +154,15 @@ describe('writing', () => {
     const edit = await client.from('profile_menu_editions').update({ month: 6 }).eq('id', add.data.id).select();
     assert.ifError(edit.error);
     assert.equal(edit.data[0].month, 6);
+    const item = await serviceInsert('items', {
+      name: `Chapter Two Martini ${run}`,
+      item_type: 'cocktail',
+      origin: 'Original',
+      origin_bar_profile_id: ids.public,
+    });
+    const addDrink = await client.from('profile_menu_edition_drinks').insert({ edition_id: add.data.id, item_id: item.id, sort_order: 0 }).select();
+    assert.ifError(addDrink.error);
+    assert.equal(addDrink.data.length, 1);
     const drop = await client.from('profile_menu_editions').delete().eq('id', add.data.id).select();
     assert.equal(drop.data.length, 1);
   });

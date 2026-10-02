@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, Field, GlassButton, GlassSurface, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -9,7 +9,7 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { DiscoverArea } from '@/components/screens/home/DiscoverArea';
 import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
-import { DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
+import { DiscoverDrinkFilters, DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchResults } from '@/components/screens/home/DiscoverSearchResults';
@@ -22,7 +22,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar } from '@/hooks/useHomeBar';
-import { useNearMe } from '@/hooks/useNearMe';
+import { useNearMe, type NearMe } from '@/hooks/useNearMe';
 import { findDrinks } from '@/lib/discover';
 import { kindLabel, STYLES } from '@/lib/drinkStyles';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
@@ -31,13 +31,13 @@ import { areaLabel, NEAR_ME_KM, type Area } from '@/lib/nearMe';
 
 /**
  * Discover, the first tab in home mode, in the order people use it: search
- * drinks or bars, say where (near me, a city, anywhere) and what (a style
- * like Martinis, or a spirit like Gin), then the drinks bars pour there, the
- * best-ranked of a drink, the top bars, drinks for your taste and new
- * releases, and last the drinks you can make yourself. Typing swaps the
- * browsing sections for search results. The map (full screen on phones,
- * beside the list on wide screens) pins the bars pouring those drinks;
- * opening it from "Anywhere" asks where you are, so it starts near you.
+ * drinks or bars, say where (near me by default, a city, anywhere) and what
+ * (a style like Martinis, a spirit like Gin, or a tasting note like Smoky),
+ * then the drinks bars pour there, the best-ranked of a drink, the top bars,
+ * drinks for your taste and new releases, and last the drinks you can make
+ * yourself. Typing swaps the browsing sections for search results. The map
+ * (full screen on phones, beside the list on wide screens) pins the bars
+ * pouring those drinks.
  */
 export function DiscoverScreen() {
   const ds = useDs();
@@ -48,11 +48,41 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const breakpoint = useBreakpoint();
   const [area, setArea] = useState<Area>({ kind: 'anywhere' });
+  const [preferNear, setPreferNear] = useState(true);
   const [kind, setKind] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
   const [view, setView] = useState<'list' | 'map'>('list');
-  const { locate } = useNearMe();
+  const touched = useRef(false);
+  const { state: near, locate } = useNearMe();
+  const place = useCallback((found: NearMe) => {
+    if (found.status !== 'ready') {
+      setPreferNear(false);
+      return;
+    }
+    setPreferNear(true);
+    setArea({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
+  }, []);
+  const onArea = (next: Area) => {
+    touched.current = true;
+    setPreferNear(next.kind === 'point' && next.source === 'me');
+    setArea(next);
+  };
+  const onNearMe = () => {
+    touched.current = true;
+    setPreferNear(true);
+    void locate().then(place);
+  };
+  useEffect(() => {
+    let live = true;
+    void locate().then((found) => {
+      if (!live || touched.current) return;
+      place(found);
+    });
+    return () => {
+      live = false;
+    };
+  }, [locate, place]);
   const searching = search.trim().length > 0;
   // Search stands alone: a style picked while browsing doesn't narrow it.
   const results = useDiscoverResults({ kind: searching ? null : kind, search, area });
@@ -65,8 +95,8 @@ export function DiscoverScreen() {
   const openMap = async () => {
     setView('map');
     if (area.kind !== 'anywhere') return;
-    const found = await locate();
-    if (found.status === 'ready') setArea({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
+    touched.current = true;
+    place(await locate());
   };
   const openBar = (ref: string) => {
     setAdding(false);
@@ -95,7 +125,7 @@ export function DiscoverScreen() {
         <DiscoverMapPane
           mode="sheet"
           area={area}
-          onArea={setArea}
+          onArea={onArea}
           drink={drink}
           results={{ ...results, title }}
           kind={kind}
@@ -104,7 +134,7 @@ export function DiscoverScreen() {
           top={
             <GlassSurface style={styles.mapTop}>
               <View style={styles.flex}>
-                <DiscoverArea area={area} onChange={setArea} />
+                <DiscoverArea area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
               </View>
               <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={() => setView('list')} />
             </GlassSurface>
@@ -160,7 +190,8 @@ export function DiscoverScreen() {
               returnKeyType="search"
               clearButtonMode="while-editing"
             />
-            <DiscoverArea area={area} onChange={setArea} />
+            {searching ? null : <DiscoverDrinkFilters kind={kind} onChange={setKind} />}
+            <DiscoverArea area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
             {searching ? (
               <DiscoverSearchResults
                 search={search}
@@ -202,7 +233,7 @@ export function DiscoverScreen() {
       <View style={[styles.screen, styles.row, { backgroundColor: ds.c.ground }]}>
         {list}
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={area} onArea={setArea} drink={drink} results={{ ...results, title }} kind={kind} onKind={setKind} />
+          <DiscoverMapPane mode="side" area={area} onArea={onArea} drink={drink} results={{ ...results, title }} kind={kind} onKind={setKind} />
         </View>
         {sheet}
       </View>

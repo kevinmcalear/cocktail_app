@@ -1,8 +1,7 @@
 /**
  * The service spec: which lines of a drink go in the batch and which are
- * added at the station, the batch pour that follows, and the card a station
- * sheet shows for each drink on tonight's menu. Pure; the drink page's
- * Service section and the station sheet render it.
+ * added at the station, and the batch pour that follows. Pure; the drink
+ * page's Service section renders it.
  *
  * A line's place comes from recipes.at_service when the bar has decided, and
  * from the name-matching guess in lib/batch.ts until then, so the drink page
@@ -100,38 +99,4 @@ export function bottleLine(spec: ServiceSpec): string | null {
   if (!spec.servesPerBottle || !spec.pourMl) return null;
   const n = spec.servesPerBottle.ml750;
   return `A 750 ml bottle is ${n} ${n === 1 ? 'serve' : 'serves'}`;
-}
-
-export interface StationCard {
-  id: string;
-  name: string;
-  style: ServiceStyle | null;
-  /** "Shake · Coupe · No ice", from whatever is set. */
-  how: string;
-  /** "67 ml batch", or null for a drink made entirely at the station. */
-  pour: string | null;
-  /** "24 ml Lime juice", in spec order; liquids and bitters only. */
-  adds: string[];
-  garnish: string[];
-}
-
-/** The card the station sheet shows for one drink. Amounts may be blank for roles below the measurement level. */
-export function stationCard(
-  drink: { id: string; name: string; style: string | null; method: string | null; glass: string | null; ice: string | null },
-  lines: SpecLine[]
-): StationCard {
-  const spec = serviceSpec(lines);
-  const label = (l: ServiceLine) => [l.amount, l.ingredient].filter(Boolean).join(' ');
-  // A bottled or carbonated drink is poured whole, so a pour with nothing added
-  // reads "93 ml from the bottle"; a batched one reads "67 ml batch".
-  const whole = (drink.style === 'bottled' || drink.style === 'carbonated' || drink.style === 'draught') && spec.station.length === 0;
-  return {
-    id: drink.id,
-    name: drink.name,
-    style: isServiceStyle(drink.style) ? drink.style : null,
-    how: [drink.method, drink.glass, drink.ice].filter((x): x is string => !!x).join(' · '),
-    pour: spec.pour ? `${spec.pour} ${whole ? 'from the bottle' : spec.batch.length === lines.length ? 'batch, nothing added' : 'batch'}` : null,
-    adds: spec.station.filter((l) => !l.garnish).map(label),
-    garnish: spec.station.filter((l) => l.garnish).map(label),
-  };
 }

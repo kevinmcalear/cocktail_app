@@ -7,6 +7,7 @@
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
 import { spiritsOf, stylesOf } from './drinkStyles';
+import { NOTE_MIN, noteDimension, type Profile } from './flavor';
 import type { Area } from './nearMe';
 
 export interface DiscoverBar {
@@ -47,6 +48,12 @@ export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'h
 
 const KM_PER_DEG = 111.045;
 
+function matchesKind(d: DiscoverDrink, f: DrinkFilter): boolean {
+  const note = noteDimension(f.kind ?? '');
+  if (note) return (f.profiles?.get(d.id)?.[note] ?? 0) >= NOTE_MIN;
+  return d.styles.includes(f.kind!) || d.spirits.includes(f.kind!);
+}
+
 /** Great-circle distance in km. */
 export function distanceKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
   const rad = Math.PI / 180;
@@ -67,11 +74,13 @@ export function barInArea(bar: DiscoverBar, area: Area): boolean {
 }
 
 export interface DrinkFilter {
-  /** A style or spirit id (drinkStyles), or null for every drink. */
+  /** A style, spirit or tasting-note id, or null for every drink. */
   kind: string | null;
   /** Typed search: every word must match the drink's name, description, ingredients or bar. */
   search: string;
   area: Area;
+  /** Drink id to flavor profile, used when kind is a tasting note. */
+  profiles?: ReadonlyMap<string, Profile>;
 }
 
 /**
@@ -83,7 +92,7 @@ export function filterDrinks(drinks: readonly DiscoverDrink[], bars: ReadonlyMap
   const hits = drinks.filter((d) => {
     const bar = bars.get(d.barId);
     if (!bar || !barInArea(bar, f.area)) return false;
-    if (f.kind && !d.styles.includes(f.kind) && !d.spirits.includes(f.kind)) return false;
+    if (f.kind && !matchesKind(d, f)) return false;
     if (!words.length) return true;
     const text = `${d.haystack} | ${foldName(bar.name)}`;
     return words.every((w) => text.includes(w));

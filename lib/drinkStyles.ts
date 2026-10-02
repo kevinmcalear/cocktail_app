@@ -10,6 +10,7 @@
  * its name and description.
  */
 import { foldName } from './discover';
+import { NOTE_KINDS, noteKind, noteLabel, noteWord } from './flavor';
 
 export interface DrinkFacts {
   name: string;
@@ -132,8 +133,10 @@ export const KINDS: readonly Kind[] = [...STYLES, ...SPIRITS];
 const KIND_BY_ID = new Map(KINDS.map((k) => [k.id, k]));
 
 export function kindLabel(id: string): string {
-  return KIND_BY_ID.get(id)?.label ?? id;
+  return KIND_BY_ID.get(id)?.label ?? noteLabel(id) ?? id;
 }
+
+const NOTES: readonly Kind[] = NOTE_KINDS.map((d) => ({ id: noteKind(d), label: noteWord(d) }));
 
 /**
  * Styles and spirits with a label word, or a classic's name, starting with
@@ -144,5 +147,5 @@ export function findKinds(search: string): Kind[] {
   if (q.length < 2) return [];
   const wordStarts = (s: string) => fold(s).split(/[\s&]+/).some((w) => w.startsWith(q));
   const classicStarts = (id: string) => STYLES.find((s) => s.id === id)?.classics.some((c) => fold(c).startsWith(q)) ?? false;
-  return KINDS.filter((k) => wordStarts(k.label) || classicStarts(k.id));
+  return [...KINDS, ...NOTES].filter((k) => wordStarts(k.label) || classicStarts(k.id));
 }
