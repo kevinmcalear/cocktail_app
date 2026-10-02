@@ -1,65 +1,96 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Caption, Chip, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, radius, space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
-import { useNearMe } from '@/hooks/useNearMe';
-import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
+import type { NearMe } from '@/hooks/useNearMe';
+import type { Area } from '@/lib/nearMe';
 
-/** A row of chips that scrolls sideways instead of wrapping. */
-export function ChipRow({ label, children }: { label: string; children: ReactNode }) {
+/** A sideways row of chips. `title` is the heading above it ("By spirit"). */
+export function ChipRow({ label, title, children }: { label: string; title?: string; children: ReactNode }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      <View role="radiogroup" accessibilityLabel={label} style={styles.chips}>
-        {children}
-      </View>
-    </ScrollView>
+    <View style={styles.group}>
+      {title ? (
+        <Caption tone="muted">{title}</Caption>
+      ) : null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        <View role="radiogroup" accessibilityLabel={label} style={styles.chips}>
+          {children}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const cityKey = (c: { city: string; country_code: string }) => `${c.city}|${c.country_code}`;
 
 /**
- * "Where": near me, anywhere, or a city with public bars. Near me asks for
- * location only when tapped; if that's refused or fails, the area stays as it
- * was and a line says to pick a city instead.
+ * "Where": a pin for near me (on by default), anywhere, then cities in a
+ * quieter row. The pin asks for location; if that's refused, the area stays
+ * put and a line says to pick a city.
  */
-export function DiscoverArea({ area, onChange }: { area: Area; onChange: (area: Area) => void }) {
+export function DiscoverArea({
+  area,
+  onChange,
+  near,
+  preferNear,
+  onNearMe,
+}: {
+  area: Area;
+  onChange: (area: Area) => void;
+  near: NearMe;
+  /** Pin stays on while the first locate is still in flight. */
+  preferNear: boolean;
+  onNearMe: () => void;
+}) {
+  const ds = useDs();
   const { data: cities } = useBarCities();
-  const { state, locate } = useNearMe();
-
-  const nearMe = async () => {
-    const found = await locate();
-    if (found.status === 'ready') {
-      onChange({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
-    }
-  };
+  const pinOn = (area.kind === 'point' && area.source === 'me') || (preferNear && area.kind === 'anywhere');
 
   const note =
-    state.status === 'locating'
+    near.status === 'locating'
       ? 'Finding where you are…'
-      : state.status === 'denied'
+      : near.status === 'denied'
         ? "Location is off for Cocktail, so pick a city instead. You can turn it on in your device's settings."
-        : state.status === 'unavailable'
+        : near.status === 'unavailable'
           ? "Couldn't find where you are. Pick a city instead, or try again."
           : null;
 
   return (
     <View style={styles.section}>
-      <ChipRow label="Where">
-        <Chip label="Near me" selected={area.kind === 'point' && area.source === 'me'} onPress={() => void nearMe()} />
-        <Chip label="Anywhere" selected={area.kind === 'anywhere'} onPress={() => onChange({ kind: 'anywhere' })} />
+      <View role="radiogroup" accessibilityLabel="Where" style={styles.chips}>
+        <PressableScale
+          role="radio"
+          aria-checked={pinOn}
+          accessibilityLabel="Near me"
+          onPress={onNearMe}
+          style={[styles.pin, { backgroundColor: pinOn ? ds.c.ink : ds.c.raised }]}
+        >
+          <IconSymbol name="mappin.and.ellipse" size={18} color={pinOn ? ds.c.ground : ds.c.ink} />
+        </PressableScale>
+        <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => onChange({ kind: 'anywhere' })} />
         {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={() => {}} /> : null}
-        {(cities ?? []).map((c) => (
-          <Chip
-            key={cityKey(c)}
-            label={c.label}
-            selected={area.kind === 'city' && cityKey(area) === cityKey(c)}
-            onPress={() => onChange({ kind: 'city', city: c.city, country_code: c.country_code, label: c.label })}
-          />
-        ))}
-      </ChipRow>
+      </View>
+      {cities?.length ? (
+        <View style={styles.group}>
+          <Caption tone="muted">City</Caption>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            <View role="radiogroup" accessibilityLabel="City" style={styles.chips}>
+              {cities.map((c) => (
+                <Chip
+                  key={cityKey(c)}
+                  quiet
+                  label={c.label}
+                  selected={area.kind === 'city' && cityKey(area) === cityKey(c)}
+                  onPress={() => onChange({ kind: 'city', city: c.city, country_code: c.country_code, label: c.label })}
+                />
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      ) : null}
       {note ? (
         <Caption tone="muted" role="status">
           {note}
@@ -70,6 +101,8 @@ export function DiscoverArea({ area, onChange }: { area: Area; onChange: (area: 
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space.sm },
+  section: { gap: space.md },
+  group: { gap: space.sm },
   chips: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
+  pin: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

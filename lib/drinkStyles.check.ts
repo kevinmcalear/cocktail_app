@@ -1,7 +1,7 @@
 // Checks for lib/drinkStyles.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { findKinds, spiritsOf, stylesOf } from './drinkStyles';
+import { findKinds, kindLabel, spiritsOf, stylesOf } from './drinkStyles';
 
 const d = (name: string, description = '', ingredients: string[] = [], riffOf: string | null = null) => ({ name, description, ingredients, riffOf });
 
@@ -35,6 +35,8 @@ assert.deepEqual(spiritsOf(d('Sakura', 'Junmai sake with ume')), ['sake']);
 
 // --- findKinds: labels and classics by word prefix ---
 assert.deepEqual(findKinds('gin').map((k) => k.id), ['gin']);
+assert.deepEqual(findKinds('smok').map((k) => k.id), ['note:smoky']);
+assert.equal(kindLabel('note:smoky'), 'Smoky');
 assert.deepEqual(findKinds('marg').map((k) => k.id), ['margarita']);
 assert.deepEqual(findKinds('boulevardier').map((k) => k.id), ['negroni']);
 assert.deepEqual(findKinds('mezcal').map((k) => k.id), ['agave']);

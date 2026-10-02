@@ -27,6 +27,33 @@ export const LABEL: Record<Dimension, string> = {
   creamy: 'creamy',
 };
 
+/**
+ * Tasting notes Discover can filter by. Strong is left out: nearly every
+ * cocktail reads strong, so the chip wouldn't narrow the list.
+ */
+export const NOTE_KINDS = DIMENSIONS.filter((d): d is Exclude<Dimension, 'strong'> => d !== 'strong');
+
+/** A drink tastes of a note from here up. Same bar matchReasons uses. */
+export const NOTE_MIN = 0.4;
+
+export const noteKind = (d: Exclude<Dimension, 'strong'>) => `note:${d}`;
+
+export function noteDimension(kind: string): Exclude<Dimension, 'strong'> | null {
+  if (!kind.startsWith('note:')) return null;
+  const d = kind.slice(5);
+  return (NOTE_KINDS as readonly string[]).includes(d) ? (d as Exclude<Dimension, 'strong'>) : null;
+}
+
+export function noteWord(d: Exclude<Dimension, 'strong'>): string {
+  const word = LABEL[d];
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+export function noteLabel(kind: string): string | null {
+  const d = noteDimension(kind);
+  return d ? noteWord(d) : null;
+}
+
 /** Profiles that understood less than this share of their spec aren't used. Mirrors get_my_taste. */
 export const MIN_COVERAGE = 0.5;
 /** Ranked drinks (with a profile) before your taste comes from rankings and matches show a percentage. */
