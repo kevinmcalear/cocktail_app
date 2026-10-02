@@ -27,9 +27,9 @@ export function ChipRow({ label, title, children }: { label: string; title?: str
 const cityKey = (c: { city: string; country_code: string }) => `${c.city}|${c.country_code}`;
 
 /**
- * "Where": near me and anywhere sit at the left of the city chips. The pin
- * asks for location; if that's refused, the area stays put and a line says
- * to pick a city.
+ * "Location": the label, then near me and anywhere at the left of the city
+ * chips. The pin asks for location; if that's refused, the area stays put
+ * and a line says to pick a city.
  */
 export function DiscoverArea({
   area,
@@ -70,25 +70,28 @@ export function DiscoverArea({
 
   return (
     <View style={styles.section}>
-      <View role="radiogroup" accessibilityLabel="Where" style={styles.where}>
-        <View style={styles.lead}>
-          <PressableScale
-            role="radio"
-            aria-checked={pinOn}
-            accessibilityLabel="Near me"
-            onPress={onNearMe}
-            style={[styles.pin, { backgroundColor: pinOn ? ds.c.ink : ds.c.raised }]}
-          >
-            <IconSymbol name="mappin.and.ellipse" size={18} color={pinOn ? ds.c.ground : ds.c.ink} />
-          </PressableScale>
-          <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => onChange({ kind: 'anywhere' })} />
-          {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={() => {}} /> : null}
+      <View style={styles.group}>
+        <Caption tone="muted">Location</Caption>
+        <View role="radiogroup" accessibilityLabel="Location" style={styles.where}>
+          <View style={styles.lead}>
+            <PressableScale
+              role="radio"
+              aria-checked={pinOn}
+              accessibilityLabel="Near me"
+              onPress={onNearMe}
+              style={[styles.pin, { backgroundColor: pinOn ? ds.c.ink : ds.c.raised }]}
+            >
+              <IconSymbol name="mappin.and.ellipse" size={18} color={pinOn ? ds.c.ground : ds.c.ink} />
+            </PressableScale>
+            <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => onChange({ kind: 'anywhere' })} />
+            {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={() => {}} /> : null}
+          </View>
+          {citiesRow?.length ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cities} contentContainerStyle={styles.chips}>
+              {citiesRow}
+            </ScrollView>
+          ) : null}
         </View>
-        {citiesRow?.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cities} contentContainerStyle={styles.chips}>
-            {citiesRow}
-          </ScrollView>
-        ) : null}
       </View>
       {note ? (
         <Caption tone="muted" role="status">
