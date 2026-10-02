@@ -27,9 +27,9 @@ export function ChipRow({ label, title, children }: { label: string; title?: str
 const cityKey = (c: { city: string; country_code: string }) => `${c.city}|${c.country_code}`;
 
 /**
- * "Where": a pin for near me (on by default), anywhere, then cities in a
- * quieter row. The pin asks for location; if that's refused, the area stays
- * put and a line says to pick a city.
+ * "Where": near me and anywhere sit at the left of the city chips. The pin
+ * asks for location; if that's refused, the area stays put and a line says
+ * to pick a city.
  */
 export function DiscoverArea({
   area,
@@ -58,39 +58,38 @@ export function DiscoverArea({
           ? "Couldn't find where you are. Pick a city instead, or try again."
           : null;
 
+  const citiesRow = cities?.map((c) => (
+    <Chip
+      key={cityKey(c)}
+      quiet
+      label={c.label}
+      selected={area.kind === 'city' && cityKey(area) === cityKey(c)}
+      onPress={() => onChange({ kind: 'city', city: c.city, country_code: c.country_code, label: c.label })}
+    />
+  ));
+
   return (
     <View style={styles.section}>
-      <View role="radiogroup" accessibilityLabel="Where" style={styles.chips}>
-        <PressableScale
-          role="radio"
-          aria-checked={pinOn}
-          accessibilityLabel="Near me"
-          onPress={onNearMe}
-          style={[styles.pin, { backgroundColor: pinOn ? ds.c.ink : ds.c.raised }]}
-        >
-          <IconSymbol name="mappin.and.ellipse" size={18} color={pinOn ? ds.c.ground : ds.c.ink} />
-        </PressableScale>
-        <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => onChange({ kind: 'anywhere' })} />
-        {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={() => {}} /> : null}
-      </View>
-      {cities?.length ? (
-        <View style={styles.group}>
-          <Caption tone="muted">City</Caption>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            <View role="radiogroup" accessibilityLabel="City" style={styles.chips}>
-              {cities.map((c) => (
-                <Chip
-                  key={cityKey(c)}
-                  quiet
-                  label={c.label}
-                  selected={area.kind === 'city' && cityKey(area) === cityKey(c)}
-                  onPress={() => onChange({ kind: 'city', city: c.city, country_code: c.country_code, label: c.label })}
-                />
-              ))}
-            </View>
-          </ScrollView>
+      <View role="radiogroup" accessibilityLabel="Where" style={styles.where}>
+        <View style={styles.lead}>
+          <PressableScale
+            role="radio"
+            aria-checked={pinOn}
+            accessibilityLabel="Near me"
+            onPress={onNearMe}
+            style={[styles.pin, { backgroundColor: pinOn ? ds.c.ink : ds.c.raised }]}
+          >
+            <IconSymbol name="mappin.and.ellipse" size={18} color={pinOn ? ds.c.ground : ds.c.ink} />
+          </PressableScale>
+          <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => onChange({ kind: 'anywhere' })} />
+          {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={() => {}} /> : null}
         </View>
-      ) : null}
+        {citiesRow?.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cities} contentContainerStyle={styles.chips}>
+            {citiesRow}
+          </ScrollView>
+        ) : null}
+      </View>
       {note ? (
         <Caption tone="muted" role="status">
           {note}
@@ -103,6 +102,9 @@ export function DiscoverArea({
 const styles = StyleSheet.create({
   section: { gap: space.md },
   group: { gap: space.sm },
+  where: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
+  lead: { flexDirection: 'row', gap: space.sm, alignItems: 'center', flexShrink: 0 },
+  cities: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   chips: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   pin: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });
