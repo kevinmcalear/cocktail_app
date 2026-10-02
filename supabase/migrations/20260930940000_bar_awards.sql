@@ -2561,7 +2561,13 @@ UNION ALL
 SELECT s.item_id, NULL, NULL, s.name, s.glass, s.ice, s.method FROM "seed_classics" s WHERE s.item_id IS NOT NULL;
 
 DELETE FROM "seed_targets" t
-WHERE t.item_id IS NULL OR EXISTS (SELECT 1 FROM "public"."recipes" r WHERE r.recipe_item_id = t.item_id);
+WHERE t.item_id IS NULL
+   OR EXISTS (SELECT 1 FROM "public"."recipes" r WHERE r.recipe_item_id = t.item_id)
+   OR EXISTS (
+        SELECT 1 FROM "public"."items" i
+        WHERE i.id = t.item_id AND i.bar_id IS NULL
+          AND i.notes ~ 'Spec (adapted )?from (Difford|Punch|Imbibe|The World''s 50 Best|50 Best)'
+      );
 
 ALTER TABLE "seed_lines" ADD COLUMN "item_id" uuid;
 UPDATE "seed_lines" l SET "item_id" = t.item_id

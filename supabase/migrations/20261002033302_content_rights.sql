@@ -102,3 +102,16 @@ UPDATE "public"."images"
 SET "credit" = 'Will Shenton, Bevvy / CC BY-SA 3.0',
     "source_url" = 'https://bevvy.co/articles/vermouth-101'
 WHERE "source_url" = 'https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg';
+
+-- Dropping those recipe lines can leave an ingredient with one parent, which
+-- the generics backfill would fill on a re-run. Do it here so that re-run
+-- still changes nothing, and production matches a fresh database.
+UPDATE "public"."items" i SET "generic_id" = p.parent_id
+FROM (
+    SELECT r.ingredient_item_id, min(r.parent_ingredient_id::text)::uuid AS parent_id
+    FROM "public"."recipes" r
+    WHERE r.parent_ingredient_id IS NOT NULL
+    GROUP BY r.ingredient_item_id
+    HAVING count(DISTINCT r.parent_ingredient_id) = 1
+) p
+WHERE i.id = p.ingredient_item_id AND i.item_type = 'ingredient' AND i.generic_id IS NULL AND p.parent_id <> i.id;
