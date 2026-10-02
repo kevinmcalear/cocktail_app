@@ -12,4 +12,8 @@ assert.equal(generated.stdout, file);
 assert.match(file, /Tanqueray London Dry Gin/);
 assert.match(file, /Guinness Draught/);
 assert.match(file, /Demerara Syrup/);
+assert.match(file, /\$q\$Cordial\$q\$, \$q\$ingredient\$q\$, \$q\$generic\$q\$/);
+assert.match(file, /\$q\$Guinness Draught\$q\$, \$q\$beer\$q\$, \$q\$product\$q\$, \$q\$.*?\$q\$, 4\.2, NULL, \$q\$Stout\$q\$, \$q\$beer\$q\$/);
+assert.match(file, /\$q\$Aspall Draught Cyder\$q\$, \$q\$beer\$q\$, \$q\$product\$q\$, \$q\$.*?\$q\$, 5\.5, NULL, NULL, NULL,/);
+assert.match(file, /\$q\$Empirical Ayuuk\$q\$, \$q\$ingredient\$q\$, \$q\$product\$q\$, \$q\$.*?\$q\$, 43, NULL,/);
 assert.doesNotMatch(file, /—|–/);

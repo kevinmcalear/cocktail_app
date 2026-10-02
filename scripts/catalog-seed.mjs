@@ -97,8 +97,18 @@ function aliasesFor(rows) {
   return kept;
 }
 
+// Beer styles that already exist as beer categories in supabase/seed_categories.sql.
+// A style that is not in this set stays uncategorised. Do not add categories here.
+const BEER_CATEGORY = new Set(['Amber Ale', 'IPA', 'Lager', 'Pale Ale', 'Pilsner', 'Porter', 'Saison', 'Sour', 'Stout', 'Wheat Beer']);
+
+function categoryOf(row) {
+  if (row.category) return row.category;
+  if (row.type === 'beer' && BEER_CATEGORY.has(row.style)) return row.style;
+  return null;
+}
+
 function domain(row) {
-  if (!row.category) return null;
+  if (!categoryOf(row)) return null;
   if (row.type === 'wine') return 'wine';
   if (row.type === 'beer') return 'beer';
   return 'spirit';
@@ -133,6 +143,10 @@ function build() {
     }
   }
   if (missing.length) throw new Error(`Recipe lines with no ingredient:\n${missing.join('\n')}`);
+  const dangling = rows
+    .filter((r) => r.type === 'ingredient' && r.generic && !known.has(String(r.generic).toLocaleLowerCase('en')))
+    .map((r) => `${r.name} -> ${r.generic}`);
+  if (dangling.length) throw new Error(`Generic with no ingredient:\n${dangling.join('\n')}`);
 
   const items = [];
   const aliasRows = [];
@@ -141,7 +155,7 @@ function build() {
   const steps = [];
   for (const row of rows) {
     items.push(
-      `(${q(row.name)}, ${q(row.type)}, ${q(row.role)}, ${q(row.description)}, ${num(row.abv)}, ${q(row.type === 'ingredient' ? row.generic : null)}, ${q(row.category)}, ${q(domain(row))}, ${q(row.maker)}, ${q(row.origin)})`,
+      `(${q(row.name)}, ${q(row.type)}, ${q(row.role)}, ${q(row.description)}, ${num(row.abv)}, ${q(row.type === 'ingredient' ? row.generic : null)}, ${q(categoryOf(row))}, ${q(domain(row))}, ${q(row.maker)}, ${q(row.origin)})`,
     );
     for (const alias of [...aliases.get(key(row.type, row.name))].sort((a, b) => a.localeCompare(b))) {
       aliasRows.push(`(${q(row.type)}, ${q(row.name)}, ${q(alias)})`);
