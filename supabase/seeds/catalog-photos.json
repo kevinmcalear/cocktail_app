@@ -2,17 +2,6 @@
   "photos": [
     {
       "item_type": "beer",
-      "name": "Affligem Blonde",
-      "role": "product",
-      "query": "Affligem Blonde bottle",
-      "file_title": "File:Affligem Blonde.png",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Affligem_Blonde.png",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Affligem_Blonde.png",
-      "mime": "image/png",
-      "credit": "Global Affligem Beer Marketing Team / Public domain"
-    },
-    {
-      "item_type": "beer",
       "name": "Amstel Lager",
       "role": "product",
       "query": "Amstel Lager bottle",
@@ -956,17 +945,6 @@
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Staropramen_Gran%C3%A1t.jpg",
       "mime": "image/jpeg",
       "credit": "cs:User:Pernak / CC BY-SA 3.0"
-    },
-    {
-      "item_type": "beer",
-      "name": "Steinlager",
-      "role": "product",
-      "query": "Steinlager bottle",
-      "file_title": "File:Steinlager Limited Edition All Blacks Bottle.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Steinlager_Limited_Edition_All_Blacks_Bottle.jpg",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Steinlager_Limited_Edition_All_Blacks_Bottle.jpg",
-      "mime": "image/jpeg",
-      "credit": "Lion New Zealand Ltd / CC BY 4.0"
     },
     {
       "item_type": "beer",
@@ -3460,10 +3438,10 @@
       "role": "product",
       "query": "Dolin Blanc vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -3471,10 +3449,10 @@
       "role": "product",
       "query": "Dolin Dry vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -3482,10 +3460,10 @@
       "role": "product",
       "query": "Dolin Rouge vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -5249,17 +5227,6 @@
     },
     {
       "item_type": "ingredient",
-      "name": "Lime Cordial",
-      "role": "generic",
-      "query": "lime cordial bottle",
-      "file_title": "File:Roses Lime NZ 2013 Label.JPG",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Roses_Lime_NZ_2013_Label.JPG",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Roses_Lime_NZ_2013_Label.JPG",
-      "mime": "image/jpeg",
-      "credit": "Coca-Cola Imatil (NZ) Ltd / Public domain"
-    },
-    {
-      "item_type": "ingredient",
       "name": "Lime Juice",
       "role": "generic",
       "query": "lime juice squeezed",
@@ -5869,10 +5836,10 @@
       "role": "product",
       "query": "Noilly Prat Extra Dry vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -5880,10 +5847,10 @@
       "role": "product",
       "query": "Noilly Prat Original Dry vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -5891,10 +5858,10 @@
       "role": "product",
       "query": "Noilly Prat Rouge vermouth bottle",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -6965,17 +6932,6 @@
     },
     {
       "item_type": "ingredient",
-      "name": "Rose's Lime Cordial",
-      "role": "product",
-      "query": "Rose's lime cordial bottle",
-      "file_title": "File:Roses Lime NZ 2013 Label.JPG",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Roses_Lime_NZ_2013_Label.JPG",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Roses_Lime_NZ_2013_Label.JPG",
-      "mime": "image/jpeg",
-      "credit": "Coca-Cola Imatil (NZ) Ltd / Public domain"
-    },
-    {
-      "item_type": "ingredient",
       "name": "Rosemary",
       "role": "generic",
       "query": "rosemary sprigs",
@@ -7746,17 +7702,6 @@
     },
     {
       "item_type": "ingredient",
-      "name": "Tartaric Acid",
-      "role": "generic",
-      "query": "tartaric acid powder",
-      "file_title": "File:Print, trade-card (BM 1957,0920.2).jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Print%2C_trade-card_(BM_1957%2C0920.2).jpg",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Print%2C_trade-card_%28BM_1957%2C0920.2%29.jpg",
-      "mime": "image/jpeg",
-      "credit": "https://www.britishmuseum.org/collection/object/P_1957-0920-2 / Public domain"
-    },
-    {
-      "item_type": "ingredient",
       "name": "Tawny Port",
       "role": "generic",
       "query": "tawny port wine glass",
@@ -7944,17 +7889,6 @@
     },
     {
       "item_type": "ingredient",
-      "name": "Tuaca",
-      "role": "product",
-      "query": "Tuaca bottle",
-      "file_title": "File:Tuaca 750 newbottle.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Tuaca_750_newbottle.jpg",
-      "download_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Tuaca_750_newbottle.jpg",
-      "mime": "image/jpeg",
-      "credit": "Brown-Forman Corporation / CC BY-SA 3.0"
-    },
-    {
-      "item_type": "ingredient",
       "name": "Tullamore D.E.W.",
       "role": "product",
       "query": "Tullamore D.E.W. Original Irish Whiskey bottle",
@@ -8069,10 +8003,10 @@
       "role": "generic",
       "query": "vermouth bottles",
       "file_title": "File:Vermouth Bottles.jpg",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Vermouth_Bottles.jpg",
+      "source_url": "https://bevvy.co/articles/vermouth-101",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Vermouth_Bottles.jpg",
       "mime": "image/jpeg",
-      "credit": "Will Shenton / CC BY-SA 3.0"
+      "credit": "Will Shenton, Bevvy / CC BY-SA 3.0"
     },
     {
       "item_type": "ingredient",
@@ -8826,6 +8760,11 @@
       "item_type": "beer",
       "name": "Aether Brewing XPA",
       "reason": "no_licensed_match"
+    },
+    {
+      "item_type": "beer",
+      "name": "Affligem Blonde",
+      "reason": "no_right"
     },
     {
       "item_type": "ingredient",
@@ -12643,6 +12582,11 @@
       "reason": "complex"
     },
     {
+      "item_type": "ingredient",
+      "name": "Lime Cordial",
+      "reason": "no_right"
+    },
+    {
       "item_type": "beer",
       "name": "Little Creatures Pale Ale",
       "reason": "no_licensed_match"
@@ -14344,6 +14288,11 @@
     },
     {
       "item_type": "ingredient",
+      "name": "Rose's Lime Cordial",
+      "reason": "no_right"
+    },
+    {
+      "item_type": "ingredient",
       "name": "Rosemary Syrup",
       "reason": "complex"
     },
@@ -14859,6 +14808,11 @@
     },
     {
       "item_type": "beer",
+      "name": "Steinlager",
+      "reason": "no_right"
+    },
+    {
+      "item_type": "beer",
       "name": "Stella Artois",
       "reason": "no_licensed_match"
     },
@@ -15021,6 +14975,11 @@
       "item_type": "ingredient",
       "name": "Tarquin's Cornish Dry Gin",
       "reason": "no_licensed_match"
+    },
+    {
+      "item_type": "ingredient",
+      "name": "Tartaric Acid",
+      "reason": "no_right"
     },
     {
       "item_type": "ingredient",
@@ -15366,6 +15325,11 @@
       "item_type": "beer",
       "name": "Truly Lemonade",
       "reason": "no_licensed_match"
+    },
+    {
+      "item_type": "ingredient",
+      "name": "Tuaca",
+      "reason": "no_right"
     },
     {
       "item_type": "beer",
@@ -15779,14 +15743,15 @@
     }
   ],
   "summary": {
-    "photos": 790,
-    "generics": 451,
-    "products": 339,
-    "skipped": 1417,
+    "photos": 784,
+    "generics": 449,
+    "products": 335,
+    "skipped": 1423,
     "skipped_reasons": {
       "no_licensed_match": 1236,
       "no_licensed_commons": 80,
-      "complex": 101
+      "complex": 101,
+      "no_right": 6
     },
     "note": "Metadata only. Apply with: node scripts/catalog-photos.mjs --apply (local). Production upload waits until catalog/products is on production and Kevin says OK (--remote)."
   }

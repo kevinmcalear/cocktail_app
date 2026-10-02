@@ -181,7 +181,7 @@
       "Ginger Beer",
       "Ginger Beer, To Top"
     ],
-    "description": "Spicy, sweet carbonated ginger drink, usually stronger than ginger ale. The mixer for a Moscow Mule, Dark and Stormy and many other ginger highballs.",
+    "description": "Spicy, sweet carbonated ginger drink, usually stronger than ginger ale. The mixer for a Moscow Mule and other ginger highballs.",
     "abv": 0,
     "generic": null,
     "category": null,
@@ -1305,7 +1305,7 @@
     "match": [
       "Fever-Tree or Fentimans"
     ],
-    "description": "Spicy Fever-Tree ginger beer with fresh ginger heat. A common Moscow Mule and Dark and Stormy mixer on craft back bars.",
+    "description": "Spicy Fever-Tree ginger beer with fresh ginger heat. A common Moscow Mule mixer on craft back bars.",
     "abv": 0,
     "generic": "Ginger Beer",
     "category": null,
@@ -1520,7 +1520,7 @@
     "type": "ingredient",
     "name": "Fentimans Ginger Beer",
     "match": [],
-    "description": "Brewed ginger beer from Fentimans with strong ginger and herbal flavour. A classic mule and stormy mixer in UK bars.",
+    "description": "Brewed ginger beer from Fentimans with strong ginger and herbal flavour. A classic mule mixer in UK bars.",
     "abv": 0,
     "generic": "Ginger Beer",
     "category": null,
@@ -1907,7 +1907,7 @@
     "type": "ingredient",
     "name": "Thomas Henry Ginger Beer",
     "match": [],
-    "description": "German ginger beer from Thomas Henry with firm spice and clean sweetness. A common European mule and stormy mixer.",
+    "description": "German ginger beer from Thomas Henry with firm spice and clean sweetness. A common European mule mixer.",
     "abv": 0,
     "generic": "Ginger Beer",
     "category": null,
