@@ -5983,7 +5983,13 @@ WHERE i.id = f.item_id AND i.riff_of_id IS NULL AND i.id <> c.id;
 
 -- --- Ingredient lines, only for drinks that have none ---
 
-DELETE FROM "fill_drinks" f WHERE EXISTS (SELECT 1 FROM "public"."recipes" r WHERE r.recipe_item_id = f.item_id);
+DELETE FROM "fill_drinks" f
+WHERE EXISTS (SELECT 1 FROM "public"."recipes" r WHERE r.recipe_item_id = f.item_id)
+   OR EXISTS (
+        SELECT 1 FROM "public"."items" i
+        WHERE i.id = f.item_id AND i.bar_id IS NULL
+          AND i.notes ~ 'Spec (adapted )?from (Difford|Punch|Imbibe|The World''s 50 Best|50 Best)'
+      );
 
 ALTER TABLE "fill_lines" ADD COLUMN "item_id" uuid;
 UPDATE "fill_lines" l SET "item_id" = f.item_id

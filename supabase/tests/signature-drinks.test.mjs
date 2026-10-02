@@ -61,12 +61,13 @@ describe('signature drinks', () => {
     assert.equal(rows[0].sketches, 0);
   });
 
-  test('every classic in the catalog has a description, its story and a spec', async () => {
+  test('every classic has a description and its story, and a spec unless the measures were borrowed', async () => {
     const { rows } = await db.query(`
       SELECT i.name FROM public.items i
       WHERE i.is_catalog AND i.name !~ ' [0-9a-f]{8}$' -- other test files' fixtures, named with a run id
         AND (i.description IS NULL OR i.notes IS NULL
-        OR NOT EXISTS (SELECT 1 FROM public.recipes r WHERE r.recipe_item_id = i.id))`);
+        OR (NOT EXISTS (SELECT 1 FROM public.recipes r WHERE r.recipe_item_id = i.id)
+            AND i.notes !~ 'Spec (adapted )?from (Difford|Punch|Imbibe|The World''s 50 Best|50 Best)'))`);
     assert.deepEqual(rows.map((r) => r.name), []);
   });
 

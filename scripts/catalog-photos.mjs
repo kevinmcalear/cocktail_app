@@ -30,6 +30,18 @@ const UA = 'CocktailAppCatalogPhotos/0.1 (catalog seed; https://github.com/kevin
 const LOCAL = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/;
 const MAX_BYTES = 12 * 1024 * 1024;
 
+// Company pack shots and a museum scan tagged free on Commons with no
+// permission behind them. Never attach these, even if a later resolve finds
+// the same file again.
+export const REFUSE_PHOTOS = new Set([
+  'beer\0Affligem Blonde',
+  'beer\0Steinlager',
+  'ingredient\0Rose\'s Lime Cordial',
+  'ingredient\0Lime Cordial',
+  'ingredient\0Tartaric Acid',
+  'ingredient\0Tuaca',
+]);
+
 const STOP = new Set([
   'aged', 'ale', 'amber', 'american', 'beer', 'blanc', 'blanco', 'blend', 'bottle', 'bottles',
   'bourbon', 'brandy', 'cask', 'champagne', 'classic', 'cream', 'creamy', 'dark', 'distillery',
@@ -198,13 +210,17 @@ async function resolvePhotos({ limit, only }) {
     return row.role === 'generic' || row.role === 'product';
   });
   const map = readMap();
-  const byKey = new Map(map.photos.map((p) => [`${p.item_type}\0${p.name}`, p]));
+  const byKey = new Map(map.photos.filter((p) => !REFUSE_PHOTOS.has(`${p.item_type}\0${p.name}`)).map((p) => [`${p.item_type}\0${p.name}`, p]));
   const skipped = [];
   let resolved = 0;
   let examined = 0;
 
   for (const row of rows) {
     const id = `${row.type}\0${row.name}`;
+    if (REFUSE_PHOTOS.has(id)) {
+      skipped.push({ item_type: row.type, name: row.name, reason: 'no_right' });
+      continue;
+    }
     if (byKey.has(id)) continue;
     if (examined >= limit) break;
     examined++;
@@ -259,7 +275,11 @@ async function resolvePhotos({ limit, only }) {
   const examinedKeys = new Set(
     rows.slice(0, examined).map((r) => `${r.type}\0${r.name}`),
   );
-  const priorSkips = (map.skipped || []).filter((s) => !examinedKeys.has(`${s.item_type}\0${s.name}`));
+  const priorSkips = (map.skipped || []).filter((s) => {
+    const id = `${s.item_type}\0${s.name}`;
+    if (skipped.some((n) => `${n.item_type}\0${n.name}` === id)) return false;
+    return !examinedKeys.has(id);
+  });
   const out = {
     photos: [...byKey.values()].sort((a, b) => a.item_type.localeCompare(b.item_type) || a.name.localeCompare(b.name)),
     skipped: [...priorSkips, ...skipped].sort((a, b) => a.name.localeCompare(b.name)),

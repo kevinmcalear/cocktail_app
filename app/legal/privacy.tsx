@@ -17,6 +17,9 @@ export default function PrivacyPolicy() {
             'Venue membership: which venues you belong to and your role in each.',
             'Diagnostics and usage: crash reports and app usage events (such as which screens are opened), with your device type, operating system and app version. These are linked to your account ID, never your name or email.',
             'On your device: your session, favourites, study list, recent activity and settings.',
+            'Location, only if you use nearby search: your device\'s position, rounded to about 110 metres before it is sent. It is used for that search and is not saved on your account.',
+            'Age check: the country you give and whether you meet that country\'s drinking age. Your date of birth is used for the check and is not stored.',
+            'What you choose to share publicly: a bar or bartender profile, drinks, and rankings.',
           ]}
         />
       </LegalSection>
@@ -75,8 +78,9 @@ export default function PrivacyPolicy() {
 
       <LegalSection heading="Age">
         <P>
-          {BRAND.productName} is for adults of legal drinking age who work in hospitality. It is not directed at anyone
-          under 18.
+          {BRAND.productName} is for adults of legal drinking age. When you confirm your age we ask for a date of birth
+          and a country, compare them with that country&apos;s drinking age, and store only the country, the age that
+          applied, and when you confirmed. The date of birth is not kept.
         </P>
       </LegalSection>
 

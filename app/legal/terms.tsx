@@ -57,6 +57,13 @@ export default function Terms() {
         </P>
       </LegalSection>
 
+      <LegalSection heading="Copyright complaints">
+        <P>
+          If you believe a page uses your work without permission, email <SupportEmail /> and name the page. We take
+          that content down while we review it.
+        </P>
+      </LegalSection>
+
       <LegalSection heading="Changes and contact">
         <P>
           We will update the date above when these terms change, and tell you in the app about significant changes.

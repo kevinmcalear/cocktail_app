@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
+  REFUSE_PHOTOS,
   commonsFilePage,
   formatCredit,
   licenseOk,
@@ -27,5 +31,22 @@ assert.equal(titleMatchesProduct('File:Random supermarket shelf.jpg', 'Tanqueray
 assert.equal(titleMatchesProduct('File:Guinness Draught.jpg', 'Guinness Draught', 'Guinness'), true);
 
 assert.match(commonsFilePage('File:Lemon.jpg'), /^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+assert.equal(REFUSE_PHOTOS.has('ingredient\0Tuaca'), true);
+assert.equal(REFUSE_PHOTOS.has('ingredient\0Gin'), false);
+
+const photoMap = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../supabase/seeds/catalog-photos.json'), 'utf8'),
+);
+for (const photo of photoMap.photos) {
+  assert.equal(REFUSE_PHOTOS.has(`${photo.item_type}\0${photo.name}`), false, photo.name);
+}
+const bevvy = photoMap.photos.filter(
+  (photo: { file_title: string; credit: string; source_url: string }) => photo.file_title === 'File:Vermouth Bottles.jpg',
+);
+assert.ok(bevvy.length > 0);
+for (const photo of bevvy) {
+  assert.equal(photo.credit, 'Will Shenton, Bevvy / CC BY-SA 3.0');
+  assert.equal(photo.source_url, 'https://bevvy.co/articles/vermouth-101');
+}
 
 console.log('catalog-photos.check.ts: ok');
