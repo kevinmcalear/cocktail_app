@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
     Image,
     ImageSourcePropType,
@@ -41,7 +41,7 @@ export function ImageCarousel({
 
     const [activeIndex, setActiveIndex] = useState(initialIndex);
     const [isZoomed, setIsZoomed] = useState(false);
-    const scrollViewRef = useRef<ScrollView>(null);
+    const scrollViewRef = useRef<ComponentRef<typeof ScrollView>>(null);
     const lastEmittedIndex = useRef<number>(-1);
 
     useEffect(() => {

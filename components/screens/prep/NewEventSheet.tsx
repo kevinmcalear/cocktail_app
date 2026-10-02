@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, Title, useDs } from '@/components/ds';
@@ -35,7 +35,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   const create = useCreateEvent();
   const defaults = tomorrowAt7();
   const [name, setName] = useState('');
-  const nameRef = useRef<TextInput>(null);
+  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [date, setDate] = useState(defaults.date);
   const [time, setTime] = useState(defaults.time);
   const [covers, setCovers] = useState('');

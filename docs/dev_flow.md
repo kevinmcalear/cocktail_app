@@ -56,7 +56,7 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 3. **The drink page:** colour-field hero, spec, photo angles with automatic sketches, locked sections by role, venue roles.
 4. **Venue operations:** prep tree with lead times, back bar map, order list, takeovers.
 5. **Study and batch.**
-6. **Expo SDK 58**, once it's stable.
+6. **Expo SDK 58.** React Native is still 0.88.0-rc.3, the build SDK 58.0.2 ships. `.npmrc` stays until that is a stable 0.88.0.
 7. **Home mode, then the public layer:** my bar, collections, profiles, credit and lineage, comparison rankings, moderation.
 8. **The gaps from steps 2 and 3:** venue brand settings with a live preview; the drink page's Service section.
 9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Cocktail edit, and beer and wine detail, still use the Tamagui layout until they are ported. Do not go looking for a redesign flag.

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ComponentRef } from 'react';
 import { FlatList, Modal, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,7 +22,7 @@ export function AddBottlesSheet({ visible, bottles, onShelf, onToggle, onClose }
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
-  const searchRef = useRef<TextInput>(null);
+  const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q ? bottles.filter((b) => b.name.toLowerCase().includes(q)) : bottles;

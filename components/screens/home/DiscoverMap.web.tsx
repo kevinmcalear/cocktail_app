@@ -1,7 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
@@ -62,7 +62,7 @@ function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: Disco
  * render, and never in native bundles), with OpenFreeMap tiles and HTML pins.
  */
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
-  const host = useRef<View>(null);
+  const host = useRef<ComponentRef<typeof View>>(null);
   const map = useRef<MapLibreMap | null>(null);
   const lib = useRef<MapLibre | null>(null);
   const markers = useRef(new Map<string, { marker: Marker; el: HTMLElement }>());

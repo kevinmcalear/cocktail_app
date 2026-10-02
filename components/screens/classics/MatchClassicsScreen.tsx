@@ -82,7 +82,7 @@ function MatchClassicsPage() {
             <Caption tone="muted" style={styles.footer}>
               {`${unmatched} other ${unmatched === 1 ? "drink doesn't" : "drinks don't"} look like a catalog classic. Open one and use Version of to choose.`}
             </Caption>
-          ) : null
+          ) : undefined
         }
       />
       <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>

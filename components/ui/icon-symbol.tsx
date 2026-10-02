@@ -3,7 +3,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { SFSymbol, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle, Platform, Text } from 'react-native';
+import { type ColorValue, type StyleProp, type TextStyle, Platform, Text } from 'react-native';
 
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 
@@ -115,7 +115,7 @@ export function IconSymbol({
 }: {
   name: IconSymbolName;
   size?: number;
-  color: string | OpaqueColorValue;
+  color: ColorValue;
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
@@ -128,5 +128,5 @@ export function IconSymbol({
   // Text until hydration is done.
   const isHydrated = useIsHydrated();
   if (!isHydrated) return <Text />;
-  return <MaterialIcons color={color} size={size} name={glyph} style={style} />;
+  return <MaterialIcons color={color as ComponentProps<typeof MaterialIcons>['color']} size={size} name={glyph} style={style} />;
 }

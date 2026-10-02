@@ -214,7 +214,7 @@ export function DiscoverScreen() {
             </View>
           </View>
         }
-        ListEmptyComponent={bar.isLoading ? null : <Body tone="muted">No drinks to show yet.</Body>}
+        ListEmptyComponent={bar.isLoading ? undefined : <Body tone="muted">No drinks to show yet.</Body>}
         renderItem={({ item }) => (
           <DrinkRow
             name={item.name}

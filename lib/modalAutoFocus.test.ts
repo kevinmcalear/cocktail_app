@@ -1,11 +1,11 @@
-import type { RefObject } from 'react';
+import type { ComponentRef, RefObject } from 'react';
 import { Keyboard, type TextInput } from 'react-native';
 
 import { focusInModal } from './modalAutoFocus';
 
 const fakeInput = () => {
   const input = { focus: jest.fn(), blur: jest.fn() };
-  return { input, ref: { current: input } as unknown as RefObject<TextInput | null> };
+  return { input, ref: { current: input } as unknown as RefObject<ComponentRef<typeof TextInput> | null> };
 };
 
 beforeEach(() => jest.useFakeTimers());

@@ -1,4 +1,3 @@
-import type { RefObject } from 'react';
 import { Keyboard, Platform } from 'react-native';
 
 /**
@@ -10,11 +9,15 @@ import { Keyboard, Platform } from 'react-native';
 export const MODAL_AUTOFOCUS = Platform.OS !== 'android';
 
 type Focusable = { focus(): void; blur(): void };
+// ponytail: Tamagui 2.7 types TamaguiElement with React Native 0.88's View
+// component rather than its instance, so a Tamagui input's ref is cast to this.
+// Drop the cast once Tamagui's types catch up.
+export type FocusableRef = { readonly current: Focusable | null };
 
 // ponytail: JS can't see when the Modal's window gains focus, so check for the
 // keyboard after a beat and ask again (blur first: focus() is a no-op on a focused
 // input). Upgrade path: a native onWindowFocusChanged hook if more sheets need it.
-export function focusInModal(input: RefObject<Focusable | null>, tries = 5, waitMs = 150) {
+export function focusInModal(input: FocusableRef, tries = 5, waitMs = 150) {
   input.current?.focus();
   setTimeout(() => {
     if (Keyboard.isVisible() || tries <= 1 || !input.current) return;

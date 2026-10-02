@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
@@ -23,7 +23,7 @@ interface PicturePagerProps {
  */
 export function PicturePager({ count, index, onIndexChange, renderPage, scrollEnabled = true, arrowsBottom }: PicturePagerProps) {
   const reduceMotion = useReducedMotion();
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
   const [width, setWidth] = useState(0);
   // The page the scroll position is on, so a change we reported isn't scrolled to again.
   const shown = useRef(index);

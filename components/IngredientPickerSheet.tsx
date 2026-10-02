@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
-import { focusInModal, MODAL_AUTOFOCUS } from "@/lib/modalAutoFocus";
+import { focusInModal, MODAL_AUTOFOCUS, type FocusableRef } from '@/lib/modalAutoFocus';
 import { capitalize } from "@/lib/stringUtils";
 
 export type IngredientPickerItem = {
@@ -61,7 +61,7 @@ export function IngredientPickerSheet({
             onClose={handleClose}
             title={title}
             maxHeight="80%"
-            onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef)}
+            onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef as unknown as FocusableRef)}
         >
             <View style={{ paddingHorizontal: 24 }}>
                 {/* key remounts so autoFocus runs each open */}

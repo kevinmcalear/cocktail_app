@@ -1,6 +1,6 @@
 import { toastDone } from '@/lib/toast';
 import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { Stack, useRouter, useLocalSearchParams, useNavigation } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams, usePreventRemove } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import {
     Alert,
@@ -62,7 +62,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const activeDraftIdProp = draftIdProp !== undefined ? draftIdProp : draftId;
     const activeBarIdProp = barIdProp !== undefined ? barIdProp : initialBarId;
     const attachToParentId = typeof attachTo === 'string' && attachTo ? attachTo : null;
-    const navigation = useNavigation();
     const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
@@ -72,8 +71,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(activeDraftIdProp || null);
 
     const [showExitModal, setShowExitModal] = useState(false);
-    const pendingNavigationActionRef = useRef<any>(null);
-    const isExitingRef = useRef(false);
+    const pendingExitRef = useRef<(() => void) | null>(null);
+    const [exiting, setExiting] = useState(false);
 
     // Form State
     const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
@@ -156,7 +155,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
     const draftLoadedRef = useRef<string | null>(null);
     const currentStateStr = JSON.stringify({ name, description, brandMaker, generic, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
-    const cleanStateStrRef = useRef<string>(currentStateStr);
+    const [cleanStateStr, setCleanStateStr] = useState(currentStateStr);
     const [needsCleanMark, setNeedsCleanMark] = useState(false);
 
     const trackedDraft = currentDraftId
@@ -179,7 +178,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
     useEffect(() => {
         if (needsCleanMark) {
-            cleanStateStrRef.current = currentStateStr;
+            setCleanStateStr(currentStateStr);
             setNeedsCleanMark(false);
         }
     }, [needsCleanMark, currentStateStr]);
@@ -267,23 +266,11 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         }
     };
 
-    useEffect(() => {
-        if (isInline) return;
-        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            if (isExitingRef.current) {
-                return;
-            }
-            const hasProgress = name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
-            if (!hasProgress) {
-                return;
-            }
-            e.preventDefault();
-            pendingNavigationActionRef.current = e.data.action;
-            setShowExitModal(true);
-        });
-
-        return unsubscribe;
-    }, [navigation, currentStateStr, name, currentDraftId, isInline]);
+    // Ask before leaving with unsaved work (on web this also guards closing the tab).
+    const allowExit = usePreventRemove(!isInline && !exiting && (name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStr), ({ repeat }) => {
+      pendingExitRef.current = repeat;
+      setShowExitModal(true);
+    });
 
     const confirmExit = async (shouldSave: boolean) => {
         setShowExitModal(false);
@@ -292,9 +279,9 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         }
         if (isInline) {
             if (onClose) onClose();
-        } else if (pendingNavigationActionRef.current) {
-            isExitingRef.current = true;
-            navigation.dispatch(pendingNavigationActionRef.current);
+        } else if (pendingExitRef.current) {
+            setExiting(true);
+            pendingExitRef.current();
         }
     };
 
@@ -414,7 +401,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
             Alert.alert("Success", "Ingredient created!", [
                 { text: "OK", onPress: () => {
-                    isExitingRef.current = true;
+                    setExiting(true);
+                    allowExit();
                     if (isInline) {
                         // ponytail: pop nested stack (onSave clears whole workspace)
                         if (onClose) onClose();
@@ -454,7 +442,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
 
     useEffect(() => {
         if (!isInline || !onChromeState) return;
-        const dirty = currentStateStr !== cleanStateStrRef.current;
+        const dirty = currentStateStr !== cleanStateStr;
         onChromeState({
             save: async () => {
                 await handleHeaderSave();
@@ -473,7 +461,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const handleBack = () => {
         if (isInline) {
             const hasProgress =
-                name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStrRef.current;
+                name.trim() !== "" || currentDraftId !== null || currentStateStr !== cleanStateStr;
             if (hasProgress) setShowExitModal(true);
             else onClose?.();
         } else {
@@ -481,7 +469,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         }
     };
 
-    const dirty = currentStateStr !== cleanStateStrRef.current;
+    const dirty = currentStateStr !== cleanStateStr;
 
     return (
         <BottomSheetModalProvider>

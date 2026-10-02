@@ -78,7 +78,7 @@ export function TonightScreen() {
               </Body>
               {active ? <Button label="See all menus" variant="secondary" onPress={openMenus} style={styles.emptyButton} /> : null}
             </View>
-          ) : null
+          ) : undefined
         }
       />
     </View>

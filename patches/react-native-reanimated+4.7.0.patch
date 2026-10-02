@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-reanimated/lib/module/ReanimatedModule/js-reanimated/JSReanimated.js b/node_modules/react-native-reanimated/lib/module/ReanimatedModule/js-reanimated/JSReanimated.js
+index 7f31935..c6b86e7 100644
+--- a/node_modules/react-native-reanimated/lib/module/ReanimatedModule/js-reanimated/JSReanimated.js
++++ b/node_modules/react-native-reanimated/lib/module/ReanimatedModule/js-reanimated/JSReanimated.js
+@@ -208,9 +208,7 @@ class JSReanimated {
+   setViewStyle(_viewTag, _style) {
+     throw new Error('[Reanimated] setViewStyle is not available in JSReanimated.');
+   }
+-  setCSSEventHandler(_handler) {
+-    throw new Error('[Reanimated] `setCSSEventHandler` is not available in JSReanimated.');
+-  }
++  setCSSEventHandler(_handler) {}
+   markNodeAsRemovable(_shadowNodeWrapper) {
+     throw new Error('[Reanimated] markNodeAsRemovable is not available in JSReanimated.');
+   }
+diff --git a/node_modules/react-native-reanimated/src/ReanimatedModule/js-reanimated/JSReanimated.ts b/node_modules/react-native-reanimated/src/ReanimatedModule/js-reanimated/JSReanimated.ts
+index e53b3e1..6621cad 100644
+--- a/node_modules/react-native-reanimated/src/ReanimatedModule/js-reanimated/JSReanimated.ts
++++ b/node_modules/react-native-reanimated/src/ReanimatedModule/js-reanimated/JSReanimated.ts
+@@ -283,9 +283,9 @@ class JSReanimated implements IReanimatedModule {
+   }
+ 
+   setCSSEventHandler(_handler: CSSEventHandler): void {
+-    throw new Error(
+-      '[Reanimated] `setCSSEventHandler` is not available in JSReanimated.'
+-    );
++    // ponytail: startup calls this, and the JS module throws. No-op matches
++    // the other unavailable CSS methods' practical effect under Jest. Drop
++    // this patch when Reanimated stops throwing here.
+   }
+ 
+   markNodeAsRemovable(_shadowNodeWrapper: ShadowNodeWrapper): void {

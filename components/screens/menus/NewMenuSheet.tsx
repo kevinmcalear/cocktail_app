@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { Body, Button, Caption, Field } from '@/components/ds';
@@ -40,7 +40,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const home = useMode().mode === 'home';
   const buildable = home ? [] : venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
   const [name, setName] = useState('');
-  const nameRef = useRef<TextInput>(null);
+  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [barId, setBarId] = useState<string | null>(buildable.some((v) => v.id === active?.id) ? active!.id : (buildable[0]?.id ?? null));
   const venueMenus = menus.filter((m) => m.barId === barId);
   const groups = groupMenus(venueMenus, now);

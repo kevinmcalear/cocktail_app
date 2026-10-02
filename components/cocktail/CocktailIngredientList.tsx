@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { Text, XStack, YStack, useTheme } from "tamagui";
@@ -68,8 +68,8 @@ function EditIngredientRow({
     const [editingMeasure, setEditingMeasure] = useState(!!autoFocusKey);
     const [editingName, setEditingName] = useState(!!autoFocusNameKey);
     const unitPickerOpenRef = useRef(false);
-    const amountRef = useRef<TextInput>(null);
-    const nameRef = useRef<TextInput>(null);
+    const amountRef = useRef<ComponentRef<typeof TextInput>>(null);
+    const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
     const committedNameRef = useRef(item.name);
     const measurement = [item.amount, item.unit || defaultUnit].filter(Boolean).join(" ");
     const muted = theme.color11?.get() as string;

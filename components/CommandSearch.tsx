@@ -33,7 +33,7 @@ import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import {
   FlatList,
   Keyboard,
@@ -206,7 +206,7 @@ export function CommandSearch({
   const theme = useTheme();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [queryInternal, setQueryInternal] = useState(initialQuery);
   const [filterInternal, setFilterInternal] = useState<CommandFilter>(initialFilter);
   const query = queryProp ?? queryInternal;

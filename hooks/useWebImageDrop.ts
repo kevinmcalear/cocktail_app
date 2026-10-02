@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef, type ComponentRef } from 'react';
 import { Platform, type View } from 'react-native';
 
 import { imageUrisFromDataTransfer } from '@/lib/imageDrop';
@@ -9,7 +9,7 @@ import { imageUrisFromDataTransfer } from '@/lib/imageDrop';
  * listens on its DOM node. Does nothing on native, or without `onUris`.
  */
 export function useWebImageDrop(onUris: ((uris: string[]) => void) | undefined, onActive?: (active: boolean) => void) {
-    const ref = useRef<View>(null);
+    const ref = useRef<ComponentRef<typeof View>>(null);
     const enabled = Platform.OS === 'web' && !!onUris;
     const dropped = useEffectEvent((uris: string[]) => onUris?.(uris));
     const active = useEffectEvent((value: boolean) => onActive?.(value));

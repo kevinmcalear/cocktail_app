@@ -63,4 +63,8 @@ jobs:
           deno-version: v2.x
       # Resolve npm: imports from Deno's cache like the edge runtime does,
       # rather than the app's node_modules (which this job doesn't install).
-      - run: deno check --node-modules-dir=none supabase/functions/*/index.ts
+      # Run inside supabase/functions so Deno stops at that folder's deno.json
+      # and does not try to install the app's package.json (expo 58 is newer
+      # than Deno's minimum dependency age).
+      - run: deno check --node-modules-dir=none */index.ts
+        working-directory: supabase/functions

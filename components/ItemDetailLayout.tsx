@@ -2,7 +2,8 @@ import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Modal, Platform, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
-import { GestureHandlerRootView, RectButton, Swipeable } from "react-native-gesture-handler";
+import { GestureHandlerRootView, RectButton } from "react-native-gesture-handler";
+import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -146,7 +147,7 @@ export function ItemDetailLayout({
         );
     }
 
-    const renderRightActions = (id: string, swipeable: Swipeable) => {
+    const renderRightActions = (id: string, swipeable: SwipeableMethods) => {
         return (
             <View style={styles.rightActionsContainer}>
                 <RectButton
@@ -175,7 +176,6 @@ export function ItemDetailLayout({
         );
     };
 
-    let swipeableRef: Swipeable | null = null;
     const isLargeScreen = windowWidth >= 768;
     // Phone hero: tall enough to set the mood, short enough that the spec starts above the fold.
     const heroHeight = Math.round(Math.min(windowWidth, windowHeight * 0.42));
@@ -517,8 +517,7 @@ export function ItemDetailLayout({
                     <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                         <View style={{ flex: 1 }}>
                             <Swipeable
-                                ref={(ref) => { swipeableRef = ref; }}
-                                renderRightActions={() => renderRightActions(id, swipeableRef!)}
+                                renderRightActions={(_progress, _translation, swipeable) => renderRightActions(id, swipeable)}
                                 friction={2}
                                 rightThreshold={40}
                                 overshootRight={false}
