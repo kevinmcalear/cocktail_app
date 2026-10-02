@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
+import { DiscoverDrinkFilters, DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
@@ -201,6 +201,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
       >
         <BottomSheetScrollView contentContainerStyle={[styles.sheet, { paddingBottom: bottomInset }]}>
           {selected ? <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} /> : null}
+          {byDrinks ? <DiscoverDrinkFilters kind={kind} onChange={onKind} /> : null}
           <Title role="heading">{title}</Title>
           {layers}
           {byDrinks ? <DiscoverKinds kind={kind} onChange={onKind} /> : null}

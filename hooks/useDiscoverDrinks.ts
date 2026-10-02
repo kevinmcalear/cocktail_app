@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { useFlavorCatalog } from '@/hooks/useFlavor';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { noteDimension } from '@/lib/flavor';
 import { supabase } from '@/lib/supabase';
 
 const PAGE = 1000;
@@ -106,8 +108,11 @@ async function readBars(): Promise<DiscoverBar[]> {
  */
 export function useDiscoverResults(filter: DrinkFilter) {
   const query = useDiscoverDrinks();
+  const catalog = useFlavorCatalog();
   const bars = query.data?.bars ?? [];
   const barsById = new Map(bars.map((b) => [b.id, b]));
-  const drinks = query.data ? filterDrinks(query.data.drinks, barsById, filter) : [];
-  return { drinks, bars, barsById, isLoading: query.isLoading, error: query.error };
+  const note = !!filter.kind && !!noteDimension(filter.kind);
+  const profiles = note ? new Map((catalog.data ?? []).map((d) => [d.id, d.profile])) : undefined;
+  const drinks = query.data ? filterDrinks(query.data.drinks, barsById, profiles ? { ...filter, profiles } : filter) : [];
+  return { drinks, bars, barsById, isLoading: query.isLoading || (note && catalog.isLoading), error: query.error };
 }
