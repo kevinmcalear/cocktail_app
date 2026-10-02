@@ -1394,7 +1394,7 @@
     "match": ["Ayuuk", "Empirical Ayuuk"],
     "description": "Spirit from Empirical flavoured only with smoked Pasilla Mixe chillies from Oaxaca and rested in oloroso sherry casks. Not an agave spirit, but smoky, savoury and fruity like mezcal.",
     "abv": 43,
-    "generic": "Spirit",
+    "generic": null,
     "category": null,
     "maker": "Empirical",
     "origin": "Denmark",
