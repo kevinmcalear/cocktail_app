@@ -116,13 +116,19 @@ FROM (
 ) p
 WHERE i.id = p.ingredient_item_id AND i.item_type = 'ingredient' AND i.generic_id IS NULL AND p.parent_id <> i.id;
 
--- Drink photos taken from Difford's, Punch and Imbibe. The credit on the
--- drink page is the site. Punch Room (the London bar) is not one of these.
+-- Cocktail photos saved from another website. A credit is not a licence.
+-- Wikimedia bottle photos and generated sketches are not in this set.
 WITH "doomed" AS (
-    SELECT "id", substring("url" FROM '/drinks/photos/(.+)$') AS "path"
-    FROM "public"."images"
-    WHERE "source_url" ~* 'diffordsguide\\.com|punchdrink\\.com|imbibemagazine\\.com'
-       OR "credit" IN ('Difford''s Guide', 'Punch', 'Imbibe')
+    SELECT img.id, substring(img.url FROM '/drinks/photos/(.+)$') AS "path"
+    FROM "public"."images" img
+    WHERE img.source_url IS NOT NULL
+      AND img.source_url !~* 'wikimedia\\.org'
+      AND EXISTS (
+          SELECT 1
+          FROM "public"."item_images" ii
+          JOIN "public"."items" i ON i.id = ii.item_id
+          WHERE ii.image_id = img.id AND i.item_type = 'cocktail'
+      )
 ),
 "files" AS (
     DELETE FROM "storage"."objects" o
