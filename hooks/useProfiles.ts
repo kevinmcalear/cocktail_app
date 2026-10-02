@@ -138,11 +138,7 @@ export function useMenuEditions(profileId: string | null | undefined) {
     queryKey: ['profile-menu-editions', profileId],
     enabled: !!profileId,
     queryFn: async (): Promise<MenuEdition[]> => {
-      const { data, error } = await supabase
-        .from('profile_menu_editions')
-        .select('id, name, year, month, theme, drinks, source_url')
-        .eq('profile_id', profileId!)
-        .limit(200);
+      const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
       if (error) throw error;
       return sortEditions((data ?? []) as MenuEdition[]);
     },
