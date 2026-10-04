@@ -95,6 +95,23 @@ describe("Caretaker's Cottage menus", () => {
     );
     assert.equal(doublethink.rows.length, 6);
     assert.deepEqual(doublethink.rows[0], { ingredient: 'Purple Carrot-Infused Tequila', generic: 'Tequila' });
+
+    // A bottle or prep the seed adds carries its generic on the item too,
+    // so the generics backfill (ingredient-generics.test.mjs) stays a no-op.
+    const { rows: bottles } = await db.query(
+      `SELECT i.name, g.name AS generic
+       FROM public.items i
+       LEFT JOIN public.items g ON g.id = i.generic_id
+       WHERE i.item_type = 'ingredient' AND i.bar_id IS NULL
+         AND i.name IN ('Purple Carrot-Infused Tequila', 'Chamomile-Infused Mezcal', 'Olive Oil-Washed Rye', 'Four Pillars Christmas Gin')
+       ORDER BY i.name`
+    );
+    assert.deepEqual(bottles, [
+      { name: 'Chamomile-Infused Mezcal', generic: 'Mezcal' },
+      { name: 'Four Pillars Christmas Gin', generic: 'Gin' },
+      { name: 'Olive Oil-Washed Rye', generic: 'Rye' },
+      { name: 'Purple Carrot-Infused Tequila', generic: 'Tequila' },
+    ]);
   });
 
   test('running it again adds nothing', async () => {

@@ -320,6 +320,22 @@ FROM "cc_lines" l
 JOIN "cc_ingredients" i ON i.key = lower(l.ingredient)
 LEFT JOIN "cc_ingredients" g ON g.key = lower(l.generic);
 
+-- A bottle or prep this adds is a kind of its parent (items.generic_id), as
+-- the generics backfill in 20260930960000 would make it on a re-run. Set it
+-- here so that re-run still changes nothing, and production matches a
+-- fresh database. Only ingredients these lines name, and only where every
+-- line that pours them agrees on one parent.
+UPDATE "public"."items" i SET "generic_id" = p.parent_id
+FROM (
+    SELECT r.ingredient_item_id, min(r.parent_ingredient_id::text)::uuid AS parent_id
+    FROM "public"."recipes" r
+    WHERE r.parent_ingredient_id IS NOT NULL
+      AND r.ingredient_item_id IN (SELECT ci.id FROM "cc_ingredients" ci JOIN "cc_lines" l ON ci.key = lower(l.ingredient))
+    GROUP BY r.ingredient_item_id
+    HAVING count(DISTINCT r.parent_ingredient_id) = 1
+) p
+WHERE i.id = p.ingredient_item_id AND i.item_type = 'ingredient' AND i.generic_id IS NULL AND p.parent_id <> i.id;
+
 -- --- The drinks on each menu ---
 
 CREATE TEMP TABLE "cc_menu_rows" AS
