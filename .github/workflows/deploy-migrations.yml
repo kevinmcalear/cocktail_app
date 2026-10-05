@@ -6,10 +6,11 @@ name: Deploy migrations
 # (workflow_dispatch) to catch production up when it is behind.
 #
 # Talks to the database directly through Supabase's session pooler, so it
-# needs two repository secrets: SUPABASE_PROJECT_ID (the project ref) and
-# SUPABASE_DB_PASSWORD (the database password). No access token: the
-# management API is not involved. Edge functions are not deployed here; that
-# stays a separate, human-gated step.
+# needs one repository secret, SUPABASE_DB_PASSWORD (the database password).
+# The project ref is public (it is the hostname every client calls) and
+# lives in PROJECT_REF below. No access token: the management API is not
+# involved. Edge functions are not deployed here; that stays a separate,
+# human-gated step.
 
 on:
   push:
@@ -22,42 +23,39 @@ concurrency:
   group: deploy-migrations
   cancel-in-progress: false
 
+env:
+  PROJECT_REF: uzrqriixgxbvhunwrwkn
+
 jobs:
   push:
     name: supabase db push
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
           version: latest
-      - name: Check the secrets are set
+      - name: Check the secret is set
         run: |
-          for name in SUPABASE_PROJECT_ID SUPABASE_DB_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository secret $name is not set. Add it under Settings > Secrets and variables > Actions."
-              exit 1
-            fi
-          done
-          if ! printf '%s' "$SUPABASE_PROJECT_ID" | grep -Eq '^[a-z]{20}$'; then
-            echo "::error::SUPABASE_PROJECT_ID should be the 20-letter project ref from Project Settings > General (got ${#SUPABASE_PROJECT_ID} characters)."
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::Repository secret SUPABASE_DB_PASSWORD is not set. Add it under Settings > Secrets and variables > Actions."
             exit 1
           fi
       # The project is in us-east-2. Which pooler cluster it sits on is only
       # shown in the dashboard, so try each: the wrong cluster answers
-      # "Tenant or user not found", a wrong password fails on all of them.
+      # "tenant/user not found", a wrong password fails on all of them. The
+      # direct host comes first in case the project has an IPv4 address.
       # The URL carries the password, so it is masked before any use.
       - name: Find the database
         run: |
           password=$(jq -rn --arg v "$SUPABASE_DB_PASSWORD" '$v|@uri')
           echo "::add-mask::$password"
-          for cluster in aws-1 aws-0; do
-            host="$cluster-us-east-2.pooler.supabase.com"
-            url="postgresql://postgres.$SUPABASE_PROJECT_ID:$password@$host:5432/postgres"
+          for host in "db.$PROJECT_REF.supabase.co" aws-1-us-east-2.pooler.supabase.com aws-0-us-east-2.pooler.supabase.com; do
+            case "$host" in db.*) user=postgres;; *) user="postgres.$PROJECT_REF";; esac
+            url="postgresql://$user:$password@$host:5432/postgres"
             echo "::add-mask::$url"
             if out=$(psql "$url" -Atc 'select 1' 2>&1); then
               echo "Connected through $host"
@@ -66,7 +64,7 @@ jobs:
             fi
             echo "$host: $out"
           done
-          echo "::error::Could not connect to the database. 'Tenant or user not found' on every cluster means the project is on another one; 'password authentication failed' means SUPABASE_DB_PASSWORD is wrong (reset it under Project Settings > Database)."
+          echo "::error::Could not connect to the database. 'tenant/user not found' on every host means the project is on another cluster; 'password authentication failed' means SUPABASE_DB_PASSWORD is wrong (reset it under Project Settings > Database)."
           exit 1
       - run: supabase migration list --db-url "$DB_URL"
       - run: supabase db push --db-url "$DB_URL"
