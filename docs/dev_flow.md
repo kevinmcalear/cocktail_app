@@ -46,7 +46,7 @@ Kevin merges when CI is green. There's no auto-merge. After merging a stack, ret
 
 Migrations, RLS, auth, `lib/roles.ts`, edge function deploys, production data, store submissions, and anything that spends money. Prepare and test these fully, then ask. See also [AGENTS.md](../AGENTS.md#how-we-work).
 
-Once a migration is merged with the `human-approved` label, the Deploy migrations workflow (`.github/workflows/deploy-migrations.yml`) runs `supabase db push` against production. It needs the `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and `SUPABASE_DB_PASSWORD` repository secrets, and can be run by hand from the Actions tab to catch production up.
+Once a migration is merged with the `human-approved` label, the Deploy migrations workflow (`.github/workflows/deploy-migrations.yml`) runs `supabase db push` against production, connecting to the database directly through the session pooler. It needs the `SUPABASE_PROJECT_ID` and `SUPABASE_DB_PASSWORD` repository secrets (no access token), and can be run by hand from the Actions tab to catch production up.
 
 ## The redesign roadmap
 
