@@ -47,6 +47,26 @@ jobs:
             echo "::error::SUPABASE_PROJECT_ID should be the 20-letter project ref from Project Settings > General (got ${#SUPABASE_PROJECT_ID} characters)."
             exit 1
           fi
+      # Diagnostic only (branch run): is the project live, does its direct
+      # host resolve over IPv4, and what does the management API say about
+      # it and its pooler. Prints hostnames and status codes, never a key.
+      - name: Diagnose the connection
+        run: |
+          ref="$SUPABASE_PROJECT_ID"
+          echo "REST endpoint status: $(curl -sS -o /dev/null -w '%{http_code}' "https://$ref.supabase.co/rest/v1/" || echo unreachable)"
+          echo "Direct host addresses:"; getent ahosts "db.$ref.supabase.co" || echo "  none"
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+            for path in "" "/config/database/pooler" "/postgrest" "/config/database/postgres"; do
+              code=$(curl -sS -o resp.json -w '%{http_code}' -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$ref$path" || echo unreachable)
+              echo "GET /v1/projects/{ref}$path -> $code"
+              jq -r 'if type=="array" then (map(.db_host // empty) | unique | map("  db_host=" + .) | .[]) elif has("status") then "  status=\(.status) region=\(.region // "")" elif has("message") then "  message=\(.message)" else "  keys: " + (keys|join(",")) end' resp.json 2>/dev/null || true
+              rm -f resp.json
+            done
+          else
+            echo "No SUPABASE_ACCESS_TOKEN secret; skipping the management API."
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       # The project is in us-east-2. Which pooler cluster it sits on is only
       # shown in the dashboard, so try each: the wrong cluster answers
       # "Tenant or user not found", a wrong password fails on all of them.
@@ -55,9 +75,9 @@ jobs:
         run: |
           password=$(jq -rn --arg v "$SUPABASE_DB_PASSWORD" '$v|@uri')
           echo "::add-mask::$password"
-          for cluster in aws-1 aws-0; do
-            host="$cluster-us-east-2.pooler.supabase.com"
-            url="postgresql://postgres.$SUPABASE_PROJECT_ID:$password@$host:5432/postgres"
+          for host in "db.$SUPABASE_PROJECT_ID.supabase.co" aws-1-us-east-2.pooler.supabase.com aws-0-us-east-2.pooler.supabase.com aws-2-us-east-2.pooler.supabase.com aws-3-us-east-2.pooler.supabase.com aws-0-us-east-1.pooler.supabase.com aws-1-us-east-1.pooler.supabase.com; do
+            case "$host" in db.*) user=postgres;; *) user="postgres.$SUPABASE_PROJECT_ID";; esac
+            url="postgresql://$user:$password@$host:5432/postgres"
             echo "::add-mask::$url"
             if out=$(psql "$url" -Atc 'select 1' 2>&1); then
               echo "Connected through $host"
