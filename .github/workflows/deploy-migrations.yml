@@ -44,6 +44,23 @@ jobs:
           done
         env:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      # Names the culprit before linking: a token scoped to the wrong
+      # organisation or project lists nothing here, and a wrong project ref
+      # fails the shape check. Neither prints the secret.
+      - name: Check the token sees the project
+        run: |
+          echo "Projects this token can see:"
+          supabase projects list
+          if ! printf '%s' "$SUPABASE_PROJECT_ID" | grep -Eq '^[a-z]{20}$'; then
+            echo "::error::SUPABASE_PROJECT_ID should be the 20-letter project ref from Project Settings > General (got ${#SUPABASE_PROJECT_ID} characters)."
+            exit 1
+          fi
+          if ! supabase projects list -o json | grep -q "\"$SUPABASE_PROJECT_ID\""; then
+            echo "::error::The access token cannot see project $SUPABASE_PROJECT_ID. Scope the token to the organisation and project that own it."
+            exit 1
+          fi
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       - run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
       - run: supabase migration list --linked
       - run: supabase db push
