@@ -13,7 +13,7 @@ Expo SDK 58 (RN 0.88.0-rc.3, React 19.3, React Compiler), Expo Router, Tamagui 2
 
 - **Branch, PR, CI, Kevin merges.** Never commit or push to `main`; a hook in `.claude/settings.json` blocks it. One step per PR; stack PRs when steps depend on each other.
 - **Verify the real thing before asking for review:** web at phone and desktop widths, plus the iOS simulator and Android when native code or layout changes. Put screenshots in the PR. Local recipes: [docs/dev_flow.md](docs/dev_flow.md#verify).
-- **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation.
+- **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation. A migration merged to main (which needs his `human-approved` label) is applied to production by the Deploy migrations workflow; that label is the OK. Edge functions are still deployed by hand.
 - **Public repo:** no emails, user data, secrets or unfixed security details in code, commits or PR text.
 - **One app, no old UI.** The Back Bar redesign is the app; the old screens and the redesign flag were removed in step 9. New screens build from `components/ds`. A large change that must reach people gradually can use a PostHog flag, but remove the old path in the PR that makes the new one the default.
 - **Parallel work:** foundation pieces (tokens, shared components, navigation) go in order in one session. Independent screens can be built in parallel worktrees once those land.
