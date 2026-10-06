@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
-import { sortEditions, type MenuEdition } from '@/lib/menuEditions';
+import { sortEditions, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
+import type { MenuDrink } from '@/types/menus';
 
 export interface Profile {
   id: string;
@@ -141,6 +143,25 @@ export function useMenuEditions(profileId: string | null | undefined) {
       const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
       if (error) throw error;
       return sortEditions((data ?? []) as MenuEdition[]);
+    },
+  });
+}
+
+/**
+ * The drinks on a menu edition with their ingredients and pictures, for
+ * signed-in readers. Signed out, a bar's own drinks aren't readable, so the
+ * menu shows their names (lib/menuEditions editionMenuDrinks).
+ */
+export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
+  const userId = useAuth().user?.id ?? null;
+  const ids = drinks.map((d) => d.id);
+  return useQuery({
+    queryKey: ['menu-edition-drinks', ids, userId],
+    enabled: !!userId && ids.length > 0,
+    queryFn: async (): Promise<MenuDrink[]> => {
+      const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
+      if (error) throw error;
+      return ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
     },
   });
 }

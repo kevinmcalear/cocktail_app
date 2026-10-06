@@ -1,3 +1,5 @@
+import type { MenuDrink } from '@/types/menus';
+
 /** A cocktail on a menu edition: the bar's own drink, not a bare name. */
 export interface MenuEditionDrink {
   id: string;
@@ -25,4 +27,15 @@ export function menuDate(edition: Pick<MenuEdition, 'year' | 'month'>): string {
 /** Newest menu first; a menu with only a year sorts after the dated ones that year. */
 export function sortEditions<T extends Pick<MenuEdition, 'year' | 'month' | 'name'>>(rows: T[]): T[] {
   return [...rows].sort((a, b) => b.year - a.year || (b.month ?? 0) - (a.month ?? 0) || a.name.localeCompare(b.name));
+}
+
+/**
+ * An edition's drinks as a menu sets them, in the edition's order: the full
+ * drink (ingredients, picture) when the reader could load it, else its name.
+ */
+export function editionMenuDrinks(drinks: MenuEditionDrink[], loaded: MenuDrink[]): MenuDrink[] {
+  const byId = new Map(loaded.map((d) => [d.id, d]));
+  return drinks.map(
+    (d) => byId.get(d.id) ?? { id: d.id, name: d.name, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null }
+  );
 }
