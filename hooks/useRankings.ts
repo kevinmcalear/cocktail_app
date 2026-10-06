@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { fetchPublished } from '@/hooks/usePublished';
 import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { SENTIMENTS, type Sentiment } from '@/lib/ranking';
@@ -42,6 +43,23 @@ const ENTRY_COLUMNS = `
 `;
 
 /**
+ * A bar's published drink you ranked as a guest: `items` hides it from you,
+ * so the embedded drink comes back empty. Fill its name and picture from
+ * published_items. One the bar has since unpublished stays empty.
+ */
+async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
+  const missing = [...new Set(rows.filter((r) => !r.item).map((r) => r.item_id))];
+  if (!missing.length) return rows;
+  const published = await fetchPublished(missing);
+  return rows.map((r) => {
+    const d = r.item ? null : published.find((p) => p.id === r.item_id);
+    if (!d) return r;
+    const item_images: ItemImageLink[] = d.imageUrl ? [{ angle: 'hero', is_generated: d.imageIsGenerated, images: { url: d.imageUrl } }] : [];
+    return { ...r, item: { name: d.name, item_images } };
+  });
+}
+
+/**
  * My list for a drink ("my martinis"), best first: loved, then fine, then
  * didn't like, each in rank_key order. Empty when signed out.
  */
@@ -58,7 +76,7 @@ export function useMyRankList(rankedAsItemId: string | null | undefined) {
         .order('rank_key', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
-      const rows = (data ?? []) as unknown as RankEntry[];
+      const rows = await withPublishedItems((data ?? []) as unknown as RankEntry[]);
       return rows.map((r) => ({ ...r, score: Number(r.score) })).sort((a, b) => SENTIMENTS.indexOf(a.sentiment) - SENTIMENTS.indexOf(b.sentiment));
     },
   });
@@ -86,7 +104,7 @@ export function useMyHadDrinks() {
     queryFn: async (): Promise<HadDrink[]> => {
       const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
       if (error) throw error;
-      return ((data ?? []) as unknown as HadRow[]).map(toHadDrink);
+      return (await withPublishedItems((data ?? []) as unknown as HadRow[])).map(toHadDrink);
     },
   });
 }
@@ -127,7 +145,11 @@ export interface RankTarget {
 export const signatureBarOf = (t: RankTarget | null | undefined) =>
   t && !t.bar_id && !t.created_by ? t.origin_bar_profile_id : null;
 
-/** The drink being ranked, with what it's a version of (for "my martinis"). */
+/**
+ * The drink being ranked, with what it's a version of (for "my martinis").
+ * A bar's published drink comes from published_items for anyone outside the
+ * bar, who can't read it in `items`.
+ */
 export function useRankTarget(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['rank-target', itemId],
@@ -139,7 +161,23 @@ export function useRankTarget(itemId: string | null | undefined) {
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as RankTarget | null;
+      if (data) return data as unknown as RankTarget;
+
+      const { data: pub, error: pubError } = await supabase
+        .from('published_items')
+        .select('id, name, bar_id, origin, riff_of_id, origin_bar_profile_id')
+        .eq('id', itemId!)
+        .eq('is_reference', false)
+        .maybeSingle();
+      if (pubError) throw pubError;
+      if (!pub) return null;
+      // The classic it's a version of is in the catalog, which everyone signed in can read.
+      const riff = pub.riff_of_id ? await supabase.from('items').select('id, name, is_catalog').eq('id', pub.riff_of_id).maybeSingle() : null;
+      if (riff?.error) throw riff.error;
+      // published_items doesn't say who made a drink. Signed in, a bar
+      // signature reads from `items`, so one with no bar here is a person's:
+      // don't default it to the bar it's credited to (signatureBarOf).
+      return { ...pub, origin_bar_profile_id: pub.bar_id ? pub.origin_bar_profile_id : null, riff_of: riff?.data ?? null, created_by: null } as RankTarget;
     },
   });
 }

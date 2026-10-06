@@ -81,10 +81,8 @@ before(async () => {
   ids.items.ownPrivate = await item({ name: `Kitchen Negroni ${run}`, created_by: users.ranker.id });
   ids.items.signature = await item({ name: `Gone Signature ${run}`, origin_bar_profile_id: ids.goneBarProfile });
 
-  // The ranker's lists, written through the app's own path (RLS), apart from
-  // the open bar's published drink: rank_entries only takes drinks the ranker
-  // can read in `items`, and a bar's published drink isn't one of those for a
-  // guest yet. The fixture stands in for when it is.
+  // The ranker's lists, written through the app's own path (RLS), the open
+  // bar's published drink too (20261006130000).
   const entry = (item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key) => ({ item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key, had_on: '2026-09-12' });
   const { classic, published, staffRiff, staffOriginal, ownPrivate, signature } = ids.items;
   const { error } = await users.ranker.client.from('rank_entries').insert([
@@ -93,12 +91,9 @@ before(async () => {
     entry(staffOriginal, staffOriginal, ids.staffBarProfile, 'fine', 0), // never named
     entry(ownPrivate, ownPrivate, null, 'disliked', 0), // never named
     entry(signature, signature, ids.goneBarProfile, 'fine', 0),
+    entry(published, published, ids.openBarProfile, 'loved', 0),
   ]);
   assert.ifError(error);
-  await db.query(
-    "INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key) VALUES ($1, $2, $2, $3, 'loved', 0)",
-    [users.ranker.id, published, ids.openBarProfile]
-  );
   const young = await db.query(
     "INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, sentiment, rank_key) VALUES ($1, $2, $2, 'loved', 0)",
     [users.unconfirmed.id, classic]

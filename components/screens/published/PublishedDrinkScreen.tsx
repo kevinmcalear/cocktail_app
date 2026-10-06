@@ -10,6 +10,7 @@ import { usePublishedDrink, type PublicBar } from '@/hooks/usePublished';
 import { hadOnLine } from '@/lib/collection';
 import { specLines } from '@/lib/spec';
 
+import { RankActions } from '../rank/RankActions';
 import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
@@ -44,7 +45,8 @@ export function MemoryCard({ memory, onEdit }: { memory: CollectedDrink; onEdit:
 /**
  * A published drink as anyone sees it, signed in or not: the menu card, and
  * the spec (generic ingredients and amounts) when the bar shares it. Collect
- * keeps it; your memory of it shows here once you have.
+ * keeps it, Rank it puts it in your list; your memory of it shows here once
+ * you've collected it.
  */
 export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?: string | null }) {
   const wide = useBreakpoint() !== 'phone';
@@ -64,13 +66,17 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const lines = specLines(data.recipes);
   const measured = lines.some((l) => l.amount);
   const who = bar?.name ?? 'The bar';
+  const picture = drink.imageUrl ? { url: drink.imageUrl, isSketch: drink.imageIsGenerated, isOutdated: false, credit: null, sourceUrl: null } : null;
 
   return (
     <PublicShell title={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} glass={data.glass?.iconKey ?? data.glass?.name}>
       <BarLink bar={bar} />
       <Display>{drink.name}</Display>
       {drink.description ? <Body tone="muted">{drink.description}</Body> : null}
-      <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={drink.name} />
+      <View style={styles.actions}>
+        <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={drink.name} />
+        <RankActions item={{ id, name: drink.name, bar_id: drink.barId }} picture={picture} />
+      </View>
       {mine ? <MemoryCard memory={mine} onEdit={() => setEditing(true)} /> : null}
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <View style={styles.section}>
@@ -98,6 +104,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
 
 const styles = StyleSheet.create({
   bar: { alignSelf: 'flex-start' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.sm },
   section: { gap: space.md },
   memory: { gap: space.xs, padding: space.lg },
   edit: { alignSelf: 'flex-start', marginTop: space.xs },
