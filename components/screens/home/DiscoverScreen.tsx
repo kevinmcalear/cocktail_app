@@ -7,7 +7,7 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
-import { DiscoverArea } from '@/components/screens/home/DiscoverArea';
+import { areaStatus, DiscoverArea } from '@/components/screens/home/DiscoverArea';
 import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
 import { DiscoverDrinkFilters, DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
@@ -17,7 +17,7 @@ import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
 import { NewFromBars } from '@/components/screens/home/NewFromBars';
 import { TopBars } from '@/components/screens/home/TopBars';
-import { space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
@@ -117,6 +117,7 @@ export function DiscoverScreen() {
 
   // Phones: the map fills the screen, with the results in a sheet over it.
   if (mapAvailable && !split && view === 'map') {
+    const note = areaStatus(near);
     return (
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
         <View style={{ paddingHorizontal: gutter }}>
@@ -132,12 +133,18 @@ export function DiscoverScreen() {
           onKind={setKind}
           bottomInset={bottom}
           top={
-            <GlassSurface style={styles.mapTop}>
-              <View style={styles.flex}>
-                <DiscoverArea area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
-              </View>
-              <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={() => setView('list')} />
-            </GlassSurface>
+            <View style={styles.mapBar}>
+              <GlassSurface style={styles.mapTop}>
+                <DiscoverArea compact area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
+                <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={() => setView('list')} />
+              </GlassSurface>
+              {note ? (
+                // On glass: bare text over the map is lost under the pins.
+                <GlassSurface style={styles.mapNote}>
+                  <Caption role="status">{note}</Caption>
+                </GlassSurface>
+              ) : null}
+            </View>
           }
         />
       </View>
@@ -258,7 +265,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },
-  mapTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, padding: space.sm },
+  mapBar: { gap: space.sm },
+  mapNote: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
+  mapTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.xs, height: layout.minTapTarget + space.xs * 2 },
   toggle: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   header: { gap: space.lg, paddingBottom: space.lg },
   add: { gap: space.sm, alignItems: 'flex-start', marginTop: space.md },
