@@ -69,11 +69,11 @@ assert.ok(instagramProblem('.ab'));
 assert.ok(instagramProblem('ab.'));
 assert.ok(instagramProblem('x'.repeat(31)));
 assert.deepEqual(profileLinks({ instagram: 'foo.bar', website: 'https://www.instagram.com/foo.bar/' }), [
-  { href: 'https://www.instagram.com/foo.bar/', label: 'instagram.com/foo.bar' },
+  { href: 'https://www.instagram.com/foo.bar/', network: 'instagram' },
 ]);
 assert.deepEqual(profileLinks({ instagram: 'foo.bar', website: 'https://example.com/bar/' }), [
-  { href: 'https://www.instagram.com/foo.bar/', label: 'instagram.com/foo.bar' },
-  { href: 'https://example.com/bar/', label: 'example.com/bar' },
+  { href: 'https://www.instagram.com/foo.bar/', network: 'instagram' },
+  { href: 'https://example.com/bar/', network: 'website' },
 ]);
 // Other networks follow Instagram in a fixed order; anything else is dropped.
 assert.deepEqual(
@@ -81,9 +81,10 @@ assert.deepEqual(
     instagram: 'foo.bar',
     website: 'https://foo.bar/',
     social_links: ['https://x.com/foobar', 'https://evil.example/x', 'https://www.facebook.com/foobar/', 'https://www.tiktok.com/@foo.bar'],
-  }).map((l) => l.label),
-  ['instagram.com/foo.bar', 'tiktok.com/@foo.bar', 'facebook.com/foobar', 'x.com/foobar', 'foo.bar'],
+  }).map((l) => l.network),
+  ['instagram', 'tiktok', 'facebook', 'x', 'website'],
 );
+// An old instagram.com website still gets the Instagram icon.
 assert.deepEqual(profileLinks({ instagram: null, website: 'https://www.instagram.com/still.here/' }), [
-  { href: 'https://www.instagram.com/still.here/', label: 'www.instagram.com/still.here' },
+  { href: 'https://www.instagram.com/still.here/', network: 'instagram' },
 ]);

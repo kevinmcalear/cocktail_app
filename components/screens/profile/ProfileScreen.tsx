@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, DsText, GlassButton, Headline, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, GlassButton, Headline, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
@@ -12,7 +12,7 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
-import { barsCrediting, profileLinks } from '@/lib/profiles';
+import { barsCrediting } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
@@ -20,6 +20,7 @@ import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
 import { Positions } from './Positions';
+import { ProfileLinks } from './ProfileLinks';
 import { WorkedMenus } from './WorkedMenus';
 import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
@@ -109,7 +110,6 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const onMenus = barsCrediting(credits);
   const unclaimed = isUnclaimed(profile);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
-  const links = profileLinks(profile);
 
   return (
     <View style={styles.body}>
@@ -130,15 +130,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
-        {links.length ? (
-          <View style={styles.links}>
-            {links.map((link) => (
-              <DsText key={link.href} variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(link.href)}>
-                {link.label}
-              </DsText>
-            ))}
-          </View>
-        ) : null}
+        <ProfileLinks profile={profile} />
       </View>
 
       <Stats>
@@ -199,7 +191,5 @@ const styles = StyleSheet.create({
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
-  links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: space.md, rowGap: space.xs },
-  link: { textDecorationLine: 'underline' },
   favourites: { gap: space.md },
 });

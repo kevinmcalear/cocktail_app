@@ -100,31 +100,31 @@ export function instagramProblem(raw: string): string | undefined {
 
 export const instagramUrl = (handle: string) => `https://www.instagram.com/${handle}/`;
 
-/** The other networks a profile can link, in the order they show. Matches profiles_social_links_format. */
-const SOCIAL = [
-  /^https:\/\/www\.tiktok\.com\/@[A-Za-z0-9._]+$/,
-  /^https:\/\/www\.facebook\.com\/(p\/)?[A-Za-z0-9.-]+\/$/,
-  /^https:\/\/x\.com\/[A-Za-z0-9_]+$/,
-  /^https:\/\/www\.youtube\.com\/(@|channel\/)[A-Za-z0-9._-]+$/,
-  /^https:\/\/www\.threads\.com\/@[A-Za-z0-9._]+$/,
-];
+export type LinkNetwork = 'instagram' | 'tiktok' | 'facebook' | 'x' | 'youtube' | 'threads' | 'website';
 
-const linkLabel = (url: string) => url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+/** The other networks a profile can link, in the order they show. Matches profiles_social_links_format. */
+const SOCIAL: [LinkNetwork, RegExp][] = [
+  ['tiktok', /^https:\/\/www\.tiktok\.com\/@[A-Za-z0-9._]+$/],
+  ['facebook', /^https:\/\/www\.facebook\.com\/(p\/)?[A-Za-z0-9.-]+\/$/],
+  ['x', /^https:\/\/x\.com\/[A-Za-z0-9_]+$/],
+  ['youtube', /^https:\/\/www\.youtube\.com\/(@|channel\/)[A-Za-z0-9._-]+$/],
+  ['threads', /^https:\/\/www\.threads\.com\/@[A-Za-z0-9._]+$/],
+];
 
 /**
  * Links under the name: Instagram, the other networks, then a real website.
  * An instagram.com website isn't shown twice, and a link to a network we don't know is dropped.
  */
-export function profileLinks(p: { instagram: string | null; website: string | null; social_links?: string[] | null }): { href: string; label: string }[] {
-  const links: { href: string; label: string }[] = [];
-  if (p.instagram) links.push({ href: instagramUrl(p.instagram), label: `instagram.com/${p.instagram}` });
-  for (const rule of SOCIAL) {
+export function profileLinks(p: { instagram: string | null; website: string | null; social_links?: string[] | null }): { href: string; network: LinkNetwork }[] {
+  const links: { href: string; network: LinkNetwork }[] = [];
+  if (p.instagram) links.push({ href: instagramUrl(p.instagram), network: 'instagram' });
+  for (const [network, rule] of SOCIAL) {
     const href = p.social_links?.find((url) => rule.test(url));
-    if (href) links.push({ href, label: linkLabel(href) });
+    if (href) links.push({ href, network });
   }
   const site = p.website?.trim() ?? '';
   if (/^https?:\/\//i.test(site) && !(p.instagram && /instagram\.com\//i.test(site))) {
-    links.push({ href: site, label: site.replace(/^https?:\/\//i, '').replace(/\/$/, '') });
+    links.push({ href: site, network: /instagram\.com\//i.test(site) ? 'instagram' : 'website' });
   }
   return links;
 }
