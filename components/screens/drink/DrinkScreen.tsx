@@ -201,7 +201,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   );
 
   const hero = (
-    <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} height={heroHeight} fade={!wide} />
+    <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />
   );
 
   return (

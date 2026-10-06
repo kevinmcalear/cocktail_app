@@ -46,6 +46,7 @@ export function TonightScreen() {
           <DrinkRow
             name={item.name}
             href={itemHref(item.category, item.id)}
+            itemId={item.id}
             imageUrl={item.imageUrl}
             glass={item.glass}
             caption={item.category !== 'Cocktail' ? item.category : undefined}

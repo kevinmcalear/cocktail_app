@@ -31,7 +31,7 @@ export function Favourites({ drinks, columns }: { drinks: HadDrink[]; columns: n
           onPress={() => router.push(href(d) as Href)}
           style={[styles.tile, { width: `${100 / columns}%` }]}
         >
-          <DrinkImage source={d.imageUrl} generated={d.isSketch} accessibilityLabel={d.name} />
+          <DrinkImage source={d.imageUrl} generated={d.isSketch} itemId={d.itemId} accessibilityLabel={d.name} />
           <DsText variant="headline" numberOfLines={2}>
             {d.name}
           </DsText>
@@ -70,6 +70,7 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
               <DrinkRow
                 name={d.name}
                 href={href(d)}
+                itemId={d.itemId}
                 imageUrl={d.imageUrl}
                 glass={null}
                 caption={caption}

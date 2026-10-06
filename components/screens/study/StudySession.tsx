@@ -102,7 +102,7 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
             {/* The picture shows the glass, so it waits for the answer. Without a photo the
                 placeholder would only repeat the glass and push the ratings off screen. */}
             {card.imageUrl && (!card.glass || picked !== null || revealed) ? (
-              <DrinkImage source={card.imageUrl} glass={card.glass?.icon ?? null} accessibilityLabel={card.name} aspectRatio={4 / 3} />
+              <DrinkImage source={card.imageUrl} glass={card.glass?.icon ?? null} itemId={card.id} accessibilityLabel={card.name} aspectRatio={4 / 3} />
             ) : null}
             {revealed ? (
               card.kind === 'cocktail' ? (

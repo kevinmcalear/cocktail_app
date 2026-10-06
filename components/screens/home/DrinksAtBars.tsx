@@ -25,6 +25,7 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
             key={d.id}
             name={d.name}
             href={itemHref('Cocktail', d.id)}
+            itemId={d.id}
             imageUrl={d.imageUrl}
             glass={null}
             caption={bar ? [bar.name, place(bar)].filter(Boolean).join(' · ') : undefined}
