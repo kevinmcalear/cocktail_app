@@ -4,10 +4,9 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
-import { menuDate, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
+import { menuDate, type MenuEdition } from '@/lib/menuEditions';
 
 const FIRST_MENUS = 6;
 
@@ -78,7 +77,7 @@ function SourceLink({ url, label, children }: { url: string | null; label: strin
   );
 }
 
-/** Every cocktail menu the bar has put out, newest first, with the month and year it launched. */
+/** Every cocktail menu the bar has put out, newest first, with the month and year it launched. Each opens its menu. */
 export function MenuHistory({ profileId, name }: { profileId: string; name: string }) {
   const { data = [], isLoading } = useMenuEditions(profileId);
   const [all, setAll] = useState(false);
@@ -89,7 +88,7 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
     <View style={styles.section}>
       <View role="list">
         {shown.map((m, i) => (
-          <EditionRow key={m.id} edition={m} current={i === 0} />
+          <EditionRow key={m.id} edition={m} current={i === 0} href={`/p/${profileId}/menus/${m.id}`} />
         ))}
       </View>
       {data.length > FIRST_MENUS && !all ? (
@@ -99,17 +98,18 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
   );
 }
 
-function EditionRow({ edition: m, current }: { edition: MenuEdition; current: boolean }) {
+function EditionRow({ edition: m, current, href }: { edition: MenuEdition; current: boolean; href: string }) {
   const ds = useDs();
-  const signedIn = !!useAuth().user;
+  const router = useRouter();
   const when = menuDate(m);
-  const drinkNames = m.drinks.map((d) => d.name).join(', ');
+  const drinkNames = m.drinks.map((d) => d.name);
   return (
-    <View role="listitem" style={[styles.edition, { borderBottomColor: ds.c.line }]}>
-      <View
-        accessible
-        accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, signedIn || !drinkNames ? null : `Drinks: ${drinkNames}`].filter(Boolean).join('. ')}
-        style={styles.editionText}
+    <View role="listitem">
+      <PressableScale
+        role="link"
+        accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, drinkNames.length ? `Drinks: ${drinkNames.join(', ')}` : null, 'Open the menu'].filter(Boolean).join('. ')}
+        onPress={() => router.push(href as Href)}
+        style={[styles.edition, { borderBottomColor: ds.c.line }]}
       >
         <View style={styles.head}>
           <DsText variant="headline" style={styles.flex}>
@@ -118,23 +118,12 @@ function EditionRow({ edition: m, current }: { edition: MenuEdition; current: bo
           <Caption tone={current ? 'ink' : 'muted'}>{when}</Caption>
         </View>
         {m.theme ? <Body tone="muted">{m.theme}</Body> : null}
-        {!signedIn && m.drinks.length ? <Caption tone="muted">{m.drinks.map((d) => d.name).join(' · ')}</Caption> : null}
-      </View>
-      {signedIn && m.drinks.length ? <DrinkNames drinks={m.drinks} /> : null}
-    </View>
-  );
-}
-
-/** Signed-in readers open the cocktail. The public drink page is only for a published spec, so signed-out readers get the names above. */
-function DrinkNames({ drinks }: { drinks: MenuEditionDrink[] }) {
-  const router = useRouter();
-  return (
-    <View style={styles.chips}>
-      {drinks.map((d) => (
-        <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(`/cocktail/${d.id}` as Href)}>
-          <Caption tone="muted">{d.name}</Caption>
-        </PressableScale>
-      ))}
+        {drinkNames.length ? (
+          <Caption tone="muted" numberOfLines={2}>
+            {drinkNames.join(' · ')}
+          </Caption>
+        ) : null}
+      </PressableScale>
     </View>
   );
 }
@@ -149,6 +138,5 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  editionText: { gap: space.xs },
   start: { alignSelf: 'flex-start' },
 });
