@@ -1,5 +1,6 @@
 // Signed-out visitors can read every column a profile page selects
-// (supabase/migrations/20261006120000_profile_instagram_anon.sql).
+// (supabase/migrations/20261006120000_profile_instagram_anon.sql,
+// 20261006200000_profile_social_links.sql).
 // anon reads profiles by column (20260927000000), so a new column the page
 // selects needs its own grant, or /p/<handle> fails for everyone signed out.
 // Runs against the local stack only: `npm run test:security`.
@@ -31,7 +32,7 @@ let profileId;
 before(async () => {
   const { data, error } = await service
     .from('profiles')
-    .insert({ kind: 'bar', handle: `cols${run}`, display_name: `Columns Bar ${run}`, instagram: `cols${run}`, is_public: true })
+    .insert({ kind: 'bar', handle: `cols${run}`, display_name: `Columns Bar ${run}`, instagram: `cols${run}`, social_links: [`https://www.tiktok.com/@cols${run}`], is_public: true })
     .select('id')
     .single();
   if (error) throw new Error(`fixture insert into profiles failed: ${error.message}`);
@@ -51,6 +52,7 @@ test('a signed-out visitor can select every column useProfile selects', async ()
   assert.ifError(error);
   assert.equal(data?.id, profileId);
   assert.equal(data.instagram, `cols${run}`);
+  assert.deepEqual(data.social_links, [`https://www.tiktok.com/@cols${run}`]);
 });
 
 test('each column on its own, so a failure names the missing grant', async () => {
@@ -60,4 +62,28 @@ test('each column on its own, so a failure names the missing grant', async () =>
     if (error) denied.push(`${column} (${error.code})`);
   }
   assert.deepEqual(denied, [], `anon can't select: ${denied.join(', ')}. Add GRANT SELECT ("<column>") ON "public"."profiles" TO "anon".`);
+});
+
+test('social_links takes only profile pages on the networks the app knows', async () => {
+  const set = (social_links) => service.from('profiles').update({ social_links }).eq('id', profileId);
+  for (const ok of [
+    ['https://www.facebook.com/cols.bar/', 'https://x.com/cols_bar', 'https://www.youtube.com/@cols', 'https://www.threads.com/@cols.bar'],
+    ['https://www.youtube.com/channel/UCabc-123_x', 'https://www.facebook.com/p/Cols-Bar-1000642/'],
+    null,
+  ]) {
+    const { error } = await set(ok);
+    assert.ifError(error);
+  }
+  for (const bad of [
+    ['https://evil.example/cols'],
+    ['javascript:alert(1)'],
+    ['https://www.instagram.com/cols/'],
+    ['https://x.com/cols https://evil.example'],
+    ['https://x.com/a,https://x.com/b'],
+    ['https://www.tiktok.com/@cols', null],
+    [],
+  ]) {
+    const { error } = await set(bad);
+    assert.equal(error?.code, '23514', `accepted ${JSON.stringify(bad)}`);
+  }
 });
