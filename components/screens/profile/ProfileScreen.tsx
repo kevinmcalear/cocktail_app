@@ -130,11 +130,15 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
-        {links.map((link) => (
-          <DsText key={link.href} variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(link.href)}>
-            {link.label}
-          </DsText>
-        ))}
+        {links.length ? (
+          <View style={styles.links}>
+            {links.map((link) => (
+              <DsText key={link.href} variant="caption" role="link" style={styles.link} onPress={() => Linking.openURL(link.href)}>
+                {link.label}
+              </DsText>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <Stats>
@@ -195,6 +199,7 @@ const styles = StyleSheet.create({
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
+  links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: space.md, rowGap: space.xs },
   link: { textDecorationLine: 'underline' },
   favourites: { gap: space.md },
 });

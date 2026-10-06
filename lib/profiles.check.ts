@@ -75,6 +75,15 @@ assert.deepEqual(profileLinks({ instagram: 'foo.bar', website: 'https://example.
   { href: 'https://www.instagram.com/foo.bar/', label: 'instagram.com/foo.bar' },
   { href: 'https://example.com/bar/', label: 'example.com/bar' },
 ]);
+// Other networks follow Instagram in a fixed order; anything else is dropped.
+assert.deepEqual(
+  profileLinks({
+    instagram: 'foo.bar',
+    website: 'https://foo.bar/',
+    social_links: ['https://x.com/foobar', 'https://evil.example/x', 'https://www.facebook.com/foobar/', 'https://www.tiktok.com/@foo.bar'],
+  }).map((l) => l.label),
+  ['instagram.com/foo.bar', 'tiktok.com/@foo.bar', 'facebook.com/foobar', 'x.com/foobar', 'foo.bar'],
+);
 assert.deepEqual(profileLinks({ instagram: null, website: 'https://www.instagram.com/still.here/' }), [
   { href: 'https://www.instagram.com/still.here/', label: 'www.instagram.com/still.here' },
 ]);
