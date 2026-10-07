@@ -21,6 +21,7 @@ export const RECIPE_UNITS: RecipeUnit[] = [
   { value: 'tsp', label: 'tsp', group: 'volume' },
   { value: 'tbsp', label: 'tbsp', group: 'volume' },
   { value: 'splash', label: 'splash', group: 'volume' },
+  { value: 'top', label: 'top', group: 'volume' },
   // Weight (specs weighed on a scale, e.g. Ethyl imports)
   { value: 'g', label: 'g', group: 'weight' },
   { value: 'kg', label: 'kg', group: 'weight' },
@@ -34,6 +35,8 @@ export const RECIPE_UNITS: RecipeUnit[] = [
   { value: 'wheel', label: 'wheel', group: 'count' },
   { value: 'slice', label: 'slice', group: 'count' },
   { value: 'cube', label: 'cube', group: 'count' },
+  { value: 'wedge', label: 'wedge', group: 'count' },
+  { value: 'rim', label: 'rim', group: 'count' },
 ];
 
 export function unitLabel(value: string | null | undefined, fallback = DEFAULT_UNIT): string {
