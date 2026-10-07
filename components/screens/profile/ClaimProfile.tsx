@@ -24,7 +24,7 @@ function claimError(error: unknown, kind: Profile['kind']): string {
  * unclaimed profile, with a note a moderator can check. Approval is on
  * /p/review-claims.
  */
-export function ClaimProfile({ profile }: { profile: Profile }) {
+export function ClaimProfile({ profile, label = 'Claim this profile' }: { profile: Profile; label?: string }) {
   const { user } = useAuth();
   const { venues } = useActiveVenue();
   const { data: claims } = useMyClaims(profile.id);
@@ -53,7 +53,7 @@ export function ClaimProfile({ profile }: { profile: Profile }) {
       <View style={styles.box}>
         {rejected ? <Caption tone="muted">Your last claim wasn’t approved. You can try again with more detail.</Caption> : null}
         <Button
-          label="Claim this profile"
+          label={label}
           variant="secondary"
           icon="checkmark"
           accessibilityHint={isBar ? 'Ask to manage this bar profile for your venue' : 'Ask to take over this profile as yours'}

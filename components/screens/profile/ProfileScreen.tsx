@@ -8,21 +8,25 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
+import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { barsCrediting } from '@/lib/profiles';
 
+import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
+import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
 import { WorkedMenus } from './WorkedMenus';
-import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
+import { BarScore, BarStats, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'shelf' | 'had' | 'bars';
 /** A person's page has the drinks they've had and how each bar did. */
@@ -109,6 +113,9 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const names = new Map(originals.map((d) => [d.id, d.name]));
   const onMenus = barsCrediting(credits);
   const unclaimed = isUnclaimed(profile);
+  // A bar whose page keeps its specs back (unclaimed, or not open): names, a lock, and why.
+  const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
+  const specsLocked = !person && pageLocksSpecs(profile.page_visibility, onTeam);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
 
   return (
@@ -133,18 +140,22 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <ProfileLinks profile={profile} />
       </View>
 
-      <Stats>
-        {had.data?.length ? <Stat value={hadStat.drinks} label={hadStat.drinks === 1 ? 'drink had' : 'drinks had'} /> : null}
-        <Stat value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} />
-        <Stat value={onMenus} label={onMenus === 1 ? 'bar menu' : 'bar menus'} />
-      </Stats>
+      {person ? (
+        <Stats>
+          {had.data?.length ? <Stat value={hadStat.drinks} label={hadStat.drinks === 1 ? 'drink had' : 'drinks had'} /> : null}
+          <Stat value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} />
+          <Stat value={onMenus} label={onMenus === 1 ? 'bar menu' : 'bar menus'} />
+        </Stats>
+      ) : (
+        <BarStats profile={profile} originals={originals.length} />
+      )}
 
       {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
       {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
 
-      {unclaimed ? <ClaimProfile profile={profile} /> : null}
+      {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 
       <Positions profile={profile} />
 
@@ -167,6 +178,13 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       ) : tab === 'originals' ? (
         isLoading ? (
           <Caption tone="muted">Loading drinks…</Caption>
+        ) : specsLocked ? (
+          <LockedOriginals
+            originals={originals}
+            selfId={profile.id}
+            details={pageShowsDescriptions(profile.page_visibility)}
+            emptyText="No drinks credited to this bar yet."
+          />
         ) : (
           <OriginalsGrid
             originals={originals}
@@ -180,6 +198,12 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       ) : (
         <ComingSoon text={profile.kind === 'bar' ? "What's on the back bar will show here." : "What's on their shelf will show here."} />
       )}
+      {specsLocked ? (
+        <SpecLockPanel
+          note={specLockNote(profile.display_name, unclaimed, false)}
+          action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null}
+        />
+      ) : null}
     </View>
   );
 }

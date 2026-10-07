@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
-import type { MenuCreditWithProfile, Original } from '@/hooks/useProfiles';
+import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { peopleCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
@@ -96,26 +96,33 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
 }
 
 /**
- * A bar's score: its drinks' scores averaged, weighted by how many people
- * ranked each. Early (under MIN_RANKERS people) says so, without a number.
+ * A bar's score is its drinks' scores averaged, weighted by how many people
+ * ranked each; it sits in BarStats. Early (under MIN_RANKERS people) says so
+ * here, without a number.
  */
 export function BarScore({ profileId }: { profileId: string }) {
   const { data } = useVenueScore(profileId);
-  if (!data) return null;
-  const people = peopleCount(data.rankers);
+  if (!data || data.score !== null) return null;
   const drinks = data.drinks === 1 ? '1 drink' : `${data.drinks} drinks`;
-  if (data.score === null) {
-    return (
-      <Caption tone="muted" align="center">
-        {`Early: ${people} ranked ${drinks} here so far. A bar score shows once ${MIN_RANKERS} people have.`}
-      </Caption>
-    );
-  }
   return (
-    <View accessible accessibilityLabel={`Bar score ${formatScore(data.score)} out of 10, from ${people} across ${drinks}`} style={styles.score}>
-      <Spec align="center">{formatScore(data.score)}</Spec>
-      <Caption tone="muted" align="center">{`Bar score · ${people} · ${drinks}`}</Caption>
-    </View>
+    <Caption tone="muted" align="center">
+      {`Early: ${peopleCount(data.rankers)} ranked ${drinks} here so far. A bar score shows once ${MIN_RANKERS} people have.`}
+    </Caption>
+  );
+}
+
+/** The numbers under a bar's name: its score once it has one, awards, people and originals. */
+export function BarStats({ profile, originals }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number }) {
+  const { data: score } = useVenueScore(profile.id);
+  const { data: awards = [] } = useProfileAwards(profile.id);
+  const { data: people = [] } = useProfilePositions(profile);
+  return (
+    <Stats>
+      {score?.score != null ? <Stat value={formatScore(score.score)} label="score" /> : null}
+      <Stat value={awards.length} label={awards.length === 1 ? 'award' : 'awards'} />
+      <Stat value={people.length} label={people.length === 1 ? 'person' : 'people'} />
+      <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} />
+    </Stats>
   );
 }
 
@@ -156,8 +163,7 @@ const styles = StyleSheet.create({
   menus: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  score: { alignItems: 'center' },
-  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
-  stat: { alignItems: 'center', minWidth: 72 },
+  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xl },
+  stat: { alignItems: 'center', minWidth: 64 },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });
