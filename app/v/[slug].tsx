@@ -5,11 +5,11 @@ import { ActivityIndicator } from 'react-native';
 import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
 
 import { AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
-import { JoinInvite } from '@/components/auth/JoinInvite';
 import { StaffLinkSignIn } from '@/components/auth/StaffLinkSignIn';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
-import { useMyBarInvite } from '@/hooks/useBarInvites';
+import { InviteWelcome } from '@/components/screens/onboarding/InviteWelcome';
+import { useMyInvites } from '@/hooks/useBarInvites';
 import { useBars } from '@/hooks/useBars';
 import { useVenueBranding, type VenueBranding } from '@/hooks/useVenueBranding';
 import { useVenueWebHead } from '@/hooks/useVenueWebHead';
@@ -102,7 +102,8 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   const mode = useInstallMode();
 
   const isMember = !!bars?.some((b) => b.bar_id === venue.id);
-  const invite = useMyBarInvite(isPending || isMember ? null : venue.id);
+  const invites = useMyInvites(!isPending && !isMember);
+  const invite = invites.data?.find((i) => i.bar_id === venue.id) ?? null;
 
   const enter = useCallback(() => {
     setSelectedContextIds([venue.id]);
@@ -115,7 +116,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
     if (isMember && mode === 'installed') enter();
   }, [isMember, mode, enter]);
 
-  if (isPending || invite.isLoading || (isMember && mode === 'installed')) return <Loading />;
+  if (isPending || invites.isLoading || (isMember && mode === 'installed')) return <Loading />;
 
   if (isError) {
     return (
@@ -125,7 +126,8 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
     );
   }
 
-  if (!isMember && invite.data) return <JoinInvite invite={invite.data} venueName={venue.name} brand={brand} />;
+  // Joining makes them a member, and the install step below takes over.
+  if (!isMember && invite) return <InviteWelcome invite={invite} setUp onJoined={() => {}} onDeclined={() => router.replace('/(tabs)')} />;
 
   if (!isMember) {
     return (

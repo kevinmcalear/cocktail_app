@@ -60,26 +60,9 @@ export function useRemoveInvite(barId: string) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
-      await queryClient.invalidateQueries({ queryKey: ['my-bar-invite', barId] });
       await queryClient.invalidateQueries({ queryKey: ['my-invites'] });
     },
     onError: () => {},
-  });
-}
-
-/** The signed-in person's own invite to this venue, if any (RLS matches their email). */
-export function useMyBarInvite(barId: string | null) {
-  const user = useAuth().user;
-  const email = user?.email?.toLowerCase() ?? null;
-  return useQuery({
-    queryKey: ['my-bar-invite', barId, user?.id],
-    enabled: !!barId && !!email,
-    staleTime: 0,
-    queryFn: async (): Promise<BarInvite | null> => {
-      const { data, error } = await supabase.from('bar_invites').select(COLUMNS).eq('bar_id', barId!).eq('email', email!).maybeSingle();
-      if (error) throw error;
-      return (data as BarInvite | null) ?? null;
-    },
   });
 }
 
@@ -93,7 +76,6 @@ export function useAcceptInvite(barId: string) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['bars'] });
-      await queryClient.invalidateQueries({ queryKey: ['my-bar-invite', barId] });
       await queryClient.invalidateQueries({ queryKey: ['my-invites'] });
     },
     onError: () => {},

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,31 +14,42 @@ import { roleLabel } from '@/lib/roles';
 
 interface InviteWelcomeProps {
   invite: MyInvite;
+  /** An account that's already set up (the staff link): no setup steps to list. */
+  setUp?: boolean;
   onJoined: () => void;
   onDeclined: () => void;
 }
 
 /**
- * Onboarding's first page for someone a venue invited, in the venue's own
- * brand: who invited them and as what, the three short steps, then accept
- * (the short setup follows) or decline (the invite goes, the usual setup runs).
+ * The welcome for someone a venue invited, in the venue's own brand: who
+ * invited them and as what, the three short steps, then accept (the short
+ * setup follows) or decline. Onboarding opens with it; the staff link shows
+ * it, without the steps, to an account that's already set up.
  */
 export function InviteWelcome(props: InviteWelcomeProps) {
-  const { invite } = props;
   return (
     <BackbarTheme>
-      <BrandProvider
-        accent={isHexColor(invite.bar_color) ? invite.bar_color : undefined}
-        displayFace={faceFromDb(invite.bar_display_face)}
-        groundTint={usableGroundTint(invite.bar_ground_tint) ?? undefined}
-      >
+      <InviteBrand invite={props.invite}>
         <Welcome {...props} />
-      </BrandProvider>
+      </InviteBrand>
     </BackbarTheme>
   );
 }
 
-function Welcome({ invite, onJoined, onDeclined }: InviteWelcomeProps) {
+/** The inviting venue's accent, display face and ground tint, for the welcome and the short setup after it. */
+export function InviteBrand({ invite, children }: { invite: MyInvite; children: ReactNode }) {
+  return (
+    <BrandProvider
+      accent={isHexColor(invite.bar_color) ? invite.bar_color : undefined}
+      displayFace={faceFromDb(invite.bar_display_face)}
+      groundTint={usableGroundTint(invite.bar_ground_tint) ?? undefined}
+    >
+      {children}
+    </BrandProvider>
+  );
+}
+
+function Welcome({ invite, setUp, onJoined, onDeclined }: InviteWelcomeProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -75,24 +87,28 @@ function Welcome({ invite, onJoined, onDeclined }: InviteWelcomeProps) {
               YOU’RE INVITED
             </Caption>
             <Display>{`Join ${invite.bar_name} as ${withArticle(roleLabel(invite.role_level))}`}</Display>
-            <Body tone="muted">{`${who} added you. Three quick steps and you’ll see tonight’s menu and every spec.`}</Body>
-            <View accessibilityLabel="Three steps" style={styles.steps}>
-              {INVITE_STEP_NAMES.map((name, i) => (
-                <View key={name} style={styles.step}>
-                  <View
-                    style={[
-                      styles.number,
-                      i === 0 ? { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong },
-                    ]}
-                  >
-                    <DsText variant="caption" color={i === 0 ? ds.accentFill.text : ds.c.muted}>
-                      {String(i + 1)}
-                    </DsText>
+            <Body tone="muted">
+              {`${who} added you. ${setUp ? 'Accept to see' : 'Three quick steps and you’ll see'} tonight’s menu and every spec.`}
+            </Body>
+            {setUp ? null : (
+              <View accessibilityLabel="Three steps" style={styles.steps}>
+                {INVITE_STEP_NAMES.map((name, i) => (
+                  <View key={name} style={styles.step}>
+                    <View
+                      style={[
+                        styles.number,
+                        i === 0 ? { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong },
+                      ]}
+                    >
+                      <DsText variant="caption" color={i === 0 ? ds.accentFill.text : ds.c.muted}>
+                        {String(i + 1)}
+                      </DsText>
+                    </View>
+                    <Body>{name}</Body>
                   </View>
-                  <Body>{name}</Body>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </View>
           <View style={styles.actions}>
             {accept.error || decline.error ? (

@@ -13,7 +13,7 @@ import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type Onboar
 import { useAppStore } from '@/store/useAppStore';
 
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
-import { InviteWelcome } from './InviteWelcome';
+import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, UnitsStep } from './ProfileSteps';
 
 const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
@@ -160,10 +160,13 @@ export function OnboardingScreen() {
     );
   }
 
-  return (
+  const page = (
     <SafetyPage title={copy.title} intro={copy.intro} kicker={joined ? inviteStepLabel(step) : null} noBack>
       {step === 'name' ? (
         <NameStep
+          // A taken handle can come back while this step is still showing (the
+          // invited path saves here), so remount it to show the handle field.
+          key={handleTaken ? 'handle' : 'name'}
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
           askPassword={askPassword}
@@ -203,6 +206,8 @@ export function OnboardingScreen() {
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
     </SafetyPage>
   );
+  // Joined: the short setup stays in the venue's colours.
+  return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
 }
 
 function Answer({ label, onPress }: { label: string; onPress: () => void }) {

@@ -210,6 +210,19 @@ describe('OnboardingScreen', () => {
     expect(mockFinish).toHaveBeenCalled();
   });
 
+  test('an invitee whose handle is taken gets the handle field on the same step', async () => {
+    mockInvites = [caretakers];
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockSaveName.mockImplementationOnce((_input, opts) => opts?.onError?.(new Error('That handle is taken. Try another.')));
+    await renderWithTamagui(<OnboardingScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByLabelText('Handle').props.value).toBe('sam.rivera');
+    await fireEvent.changeText(screen.getByLabelText('Handle'), 'sam.r');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockSaveName).toHaveBeenLastCalledWith({ name: 'Sam Rivera', handle: 'sam.r', profileId: null }, expect.anything());
+  });
+
   test('declining an invite runs the usual setup', async () => {
     mockInvites = [{ ...caretakers, bar_profile_id: null, role_level: 40, name: null, invited_by_name: null }];
     mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.());
