@@ -11,10 +11,6 @@
 -- Seeded drinks don't queue automatic sketches (nobody to bill for them).
 SET "app.image_worker" = 'on';
 
--- Nor flavour jobs: with CATALOG_AI_FILL=on each one is a paid AI fill and
--- drawing for a drink with no venue. The queue goes back to how it was at
--- the end; the backfill for these drinks runs separately, once it's OK'd.
-CREATE TEMP TABLE "bh_flavor_jobs" AS SELECT * FROM "private"."item_flavor_jobs";
 
 CREATE TEMP TABLE "bh_editions" ("handle" text, "name" text, "year" int, "month" int, "end_year" int, "end_month" int,
     "is_current" boolean, "source_url" text, "old_name" text, "old_year" int, "old_month" int);
@@ -18531,6 +18527,16 @@ WHERE p.kind = 'bar' AND p.handle IN (
 )
 ORDER BY p.handle, p.created_at;
 
+-- Nor flavour jobs, which ignore app.image_worker: with CATALOG_AI_FILL=on
+-- each one is a paid AI fill and drawing for a drink with no venue. Note
+-- these bars' drinks' jobs now; at the end the drinks this touched go back
+-- to them, and the rest of the queue is never touched. The backfill for
+-- these drinks runs separately, once it's OK'd.
+CREATE TEMP TABLE "bh_flavor_jobs" AS
+SELECT j.* FROM "private"."item_flavor_jobs" j
+JOIN "public"."items" i ON i.id = j.item_id
+WHERE i.item_type = 'cocktail' AND i.bar_id IS NULL AND i.origin_bar_profile_id IN (SELECT id FROM "bh_bars");
+
 -- --- Editions ---
 
 -- Corrections: the named existing edition takes the researched name and date,
@@ -18751,17 +18757,27 @@ BEGIN
     END IF;
 END $$;
 
--- --- Put the flavour queue back ---
+-- --- Put these drinks' flavour jobs back ---
+
+CREATE TEMP TABLE "bh_touched" AS
+SELECT item_id FROM "bh_drinks"
+UNION
+SELECT i.id FROM "public"."items" i
+JOIN "bh_bars" p ON i.origin_bar_profile_id = p.id
+JOIN "bh_renames" r ON r.handle = p.handle AND public.menu_name_key(i.name) = public.menu_name_key(r.to_name)
+WHERE i.item_type = 'cocktail' AND i.bar_id IS NULL;
 
 DELETE FROM "private"."item_flavor_jobs" j
-WHERE NOT EXISTS (SELECT 1 FROM "bh_flavor_jobs" o WHERE o.item_id = j.item_id);
+USING "bh_touched" t
+WHERE j.item_id = t.item_id AND NOT EXISTS (SELECT 1 FROM "bh_flavor_jobs" o WHERE o.item_id = j.item_id);
 UPDATE "private"."item_flavor_jobs" j SET
     "status" = o.status, "revision" = o.revision, "attempts" = o.attempts, "run_after" = o.run_after,
     "lease_until" = o.lease_until, "last_error" = o.last_error, "updated_at" = o.updated_at
 FROM "bh_flavor_jobs" o
-WHERE o.item_id = j.item_id AND o.revision <> j.revision;
+JOIN "bh_touched" t ON t.item_id = o.item_id
+WHERE j.item_id = o.item_id AND j.revision <> o.revision;
 
-DROP TABLE "bh_flavor_jobs", "bh_menu_rows", "bh_ingredients", "bh_bars", "bh_variants", "bh_glassware", "bh_removes", "bh_renames",
+DROP TABLE "bh_touched", "bh_flavor_jobs", "bh_menu_rows", "bh_ingredients", "bh_bars", "bh_variants", "bh_glassware", "bh_removes", "bh_renames",
     "bh_menu", "bh_lines", "bh_drinks", "bh_editions";
 
 RESET "app.image_worker";
