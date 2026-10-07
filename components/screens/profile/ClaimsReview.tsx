@@ -47,7 +47,11 @@ function ClaimsPage() {
       <WebHead>
         <title>Profile claims</title>
       </WebHead>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.readable}>
           <Title>Profile claims</Title>
           <Body tone="muted">People asking to take over a profile. Check what they gave against the page before you approve. A bar’s page starts Locked.</Body>

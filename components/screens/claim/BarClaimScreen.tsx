@@ -62,6 +62,8 @@ function ClaimPage({ profileRef }: { profileRef: string }) {
       </WebHead>
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
         <View style={styles.readable}>{body}</View>
