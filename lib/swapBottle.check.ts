@@ -6,7 +6,7 @@ const drink = (id: string, itemType: SwapDrink['itemType'], lines: SwapDrink['li
   id,
   name: id,
   itemType,
-  methodId: 'stir',
+  methodIds: ['stir'],
   lines,
 });
 const line = (id: string, ingredientId: string | null, genericId: string | null, amount = 30): SwapDrink['lines'][number] => ({

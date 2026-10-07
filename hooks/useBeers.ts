@@ -1,4 +1,5 @@
 import { useViewAs } from '@/hooks/useViewAs';
+import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
@@ -10,21 +11,19 @@ export function useBeers(options?: { allContexts?: boolean }) {
 
     return useQuery({
         queryKey: ['beers', selectedContextIds, options, viewAsRoleLevel],
-        queryFn: async () => {
-            let query = supabase
-                .from('app_item_presentation')
-                .select('*, item_images(sort_order,image_id,is_generated,outdated_since,images(id,url,palette)), item_categories(category_id)')
-                .eq('item_type', 'beer');
+        queryFn: () =>
+            allRows((from, to) => {
+                let query = supabase
+                    .from('app_item_presentation')
+                    .select('*, item_images(sort_order,image_id,is_generated,outdated_since,images(id,url,palette)), item_categories(category_id)')
+                    .eq('item_type', 'beer');
 
-            if (!options?.allContexts) {
-                query = applyBarContextFilter(query, selectedContextIds);
-            }
+                if (!options?.allContexts) {
+                    query = applyBarContextFilter(query, selectedContextIds);
+                }
 
-            const { data, error } = await query.order('name', { ascending: true });
-
-            if (error) throw error;
-            return data;
-        }
+                return query.order('name', { ascending: true }).order('id').range(from, to);
+            })
     });
 }
 

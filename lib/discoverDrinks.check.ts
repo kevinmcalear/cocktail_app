@@ -49,6 +49,10 @@ assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['negroni'], search: ''
 assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['gin'], search: '', area: anywhere })).sort(), ['4', '5']);
 assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'campari dante', area: anywhere })), ['2', '1'], 'every word matches, pictures first');
 assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'attaboy', area: anywhere })), ['3'], 'a bar name finds its drinks');
+// A drink on a menu now comes before a past one, even one with a picture; past drinks are still found.
+const past = { ...drink('6', 'Plum Negroni', 'dante', ['Campari'], '', null, 'p.jpg'), menu: { onNow: false, past: 'Past · Mar 2024 to Jan 2025', order: 2 } };
+const onNow = { ...drink('7', 'Negroni', 'dante', ['Campari']), menu: { onNow: true, past: null, order: 0 } };
+assert.deepEqual(ids(filterDrinks([past, onNow], bars, { kinds: [], search: 'negroni', area: anywhere })), ['7', '6']);
 assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour'], search: '', area: nearDante })), [], 'the Penicillin is too far');
 const bitter = Object.fromEntries(DIMENSIONS.map((d) => [d, d === 'bitter' ? 0.8 : 0])) as Profile;
 assert.deepEqual(

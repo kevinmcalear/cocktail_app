@@ -129,15 +129,8 @@ export function useCreateDrink() {
       const id = item.id as string;
 
       try {
-        await saveDrinkSpec(id, lines, methodIds[0] ?? null, null);
-        // ponytail: save_drink_spec takes one method; the rest follow it in
-        // order. Upgrade path: an array argument on the RPC (and the editor).
-        if (methodIds.length > 1) {
-          const { error } = await supabase
-            .from('item_methods')
-            .insert(methodIds.slice(1).map((method_item_id, i) => ({ item_id: id, method_item_id, sort_order: i + 1 })));
-          if (error) throw error;
-        }
+        // Every method, in order, in the same transaction as the spec.
+        await saveDrinkSpec(id, lines, methodIds, null);
       } catch (e) {
         await supabase.from('items').delete().eq('id', id);
         throw e;
@@ -146,6 +139,13 @@ export function useCreateDrink() {
       if (draft.publish) {
         const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
         if (error) warnings.push(plainDbMessage(error) ?? 'It’s saved as private: who can see it didn’t change.');
+      }
+
+      // Not the person credited first, and only people with a profile (the database checks both).
+      const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
+      if (coIds.length) {
+        const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
+        if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
       if (menuSectionId) {

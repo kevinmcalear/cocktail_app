@@ -1,5 +1,6 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { classifyMethod, type BatchMethod } from '@/lib/batch';
+import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import { formatIce, glassFit } from '@/lib/glass';
 import type { SpecLine } from '@/lib/spec';
@@ -46,7 +47,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     : null;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
   const family = find(dropdowns?.families as Named[], item.family_id);
-  const methods = (item.item_methods ?? []).map((m) => find(dropdowns?.methods as Named[], m.method_item_id)?.name).filter((n): n is string => !!n);
+  const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
   const method: BatchMethod = classifyMethod(methods);
   const strength: Strength | null = amounts ? drinkStrength(lines, method, { dilutionPct: item.dilution_pct, defaults: dilutionDefaults }) : null;
   const abv = specLocked ? null : formatAbv(item.abv);

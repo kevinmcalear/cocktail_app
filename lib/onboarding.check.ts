@@ -1,7 +1,7 @@
 // Checks for lib/onboarding.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, yearError } from './onboarding';
+import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, menuNameError, nameError, needsOnboarding, nextStep, passwordError, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
 
 assert.equal(needsOnboarding(null), false);
 assert.equal(needsOnboarding({}), false);
@@ -22,6 +22,23 @@ assert.equal(nextStep('past'), 'menus');
 assert.equal(nextStep('menus'), 'drinks');
 assert.equal(nextStep('drinks'), 'units');
 assert.equal(nextStep('units'), 'done');
+
+// Invited: accept, then name, units, done. Declining is the usual way.
+assert.equal(nextStep('name', 'no', true), 'units');
+assert.equal(nextStep('units', 'no', true), 'done');
+assert.equal(nextStep('invite'), 'name');
+assert.equal(nextStep('name'), 'hospitality');
+assert.equal(inviteStepLabel('name'), 'Step 1 of 3');
+assert.equal(inviteStepLabel('units'), 'Step 2 of 3');
+assert.equal(inviteStepLabel('invite'), null);
+assert.equal(inviteJobTitle(30), 'Bartender');
+assert.equal(inviteJobTitle(35), 'Drink Creator');
+assert.equal(inviteJobTitle(40), 'Team member');
+assert.equal(withArticle('Bartender'), 'a Bartender');
+assert.equal(withArticle('Admin'), 'an Admin');
+assert.equal(withArticle('Employee'), 'an Employee');
+assert.equal(passwordError('12345'), 'Use at least 6 characters.');
+assert.equal(passwordError('123456'), null);
 
 assert.equal(venueLabel({ display_name: 'Attaboy', locality: 'New York' }), 'Attaboy, New York');
 assert.equal(venueLabel({ display_name: 'Attaboy', locality: null, is_closed: true }), 'Attaboy, closed');

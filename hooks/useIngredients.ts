@@ -1,4 +1,5 @@
 import { useViewAs } from '@/hooks/useViewAs';
+import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,33 +14,38 @@ export function useIngredients(options?: { allContexts?: boolean }) {
 
     return useQuery({
         queryKey: ['ingredients', selectedContextIds, options, viewAsRoleLevel],
-        queryFn: async () => {
-            let query = supabase
-                .from('app_item_presentation')
-                .select(`
-                    *,
-                    item_images (
-                        sort_order,
-                        image_id,
-                        is_generated,
-                        outdated_since,
-                        images ( id, url, palette )
-                    ),
-                    item_categories (
-                        category_id
-                    )
-                `)
-                .eq('item_type', 'ingredient');
+        // ~5,400 rows: too big to save between launches (storage caps at a few MB).
+        meta: { persist: false },
+        queryFn: () =>
+            allRows((from, to) => {
+                // Only what search and the Creator Hub read: every column is ~6 MB.
+                let query = supabase
+                    .from('app_item_presentation')
+                    .select(`
+                        id,
+                        name,
+                        description,
+                        brand_maker,
+                        bar_id,
+                        hide_from_search,
+                        created_at,
+                        item_images (
+                            sort_order,
+                            is_generated,
+                            images ( url )
+                        ),
+                        item_categories (
+                            category_id
+                        )
+                    `)
+                    .eq('item_type', 'ingredient');
 
-            if (!options?.allContexts) {
-                query = applyBarContextFilter(query, selectedContextIds);
-            }
+                if (!options?.allContexts) {
+                    query = applyBarContextFilter(query, selectedContextIds);
+                }
 
-            const { data, error } = await query.order('name');
-                
-            if (error) throw error;
-            return data;
-        }
+                return query.order('name').order('id').range(from, to);
+            })
     });
 }
 

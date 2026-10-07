@@ -132,7 +132,10 @@ describe('the seed', () => {
        FROM public.items i
        JOIN public.profiles p ON p.id = i.origin_bar_profile_id
        LEFT JOIN public.items c ON c.id = i.riff_of_id
-       WHERE i.creator_profile_id IS NULL AND i.origin_bar_profile_id IS NOT NULL AND i.bar_id IS NULL AND i.created_by IS NULL`
+       WHERE i.creator_profile_id IS NULL AND i.origin_bar_profile_id IS NOT NULL AND i.bar_id IS NULL AND i.created_by IS NULL
+         -- Seeded rows only: test files run in parallel, and their fixtures
+         -- (a hidden bar's drink in menu-history.test.mjs) carry their run id.
+         AND p.handle !~ '[0-9a-f]{8}' AND p.display_name !~ '[0-9a-f]{8}'`
     );
     assert.ok(rows[0].n > 0, 'the seed added signature drinks');
     assert.equal(rows[0].bad, 0);

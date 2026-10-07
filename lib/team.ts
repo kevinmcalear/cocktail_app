@@ -42,3 +42,20 @@ export function roster<T extends { display_name?: string | null; email: string |
     : people.slice();
   return shown.sort((a, b) => personName(a).localeCompare(personName(b)) || (a.email ?? '').localeCompare(b.email ?? ''));
 }
+
+/**
+ * The roles an Admin can invite someone as, each with what it lets them do.
+ * Guest isn't offered: it's for people who only look at the menu.
+ */
+export const INVITE_ROLES: { level: number; detail: string }[] = [
+  { level: 20, detail: 'Sees menus and specs' },
+  { level: 30, detail: 'Plus prep notes and the staff list' },
+  { level: 35, detail: 'Adds and edits drinks and menus' },
+  { level: TEAM_MANAGE, detail: 'Everything, including the team' },
+];
+
+/** The invite button: "Email Sam an invite", by first name once there is one. */
+export function inviteButtonLabel(name: string): string {
+  const first = name.trim().split(/\s+/)[0];
+  return first ? `Email ${first} an invite` : 'Email an invite';
+}

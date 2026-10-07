@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title>You're invited</title>
+  <!-- Apple Mail loads these; other clients fall back to Georgia and the system sans. -->
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; supported-color-schemes: dark; }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#0E0D0C;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">{{ .Data.invite_bar }} invited you to the team.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0E0D0C" style="background-color:#0E0D0C;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:400px;">
+          <tr>
+            <td align="center" style="padding-bottom:24px;">
+              <img src="https://babyvom.it/icon-192.png" width="64" height="64" alt="" style="display:block;border:0;border-radius:22px;width:64px;height:64px;">
+            </td>
+          </tr>
+          <!-- Product name lives in constants/brand.json. -->
+          <tr>
+            <td align="center" style="padding-bottom:8px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:18px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#A59C90;">
+              Cocktail
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-bottom:8px;font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-size:34px;line-height:38px;color:#F3EEE6;">
+              You're invited
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-bottom:24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;line-height:24px;color:#A59C90;">
+              {{ if .Data.invite_name }}{{ .Data.invite_name }}, {{ end }}{{ .Data.invite_bar }} added you to the team as {{ .Data.invite_role }}.
+            </td>
+          </tr>
+          <tr>
+            <td bgcolor="#1A1816" style="background-color:#1A1816;border:1px solid #2F2D2B;border-radius:22px;padding:24px;">
+              <p style="margin:0 0 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;line-height:24px;color:#F3EEE6;text-align:center;word-break:break-word;">
+                Open the link to set up your account for {{ .Email }}. It takes a minute.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" bgcolor="#E4B062" style="background-color:#E4B062;border-radius:999px;">
+                    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=invite" style="display:block;padding:12px 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;line-height:20px;font-weight:600;color:#0E0D0C;text-decoration:none;text-align:center;">
+                      Join the team
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-top:24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:18px;color:#A59C90;">
+              If you don't know this bar, you can ignore this email.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

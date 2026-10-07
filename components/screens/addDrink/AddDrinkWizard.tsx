@@ -61,7 +61,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
   const clear = useDrinkWizardStore((s) => s.clear);
-  const draft: WizardDraft = kept?.draft ?? EMPTY_DRAFT;
+  // Filled out with today's fields: a draft kept by an older version of the app may lack some.
+  const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
   const [resumed, setResumed] = useState(() => hasContent(draft));
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -168,7 +169,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={sheetGap}
       testID="add-drink"
       onLayout={(e) => setHeight(e.nativeEvent.layout.height)}

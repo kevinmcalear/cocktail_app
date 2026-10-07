@@ -23,6 +23,8 @@ type Props = {
   retryLabel: string;
   waitingTitle?: string;
   waitingSubtitle?: string;
+  /** Shown instead of "Link required" when the page opens without a link (the staff link's sign-in). */
+  noLink?: ReactNode;
 };
 
 /**
@@ -37,6 +39,7 @@ export function EmailLinkGate({
   retryLabel,
   waitingTitle = 'Continue',
   waitingSubtitle = 'Tap below to finish — this keeps email previews from burning the link.',
+  noLink,
 }: Props) {
   const theme = useTheme();
   const [link, setLink] = useState<AuthLinkState | null>(null);
@@ -96,6 +99,8 @@ export function EmailLinkGate({
       </AuthShell>
     );
   }
+
+  if (!link.hasCredential && noLink) return <>{noLink}</>;
 
   if (!link.hasCredential) {
     return (
