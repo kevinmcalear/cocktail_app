@@ -2,7 +2,6 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
@@ -18,50 +17,28 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
-import { Button, Input, ScrollView, Separator, Text, XStack, YStack, useTheme } from 'tamagui';
-import { STATUS } from '@/constants/palette';
+import { useEffect, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { ChoiceChips, ChoiceRows, RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { layout, radius, space } from '@/constants/tokens';
 
-function Section({
-  title,
-  children,
-  minWidth = 320,
-}: {
-  title: string;
-  children: ReactNode;
-  minWidth?: number;
-}) {
+/** Settings: profile, venues, preferences and the account. */
+export function SettingsScreen() {
   return (
-    // ponytail: content-sized height — flex:1 + overflow:hidden was clipping the forms
-    <YStack gap="$3" flexGrow={1} flexBasis={minWidth} minWidth={minWidth} maxWidth="100%">
-      <Text
-        fontSize={12}
-        fontWeight="700"
-        color="$color11"
-        textTransform="uppercase"
-        letterSpacing={0.8}
-      >
-        {title}
-      </Text>
-      <YStack
-        backgroundColor="$backgroundStrong"
-        borderWidth={1}
-        borderColor="$borderColor"
-        borderRadius={12}
-        padding="$4"
-        gap="$4"
-      >
-        {children}
-      </YStack>
-    </YStack>
+    <BackbarTheme>
+      <Settings />
+    </BackbarTheme>
   );
 }
 
-export function SettingsScreen() {
-  const theme = useTheme();
+function Settings() {
+  const ds = useDs();
+  const gutter = useGutter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
@@ -97,6 +74,8 @@ export function SettingsScreen() {
     setDefaultSearchContext,
     defaultUnit,
     setDefaultUnit,
+    serviceMode,
+    toggleServiceMode,
   } = useSettingsStore();
   const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
@@ -219,317 +198,147 @@ export function SettingsScreen() {
     }
   };
 
-  const color = theme.color?.get() as string;
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
 
   const profilePanel = (
-    <Section title="Profile">
-      <XStack alignItems="center" gap="$4">
+    <SettingsSection title="Profile">
+      <View style={styles.who}>
         <Pressable onPress={pickImage} role="button" aria-label="Change profile photo">
-          <View>
-            <UserAvatar
-              uri={localImageUri || avatarUrl}
-              name={[firstName, lastName].filter(Boolean).join(' ')}
-              email={user?.email}
-              size={72}
-              borderWidth={1}
-              borderColor={theme.borderColor?.get() as string}
-            />
-          </View>
+          <UserAvatar
+            uri={localImageUri || avatarUrl}
+            name={fullName}
+            email={user?.email}
+            size={72}
+            borderWidth={1}
+            borderColor={ds.c.line}
+          />
         </Pressable>
-        <YStack flex={1} gap="$1">
-          <Text fontSize={16} fontWeight="600" color="$color">
-            {[firstName, lastName].filter(Boolean).join(' ') || user?.email || 'Account'}
-          </Text>
-          {!!user?.email && (
-            <Text fontSize={13} color="$color11">
-              {user.email}
-            </Text>
-          )}
-          <Pressable onPress={pickImage}>
-            <Text fontSize={13} color="$color8" fontWeight="600" marginTop="$1">
-              Change photo
-            </Text>
-          </Pressable>
-        </YStack>
-      </XStack>
+        <View style={styles.whoText}>
+          <Body>{fullName || user?.email || 'Account'}</Body>
+          {!!user?.email && <Caption tone="muted">{user.email}</Caption>}
+          <Button label="Change photo" variant="ghost" onPress={pickImage} style={styles.inlineButton} />
+        </View>
+      </View>
 
-      <XStack gap="$3" flexWrap="wrap">
-        <YStack flex={1} minWidth={140} gap="$1.5">
-          <Text fontSize={12} color="$color11">
-            First name
-          </Text>
-          <Input
-            value={firstName}
-            onChangeText={setFirstName}
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-          />
-        </YStack>
-        <YStack flex={1} minWidth={140} gap="$1.5">
-          <Text fontSize={12} color="$color11">
-            Last name
-          </Text>
-          <Input
-            value={lastName}
-            onChangeText={setLastName}
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-          />
-        </YStack>
-      </XStack>
+      <View style={styles.names}>
+        <View style={styles.name}>
+          <Field label="First name" value={firstName} onChangeText={setFirstName} autoComplete="given-name" />
+        </View>
+        <View style={styles.name}>
+          <Field label="Last name" value={lastName} onChangeText={setLastName} autoComplete="family-name" />
+        </View>
+      </View>
 
-      <YStack gap="$3">
-        <Text fontSize={13} fontWeight="600" color="$color">
-          Change password
-        </Text>
-        <PasswordField
-          label="New password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="New password"
-          autoComplete="new-password"
-          textContentType="newPassword"
-        />
-        <PasswordField
-          label="Confirm password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Confirm new password"
-          autoComplete="new-password"
-          textContentType="newPassword"
-        />
-      </YStack>
+      <Caption tone="muted" role="heading">
+        Change password
+      </Caption>
+      <PasswordField
+        label="New password"
+        value={password}
+        onChangeText={setPassword}
+        placeholder="New password"
+        autoComplete="new-password"
+        textContentType="newPassword"
+      />
+      <PasswordField
+        label="Confirm password"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        placeholder="Confirm new password"
+        autoComplete="new-password"
+        textContentType="newPassword"
+      />
 
       <Button
-        backgroundColor="$color8"
+        label={savingProfile ? 'Saving…' : 'Save profile'}
         onPress={saveProfile}
         disabled={savingProfile}
-        borderRadius={8}
-        height={44}
-        alignSelf="flex-start"
-        paddingHorizontal="$5"
-      >
-        {savingProfile ? (
-          <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-        ) : (
-          <Text color="$backgroundStrong" fontWeight="700">
-            Save profile
-          </Text>
-        )}
-      </Button>
-    </Section>
+        style={styles.start}
+      />
+    </SettingsSection>
   );
 
   const venuesPanel = (
-    <Section title="Venues">
+    <SettingsSection title="Venues">
       {barsLoading ? (
         <ListRowsSkeleton rows={3} />
       ) : userBars?.length === 0 && !showCreateBar ? (
-        <Text color="$color11">You are not a member of any venues yet.</Text>
+        <Body tone="muted">You are not a member of any venues yet.</Body>
       ) : (
-        <YStack gap="$2">
-          {userBars?.map((ub: any) => {
+        <View>
+          {userBars?.map((ub: any, i: number) => {
             const bar = Array.isArray(ub.bars) ? ub.bars[0] : ub.bars;
             const name = bar?.name || 'Venue';
             const logo = bar?.logo_url;
             const open = expandedBarId === ub.bar_id;
             return (
-              <YStack key={ub.bar_id} gap="$2">
-                <Pressable
+              <View key={ub.bar_id}>
+                {i > 0 ? <RowDivider /> : null}
+                <SettingsRow
+                  label={name}
+                  detail={roleLabel(ub.role_level)}
+                  role="button"
+                  expanded={open}
                   onPress={() => setExpandedBarId(open ? null : ub.bar_id)}
-                >
-                  <XStack
-                    alignItems="center"
-                    gap="$3"
-                    paddingVertical="$2"
-                    paddingHorizontal="$2"
-                    borderRadius={8}
-                    backgroundColor={open ? '$backgroundHover' : 'transparent'}
-                  >
-                    {logo ? (
-                      <Image
-                        source={{ uri: logo }}
-                        style={{ width: 32, height: 32, borderRadius: 6 }}
-                      />
-                    ) : (
-                      <IconSymbol name="building.2.fill" size={20} color={color} />
-                    )}
-                    <YStack flex={1}>
-                      <Text fontSize={15} fontWeight="600" color="$color">
-                        {name}
-                      </Text>
-                      <Text fontSize={12} color="$color11">
-                        {roleLabel(ub.role_level)}
-                      </Text>
-                    </YStack>
-                    <IconSymbol
-                      name={open ? 'chevron.down' : 'chevron.right'}
-                      size={18}
-                      color={theme.color11?.get() as string}
-                    />
-                  </XStack>
-                </Pressable>
+                  icon="building.2.fill"
+                  leading={logo ? <Image source={{ uri: logo }} style={styles.logo} /> : undefined}
+                />
                 {open ? (
-                  <YStack
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={10}
-                    padding="$2"
-                    backgroundColor="$background"
-                  >
-                    <BarInlineEditor
-                      barId={ub.bar_id}
-                      embedded
-                      onClose={() => setExpandedBarId(null)}
-                    />
-                  </YStack>
+                  <View style={[styles.venueEditor, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]}>
+                    <BarInlineEditor barId={ub.bar_id} embedded onClose={() => setExpandedBarId(null)} />
+                  </View>
                 ) : null}
-              </YStack>
+              </View>
             );
           })}
-        </YStack>
+        </View>
       )}
 
-      <Separator borderColor="$borderColor" />
+      <RowDivider />
 
       {showCreateBar ? (
-        <YStack gap="$3">
-          <Input
-            value={newBarName}
-            onChangeText={setNewBarName}
-            placeholder="New venue name"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-          />
-          <XStack gap="$2">
+        <View style={styles.createBar}>
+          <Field label="Venue name" value={newBarName} onChangeText={setNewBarName} placeholder="New venue name" />
+          <View style={styles.pair}>
+            <Button label={creatingBar ? 'Creating…' : 'Create'} onPress={createBar} disabled={creatingBar} style={styles.fill} />
             <Button
-              flex={1}
-              backgroundColor="$color8"
-              onPress={createBar}
-              disabled={creatingBar}
-              borderRadius={8}
-            >
-              {creatingBar ? (
-                <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-              ) : (
-                <Text color="$backgroundStrong" fontWeight="700">
-                  Create
-                </Text>
-              )}
-            </Button>
-            <Button
-              flex={1}
-              backgroundColor="$background"
-              borderWidth={1}
-              borderColor="$borderColor"
+              label="Cancel"
+              variant="secondary"
               onPress={() => {
                 setShowCreateBar(false);
                 setNewBarName('');
               }}
-              borderRadius={8}
-            >
-              <Text color="$color">Cancel</Text>
-            </Button>
-          </XStack>
-        </YStack>
+              style={styles.fill}
+            />
+          </View>
+        </View>
       ) : (
-        <Button
-          backgroundColor="$background"
-          borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius={8}
-          icon={<IconSymbol name="plus" size={16} color={color} />}
-          onPress={() => setShowCreateBar(true)}
-          alignSelf="flex-start"
-          paddingHorizontal="$4"
-        >
-          <Text color="$color" fontWeight="600">
-            Create venue
-          </Text>
-        </Button>
+        <Button label="Create venue" variant="secondary" icon="plus" onPress={() => setShowCreateBar(true)} style={styles.start} />
       )}
-    </Section>
+    </SettingsSection>
   );
 
   const appearancePanel = (
-    <Section title="Appearance" minWidth={240}>
-      <XStack gap="$2">
-        {THEME_MODES.map(({ id, label }) => {
-          const selected = themeMode === id;
-          return (
-            <Pressable
-              key={id}
-              onPress={() => setThemeMode(id)}
-              style={{ flex: 1 }}
-              role="radio"
-              aria-checked={selected}
-              aria-label={`${label} appearance`}
-            >
-              <YStack
-                alignItems="center"
-                justifyContent="center"
-                paddingVertical="$3"
-                borderRadius={8}
-                backgroundColor={selected ? '$color8' : '$background'}
-                borderWidth={1}
-                borderColor={selected ? '$color8' : '$borderColor'}
-              >
-                <Text
-                  fontSize={13}
-                  fontWeight={selected ? '700' : '500'}
-                  color={selected ? '$backgroundStrong' : '$color'}
-                >
-                  {label}
-                </Text>
-              </YStack>
-            </Pressable>
-          );
-        })}
-      </XStack>
-    </Section>
+    <SettingsSection title="Appearance" minWidth={240}>
+      <ChoiceChips label="Appearance" options={THEME_MODES} value={themeMode} onChange={setThemeMode} />
+    </SettingsSection>
   );
 
   const unitsPanel = (
-    <Section title="Default unit" minWidth={240}>
-      <Text fontSize={12} color="$color11">
-        Used for new recipe ingredients
-      </Text>
-      <XStack gap="$2">
-        {DEFAULT_UNIT_OPTIONS.map(({ id, label }) => {
-          const selected = defaultUnit === id;
-          return (
-            <Pressable
-              key={id}
-              onPress={() => setDefaultUnit(id)}
-              style={{ flex: 1 }}
-              role="radio"
-              aria-checked={selected}
-            >
-              <YStack
-                alignItems="center"
-                justifyContent="center"
-                paddingVertical="$3"
-                borderRadius={8}
-                backgroundColor={selected ? '$color8' : '$background'}
-                borderWidth={1}
-                borderColor={selected ? '$color8' : '$borderColor'}
-              >
-                <Text
-                  fontSize={13}
-                  fontWeight={selected ? '700' : '500'}
-                  color={selected ? '$backgroundStrong' : '$color'}
-                >
-                  {label}
-                </Text>
-              </YStack>
-            </Pressable>
-          );
-        })}
-      </XStack>
-    </Section>
+    <SettingsSection title="Default unit" note="Used for new recipe ingredients" minWidth={240}>
+      <ChoiceChips label="Default unit" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
+    </SettingsSection>
+  );
+
+  const servicePanel = (
+    <SettingsSection title="Behind the bar" minWidth={240}>
+      <SwitchRow
+        label="Service mode"
+        detail="Keeps the screen awake on specs and uses larger spec type."
+        value={serviceMode}
+        onValueChange={toggleServiceMode}
+      />
+    </SettingsSection>
   );
 
   const pickDefaultSearch = (value: string) => {
@@ -548,222 +357,127 @@ export function SettingsScreen() {
   ];
 
   const searchFilterPanel = (
-    <Section title="Default search filter" minWidth={240}>
-      <Text fontSize={12} color="$color11">
-        Applied when the app opens
-      </Text>
-      <YStack gap="$2">
-        {searchDefaultOptions.map(({ id, label }) => {
-          const selected = defaultSearchContext === id;
-          return (
-            <Pressable
-              key={id}
-              onPress={() => pickDefaultSearch(id)}
-              role="radio"
-              aria-checked={selected}
-            >
-              <XStack
-                alignItems="center"
-                justifyContent="space-between"
-                paddingVertical="$2.5"
-                paddingHorizontal="$3"
-                borderRadius={8}
-                backgroundColor={selected ? '$color8' : '$background'}
-                borderWidth={1}
-                borderColor={selected ? '$color8' : '$borderColor'}
-              >
-                <Text
-                  fontSize={14}
-                  fontWeight={selected ? '700' : '500'}
-                  color={selected ? '$backgroundStrong' : '$color'}
-                >
-                  {label}
-                </Text>
-                {selected && (
-                  <IconSymbol
-                    name="checkmark"
-                    size={16}
-                    color={theme.backgroundStrong?.get() as string}
-                  />
-                )}
-              </XStack>
-            </Pressable>
-          );
-        })}
-      </YStack>
-    </Section>
+    <SettingsSection title="Default search filter" note="Applied when the app opens" minWidth={240}>
+      <ChoiceRows
+        label="Default search filter"
+        options={searchDefaultOptions}
+        value={defaultSearchContext}
+        onChange={pickDefaultSearch}
+      />
+    </SettingsSection>
   );
 
-
-  const linkRow = (label: string, onPress: () => void) => (
-    <Pressable role="link" onPress={onPress}>
-      <XStack alignItems="center" justifyContent="space-between">
-        <Text fontSize={15} color="$color">
-          {label}
-        </Text>
-        <IconSymbol name="chevron.right" size={16} color={color} />
-      </XStack>
-    </Pressable>
-  );
+  const linkRow = (label: string, onPress: () => void) => <SettingsRow label={label} onPress={onPress} />;
 
   const accountPanel = (
-    <Section title="Account" minWidth={240}>
-      {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
-      {linkRow('Terms of use', () => router.push('/legal/terms'))}
-      <SafetyLinks row={linkRow} />
-      <Separator />
-      <Pressable role="button" disabled={deletingAccount} onPress={() => void deleteAccount()}>
-        <XStack alignItems="center" justifyContent="space-between">
-          <YStack flex={1}>
-            <Text fontSize={15} fontWeight="600" color="$red10">
-              Delete account
-            </Text>
-            <Text fontSize={12} color="$color11">
-              Permanently remove your account and personal data
-            </Text>
-          </YStack>
-          {deletingAccount ? <ActivityIndicator color={STATUS.danger} /> : null}
-        </XStack>
-      </Pressable>
-    </Section>
+    <SettingsSection title="Account" minWidth={240}>
+      <View>
+        {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
+        {linkRow('Terms of use', () => router.push('/legal/terms'))}
+        <SafetyLinks row={linkRow} />
+        <RowDivider />
+        <SettingsRow
+          label="Delete account"
+          detail="Permanently remove your account and personal data"
+          tone="danger"
+          role="button"
+          busy={deletingAccount}
+          trailing={<View />}
+          onPress={() => void deleteAccount()}
+        />
+      </View>
+    </SettingsSection>
   );
 
   const viewAsPanel =
     viewAsChoices.length === 0 ? null : (
-      <Section title="View as" minWidth={280}>
-        <Text fontSize={12} color="$color11">
-          Preview menus and recipes as a lower permission level
-        </Text>
-        <YStack gap="$2">
-          <Pressable
-            disabled={viewAsSaving}
-            onPress={() => {
-              void setViewAsRoleLevel(null);
-            }}
-          >
-            <XStack
-              alignItems="center"
-              justifyContent="space-between"
-              paddingVertical="$2.5"
-              paddingHorizontal="$3"
-              borderRadius={8}
-              backgroundColor={viewAsRoleLevel == null ? '$color8' : '$background'}
-              borderWidth={1}
-              borderColor={viewAsRoleLevel == null ? '$color8' : '$borderColor'}
-            >
-              <Text
-                fontSize={14}
-                fontWeight={viewAsRoleLevel == null ? '700' : '500'}
-                color={viewAsRoleLevel == null ? '$backgroundStrong' : '$color'}
-              >
-                Off ({roleLabel(maxRealRole)})
-              </Text>
-            </XStack>
-          </Pressable>
-          {viewAsChoices.map(({ level, label }) => {
-            const selected = viewAsRoleLevel === level;
-            return (
-              <Pressable
-                key={level}
-                disabled={viewAsSaving}
-                onPress={() => {
-                  void setViewAsRoleLevel(level);
-                }}
-              >
-                <XStack
-                  alignItems="center"
-                  justifyContent="space-between"
-                  paddingVertical="$2.5"
-                  paddingHorizontal="$3"
-                  borderRadius={8}
-                  backgroundColor={selected ? '$color8' : '$background'}
-                  borderWidth={1}
-                  borderColor={selected ? '$color8' : '$borderColor'}
-                >
-                  <Text
-                    fontSize={14}
-                    fontWeight={selected ? '700' : '500'}
-                    color={selected ? '$backgroundStrong' : '$color'}
-                  >
-                    {label}
-                  </Text>
-                </XStack>
-              </Pressable>
-            );
-          })}
-        </YStack>
-      </Section>
+      <SettingsSection title="View as" note="Preview menus and recipes as a lower permission level" minWidth={280}>
+        <ChoiceRows
+          label="View as"
+          disabled={viewAsSaving}
+          options={[
+            { id: 'off', label: `Off (${roleLabel(maxRealRole)})` },
+            ...viewAsChoices.map(({ level, label }) => ({ id: String(level), label })),
+          ]}
+          value={viewAsRoleLevel == null ? 'off' : String(viewAsRoleLevel)}
+          onChange={(id) => void setViewAsRoleLevel(id === 'off' ? null : Number(id))}
+        />
+      </SettingsSection>
     );
 
+  const logOut = async () => {
+    const ok = await confirmAsync({
+      title: 'Log out?',
+      message: 'Saved offline data on this device will be cleared.',
+      confirmText: 'Log out',
+      destructive: true,
+    });
+    if (ok) signOut();
+  };
+
   return (
-    <ScrollView flex={1} backgroundColor="$background" showsVerticalScrollIndicator={false}>
-      <YStack
-        width="100%"
-        maxWidth={1100}
-        alignSelf="center"
-        paddingHorizontal="$6"
-        paddingVertical="$6"
-        gap="$5"
-        // Room for the floating tab bar on phones and narrow web.
-        paddingBottom={Math.max(80, tabBarInset)}
+    <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
+      <ScrollView
+        style={styles.fill}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingTop: insets.top + layout.minTapTarget + space.xl,
+          paddingHorizontal: gutter,
+          // Room for the floating tab bar on phones and narrow web.
+          paddingBottom: Math.max(space.xxxl * 2, tabBarInset),
+        }}
       >
-        <YStack gap="$1">
-          <Text fontSize={28} fontWeight="700" color="$color">
-            Settings
-          </Text>
-          <Text fontSize={14} color="$color11">
-            Profile, venues, and preferences
-          </Text>
-        </YStack>
+        <View style={styles.page}>
+          <View style={styles.head}>
+            <Title>Settings</Title>
+            <Body tone="muted">Profile, venues, and preferences</Body>
+          </View>
 
-        {/* ponytail: side-by-side wrap; height from content so forms aren't clipped */}
-        <XStack flexWrap="wrap" gap="$5" alignItems="flex-start">
-          {profilePanel}
-          {venuesPanel}
-        </XStack>
+          {/* ponytail: side-by-side wrap; height from content so forms aren't clipped */}
+          <View style={styles.wrap}>
+            {profilePanel}
+            {venuesPanel}
+          </View>
 
-        <XStack flexWrap="wrap" gap="$5" alignItems="flex-start">
-          {appearancePanel}
-          {unitsPanel}
-          {searchFilterPanel}
-          {viewAsPanel}
-          {accountPanel}
-          <YStack flexGrow={1} flexBasis={220} minWidth={220} justifyContent="flex-end" paddingTop={28}>
-            <Pressable
-              role="button"
-              onPress={async () => {
-                const ok = await confirmAsync({
-                  title: 'Log out?',
-                  message: 'Saved offline data on this device will be cleared.',
-                  confirmText: 'Log out',
-                  destructive: true,
-                });
-                if (ok) signOut();
-              }}
-            >
-              <XStack
-                alignItems="center"
-                justifyContent="center"
-                gap="$2"
-                paddingVertical="$4"
-                borderRadius={12}
-                borderWidth={1}
-                borderColor="$red7"
-                backgroundColor="$red2"
-              >
-                <IconSymbol
-                  name="rectangle.portrait.and.arrow.right"
-                  size={18}
-                  color={STATUS.danger}
-                />
-                <Text fontSize={15} fontWeight="700" color="$red10">
-                  Log out
-                </Text>
-              </XStack>
-            </Pressable>
-          </YStack>
-        </XStack>
-      </YStack>
-    </ScrollView>
+          <View style={styles.wrap}>
+            {appearancePanel}
+            {unitsPanel}
+            {servicePanel}
+            {searchFilterPanel}
+            {viewAsPanel}
+            {accountPanel}
+          </View>
+
+          <Button label="Log out" variant="secondary" size="lg" icon="rectangle.portrait.and.arrow.right" onPress={() => void logOut()} style={styles.logOut} />
+        </View>
+      </ScrollView>
+      <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
+        <GlassButton
+          accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
+          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  page: { width: '100%', maxWidth: 1100, alignSelf: 'center', gap: space.xl },
+  head: { gap: space.xs },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xl, alignItems: 'flex-start' },
+  who: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  whoText: { flex: 1, gap: 2, alignItems: 'flex-start' },
+  inlineButton: { paddingHorizontal: 0, height: layout.minTapTarget },
+  names: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  name: { flex: 1, minWidth: 140 },
+  start: { alignSelf: 'flex-start' },
+  logo: { width: 32, height: 32, borderRadius: radius.mark },
+  venueEditor: { borderWidth: 1, borderRadius: radius.control, padding: space.sm, marginBottom: space.sm },
+  createBar: { gap: space.md },
+  pair: { flexDirection: 'row', gap: space.sm },
+  logOut: { alignSelf: 'center', minWidth: 240 },
+  back: { position: 'absolute' },
+});
