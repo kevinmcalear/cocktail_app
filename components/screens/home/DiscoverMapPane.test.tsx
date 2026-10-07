@@ -12,6 +12,8 @@ jest.mock('@/hooks/useDiscover', () => ({
   useDiscoverRankings: () => ({ data: undefined, isLoading: false }),
   useTopBars: () => ({ data: undefined, isLoading: false }),
 }));
+let mockTopDrinks: unknown[] = [];
+jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
 jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');
   return {
@@ -69,4 +71,27 @@ test('a drinks pin lists those cocktails in the card', async () => {
 
   await fireEvent.press(screen.getByRole('button', { name: 'Show all 4' }));
   expect(screen.getByText('Martini No. 4')).toBeTruthy();
+});
+
+test("the card shows the bar's top drinks once they have scores", async () => {
+  const top = (item_id: string, name: string, position: number | null, score: number | null) => ({
+    position, item_id, name, bar_id: null, ranked_as_item_id: item_id, ranked_as_name: null, image_url: null, image_is_generated: null,
+    score, rankers: score === null ? 3 : 30, menu: null, menu_from: null, menu_to: null,
+  });
+  mockTopDrinks = [top('t1', 'Smoke & Fig Old Fashioned', 1, 9.4), top('t2', 'Rye Garden Highball', 2, 9), top('t3', 'Early Bird', null, null)];
+  await renderPane([drink('d1', 'House Martini')]);
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
+
+  expect(screen.getByText('Top drinks here')).toBeTruthy();
+  expect(screen.getByText('Smoke & Fig Old Fashioned')).toBeTruthy();
+  expect(screen.getByText('9.4')).toBeTruthy();
+  expect(screen.getByText('9.0')).toBeTruthy();
+  expect(screen.queryByText('Early Bird')).toBeNull();
+});
+
+test('an early bar\'s card has no top drinks block', async () => {
+  mockTopDrinks = [];
+  await renderPane([drink('d1', 'House Martini')]);
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
+  expect(screen.queryByText('Top drinks here')).toBeNull();
 });
