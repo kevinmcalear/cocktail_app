@@ -75,7 +75,7 @@ function mockAnswer(parts: SpecPart[], drink: SketchDrink | null): string {
   }
   return JSON.stringify({
     ingredients: parts.map((p) => ({ id: p.id, sweet: 0.5, fruity: 0.5, abv: 0, color: "#c0392b", tint: 0.8, foam: null })),
-    ...(drink ? { drink: { glass: "flute", ice: "none", method: "build", garnish: "lemon_peel", color: "#f0e4b0", foam: null } } : {}),
+    ...(drink ? { drink: { glass: "flute", ice: "none", method: "build", garnish: "lemon_peel", color: "pale_straw", foam: null } } : {}),
   });
 }
 
@@ -91,7 +91,8 @@ interface SketchContext {
 
 /** What the model is shown about a drink, hashed: a cached answer stands until it changes. */
 async function sketchBasis(ctx: SketchContext, parts: SpecPart[]): Promise<string> {
-  const text = JSON.stringify([ctx.name, ctx.description ?? "", parts.map((p) => p.name)]);
+  // SKETCH_VERSION too: answers asked under older rules are asked again.
+  const text = JSON.stringify([SKETCH_VERSION, ctx.name, ctx.description ?? "", parts.map((p) => p.name)]);
   const digest = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }

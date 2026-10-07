@@ -16,7 +16,7 @@
  * private.enqueue_item_flavors() so stored inputs follow.
  */
 
-export const SKETCH_VERSION = 1;
+export const SKETCH_VERSION = 2;
 
 export const GLASSES = [
   'coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'fizz', 'flute',
@@ -385,6 +385,20 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000;
 export const isHex = (s: unknown): s is string => typeof s === 'string' && HEX.test(s);
 
 const CREAM = '#F6F0E2';
+
+/**
+ * The colours a finished drink can be, by name. The AI fill picks one of
+ * these for a whole drink: asked for free hex, it answered pure black or
+ * white for half the drinks it didn't know.
+ */
+export const DRINK_COLORS = {
+  clear: CLEAR, pale_straw: '#EFE3B0', gold: '#E3B84A', amber: '#C98A35', copper: '#B0602A', brown: '#7A4420',
+  dark_brown: '#3A2216', black: '#1E140E', ruby: '#9A1530', red: '#C42A36', pink: '#EE9AA6', blush: '#F2C0B8',
+  coral: '#F08070', orange: '#F08A32', peach: '#F2B47A', yellow: '#EED45A', lime: '#B8D45A', green: '#6FA64A',
+  mint: '#7CC48A', blue: '#3A6FC8', purple: '#7A4FA0', lilac: '#B8A0D8', creamy_white: '#F2EADA', milky_coffee: '#B89070',
+} as const;
+export type DrinkColor = keyof typeof DRINK_COLORS;
+const DRINK_COLOR_NAMES = Object.keys(DRINK_COLORS) as DrinkColor[];
 const DEFAULT_LIQUID = '#D8A050';
 
 // Words in a description that name a colour, for drinks with no usable spec.
@@ -560,7 +574,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
     alpha = 0.14;
   } else if (ai?.color && isHex(ai.color)) {
     hex = ai.color.toLowerCase();
-    alpha = 0.75;
+    alpha = hex === CLEAR.toLowerCase() ? 0.14 : 0.75;
     liquidFrom = 'ai';
     usedAi = true;
   } else {
@@ -676,7 +690,9 @@ export function sketchPromptAddendum(drink: SketchDrink | null): string[] {
     out.push(
       'Also add a "drink" object describing how this drink is served:',
       `{"glass": one of ${GLASSES.join(', ')}; "ice": one of ${ICES.join(', ')}; "method": one of ${METHODS.join(', ')};`,
-      `"garnish": one of ${GARNISHES.join(', ')} or null; "color": the finished drink's colour as "#rrggbb"; "foam": one of ${FOAMS.join(', ')} or null}.`,
+      `"garnish": one of ${GARNISHES.join(', ')} or null; "color": the finished drink's colour, one of ${DRINK_COLOR_NAMES.join(', ')}`,
+      '(pick the closest real colour from its ingredients and style; clear for colourless drinks); '
+        + `"foam": one of ${FOAMS.join(', ')} or null}.`,
       'Judge from the name, description and ingredients, the way a bartender would serve it.',
       `Drink: ${JSON.stringify({ name: drink.name, description: (drink.description ?? '').slice(0, 600), ingredients: drink.lines.map((l) => l.name).slice(0, 20) })}`,
     );
@@ -698,6 +714,14 @@ const hexOf = (v: unknown): string | undefined => {
   return undefined;
 };
 
+/** A drink colour from its name; a bare hex is kept unless it's the pure black or white the model falls back to. */
+const drinkColorOf = (v: unknown): string | undefined => {
+  const name = pick(DRINK_COLOR_NAMES, v);
+  if (name) return DRINK_COLORS[name].toLowerCase();
+  const hex = hexOf(v);
+  return hex && hex !== '#000000' && hex !== '#ffffff' ? hex : undefined;
+};
+
 /**
  * The shape the model must answer in (Gemini's responseSchema), so every
  * enum comes back from its list. Taste dimensions come from flavor.ts.
@@ -716,7 +740,7 @@ export function aiAnswerSchema(tasteDimensions: readonly string[], withDrink: bo
   const drink = {
     type: 'OBJECT',
     properties: {
-      glass: str(GLASSES), ice: str(ICES), method: str(METHODS), garnish: str(GARNISHES, true), color: str(), foam: str(FOAMS, true),
+      glass: str(GLASSES), ice: str(ICES), method: str(METHODS), garnish: str(GARNISHES, true), color: str(DRINK_COLOR_NAMES), foam: str(FOAMS, true),
     },
     required: ['glass', 'ice', 'method', 'color'],
   };
@@ -758,7 +782,7 @@ export function parseAiDrink(text: string): DrinkLook | null {
     ice: pick(ICES, d.ice) ?? iceFromName(said(d.ice)) ?? undefined,
     method: pick(METHODS, d.method) ?? methodFromNames([said(d.method)]) ?? undefined,
     garnish: pick(GARNISHES, d.garnish) ?? (said(d.garnish) ? first(GARNISH_RULES, said(d.garnish)) : null),
-    color: hexOf(d.color),
+    color: drinkColorOf(d.color),
     foam: pick(FOAMS, d.foam) ?? null,
   };
   return look.glass || look.ice || look.method || look.color ? look : null;
