@@ -45,16 +45,16 @@ const pool = buildPool({
 });
 const byId = new Map(pool.map((c) => [c.id, c]));
 assert.equal(byId.get('negroni')?.weight, WEIGHT.canMake);
-assert.equal(byId.get('negroni')?.reason, 'You can make this tonight', 'can make wins over a bar drink of the same id');
+assert.equal(byId.get('negroni')?.reason, 'You have all the bottles at home.', 'can make wins over a bar drink of the same id');
 assert.equal(byId.get('daiquiri')?.weight, WEIGHT.any);
 assert.equal(byId.get('daiquiri')?.reason, null);
 assert.equal(byId.get('paloma-limantour')?.weight, WEIGHT.ratedBar * 2, 'a 10 bar doubles the rated weight');
-assert.equal(byId.get('paloma-limantour')?.reason, 'Well rated near you, at Licorería Limantour');
+assert.equal(byId.get('paloma-limantour')?.reason, 'Well rated near you, at Licorería Limantour.');
 assert.ok(!byId.has('closed-bar-drink'), 'drinks at bars outside the rated list stay out');
 assert.equal(
   buildPool({ drinks: [], canMake: new Set(), barDrinks: [{ ...d('x'), barId: 'b' }], ratedBars: [{ id: 'b', name: 'B', score: 5 }], near: false })[0]
     .reason,
-  'Well rated, at B'
+  'Well rated, at B.'
 );
 
 // --- picking: by weight, skipping recent ones ---

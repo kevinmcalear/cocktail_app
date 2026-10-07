@@ -7,6 +7,9 @@ import { getKnownDeviceLocation } from '@/lib/deviceLocation';
 import { buildPool, type Candidate } from '@/lib/eightBall';
 import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
 
+/** A fix that takes longer than this isn't worth the wait: the ball answers for anywhere. */
+const LOCATION_WAIT_MS = 1500;
+
 /**
  * The eight ball's pool: every drink the person can see, weighted toward
  * what their shelf makes and what's well rated nearby (lib/eightBall.ts).
@@ -20,12 +23,15 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
   const [area, setArea] = useState<Area | null>(null);
   useEffect(() => {
     let live = true;
+    const giveUp = setTimeout(() => live && setArea((a) => a ?? { kind: 'anywhere' }), LOCATION_WAIT_MS);
     void getKnownDeviceLocation().then((found) => {
       if (!live) return;
-      setArea(found.ok ? { kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' } : { kind: 'anywhere' });
+      if (found.ok) setArea({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
+      else setArea((a) => a ?? { kind: 'anywhere' });
     });
     return () => {
       live = false;
+      clearTimeout(giveUp);
     };
   }, []);
   const top = useTopBars(area ?? { kind: 'anywhere' });

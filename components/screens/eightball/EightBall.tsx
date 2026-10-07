@@ -1,16 +1,18 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { AccessibilityInfo, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { AccessibilityInfo, Modal, Platform, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, DrinkImage, GlassButton, Headline, Title, useDs } from '@/components/ds';
-import { radius, space, springs } from '@/constants/tokens';
+import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
+import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
 import { FORTUNES, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
 import { itemHref } from '@/lib/itemRoutes';
 
-const BALL = 220;
+import { BallArt } from './BallArt';
+
 /** How long the ball "thinks" before it answers. */
 const THINK_MS = 1100;
 const native = Platform.OS !== 'web';
@@ -20,10 +22,11 @@ type Answer = { state: 'thinking'; fortune: string } | { state: 'shown'; drink: 
 const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
 
 /**
- * The magic eight ball (issue #18): the ball wobbles, its window turns up a
- * fortune, and a drink rises out of it with Another and Open. Shaking again
- * (routed in by EightBallProvider through `rollRef`) is Another. With Reduce
- * Motion on, nothing moves: the answer fades in.
+ * The magic eight ball (issue #18), as the approved Shake design: the ball
+ * wobbles, its window turns up a fortune, then the drink, with "Make a …",
+ * why, and Another and Open recipe. Shaking again (routed in by
+ * EightBallProvider through `rollRef`) is Another. With Reduce Motion on,
+ * nothing moves: the answer fades in.
  */
 export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {
   return (
@@ -39,6 +42,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const ds = useDs();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
   const { pool, isLoading } = useEightBallPool();
   const [answer, setAnswer] = useState<Answer>(() => ({ state: 'thinking', fortune: randomFortune() }));
   const latest = useRef({ pool, isLoading });
@@ -46,12 +50,15 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const wobble = useSharedValue(0);
-  const face = useSharedValue(0); // 0: the "8"; 1: the window with its answer
-  const card = useSharedValue(0);
+  const rise = useSharedValue(0); // the triangle's words coming up
+  const card = useSharedValue(0); // title, reason and buttons
 
   useEffect(() => {
     latest.current = { pool, isLoading };
   });
+
+  const bringUp = (value: SharedValue<number>) =>
+    value.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withSpring(1, springs.pour)));
 
   // Waits out the think time and the pool, then answers.
   function reveal() {
@@ -62,23 +69,19 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     const drink = pickDrink(latest.current.pool, recent.current);
     if (drink) recent.current = [drink.id, ...recent.current].slice(0, RECENT);
     setAnswer({ state: 'shown', drink });
-    card.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSpring(1, springs.pour));
-    if (native) {
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      AccessibilityInfo.announceForAccessibility(drink ? `${drink.name}. ${drink.reason ?? ''}` : 'No drinks yet');
-    }
+    bringUp(rise);
+    bringUp(card);
+    if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Android and web read the live region; iOS needs telling.
+    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `Make a ${drink.name}. ${drink.reason ?? ''}` : 'Nothing to pick yet');
   }
 
   function think() {
     if (timer.current) clearTimeout(timer.current);
-    card.set(reduceMotion ? withTiming(0, { duration: 150 }) : withSpring(0, springs.snap));
-    if (reduceMotion) {
-      face.set(withTiming(1, { duration: 200 }));
-    } else {
-      // A jolt, then the pour spring rings it out like a ball settling in the hand.
-      wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
-      face.set(withSequence(withTiming(0, { duration: 120 }), withSpring(1, springs.pour)));
-    }
+    card.set(withTiming(0, { duration: 150 }));
+    bringUp(rise);
+    // A jolt, then the pour spring rings it out like a ball settling in the hand.
+    if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
     if (native) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     timer.current = setTimeout(reveal, reduceMotion ? 300 : THINK_MS);
   }
@@ -104,14 +107,10 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ballStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: wobble.get() * 18 }, { rotate: `${wobble.get() * 9}deg` }],
-  }));
-  const eightStyle = useAnimatedStyle(() => ({ opacity: 1 - face.get(), transform: [{ scale: 1 - face.get() * 0.3 }] }));
-  const windowStyle = useAnimatedStyle(() => ({ opacity: face.get(), transform: [{ translateY: (1 - face.get()) * 14 }] }));
-  const cardStyle = useAnimatedStyle(() => ({ opacity: card.get(), transform: [{ translateY: reduceMotion ? 0 : (1 - card.get()) * 32 }] }));
+  const cardStyle = useAnimatedStyle(() => ({ opacity: card.get(), transform: [{ translateY: reduceMotion ? 0 : (1 - card.get()) * 24 }] }));
 
-  const drink = answer.state === 'shown' ? answer.drink : null;
+  const shown = answer.state === 'shown';
+  const drink = shown ? answer.drink : null;
   const open = () => {
     if (!drink) return;
     onClose();
@@ -119,84 +118,48 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.scrim }]}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close the eight ball" />
-      <View style={styles.close}>
+    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}>
+      <View style={[styles.close, { top: insets.top + space.sm }]}>
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
       </View>
-      <View style={styles.stack} pointerEvents="box-none">
-        <Animated.View style={[styles.ball, { backgroundColor: ds.c.ground, borderColor: ds.c.lineStrong }, ballStyle]}>
-          <View style={[styles.shine, { backgroundColor: ds.c.ink }]} />
-          <Animated.View style={[styles.eight, { backgroundColor: ds.c.paper }, eightStyle]}>
-            <Title color={ds.c.sketchInk}>8</Title>
-          </Animated.View>
-          <Animated.View style={[styles.window, { backgroundColor: ds.c.raised }, windowStyle]}>
-            <View style={[styles.triangle, { borderBottomColor: ds.c.surface }]} />
-            <Caption style={styles.fortune} numberOfLines={3}>
-              {answer.state === 'thinking' ? answer.fortune : drink ? drink.name : 'Ask again later'}
-            </Caption>
-          </Animated.View>
-        </Animated.View>
-
-        <Animated.View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }, cardStyle]} aria-live="polite">
-          {answer.state === 'thinking' ? null : drink ? (
+      <View style={styles.column}>
+        <Caption tone="muted" style={styles.eyebrow}>
+          {shown ? 'THE BAR HAS SPOKEN' : 'ASKING THE BAR'}
+        </Caption>
+        <BallArt text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')} wobble={wobble} rise={rise} still={reduceMotion} />
+        <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
+          {shown ? (
             <>
-              <View style={styles.row}>
-                <View style={styles.thumb}>
-                  <DrinkImage source={drink.imageUrl} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
-                </View>
-                <View style={styles.text}>
-                  <Headline numberOfLines={2}>{drink.name}</Headline>
-                  {drink.reason ? <Caption tone="muted">{drink.reason}</Caption> : null}
-                </View>
-              </View>
-              <View style={styles.actions}>
-                <Button label="Another" icon="arrow.clockwise" variant="secondary" onPress={roll} style={styles.action} />
-                <Button label="Open" onPress={open} style={styles.action} />
-              </View>
+              <Title align="center">{drink ? `Make a ${drink.name}` : 'Nothing to pick yet'}</Title>
+              <Body tone="muted" align="center">
+                {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
+              </Body>
             </>
-          ) : (
-            <Body tone="muted">No drinks to pick from yet. Add a few bottles to My Bar or save some drinks, then ask again.</Body>
-          )}
+          ) : null}
         </Animated.View>
-        {native ? <Caption tone="muted">Shake again for another</Caption> : null}
       </View>
+      <Animated.View style={[styles.actions, cardStyle]} pointerEvents={shown ? 'auto' : 'none'}>
+        <Button
+          label="Another"
+          icon="arrow.clockwise"
+          variant="secondary"
+          size="lg"
+          onPress={roll}
+          accessibilityHint={native ? 'Or shake your phone again' : undefined}
+          style={styles.action}
+        />
+        {drink ? <Button label="Open recipe" size="lg" onPress={open} style={styles.action} /> : null}
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
-  close: { position: 'absolute', top: space.xxxl + space.lg, right: space.lg },
-  stack: { alignItems: 'center', gap: space.xl, width: '100%', maxWidth: 420 },
-  ball: {
-    width: BALL,
-    height: BALL,
-    borderRadius: BALL / 2,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  shine: { position: 'absolute', top: BALL * 0.1, left: BALL * 0.18, width: BALL * 0.28, height: BALL * 0.16, borderRadius: BALL, opacity: 0.12, transform: [{ rotate: '-30deg' }] },
-  eight: { position: 'absolute', width: BALL * 0.42, height: BALL * 0.42, borderRadius: BALL, alignItems: 'center', justifyContent: 'center' },
-  window: { position: 'absolute', width: BALL * 0.56, height: BALL * 0.56, borderRadius: BALL, alignItems: 'center', justifyContent: 'center' },
-  triangle: {
-    position: 'absolute',
-    top: BALL * 0.08,
-    width: 0,
-    height: 0,
-    borderLeftWidth: BALL * 0.24,
-    borderRightWidth: BALL * 0.24,
-    borderBottomWidth: BALL * 0.38,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
-  fortune: { textAlign: 'center', width: BALL * 0.3, marginTop: BALL * 0.06 },
-  card: { width: '100%', borderRadius: radius.card, borderWidth: 1, borderCurve: 'continuous', padding: space.lg, gap: space.lg, minHeight: 148 },
-  row: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
-  thumb: { width: 72 },
-  text: { flex: 1, gap: space.xs },
-  actions: { flexDirection: 'row', gap: space.sm },
+  screen: { flex: 1, paddingHorizontal: space.xl, alignItems: 'center' },
+  close: { position: 'absolute', right: space.lg, zIndex: 1 },
+  column: { flex: 1, width: '100%', maxWidth: 420, alignItems: 'center', gap: space.xl },
+  eyebrow: { letterSpacing: 0.8 },
+  copy: { gap: space.sm, alignItems: 'center', marginTop: space.md, minHeight: 120 },
+  actions: { flexDirection: 'row', gap: space.sm, width: '100%', maxWidth: 420 },
   action: { flex: 1 },
 });
