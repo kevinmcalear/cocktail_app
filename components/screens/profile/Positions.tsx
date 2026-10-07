@@ -7,12 +7,11 @@ import { space } from '@/constants/tokens';
 import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
 
 /**
- * Only where someone works now. Past jobs (many from public research on
- * unclaimed profiles) stay off until the person opts in.
- * ponytail: no opt-in yet, so past jobs never show. The upgrade is a
- * per-job switch the person turns on.
+ * Where someone works now, and each past job (many from public research on
+ * unclaimed profiles) only once the person switches it on. RLS hides the rest
+ * from everyone else; this keeps the owner's own view the same as theirs.
  */
-export const isShownPosition = (p: Pick<Position, 'is_current'>) => p.is_current;
+export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'>) => p.is_current || p.is_shown;
 
 /** "Works at" on a person, "People" on a bar. Each row opens the other profile. */
 export function Positions({ profile }: { profile: Pick<Profile, 'id' | 'kind'> }) {
