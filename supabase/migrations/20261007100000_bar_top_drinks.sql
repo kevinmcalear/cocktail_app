@@ -23,7 +23,8 @@
 --
 -- menu: 'current' when the drink is on one of the bar's live menus or its
 -- latest menu edition (unless the bar has closed), 'past' when it was on an
--- older one, NULL when no menu lists it.
+-- older one, NULL when no menu lists it. menu_from and menu_to: the first and
+-- last year a menu listed it ("Past · 2024 to 2025").
 
 -- Whether anyone may see this drink's name: published_items' rules for one
 -- drink, without building the whole view.
@@ -61,7 +62,9 @@ CREATE FUNCTION "public"."get_bar_top_drinks"("p_profile_id" "uuid", "p_limit" i
         "image_is_generated" boolean,
         "score" numeric,
         "rankers" integer,
-        "menu" "text"
+        "menu" "text",
+        "menu_from" integer,
+        "menu_to" integer
     )
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
@@ -125,11 +128,27 @@ CREATE FUNCTION "public"."get_bar_top_drinks"("p_profile_id" "uuid", "p_limit" i
                            JOIN public.profile_menu_editions e ON e.id = d.edition_id
                            WHERE d.item_id = c.item_id AND e.profile_id = b.id)
              THEN 'past'
-           END AS menu
+           END AS menu,
+           years.menu_from, years.menu_to
     FROM candidates c
     CROSS JOIN bar b
     JOIN public.items i ON i.id = c.item_id
     JOIN public.items ra ON ra.id = c.ranked_as_item_id
+    CROSS JOIN LATERAL (
+      SELECT min(y)::integer AS menu_from, max(y)::integer AS menu_to
+      FROM (
+        SELECT e.year::integer AS y
+        FROM public.profile_menu_edition_drinks d
+        JOIN public.profile_menu_editions e ON e.id = d.edition_id
+        WHERE d.item_id = c.item_id AND e.profile_id = b.id
+        UNION ALL
+        SELECT extract(year FROM x)::integer
+        FROM public.menu_drinks md
+        JOIN public.menus m ON m.id = md.menu_id
+        CROSS JOIN LATERAL (VALUES (m.starts_at), (m.ends_at)) AS t(x)
+        WHERE md.item_id = c.item_id AND m.bar_id = b.bar_id AND (m.is_active OR m.ends_at <= now()) AND x IS NOT NULL AND x <= now()
+      ) listed
+    ) years
   ), ordered AS (
     SELECT t.*,
            row_number() OVER (
@@ -139,7 +158,7 @@ CREATE FUNCTION "public"."get_bar_top_drinks"("p_profile_id" "uuid", "p_limit" i
     FROM tagged t
   )
   SELECT CASE WHEN o.ranked THEN o.n END, o.item_id, o.name, o.bar_id, o.ranked_as_item_id, o.ranked_as_name,
-         img.url, img.is_generated, CASE WHEN o.ranked THEN o.score END, o.rankers, o.menu
+         img.url, img.is_generated, CASE WHEN o.ranked THEN o.score END, o.rankers, o.menu, o.menu_from, o.menu_to
   FROM ordered o
   LEFT JOIN LATERAL (
     SELECT im.url, ii.is_generated

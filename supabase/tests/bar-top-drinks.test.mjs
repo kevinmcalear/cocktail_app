@@ -141,6 +141,10 @@ describe("a bar's top drinks", () => {
     assert.equal(Number(top.score), 10);
     assert.equal(early.score, null, 'early rows carry no score');
     assert.equal(early.ranked_as_name, null);
+    const years = (id) => rows.filter((r) => r.item_id === id).map((r) => [r.menu_from, r.menu_to])[0];
+    assert.deepEqual(years(ids.onMenu), [2019, 2026], 'first and last menu that listed it');
+    assert.deepEqual(years(ids.oldMenu), [2019, 2019]);
+    assert.deepEqual(years(ids.offMenu), [null, null]);
   });
 
   test('never names a drink the bar keeps private or one taken down, however many ranked it', async () => {

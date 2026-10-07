@@ -1,23 +1,28 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useProfilePositions, type Profile } from '@/hooks/useProfiles';
 
-/** "Works at" on a person, "People" on a bar. Each row opens the other profile. */
-export function Positions({ profile }: { profile: Pick<Profile, 'id' | 'kind'> }) {
+/**
+ * "Works at" on a person, "People" on a bar. Each row opens the other
+ * profile. With emptyText it fills a tab: no heading, and a line when empty.
+ */
+export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' | 'kind'>; emptyText?: string }) {
   const ds = useDs();
   const router = useRouter();
   const { data: positions = [] } = useProfilePositions(profile);
-  if (!positions.length) return null;
+  if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   const onPerson = profile.kind === 'person';
   return (
     <View style={styles.section}>
-      <Caption tone="muted" style={styles.cap}>
-        {onPerson ? 'Works at' : 'People'}
-      </Caption>
+      {emptyText ? null : (
+        <Caption tone="muted" style={styles.cap}>
+          {onPerson ? 'Works at' : 'People'}
+        </Caption>
+      )}
       <View role="list">
         {positions.map((p) => {
           const other = onPerson ? p.bar : p.person;
