@@ -456,9 +456,7 @@ export default function EditIngredientScreen({
                 images={images}
                 emptyPhotoPlaceholder={images.length === 0}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
                 embedded={!!isInline}
                 isEditing
                 editableTitle={{

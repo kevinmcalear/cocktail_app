@@ -26,9 +26,9 @@ export interface ItemDetailLayoutProps {
     imageTags?: (string | null)[];
     isLoading?: boolean;
     isFavorite: boolean;
-    isInStudyPile: boolean;
+    isInStudyPile?: boolean;
     onToggleFavorite: (id: string) => void;
-    onToggleStudyPile: (id: string) => void;
+    onToggleStudyPile?: (id: string) => void; // leave out to hide the study button
     /** Shows the "…" actions. Pass only when the viewer's effective role can edit. */
     onEditPress?: () => void;
     canEdit?: boolean;
@@ -161,7 +161,7 @@ export function ItemDetailLayout({
                     <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={24} color="#FFF" />
                     <Text style={[styles.actionText, { color: '#FFF' }]}>{isFavorite ? "Unfav" : "Fav"}</Text>
                 </RectButton>
-                <RectButton
+                {onToggleStudyPile && <RectButton
                     style={[styles.actionButton, { backgroundColor: STATUS.info }]}
                     onPress={() => {
                         onToggleStudyPile(id);
@@ -171,7 +171,7 @@ export function ItemDetailLayout({
                 >
                     <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={24} color="#FFF" />
                     <Text style={[styles.actionText, { color: '#FFF' }]}>{isInStudyPile ? "Remove" : "Study"}</Text>
-                </RectButton>
+                </RectButton>}
             </View>
         );
     };
@@ -437,12 +437,12 @@ export function ItemDetailLayout({
                                 }} accessibilityRole="button" accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? STATUS.danger : theme.color?.get() as string} />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => {
+                                {onToggleStudyPile && <TouchableOpacity onPress={() => {
                                     onToggleStudyPile(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                 }} accessibilityRole="button" accessibilityLabel={isInStudyPile ? "Remove from study pile" : "Add to study pile"} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? STATUS.info : theme.color?.get() as string} />
-                                </TouchableOpacity>
+                                </TouchableOpacity>}
                             </>
                         )}
                         {renderDesktopHeaderAction()}

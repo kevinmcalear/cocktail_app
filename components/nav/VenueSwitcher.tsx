@@ -49,7 +49,7 @@ export function VenueSwitcher() {
   const [open, setOpen] = useState(false);
   const home = mode === 'home';
   const canSwitch = venues.length > 0;
-  // Land on the first tab, since the other tabs change with the mode.
+  // Land on the mode's first tab (Discover at home, Tonight at a venue), since the tabs change with the mode.
   const choose = (next: 'home' | Venue) => {
     if (next === 'home') setMode('home');
     else {
@@ -57,7 +57,7 @@ export function VenueSwitcher() {
       setMode('venue');
     }
     setOpen(false);
-    router.navigate('/');
+    router.navigate(next === 'home' ? '/discover' : '/');
   };
   const label = home ? 'Home bar' : (active?.name ?? 'No venue yet');
   return (
