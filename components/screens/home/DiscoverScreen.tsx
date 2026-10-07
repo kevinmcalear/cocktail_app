@@ -6,6 +6,7 @@ import { Body, Button, Caption, Display, Field, GlassButton, GlassSurface, Headl
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { areaStatus, DiscoverArea } from '@/components/screens/home/DiscoverArea';
 import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
@@ -186,7 +187,10 @@ export function DiscoverScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <ScreenHeaderSpacer />
-            <Display>Discover</Display>
+            <View style={styles.titleRow}>
+              <Display>Discover</Display>
+              <EightBallButton />
+            </View>
             <Field
               label="Search drinks or bars"
               value={search}
@@ -271,6 +275,7 @@ const styles = StyleSheet.create({
   mapTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.xs, height: layout.minTapTarget + space.xs * 2 },
   toggle: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   header: { gap: space.lg, paddingBottom: space.lg },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   add: { gap: space.sm, alignItems: 'flex-start', marginTop: space.md },
   library: { gap: space.xs, marginTop: space.xl },
 });
