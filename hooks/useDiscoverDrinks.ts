@@ -111,7 +111,7 @@ export function useDiscoverResults(filter: DrinkFilter) {
   const catalog = useFlavorCatalog();
   const bars = query.data?.bars ?? [];
   const barsById = new Map(bars.map((b) => [b.id, b]));
-  const note = !!filter.kind && !!noteDimension(filter.kind);
+  const note = filter.kinds.some((k) => !!noteDimension(k));
   const profiles = note ? new Map((catalog.data ?? []).map((d) => [d.id, d.profile])) : undefined;
   const drinks = query.data ? filterDrinks(query.data.drinks, barsById, profiles ? { ...filter, profiles } : filter) : [];
   return { drinks, bars, barsById, isLoading: query.isLoading || (note && catalog.isLoading), error: query.error };
