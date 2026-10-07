@@ -1,7 +1,7 @@
 // Checks for lib/discoverDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barInArea, distanceKm, drinkPins, filterDrinks, findBars, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
+import { barInArea, distanceKm, drinkPins, filterDrinks, findBars, kindsTitle, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
 import { DIMENSIONS, type Profile } from './flavor';
 
 const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null): DiscoverBar => ({
@@ -45,18 +45,27 @@ assert.ok(!barInArea(nomad, { kind: 'city', city: 'New York', country_code: 'US'
 
 // --- filtering: style, spirit, search words (bar names too), area ---
 const anywhere = { kind: 'anywhere' as const };
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: 'negroni', search: '', area: anywhere })), ['2']);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: 'gin', search: '', area: anywhere })).sort(), ['4', '5']);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: null, search: 'campari dante', area: anywhere })), ['2', '1'], 'every word matches, pictures first');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: null, search: 'attaboy', area: anywhere })), ['3'], 'a bar name finds its drinks');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: 'sour', search: '', area: nearDante })), [], 'the Penicillin is too far');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['negroni'], search: '', area: anywhere })), ['2']);
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['gin'], search: '', area: anywhere })).sort(), ['4', '5']);
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'campari dante', area: anywhere })), ['2', '1'], 'every word matches, pictures first');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'attaboy', area: anywhere })), ['3'], 'a bar name finds its drinks');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour'], search: '', area: nearDante })), [], 'the Penicillin is too far');
 const bitter = Object.fromEntries(DIMENSIONS.map((d) => [d, d === 'bitter' ? 0.8 : 0])) as Profile;
 assert.deepEqual(
-  ids(filterDrinks(drinks, bars, { kind: 'note:bitter', search: '', area: anywhere, profiles: new Map([['1', bitter]]) })),
+  ids(filterDrinks(drinks, bars, { kinds: ['note:bitter'], search: '', area: anywhere, profiles: new Map([['1', bitter]]) })),
   ['1'],
   'a tasting note keeps drinks that fairly taste of it',
 );
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kind: null, search: 'penicillin', area: anywhere })), ['3']);
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'penicillin', area: anywhere })), ['3']);
+
+// --- several filters: any within a group, every group ---
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['negroni', 'sour'], search: '', area: anywhere })).sort(), ['2', '3', '4'], 'Negronis or sours');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['gin', 'whiskey'], search: '', area: anywhere })).sort(), ['3', '4', '5'], 'gin or whiskey');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour', 'gin'], search: '', area: anywhere })), ['4'], 'a sour made with gin: the Gimlet');
+assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour', 'whiskey'], search: '', area: anywhere })), ['3'], 'the Penicillin is both');
+assert.equal(kindsTitle([]), 'Drinks');
+assert.equal(kindsTitle(['martini', 'gin']), 'Martinis & Gin');
+assert.equal(kindsTitle(['martini', 'gin', 'note:smoky']), 'Drinks, 3 filters');
 
 // --- bars: name first, then place ---
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'da')), ['dante']);
@@ -70,5 +79,5 @@ assert.deepEqual(pins.map((p) => [p.id, p.drinks]), [['dante', 2], ['attaboy', 1
 
 // --- names that start with a symbol or number sort after letters ---
 const odd = [drink('a', '&thesea', 'dante'), drink('b', '1986', 'dante'), drink('c', 'Zombie', 'dante')];
-assert.deepEqual(ids(filterDrinks(odd, bars, { kind: null, search: '', area: anywhere })), ['c', 'a', 'b']);
+assert.deepEqual(ids(filterDrinks(odd, bars, { kinds: [], search: '', area: anywhere })), ['c', 'a', 'b']);
 assert.deepEqual(ids(findBars([bar('o', 'Origin Bar', null, null, null), bar('g', 'Bar Orchard Ginza', null, null, null)], 'gin')), ['g'], 'a word must start with it');
