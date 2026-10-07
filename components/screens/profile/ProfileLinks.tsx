@@ -17,12 +17,12 @@ const ICON: Record<LinkNetwork, { glyph: string; name: string }> = {
 };
 
 /** A row of icons under a profile's name: Instagram, the other networks, then the website. */
-export function ProfileLinks({ profile }: { profile: Parameters<typeof profileLinks>[0] & { display_name: string } }) {
+export function ProfileLinks({ profile, align = 'center' }: { profile: Parameters<typeof profileLinks>[0] & { display_name: string }; align?: 'center' | 'start' }) {
   const ds = useDs();
   const links = profileLinks(profile);
   if (!links.length) return null;
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, align === 'start' && styles.start]}>
       {links.map(({ href, network }) => {
         const { glyph, name } = ICON[network];
         return (
@@ -43,5 +43,6 @@ export function ProfileLinks({ profile }: { profile: Parameters<typeof profileLi
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
+  start: { justifyContent: 'flex-start' },
   button: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

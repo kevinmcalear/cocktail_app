@@ -8,6 +8,8 @@
 - [docs/dev_flow.md](docs/dev_flow.md): the cycle from issue to merge, local verification recipes, the redesign roadmap
 - [docs/design_system.md](docs/design_system.md): the Back Bar design rules (colour, type, motion, glass, images, layout, accessibility)
 - [Back Bar brief](https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf): research, mockups and data needs for the redesign
+- [Who Pays for the Pour](https://claude.ai/artifact/DEL4jQdeGXfsa8sWAEQ4nR): monetization proposal (venue plans, what stays free, selling recipes, Discover sponsorship, legal checks, open questions). Design only, nothing decided
+- [NYC and Melbourne Market Model](https://claude.ai/artifact/3At2tiwetEBDdozvkm6UPf): interactive market sizing from licence data (venues, adoption, pricing, revenue ramp)
 
 ## Reference
 

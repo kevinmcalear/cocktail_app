@@ -12,6 +12,7 @@ let mockSaveError: Error | null = null;
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
+jest.mock('./PastJobs', () => ({ PastJobs: () => null }));
 jest.mock('@/hooks/useMyProfile', () => ({
   useMyProfile: () => ({ data: mockProfile, isPending: false, error: null }),
   useSaveMyProfile: () => ({ mutate: mockMutate, isPending: false, error: mockSaveError }),

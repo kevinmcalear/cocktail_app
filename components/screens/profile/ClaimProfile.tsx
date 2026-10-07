@@ -7,6 +7,8 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClaimProfile, useMyClaims, type Profile } from '@/hooks/useProfiles';
 
+import { CLAIM_PAST_JOBS } from './PastJobs';
+
 /** Postgres errors from the claim insert, in words. */
 function claimError(error: unknown, kind: Profile['kind']): string {
   const code = (error as { code?: string } | null)?.code;
@@ -24,7 +26,7 @@ function claimError(error: unknown, kind: Profile['kind']): string {
  * unclaimed profile, with a note a moderator can check. Approval is on
  * /p/review-claims.
  */
-export function ClaimProfile({ profile }: { profile: Profile }) {
+export function ClaimProfile({ profile, label = 'Claim this profile' }: { profile: Profile; label?: string }) {
   const { user } = useAuth();
   const { venues } = useActiveVenue();
   const { data: claims } = useMyClaims(profile.id);
@@ -53,7 +55,7 @@ export function ClaimProfile({ profile }: { profile: Profile }) {
       <View style={styles.box}>
         {rejected ? <Caption tone="muted">Your last claim wasn’t approved. You can try again with more detail.</Caption> : null}
         <Button
-          label="Claim this profile"
+          label={label}
           variant="secondary"
           icon="checkmark"
           accessibilityHint={isBar ? 'Ask to manage this bar profile for your venue' : 'Ask to take over this profile as yours'}
@@ -91,6 +93,7 @@ export function ClaimProfile({ profile }: { profile: Profile }) {
         numberOfLines={3}
         maxLength={1000}
       />
+      {isBar ? null : <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>}
       {claim.error ? (
         <Caption tone="accent" role="alert">
           {claimError(claim.error, profile.kind)}

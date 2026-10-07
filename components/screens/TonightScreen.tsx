@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { MenuCard } from '@/components/screens/menus/MenuRows';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -59,6 +60,7 @@ export function TonightScreen() {
             <View style={styles.titleRow}>
               <Display>Tonight</Display>
               <View style={styles.titleActions}>
+                <EightBallButton />
                 {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
               </View>
             </View>

@@ -27,7 +27,7 @@ export interface DraftLook {
 }
 
 export function draftSketchInputs(draft: DraftLook): SketchInputs {
-  return sketchFromDrink({
+  const { inputs } = sketchFromDrink({
     name: draft.name,
     description: draft.description ?? null,
     glass: draft.glass ?? null,
@@ -41,5 +41,7 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
       unit: l.unit,
       volume: partWeight({ name: l.name, amount: l.amount, unit: l.unit }).volume,
     })),
-  }).inputs;
+  });
+  // The glass shape comes from the drink's pick or its bar's glass, not the rules.
+  return { ...inputs, variant: null };
 }
