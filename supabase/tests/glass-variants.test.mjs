@@ -71,6 +71,13 @@ before(async () => {
   for (const label of ['admin', 'creator', 'bartender', 'outsider']) users[label] = await makeUser(label);
   ids.bar = (await serviceInsert('bars', { name: `Glass Bar ${run}` })).id;
   ids.otherBar = (await serviceInsert('bars', { name: `Other Glass Bar ${run}` })).id;
+  // Glassware hangs off bar profiles: two venues' own, and a bar with no venue
+  // (how most seeded bars are).
+  const profile = async (name, barId) => (await serviceInsert('profiles', { kind: 'bar', handle: `${name}${run}`, display_name: `${name} ${run}`, bar_id: barId })).id;
+  ids.barProfile = await profile('glassbar', ids.bar);
+  ids.otherProfile = await profile('otherglass', ids.otherBar);
+  ids.seededProfile = await profile('seededglass', null);
+  ids.person = (await serviceInsert('profiles', { kind: 'person', handle: `glassperson${run}`, display_name: `Person ${run}` })).id;
   await serviceInsert('user_bars', { user_id: users.admin.id, bar_id: ids.bar, role_level: 40 });
   await serviceInsert('user_bars', { user_id: users.creator.id, bar_id: ids.bar, role_level: 35 });
   await serviceInsert('user_bars', { user_id: users.bartender.id, bar_id: ids.bar, role_level: 30 });
@@ -78,9 +85,11 @@ before(async () => {
   ids.martini = await drink('House Martini', { bar_id: ids.bar });
   ids.rocks = await drink('House Negroni', { bar_id: ids.bar });
   ids.elsewhere = await drink('Their Martini', { bar_id: ids.otherBar });
+  ids.seeded = await drink('Seeded Martini', { origin_bar_profile_id: ids.seededProfile });
   await saveSketch(ids.martini);
   await saveSketch(ids.rocks, { ...INPUTS, glass: 'rocks', ice: 'large' });
   await saveSketch(ids.elsewhere);
+  await saveSketch(ids.seeded);
 });
 
 after(async () => {
@@ -88,6 +97,7 @@ after(async () => {
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
+  await db.query('DELETE FROM public.profiles WHERE display_name LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
   await db.end();
@@ -95,35 +105,40 @@ after(async () => {
 
 describe('a bar\'s glassware', () => {
   test('anyone signed in reads it; signed out, nobody', async () => {
-    await serviceInsert('bar_glassware', { bar_id: ids.otherBar, glass: 'coupe', variant: 'coupe_saucer', maker: 'Maker', series: 'Series' });
-    const { data } = await users.outsider.client.from('bar_glassware').select('glass, variant, maker').eq('bar_id', ids.otherBar);
+    await serviceInsert('bar_glassware', { profile_id: ids.otherProfile, glass: 'coupe', variant: 'coupe_saucer', maker: 'Maker', series: 'Series' });
+    const { data } = await users.outsider.client.from('bar_glassware').select('glass, variant, maker').eq('profile_id', ids.otherProfile);
     assert.deepEqual(data, [{ glass: 'coupe', variant: 'coupe_saucer', maker: 'Maker' }]);
-    const { data: anonData, error } = await anon.from('bar_glassware').select('id').eq('bar_id', ids.otherBar);
+    const { data: anonData, error } = await anon.from('bar_glassware').select('id').eq('profile_id', ids.otherProfile);
     assert.ok(error || anonData.length === 0, 'anon reads nothing');
   });
 
   test('only the bar\'s admins write it', async () => {
     for (const who of ['creator', 'bartender', 'outsider']) {
-      const { error } = await users[who].client.from('bar_glassware').insert({ bar_id: ids.bar, glass: 'martini', variant: 'martini_pony' });
+      const { error } = await users[who].client.from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'martini', variant: 'martini_pony' });
       assert.ok(error, `${who} refused`);
     }
-    const { error: elsewhere } = await users.admin.client.from('bar_glassware').insert({ bar_id: ids.otherBar, glass: 'martini' });
+    const { error: elsewhere } = await users.admin.client.from('bar_glassware').insert({ profile_id: ids.otherProfile, glass: 'martini' });
     assert.ok(elsewhere, 'not at another bar');
     const { data, error } = await users.admin.client
-      .from('bar_glassware').insert({ bar_id: ids.bar, glass: 'martini', variant: 'martini_pony', name: 'House V', maker: 'Maker' }).select('id').single();
+      .from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'martini', variant: 'martini_pony', name: 'House V', maker: 'Maker' }).select('id').single();
     assert.ifError(error);
     ids.barMartini = data.id;
   });
 
+  test('it belongs to a bar\'s profile, not a person\'s', async () => {
+    const { error } = await service.from('bar_glassware').insert({ profile_id: ids.person, glass: 'martini' });
+    assert.ok(error);
+  });
+
   test('a variant must be one of its own glass\'s', async () => {
     for (const variant of ['coupe_deep', 'Nude Savage', 'martini_', 'martini_pony_2']) {
-      const { error } = await service.from('bar_glassware').insert({ bar_id: ids.otherBar, glass: 'martini', variant, is_default: false });
+      const { error } = await service.from('bar_glassware').insert({ profile_id: ids.otherProfile, glass: 'martini', variant, is_default: false });
       assert.ok(error, `refused: ${variant}`);
     }
   });
 
   test('it loads the research pass\'s shape: maker, designer, series, a note and web sources', async () => {
-    const row = { bar_id: ids.otherBar, glass: 'nick', variant: 'nick_tulip', name: 'Nick & Nora', maker: 'Maker', designer: 'Designer',
+    const row = { profile_id: ids.otherProfile, glass: 'nick', variant: 'nick_tulip', name: 'Nick & Nora', maker: 'Maker', designer: 'Designer',
       series: 'Series', shape_note: 'Tall and narrow, closing at the rim', source_urls: ['https://example.com/glass'] };
     assert.ifError((await service.from('bar_glassware').insert(row)).error);
     for (const source_urls of [['javascript:alert(1)'], ['ftp://example.com'], Array.from({ length: 11 }, (_, i) => `https://example.com/${i}`)]) {
@@ -133,9 +148,9 @@ describe('a bar\'s glassware', () => {
   });
 
   test('one default glass per type', async () => {
-    const { error } = await service.from('bar_glassware').insert({ bar_id: ids.bar, glass: 'martini', variant: 'martini_soft' });
+    const { error } = await service.from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'martini', variant: 'martini_soft' });
     assert.ok(error, 'a second default martini glass is refused');
-    const { error: spare } = await service.from('bar_glassware').insert({ bar_id: ids.bar, glass: 'martini', variant: 'martini_soft', is_default: false });
+    const { error: spare } = await service.from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'martini', variant: 'martini_soft', is_default: false });
     assert.ifError(spare);
   });
 });
@@ -145,6 +160,12 @@ describe('the variant in the drawing inputs', () => {
     assert.equal(await variantOf(ids.martini), 'martini_pony');
     assert.equal(await variantOf(ids.rocks), null, 'a rocks drink keeps the default');
     assert.equal(await variantOf(ids.elsewhere), null, 'another bar\'s martini keeps the default');
+  });
+
+  test('a seeded bar drink with no venue follows the bar it comes from', async () => {
+    assert.equal(await variantOf(ids.seeded), null);
+    await serviceInsert('bar_glassware', { profile_id: ids.seededProfile, glass: 'martini', variant: 'martini_soft' });
+    assert.equal(await variantOf(ids.seeded), 'martini_soft');
   });
 
   test('the drink\'s own pick wins, while it is drawn in that glass', async () => {

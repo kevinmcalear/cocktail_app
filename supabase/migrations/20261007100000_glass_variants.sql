@@ -6,7 +6,10 @@
 --                           a key from lib/sketch/geometry.ts GLASS_VARIANTS
 --                           ('martini_pony'). It only counts while the drink
 --                           is drawn in that glass.
---   bar_glassware           the glasses a bar pours into, one row per shape:
+--   bar_glassware           the glasses a bar pours into, one row per shape,
+--                           on the bar's profile (most bars on the app are a
+--                           public profile with no venue; a venue's drinks
+--                           find theirs through profiles.bar_id):
 --                           maker, designer, series, the shape's name and a
 --                           note on it, sources, and which drawing it is.
 --                           The default glass of each type is what the bar's
@@ -113,7 +116,8 @@ $$;
 
 CREATE TABLE "public"."bar_glassware" (
     "id" "uuid" DEFAULT "gen_random_uuid"() PRIMARY KEY,
-    "bar_id" "uuid" NOT NULL REFERENCES "public"."bars"("id") ON DELETE CASCADE,
+    -- A profile of kind 'bar' (checked below).
+    "profile_id" "uuid" NOT NULL REFERENCES "public"."profiles"("id") ON DELETE CASCADE,
     "glass" "text" NOT NULL CHECK ("glass" IN ('coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'fizz', 'flute',
                                                'wine', 'spritz', 'snifter', 'julep', 'tiki', 'mug', 'ceramic', 'beer')),
     -- How it's drawn; null is the default drawing of its type.
@@ -136,16 +140,26 @@ CREATE TABLE "public"."bar_glassware" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
-CREATE INDEX "bar_glassware_bar_id_idx" ON "public"."bar_glassware" ("bar_id", "sort_order");
-CREATE UNIQUE INDEX "bar_glassware_default_key" ON "public"."bar_glassware" ("bar_id", "glass") WHERE "is_default";
+CREATE INDEX "bar_glassware_profile_id_idx" ON "public"."bar_glassware" ("profile_id", "sort_order");
+CREATE UNIQUE INDEX "bar_glassware_default_key" ON "public"."bar_glassware" ("profile_id", "glass") WHERE "is_default";
 
 ALTER TABLE "public"."bar_glassware" ENABLE ROW LEVEL SECURITY;
 
--- Which glasses a bar uses is no secret: anyone signed in, like the bar itself.
+-- Which glasses a bar uses is no secret: anyone signed in, like the bar
+-- itself. The venue's admins (brand) and app admins write it.
+CREATE FUNCTION "private"."can_edit_bar_glassware"("p_profile_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT private.is_app_admin()
+      OR EXISTS (SELECT 1 FROM public.profiles p
+                 WHERE p.id = p_profile_id AND p.bar_id IN (SELECT private.bars_with_capability('brand')));
+$$;
+
 CREATE POLICY "bar_glassware_select" ON "public"."bar_glassware" FOR SELECT TO "authenticated" USING (true);
 CREATE POLICY "bar_glassware_write" ON "public"."bar_glassware" FOR ALL TO "authenticated"
-    USING ("bar_id" IN (SELECT "private"."bars_with_capability"('brand')))
-    WITH CHECK ("bar_id" IN (SELECT "private"."bars_with_capability"('brand')));
+    USING ("private"."can_edit_bar_glassware"("profile_id"))
+    WITH CHECK ("private"."can_edit_bar_glassware"("profile_id"));
 
 REVOKE ALL ON "public"."bar_glassware" FROM PUBLIC, "anon";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "public"."bar_glassware" TO "authenticated", "service_role";
@@ -155,6 +169,9 @@ CREATE FUNCTION "private"."screen_bar_glassware_text"() RETURNS "trigger"
     SET "search_path" TO ''
     AS $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = NEW.profile_id AND kind = 'bar') THEN
+        RAISE EXCEPTION 'Glassware belongs to a bar.';
+    END IF;
     PERFORM private.refuse_screened(NEW.name, 'name', 'name');
     PERFORM private.refuse_screened(NEW.maker, 'maker', 'maker');
     PERFORM private.refuse_screened(NEW.designer, 'designer', 'designer');
@@ -172,6 +189,17 @@ CREATE TRIGGER "screen_text" BEFORE INSERT OR UPDATE ON "public"."bar_glassware"
 -- The variant in the drawing inputs
 -- ---------------------------------------------------------------------------
 
+-- A drink's bar: its venue's profile, else the bar it comes from (seeded bar
+-- drinks have no venue, only origin_bar_profile_id).
+CREATE FUNCTION "private"."item_bar_profile"("p_item_id" "uuid") RETURNS "uuid"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT coalesce((SELECT p.id FROM public.profiles p WHERE p.bar_id = i.bar_id), i.origin_bar_profile_id)
+  FROM public.items i
+  WHERE i.id = p_item_id;
+$$;
+
 -- The drink's own pick for this glass, else its bar's default glass of it.
 CREATE FUNCTION "private"."item_sketch_variant"("p_item_id" "uuid", "p_glass" "text") RETURNS "text"
     LANGUAGE "sql" STABLE SECURITY DEFINER
@@ -179,7 +207,8 @@ CREATE FUNCTION "private"."item_sketch_variant"("p_item_id" "uuid", "p_glass" "t
     AS $$
   SELECT coalesce(
     CASE WHEN split_part(i.sketch_variant, '_', 1) = p_glass THEN i.sketch_variant END,
-    (SELECT g.variant FROM public.bar_glassware g WHERE g.bar_id = i.bar_id AND g.glass = p_glass AND g.is_default)
+    (SELECT g.variant FROM public.bar_glassware g
+     WHERE g.profile_id = private.item_bar_profile(i.id) AND g.glass = p_glass AND g.is_default)
   )
   FROM public.items i
   WHERE i.id = p_item_id;
@@ -214,16 +243,18 @@ BEGIN
         UPDATE public.item_sketches s SET inputs = s.inputs
         FROM public.items i
         WHERE i.id = s.item_id
-          AND i.bar_id IN (OLD.bar_id, NEW.bar_id)
-          AND s.inputs ->> 'glass' IN (OLD.glass, NEW.glass);
+          AND s.inputs ->> 'glass' IN (OLD.glass, NEW.glass)
+          AND (i.origin_bar_profile_id IN (OLD.profile_id, NEW.profile_id)
+               OR i.bar_id IN (SELECT p.bar_id FROM public.profiles p WHERE p.id IN (OLD.profile_id, NEW.profile_id)));
     END IF;
     RETURN NULL;
 END;
 $$;
 
-CREATE TRIGGER "refresh_sketch_variant" AFTER UPDATE OF "sketch_variant", "bar_id" ON "public"."items"
+CREATE TRIGGER "refresh_sketch_variant" AFTER UPDATE OF "sketch_variant", "bar_id", "origin_bar_profile_id" ON "public"."items"
     FOR EACH ROW
-    WHEN (OLD."sketch_variant" IS DISTINCT FROM NEW."sketch_variant" OR OLD."bar_id" IS DISTINCT FROM NEW."bar_id")
+    WHEN (OLD."sketch_variant" IS DISTINCT FROM NEW."sketch_variant" OR OLD."bar_id" IS DISTINCT FROM NEW."bar_id"
+          OR OLD."origin_bar_profile_id" IS DISTINCT FROM NEW."origin_bar_profile_id")
     EXECUTE FUNCTION "private"."refresh_item_sketch_variants"();
 CREATE TRIGGER "refresh_sketch_variant" AFTER INSERT OR UPDATE OR DELETE ON "public"."bar_glassware"
     FOR EACH ROW EXECUTE FUNCTION "private"."refresh_item_sketch_variants"();
@@ -266,6 +297,9 @@ REVOKE EXECUTE ON FUNCTION "private"."valid_source_urls"("p_urls" "text"[]) FROM
 GRANT EXECUTE ON FUNCTION "private"."valid_source_urls"("p_urls" "text"[]) TO "authenticated", "service_role";
 GRANT EXECUTE ON FUNCTION "private"."valid_glass_variant"("p_glass" "text", "p_variant" "text") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."item_sketch_variant"("p_item_id" "uuid", "p_glass" "text") FROM PUBLIC, "anon", "authenticated";
+REVOKE EXECUTE ON FUNCTION "private"."item_bar_profile"("p_item_id" "uuid") FROM PUBLIC, "anon", "authenticated";
+REVOKE EXECUTE ON FUNCTION "private"."can_edit_bar_glassware"("p_profile_id" "uuid") FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."can_edit_bar_glassware"("p_profile_id" "uuid") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."item_sketches_set_variant"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "private"."refresh_item_sketch_variants"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "private"."screen_bar_glassware_text"() FROM PUBLIC, "anon", "authenticated";

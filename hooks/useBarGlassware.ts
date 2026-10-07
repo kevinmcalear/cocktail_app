@@ -4,8 +4,8 @@ import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
 // A bar's glassware (bar_glassware, supabase/migrations/20261007100000_glass_variants.sql):
-// the glasses it pours into and which drawing each one is. Row shapes are
-// written by hand until types/ is regenerated.
+// the glasses it pours into and which drawing each one is, on the bar's
+// profile. Row shapes are written by hand until types/ is regenerated.
 
 export interface BarGlass {
   id: string;
@@ -22,7 +22,7 @@ export interface BarGlass {
   is_default: boolean;
 }
 
-/** The bar's glasses, in its order. Pass null to skip. */
+/** A venue's glasses (through its profile), in its order. Pass null to skip. */
 export function useBarGlassware(barId: string | null | undefined) {
   return useQuery({
     queryKey: ['bar-glassware', barId],
@@ -31,12 +31,12 @@ export function useBarGlassware(barId: string | null | undefined) {
     queryFn: async (): Promise<BarGlass[]> => {
       const { data, error } = await supabase
         .from('bar_glassware')
-        .select('id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default')
-        .eq('bar_id', barId!)
+        .select('id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default, profiles!inner(bar_id)')
+        .eq('profiles.bar_id', barId!)
         .order('sort_order')
         .order('created_at');
       if (error) throw error;
-      return (data ?? []) as BarGlass[];
+      return (data ?? []).map(({ profiles: _bar, ...row }) => row) as BarGlass[];
     },
   });
 }
