@@ -129,15 +129,8 @@ export function useCreateDrink() {
       const id = item.id as string;
 
       try {
+        // Every method, in order, in the same transaction as the spec.
         await saveDrinkSpec(id, lines, methodIds, null);
-        // ponytail: save_drink_spec takes one method; the rest follow it in
-        // order. Upgrade path: an array argument on the RPC (and the editor).
-        if (methodIds.length > 1) {
-          const { error } = await supabase
-            .from('item_methods')
-            .insert(methodIds.slice(1).map((method_item_id, i) => ({ item_id: id, method_item_id, sort_order: i + 1 })));
-          if (error) throw error;
-        }
       } catch (e) {
         await supabase.from('items').delete().eq('id', id);
         throw e;
