@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, Surface, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
-import { usePendingClaims, useReviewClaim, type ClaimForReview } from '@/hooks/useProfiles';
+import { usePendingClaims, useReviewClaim, type ClaimForReview, type ClaimReview } from '@/hooks/useProfiles';
+
+import { BarClaimCard } from './BarClaimReview';
 
 /** Review errors in words. The database's own messages (P0001) are already written for people. */
 function reviewError(error: unknown): string {
@@ -17,8 +19,12 @@ function reviewError(error: unknown): string {
 
 /**
  * Moderators' list of pending profile claims, oldest first: approve hands the
- * profile over (and turns down other claims on it), or turn it down.
- * ponytail: a plain list; no search or history until claims pile up.
+ * profile over (and turns down other claims on it), or turn it down with a
+ * reason. A bar claim shows the page's contact details beside what the
+ * claimant gave, and the check for how they chose to prove it. Work-email
+ * claims that match the bar's own site never land here: they're approved on
+ * the spot.
+ * ponytail: a plain list; no search, history or undo until claims pile up.
  */
 export function ClaimsReview() {
   return (
@@ -41,10 +47,14 @@ function ClaimsPage() {
       <WebHead>
         <title>Profile claims</title>
       </WebHead>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.readable}>
           <Title>Profile claims</Title>
-          <Body tone="muted">People asking to take over a profile. Check their note before you approve.</Body>
+          <Body tone="muted">People asking to take over a profile. Check what they gave against the page before you approve. A bar’s page starts Locked.</Body>
           {review.error ? (
             <Caption tone="accent" role="alert">
               {reviewError(review.error)}
@@ -54,15 +64,18 @@ function ClaimsPage() {
           {error ? <Body tone="muted">Couldn’t load claims. Check your connection and try again.</Body> : null}
           {claims && !claims.length ? <Body tone="muted">No claims waiting. Only moderators see other people’s claims here.</Body> : null}
           <View role="list" style={styles.list}>
-            {claims?.map((c) => (
-              <ClaimCard
-                key={c.id}
-                claim={c}
-                busy={review.isPending}
-                onOpen={() => c.profile && router.push(`/p/${c.profile.id}` as Href)}
-                onReview={(approve) => review.mutate({ claimId: c.id, approve })}
-              />
-            ))}
+            {claims?.map((c) => {
+              const Card = c.method === 'note' ? ClaimCard : BarClaimCard;
+              return (
+                <Card
+                  key={c.id}
+                  claim={c}
+                  busy={review.isPending}
+                  onOpen={() => c.profile && router.push(`/p/${c.profile.id}` as Href)}
+                  onReview={(r) => review.mutate(r)}
+                />
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -77,7 +90,7 @@ function ClaimsPage() {
   );
 }
 
-function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; busy: boolean; onOpen: () => void; onReview: (approve: boolean) => void }) {
+function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; busy: boolean; onOpen: () => void; onReview: (review: ClaimReview) => void }) {
   const who = claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'Someone without a profile yet';
   const target = claim.profile ? `${claim.profile.display_name} (@${claim.profile.handle})` : 'a profile';
   const onBehalf = claim.bar_id ? ` for ${claim.bar?.name ?? 'their venue'}` : '';
@@ -94,8 +107,8 @@ function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; b
         </Body>
         <Body tone="muted">{claim.message ? `"${claim.message}"` : 'No note.'}</Body>
         <View style={styles.actions}>
-          <Button label="Approve" disabled={busy} accessibilityHint={`Hands ${target} over`} onPress={() => onReview(true)} />
-          <Button label="Turn down" variant="secondary" disabled={busy} onPress={() => onReview(false)} />
+          <Button label="Approve" disabled={busy} accessibilityHint={`Hands ${target} over`} onPress={() => onReview({ claimId: claim.id, approve: true })} />
+          <Button label="Turn down" variant="secondary" disabled={busy} onPress={() => onReview({ claimId: claim.id, approve: false })} />
         </View>
       </View>
     </Surface>
@@ -104,7 +117,7 @@ function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; b
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  readable: { width: '100%', maxWidth: 720, alignSelf: 'center', gap: space.md },
+  readable: { width: '100%', maxWidth: 960, alignSelf: 'center', gap: space.md },
   controls: { position: 'absolute' },
   list: { gap: space.md, marginTop: space.md },
   card: { gap: space.sm },
