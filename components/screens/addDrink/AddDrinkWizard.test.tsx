@@ -8,6 +8,7 @@ import { AddDrinkWizard } from './AddDrinkWizard';
 
 const mockCreate = jest.fn();
 const mockSaved = jest.fn();
+let mockBarGlasses: unknown[] = [];
 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }) }));
 jest.mock('@/hooks/useDropdowns', () => ({
@@ -24,11 +25,13 @@ jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
+jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 
 beforeEach(() => {
   mockCreate.mockReset();
   mockSaved.mockReset();
+  mockBarGlasses = [];
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
 });
@@ -101,5 +104,25 @@ describe('AddDrinkWizard', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));
     expect(screen.getByLabelText('Name').props.value).toBe('');
     expect(screen.getByRole('button', { name: 'Next: ingredients', disabled: true })).toBeTruthy();
+  });
+
+  test('the glass step offers its shapes, marks the bar\'s, and a new glass drops the pick', async () => {
+    mockBarGlasses = [{ id: 'bg', glass: 'rocks', variant: 'rocks_tapered', is_default: true, bar_name: 'Little Rye' }];
+    useDrinkWizardStore.getState().patch('bar-1', { name: 'Negroni' });
+    useDrinkWizardStore.getState().setStep('bar-1', 'glass');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    expect(screen.queryByText('WHICH SHAPE?')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
+    expect(screen.getByText('WHICH SHAPE?')).toBeTruthy();
+    expect(screen.getByText('Little Rye uses this')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Tapered', checked: true })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Heavy base' }));
+    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBe('rocks_heavy');
+    expect(screen.getByRole('radio', { name: 'Heavy base', checked: true })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
+    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBeNull();
   });
 });

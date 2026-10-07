@@ -102,6 +102,7 @@ export function useCreateDrink() {
           description: draft.description.trim() || null,
           notes: draft.notes.trim() || null,
           glassware_id: glassId,
+          sketch_variant: draft.glassVariant ?? null,
           ice_id: iceId,
           riff_of_id: draft.riffOf?.id ?? null,
           creator_profile_id: creatorId,

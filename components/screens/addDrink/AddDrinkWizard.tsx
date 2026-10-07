@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space, springs } from '@/constants/tokens';
+import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -19,6 +20,7 @@ import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
 import { GarnishStep } from './GarnishStep';
+import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
@@ -66,6 +68,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const dropdowns = useDropdowns().data;
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
+  const barGlasses = useBarGlassware(barId).data;
+  const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
 
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
@@ -133,7 +137,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
       case 'method':
         return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
       case 'glass':
-        return <PickStep label="Glass" ownLabel="Another glass" options={choiceList(COMMON_GLASSES, dropdowns?.glassware ?? [])} selected={draft.glass ? [draft.glass] : []} onChange={([glass]) => set({ glass: glass ?? null })} />;
+        return <GlassStep draft={draft} set={set} options={choiceList(COMMON_GLASSES, dropdowns?.glassware ?? [])} barGlasses={barGlasses} barVariants={barVariants} />;
       case 'ice':
         return <PickStep label="Ice" ownLabel="Other ice" options={choiceList(COMMON_ICE, dropdowns?.iceTypes ?? [])} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} />;
       case 'garnish':
@@ -169,6 +173,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
           side={column ? space.lg : gutter}
           rounded={column}
           folded={typing && !column}
+          barVariants={barVariants}
         />
         <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
           <Animated.View key={step} entering={entering} style={styles.body}>
