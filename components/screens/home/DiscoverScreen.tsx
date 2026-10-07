@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
@@ -211,7 +212,10 @@ export function DiscoverScreen() {
     >
       <View>
         <ScreenHeaderSpacer />
-        <Display>Discover</Display>
+        <View style={styles.titleRow}>
+          <Display>Discover</Display>
+          <EightBallButton />
+        </View>
       </View>
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
@@ -271,6 +275,7 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },
