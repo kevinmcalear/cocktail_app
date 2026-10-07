@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 
 import { Body, Caption, DsText, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space } from '@/constants/tokens';
+import { backbar, radius, space } from '@/constants/tokens';
 import { useProfilePositions, useShowPosition, type Position } from '@/hooks/useProfiles';
 
 const NOTE = 'Drinks you created at past bars keep your credit either way. This only changes the jobs list.';
@@ -56,6 +56,10 @@ export function PastJobs({ personId }: { personId: string }) {
                 onValueChange={(on) => show.mutate({ id: p.id, shown: on })}
                 aria-label={`Show ${p.bar.display_name} on my profile`}
                 trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
+                // A white thumb on every platform. react-native-web colours the
+                // on thumb from its own activeThumbColor (teal by default).
+                thumbColor={backbar.light.surface}
+                {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
               />
             )
           )}
