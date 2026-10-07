@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
+import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { OnboardingScreen } from './OnboardingScreen';
@@ -13,12 +14,26 @@ const mockFinish = jest.fn();
 const mockClaim = jest.fn();
 const mockSaveMenu = jest.fn();
 const mockSaveDrink = jest.fn();
+const mockAccept = jest.fn();
+const mockDecline = jest.fn();
+const mockUpdatePassword = jest.fn();
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
+let mockInvitedAt: string | undefined;
+type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_logo_url: null; bar_color: string | null; bar_display_face: null; bar_ground_tint: null; bar_profile_id: string | null; role_level: number; name: string | null; invited_by_name: string | null };
+let mockInvites: Invite[] = [];
+const caretakers: Invite = { id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_logo_url: null, bar_color: '#D0643B', bar_display_face: null, bar_ground_tint: null, bar_profile_id: 'bp', role_level: 30, name: 'Sam Rivera', invited_by_name: 'Ada' };
 let mockPeople: { id: string; handle: string; display_name: string; city: string | null; is_claimed: boolean }[] = [];
 let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean }[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta }, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updatePassword: mockUpdatePassword }),
+}));
+jest.mock('@/hooks/useBarInvites', () => ({
+  useMyInvites: () => ({ data: mockInvites, isLoading: false }),
+  useAcceptInvite: () => ({ mutate: mockAccept, isPending: false, error: null }),
+  useRemoveInvite: () => ({ mutate: mockDecline, isPending: false, error: null }),
+}));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useOnboarding', () => ({
   useSaveOnboardingName: () => ({ mutate: mockSaveName, isPending: false, error: null }),
@@ -44,6 +59,12 @@ const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postc
 
 beforeEach(() => {
   mockMeta = { onboarded: false };
+  mockInvitedAt = undefined;
+  mockInvites = [];
+  mockAccept.mockReset();
+  mockDecline.mockReset();
+  mockUpdatePassword.mockReset();
+  mockUpdatePassword.mockResolvedValue({ error: null });
   mockPeople = [];
   mockBars = [attaboy];
   mockReplace.mockClear();
@@ -165,6 +186,62 @@ describe('OnboardingScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Bar name'), 'Little Rye');
     await fireEvent.press(screen.getByRole('button', { name: 'Add bar' }));
     expect(mockCreateBar).toHaveBeenCalledWith('Little Rye', expect.anything());
+  });
+
+  test('an invitee accepts, names themselves with a password, picks units, and their job is saved', async () => {
+    mockInvitedAt = '2026-10-07T00:00:00Z';
+    mockInvites = [caretakers];
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockSaveWork.mockImplementation((_input, opts) => opts?.onSettled?.());
+    await renderWithTamagui(<OnboardingScreen />);
+    expect(screen.getByText('Join Caretakers as a Bartender')).toBeTruthy();
+    expect(screen.getByText(/^Ada added you\./)).toBeTruthy();
+    expect(screen.getByText('Pick ml or oz')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
+    expect(useAppStore.getState().selectedContextIds).toEqual(['venue']);
+
+    expect(screen.getByText('Step 1 of 3')).toBeTruthy();
+    expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Use at least 6 characters.')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'local-pass');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockUpdatePassword).toHaveBeenCalledWith('local-pass');
+    expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
+    expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender' }, expect.anything());
+
+    expect(await screen.findByText('Step 2 of 3')).toBeTruthy();
+    expect(screen.queryByText('Do you work in hospitality?')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockFinish).toHaveBeenCalled();
+  });
+
+  test('an invitee whose handle is taken gets the handle field on the same step', async () => {
+    mockInvites = [caretakers];
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockSaveName.mockImplementationOnce((_input, opts) => opts?.onError?.(new Error('That handle is taken. Try another.')));
+    await renderWithTamagui(<OnboardingScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByLabelText('Handle').props.value).toBe('sam.rivera');
+    await fireEvent.changeText(screen.getByLabelText('Handle'), 'sam.r');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockSaveName).toHaveBeenLastCalledWith({ name: 'Sam Rivera', handle: 'sam.r', profileId: null }, expect.anything());
+  });
+
+  test('declining an invite runs the usual setup', async () => {
+    mockInvites = [{ ...caretakers, bar_profile_id: null, role_level: 40, name: null, invited_by_name: null }];
+    mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.());
+    await renderWithTamagui(<OnboardingScreen />);
+    expect(screen.getByText('Join Caretakers as an Admin')).toBeTruthy();
+    expect(screen.getByText(/^Caretakers added you\./)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Not me? Decline' }));
+    expect(mockDecline).toHaveBeenCalledWith('i1', expect.anything());
+    expect(screen.queryByText(/Step \d of 3/)).toBeNull();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
   });
 
   test('a finished account leaves setup', async () => {

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, Chip, Display, Field, Headline, LockedSection, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useBarInvites, useRemoveInvite } from '@/hooks/useBarInvites';
+import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
 import { useBarMembers, useRemoveMember, useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -16,7 +16,7 @@ import { confirmAsync } from '@/lib/dialogs';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 import { canManageTeam, canSeeTeam, joinedLabel, personName, roster, TEAM_MANAGE } from '@/lib/team';
 
-const EMPLOYEE = 20;
+import { InviteSheet, type InviteNote } from './InviteSheet';
 
 function problem(error: unknown): string | null {
   if (!error) return null;
@@ -48,7 +48,8 @@ function Roles({ label, value, ceiling, disabled, onPick }: {
 
 /**
  * My team, for the venue in the sidebar. Employee and above see who is on it.
- * An Admin can look someone up, invite by email, change a role, or remove them.
+ * An Admin can look someone up, invite by name and email (we email them the
+ * invite), change a role, or remove them.
  * The database decides who may; this only hides the controls.
  */
 export function TeamScreen() {
@@ -65,14 +66,21 @@ export function TeamScreen() {
   const barId = visible ? active.id : null;
   const members = useBarMembers(barId);
   const change = useSetMemberRole(barId ?? '');
-  const add = useSetMemberRole(barId ?? '');
   const remove = useRemoveMember(barId ?? '');
   const { data: invites = [] } = useBarInvites(barId ?? '', manage);
   const cancel = useRemoveInvite(barId ?? '');
+  const send = useSendInviteEmail(barId ?? '');
   const [query, setQuery] = useState('');
-  const [email, setEmail] = useState('');
-  const [newRole, setNewRole] = useState(EMPLOYEE);
-  const busy = change.isPending || add.isPending || remove.isPending || cancel.isPending;
+  const [inviting, setInviting] = useState(false);
+  const [note, setNote] = useState<InviteNote | null>(null);
+  const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
+  const emailInvite = (to: string) => {
+    setNote(null);
+    send.mutate(to, {
+      onSuccess: () => setNote({ text: `Invite emailed to ${to}.` }),
+      onError: (e) => setNote({ text: `The email didn’t send (${e.message}). They can still join from your staff link.`, failed: true }),
+    });
+  };
   const people = roster(members.data ?? [], manage ? query : '');
 
   const confirmRole = (who: string, level: number) =>
@@ -93,34 +101,25 @@ export function TeamScreen() {
       <>
         <LockedSection title="Manage the team" unlocked={manage} opensAt="Admin">
           <Field label="Look up" value={query} onChangeText={setQuery} placeholder="Name or email" autoCapitalize="none" autoCorrect={false} />
-          <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="name@bar.com"
-            hint="They join when they open your staff link and sign in with this email."
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-          />
-          <Roles label="Role for the new member" value={newRole} ceiling={role} disabled={busy} onPick={setNewRole} />
-          {problem(add.error) ? <Caption tone="accent" role="alert">{problem(add.error)}</Caption> : null}
-          <Button
-            label="Invite"
-            disabled={busy || !email.trim()}
-            onPress={async () => {
-              if (!(await confirmRole(email.trim(), newRole))) return;
-              add.mutate({ email, roleLevel: newRole }, { onSuccess: () => setEmail('') });
-            }}
-            style={styles.invite}
-          />
+          <Button label="Invite someone" onPress={() => setInviting(true)} disabled={busy} style={styles.invite} />
+          {note ? (
+            <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
+              {note.text}
+            </Caption>
+          ) : null}
           {invites.map((i) => (
             <View key={i.id} style={styles.inviteRow}>
-              <Caption>{`${i.email} · invited as ${roleLabel(i.role_level)}`}</Caption>
-              <Button label="Cancel invite" variant="ghost" disabled={busy} onPress={() => cancel.mutate(i.id)} />
+              <Caption>{`${i.name ? `${i.name}, ` : ''}${i.email} · invited as ${roleLabel(i.role_level)}`}</Caption>
+              <View style={styles.inviteActions}>
+                <Button label="Email again" variant="ghost" disabled={busy} onPress={() => emailInvite(i.email)} />
+                <Button label="Cancel invite" variant="ghost" disabled={busy} onPress={() => cancel.mutate(i.id)} />
+              </View>
             </View>
           ))}
         </LockedSection>
+        {manage && active ? (
+          <InviteSheet visible={inviting} onClose={() => setInviting(false)} barId={active.id} barName={active.name} ceiling={role} onDone={setNote} />
+        ) : null}
         {problem(change.error) || problem(remove.error) || problem(cancel.error) ? (
           <Caption tone="accent" role="alert">{problem(change.error) || problem(remove.error) || problem(cancel.error)}</Caption>
         ) : null}
@@ -205,6 +204,7 @@ const styles = StyleSheet.create({
   roles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   invite: { alignSelf: 'flex-start' },
   inviteRow: { gap: space.xs },
+  inviteActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   person: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   remove: { alignSelf: 'flex-start' },
 });

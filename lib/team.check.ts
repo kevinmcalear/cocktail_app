@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { canManageTeam, canSeeTeam, joinedLabel, personName, roster, TEAM_MANAGE, TEAM_SEE } from './team';
+import { canManageTeam, canSeeTeam, INVITE_ROLES, inviteButtonLabel, joinedLabel, personName, roster, TEAM_MANAGE, TEAM_SEE } from './team';
 
 assert.equal(TEAM_SEE, 20);
 assert.equal(TEAM_MANAGE, 40);
@@ -24,3 +24,7 @@ assert.deepEqual(roster(people, '').map(personName), ['Ada', 'Jo', 'sam']);
 assert.deepEqual(roster(people, '  JO ').map(personName), ['Jo']);
 assert.deepEqual(roster(people, 'sam@').map(personName), ['sam']);
 assert.deepEqual(roster(people, 'nobody'), []);
+
+assert.deepEqual(INVITE_ROLES.map((r) => r.level), [20, 30, 35, 40]);
+assert.equal(inviteButtonLabel('  Sam Okafor '), 'Email Sam an invite');
+assert.equal(inviteButtonLabel(''), 'Email an invite');
