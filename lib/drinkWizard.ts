@@ -113,6 +113,9 @@ export const hasContent = (d: WizardDraft) => WIZARD_STEPS.some((s) => s !== 're
 
 const norm = (s: string) => s.trim().toLowerCase();
 
+/** A name as an ILIKE pattern that matches only itself (any case, spaces tidied). */
+export const likeExactly = (name: string) => name.trim().replace(/\s+/g, ' ').replace(/[\\%_]/g, (c) => `\\${c}`);
+
 /** The existing row with this name (any case), or a new one to create. */
 export function pickByName<T extends { id: string; name: string | null }>(name: string, rows: readonly T[]): WizardPick {
   const hit = rows.find((r) => r.name && norm(r.name) === norm(name));
@@ -155,9 +158,10 @@ export function searchByName<T extends { id: string; name: string | null }>(quer
 
 // --- quick choices ---
 
+// Spirits and the things that go with them, mixed, so the first few cover most specs.
 export const COMMON_INGREDIENTS = [
-  'Gin', 'Rye whiskey', 'Bourbon', 'White rum', 'Tequila', 'Mezcal', 'Vodka', 'Sweet vermouth', 'Dry vermouth', 'Campari',
-  'Lime juice', 'Lemon juice', 'Simple syrup', 'Angostura bitters', 'Soda water', 'Egg white',
+  'Gin', 'Lime juice', 'Lemon juice', 'Simple syrup', 'Sweet vermouth', 'Campari', 'Angostura bitters', 'Rye whiskey',
+  'Bourbon', 'White rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry vermouth', 'Soda water', 'Egg white',
 ] as const;
 export const COMMON_METHODS = ['Shake', 'Stir', 'Build', 'Throw', 'Blend', 'Swizzle', 'Dry shake', 'Muddle'] as const;
 export const COMMON_GLASSES = ['Coupe', 'Nick & Nora', 'Martini', 'Rocks', 'Highball', 'Collins', 'Flute', 'Wine', 'Julep cup', 'Mug', 'Tiki'] as const;

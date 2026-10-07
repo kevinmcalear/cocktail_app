@@ -2,12 +2,13 @@ import { useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { MenuCreditWithProfile, Original } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
-import { peopleCount } from '@/lib/nearMe';
+import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
@@ -96,25 +97,23 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
 }
 
 /**
- * A bar's score: its drinks' scores averaged, weighted by how many people
- * ranked each. Early (under MIN_RANKERS people) says so, without a number.
+ * A bar's name with its score and how many people have ranked drinks there.
+ * The score is its drinks' scores averaged, weighted by how many people
+ * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarScore({ profileId }: { profileId: string }) {
-  const { data } = useVenueScore(profileId);
-  if (!data) return null;
-  const people = peopleCount(data.rankers);
-  const drinks = data.drinks === 1 ? '1 drink' : `${data.drinks} drinks`;
-  if (data.score === null) {
-    return (
-      <Caption tone="muted" align="center">
-        {`Early: ${people} ranked ${drinks} here so far. A bar score shows once ${MIN_RANKERS} people have.`}
-      </Caption>
-    );
-  }
+export function BarHeader({ profile, detail }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string }) {
+  const { data } = useVenueScore(profile.id);
+  const score = data?.score ?? null;
+  const ranked = data?.rankers ? rankedCount(data.rankers) : null;
+  const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
   return (
-    <View accessible accessibilityLabel={`Bar score ${formatScore(data.score)} out of 10, from ${people} across ${drinks}`} style={styles.score}>
-      <Spec align="center">{formatScore(data.score)}</Spec>
-      <Caption tone="muted" align="center">{`Bar score · ${people} · ${drinks}`}</Caption>
+    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
+      <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+      <View style={styles.flex}>
+        <Title>{profile.display_name}</Title>
+        <Caption tone="muted">{[detail, ranked].filter(Boolean).join(' · ')}</Caption>
+      </View>
+      {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
     </View>
   );
 }
@@ -156,7 +155,7 @@ const styles = StyleSheet.create({
   menus: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  score: { alignItems: 'center' },
+  barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },

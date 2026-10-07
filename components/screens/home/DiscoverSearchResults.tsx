@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, Headline } from '@/components/ds';
+import { Caption, Chip } from '@/components/ds';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
-import { findBars, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { barInArea, findBars, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { findKinds } from '@/lib/drinkStyles';
 import { areaLabel, type Area } from '@/lib/nearMe';
 
@@ -28,11 +28,11 @@ interface Props {
 /**
  * What Discover's search finds: the styles and spirits it names ("gin",
  * "marg"), bars by name or city, and drinks at bars by name, ingredient or
- * description. Bars are found anywhere; drinks stay in the area.
+ * description, all in the area.
  */
 export function DiscoverSearchResults({ search, area, drinks, bars, barsById, isLoading, signedIn, onKind }: Props) {
   const kinds = findKinds(search);
-  const foundBars = findBars(bars, search).slice(0, MAX_BARS);
+  const foundBars = findBars(bars.filter((b) => barInArea(b, area)), search).slice(0, MAX_BARS);
   const where = areaLabel(area);
 
   return (
@@ -45,16 +45,8 @@ export function DiscoverSearchResults({ search, area, drinks, bars, barsById, is
         </ChipRow>
       ) : null}
 
-      {foundBars.length ? (
-        <View style={styles.section}>
-          <Caption tone="muted">Bars</Caption>
-          <BarList bars={foundBars} />
-        </View>
-      ) : null}
-
       <View style={styles.section}>
-        <Caption tone="muted">{`Drinks at bars ${where}`}</Caption>
-        <Headline role="heading">{drinks.length ? `${drinks.length} ${drinks.length === 1 ? 'drink' : 'drinks'}` : 'Drinks'}</Headline>
+        <Caption tone="muted">{drinks.length ? `Drinks ${where} · ${drinks.length}` : `Drinks ${where}`}</Caption>
         {!signedIn ? (
           <ListNote>Sign in to search the drinks bars pour.</ListNote>
         ) : isLoading ? (
@@ -62,9 +54,16 @@ export function DiscoverSearchResults({ search, area, drinks, bars, barsById, is
         ) : drinks.length ? (
           <DrinkAtBarList drinks={drinks} barsById={barsById} limit={12} />
         ) : (
-          <ListNote>{`No drinks ${where} match "${search.trim()}".${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}</ListNote>
+          <ListNote>{`No drinks ${where} match "${search.trim()}".${area.kind === 'anywhere' ? '' : ' Try Everywhere.'}`}</ListNote>
         )}
       </View>
+
+      {foundBars.length ? (
+        <View style={styles.section}>
+          <Caption tone="muted">{`Bars ${where}`}</Caption>
+          <BarList bars={foundBars} />
+        </View>
+      ) : null}
     </View>
   );
 }

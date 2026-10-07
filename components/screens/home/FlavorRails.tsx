@@ -4,8 +4,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, Headline, PressableScale, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useFlavorCatalog, useItemScores, useMyRankedIds, useMyTaste } from '@/hooks/useFlavor';
-import { COLD_START_DRINKS, forYou, mostCreative } from '@/lib/flavor';
+import { useFlavorCatalog, useMyRankedIds, useMyTaste } from '@/hooks/useFlavor';
+import { COLD_START_DRINKS, forYou } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { TasteQuestions } from './TasteQuestions';
@@ -95,33 +95,6 @@ export function ForYou() {
       </Rail>
       {cold ? <Button label="Change my answers" variant="ghost" onPress={() => setAsking(true)} /> : null}
     </View>
-  );
-}
-
-/**
- * "Most creative": well-ranked drinks whose flavor is furthest from a
- * classic (lib/flavor.ts mostCreative). Hidden until some qualify.
- */
-export function MostCreative() {
-  const catalog = useFlavorCatalog();
-  const candidates = (catalog.data ?? []).filter((d) => !d.isClassic).map((d) => d.id);
-  const scores = useItemScores(candidates);
-  const list = catalog.data && scores.data ? mostCreative(catalog.data, scores.data) : [];
-  if (!list.length) return null;
-  return (
-    <Rail title="Most creative" note="Drinks people rank highly that taste least like the classic they're closest to.">
-      {list.map((c) => (
-        <View role="listitem" key={c.id}>
-          <RailCard
-            id={c.id}
-            name={c.name}
-            imageUrl={c.imageUrl}
-            badge={`Scored ${scores.data![c.id].toFixed(1)}`}
-            reason={c.versionOf ? `A long way from the ${c.from} it's a version of.` : `Furthest from its nearest classic, the ${c.from}.`}
-          />
-        </View>
-      ))}
-    </Rail>
   );
 }
 
