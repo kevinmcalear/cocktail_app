@@ -31,7 +31,8 @@ export interface GlassShape {
 export const GLASS_SHAPES: Record<SketchGlass, GlassShape> = {
   coupe: { rim: 31, prof: [[31, 26.5], [34, 26.2], [38, 25.2], [42, 23.4], [45, 21], [47.5, 17.5], [49.5, 12], [50.8, 6], [51.3, 0]], top: 34.5, stem: [51.3, 86], foot: [87, 13.5], stemmed: true, stemW: 0.75, flare: 2.6 },
   nick: { rim: 28, prof: [[28, 20], [33, 19.8], [38, 18.9], [43, 16.8], [48, 13], [52, 8.5], [55, 4], [57, 0]], top: 32, stem: [57, 85], foot: [86, 12], stemmed: true, stemW: 0.8, flare: 2.6 },
-  martini: { rim: 26, prof: [[26, 34], [60, 0]], top: 30, stem: [60, 84], foot: [85.5, 13], stemmed: true },
+  // A classic V: a touch of flare at the lip, a softened point, a long fine stem.
+  martini: { rim: 22, prof: [[22, 27], [25, 24.4], [30, 20.8], [36, 16.9], [42, 13.1], [48, 9.2], [53, 5.8], [56.5, 3], [58.5, 0.8], [59, 0]], top: 26, stem: [59, 86], foot: [87, 13.5], stemmed: true, stemW: 0.7, flare: 2.4 },
   rocks: { rim: 40, prof: [[40, 25], [86, 22.5]], top: 52, base: 79, stemmed: false },
   highball: { rim: 13, prof: [[13, 18], [88, 16.5]], top: 23, base: 82, stemmed: false },
   collins: { rim: 9, prof: [[9, 14.5], [90, 13.8]], top: 16, base: 84, stemmed: false },
@@ -46,6 +47,57 @@ export const GLASS_SHAPES: Record<SketchGlass, GlassShape> = {
   mug: { rim: 34, prof: [[34, 18.5], [84, 18]], top: 38, base: 81, stemmed: false, opaque: SKETCH.copper, handle: true },
   ceramic: { rim: 38, prof: [[38, 20], [60, 21], [84, 17]], top: 41, base: 82, stemmed: false, opaque: SKETCH.ceramicGlaze },
 };
+
+export interface GlassVariant {
+  /** Stored in drawing inputs and bar glassware: '<glass>_<name>'. */
+  key: string;
+  label: string;
+  shape: GlassShape;
+}
+
+const v = (glass: SketchGlass, name: string, label: string, shape: GlassShape = GLASS_SHAPES[glass]): GlassVariant => ({ key: `${glass}_${name}`, label, shape });
+
+/**
+ * Other shapes for the glasses bars choose most carefully, so a drink can be
+ * drawn in its own bar's glass. The first is the default (GLASS_SHAPES).
+ * ponytail: generic families, not real makers' glasses; a bar's own maker and
+ * series live in bar_glassware and map onto one of these.
+ */
+export const GLASS_VARIANTS: Partial<Record<SketchGlass, GlassVariant[]>> = {
+  martini: [
+    v('martini', 'classic', 'Classic'),
+    v('martini', 'rounded', 'Rounded', { rim: 24, prof: [[24, 26], [30, 25], [36, 23], [42, 19.5], [48, 14.5], [52, 10], [55.5, 5], [57, 0]], top: 28, stem: [57, 85], foot: [86, 13], stemmed: true, stemW: 0.75, flare: 2.5 }),
+    v('martini', 'petite', 'Petite', { rim: 28, prof: [[28, 21], [34, 17.6], [40, 14], [46, 10.2], [51, 6.6], [55, 3.4], [57.5, 0.8], [58, 0]], top: 32, stem: [58, 85], foot: [86, 11.5], stemmed: true, stemW: 0.95, flare: 2.8 }),
+  ],
+  coupe: [
+    v('coupe', 'wide', 'Wide'),
+    v('coupe', 'deep', 'Deep', { rim: 27, prof: [[27, 22], [31, 21.8], [36, 20.8], [41, 18.8], [45, 16], [48.5, 12], [51, 7.5], [52.6, 3], [53, 0]], top: 31, stem: [53, 86], foot: [87, 12.5], stemmed: true, stemW: 0.8, flare: 2.6 }),
+    v('coupe', 'saucer', 'Saucer', { rim: 36, prof: [[36, 30], [38, 29.4], [40.5, 27.5], [43, 24], [45, 19.5], [46.6, 13], [47.6, 6], [48, 0]], top: 38.5, stem: [48, 86], foot: [87, 14], stemmed: true, stemW: 0.7, flare: 2.4 }),
+  ],
+  nick: [
+    v('nick', 'bell', 'Bell'),
+    v('nick', 'tulip', 'Tulip', { rim: 24, prof: [[24, 16.5], [28, 17.6], [33, 18], [38, 17.4], [43, 15.6], [48, 12.4], [52, 8.4], [55, 4], [56.6, 0]], top: 30, stem: [56.6, 85], foot: [86, 11.5], stemmed: true, stemW: 0.75, flare: 2.4 }),
+    v('nick', 'little', 'Little', { rim: 33, prof: [[33, 18], [37, 17.8], [41, 16.8], [45, 14.6], [48.5, 11.4], [51.5, 7.5], [53.6, 3.5], [54.6, 0]], top: 36.5, stem: [54.6, 85], foot: [86, 11], stemmed: true, stemW: 0.85, flare: 2.6 }),
+  ],
+  rocks: [
+    v('rocks', 'straight', 'Straight'),
+    v('rocks', 'heavy', 'Heavy base', { rim: 42, prof: [[42, 27], [86, 26]], top: 54, base: 74, stemmed: false }),
+    v('rocks', 'tapered', 'Tapered', { rim: 44, prof: [[44, 27.5], [86, 19]], top: 56, base: 80, stemmed: false }),
+  ],
+  highball: [
+    v('highball', 'straight', 'Straight'),
+    v('highball', 'tapered', 'Tapered', { rim: 12, prof: [[12, 19.5], [88, 14]], top: 22, base: 83, stemmed: false }),
+    v('highball', 'heavy', 'Heavy base', { rim: 14, prof: [[14, 18.5], [88, 18]], top: 24, base: 76, stemmed: false }),
+  ],
+};
+
+/** The variants a glass can be drawn as: just its one shape when it has none. */
+export const variantsOf = (glass: SketchGlass): GlassVariant[] => GLASS_VARIANTS[glass] ?? [v(glass, 'standard', 'Standard')];
+
+/** A glass's shape in a variant; an unknown or other glass's variant draws the default. */
+export function glassShape(glass: SketchGlass, variant?: string | null): GlassShape {
+  return GLASS_VARIANTS[glass]?.find((x) => x.key === variant)?.shape ?? GLASS_SHAPES[glass];
+}
 
 export function hw(g: GlassShape, y: number): number {
   const p = g.prof;
