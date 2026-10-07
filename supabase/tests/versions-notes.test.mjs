@@ -141,6 +141,26 @@ describe('save_drink_spec', () => {
     const asBartender = await users.bartender.client.rpc('restore_drink_version', { p_item: ids.drink, p_version: 1 });
     assert.ok(asBartender.error, 'restoring needs edit rights');
   });
+
+  test('a drink keeps several methods in order, skipping repeats and non-methods', async () => {
+    const { data: version, error } = await users.creator.client.rpc('save_drink_spec', {
+      p_item: ids.drink,
+      p_lines: [line(ids.bourbon, 60, 'ml')],
+      p_method_ids: [ids.shake, ids.stir, ids.shake, ids.bourbon],
+      p_note: null,
+    });
+    assert.ifError(error);
+    const rows = await service.from('item_methods').select('method_item_id, sort_order').eq('item_id', ids.drink).order('sort_order');
+    assert.deepEqual(rows.data.map((r) => r.method_item_id), [ids.shake, ids.stir]);
+    const v = await versions(users.creator.client);
+    assert.equal(v.at(-1).version, version);
+    assert.deepEqual(v.at(-1).snapshot.methods, [`Shake ${run}`, `Stir ${run}`]);
+
+    const none = await users.creator.client.rpc('save_drink_spec', { p_item: ids.drink, p_lines: [line(ids.bourbon, 60, 'ml')], p_method_ids: [], p_note: null });
+    assert.ifError(none.error);
+    const left = await service.from('item_methods').select('method_item_id').eq('item_id', ids.drink);
+    assert.equal(left.data.length, 0, 'an empty list clears the methods');
+  });
 });
 
 describe('item_comments', () => {

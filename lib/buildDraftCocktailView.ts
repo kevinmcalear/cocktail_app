@@ -8,7 +8,7 @@ export function buildDraftCocktailView(
         description: string;
         origin: string;
         notes: string;
-        methodId: string | null;
+        methodIds: string[];
         glasswareId: string | null;
         familyId: string | null;
         iceId: string | null;
@@ -29,9 +29,7 @@ export function buildDraftCocktailView(
         description: state.description || null,
         origin: state.origin || null,
         notes: state.notes || null,
-        item_methods: state.methodId
-            ? [{ method: { name: label(state.methods, state.methodId) } }]
-            : [],
+        item_methods: state.methodIds.map((id) => ({ method: { name: label(state.methods, id) } })),
         glassware: state.glasswareId ? { name: label(state.glassware, state.glasswareId) } : null,
         family: state.familyId ? { name: label(state.families, state.familyId) } : null,
         ice: state.iceId ? { name: label(state.iceTypes, state.iceId) } : null,

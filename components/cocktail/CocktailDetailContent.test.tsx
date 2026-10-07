@@ -47,6 +47,7 @@ function makeEditor(): Editor {
     families: [],
     iceTypes: [],
     origin: '',
+    methodIds: [],
     getSpecId: () => null,
     barId: null,
   } as unknown as Editor;

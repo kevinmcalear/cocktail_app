@@ -17,7 +17,7 @@ export interface SwapDrink {
   id: string;
   name: string;
   itemType: 'cocktail' | 'ingredient';
-  methodId: string | null;
+  methodIds: string[];
   lines: SwapLine[];
 }
 

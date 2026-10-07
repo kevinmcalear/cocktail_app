@@ -58,12 +58,35 @@ test('tapping the selected option clears it only when deselect is allowed', asyn
   expect(cleared.onSelect).toHaveBeenCalledWith(null);
 });
 
-test('long-pressing an option offers to delete it', async () => {
-  const onDelete = jest.fn();
-  await renderSheet({ onDelete });
+test('with several selected, a tap adds or removes one and the sheet stays open until Done', async () => {
+  const { onSelect, onClose } = await renderSheet({ selectedIds: ['m1', 'm2'] });
 
-  await fireEvent(screen.getByText('Stirred'), 'longPress');
-  expect(onDelete).toHaveBeenCalledWith({ id: 'm2', name: 'Stirred' });
+  await fireEvent.press(screen.getByText('Stirred'));
+  expect(onSelect).toHaveBeenCalledWith('m2');
+  expect(onClose).not.toHaveBeenCalled();
+
+  await fireEvent.press(screen.getByText('Done'));
+  expect(onClose).toHaveBeenCalled();
+});
+
+test('adding a method when several are picked selects it once and keeps the sheet open', async () => {
+  const onAdd = jest.fn(async () => 'm3');
+  const { onSelect, onClose } = await renderSheet({ selectedIds: ['m1'], onAdd });
+
+  await fireEvent.press(screen.getByText('+ Add'));
+  await fireEvent.changeText(screen.getByPlaceholderText('New method'), 'Freezer pour');
+  await fireEvent.press(screen.getByText('Add'));
+  await waitFor(() => expect(onSelect).toHaveBeenCalledWith('m3'));
+  expect(onClose).not.toHaveBeenCalled();
+  await screen.unmount();
+
+  // Typing a method that's already on the drink doesn't take it off again.
+  const again = await renderSheet({ selectedIds: ['m1'], onAdd: jest.fn(async () => 'm1') });
+  await fireEvent.press(screen.getByText('+ Add'));
+  await fireEvent.changeText(screen.getByPlaceholderText('New method'), 'shaken');
+  await fireEvent.press(screen.getByText('Add'));
+  await waitFor(() => expect(screen.queryByPlaceholderText('New method')).toBeNull());
+  expect(again.onSelect).not.toHaveBeenCalled();
 });
 
 test('adding an option saves the trimmed name, selects it and closes', async () => {

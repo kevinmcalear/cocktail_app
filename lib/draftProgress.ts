@@ -1,4 +1,5 @@
 import { STATUS } from '@/constants/palette';
+import { draftMethodIds } from '@/lib/drinkMethods';
 
 export interface ProgressInfo {
     percentage: number;
@@ -86,7 +87,7 @@ export function calculateDraftProgress(
             // Specs: up to 25% total, 6.25% for each of Glassware, Method, Family, Ice
             let specsScore = 0;
             if (isValueSet(data.glasswareId)) specsScore += 6.25;
-            if (isValueSet(data.methodId)) specsScore += 6.25;
+            if (draftMethodIds(data).length) specsScore += 6.25;
             if (isValueSet(data.familyId)) specsScore += 6.25;
             if (isValueSet(data.iceId)) specsScore += 6.25;
             score += Math.round(specsScore * 100) / 100;

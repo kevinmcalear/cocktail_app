@@ -17,7 +17,8 @@ export const COCKTAIL_LIST_COLUMNS = `
     family_id,
     ice_id,
     item_methods!item_methods_item_id_fkey (
-        method_item_id
+        method_item_id,
+        sort_order
     ),
     recipes:app_recipe_presentation!recipe_item_id (
         sort_order,
@@ -147,6 +148,7 @@ export function useCocktail(id?: string | string[]) {
                     ),
                     item_methods!item_methods_item_id_fkey (
                         method_item_id,
+                        sort_order,
                         method:items!item_methods_method_item_id_fkey (
                             name
                         )

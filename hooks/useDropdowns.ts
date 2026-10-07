@@ -1,8 +1,9 @@
+import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 /** Bump when menus shape / current filter changes so hour-long cache can't serve stale rows. */
-export const DROPDOWNS_QUERY_KEY = ['dropdowns_v5'] as const;
+export const DROPDOWNS_QUERY_KEY = ['dropdowns_v6'] as const;
 
 export function useDropdowns() {
     return useQuery({
@@ -45,15 +46,23 @@ export function useDropdowns() {
                 return res.data || [];
             };
 
-            const [itemsRes, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
-                supabase.from('app_item_presentation').select('*, item_images(images(url))').in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient']).order('name'),
+            // Over 5,000 rows, mostly ingredients: one request stops at 1,000 by
+            // name, so a new method named "Freezer pour" never showed up.
+            const [items, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
+                allRows((from, to) =>
+                    supabase
+                        .from('app_item_presentation')
+                        .select('*, item_images(images(url))')
+                        .in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient'])
+                        .order('name')
+                        .order('id')
+                        .range(from, to)
+                ),
                 menusQuery(),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order'),
                 supabase.from('categories').select('*').order('name')
             ]);
-            
-            const items = itemsRes.data || [];
 
             return {
                 methods: items.filter(item => item.item_type === 'method'),
