@@ -17,6 +17,7 @@ import type { MenuStatus } from '@/types/menus';
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuSections } from './MenuSections';
+import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
 const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
@@ -74,14 +75,22 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const status = menuStatus(menu, now);
   const venue = venues.find((v) => v.id === menu.barId);
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
-  const hero = menu.coverUrl ?? menu.sections.flatMap((s) => s.drinks).find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
+  // Its cover photo, or with none, its first drinks' own pictures (sketches where there's no photo).
+  const pictures = menu.sections.flatMap((s) => s.drinks);
+  const hero = !!menu.coverUrl || pictures.length > 0;
   const go = (href: string) => router.push(href as Href);
   const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-        {hero ? <DrinkHero name={menu.name} pictures={[{ url: hero, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
+        {menu.coverUrl ? (
+          <DrinkHero name={menu.name} pictures={[{ url: menu.coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade />
+        ) : hero ? (
+          <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
+        ) : (
+          <View style={{ height: insets.top + 72 }} />
+        )}
         <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
           {/* A home menu is always a draft to the venue calendar: its night is in the line below. */}
