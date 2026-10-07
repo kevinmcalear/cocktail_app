@@ -1,0 +1,5269 @@
+{
+  "batch": "recent_2",
+  "researched_on": "2026-10-07",
+  "searches_used": 40,
+  "bars": [
+    {
+      "handle": "barleonehk",
+      "name": "Bar Leone",
+      "glassware": [
+        {
+          "maker": "BOBO",
+          "designer": null,
+          "series": "Popolare",
+          "shapes": [
+            {
+              "name": "Popolare Highball",
+              "sketch_shape": "highball",
+              "shape_note": null
+            },
+            {
+              "name": "Popolare Spritz",
+              "sketch_shape": "spritz",
+              "shape_note": null
+            },
+            {
+              "name": "Popolare Rock",
+              "sketch_shape": "rocks",
+              "shape_note": null
+            },
+            {
+              "name": "Popolare Martini",
+              "sketch_shape": "martini",
+              "shape_note": null
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.timeout.com/hong-kong/news/bar-leone-launches-a-glassware-collection-with-bobo-073126",
+            "https://www.forbes.com.au/life/eat-drink/bobo-bar-leone-popolare-glassware/"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "Bellini",
+          "glass": "small tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "small, low straight-sided tumbler",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.the50.com/bars/the-list/bar-leone.html"
+        },
+        {
+          "drink": "Negroni",
+          "glass": "Popolare Rock",
+          "sketch_shape": "rocks",
+          "shape_note": null,
+          "maker": "BOBO",
+          "series": "Popolare",
+          "verified": "page",
+          "source_url": "https://www.forbes.com.au/life/eat-drink/bobo-bar-leone-popolare-glassware/"
+        }
+      ],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Bellini",
+          "ingredients": [
+            "almond eau de vie",
+            "peach",
+            "cream"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/the-list/bar-leone.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "found",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 2,
+        "notes": "Bar site is a JS shell with no readable menu. Glassware: BOBO (Stockholm) Popolare collection (Highball, Spritz, Rock, Martini), in use at the bar per Time Out HK (31 Jul 2026); Forbes AU (6 Aug 2026) shows the signature Negroni in the Rock glass, retail launch Nov 2026. 50 Best 2025 profile: Bellini served in a small tumbler. A late-July 2026 SCMP guide mentions new summer drinks but returned 403, so no edition added."
+      }
+    },
+    {
+      "handle": "jiggerandponysg",
+      "name": "Jigger & Pony",
+      "glassware": [
+        {
+          "maker": "Kimura Glass",
+          "designer": null,
+          "series": "Crumple",
+          "shapes": [
+            {
+              "name": "Crumple glass",
+              "sketch_shape": "rocks",
+              "shape_note": "tumbler with crumpled, creased walls"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://citynomads.com/jigger-pony-the-king-of-classic-cocktails/"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "Ugly Tomatoes",
+          "glass": "Kimura Crumple",
+          "sketch_shape": "rocks",
+          "shape_note": "tumbler with crumpled, creased walls",
+          "maker": "Kimura Glass",
+          "series": "Crumple",
+          "verified": "page",
+          "source_url": "https://citynomads.com/jigger-pony-the-king-of-classic-cocktails/"
+        }
+      ],
+      "editions": [
+        {
+          "name": "BLOOM",
+          "existing": {
+            "name": "BLOOM",
+            "start": "2026"
+          },
+          "start": "2026",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Crimson Fizz",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.jiggerandpony.com/bloom-menu",
+            "https://www.boothby.com.au/how-jigger-ponys-new-menu-came-to-life/"
+          ]
+        },
+        {
+          "name": "IDENTITY",
+          "existing": {
+            "name": "IDENTITY",
+            "start": "2023-02"
+          },
+          "start": "2023-02",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Cloudy Kangaroo",
+              "ingredients": [
+                "Haku vodka",
+                "sherry",
+                "peach",
+                "sake kasu",
+                "soy milk curd"
+              ]
+            },
+            {
+              "name": "Ugly Tomatoes",
+              "ingredients": [
+                "Hapusa Himalayan gin",
+                "house kummel",
+                "tomato"
+              ]
+            },
+            {
+              "name": "Honey Magnum",
+              "ingredients": [
+                "bourbon",
+                "raw honey",
+                "strawberry wine",
+                "beetroot",
+                "beeswax"
+              ]
+            },
+            {
+              "name": "Dirty Martini",
+              "ingredients": [
+                "Bombay Sapphire gin",
+                "house brine",
+                "extra virgin olive oil emulsion"
+              ]
+            },
+            {
+              "name": "Super Lemon Highball",
+              "ingredients": [
+                "Suntory World Whisky AO",
+                "lemon water",
+                "Hokkaido soft water",
+                "lemon jelly"
+              ]
+            },
+            {
+              "name": "Pear & Hops",
+              "ingredients": [
+                "Seedlip Spice",
+                "pear"
+              ]
+            },
+            {
+              "name": "Coffee & Cacao",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://citynomads.com/jigger-pony-the-king-of-classic-cocktails/"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 2,
+        "notes": "Bar site confirms BLOOM is the current menu (eighth menuzine, 21 cocktails in four chapters: Hope, Growth, Beauty, Just Be); full list is in a flipbook that could not be read. Boothby (23 Jul 2026) says it launched a couple of weeks before an interview but gives no month, so start stays 2026. Crimson Fizz is captioned as a BLOOM drink. City Nomads (15 Apr 2023) review of IDENTITY adds drinks and says Ugly Tomatoes is served in Kimura Crumple glassware; rocks is the closest sketch shape for the crumpled tumbler."
+      }
+    },
+    {
+      "handle": "coahongkong",
+      "name": "COA",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "La Paloma de Oaxaca",
+          "ingredients": [
+            "tequila blanco",
+            "mezcal joven",
+            "lime",
+            "grapefruit soda",
+            "worm salt"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://coa.com.hk/"
+        },
+        {
+          "drink": "Ancho Highball",
+          "ingredients": [
+            "tequila blanco",
+            "salted plum",
+            "ancho chile",
+            "guava soda"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://coa.com.hk/"
+        },
+        {
+          "drink": "Coconut Milk Punch",
+          "ingredients": [
+            "aged rum",
+            "overproof rum",
+            "dry sherry",
+            "coffee",
+            "coconut cream",
+            "tamarind",
+            "pineapple",
+            "lemon",
+            "salt"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://coa.com.hk/"
+        },
+        {
+          "drink": "Bloody \"Beef\" Maria",
+          "ingredients": [],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/the-list/coa.html"
+        },
+        {
+          "drink": "Pepper Smash",
+          "ingredients": [],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/the-list/coa.html"
+        },
+        {
+          "drink": "Bitter Melon Collins",
+          "ingredients": [
+            "bitter melon",
+            "tequila",
+            "coconut",
+            "green curry",
+            "blood orange",
+            "elderflower tonic"
+          ],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/coa"
+        },
+        {
+          "drink": "Mole Negroni",
+          "ingredients": [
+            "cacao husk-infused vermouth",
+            "Campari",
+            "tequila reposado",
+            "ancho verde liqueur"
+          ],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/coa"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site lists three undated featured cocktails (recorded as Oct 2026 sightings) and says a new cocktail is added weekly; no named or dated menus. 50 Best 2025 profile and SCMP 100 Top Tables 2026 (mentions an undated menu refresh) add drinks. One search found no glassware maker."
+      }
+    },
+    {
+      "handle": "drywavecocktailstudio",
+      "name": "Dry Wave Cocktail Studio",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "1806-1988",
+          "ingredients": [],
+          "seen": "2024-08",
+          "source_url": "https://www.the50.com/stories/News/dry-wave-one-to-watch-asias-50-best-bars-2024.html"
+        },
+        {
+          "drink": "Love Birds in Venice",
+          "ingredients": [],
+          "seen": "2024-08",
+          "source_url": "https://www.the50.com/stories/News/dry-wave-one-to-watch-asias-50-best-bars-2024.html"
+        },
+        {
+          "drink": "Morning Tijuana",
+          "ingredients": [],
+          "seen": "2024-08",
+          "source_url": "https://www.the50.com/stories/News/dry-wave-one-to-watch-asias-50-best-bars-2024.html"
+        },
+        {
+          "drink": "Casoni Martini",
+          "ingredients": [],
+          "seen": "2025-06",
+          "source_url": "https://www.alcoholprofessor.com/blog-posts/modern-cocktail-bars-bangkok"
+        },
+        {
+          "drink": "Soap and Stone",
+          "ingredients": [
+            "cream",
+            "brown mushroom",
+            "green sea kelp powder"
+          ],
+          "seen": "2025-06",
+          "source_url": "https://www.alcoholprofessor.com/blog-posts/modern-cocktail-bars-bangkok"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "No bar website. The menu concept is 'Super Classics' (two classics merged into one drink, 18 of them per a Jun 2025 article, plus 30+ classics in 10 flavour 'waves'), but no dated or named edition was found, so drinks are sightings. 50 Best story (29 Aug 2024) and Alcohol Professor (2 Jun 2025) used."
+      }
+    },
+    {
+      "handle": "mobarshenzhen",
+      "name": "MO Bar Shenzhen",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Colours of China",
+          "existing": {
+            "name": "Colours of China",
+            "start": "2025-06"
+          },
+          "start": "2025-02",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Canary",
+              "ingredients": [
+                "mezcal",
+                "mango"
+              ]
+            },
+            {
+              "name": "Lutinu",
+              "ingredients": [
+                "tomato"
+              ]
+            },
+            {
+              "name": "Amethyst",
+              "ingredients": [
+                "London dry gin",
+                "maraschino liqueur",
+                "honey",
+                "soda water",
+                "Fenghuang dancong tea"
+              ]
+            },
+            {
+              "name": "Ruby",
+              "ingredients": [
+                "bourbon",
+                "fermented rose jam",
+                "strawberry milk",
+                "buckwheat"
+              ]
+            },
+            {
+              "name": "Scarlet",
+              "ingredients": []
+            },
+            {
+              "name": "Ecru",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://global.chinadaily.com.cn/a/202502/28/WS67c14fa3a310c240449d7d9c.html",
+            "https://100toptables.scmp.com/restaurants-profile-2026/mo-bar-shenzhen",
+            "https://www.eyeshenzhen.com/content/2024-12/25/content_31409331.htm"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Corrected start: China Daily (28 Feb 2025) says the menu was unveiled in February 2025, not June. 16 drinks across four seasons (24 solar terms). SCMP 100 Top Tables 2026 still lists it, but no source from the last 3 months confirms it is current. An earlier movable-type-themed menu (per Eye Shenzhen, Dec 2024) has no start date, so no edition. Hotel page did not render."
+      }
+    },
+    {
+      "handle": "bkksocialclub",
+      "name": "BKK Social Club",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Buenos Aires menu",
+          "existing": {
+            "name": "Buenos Aires menu",
+            "start": "2021-04"
+          },
+          "start": "2021-04",
+          "end": "2024-10",
+          "end_basis": "replaced",
+          "is_current": false,
+          "drinks": [],
+          "verified": "page",
+          "source_urls": [
+            "https://press.fourseasons.com/bangkok/hotel-news/2024/bkk-menu"
+          ]
+        },
+        {
+          "name": "Mexico City: People, Places and Parties",
+          "existing": {
+            "name": "Mexico City: People, Places and Parties",
+            "start": "2024"
+          },
+          "start": "2024-11",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "La Capilla",
+              "ingredients": []
+            },
+            {
+              "name": "Frida Kahlo",
+              "ingredients": []
+            },
+            {
+              "name": "Pique",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://press.fourseasons.com/bangkok/hotel-news/2024/bkk-menu"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "found",
+        "searches": 1,
+        "notes": "Four Seasons release dated 8 Nov 2024 announces the Mexico City menu, moving on from the Argentina (Buenos Aires) menu, so start set to 2024-11 and the Buenos Aires menu ended 2024-10 (replaced). Bar page returned 403; no 2026 menu found (a Sept 2026 release covers a guest-bar event only), so is_current left null."
+      }
+    },
+    {
+      "handle": "lennons.bkk",
+      "name": "Lennon's",
+      "glassware": [],
+      "drink_glasses": [
+        {
+          "drink": "Mando-Tini",
+          "glass": "coupe",
+          "sketch_shape": "coupe",
+          "shape_note": "wide shallow coupe bowl on a tall thin stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.rosewoodhotels.com/content/dam/rosewoodhotels/property/bangkok/en/documents/lennon%27s/RWBKK_Dinning_Lennon%27s_Signature%20Cocktail%20Menu_Bangkok%20Beats.pdf"
+        },
+        {
+          "drink": "Sagoregroni",
+          "glass": "rocks",
+          "sketch_shape": "rocks",
+          "shape_note": "short straight-sided rocks tumbler, heavy base",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.rosewoodhotels.com/content/dam/rosewoodhotels/property/bangkok/en/documents/lennon%27s/RWBKK_Dinning_Lennon%27s_Signature%20Cocktail%20Menu_Bangkok%20Beats.pdf"
+        },
+        {
+          "drink": "Amemican Mary",
+          "glass": "coupe",
+          "sketch_shape": "coupe",
+          "shape_note": "shallow coupe bowl on a slim stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.rosewoodhotels.com/content/dam/rosewoodhotels/property/bangkok/en/documents/lennon%27s/RWBKK_Dinning_Lennon%27s_Signature%20Cocktail%20Menu_Bangkok%20Beats.pdf"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Bangkok Beats",
+          "existing": null,
+          "start": "2026-01",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Mando-Tini",
+              "ingredients": [
+                "The Botanist Islay gin",
+                "coconut oil",
+                "dry mango",
+                "Marian plum",
+                "bianco vermouth"
+              ]
+            },
+            {
+              "name": "Sagoregroni",
+              "ingredients": [
+                "Matusalem Platino rum",
+                "longan",
+                "rosso vermouth",
+                "pandan",
+                "Campari",
+                "Ratafia Rossi",
+                "sago"
+              ]
+            },
+            {
+              "name": "Amemican Mary",
+              "ingredients": [
+                "José Cuervo Tradicional tequila",
+                "400 Conejos mezcal",
+                "dried beef",
+                "pistachio",
+                "pineapple",
+                "vinegar",
+                "clarified carrot ketchup",
+                "egg white"
+              ]
+            },
+            {
+              "name": "Fad Thai Sour",
+              "ingredients": [
+                "Wild Turkey bourbon",
+                "peanut butter",
+                "chives",
+                "tamarind",
+                "orgeat",
+                "calamansi",
+                "lime",
+                "egg white"
+              ]
+            },
+            {
+              "name": "Sol Tum",
+              "ingredients": [
+                "Tito's vodka",
+                "papaya",
+                "coriander",
+                "tomato",
+                "calamansi",
+                "tamarind",
+                "lime",
+                "chili"
+              ]
+            },
+            {
+              "name": "Fish & Watermela Punch",
+              "ingredients": [
+                "Matusalem Platino rum",
+                "watermelon lacto",
+                "citrus",
+                "dried fish",
+                "yogurt",
+                "jasmine green tea",
+                "CO2"
+              ]
+            },
+            {
+              "name": "Thai Milk Ti",
+              "ingredients": [
+                "Rémy Martin 1738",
+                "Thai tea",
+                "milk",
+                "lime",
+                "salak fruit",
+                "beer reduction",
+                "spices",
+                "Campari",
+                "Ratafia Rossi",
+                "Bénédictine"
+              ]
+            },
+            {
+              "name": "C&C Donic",
+              "ingredients": [
+                "The Botanist Islay gin",
+                "oliang",
+                "peach",
+                "chrysanthemum tonic",
+                "orange sorbet"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.rosewoodhotels.com/en/bangkok/media-hub/introducing-lennons-bangkok-beats-signature-cocktail-menu",
+            "https://www.rosewoodhotels.com/content/dam/rosewoodhotels/property/bangkok/en/documents/lennon%27s/RWBKK_Dinning_Lennon%27s_Signature%20Cocktail%20Menu_Bangkok%20Beats.pdf",
+            "https://www.rosewoodhotels.com/en/bangkok/dining/lennons"
+          ]
+        },
+        {
+          "name": "Reopening menu (Lennon's Favorites and The Sound of the Future)",
+          "existing": null,
+          "start": "2022-03",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Why Need to be Single",
+              "ingredients": []
+            },
+            {
+              "name": "Fly Me to the Moon",
+              "ingredients": []
+            },
+            {
+              "name": "Woman",
+              "ingredients": []
+            },
+            {
+              "name": "You are the Sunshine of My Life",
+              "ingredients": [
+                "croissant syrup",
+                "baked apple"
+              ]
+            },
+            {
+              "name": "A Mover La Colita",
+              "ingredients": [
+                "rum",
+                "banana",
+                "Thai coffee"
+              ]
+            },
+            {
+              "name": "Giorgio Moroder",
+              "ingredients": []
+            },
+            {
+              "name": "American Disco",
+              "ingredients": [
+                "clarified milk punch"
+              ]
+            },
+            {
+              "name": "Japanese Disco",
+              "ingredients": [
+                "sakura vermouth"
+              ]
+            },
+            {
+              "name": "Indian Disco",
+              "ingredients": [
+                "tamarind",
+                "curry leaf"
+              ]
+            },
+            {
+              "name": "Thai Disco",
+              "ingredients": [
+                "pineapple",
+                "coconut",
+                "pandan"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.rosewoodhotels.com/en/global/media-hub/press-releases/lennons-at-rosewood-bangkok-reopens-with-all-new-cocktail-menu-on-march/"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "found",
+        "history": "found",
+        "searches": 1,
+        "notes": "Bangkok Beats announced in a Rosewood release dated 12 Jan 2026; drinks and ingredients read from the menu PDF linked on the bar page (glass shapes from the menu's drink images). Reopening menu from the 1 Mar 2022 release (reopened 2 Mar 2022). Classics sit on a separate list. No glassware maker found."
+      }
+    },
+    {
+      "handle": "penrose.kl",
+      "name": "Penrose",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Makopa Martini",
+          "ingredients": [
+            "lacto-fermented kedondong"
+          ],
+          "seen": "2022",
+          "source_url": "https://www.alambic-magazine.com/interview-of-jon-lee-penrose-malaysia/"
+        },
+        {
+          "drink": "XocoNegro",
+          "ingredients": [
+            "cacao-distilled vodka",
+            "barley-steeped vermouth"
+          ],
+          "seen": "2022",
+          "source_url": "https://www.alambic-magazine.com/interview-of-jon-lee-penrose-malaysia/"
+        },
+        {
+          "drink": "Rum Mussa",
+          "ingredients": [],
+          "seen": "2022",
+          "source_url": "https://www.alambic-magazine.com/interview-of-jon-lee-penrose-malaysia/"
+        },
+        {
+          "drink": "Storm Spice",
+          "ingredients": [],
+          "seen": "2022",
+          "source_url": "https://www.alambic-magazine.com/interview-of-jon-lee-penrose-malaysia/"
+        },
+        {
+          "drink": "Rum De Violette",
+          "ingredients": [],
+          "seen": "2022",
+          "source_url": "https://www.alambic-magazine.com/interview-of-jon-lee-penrose-malaysia/"
+        },
+        {
+          "drink": "Rum Musa",
+          "ingredients": [
+            "rum",
+            "banana",
+            "pimento berry",
+            "tamarind"
+          ],
+          "seen": "2024-06",
+          "source_url": "https://www.timeout.com/kuala-lumpur/bars-and-pubs/penrose"
+        },
+        {
+          "drink": "Penrose Gibson",
+          "ingredients": [],
+          "seen": "2024-08",
+          "source_url": "https://www.the50.com/stories/News/penrose-highest-climber-asias-50-best-bars-2024.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "No bar website. Sources describe a 15-drink signature menu (highballs, sours, spirit-forward, temperance) but give no menu names or launch dates, so drinks are sightings (Alambic, late 2022; Time Out KL, 19 Jun 2024; 50 Best, Aug 2024). No new KL menu found; a Jan 2026 MO Bar Singapore guest shift is not a house menu."
+      }
+    },
+    {
+      "handle": "barkumiko",
+      "name": "Kumiko",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Winning Element",
+          "ingredients": [
+            "blanco tequila",
+            "mezcal",
+            "black currant",
+            "shiso",
+            "oloroso sherry",
+            "lemon",
+            "ginger beer"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Highball No. 12",
+          "ingredients": [
+            "whisky",
+            "burgundy truffle honey tincture",
+            "truffle calvados",
+            "club soda"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Champagne Highball",
+          "ingredients": [
+            "black whisky",
+            "armagnac",
+            "yuzushu",
+            "Champagne"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Moonstone Vodka Soda",
+          "ingredients": [
+            "rice vodka",
+            "rum",
+            "sparkling apple juice"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Gin and Tonic",
+          "ingredients": [
+            "gin",
+            "basil shrub",
+            "tonic"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Lemon Tōgarashi Chū-Hi",
+          "ingredients": [
+            "shōchū",
+            "citrus cordial",
+            "club soda",
+            "shichimi salt rim"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Uméboshi Chū-Hi",
+          "ingredients": [
+            "shōchū",
+            "uméboshi purée",
+            "lemon",
+            "seven spice",
+            "umé juice"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Sherry and Tonic",
+          "ingredients": [
+            "fino sherry",
+            "celery bitters",
+            "pear cider",
+            "elderflower tonic"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Yuzu Spritz",
+          "ingredients": [
+            "singani",
+            "yuzushu",
+            "Suze",
+            "Cointreau",
+            "Champagne"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Walk Softly",
+          "ingredients": [
+            "rice vodka",
+            "yuzushu",
+            "dry vermouth",
+            "lemon",
+            "Champagne"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Sea Flower",
+          "ingredients": [
+            "gin",
+            "blanc vermouth",
+            "yuzu koshō",
+            "kabosu juice",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Ichigo Gimlet",
+          "ingredients": [
+            "gin",
+            "strawberry",
+            "lime cordial"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Cloud Hopper",
+          "ingredients": [
+            "rice shōchū",
+            "mezcal",
+            "passionfruit",
+            "green cardamom",
+            "oat milk",
+            "Yakult",
+            "lemon"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Sea Grape Martini",
+          "ingredients": [
+            "gin",
+            "albariño",
+            "Okinawan sea grapes",
+            "shio-kōji cucumber olive brine"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Fukubukuro",
+          "ingredients": [
+            "junmai namazaké",
+            "barley shōchū",
+            "celery bitters",
+            "burgundy truffle honey"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Lychee Martini",
+          "ingredients": [
+            "imo shōchū",
+            "junmai sake",
+            "uméshu"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Up to Her",
+          "ingredients": [
+            "single malt whisky",
+            "Braulio",
+            "red fruit apéritif",
+            "purple sweet potato vinegar",
+            "tokubetsu junmai"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Yamazaki Vieux Carré",
+          "ingredients": [
+            "single malt whisky",
+            "armagnac",
+            "oloroso sherry",
+            "Cocchi vermouth",
+            "Bénédictine",
+            "Peychaud's bitters",
+            "Angostura bitters"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "New Wave",
+          "ingredients": [
+            "whisky",
+            "Pineau des Charentes rouge",
+            "verjus blanc",
+            "rice shōchū",
+            "mugicha",
+            "kümmel"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Legent Manhattan",
+          "ingredients": [
+            "bourbon",
+            "umeshu",
+            "Cocchi vermouth",
+            "Bénédictine",
+            "Peychaud's bitters",
+            "Angostura bitters"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Old Fashioned",
+          "ingredients": [
+            "whisky",
+            "barley shōchū",
+            "palo cortado sherry",
+            "demerara",
+            "Angostura bitters"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Umé Boulevardier",
+          "ingredients": [
+            "whisky",
+            "uméshu",
+            "Campari",
+            "Cocchi Americano Rosa"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Low Mist",
+          "ingredients": [
+            "malt whisky",
+            "mugi shōchū",
+            "Cynar",
+            "white rum",
+            "maitaké cordial",
+            "smoked black peppercorn"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Olive Martini",
+          "ingredients": [
+            "junmai ginjo",
+            "rice shōchū",
+            "vodka",
+            "shio-kōji cucumber olive brine"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Moonrise Daiquiri",
+          "ingredients": [
+            "junmai ginjo",
+            "hōjicha",
+            "dark rum",
+            "Angostura bitters",
+            "demerara",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Bermutto Sazerac",
+          "ingredients": [
+            "Japanese bermutto",
+            "whisky",
+            "dry riesling",
+            "absinthe"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Bright One",
+          "ingredients": [
+            "yuzu juice",
+            "clover honey",
+            "Seedlip Spice 94",
+            "ginger beer"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Saved by the Bell",
+          "ingredients": [
+            "sanshō",
+            "yarrow",
+            "cubeb pepper",
+            "yellow mustard seed",
+            "kinmokusei",
+            "apple juice",
+            "ginger beer"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Bianco",
+          "ingredients": [
+            "mint",
+            "fennel seed",
+            "chamomile",
+            "white peppercorn",
+            "lavender honey",
+            "verjus blanc",
+            "club soda"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Uméboshi Swizzle",
+          "ingredients": [
+            "shiso-pickled umé",
+            "brown rice vinegar",
+            "lemon",
+            "sesame",
+            "seven spice"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Pepperberry Tonic",
+          "ingredients": [
+            "Tasmanian pepperberry",
+            "sanshō",
+            "angelica root",
+            "fennel seed",
+            "elderflower tonic"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Hōji-Hi",
+          "ingredients": [
+            "hōjicha",
+            "concord grape",
+            "pomegranate molasses",
+            "club soda"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Maple Blues",
+          "ingredients": [
+            "mugicha",
+            "seven spice lemon cordial",
+            "maple syrup"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        },
+        {
+          "drink": "Protea",
+          "ingredients": [
+            "adzuki",
+            "purple sweet potato vinegar",
+            "Seedlip Spice 94",
+            "verjus rouge",
+            "club soda",
+            "tonic"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://barkumiko.com/dining-room-and-bar"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "none_found",
+        "searches": 2,
+        "notes": "Current Dining Room & Bar list read from the bar site; it is undated, so drinks are Oct 2026 sightings rather than an edition. Walk Softly, Sea Flower and New Wave carry over from the existing July 2019 list. One glassware search: press says vessels were sourced in Japan but names no maker. A second search found no dated 2025 or 2026 menu relaunch."
+      }
+    },
+    {
+      "handle": "theclementebar",
+      "name": "Clemente Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Lounge Sample Menu 8.18.26",
+          "existing": {
+            "name": "Lounge Sample Menu 8.18.26",
+            "start": "2026-08"
+          },
+          "start": "2026-08",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "30th Century",
+              "ingredients": [
+                "Lalo tequila blanco",
+                "hazelnut",
+                "melon",
+                "cacao"
+              ]
+            },
+            {
+              "name": "Sour Love",
+              "ingredients": [
+                "Grey Goose vodka",
+                "green tomato",
+                "muskmelon",
+                "coconut",
+                "aloe"
+              ]
+            },
+            {
+              "name": "Restricted Vision",
+              "ingredients": [
+                "Toki Japanese whisky",
+                "masa",
+                "fig leaf",
+                "bitter bianco"
+              ]
+            },
+            {
+              "name": "Killswitch",
+              "ingredients": [
+                "apricot sour",
+                "Mijenta reposado tequila",
+                "sunflower",
+                "habanero"
+              ]
+            },
+            {
+              "name": "Kudamono",
+              "ingredients": [
+                "Michter's bourbon",
+                "shochu",
+                "strawberry",
+                "oolong",
+                "hoja santo"
+              ]
+            },
+            {
+              "name": "Still Life",
+              "ingredients": [
+                "Roku gin",
+                "clairin",
+                "basil",
+                "pepita orgeat",
+                "rhubarb"
+              ]
+            },
+            {
+              "name": "Breaknight",
+              "ingredients": [
+                "Don Fulano blanco tequila",
+                "passion fruit",
+                "bell pepper",
+                "coconut water"
+              ]
+            },
+            {
+              "name": "Momogari",
+              "ingredients": [
+                "Grey Goose vodka",
+                "white peach",
+                "chamomile"
+              ]
+            },
+            {
+              "name": "Golden Orchard",
+              "ingredients": [
+                "Glenfiddich 14",
+                "apple",
+                "cream cheese",
+                "almond",
+                "rau ram"
+              ]
+            },
+            {
+              "name": "Caballero",
+              "ingredients": [
+                "Teeling Irish whiskey",
+                "platano",
+                "Amaro Nardini",
+                "sarsparilla"
+              ]
+            },
+            {
+              "name": "Clemente Martini",
+              "ingredients": [
+                "Altamura vodka",
+                "Malfy gin",
+                "green curry",
+                "saffron"
+              ]
+            },
+            {
+              "name": "Antheia",
+              "ingredients": [
+                "fino sherry",
+                "ambrato",
+                "calendula",
+                "melon",
+                "yuzu",
+                "St-Germain"
+              ]
+            },
+            {
+              "name": "Moongold",
+              "ingredients": [
+                "Komasa gin",
+                "Cap Corse quinquina",
+                "shiro miso",
+                "yuzu"
+              ]
+            },
+            {
+              "name": "Asahi Falls",
+              "ingredients": [
+                "Fords gin",
+                "wasabi",
+                "pear brandy",
+                "Strega",
+                "Chartreuse Végétal"
+              ]
+            },
+            {
+              "name": "Oyatsu Club",
+              "ingredients": [
+                "kome shochu",
+                "genmaicha",
+                "sweet potato and nori miso",
+                "sesame"
+              ]
+            },
+            {
+              "name": "Negroni Colada",
+              "ingredients": [
+                "Planteray coconut rum",
+                "bitter bianco",
+                "blanc vermouth",
+                "pineapple"
+              ]
+            },
+            {
+              "name": "Green Light",
+              "ingredients": [
+                "fino sherry",
+                "oloroso sherry",
+                "pistachio",
+                "kiwi"
+              ]
+            },
+            {
+              "name": "Marlboro",
+              "ingredients": [
+                "Roots Divino Bianco",
+                "red bitter",
+                "Earl Grey",
+                "toasted coconut foam"
+              ]
+            },
+            {
+              "name": "Kalimotxo",
+              "ingredients": [
+                "Everleaf Mountain",
+                "Mt. Olympus",
+                "cola spices",
+                "clarified whey"
+              ]
+            },
+            {
+              "name": "Proxy Fizz",
+              "ingredients": [
+                "Seedlip Garden",
+                "cucumber",
+                "green apple",
+                "amazake"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.clementebar.com/bar",
+            "https://static1.squarespace.com/static/664bbb364d2c1746f9da6006/t/6a84b768bac6c774e3fadb87/1787082600633/Lounge+Sample+Menu+8.18.26.pdf"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Added ingredients to the existing 8.18.26 Lounge sample menu from the PDF linked on the bar's Lounge page (still the linked menu, so current). The Lounge page also names The Clemente Espresso Martini and Songbird. One glassware search found only Daniel Humm retail lines (Crate & Barrel), nothing tying a glass to the bar."
+      }
+    },
+    {
+      "handle": "alice_cheongdam",
+      "name": "Alice Cheongdam",
+      "glassware": [],
+      "drink_glasses": [
+        {
+          "drink": "Alice Boutique",
+          "glass": "elephant-shaped vessel (trunk as straw)",
+          "sketch_shape": null,
+          "shape_note": "elephant-shaped vessel whose trunk works as a straw",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.timeout.com/seoul/bars/alice"
+        },
+        {
+          "drink": "Face to Vase",
+          "glass": "vase",
+          "sketch_shape": null,
+          "shape_note": "a flower vase used as the drinking vessel",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://v.daum.net/v/20250807115012074"
+        },
+        {
+          "drink": "Okie Dok",
+          "glass": "jangdok-shaped glass (Korean earthenware jar)",
+          "sketch_shape": "ceramic",
+          "shape_note": "squat, round-bellied jar shape like a Korean jangdok",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://v.daum.net/v/20250807115012074"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Be Wonder",
+          "existing": {
+            "name": "Be Wonder",
+            "start": "2025-03"
+          },
+          "start": "2025-03",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Face to Vase",
+              "ingredients": [
+                "gin",
+                "eucalyptus",
+                "sake",
+                "mango"
+              ]
+            },
+            {
+              "name": "Okie Dok",
+              "ingredients": [
+                "soju",
+                "strawberry gochujang",
+                "rice ice cream",
+                "walnut"
+              ]
+            },
+            {
+              "name": "Snooze",
+              "ingredients": [
+                "kiwi",
+                "apple",
+                "botanicals"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://v.daum.net/v/20250807115012074"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Alice Boutique",
+          "ingredients": [
+            "gin",
+            "tonic",
+            "grapefruit juice",
+            "nitrogen smoke"
+          ],
+          "seen": "2015-05",
+          "source_url": "https://www.timeout.com/seoul/bars/alice"
+        },
+        {
+          "drink": "Fruit Box",
+          "ingredients": [],
+          "seen": "2024-11",
+          "source_url": "https://www.tatlerasia.com/dining/alice-cheongdam"
+        },
+        {
+          "drink": "Sammy Yammy",
+          "ingredients": [],
+          "seen": "2024-11",
+          "source_url": "https://www.tatlerasia.com/dining/alice-cheongdam"
+        },
+        {
+          "drink": "Make Me Bigger",
+          "ingredients": [],
+          "seen": "2024-11",
+          "source_url": "https://www.tatlerasia.com/dining/alice-cheongdam"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 2,
+        "notes": "No bar website. Korea Herald (7 Aug 2025) describes the card-themed menu book matching the existing Be Wonder edition (Face to Vase served in a vase, Okie Dok in a jangdok-shaped glass, Snooze mocktail); ingredients added. Tatler (photos Nov 2024) names three earlier must-try drinks; Time Out Seoul (May 2015) the Alice Boutique in an elephant vessel. No 2026 menu found."
+      }
+    },
+    {
+      "handle": "venderbar",
+      "name": "Vender",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "A Cigar Vending Machine",
+          "ingredients": [
+            "dark rum",
+            "red wine syrup",
+            "aromatised wine",
+            "lemon juice",
+            "egg white",
+            "chocolate bitters",
+            "Taiwanese cypress smoke"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/discovery/Establishments/Taiwan/Taichung/Vender.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "No bar website. 50 Best discovery page (citing 2025 ranks) describes drinks named after vending machines with ingredients shown in 'pockets' and a mini Singapore Sling welcome shot; only one drink is named. Difford's has no drinks. No dated menus found."
+      }
+    },
+    {
+      "handle": "night.hawk.sg",
+      "name": "Night Hawk",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Positive Negativity",
+          "existing": {
+            "name": "Positive Negativity",
+            "start": "2026"
+          },
+          "start": "2026",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Positive Negativity",
+              "ingredients": [
+                "shochu",
+                "gin",
+                "fortified wine",
+                "celery",
+                "onion",
+                "carrot",
+                "vinegar",
+                "salt"
+              ]
+            },
+            {
+              "name": "Disgust/Rejection of Unhealthy Things",
+              "ingredients": [
+                "tequila",
+                "genever",
+                "pickle brine",
+                "lettuce",
+                "tomato",
+                "beef soda",
+                "Worcestershire",
+                "honey",
+                "cheddar",
+                "beef fat"
+              ]
+            },
+            {
+              "name": "Loneliness/Independence",
+              "ingredients": [
+                "mezcal",
+                "cognac",
+                "rye",
+                "ratafia",
+                "amaro",
+                "sour cherry",
+                "sage",
+                "lemongrass"
+              ]
+            },
+            {
+              "name": "Fear/Survival Instinct",
+              "ingredients": [
+                "cognac",
+                "amaro",
+                "Campari",
+                "dark chocolate",
+                "cinnamon pickle brine",
+                "seasoned silkworm"
+              ]
+            },
+            {
+              "name": "Stubbornness/Resilience",
+              "ingredients": [
+                "tequila",
+                "mezcal",
+                "fino sherry",
+                "green juice",
+                "green spice mix",
+                "citrus",
+                "coconut cream",
+                "absinthe",
+                "spicy honey miso kale"
+              ]
+            },
+            {
+              "name": "Anxiety/Perfectionism",
+              "ingredients": [
+                "gin",
+                "fortified wine",
+                "barley",
+                "pistachio",
+                "melon",
+                "basil",
+                "rendered pork fat",
+                "citrus",
+                "egg white"
+              ]
+            },
+            {
+              "name": "Discontentment/Ambition",
+              "ingredients": [
+                "bourbon",
+                "gentiane",
+                "shiso",
+                "white sesame",
+                "mochi"
+              ]
+            },
+            {
+              "name": "Rage/Protection",
+              "ingredients": [
+                "rye",
+                "malt whisky",
+                "beetroot",
+                "raspberry",
+                "citrus",
+                "egg white"
+              ]
+            },
+            {
+              "name": "Lust/Motivation",
+              "ingredients": [
+                "gin",
+                "sloe gin",
+                "fortified wine",
+                "pink peppercorn",
+                "pomegranate",
+                "coconut cream",
+                "grenadine caviar"
+              ]
+            },
+            {
+              "name": "Death/Appreciation of Time",
+              "ingredients": [
+                "single malt whisky",
+                "cognac",
+                "rye",
+                "banana",
+                "miso",
+                "chocolate"
+              ]
+            },
+            {
+              "name": "Nighthawks",
+              "ingredients": [
+                "rum",
+                "vodka",
+                "amaro",
+                "chocolate",
+                "coffee",
+                "MSG",
+                "hot coconut foam"
+              ]
+            },
+            {
+              "name": "Gamma-ray Holiday",
+              "ingredients": [
+                "gin",
+                "melon",
+                "pineapple",
+                "citrus",
+                "soda",
+                "bitter gourd"
+              ]
+            },
+            {
+              "name": "Kick Artist Fix",
+              "ingredients": [
+                "rye",
+                "rum",
+                "fortified wine",
+                "brown butter",
+                "maple mousse pancake"
+              ]
+            },
+            {
+              "name": "Slippery Transistor",
+              "ingredients": [
+                "peanut butter scotch",
+                "rum",
+                "almond",
+                "crème de cassis",
+                "chocolate",
+                "salt"
+              ]
+            },
+            {
+              "name": "Black Hole Sun",
+              "ingredients": [
+                "bourbon",
+                "grand bitters",
+                "sloe gin",
+                "raspberry",
+                "soda",
+                "ice cream",
+                "popping candy"
+              ]
+            },
+            {
+              "name": "For Mynahs",
+              "ingredients": [
+                "N.A. rum",
+                "N.A. coffee liqueur",
+                "coffee",
+                "hot coconut foam"
+              ]
+            },
+            {
+              "name": "Sunspot",
+              "ingredients": [
+                "N.A. malt",
+                "N.A. bitters",
+                "raspberry",
+                "citrus",
+                "soda",
+                "ice cream",
+                "popping candy"
+              ]
+            },
+            {
+              "name": "Resilience",
+              "ingredients": [
+                "N.A. tequila",
+                "green juice",
+                "green spice mix",
+                "citrus",
+                "coconut cream",
+                "honey miso kale"
+              ]
+            },
+            {
+              "name": "Tropical Smash",
+              "ingredients": [
+                "N.A. gin",
+                "melon",
+                "citrus",
+                "pineapple",
+                "bitter gourd",
+                "soda"
+              ]
+            },
+            {
+              "name": "Ambition",
+              "ingredients": [
+                "N.A. bourbon",
+                "ginger",
+                "shiso",
+                "white sesame",
+                "citrus",
+                "mochi"
+              ]
+            },
+            {
+              "name": "Electric Garden",
+              "ingredients": [
+                "vodka",
+                "citrus",
+                "peach",
+                "basil"
+              ]
+            },
+            {
+              "name": "Neon Valley",
+              "ingredients": [
+                "silver tequila",
+                "oloroso sherry",
+                "pear",
+                "citrus",
+                "pink peppercorn grenadine"
+              ]
+            },
+            {
+              "name": "202X Tracks",
+              "ingredients": [
+                "gin",
+                "apricot",
+                "dark chocolate",
+                "citrus",
+                "white sesame",
+                "salt"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.nighthawk.sg/digitalmenu"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 2,
+        "notes": "Bar's digital menu shows Positive Negativity as current with ingredients; it lists the opening drink as 'Positive Negativity' where the existing edition has 'Disappointment/Hope'. The full list here includes the carried-over Night Hawk Classics, non-alcoholic and shot sections. Start month not found in two searches; an Oct 2026 Star (KL) guest-shift article lists two of these drinks."
+      }
+    },
+    {
+      "handle": "darksidehk",
+      "name": "DarkSide",
+      "glassware": [
+        {
+          "maker": "Ryan Foote",
+          "designer": "Ryan Foote",
+          "series": null,
+          "shapes": [
+            {
+              "name": "ceramic cup",
+              "sketch_shape": "ceramic",
+              "shape_note": null
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "New Moon",
+          "glass": "coupette with ice ball",
+          "sketch_shape": "coupe",
+          "shape_note": "small coupe holding a single ice ball",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Waxing Crescent",
+          "glass": "teacup with ice block",
+          "sketch_shape": "ceramic",
+          "shape_note": "teacup holding a block of ice",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "First Quarter",
+          "glass": "pony glass",
+          "sketch_shape": null,
+          "shape_note": "small pony glass",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Waxing Gibbous",
+          "glass": "rocks glass with ice block",
+          "sketch_shape": "rocks",
+          "shape_note": "rocks glass over a block of ice",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Full Moon",
+          "glass": "ceramic cup",
+          "sketch_shape": "ceramic",
+          "shape_note": null,
+          "maker": "Ryan Foote",
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Waning Gibbous",
+          "glass": "ceramic rock-textured highball mug",
+          "sketch_shape": "mug",
+          "shape_note": "tall ceramic mug with a rough, rock-like textured surface",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Last Quarter",
+          "glass": "ceramic textured moon cup",
+          "sketch_shape": "ceramic",
+          "shape_note": "textured ceramic cup evoking the moon's surface, served with a straw",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        },
+        {
+          "drink": "Waning Crescent",
+          "glass": "coupette with ice ball",
+          "sketch_shape": "coupe",
+          "shape_note": "small coupe holding a single ice ball",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Echoes",
+          "existing": {
+            "name": "Echoes",
+            "start": "2026"
+          },
+          "start": "2026-07",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "All Eyes on Me",
+              "ingredients": []
+            },
+            {
+              "name": "The Dragon's Beat",
+              "ingredients": []
+            },
+            {
+              "name": "Chic & Candied",
+              "ingredients": []
+            },
+            {
+              "name": "Cha Cha Bun",
+              "ingredients": []
+            },
+            {
+              "name": "You're Soy Cool",
+              "ingredients": []
+            },
+            {
+              "name": "Just 3 Minutes",
+              "ingredients": []
+            },
+            {
+              "name": "Nutty Nightcup",
+              "ingredients": []
+            },
+            {
+              "name": "I Don't Bite",
+              "ingredients": []
+            },
+            {
+              "name": "Catch It If You Can",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.rosewoodhotels.com/en/global/media-hub/press-releases/darkside-at-rosewood-hong-kong-debuts-an-imaginative-new-menu-of/",
+            "https://www.rosewoodhotels.com/en/hong-kong/dining/darkside"
+          ]
+        },
+        {
+          "name": "Classic Cocktails Menu",
+          "existing": null,
+          "start": "2024-12",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Blood and Sand",
+              "ingredients": [
+                "DarkSide blended whiskey",
+                "Mancino Rosso vermouth",
+                "orange",
+                "citrus",
+                "Cherry Heering"
+              ]
+            },
+            {
+              "name": "Brown Derby",
+              "ingredients": [
+                "Matusalem 15 rum",
+                "Michter's bourbon",
+                "grapefruit",
+                "honey",
+                "maple"
+              ]
+            },
+            {
+              "name": "Mai Tai",
+              "ingredients": [
+                "Jamaican rum",
+                "agricole rum",
+                "Cointreau",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Champs Elysees",
+              "ingredients": [
+                "Rémy Martin VSOP cognac",
+                "Château Laubade VSOP armagnac"
+              ]
+            },
+            {
+              "name": "Fallen Angel",
+              "ingredients": [
+                "NIP gin",
+                "crème de menthe"
+              ]
+            },
+            {
+              "name": "Scofflaw",
+              "ingredients": [
+                "Michter's rye",
+                "Mancino Secco vermouth",
+                "grenadine",
+                "citrus",
+                "bitters"
+              ]
+            },
+            {
+              "name": "Bloody Maria",
+              "ingredients": [
+                "Altos blanco tequila",
+                "Siete Misterios mezcal",
+                "tomato",
+                "spice"
+              ]
+            },
+            {
+              "name": "Hanky Panky",
+              "ingredients": [
+                "Monkey 47 gin",
+                "Mancino Rosso vermouth",
+                "Fernet Hunter",
+                "Fernet-Branca"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://luxuriousmagazine.com/darkside-new-cocktail-menu-1920s-30s"
+          ]
+        },
+        {
+          "name": "The Moon Menu",
+          "existing": null,
+          "start": "2021-07",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "New Moon",
+              "ingredients": [
+                "Johnnie Walker Black Label",
+                "Fernet Hunter",
+                "hinoki",
+                "banana Marsala"
+              ]
+            },
+            {
+              "name": "Waxing Crescent",
+              "ingredients": [
+                "Rémy Martin VSOP",
+                "tonka bean",
+                "Graham's Fine Ruby Port",
+                "Pineau des Charentes",
+                "myrrh mist"
+              ]
+            },
+            {
+              "name": "First Quarter",
+              "ingredients": [
+                "raspberry",
+                "fig leaf",
+                "whisky"
+              ]
+            },
+            {
+              "name": "Waxing Gibbous",
+              "ingredients": [
+                "Grey Goose vodka",
+                "Tio Pepe sherry",
+                "coconut",
+                "pandan vinegar",
+                "lychee",
+                "taro",
+                "sandalwood"
+              ]
+            },
+            {
+              "name": "Full Moon",
+              "ingredients": [
+                "Star of Bombay gin",
+                "clarified milk punch",
+                "sour cherry wine"
+              ]
+            },
+            {
+              "name": "Waning Gibbous",
+              "ingredients": [
+                "Michter's bourbon",
+                "Mancino Bianco vermouth",
+                "passionfruit and cherry blossom tea",
+                "strawberry gum"
+              ]
+            },
+            {
+              "name": "Last Quarter",
+              "ingredients": [
+                "calvados",
+                "ruby chocolate cordial",
+                "London Essence soda"
+              ]
+            },
+            {
+              "name": "Waning Crescent",
+              "ingredients": [
+                "beetroot",
+                "Pipiroka",
+                "vinegar",
+                "Mr Black coffee liqueur",
+                "coffee water"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://luxuriousmagazine.com/darkside-at-rosewood-cocktail-menu"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "found",
+        "history": "found",
+        "searches": 1,
+        "notes": "Echoes released 8 Jul 2026 (Rosewood release; bar page links the Echoes menu PDF, too large to fetch, and the release gives flavour notes only, so no ingredients). Classic Cocktails Menu from 9 Dec 2024 (Luxurious Magazine); Moon Menu from 12 Jul 2021 with per-drink vessels including a ceramic cup by Ryan Foote. Moon Menu drinks are named by moon phase."
+      }
+    },
+    {
+      "handle": "mahaniyom.cocktailbar",
+      "name": "Mahaniyom Cocktail Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Pineapple",
+          "ingredients": [
+            "gin",
+            "fermented pineapple peel",
+            "dehydrated pineapple",
+            "vermouth",
+            "pineapple and green pepper cordial",
+            "Vietnamese coriander"
+          ],
+          "seen": "2022-03",
+          "source_url": "https://www.timeout.com/bangkok/bars/mahaniyom-cocktail-bar"
+        },
+        {
+          "drink": "Pomelo",
+          "ingredients": [
+            "rum",
+            "chili"
+          ],
+          "seen": "2022-03",
+          "source_url": "https://www.timeout.com/bangkok/bars/mahaniyom-cocktail-bar"
+        },
+        {
+          "drink": "Squid",
+          "ingredients": [
+            "vodka",
+            "mirin",
+            "ginger cordial",
+            "dried squid tomato juice",
+            "squid ink"
+          ],
+          "seen": "2022-03",
+          "source_url": "https://www.timeout.com/bangkok/bars/mahaniyom-cocktail-bar"
+        },
+        {
+          "drink": "Cow",
+          "ingredients": [
+            "Wagyu fat-washed brandy",
+            "mulberry red wine",
+            "miso",
+            "black pepper brown butter",
+            "blue cheese"
+          ],
+          "seen": "2022-03",
+          "source_url": "https://www.timeout.com/bangkok/bars/mahaniyom-cocktail-bar"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 2,
+        "notes": "No bar website. Time Out Bangkok (14 Mar 2022) lists 12 single-ingredient signature cocktails; four named. A Bangkok Post piece on a newer 'BTT Pop' menu (Yaowarat hero ingredients, eight new drinks incl. The Worm and The Guava) could not be fetched (paywall) and its date is unknown, so no edition was added. A second search for BTT Pop found nothing."
+      }
+    },
+    {
+      "handle": "librarybartoronto",
+      "name": "Library Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "LIGHTS",
+          "existing": null,
+          "start": "2025-10",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "First Light",
+              "ingredients": [
+                "Ketel One Hunter's vodka",
+                "malt",
+                "banana",
+                "maple",
+                "oat milk"
+              ]
+            },
+            {
+              "name": "Logger's Cocktail",
+              "ingredients": [
+                "Dillon's Single Cask rye",
+                "pumpernickel",
+                "blackcurrant",
+                "Fernet-Branca"
+              ]
+            },
+            {
+              "name": "Split Rock",
+              "ingredients": [
+                "Los Siete Misterios mezcal",
+                "Spirit of York aquavit",
+                "smoked maple",
+                "evergreen",
+                "oak moss"
+              ]
+            },
+            {
+              "name": "New Names",
+              "ingredients": [
+                "Singleton 12",
+                "Torres 10 brandy",
+                "Persian spiced honey",
+                "lemon",
+                "rose",
+                "pistachio",
+                "baklava"
+              ]
+            },
+            {
+              "name": "Belly of the Beast",
+              "ingredients": [
+                "Bearface Canadian whisky",
+                "Appleton 12 rum",
+                "Metaxa 5 Star",
+                "mace",
+                "pecan",
+                "sea buckthorn",
+                "grapefruit",
+                "blood bitters"
+              ]
+            },
+            {
+              "name": "Missing Millionaire",
+              "ingredients": [
+                "Macallan 12",
+                "Michter's Small Batch bourbon",
+                "coconut Lot No. 40",
+                "Bénédictine",
+                "Cocchi Vermouth di Torino"
+              ]
+            },
+            {
+              "name": "Three Hearts",
+              "ingredients": [
+                "Hennessy VS",
+                "Fonseca white port",
+                "Havana Club 3",
+                "burnt apricot",
+                "bitter melon",
+                "verjus",
+                "sparkling wine"
+              ]
+            },
+            {
+              "name": "Spirit Painting",
+              "ingredients": [
+                "Toki whisky",
+                "agave blanco",
+                "Tio Pepe fino",
+                "vetiver",
+                "green olive"
+              ]
+            },
+            {
+              "name": "Midnight Snow",
+              "ingredients": [
+                "Citadelle gin",
+                "raspberry",
+                "blueberry",
+                "elderflower",
+                "espresso",
+                "salt"
+              ]
+            },
+            {
+              "name": "Peaches on Friday",
+              "ingredients": [
+                "Absolut Citron",
+                "Dillon's peach liqueur",
+                "whey",
+                "peach and clover tea",
+                "vanilla",
+                "faux pistachio"
+              ]
+            },
+            {
+              "name": "Clara's Perfume",
+              "ingredients": [
+                "Ketel One vodka",
+                "Cocchi Americano",
+                "vetiver",
+                "strawberry",
+                "soda"
+              ]
+            },
+            {
+              "name": "Garden of the Blind",
+              "ingredients": [
+                "Johnnie Walker Black",
+                "Talisker 10",
+                "Spirit of York aquavit",
+                "persimmon",
+                "cedar",
+                "anise",
+                "soda"
+              ]
+            },
+            {
+              "name": "Caravaggio",
+              "ingredients": [
+                "Bacardi 8",
+                "Averna",
+                "fig liqueur",
+                "balsamic maple",
+                "lemon",
+                "soda",
+                "salt"
+              ]
+            },
+            {
+              "name": "The Builder",
+              "ingredients": [
+                "Belvedere Organic vodka",
+                "calvados",
+                "quinquina",
+                "crème de cacao",
+                "Tio Pepe fino",
+                "peach",
+                "olive",
+                "concrete"
+              ]
+            },
+            {
+              "name": "The Searcher",
+              "ingredients": [
+                "choice of spirit",
+                "Cynar",
+                "Amaro Nonino",
+                "Cocchi Vermouth di Torino",
+                "house dry vermouth",
+                "Fuji bitters"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.librarybartoronto.com/menus/",
+            "https://canadas100best.com/stories/library-bar-new-menu/",
+            "https://www.thegate.ca/?p=71162"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "The World Famous Birdbath Martini",
+          "ingredients": [
+            "Quill gin or vodka",
+            "house vermouth blend",
+            "house orange bitters",
+            "lemon oil",
+            "olives",
+            "pickled onions"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.librarybartoronto.com/menus/"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "LIGHTS (A Story of Toronto and the People Who Built It, after Ondaatje's In the Skin of a Lion) launched the week of 8 Oct 2025 per Canada's 100 Best; the bar site still lists it. Search snippets mention an earlier 20-cocktail literary menu and a porcelain lion vessel for Belly of the Beast, but neither was confirmed on a fetched page. Birdbath Martini served tableside."
+      }
+    },
+    {
+      "handle": "civlibto",
+      "name": "Civil Liberties",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [],
+      "coverage": {
+        "glassware": "not_searched",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 0,
+        "notes": "Bar site banner reads 'Serving menu free since 2014': there is no printed cocktail menu by design (bartenders make drinks to order), so there are no editions to record. No search spent."
+      }
+    },
+    {
+      "handle": "gokan.hk",
+      "name": "Gokan",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Watermelon Koffeezz",
+          "ingredients": [
+            "gin",
+            "light-roast coffee",
+            "watermelon"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.tatlerasia.com/dining/gokan-hk"
+        },
+        {
+          "drink": "Figaroni",
+          "ingredients": [
+            "fig leaf",
+            "pomegranate vinegar"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.tatlerasia.com/dining/gokan-hk"
+        },
+        {
+          "drink": "Whisky Sour Brûlée",
+          "ingredients": [],
+          "seen": "2026",
+          "source_url": "https://www.tatlerasia.com/dining/gokan-hk"
+        },
+        {
+          "drink": "Banana Chu-hi",
+          "ingredients": [],
+          "seen": "2026",
+          "source_url": "https://www.tatlerasia.com/dining/gokan-hk"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "No bar website. Menu is organised by the five tastes, each drink offered as highball, rocks or straight up (Time Out HK, 9 Jun 2025; Tatler). Tatler profile (images dated May 2026) names four drinks, recorded as 2026 sightings; existing editions unchanged."
+      }
+    },
+    {
+      "handle": "penicillin_bar",
+      "name": "Penicillin",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Opening menu",
+          "existing": {
+            "name": "Opening menu",
+            "start": "2020-11"
+          },
+          "start": "2020-11",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Modernist Science",
+              "ingredients": [
+                "discarded bread vodka",
+                "spiced cheese liquor",
+                "white miso pineapple",
+                "salted egg yolk"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.the50.com/stories/News/penicillin-brewing-sustainable-revolution-for-bars-in-hong-kong.html"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "A Far End",
+          "ingredients": [
+            "used tea leaf rum",
+            "pandan taro yogurt",
+            "lemon honey sherbet"
+          ],
+          "seen": "2021-04",
+          "source_url": "https://www.the50.com/stories/News/penicillin-brewing-sustainable-revolution-for-bars-in-hong-kong.html"
+        },
+        {
+          "drink": "Hot, Flat & Crowded",
+          "ingredients": [
+            "mango custard gin",
+            "salted burnt butter",
+            "grilled purple cabbage cream soda"
+          ],
+          "seen": "2025",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2025/penicillin"
+        },
+        {
+          "drink": "One Penicillin, One Tree",
+          "ingredients": [
+            "white chocolate whisky",
+            "strawberry brine",
+            "coconut kefir",
+            "avocado stone"
+          ],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/penicillin"
+        },
+        {
+          "drink": "Advance Treatment",
+          "ingredients": [
+            "croissant-infused rye",
+            "aged almond-soy sauce",
+            "cacao butter-washed dark rum",
+            "tamarind-palm sugar cordial",
+            "beeswax"
+          ],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/penicillin"
+        },
+        {
+          "drink": "Genetic Engineering",
+          "ingredients": [],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/penicillin"
+        },
+        {
+          "drink": "The Original",
+          "ingredients": [],
+          "seen": "2026",
+          "source_url": "https://100toptables.scmp.com/restaurants-profile-2026/penicillin"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 2,
+        "notes": "Bar site shows its menu only as images. 50 Best story (22 Apr 2021) adds Modernist Science ingredients to the existing opening menu and A Far End; SCMP 100 Top Tables 2025 and 2026 profiles give later drinks (sightings). A glassware search found recycled-paper coasters and EcoSpirits containers but no glass or ceramics maker. No dated 2025/2026 Hong Kong menu launch found."
+      }
+    },
+    {
+      "handle": "opm.bkk",
+      "name": "Opium Bar",
+      "glassware": [],
+      "drink_glasses": [
+        {
+          "drink": "Inseparable",
+          "glass": "tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "short straight-sided tumbler",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Twilight Alley",
+          "glass": "stemmed balloon glass",
+          "sketch_shape": "wine",
+          "shape_note": "round balloon bowl on a short stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Reverie in Yellow",
+          "glass": "coupe",
+          "sketch_shape": "coupe",
+          "shape_note": "wide shallow coupe bowl on a thin stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Fig & Fog",
+          "glass": "rocks",
+          "sketch_shape": "rocks",
+          "shape_note": "short rocks tumbler",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Echoes",
+          "glass": "highball",
+          "sketch_shape": "highball",
+          "shape_note": "tall straight-sided highball",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Dot Dot Dot",
+          "glass": "rocks",
+          "sketch_shape": "rocks",
+          "shape_note": "low, wide rocks glass",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Dee Dee Da Da Dah",
+          "glass": "highball",
+          "sketch_shape": "highball",
+          "shape_note": "tall slim highball",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Ember",
+          "glass": "stemmed wine glass",
+          "sketch_shape": "wine",
+          "shape_note": "tulip-shaped wine bowl on a tall stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        },
+        {
+          "drink": "Monsoon Martini",
+          "glass": "martini glass",
+          "sketch_shape": "martini",
+          "shape_note": "conical V-shaped martini bowl on a long stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Expression Cocktails #2",
+          "existing": {
+            "name": "Expression Cocktails #2",
+            "start": "2025-12"
+          },
+          "start": "2025-12",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Mid Summer",
+              "ingredients": [
+                "Dewar's 12",
+                "apple-thyme soda",
+                "clear lemon",
+                "Sato 422",
+                "yuzu foam"
+              ]
+            },
+            {
+              "name": "Jamming James",
+              "ingredients": [
+                "Jameson Black Barrel",
+                "rosella jam",
+                "chestnut",
+                "cacao husk",
+                "lemon",
+                "egg white",
+                "lapsang spray"
+              ]
+            },
+            {
+              "name": "La Diablada",
+              "ingredients": [
+                "Demonio de los Andes pisco",
+                "Giffard crème de cassis",
+                "devil falernum",
+                "earth blood cordial",
+                "absinthe cherry bitters"
+              ]
+            },
+            {
+              "name": "Inseparable",
+              "ingredients": [
+                "Issan rum",
+                "snow chrysanthemum",
+                "Wong Lo Kat",
+                "Tolak Angin",
+                "ginger ale",
+                "tonic"
+              ]
+            },
+            {
+              "name": "Juxtaposed",
+              "ingredients": [
+                "Deacon whisky",
+                "brown Swiss mushroom butter",
+                "shiitake-ponzu",
+                "ginger and honey syrup",
+                "lemon"
+              ]
+            },
+            {
+              "name": "Twilight Alley",
+              "ingredients": [
+                "Glenmorangie 12",
+                "star anise",
+                "bael",
+                "jasmine tea and champaca liqueur",
+                "amaretto",
+                "Fernet-Branca",
+                "peach bitters"
+              ]
+            },
+            {
+              "name": "Reverie in Yellow",
+              "ingredients": [
+                "Sabatini gin",
+                "geranium and niam distillate",
+                "bergamot and joy tea cold brew",
+                "champagne acid",
+                "lemon leaf sorbet",
+                "CO2"
+              ]
+            },
+            {
+              "name": "Fig & Fog",
+              "ingredients": [
+                "Compass Box Orchard House",
+                "Ardbeg 10",
+                "perilla seed",
+                "fig leaf",
+                "dried cherry tomato and IPA cordial",
+                "cacao husk and coffee",
+                "Horlicks and tomato foam"
+              ]
+            },
+            {
+              "name": "Campfire",
+              "ingredients": [
+                "Michter's bourbon",
+                "dark chocolate",
+                "apple vinegar reduction",
+                "coffee flower honey",
+                "mulled wine"
+              ]
+            },
+            {
+              "name": "Echoes",
+              "ingredients": [
+                "Phraya Elements 8 rum",
+                "spicy pink pomelo",
+                "boat noodle spice",
+                "Thai basil distillate",
+                "elderflower tonic"
+              ]
+            },
+            {
+              "name": "First Blush",
+              "ingredients": [
+                "Bombay Sapphire",
+                "guava leaf hydrosol",
+                "Pan See Tong guava and plum",
+                "coconut milk washed cordial",
+                "Uthaitip herbal elixir"
+              ]
+            },
+            {
+              "name": "Dot Dot Dot",
+              "ingredients": [
+                "The Macallan 12 Double Cask",
+                "Los Siete Misterios mezcal",
+                "salak-shu",
+                "pickled salak caramel",
+                "mandarin bitters"
+              ]
+            },
+            {
+              "name": "Dee Dee Da Da Dah",
+              "ingredients": [
+                "Patrón Silver",
+                "sage",
+                "lychee",
+                "sugarcane and calamansi juice",
+                "lotus seed and butterfly pea",
+                "elderflower tonic",
+                "pomelo blossom mist"
+              ]
+            },
+            {
+              "name": "Salted Winter",
+              "ingredients": [
+                "Grey Goose vodka",
+                "lemongrass",
+                "Giffard vanilla liqueur",
+                "bergamot",
+                "passion fruit and pineapple",
+                "Japanese mint",
+                "mango shaved ice",
+                "Ô-mai salt"
+              ]
+            },
+            {
+              "name": "Fifth Moon",
+              "ingredients": [
+                "Martell VS",
+                "lotus flower tea and osmanthus",
+                "pomelo peel cordial",
+                "Surin brown rice"
+              ]
+            },
+            {
+              "name": "Ember",
+              "ingredients": [
+                "Ardbeg 10",
+                "Ratafia Rossi",
+                "lemon lavender verbena cordial",
+                "palo santo",
+                "saline",
+                "CO2"
+              ]
+            },
+            {
+              "name": "Drinking in Color",
+              "ingredients": [
+                "Gin Mare",
+                "sencha tea cordial",
+                "blue spirulina",
+                "L'Ermitage Green",
+                "Barbeito Madeira",
+                "chamomile",
+                "dried apricot",
+                "green cardamom",
+                "kombu"
+              ]
+            },
+            {
+              "name": "Pleasure Spiked With Pain",
+              "ingredients": [
+                "Patrón El Alto",
+                "tomato Campari",
+                "pineapple Cocchi Americano",
+                "Italian basil distillate"
+              ]
+            },
+            {
+              "name": "Simona",
+              "ingredients": [
+                "Ratafia Rossi",
+                "Roku Sakura Bloom gin",
+                "green apple soda"
+              ]
+            },
+            {
+              "name": "Fabrizio",
+              "ingredients": [
+                "Mancino Amaranto",
+                "lacto-fermented tomato",
+                "Campari",
+                "soda"
+              ]
+            },
+            {
+              "name": "Luca",
+              "ingredients": [
+                "Cocchi Extra Dry",
+                "amontillado sherry",
+                "cucumber hydrosol"
+              ]
+            },
+            {
+              "name": "Inès",
+              "ingredients": [
+                "Lillet Rosé",
+                "oloroso sherry",
+                "osmanthus"
+              ]
+            },
+            {
+              "name": "Monsoon Martini",
+              "ingredients": [
+                "Grey Goose vodka",
+                "prongfah and shiso leaves",
+                "palo santo",
+                "pear vermouth",
+                "caper brine"
+              ]
+            },
+            {
+              "name": "Opium Martini",
+              "ingredients": [
+                "Pokun gin",
+                "Tio Pepe",
+                "L'Ermitage Green"
+              ]
+            },
+            {
+              "name": "Four-Way Martini",
+              "ingredients": [
+                "Botanist gin",
+                "Cocchi extra dry vermouth",
+                "red shiso hydrosol"
+              ]
+            },
+            {
+              "name": "Solano Martini",
+              "ingredients": [
+                "Los Siete Misterios mezcal",
+                "Cocchi extra dry vermouth",
+                "Tio Pepe",
+                "roasted tomato water"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://opiumbarbangkok.com",
+            "https://static1.squarespace.com/static/606426f2a32cb67159564fbe/t/69c9f1488a83b4037db83b3a/1774842184391/Opium+Menu+2026+PDF.pdf"
+          ],
+          "remove_drinks": [
+            "Song Wat"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Added ingredients and glass shapes (from the menu's drink illustrations) to Expression Cocktails #2 from the 2026 menu PDF linked on the bar site. Correction: 'Song Wat', 'Chiang Mai', 'Floating Market', 'Hanoi in Four Seasons' and 'Sardinia' are section titles, not drinks, so the existing 'Song Wat' drink entry is a section name. Low-ABV and martini sections added; an 'Opium All Stars' section repeats drinks from previous menus."
+      }
+    },
+    {
+      "handle": "arcatulum",
+      "name": "Arca",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Ciclos",
+          "existing": {
+            "name": "Ciclos",
+            "start": "2026"
+          },
+          "start": "2026",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Bloody Mayan",
+              "ingredients": [
+                "Ketel One vodka",
+                "xoconostle",
+                "achiote",
+                "blond beer"
+              ]
+            },
+            {
+              "name": "Pixtle Mai Tai",
+              "ingredients": [
+                "Don Julio Blanco",
+                "bourbon",
+                "pixtle",
+                "mamey"
+              ]
+            },
+            {
+              "name": "Marzipan Carajillo",
+              "ingredients": [
+                "Aupale vodka",
+                "Licor 43",
+                "marzipan",
+                "coffee",
+                "peanut liqueur"
+              ]
+            },
+            {
+              "name": "Cacao Boulevardier",
+              "ingredients": [
+                "Johnnie Walker Black Label",
+                "cacao",
+                "dry vermouth",
+                "Frangelico",
+                "Campari"
+              ]
+            },
+            {
+              "name": "Green Garden",
+              "ingredients": [
+                "Condesa sahumerio",
+                "St-Germain",
+                "pulque",
+                "cinnamon leaf oil"
+              ]
+            },
+            {
+              "name": "Botanical",
+              "ingredients": [
+                "Bacardí",
+                "basil",
+                "Mayan lime"
+              ]
+            },
+            {
+              "name": "Mayan Fizz",
+              "ingredients": [
+                "Condesa gin",
+                "fino sherry",
+                "Mayan lime leaf",
+                "prosecco"
+              ]
+            },
+            {
+              "name": "Holy Last Word",
+              "ingredients": [
+                "Montelobos Ensamble mezcal",
+                "hoja santa",
+                "coconut",
+                "Mayan lime liqueur",
+                "green Chartreuse"
+              ]
+            },
+            {
+              "name": "Bees and Pollen",
+              "ingredients": [
+                "Johnnie Walker Black Label",
+                "flor de mayo",
+                "xtabentún",
+                "melipona honey",
+                "ginger",
+                "sour orange"
+              ]
+            },
+            {
+              "name": "Framboyán",
+              "ingredients": [
+                "Altos Blanco tequila",
+                "framboyán liqueur",
+                "Italicus",
+                "St-Germain"
+              ]
+            },
+            {
+              "name": "Junglepolitan",
+              "ingredients": [
+                "Ketel One vodka",
+                "hibiscus reduction",
+                "Licor 43",
+                "lemongrass vermouth"
+              ]
+            },
+            {
+              "name": "Gin Mile",
+              "ingredients": [
+                "Tanqueray No. Ten",
+                "chamomile",
+                "toasted butter",
+                "lemon sherbet"
+              ]
+            },
+            {
+              "name": "Soursop Margarita",
+              "ingredients": [
+                "Don Patrón Cristalino",
+                "soursop",
+                "Huana",
+                "nami sake",
+                "sour orange"
+              ]
+            },
+            {
+              "name": "Mangojack Collins",
+              "ingredients": [
+                "Bacardí",
+                "Absolut Elyx",
+                "jackfruit",
+                "mango",
+                "Alma Finca"
+              ]
+            },
+            {
+              "name": "Gooseberry Sour",
+              "ingredients": [
+                "Sotol Noche Luna",
+                "jungle gooseberry",
+                "aquafaba",
+                "local mandarin"
+              ]
+            },
+            {
+              "name": "Prickly Negroni",
+              "ingredients": [
+                "Condesa prickly pear",
+                "Primo",
+                "Yolixpa",
+                "xoconostle"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://arcatulum.com/"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Bar site lists the current cocktails in four sections (Seeds, Leaves, Flowers, Fruits) without the 'Ciclos' title or a date; matched to the existing Ciclos edition, adding ingredients and five drinks (Framboyán, Soursop Margarita, Mangojack Collins, Gooseberry Sour, Prickly Negroni)."
+      }
+    },
+    {
+      "handle": "civwrksto",
+      "name": "Civil Works",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "A Manual for Laying Pipe",
+          "existing": null,
+          "start": "2024",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Woolnough",
+              "ingredients": [
+                "aromatised wine",
+                "Scotch",
+                "wild haskap berries",
+                "vetiver"
+              ]
+            },
+            {
+              "name": "Overhead Tonnage",
+              "ingredients": []
+            },
+            {
+              "name": "W.A.P.-tini",
+              "ingredients": [
+                "rice-washed pear vodka"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.the50.com/stories/News/civil-works-toronto-best-cocktail-menu-north-americas-50-best-bars-2025.html",
+            "https://streetsoftoronto.com/?p=143680"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Opening menu 'A Manual for Laying Pipe' (bar opened mid-2024; Streets of Toronto 15 Aug 2024; won best cocktail menu at North America's 50 Best 2025, article 12 Jun 2025). A Feb 2026 Business Wire release about a newer menu returned 403, so it is not recorded and is_current is null. Current menu is a Canva link that could not be read."
+      }
+    },
+    {
+      "handle": "attaboy134",
+      "name": "Attaboy",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [],
+      "coverage": {
+        "glassware": "not_searched",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 0,
+        "notes": "Bar site has no menu (only locations, press, shop links). No dated menus found; no search spent."
+      }
+    },
+    {
+      "handle": "originbarsg",
+      "name": "Origin Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Cocktail menu (March 2021)",
+          "existing": {
+            "name": "Cocktail menu (March 2021)",
+            "start": "2021-03"
+          },
+          "start": "2021-03",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Nashi & Matcha",
+              "ingredients": [
+                "nashi pear",
+                "matcha",
+                "caramel cordial",
+                "Roku gin",
+                "tonic"
+              ]
+            },
+            {
+              "name": "Crystal Moj!to",
+              "ingredients": [
+                "sugar cane juice",
+                "ascorbic acid",
+                "mint",
+                "lime",
+                "burnt lime"
+              ]
+            },
+            {
+              "name": "Urban Jungle",
+              "ingredients": [
+                "Samai Gold rum",
+                "baked pineapple cordial",
+                "nutmeg flower",
+                "Kampot black pepper"
+              ]
+            },
+            {
+              "name": "Tropez",
+              "ingredients": [
+                "Matusalem 7 rum",
+                "Mancino Rosso Amaranto",
+                "maraschino",
+                "coconut flakes"
+              ]
+            },
+            {
+              "name": "Saz-Mei",
+              "ingredients": [
+                "plum-infused Rémy Martin VSOP",
+                "Origin absinthe"
+              ]
+            },
+            {
+              "name": "Dirty Brew",
+              "ingredients": [
+                "espresso",
+                "Mr Black amaro",
+                "cardamom cream",
+                "The Lovers rum"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://citynomads.com/bar-review-origin-bar-at-shangri-la-hotel-singapore-pays-tributes-to-singapores-neighbourhoods/"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Respect The Martini",
+          "ingredients": [
+            "gin",
+            "muscat",
+            "junmai daiginjo sake",
+            "dry vermouth"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+        },
+        {
+          "drink": "DJ Pepper",
+          "ingredients": [
+            "vodka",
+            "distilled sour cherry",
+            "cola hydrosol",
+            "vitamin C"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+        },
+        {
+          "drink": "Shake Shuka",
+          "ingredients": [
+            "gin",
+            "tomato",
+            "basil",
+            "Sichuan mala"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+        },
+        {
+          "drink": "Duty Free",
+          "ingredients": [
+            "whisky",
+            "pistachio",
+            "chocolate",
+            "bitters"
+          ],
+          "seen": "2025",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/origin-bar.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "City Nomads (31 May 2021) confirms the 2021 menu as the third in four years and adds ingredients plus Saz-Mei. The Asia's 50 Best profile (citing the 2025 rank) describes a newer 16-drink 'X' menu with no launch date, so its drinks are sightings. The bar site still lists the INFINITY (2024) drink names, so it is not a reliable current-menu source."
+      }
+    },
+    {
+      "handle": "drinkkongbar",
+      "name": "Drink Kong",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Flux",
+          "existing": {
+            "name": "Flux",
+            "start": "2025-06"
+          },
+          "start": "2025-06",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Sintesi",
+              "ingredients": [
+                "bourbon",
+                "amaro",
+                "passion fruit",
+                "saffron honey"
+              ]
+            },
+            {
+              "name": "Gaijin",
+              "ingredients": [
+                "Nikka whisky",
+                "miso",
+                "milk",
+                "pineapple"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.drinkkong.com/",
+            "https://www.the50.com/bars/best-in-europe/the-list/drink-kong.html"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site links 'Menu FLUX' (MENU-FLUX-2026.pdf, uploaded Aug 2026; too large to fetch) and Europe's 50 Best 2026 profile describes Flux as the current menu, naming Sintesi and Gaijin. One search found no glassware maker."
+      }
+    },
+    {
+      "handle": "hankypankydf",
+      "name": "Hanky Panky",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site has no menu. 50 Best profile names no menu. Search snippets mention a 'Twelve Wonders of Mixology' menu and an earlier 'Passport Menu' (Tiger Punch), but no fetched page confirmed names or dates, so nothing was added."
+      }
+    },
+    {
+      "handle": "mius.hongkong",
+      "name": "Mius",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Opening menu",
+          "existing": {
+            "name": "Opening menu",
+            "start": "2025-08"
+          },
+          "start": "2025-08",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Gin & Apple",
+              "ingredients": [
+                "gin",
+                "coconut",
+                "kaffir lime",
+                "pandan",
+                "green apple soda"
+              ]
+            },
+            {
+              "name": "Strawberry Negroni",
+              "ingredients": [
+                "gin",
+                "Italian bitter amaro",
+                "grenache",
+                "strawberry",
+                "pink peppercorn"
+              ]
+            },
+            {
+              "name": "Shiso Sour",
+              "ingredients": [
+                "gin",
+                "shiso",
+                "salted plum",
+                "amontillado sherry",
+                "lemon",
+                "egg white"
+              ]
+            },
+            {
+              "name": "Matcha Mori",
+              "ingredients": [
+                "hot whisky",
+                "matcha",
+                "coconut",
+                "salted vanilla cream"
+              ]
+            },
+            {
+              "name": "Guava Oolong Float",
+              "ingredients": [
+                "guava and oolong sorbet",
+                "sparkling sake"
+              ]
+            },
+            {
+              "name": "Alex After Dark",
+              "ingredients": [
+                "sweet potato shochu",
+                "black sesame",
+                "amazake",
+                "chocolate",
+                "coffee"
+              ]
+            },
+            {
+              "name": "Highball",
+              "ingredients": [
+                "frozen whisky",
+                "Japanese soda"
+              ]
+            },
+            {
+              "name": "Garibaldi",
+              "ingredients": [
+                "Italian bitter vermouth",
+                "orange",
+                "grapefruit",
+                "White Jade Orchid",
+                "Earl Grey"
+              ]
+            },
+            {
+              "name": "Bamboo",
+              "ingredients": [
+                "fino sherry",
+                "vermouth",
+                "aromatic bitters",
+                "amaro"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.mius.hk/menu"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Rosé",
+          "ingredients": [
+            "pisco",
+            "grape",
+            "buckwheat",
+            "jasmine",
+            "cardamom"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.mius.hk/menu"
+        },
+        {
+          "drink": "Dirty Margarita",
+          "ingredients": [
+            "tequila",
+            "fennel pollen",
+            "olive",
+            "gentian",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.mius.hk/menu"
+        },
+        {
+          "drink": "Tomatotini",
+          "ingredients": [
+            "vodka",
+            "tomato shrub",
+            "dill",
+            "lime",
+            "basil oil"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.mius.hk/menu"
+        },
+        {
+          "drink": "Second Life",
+          "ingredients": [
+            "calvados",
+            "mugi shochu",
+            "smoked tea",
+            "coffee",
+            "cinnamon"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.mius.hk/menu"
+        },
+        {
+          "drink": "Fig Ol' Days",
+          "ingredients": [
+            "Scotch whisky",
+            "fino sherry",
+            "fig leaf",
+            "palo santo"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.mius.hk/menu"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Bar's undated menu page lists all nine opening-menu drinks (ingredients added from it) plus five more, recorded as Oct 2026 sightings since no source dates when they were added. No search spent."
+      }
+    },
+    {
+      "handle": "barlibre_ikebukuro",
+      "name": "Bar Libre",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "wilting wine glass",
+              "sketch_shape": "wine",
+              "shape_note": "wine glass whose bowl looks like it droops or wilts"
+            },
+            {
+              "name": "artisanal ceramics",
+              "sketch_shape": "ceramic",
+              "shape_note": null
+            },
+            {
+              "name": "flower vase",
+              "sketch_shape": null,
+              "shape_note": "a flower vase used as the drinking vessel"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.the50.com/bars/asia/the-list/bar-libre.html"
+          ]
+        }
+      ],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Samurai Penicillin",
+          "ingredients": [
+            "Johnnie Walker Blue Label",
+            "shiso kombucha",
+            "honey"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.the50.com/bars/asia/the-list/bar-libre.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "partial",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site links a 'Bar LIBRE MENU 2026' PDF (Ikebukuro) that was over the fetch size limit. Asia's 50 Best 2026 profile describes four menu sections (Introduction, Development, Twist, Conclusion, low to high ABV), names Samurai Penicillin, and mentions wilting wine glasses, artisanal ceramics and flower vases (no maker named)."
+      }
+    },
+    {
+      "handle": "atlasbarsg",
+      "name": "ATLAS",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Daughters of ATLAS",
+          "existing": {
+            "name": "Daughters of ATLAS",
+            "start": "2026-04"
+          },
+          "start": "2026-04",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Cartographer",
+              "ingredients": []
+            },
+            {
+              "name": "Shackleton",
+              "ingredients": []
+            },
+            {
+              "name": "Wingbeat",
+              "ingredients": [
+                "dill",
+                "cucumber",
+                "mint",
+                "yoghurt"
+              ]
+            },
+            {
+              "name": "Electric Vice",
+              "ingredients": [
+                "prickly pear",
+                "horchata",
+                "pineapple",
+                "brandied cherry"
+              ]
+            },
+            {
+              "name": "The Maquis",
+              "ingredients": [
+                "tequila",
+                "mezcal",
+                "lime",
+                "parsley",
+                "rosemary",
+                "thyme",
+                "green chilli",
+                "olive oil"
+              ]
+            },
+            {
+              "name": "Apple Aria",
+              "ingredients": [
+                "mezcal",
+                "ginger"
+              ]
+            },
+            {
+              "name": "Atlas Espresso Martini",
+              "ingredients": [
+                "coffee liqueur",
+                "cinnamon"
+              ]
+            },
+            {
+              "name": "Atlas Negroni",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://atlasbar.sg",
+            "https://www.timeout.com/singapore/news/atlas-unveils-its-first-major-cocktail-menu-refresh-in-years-heres-why-this-iconic-great-gatsby-bar-is-worth-revisiting-061026"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Time Out Singapore (10 Jun 2026) covers Daughters of ATLAS (seven chapters, 16 signatures plus non-alcoholic versions, by head bartender Esmeralda Castrogiovanni) and names eight drinks; the bar site (Oct 2026) still promotes the theme, so it is marked current. No glassware maker found."
+      }
+    },
+    {
+      "handle": "problemchild_ph",
+      "name": "Problem Child",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Green Sticks",
+          "ingredients": [
+            "rum",
+            "wakame distillate",
+            "salsa verde"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/problem-child.html"
+        },
+        {
+          "drink": "Serene",
+          "ingredients": [
+            "Japanese whisky",
+            "green tea",
+            "jasmine",
+            "oolong",
+            "orange bitters"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.the50.com/bars/best-in-asia/the-list/problem-child.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "No bar website. Asia's 50 Best 2026 profile says the menu changes colour theme every three months and names Green Sticks, Serene and Negroni and Ranch Water remixes (sightings). A May 2026 Daily Tribune piece listing more drinks did not load, so its details are not recorded."
+      }
+    },
+    {
+      "handle": "lamp.bar",
+      "name": "Lamp Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "50 Best profile (2025 rank) says there is no menu: drinks are made to order after talking through preferences, so no editions exist. Search snippets say Kaneko's ceramicist parents make some cups and coasters, but no fetched page confirmed a maker, so nothing recorded."
+      }
+    },
+    {
+      "handle": "bandistahouston",
+      "name": "Bandista",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "May 2025 menu",
+          "existing": null,
+          "start": "2025-05",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Almost Famous",
+              "ingredients": [
+                "mezcal",
+                "roasted pineapple",
+                "epazote-infused génépy",
+                "charred citrus",
+                "scarlet aperitivo"
+              ]
+            },
+            {
+              "name": "Limbo of the Lost",
+              "ingredients": [
+                "aged rum",
+                "white rum",
+                "lime acid blend",
+                "kombu"
+              ]
+            },
+            {
+              "name": "La Mala Educación",
+              "ingredients": [
+                "toasted bolillo-infused tequila",
+                "piloncillo",
+                "bitters"
+              ]
+            },
+            {
+              "name": "Boudoir Renaissance",
+              "ingredients": [
+                "gin",
+                "Krigler 223 essence",
+                "vermouth"
+              ]
+            },
+            {
+              "name": "Voy Desvelado",
+              "ingredients": [
+                "mezcal",
+                "cold brew coffee",
+                "yuzu",
+                "passion fruit",
+                "chocolate bitters"
+              ]
+            },
+            {
+              "name": "Colada Cosmico",
+              "ingredients": [
+                "vodka",
+                "coconut liqueur",
+                "macadamia",
+                "pineapple",
+                "coconut"
+              ]
+            },
+            {
+              "name": "Rob Ahoy",
+              "ingredients": [
+                "Scotch",
+                "banana liqueur",
+                "rum",
+                "Punt e Mes",
+                "lemongrass"
+              ]
+            },
+            {
+              "name": "Hill Country Highball",
+              "ingredients": [
+                "rye",
+                "peach",
+                "champagne vinegar",
+                "mesquite honey",
+                "Topo Chico"
+              ]
+            },
+            {
+              "name": "Paradiso",
+              "ingredients": [
+                "prickly pear gin",
+                "lychee",
+                "guava",
+                "rose",
+                "grapefruit",
+                "white crème de cacao"
+              ]
+            },
+            {
+              "name": "Subtle Touch",
+              "ingredients": [
+                "tequila",
+                "aloe",
+                "citric acid",
+                "salt",
+                "lime zest",
+                "bubbles"
+              ]
+            },
+            {
+              "name": "Hunter's Holiday",
+              "ingredients": [
+                "18-year Scotch",
+                "oloroso sherry",
+                "blueberry",
+                "coriander",
+                "saffron",
+                "orange"
+              ]
+            },
+            {
+              "name": "Un-Crusta-Ble",
+              "ingredients": [
+                "brandy",
+                "golden milk",
+                "mango",
+                "falernum",
+                "lemon",
+                "Angostura bitters"
+              ]
+            },
+            {
+              "name": "Ménage à Trois",
+              "ingredients": [
+                "cognac",
+                "crème de cacao",
+                "coffee liqueur",
+                "cream",
+                "cacao butter"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://press.fourseasons.com/houston/hotel-news/2025/new-cocktail-menu-at-bandista"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Manhattan",
+          "ingredients": [
+            "WhistlePig 12 rye"
+          ],
+          "seen": "2022-02",
+          "source_url": "https://houston.culturemap.com/news/restaurants-bars/02-25-22-bandista-new-cocktail-bar-speakeasy-four-seasons-hotel-jonathan-jones"
+        },
+        {
+          "drink": "The Viking Funeral",
+          "ingredients": [
+            "Highland Park 15 Viking Heart"
+          ],
+          "seen": "2022-02",
+          "source_url": "https://houston.culturemap.com/news/restaurants-bars/02-25-22-bandista-new-cocktail-bar-speakeasy-four-seasons-hotel-jonathan-jones"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Four Seasons release of 20 May 2025 says the 13-drink menu launched 21 May 2025; no newer full menu found (2026 releases cover guest shifts and summer sessions), so is_current is null. 2023 and 2022 menu releases returned 404. CultureMap (25 Feb 2022) opening drinks recorded as sightings. Bar site has no menu."
+      }
+    },
+    {
+      "handle": "bonvivantsbahamas",
+      "name": "Bon Vivants",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "flamingo-shaped glass",
+              "sketch_shape": "tiki",
+              "shape_note": "glass moulded in the shape of a flamingo"
+            },
+            {
+              "name": "tiki glass",
+              "sketch_shape": "tiki",
+              "shape_note": null
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.the50.com/bars/best-in-north-america/the-list/bon-vivants.html"
+          ]
+        }
+      ],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "The Long Surrender",
+          "ingredients": [
+            "tequila",
+            "curaçao",
+            "Scrappy's Firewater tincture",
+            "passion fruit liqueur",
+            "lime",
+            "agave"
+          ],
+          "seen": "2026",
+          "source_url": "https://www.the50.com/bars/best-in-north-america/the-list/bon-vivants.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site links a Bar-Menu.pdf that was over the fetch size limit. North America's 50 Best 2026 profile names The Long Surrender and says drinks come in flamingo- or tiki-shaped glasses (no maker). No dated menus found."
+      }
+    },
+    {
+      "handle": "boadascocktails",
+      "name": "Boadas Cocktails",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "vaso de tubo (for mineral water)",
+              "sketch_shape": "collins",
+              "shape_note": "tall, narrow, straight-sided tube glass"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://es.ara.cat/comer/cocteleria-boadas-cocteles-vida-desafian-tiempo-rambla-barcelona_1_4822108.html"
+          ]
+        }
+      ],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Antonio Machín",
+          "ingredients": [
+            "rum",
+            "pineapple",
+            "coffee"
+          ],
+          "seen": "2023-10",
+          "source_url": "https://es.ara.cat/comer/cocteleria-boadas-cocteles-vida-desafian-tiempo-rambla-barcelona_1_4822108.html"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "none_found",
+        "history": "none_found",
+        "searches": 1,
+        "notes": "Bar site's carta page returned 404. Ara (8 Oct 2023, 90th anniversary) names the Antonio Machín and notes mineral water served in a tube glass; menu groups classics, modern classics and originals plus a daily cocktail. No dated menu editions found."
+      }
+    },
+    {
+      "handle": "republicbarsg",
+      "name": "Republic",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Volume 4",
+          "existing": {
+            "name": "Volume 4",
+            "start": "2026-01"
+          },
+          "start": "2026-01",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "La Dolce Vita",
+              "ingredients": [
+                "peach liqueur",
+                "jasmine tea",
+                "sparkling wine"
+              ]
+            },
+            {
+              "name": "Emma Peel",
+              "ingredients": [
+                "banana"
+              ]
+            },
+            {
+              "name": "Chromatic Signal",
+              "ingredients": [
+                "rum",
+                "cacao",
+                "coffee",
+                "mint"
+              ]
+            },
+            {
+              "name": "Yellow Submarine",
+              "ingredients": []
+            },
+            {
+              "name": "Punch",
+              "ingredients": [
+                "rum",
+                "tropical fruit",
+                "spice"
+              ]
+            },
+            {
+              "name": "Mission",
+              "ingredients": [
+                "whisky"
+              ]
+            },
+            {
+              "name": "Yabba Dabba Dew",
+              "ingredients": [
+                "bourbon",
+                "melon",
+                "prosciutto"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.tatlerasia.com/dining/drinks/republic-bar-volume-four"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Tatler (28 Jul 2026) calls Volume Four the latest menu (12 drinks over six TV genres: Film, Drama, Sport, Music, News, Cartoons) and gives partial ingredients; no launch date stated, existing 2026-01 kept. Bar site returned 403."
+      }
+    },
+    {
+      "handle": "the_clumsies",
+      "name": "The Clumsies",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Spirits of the City: Polykatoikia",
+          "existing": {
+            "name": "Spirits of the City: Polykatoikia",
+            "start": "2026-05"
+          },
+          "start": "2026-05",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "City Skin",
+              "ingredients": [
+                "Bacardi Añejo Cuatro rum",
+                "strawberry",
+                "mango kombucha umni",
+                "spices"
+              ]
+            },
+            {
+              "name": "Spirit of the City",
+              "ingredients": [
+                "Bombay Sapphire gin",
+                "beurre noisette",
+                "apricot",
+                "cucumber",
+                "cilantro"
+              ]
+            },
+            {
+              "name": "The Pause Between",
+              "ingredients": [
+                "42 Below vodka",
+                "walnut pie",
+                "yogurt",
+                "berry cola air"
+              ]
+            },
+            {
+              "name": "YesterNow",
+              "ingredients": [
+                "Patrón Silver tequila",
+                "Ilegal mezcal",
+                "mocha",
+                "jasmine rice",
+                "coconut",
+                "kaffir lime"
+              ]
+            },
+            {
+              "name": "Kykeon",
+              "ingredients": [
+                "Metaxa 12 Stars",
+                "malted barley",
+                "peach amaretto",
+                "pennyroyal"
+              ]
+            },
+            {
+              "name": "Rec & Play",
+              "ingredients": [
+                "Dewar's 12",
+                "pineapple pyrolysis bitter",
+                "Martini Riserva Ambrato vermouth",
+                "chorizo oil"
+              ]
+            },
+            {
+              "name": "Changing Seasons",
+              "ingredients": [
+                "Santa Teresa 1796 rum",
+                "cherry",
+                "falernum",
+                "basil"
+              ]
+            },
+            {
+              "name": "Perfect Imperfection",
+              "ingredients": [
+                "Bombay Sapphire gin",
+                "mastiha",
+                "oil herbs and cheese waste",
+                "Schweppes Indian tonic",
+                "orange bitters"
+              ]
+            },
+            {
+              "name": "Proika",
+              "ingredients": [
+                "42 Below vodka",
+                "blue cheese",
+                "fig",
+                "sundried tomato",
+                "honey",
+                "amontillado"
+              ]
+            },
+            {
+              "name": "Curated Chaos",
+              "ingredients": [
+                "Bombay Premier Cru",
+                "miso Noilly Prat vermouth",
+                "umeshu",
+                "blueberry brine"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.theclumsies.gr/",
+            "https://www.theclumsies.gr/catalogue/clumsies-cocktail-menu-2023.pdf"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "The bar site's cocktail-menu PDF (file still named 2023) now holds the Polykatoikia menu; ingredients read from the PDF pages. No search spent."
+      }
+    },
+    {
+      "handle": "thelongislandbar",
+      "name": "The Long Island Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "A Martini",
+          "ingredients": [
+            "Hepple gin",
+            "Dassai 50 junmai daiginjo",
+            "Lustau blanco vermut",
+            "bergamot and pomelo tincture"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "Dolores del Rio",
+          "ingredients": [
+            "jalapeño-infused blanco tequila",
+            "Aperol",
+            "passion fruit",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "Cognac French 75",
+          "ingredients": [
+            "cognac",
+            "lemon",
+            "prosecco"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "The Long Island Gimlet",
+          "ingredients": [
+            "gin",
+            "lime-ginger cordial",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "The Erin",
+          "ingredients": [
+            "rye",
+            "sweet vermouth",
+            "Suze",
+            "Bigallet China Amer"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "Paloma",
+          "ingredients": [
+            "blanco tequila",
+            "grapefruit soda",
+            "lime"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "Improved Pendennis Club",
+          "ingredients": [
+            "gin",
+            "apricot",
+            "lime",
+            "Peychaud's bitters"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "Boulevardier",
+          "ingredients": [
+            "rye",
+            "Campari",
+            "sweet vermouth"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        },
+        {
+          "drink": "White Negroni Sbagliato",
+          "ingredients": [
+            "Carpano Bianco",
+            "Suze",
+            "prosecco"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.thelongislandbar.com/menus"
+        }
+      ],
+      "coverage": {
+        "glassware": "not_searched",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Current undated drinks list from the bar's Menus page, recorded as Oct 2026 sightings. The Long Island Gimlet and Boulevardier carry over from the existing 2014 list. No search spent."
+      }
+    },
+    {
+      "handle": "hero_nairobi",
+      "name": "Hero Bar",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Comic-book cocktail menu",
+          "existing": {
+            "name": "Comic-book cocktail menu",
+            "start": "2026"
+          },
+          "start": "2026",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Highly Sassy",
+              "ingredients": [
+                "berbere-infused Ketel One vodka",
+                "passion baobab syrup",
+                "black tea",
+                "lime"
+              ]
+            },
+            {
+              "name": "Holy Cape",
+              "ingredients": [
+                "Tanqueray gin",
+                "Pimm's",
+                "vermouth",
+                "lemon",
+                "chickpea foam",
+                "tonic"
+              ]
+            },
+            {
+              "name": "Loki's Cup",
+              "ingredients": [
+                "Tanqueray gin",
+                "Bulleit bourbon",
+                "Martini Rosso",
+                "orange bitters"
+              ]
+            },
+            {
+              "name": "Boy Scout Ol' Fashion",
+              "ingredients": [
+                "Bulleit bourbon"
+              ]
+            },
+            {
+              "name": "Plantain Old Fashioned",
+              "ingredients": [
+                "plantain butter-washed whisky",
+                "plantain banana syrup",
+                "fried plantain",
+                "plantain dust"
+              ]
+            },
+            {
+              "name": "Madafu Sawa",
+              "ingredients": [
+                "coconut butter-washed whisky",
+                "coconut water",
+                "lime",
+                "aquafaba",
+                "coconut tincture"
+              ]
+            },
+            {
+              "name": "Ode to Lucy",
+              "ingredients": [
+                "Rémy Martin VSOP",
+                "Cointreau",
+                "ginger",
+                "strawberry tea",
+                "grapefruit"
+              ]
+            },
+            {
+              "name": "Vegan Sawa",
+              "ingredients": [
+                "tequila or whisky",
+                "lime",
+                "aquafaba",
+                "aromatic bitters"
+              ]
+            },
+            {
+              "name": "High Alert",
+              "ingredients": [
+                "Luxardo Aperitivo",
+                "mezcal",
+                "Jaba Juice",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "Barbossa",
+              "ingredients": [
+                "coconut oil-washed rum",
+                "pineapple",
+                "Bahari rum"
+              ]
+            },
+            {
+              "name": "Witch Doctor",
+              "ingredients": [
+                "cachaça",
+                "basil syrup",
+                "passion fruit",
+                "orange juice"
+              ]
+            },
+            {
+              "name": "Tinted Scarlet",
+              "ingredients": [
+                "Ketel One vodka",
+                "rose petals",
+                "grapefruit",
+                "ginger beer"
+              ]
+            },
+            {
+              "name": "Kom Mule Bucha",
+              "ingredients": [
+                "Ketel One vodka",
+                "lime",
+                "fermented ginger beer"
+              ]
+            },
+            {
+              "name": "I Am Groot",
+              "ingredients": [
+                "Hendrick's gin",
+                "pineapple",
+                "basil",
+                "mint",
+                "cucumber"
+              ]
+            },
+            {
+              "name": "Hibiscus Disco",
+              "ingredients": [
+                "Tanqueray No. Ten",
+                "agave",
+                "house bitters",
+                "hibiscus kombucha"
+              ]
+            },
+            {
+              "name": "Infinity",
+              "ingredients": [
+                "Beefeater Pink",
+                "blueberry",
+                "sage",
+                "tonic"
+              ]
+            },
+            {
+              "name": "Tiger Lily",
+              "ingredients": [
+                "Tambuzi KO gin",
+                "aromatic bitters",
+                "lime"
+              ]
+            },
+            {
+              "name": "Hammer Thyme",
+              "ingredients": [
+                "sultana and thyme-infused Jack Daniel's",
+                "lemon",
+                "triple sec",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "Burning Belly",
+              "ingredients": [
+                "Johnnie Walker Black",
+                "popcorn",
+                "chamomile cordial",
+                "soda"
+              ]
+            },
+            {
+              "name": "Tomatina",
+              "ingredients": [
+                "Don Julio Blanco",
+                "cherry tomato and coriander shrub",
+                "lime",
+                "berbere"
+              ]
+            },
+            {
+              "name": "Wild Sunfyre",
+              "ingredients": [
+                "tequila",
+                "lacto-fermented gooseberry",
+                "lime",
+                "agave",
+                "peach liqueur"
+              ]
+            },
+            {
+              "name": "Captain's Tea",
+              "ingredients": [
+                "tree tomato banana oleo",
+                "Captain Morgan Spiced",
+                "lemon"
+              ]
+            },
+            {
+              "name": "Papa Smurf",
+              "ingredients": [
+                "Tanqueray No. Ten",
+                "rosso vermouth",
+                "Luxardo Aperitivo",
+                "Campari",
+                "blueberry"
+              ]
+            },
+            {
+              "name": "Jackfruit Ripper",
+              "ingredients": [
+                "Hendrick's gin",
+                "jackfruit",
+                "Campari",
+                "rosso vermouth"
+              ]
+            },
+            {
+              "name": "Kijabe Kayama",
+              "ingredients": [
+                "Procera gin",
+                "lemon",
+                "green juniper",
+                "holy basil",
+                "gomme"
+              ]
+            },
+            {
+              "name": "Elixir of the Gods",
+              "ingredients": [
+                "Mezcal Convite",
+                "lacto-fermented spiced watermelon",
+                "lime",
+                "sugar"
+              ]
+            },
+            {
+              "name": "En Garde!",
+              "ingredients": [
+                "Tanqueray No. Ten",
+                "fig liqueur",
+                "pinot grigio",
+                "Campari"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.hero-kenya.com"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "none_found",
+        "searches": 0,
+        "notes": "Bar site lists the current menu (Heroes, Sidekicks, Hero, Sensei Sips, plus 10 zero-ABV 'Law Enforcement' drinks not recorded here); ingredients added and five drinks added (Papa Smurf, Jackfruit Ripper, Kijabe Kayama, Elixir of the Gods, En Garde!). No search spent."
+      }
+    },
+    {
+      "handle": "naked.athens",
+      "name": "Naked Athens",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "Discover the Uncovered",
+          "existing": {
+            "name": "Discover the Uncovered",
+            "start": "2025-10"
+          },
+          "start": "2025-10",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Pink Grapefruit Tequila Sunrise",
+              "ingredients": [
+                "The Lost Explorer mezcal",
+                "Olmeca Reposado tequila",
+                "kumquat",
+                "pomegranate molasses",
+                "Thomas Henry pink grapefruit soda",
+                "Amaro Santoni",
+                "Luxardo Aperitivo"
+              ]
+            },
+            {
+              "name": "Spicy Mango Paloma",
+              "ingredients": [
+                "The Lost Explorer mezcal",
+                "Olmeca Silver tequila",
+                "spicy mango soda"
+              ]
+            },
+            {
+              "name": "Pornstar Maracuja",
+              "ingredients": [
+                "Absolut vodka",
+                "Cointreau",
+                "Amaro Santoni",
+                "maracuja",
+                "vanilla submarine"
+              ]
+            },
+            {
+              "name": "Strawberry Bloody Mary",
+              "ingredients": [
+                "Absolut vodka",
+                "Luxardo Bitter",
+                "invisible strawberries"
+              ]
+            },
+            {
+              "name": "Kiwi G&T",
+              "ingredients": [
+                "Beefeater gin",
+                "kiwi",
+                "Thomas Henry dry tonic",
+                "neroli"
+              ]
+            },
+            {
+              "name": "Apple #Not Martini",
+              "ingredients": [
+                "Beefeater gin",
+                "Roku gin",
+                "Roots Mastiha",
+                "invisible green apple"
+              ]
+            },
+            {
+              "name": "Pineapple Tai",
+              "ingredients": [
+                "Havana Club 7",
+                "Metaxa 12",
+                "Cointreau",
+                "pineapple ketchup",
+                "granola"
+              ]
+            },
+            {
+              "name": "NKD-aiquiri Banana",
+              "ingredients": [
+                "Havana Club 3",
+                "invisible banana",
+                "tonka",
+                "cacao blanc"
+              ]
+            },
+            {
+              "name": "Scotch & #Not Soda",
+              "ingredients": [
+                "Ballantine's Finest",
+                "plain cola"
+              ]
+            },
+            {
+              "name": "Carob Old Fashioned",
+              "ingredients": [
+                "Jameson Irish whiskey",
+                "Metaxa 12",
+                "carob",
+                "popcorn"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://nakedbarathens.com/",
+            "https://nakedbarathens.com/wp-content/uploads/2026/09/NKD-ATH-COCKTAIL-MENU.pdf"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Cocktail menu PDF linked on the bar site (uploaded Sept 2026) is still Discover the Uncovered; ingredients added. No search spent."
+      }
+    },
+    {
+      "handle": "tellcamellia",
+      "name": "Tell Camellia",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "January 2025 menu",
+          "existing": {
+            "name": "January 2025 menu",
+            "start": "2025-01"
+          },
+          "start": "2025-01",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Pa Pa Da",
+              "ingredients": [
+                "lapsang tea",
+                "sandalwood",
+                "mushroom",
+                "cacao husk",
+                "dark rum"
+              ]
+            },
+            {
+              "name": "Tea Time",
+              "ingredients": [
+                "white peony tea",
+                "clarified raspberry",
+                "oat",
+                "honey",
+                "lemon",
+                "vodka"
+              ]
+            },
+            {
+              "name": "Chapagne Saan",
+              "ingredients": [
+                "darjeeling tea",
+                "matcha",
+                "coconut reduction",
+                "yuzu",
+                "pandan",
+                "vodka"
+              ]
+            },
+            {
+              "name": "Tall Pine",
+              "ingredients": [
+                "cold brew sencha",
+                "shiso",
+                "pine",
+                "tonic",
+                "elderflower",
+                "gin"
+              ]
+            },
+            {
+              "name": "Not Negroni",
+              "ingredients": [
+                "roasted green tea",
+                "hojicha",
+                "Campari",
+                "vermouth",
+                "fig leaf",
+                "gin"
+              ]
+            },
+            {
+              "name": "Warm Cloud",
+              "ingredients": [
+                "redistilled matcha",
+                "warm foam",
+                "kaffir lime",
+                "banana",
+                "lemon",
+                "bourbon"
+              ]
+            },
+            {
+              "name": "South of Jazz",
+              "ingredients": [
+                "jasmine tea",
+                "duck fat",
+                "dulce de leche",
+                "pink guava",
+                "tequila"
+              ]
+            },
+            {
+              "name": "Sencha T-Tonic",
+              "ingredients": [
+                "sencha tea",
+                "gin"
+              ]
+            },
+            {
+              "name": "Jasmine T-Tonic",
+              "ingredients": [
+                "jasmine tea",
+                "gin"
+              ]
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.tellcamellia.hk/"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Bar homepage (2026) shows nine drinks from the current list (Tea-Tails, T-Tonic, Tisbane, House Classics), matching the existing January 2025 menu; ingredients added plus South of Jazz and two T-Tonics. Full menu is image-only. No search spent."
+      }
+    },
+    {
+      "handle": "threehorsesbar",
+      "name": "Three Horses",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "Sherry Bakewell",
+          "ingredients": [
+            "oloroso sherry",
+            "cherry wine",
+            "smoked amaretto",
+            "lime"
+          ],
+          "seen": "2026-03",
+          "source_url": "https://www.timeout.com/melbourne/bars/three-horses"
+        },
+        {
+          "drink": "Sisquo Sour",
+          "ingredients": [
+            "pisco",
+            "bianco vermouth",
+            "jasmine",
+            "strawberry",
+            "lemon"
+          ],
+          "seen": "2026-03",
+          "source_url": "https://www.timeout.com/melbourne/bars/three-horses"
+        },
+        {
+          "drink": "Mango G and T",
+          "ingredients": [
+            "Caretaker's and Four Pillars house gin",
+            "mango sorbet",
+            "Fever-Tree tonic",
+            "lime"
+          ],
+          "seen": "2026-03",
+          "source_url": "https://www.timeout.com/melbourne/bars/three-horses"
+        },
+        {
+          "drink": "Ir(ish) Coffee",
+          "ingredients": [
+            "Pedro Ximénez",
+            "blueberry coffee",
+            "Baba's macadamia Irish cream"
+          ],
+          "seen": "2026-03",
+          "source_url": "https://www.timeout.com/melbourne/bars/three-horses"
+        },
+        {
+          "drink": "House Martini",
+          "ingredients": [],
+          "seen": "2025-06",
+          "source_url": "https://www.boothby.com.au/three-horses-new-bar-caretakers-cottage/"
+        },
+        {
+          "drink": "Sgroppino",
+          "ingredients": [],
+          "seen": "2025-06",
+          "source_url": "https://www.boothby.com.au/three-horses-new-bar-caretakers-cottage/"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "No menu on the bar site. Time Out Melbourne (5 Mar 2026) says the drinks list rotates every three months and lists four drinks (sightings). Boothby (30 Jun 2025) previews the opening (due before end Sept 2025) with House Martini, Jabberwocky and Sgroppino. Existing opening edition left as is; no named rotation dates found."
+      }
+    },
+    {
+      "handle": "amarobarlondon",
+      "name": "Amaro",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [
+        {
+          "name": "April 2025 menu",
+          "existing": null,
+          "start": "2025-04",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Basil Smash Punch",
+              "ingredients": []
+            },
+            {
+              "name": "Cucumber Collins",
+              "ingredients": []
+            },
+            {
+              "name": "Lychee Clover Club",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.amarobar.co.uk/"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "not_searched",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 0,
+        "notes": "Bar homepage menu images are labelled 'Amaro Bar Menu 2025 April' and show three drinks; the full menus are Google Drive links that could not be read. Existing July 2026 list not re-checked. No search spent."
+      }
+    },
+    {
+      "handle": "charleshseoul",
+      "name": "Charles H.",
+      "glassware": [],
+      "drink_glasses": [
+        {
+          "drink": "Queen of Diamonds",
+          "glass": "over a hand-cut ice diamond",
+          "sketch_shape": "rocks",
+          "shape_note": "glass not described; drink sits over a hand-cut diamond-shaped ice block",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://press.fourseasons.com/seoul/hotel-news/2025/new-cocktail-menu-at-charles-h"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Destinations menu (Around the World in 20 Drinks)",
+          "existing": {
+            "name": "Signature cocktails (2025)",
+            "start": "2025-04"
+          },
+          "start": "2025-02",
+          "end": null,
+          "end_basis": null,
+          "is_current": null,
+          "drinks": [
+            {
+              "name": "Spilled Milk",
+              "ingredients": [
+                "banana milk",
+                "iced americano",
+                "soju"
+              ]
+            },
+            {
+              "name": "Orchard Fizz",
+              "ingredients": [
+                "pear",
+                "walnut"
+              ]
+            },
+            {
+              "name": "Salt Lemon Tonic",
+              "ingredients": [
+                "Moroccan spices",
+                "preserved lemon"
+              ]
+            },
+            {
+              "name": "Halo Glow",
+              "ingredients": []
+            },
+            {
+              "name": "Queen of Diamonds",
+              "ingredients": [
+                "Amalfi coast gin",
+                "Italian bergamot liqueur",
+                "redistilled Campari"
+              ]
+            },
+            {
+              "name": "Vixen Fix",
+              "ingredients": [
+                "Burgundy",
+                "red berries",
+                "white chocolate"
+              ]
+            },
+            {
+              "name": "Pan American Highball",
+              "ingredients": [
+                "apple",
+                "pomegranate",
+                "calvados",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Birthday Boy",
+              "ingredients": [
+                "Terry's Chocolate Orange"
+              ]
+            },
+            {
+              "name": "Manhattan Flight",
+              "ingredients": []
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://press.fourseasons.com/seoul/hotel-news/2025/new-cocktail-menu-at-charles-h"
+          ]
+        }
+      ],
+      "sightings": [],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "partial",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Correction: the existing 'Signature cocktails (2025)' edition (Vixen Fix, Queen of Diamonds, Spilled Milk) is the 20-drink Destinations menu; Four Seasons release of 31 Jan 2025 says it is available from 28 Feb 2025, so start set to 2025-02 and the name corrected. Manhattan Flight is a Manhattan plus El Presidente and Fourth Regiment. No 2026 menu found; bar page returned 403."
+      }
+    },
+    {
+      "handle": "aboveboardbarmelb",
+      "name": "Above Board",
+      "glassware": [],
+      "drink_glasses": [],
+      "editions": [],
+      "sightings": [
+        {
+          "drink": "HSL Special",
+          "ingredients": [
+            "Amaro Montenegro",
+            "crème de mûre",
+            "absinthe",
+            "lime",
+            "sugar"
+          ],
+          "seen": "2019-07",
+          "source_url": "https://www.centurion-magazine.com/travel/bars/oceania/australia/melbourne-above-board"
+        },
+        {
+          "drink": "Japanese Slipper",
+          "ingredients": [
+            "Midori",
+            "curaçao",
+            "lemon"
+          ],
+          "seen": "2024-10",
+          "source_url": "https://www.timeout.com/melbourne/bars/above-board"
+        },
+        {
+          "drink": "Gentlemen Caller",
+          "ingredients": [
+            "rye",
+            "sweet vermouth",
+            "Gran Classico"
+          ],
+          "seen": "2024-10",
+          "source_url": "https://www.timeout.com/melbourne/bars/above-board"
+        },
+        {
+          "drink": "Hot Minute",
+          "ingredients": [
+            "tequila",
+            "lemon",
+            "bitters"
+          ],
+          "seen": "2024-10",
+          "source_url": "https://www.timeout.com/melbourne/bars/above-board"
+        }
+      ],
+      "coverage": {
+        "glassware": "none_found",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 1,
+        "notes": "Bar site has no menu. Drinks from Centurion (Jul 2019) and Time Out Melbourne (updated 22 Oct 2024) recorded as sightings; the menu is a short list of classics and house drinks with no named or dated editions. No glassware maker found."
+      }
+    }
+  ]
+}

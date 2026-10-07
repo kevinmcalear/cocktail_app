@@ -1,0 +1,1311 @@
+{
+  "batch": "launch",
+  "researched_on": "2026-10-07",
+  "searches_used": 20,
+  "bars": [
+    {
+      "handle": "caretakers.cottage",
+      "name": "Caretaker's Cottage",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "Nick & Nora",
+              "sketch_shape": "nick",
+              "shape_note": "small rounded bowl on a tall thin stem, round foot (House Martini, 2022 photo)"
+            },
+            {
+              "name": "Highball",
+              "sketch_shape": "highball",
+              "shape_note": "tall straight-sided tumbler with a thick base"
+            },
+            {
+              "name": "Rocks",
+              "sketch_shape": "rocks",
+              "shape_note": "short straight-sided thin-rimmed tumbler"
+            },
+            {
+              "name": "Coupe",
+              "sketch_shape": "coupe",
+              "shape_note": null
+            },
+            {
+              "name": "Porcelain cup",
+              "sketch_shape": "ceramic",
+              "shape_note": "porcelain cup chosen to look like a whale's stretched throat"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.boothby.com.au/bars-of-note-caretakers-cottage/",
+            "https://www.boothby.com.au/caretakers-cottage-drinks-menu/",
+            "https://australianbartender.com.au/2023/11/30/creativity-cocktails-caretakers-cottage-how-to-interweave-a-story-through-cocktails-featuring-hendricks-flora-adora/"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "House Martini",
+          "glass": "Nick & Nora",
+          "sketch_shape": "nick",
+          "shape_note": "small rounded bowl, tall thin stem, round foot; served frosted with olives on the side",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.boothby.com.au/bars-of-note-caretakers-cottage/"
+        },
+        {
+          "drink": "Batanga",
+          "glass": "Highball",
+          "sketch_shape": "highball",
+          "shape_note": "tall straight-sided tumbler, thick base, salt-rimmed",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.boothby.com.au/caretakers-cottage-drinks-menu/"
+        },
+        {
+          "drink": "Home Comforts",
+          "glass": "Rocks",
+          "sketch_shape": "rocks",
+          "shape_note": "short straight-sided thin-rimmed tumbler over a large clear cube",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.boothby.com.au/caretakers-cottage-drinks-menu/"
+        },
+        {
+          "drink": "The Snail & The Whale",
+          "glass": "Porcelain cup",
+          "sketch_shape": "ceramic",
+          "shape_note": "porcelain cup shaped like a whale's stretched throat, garnished with snail shells",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://australianbartender.com.au/2023/11/30/creativity-cocktails-caretakers-cottage-how-to-interweave-a-story-through-cocktails-featuring-hendricks-flora-adora/"
+        },
+        {
+          "drink": "Malibu Stormy",
+          "glass": "Coupette",
+          "sketch_shape": "coupe",
+          "shape_note": null,
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.forbes.com.au/covers/lifestyle/why-melbournes-caretakers-cottage-is-a-must-visit-masterpiece/"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Second-year list",
+          "existing": {
+            "name": "Second-year list",
+            "start": "2023-02"
+          },
+          "start": "2023-02",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "House Martini",
+              "ingredients": [
+                "Plymouth gin",
+                "house dry vermouth"
+              ]
+            },
+            {
+              "name": "Hotel Nacional Special",
+              "ingredients": [
+                "Havana Club 3yr rum",
+                "apricot",
+                "pineapple",
+                "lime"
+              ]
+            },
+            {
+              "name": "Batanga",
+              "ingredients": [
+                "Altos Plata tequila",
+                "lime",
+                "Jarritos Mexican Cola",
+                "grasshopper salt"
+              ]
+            },
+            {
+              "name": "A La Louisian",
+              "ingredients": [
+                "Wild Turkey Rye whiskey",
+                "house sweet vermouth",
+                "DOM Bénédictine",
+                "cherry bitters",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Home Comforts",
+              "ingredients": [
+                "Cottage limoncello",
+                "passionfruit sorbet",
+                "Yarra Valley cuvée"
+              ]
+            },
+            {
+              "name": "Jürgen Popp",
+              "ingredients": [
+                "Beefeater gin",
+                "dry sherry",
+                "lemon",
+                "Jarritos Pineapple Soda"
+              ]
+            },
+            {
+              "name": "Better Half",
+              "ingredients": [
+                "Amaro Montenegro",
+                "orgeat",
+                "coconut",
+                "strawberry foam"
+              ]
+            },
+            {
+              "name": "East 8 Hold Up Milk Punch",
+              "ingredients": [
+                "Plymouth gin",
+                "Aperol",
+                "tropical mix",
+                "chardonnay",
+                "lime"
+              ]
+            }
+          ],
+          "notes": "Full list read from the Feb 2023 menu images in the Boothby article (menu file named 'N2 CC Menu Feb 23'). Correction: Frantic Atlantic is NOT on this list; Time Out places it on the December 2024 'Best of' list, so move it there. The punch's third line reads 'totally tropical stuff' on the menu, kept here as 'tropical mix'.",
+          "verified": "page",
+          "source_urls": [
+            "https://www.boothby.com.au/caretakers-cottage-drinks-menu/"
+          ],
+          "remove_drinks": [
+            "Frantic Atlantic"
+          ]
+        },
+        {
+          "name": "Sun Goes Down, Music Goes Up",
+          "existing": {
+            "name": "Sun Goes Down, Music Goes Up",
+            "start": "2023-10"
+          },
+          "start": "2023-10",
+          "end": "2023-10",
+          "end_basis": "replaced",
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "The Snail & The Whale",
+              "ingredients": [
+                "Hendrick's Flora Adora gin",
+                "blueberry wine",
+                "Amaro Montenegro",
+                "blood orange"
+              ]
+            }
+          ],
+          "notes": "Australian Bartender (30 Nov 2023) says the drink would be replaced by another Flora Adora drink on the November 2023 menu, and that October's theme was travel.",
+          "verified": "page",
+          "source_urls": [
+            "https://australianbartender.com.au/2023/11/30/creativity-cocktails-caretakers-cottage-how-to-interweave-a-story-through-cocktails-featuring-hendricks-flora-adora/"
+          ]
+        },
+        {
+          "name": "Best of 2024 menu",
+          "existing": null,
+          "start": "2024-12",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "House Martini",
+              "ingredients": [
+                "gin",
+                "house dry vermouth"
+              ]
+            },
+            {
+              "name": "June Bug Milk Punch",
+              "ingredients": [
+                "coconut rum",
+                "banana",
+                "Cottage melon liqueur",
+                "pineapple",
+                "lime",
+                "salt"
+              ]
+            },
+            {
+              "name": "Frantic Atlantic",
+              "ingredients": [
+                "pisco",
+                "elderflower",
+                "grapefruit",
+                "lemon"
+              ]
+            }
+          ],
+          "notes": "Time Out review dated 19 Dec 2024: the December list was a 'Best of' album bringing back the bar's favourite cocktails of 2024, all $26, on a menu designed like a festival pamphlet. Only these drinks are named. House Martini gin is not named in this source (house dry vermouth per Boothby Oct 2023).",
+          "verified": "page",
+          "source_urls": [
+            "https://www.timeout.com/melbourne/bars/caretakers-cottage",
+            "https://www.boothby.com.au/house-martini"
+          ]
+        },
+        {
+          "name": "September 2026 menu",
+          "existing": {
+            "name": "September 2026 menu",
+            "start": "2026-09"
+          },
+          "start": "2026-09",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "House Martini",
+              "ingredients": [
+                "Four Pillars & Caretaker's Cottage house gin",
+                "house dry vermouth"
+              ]
+            },
+            {
+              "name": "Clover Club Milk Punch",
+              "ingredients": [
+                "tequila",
+                "rose vermouth",
+                "Japanese cherry tea",
+                "blood peach",
+                "raspberry",
+                "lemon"
+              ]
+            }
+          ],
+          "notes": "Adds the lines the existing seed left out. The bar's sitemap shows /ccbwmenu last modified 5 Sep 2026; the page heading is 'SEPTEMBER MENU', all drinks $27. The House Martini gin changed from Plymouth (Feb 2023 list) to the bar's own Four Pillars gin.",
+          "verified": "page",
+          "source_urls": [
+            "https://www.caretakerscottage.bar/ccbwmenu"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Seasonal Spritz",
+          "ingredients": [
+            "jasmine pearl tea",
+            "guava",
+            "verjus",
+            "lemon"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.caretakerscottage.bar/zero",
+          "note": "zero-proof list on the bar's site (page last modified 2 Aug 2026)"
+        },
+        {
+          "drink": "Horchata",
+          "ingredients": [
+            "toasted rice",
+            "blood orange",
+            "coffee",
+            "coconut",
+            "cardamom"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.caretakerscottage.bar/zero",
+          "note": "zero-proof list on the bar's site (page last modified 2 Aug 2026)"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 11,
+        "notes": "Could not verify the Rémy Savage / Nude Savage glassware claim: no source links the bar to Nude or Savage (Nude's Savage range, Sept 2020, is Coupe, Coupetini, Pony, Water, Low, Highball), so maker stays null; shapes come from captioned photos and Boothby's note that each list has two tall drinks, two coupes and one rocks or unique glass. Tatler (5 Feb 2024) text as fetched does not name the Zombie Milk Punch, so the existing January 2024 edition is unconfirmed. No dated source found for Feb-Aug 2026 or most 2025 months; Instagram is login-walled and the Wayback Machine never archived the menu pages. A July 2022 Shout article mentions an unnamed French 75 milk punch and Australian Bartender (Apr 2022) an unnamed Cosmo slushy on the opening list."
+      }
+    },
+    {
+      "handle": "abarwithshapesforaname",
+      "name": "A Bar with Shapes for a Name",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "Highball",
+              "sketch_shape": "highball",
+              "shape_note": "tall straight-sided clear tumbler, served with ice spheres and the drink's bottle alongside"
+            },
+            {
+              "name": "Tapered tumbler",
+              "sketch_shape": "rocks",
+              "shape_note": "plain thin-walled tumbler flaring slightly wider at the rim, often frosted"
+            },
+            {
+              "name": "Round stemless tumbler",
+              "sketch_shape": "rocks",
+              "shape_note": "rounded-bottom stemless tumbler on a coloured (blue) base, holds a large cube with a prism inside"
+            },
+            {
+              "name": "Small stemmed glass",
+              "sketch_shape": "nick",
+              "shape_note": "small rounded bowl on a long thin frosted stem"
+            },
+            {
+              "name": "Martini glass",
+              "sketch_shape": "martini",
+              "shape_note": "V-shaped cone bowl on a tall thin frosted stem"
+            },
+            {
+              "name": "Hourglass goblet",
+              "sketch_shape": "wine",
+              "shape_note": "cobalt-blue glass goblet, deep cup on a short solid foot, hourglass profile"
+            },
+            {
+              "name": "Speckled tumbler",
+              "sketch_shape": "highball",
+              "shape_note": "tall tumbler with multicoloured confetti speckles in the glass, piled with crushed ice"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.clubbauhaus.com/menu",
+            "https://drive.google.com/file/d/15PbzJcI98ZZlYlty_xZE6F9jPVP2nTM9/view",
+            "https://drive.google.com/file/d/1zZUg3G9GvTT5pXzFxtYak0WdDIjaXaY1/view"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "Pastel",
+          "glass": "Highball",
+          "sketch_shape": "highball",
+          "shape_note": "tall straight-sided clear tumbler with ice spheres; bottle served alongside",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Atlas",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "plain tumbler flaring wider at the rim",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Kazimir",
+          "glass": "Round stemless tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "rounded-bottom stemless tumbler on a blue base, large cube with a prism frozen inside",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Habanero",
+          "glass": "Small stemmed glass",
+          "sketch_shape": "nick",
+          "shape_note": "small rounded bowl on a long thin frosted stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "バター割り",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "highball",
+          "shape_note": "tall-ish tumbler flaring to the rim, ice sphere",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Osmanthus",
+          "glass": "Martini glass",
+          "sketch_shape": "martini",
+          "shape_note": "V-shaped cone bowl on a thin stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Chroma",
+          "glass": "Hourglass goblet",
+          "sketch_shape": "wine",
+          "shape_note": "cobalt-blue glass goblet with deep cup and short solid foot",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Villa",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "frosted tumbler flaring slightly at the rim",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Assignment",
+          "glass": "Martini glass",
+          "sketch_shape": "martini",
+          "shape_note": "V-shaped cone bowl on a tall frosted stem",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Toreador",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "plain clear tumbler flaring slightly at the rim, large cube",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Lychee Martini",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "plain clear tumbler with a large cube",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Manhattan",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "frosted clear tumbler with a large block of ice",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Espresso Martini",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "small clear tumbler with ice",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Last Word",
+          "glass": "Tapered tumbler",
+          "sketch_shape": "rocks",
+          "shape_note": "frosted clear tumbler",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Piña Colada",
+          "glass": "Rocks",
+          "sketch_shape": "rocks",
+          "shape_note": "straight-sided clear tumbler with a cube",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        },
+        {
+          "drink": "Odessa",
+          "glass": "Speckled tumbler",
+          "sketch_shape": "highball",
+          "shape_note": "tall tumbler with multicoloured confetti speckles, crushed ice",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.clubbauhaus.com/menu"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Opening menu",
+          "existing": {
+            "name": "Opening menu",
+            "start": "2021-05"
+          },
+          "start": "2021-05",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Pastel",
+              "ingredients": [
+                "vodka",
+                "rhubarb",
+                "recomposed lime",
+                "raspberry"
+              ]
+            }
+          ],
+          "notes": "The bar's menu page calls the Pastel the original house cocktail, designed before the official opening in 2021. Date note: Drinks International (3 Dec 2020) gave an opening of around 10 Dec 2020 and The Spirits Business (9 Feb 2021) says it opened just before the January 2021 lockdown and was serving delivered bottled cocktails; the bar's own site says it opened its doors in May 2021 (start kept).",
+          "verified": "page",
+          "source_urls": [
+            "https://www.clubbauhaus.com/menu",
+            "https://www.clubbauhaus.com/abarwithshapesforaname",
+            "https://www.thespiritsbusiness.com/2021/02/hottest-bar-openings-in-january-2021"
+          ]
+        },
+        {
+          "name": "Winter 2025-26 menu",
+          "existing": {
+            "name": "Winter 2025-26 menu",
+            "start": "2025-12"
+          },
+          "start": "2025-12",
+          "end": "2026-06",
+          "end_basis": "replaced",
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Chroma",
+              "ingredients": [
+                "Citadelle gin",
+                "cucumber",
+                "lime",
+                "coconut"
+              ]
+            },
+            {
+              "name": "Lychee Martini",
+              "ingredients": [
+                "vodka",
+                "lychee",
+                "Dolin dry vermouth"
+              ]
+            },
+            {
+              "name": "Atlas",
+              "ingredients": [
+                "Redbreast 12 whiskey",
+                "dulce de leche",
+                "Amarás Espadín mezcal",
+                "tonka"
+              ]
+            },
+            {
+              "name": "Habanero",
+              "ingredients": [
+                "yellow habanero",
+                "Campari"
+              ]
+            },
+            {
+              "name": "バター割り",
+              "ingredients": [
+                "Toki whisky",
+                "palo santo",
+                "butter",
+                "golden syrup"
+              ]
+            },
+            {
+              "name": "Villa",
+              "ingredients": [
+                "Buffalo Trace bourbon",
+                "soursop",
+                "dill"
+              ]
+            },
+            {
+              "name": "Pastel",
+              "ingredients": [
+                "vodka",
+                "rhubarb",
+                "recomposed lime",
+                "Capreolus raspberry"
+              ]
+            },
+            {
+              "name": "Osmanthus",
+              "ingredients": [
+                "Citadelle gin",
+                "sauvignon grape",
+                "osmanthus"
+              ]
+            },
+            {
+              "name": "Miguelito",
+              "ingredients": [
+                "Almave agave",
+                "Pathfinder herb & root",
+                "aloe vera",
+                "lime"
+              ]
+            },
+            {
+              "name": "Kazimir",
+              "ingredients": [
+                "vodka",
+                "peach yogurt",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Boulevardier",
+              "ingredients": [
+                "Buffalo Trace bourbon",
+                "Martini Rosso",
+                "Campari",
+                "honey butter",
+                "orange"
+              ]
+            },
+            {
+              "name": "Toreador",
+              "ingredients": [
+                "Ocho 8 tequila",
+                "Greensand apricot eau de vie",
+                "recomposed lime",
+                "agave"
+              ]
+            },
+            {
+              "name": "Assignment",
+              "ingredients": [
+                "green shiso",
+                "coffee",
+                "coconut"
+              ]
+            },
+            {
+              "name": "-=+",
+              "ingredients": [
+                "sauvignon grape",
+                "orange blossom",
+                "Côtes du Rhône",
+                "lemon"
+              ]
+            }
+          ],
+          "notes": "PDF 'Shapes Menu 02-12' created 2 Dec 2025. Adds the low-ABV '-=+' missing from the seed. Assignment's line reads 'aroma: green shiso, coffee, coconut / taste: martini'; the bar's menu page calls it 'shiso'. Archived copies of the bar page link this PDF on 16 Feb, 5 Mar, 13 Apr and 11 Jun 2026 and a different menu from 26 Jun 2026, so it last ran in June 2026 (website timing, month approximate).",
+          "verified": "page",
+          "source_urls": [
+            "https://drive.google.com/file/d/1zZUg3G9GvTT5pXzFxtYak0WdDIjaXaY1/view",
+            "https://web.archive.org/web/20260611195642/https://www.clubbauhaus.com/abarwithshapesforaname",
+            "https://web.archive.org/web/20260626142452/https://www.clubbauhaus.com/abarwithshapesforaname"
+          ]
+        },
+        {
+          "name": "June 2026 menu",
+          "existing": null,
+          "start": "2026-06",
+          "end": "2026-07",
+          "end_basis": "replaced",
+          "is_current": false,
+          "drinks": [],
+          "notes": "A different 'sample menu' PDF (Drive id 1Zj0UXIgIpRYXDW5Zclb3NVdJ33pTQulT) is linked on archived copies of the bar page from 26 Jun to 18 Jul 2026; the file has since been removed, so its drinks are unknown. Replaced by the 'Shapes Menu 09-07' list, on the page by 20 Aug 2026.",
+          "verified": "page",
+          "source_urls": [
+            "https://web.archive.org/web/20260626142452/https://www.clubbauhaus.com/abarwithshapesforaname",
+            "https://web.archive.org/web/20260718151326/https://www.clubbauhaus.com/abarwithshapesforaname"
+          ]
+        },
+        {
+          "name": "July 2026 menu",
+          "existing": null,
+          "start": "2026-07",
+          "end": "2026-08",
+          "end_basis": "replaced",
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Lychee Martini",
+              "ingredients": [
+                "Grey Goose vodka",
+                "lychee",
+                "Dolin dry vermouth"
+              ]
+            },
+            {
+              "name": "Atlas",
+              "ingredients": [
+                "Redbreast 12 whiskey",
+                "dulce de leche",
+                "Amarás Espadín mezcal",
+                "tonka"
+              ]
+            },
+            {
+              "name": "Habanero",
+              "ingredients": [
+                "yellow habanero",
+                "Campari"
+              ]
+            },
+            {
+              "name": "バター割り",
+              "ingredients": [
+                "Toki whisky",
+                "palo santo",
+                "butter",
+                "golden syrup"
+              ]
+            },
+            {
+              "name": "Pastel",
+              "ingredients": [
+                "vodka",
+                "rhubarb",
+                "recomposed lime",
+                "Capreolus raspberry",
+                "Schweppes soda"
+              ]
+            },
+            {
+              "name": "Katsura",
+              "ingredients": [
+                "Valdespino amontillado sherry",
+                "amazake",
+                "Veritas rum",
+                "Giffard triple sec"
+              ]
+            },
+            {
+              "name": "Miguelito",
+              "ingredients": [
+                "Almave agave",
+                "Pathfinder herb & root",
+                "aloe vera",
+                "lime"
+              ]
+            },
+            {
+              "name": "Kazimir",
+              "ingredients": [
+                "vodka",
+                "peach yogurt",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Boulevardier",
+              "ingredients": [
+                "Buffalo Trace bourbon",
+                "Martini Rosso",
+                "Campari",
+                "honey butter",
+                "orange"
+              ]
+            },
+            {
+              "name": "Toreador",
+              "ingredients": [
+                "Ocho 8 tequila",
+                "Greensand apricot eau de vie",
+                "recomposed lime",
+                "agave"
+              ]
+            }
+          ],
+          "notes": "PDF titled 'Shapes Menu 09-07 A4' (created 9 Jul 2026), linked as the sample menu on archived bar pages of 20 and 26 Aug 2026. Replaced by the Neue Menu (PDF dated 12 Sep 2026).",
+          "verified": "page",
+          "source_urls": [
+            "https://drive.google.com/file/d/19i_iP6dSYsrs0ZNaVWRXHITz_M_uuzhI/view",
+            "https://web.archive.org/web/20260820005319/https://www.clubbauhaus.com/abarwithshapesforaname",
+            "https://web.archive.org/web/20260826123621/https://www.clubbauhaus.com/abarwithshapesforaname"
+          ]
+        },
+        {
+          "name": "Neue Menu",
+          "existing": {
+            "name": "Neue Menu",
+            "start": "2026-09"
+          },
+          "start": "2026-09",
+          "end": null,
+          "end_basis": null,
+          "is_current": true,
+          "drinks": [
+            {
+              "name": "Core",
+              "ingredients": [
+                "El Gobernador pisco",
+                "ruby cacao",
+                "kalamata olive"
+              ]
+            },
+            {
+              "name": "Bogler",
+              "ingredients": [
+                "Buffalo Trace bourbon",
+                "shiso",
+                "sesame",
+                "lemon"
+              ]
+            },
+            {
+              "name": "Soffiten",
+              "ingredients": [
+                "Harbour Brewing lager",
+                "Picon Amer",
+                "red & green Szechuan",
+                "Ocho 8 tequila",
+                "lime leaf",
+                "verjus"
+              ]
+            },
+            {
+              "name": "Aalto",
+              "ingredients": [
+                "bilberry",
+                "chamomile",
+                "Noughty non-alcoholic sparkling chardonnay"
+              ]
+            },
+            {
+              "name": "Warp/Weft",
+              "ingredients": [
+                "Toki whisky",
+                "banana",
+                "flaxseed"
+              ]
+            },
+            {
+              "name": "バター割り",
+              "ingredients": [
+                "Toki whisky",
+                "palo santo",
+                "butter",
+                "golden syrup"
+              ]
+            },
+            {
+              "name": "Pastel",
+              "ingredients": [
+                "vodka",
+                "rhubarb",
+                "recomposed lime",
+                "Capreolus raspberry",
+                "Schweppes soda"
+              ]
+            },
+            {
+              "name": "Albers",
+              "ingredients": [
+                "Martell VS",
+                "pink peppercorn",
+                "Veritas rum",
+                "passionberry"
+              ]
+            },
+            {
+              "name": "Miguelito",
+              "ingredients": [
+                "Almave agave",
+                "Pathfinder herb & root",
+                "aloe vera",
+                "lime"
+              ]
+            },
+            {
+              "name": "Kazimir",
+              "ingredients": [
+                "vodka",
+                "peach yogurt",
+                "absinthe"
+              ]
+            },
+            {
+              "name": "Atlas",
+              "ingredients": [
+                "Redbreast 12 whiskey",
+                "dulce de leche",
+                "Amarás Espadín mezcal",
+                "tonka"
+              ]
+            },
+            {
+              "name": "Toreador",
+              "ingredients": [
+                "Ocho 8 tequila",
+                "Greensand apricot eau de vie",
+                "recomposed lime",
+                "agave"
+              ]
+            }
+          ],
+          "notes": "PDF 'shaopes neue menu 12-09' created 12 Sep 2026, the current 'sample menu' link on the bar page. Pastel lists Capreolus raspberry or Schweppes soda (alcohol-free option).",
+          "verified": "page",
+          "source_urls": [
+            "https://drive.google.com/file/d/15PbzJcI98ZZlYlty_xZE6F9jPVP2nTM9/view",
+            "https://www.clubbauhaus.com/abarwithshapesforaname"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Old Fashioned",
+          "ingredients": [
+            "Knob Creek Rye whiskey",
+            "Green Spot Irish whiskey",
+            "grape sugar",
+            "quince eau de vie"
+          ],
+          "seen": "2021-02",
+          "source_url": "https://www.thespiritsbusiness.com/2021/02/hottest-bar-openings-in-january-2021",
+          "note": "home-delivered bottled cocktail during lockdown"
+        },
+        {
+          "drink": "Gimlet",
+          "ingredients": [
+            "The Botanist gin",
+            "berry distillate",
+            "passionfruit and celery cordial"
+          ],
+          "seen": "2021-01",
+          "source_url": "https://www.designmynight.com/london/bars/east-london/a-bar-with-shapes-for-a-name/new-bar-spy",
+          "note": "pre-opening preview of the menu"
+        },
+        {
+          "drink": "Espresso Martini",
+          "ingredients": [
+            "vodka",
+            "cognac",
+            "Colombian and Ethiopian coffee",
+            "sugar",
+            "salt"
+          ],
+          "seen": "2021-01",
+          "source_url": "https://www.designmynight.com/london/bars/east-london/a-bar-with-shapes-for-a-name/new-bar-spy",
+          "note": "pre-opening preview; the bar's menu page (Oct 2026) still lists an Espresso Martini of vodka, cognac, coffee among its classics"
+        },
+        {
+          "drink": "Kazimir",
+          "ingredients": [
+            "vodka",
+            "peach yogurt",
+            "absinthe blanche"
+          ],
+          "seen": "2022-01",
+          "source_url": "https://punchdrink.com/articles/making-kazimir-cocktail-bar-shapes-for-name-london/",
+          "note": "poured over a clear ice cube with a glass prism frozen inside"
+        },
+        {
+          "drink": "Last Word",
+          "ingredients": [
+            "gin",
+            "Chartreuse",
+            "Campari",
+            "cherry",
+            "whiskey",
+            "maple"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "classic cocktails section of the bar's menu page"
+        },
+        {
+          "drink": "Manhattan",
+          "ingredients": [
+            "bourbon",
+            "olive oil",
+            "sweet vermouth",
+            "turmeric"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "classic cocktails section of the bar's menu page"
+        },
+        {
+          "drink": "Piña Colada",
+          "ingredients": [
+            "rum",
+            "Earl Grey",
+            "recomposed pineapple",
+            "coconut",
+            "sherry"
+          ],
+          "seen": "2026-10",
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "classic cocktails section of the bar's menu page"
+        },
+        {
+          "drink": "Lido",
+          "ingredients": [
+            "cognac",
+            "recomposed champagne",
+            "Chartreuse"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        },
+        {
+          "drink": "Birne",
+          "ingredients": [
+            "whiskey",
+            "pear",
+            "olive",
+            "sage"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        },
+        {
+          "drink": "Sotolon",
+          "ingredients": [
+            "gin",
+            "Bramley apple",
+            "fenugreek",
+            "gentian"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date; 50 Best's undated profile adds agave"
+        },
+        {
+          "drink": "Odessa",
+          "ingredients": [
+            "cognac",
+            "pineapple",
+            "liquorice",
+            "coffee"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        },
+        {
+          "drink": "Duotone",
+          "ingredients": [
+            "mezcal",
+            "mimosa flower",
+            "galangal"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        },
+        {
+          "drink": "Peat & Jasmine",
+          "ingredients": [
+            "whiskey",
+            "jasmine tea"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        },
+        {
+          "drink": "Loop Light",
+          "ingredients": [
+            "gin",
+            "oolong tea",
+            "citra hops"
+          ],
+          "seen": null,
+          "source_url": "https://www.clubbauhaus.com/menu",
+          "note": "listed as an archived house cocktail, no date"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "found",
+        "history": "partial",
+        "searches": 7,
+        "notes": "Glass shapes come from the photo beside each drink on the bar's own menu page and match the glass icons on the PDF menus; no source names a maker, so whether these are Nude's Savage range (Rémy Savage's 2020 design for Nude: Coupe, Coupetini, Pony, Water, Low, Highball) is unverified. The small stemmed Habanero glass resembles the Savage Pony, but that is a guess. Two new editions come from archived copies of the bar page: a June 2026 menu (file gone, drinks unknown) and the July 2026 list. No dated menus found between the 2021 opening and Dec 2025; the seven archived house cocktails are undated. The site's 'shiso' entry repeats Chroma's ingredients, so the PDF's Assignment line is used."
+      }
+    },
+    {
+      "handle": "bar.bellamy",
+      "name": "Bar Bellamy",
+      "glassware": [
+        {
+          "maker": null,
+          "designer": null,
+          "series": null,
+          "shapes": [
+            {
+              "name": "Nick & Nora",
+              "sketch_shape": "nick",
+              "shape_note": "small rounded bowl on a tall thin frosted stem, round foot"
+            }
+          ],
+          "verified": "page",
+          "source_urls": [
+            "https://www.boothby.com.au/bar-bellamy/"
+          ]
+        }
+      ],
+      "drink_glasses": [
+        {
+          "drink": "Lupini Tini",
+          "glass": "Nick & Nora",
+          "sketch_shape": "nick",
+          "shape_note": "small rounded bowl on a tall thin frosted stem; lupini bean on a pick",
+          "maker": null,
+          "series": null,
+          "verified": "page",
+          "source_url": "https://www.boothby.com.au/bar-bellamy/"
+        }
+      ],
+      "editions": [
+        {
+          "name": "Opening menu",
+          "existing": {
+            "name": "Opening menu",
+            "start": "2023-05"
+          },
+          "start": "2023-05",
+          "end": null,
+          "end_basis": null,
+          "is_current": false,
+          "drinks": [
+            {
+              "name": "Lupini Tini",
+              "ingredients": [
+                "olive oil-washed gin",
+                "sake",
+                "vermouth",
+                "brined lupini beans"
+              ]
+            },
+            {
+              "name": "Fig Amer Bière",
+              "ingredients": [
+                "Philter Red Ale",
+                "fig-infused Picon Amer",
+                "fig aperitif"
+              ]
+            }
+          ],
+          "notes": "Boothby (4 May 2023) reports the bar has opened and names the Lupini Tini as the Martini it launched with; Australian Bartender (17 May 2023, spelled 'Lupini-tini') gives its build and says the Fig Amer Bière was the opening-night hit, served as a butcher of Philter Red Ale with a nip of fig-infused Picon Amer. The bar may have opened in the last days of April 2023 (its site was built 25 Apr 2023); May kept. The bar says its list rotates constantly (50 Best: a few times a week), so no further named editions were found.",
+          "verified": "page",
+          "source_urls": [
+            "https://www.boothby.com.au/bar-bellamy/",
+            "https://australianbartender.com.au/2023/05/17/bar-bellamy-first-time-bar-owners-bring-their-hospo-flair-to-carlton/"
+          ]
+        }
+      ],
+      "sightings": [
+        {
+          "drink": "Blue Heaven",
+          "ingredients": [
+            "raspberry and vanilla distillate",
+            "Marionette blue curaçao",
+            "lemon",
+            "Calpis",
+            "shaved ice"
+          ],
+          "seen": "2024-11",
+          "source_url": "https://www.boothby.com.au/2024-50-best-drinks-in-australia/",
+          "note": "No. 2 on Boothby's 2024 list (19 Nov 2024); ingredients from Time Out's review of 9 Dec 2024"
+        },
+        {
+          "drink": "Chet Baker",
+          "ingredients": [
+            "beeswax-washed rum",
+            "banana molasses",
+            "pandan-infused Punt e Mes",
+            "bitters"
+          ],
+          "seen": "2024-11",
+          "source_url": "https://www.boothby.com.au/2024-50-best-drinks-in-australia/",
+          "note": "by Alex Gondzioulis, No. 7 on Boothby's 2024 list"
+        },
+        {
+          "drink": "Martini",
+          "ingredients": [
+            "Never Never Triple Juniper gin",
+            "olive herb wine",
+            "manzanilla sherry",
+            "preserved lemon butter",
+            "cacao blanc"
+          ],
+          "seen": "2024-12",
+          "source_url": "https://www.timeout.com/melbourne/bars/bar-bellamy",
+          "note": "house Martini riff in Time Out's review; the last two make up its 'olive' garnish"
+        },
+        {
+          "drink": "Yellow King",
+          "ingredients": [
+            "Estancia raicilla",
+            "mandarin",
+            "ginger wine",
+            "Strega",
+            "meringue"
+          ],
+          "seen": "2024-12",
+          "source_url": "https://www.timeout.com/melbourne/bars/bar-bellamy",
+          "note": null
+        },
+        {
+          "drink": "Just Right",
+          "ingredients": [
+            "raicilla",
+            "Dewar's 12 Scotch whisky",
+            "Pasubio",
+            "blueberry",
+            "cereal milk"
+          ],
+          "seen": "2024-12",
+          "source_url": "https://www.timeout.com/melbourne/bars/bar-bellamy",
+          "note": null
+        },
+        {
+          "drink": "Amber Stitch",
+          "ingredients": [
+            "wattleseed",
+            "corn silk tea",
+            "beetroot bitters"
+          ],
+          "seen": "2025-03",
+          "source_url": "https://www.broadsheet.com.au/melbourne/event/bar-bellamy-christian-kimber-melbourne-fashion-festival",
+          "note": "limited-edition Old Fashioned twist with Woodford Reserve, at the bar 3-8 Mar 2025"
+        },
+        {
+          "drink": "Silken Sprig",
+          "ingredients": [
+            "pineapple syrup",
+            "Zucca Rabarbaro",
+            "caramelised milk chocolate"
+          ],
+          "seen": "2025-03",
+          "source_url": "https://www.broadsheet.com.au/melbourne/event/bar-bellamy-christian-kimber-melbourne-fashion-festival",
+          "note": "limited-edition Old Fashioned twist with Woodford Reserve, at the bar 3-8 Mar 2025"
+        }
+      ],
+      "coverage": {
+        "glassware": "partial",
+        "current_menu": "none_found",
+        "history": "partial",
+        "searches": 2,
+        "notes": "The bar's site shows no cocktail list (it points to Instagram, which is login-walled), and 50 Best says the list changes a few times a week, so dated drinks are sightings rather than editions. Glassware maker not found; only the Lupini Tini photo shows a glass. Guest-shift drinks (Kingpin, Garden State, Nov 2024 takeover with Rosella's and Double Deuce Lounge) were left out because they were served at an event, not on the bar's list."
+      }
+    }
+  ]
+}

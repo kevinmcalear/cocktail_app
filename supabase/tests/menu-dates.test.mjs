@@ -125,7 +125,8 @@ describe('when a menu was on', () => {
     );
     assert.deepEqual(rows, [
       { name: 'Opening menu', end_year: 2023, end_month: 2, is_current: false },
-      { name: 'June 2024 menu', end_year: 2025, end_month: 7, is_current: false },
+      // Until the Best of 2024 list (20261007190000_bar_history).
+      { name: 'June 2024 menu', end_year: 2024, end_month: 12, is_current: false },
       { name: 'September 2026 menu', end_year: null, end_month: null, is_current: true },
     ]);
   });
