@@ -34,7 +34,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Prep', 'Study', 'Menus', 'Off menu', 'Back bar', 'My team']);
+  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Discover', 'Menus', 'Off menu', 'Back bar', 'My team']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -68,12 +68,14 @@ test('a guest does not see My team', async () => {
 
 test('home mode lists the home tabs and navigates to their routes', async () => {
   mockMode = 'home';
-  mockPathname = '/';
+  mockPathname = '/discover';
   await renderWithTamagui(<WebSideNav />);
 
   expect(links()).toEqual(['Search', 'Discover', 'My Bar', 'Collection', 'You']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
+  await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
   await fireEvent.press(screen.getByRole('link', { name: 'My Bar' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
   await fireEvent.press(screen.getByRole('link', { name: 'Search' }));

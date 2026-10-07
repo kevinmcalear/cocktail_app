@@ -1,9 +1,10 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { BackbarTheme, useDs } from '@/components/ds';
 import { BatchScreen } from '@/components/screens/batch/BatchScreen';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FEATURES } from '@/constants/features';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
@@ -13,9 +14,13 @@ import { classifyMethod } from '@/lib/batch';
 import { drinkStrength } from '@/lib/drinkMath';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 
-/** Batch a drink for prep; opened from the drink page. */
+/** Batch a drink for prep; opened from the drink page. With Prep switched off it opens the drink. */
 export default function BatchRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  return FEATURES.prep ? <Batch id={id} /> : <Redirect href={`/cocktail/${id}`} />;
+}
+
+function Batch({ id }: { id: string }) {
   const router = useRouter();
   const { data: cocktail, error, refetch } = useCocktail(id);
   const { data: dropdowns } = useDropdowns();

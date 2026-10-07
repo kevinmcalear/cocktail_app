@@ -205,6 +205,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/from-photo" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/costing" options={{ headerShown: false }} />

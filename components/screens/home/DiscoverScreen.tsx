@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -74,16 +74,17 @@ export function DiscoverScreen() {
     setPreferNear(true);
     void locate().then(place);
   };
+  // Ask once Discover is on screen, not when it mounts: native tabs mount every tab up front, so in
+  // venue mode it sits behind Tonight (and their per-tab focus isn't reliable for this).
+  const onScreen = usePathname() === '/discover';
+  const asked = useRef(false);
   useEffect(() => {
-    let live = true;
+    if (!onScreen || asked.current) return;
+    asked.current = true;
     void locate().then((found) => {
-      if (!live || touched.current) return;
-      place(found);
+      if (!touched.current) place(found);
     });
-    return () => {
-      live = false;
-    };
-  }, [locate, place]);
+  }, [onScreen, locate, place]);
   const searching = search.trim().length > 0;
   // Search stands alone: a style picked while browsing doesn't narrow it.
   const results = useDiscoverResults({ kind: searching ? null : kind, search, area });
