@@ -46,14 +46,26 @@ export function useDropdowns() {
                 return res.data || [];
             };
 
-            // Over 5,000 rows, mostly ingredients: one request stops at 1,000 by
-            // name, so a new method named "Freezer pour" never showed up.
-            const [items, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
+            // A request stops at 1,000 rows. Specs used to share one with 5,000+
+            // ingredients sorted by name, so a new method like "Freezer pour" never
+            // showed up, and the ingredient picker missed most ingredients.
+            const [specs, ingredients, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
                 allRows((from, to) =>
                     supabase
                         .from('app_item_presentation')
                         .select('*, item_images(images(url))')
-                        .in('item_type', ['method', 'glassware', 'family', 'ice', 'ingredient'])
+                        .in('item_type', ['method', 'glassware', 'family', 'ice'])
+                        .order('name')
+                        .order('id')
+                        .range(from, to)
+                ),
+                // Only what the pickers read: every column for ~5,400 rows is ~4 MB, too big to
+                // persist. ponytail: all of them on the device (~1 MB); search server-side past ~20,000.
+                allRows((from, to) =>
+                    supabase
+                        .from('app_item_presentation')
+                        .select('id, name, item_type, generic_id, bar_id, item_images(images(url))')
+                        .eq('item_type', 'ingredient')
                         .order('name')
                         .order('id')
                         .range(from, to)
@@ -65,11 +77,11 @@ export function useDropdowns() {
             ]);
 
             return {
-                methods: items.filter(item => item.item_type === 'method'),
-                glassware: items.filter(item => item.item_type === 'glassware'),
-                families: items.filter(item => item.item_type === 'family'),
-                iceTypes: items.filter(item => item.item_type === 'ice'),
-                ingredients: items.filter(item => item.item_type === 'ingredient'),
+                methods: specs.filter(item => item.item_type === 'method'),
+                glassware: specs.filter(item => item.item_type === 'glassware'),
+                families: specs.filter(item => item.item_type === 'family'),
+                iceTypes: specs.filter(item => item.item_type === 'ice'),
+                ingredients,
                 menus: menusData,
                 menuTemplates: templatesRes.data || [],
                 templateSections: sectionsRes.data || [],
