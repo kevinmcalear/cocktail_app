@@ -41,7 +41,7 @@ interface DiscoverMapPaneProps {
 const PREVIEW_DRINKS = 3;
 
 /** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
-const SHEET_PEEK = layout.minTapTarget + space.xl;
+const SHEET_PEEK = layout.minTapTarget + space.sm;
 
 /** The bar a pin stands for, the drinks there on the drinks layer, and a way in. */
 function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; onClose: () => void }) {
@@ -141,8 +141,8 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
   const list = rows.isLoading ? (
     <ListNote>Loading…</ListNote>
   ) : byDrinks ? (
-    // A selected pin already lists its drinks in the card.
-    selected ? null : barDrinks.length ? (
+    // Wide screens list a selected bar's drinks in its card; phones keep the card small and list them here.
+    selected && mode === 'side' ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} />
     ) : (
       <ListNote>{`No drinks ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
@@ -198,30 +198,34 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
       {selected ? (
         // Floats over the map just above the peek, so the map and the card share the screen.
         <View pointerEvents="box-none" style={[styles.overlay, { bottom: bottomInset + SHEET_PEEK + space.sm }]}>
-          <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} />
+          <SelectedBar key={selected.id} pin={selected} drinks={[]} onClose={() => setSelectedId(null)} />
         </View>
       ) : null}
-      <BottomSheet
-        snapPoints={[SHEET_PEEK, '50%', '88%']}
-        bottomInset={bottomInset}
-        detached
-        style={styles.floating}
-        backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
-        handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
-        accessibilityLabel="Results"
-      >
-        <BottomSheetScrollView contentContainerStyle={styles.sheet}>
-          <Caption tone="muted" numberOfLines={1}>
-            {rows.isLoading ? 'Loading…' : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
-          </Caption>
-          <Title role="heading" numberOfLines={1}>
-            {title}
-          </Title>
-          {layers}
-          {list}
-          <MapCredit />
-        </BottomSheetScrollView>
-      </BottomSheet>
+      {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
+      <View pointerEvents="box-none" style={[styles.sheetBox, { bottom: bottomInset }]}>
+        <BottomSheet
+          snapPoints={[SHEET_PEEK, '50%', '88%']}
+          backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
+          handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
+          accessibilityLabel="Results"
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.sheet}>
+            <Caption tone="muted" numberOfLines={1}>
+              {rows.isLoading
+                ? 'Loading…'
+                : selected && byDrinks
+                  ? `${drinkCount(barDrinks.length)} at ${selected.name} · swipe up for them`
+                  : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
+            </Caption>
+            <Title role="heading" numberOfLines={1}>
+              {title}
+            </Title>
+            {layers}
+            {list}
+            <MapCredit />
+          </BottomSheetScrollView>
+        </BottomSheet>
+      </View>
     </View>
   );
 }
@@ -242,5 +246,5 @@ const styles = StyleSheet.create({
   score: { alignItems: 'flex-end' },
   sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: space.md },
   // Floats above the tab bar, clear of the screen edges, like the tab bar itself.
-  floating: { marginHorizontal: space.sm },
+  sheetBox: { position: 'absolute', top: 0, left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
 });
