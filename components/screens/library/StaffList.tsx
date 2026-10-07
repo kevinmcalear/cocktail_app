@@ -1,33 +1,36 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Body, Button, Caption, Field, Headline, PressableScale, useDs } from '@/components/ds';
-import { DrinkRow } from '@/components/screens/DrinkRow';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space } from '@/constants/tokens';
+import { Body, Button, Caption, Field, useBreakpoint, useDs } from '@/components/ds';
+import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
 import { plainDbMessage } from '@/lib/dbError';
 import { itemHref } from '@/lib/itemRoutes';
-import { candidatesFor, cutOf, moved, ranked, STAFF_LIST_MAX, staffOrder, unranked, type Cut } from '@/lib/staffList';
+import { menuState } from '@/lib/libraryFilters';
+import { candidatesFor, CUTS, moved, ranked, STAFF_LIST_MAX, staffOrder, unranked } from '@/lib/staffList';
+
+import { StaffRow } from './StaffRow';
 
 const NO_PICKS: StaffPick[] = [];
-
-const CUT_HINT: Record<Cut, string> = {
-  10: 'Suggest these first',
-  20: 'The next ten',
-  50: 'The rest of the list',
-};
+const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
 /**
- * The staff list in Library: the drinks to know and suggest, ranked, with
- * cut lines at 10, 20 and 50. Everyone at the venue reads it; Drink Creators
- * and up add, order and remove (bar_off_menu, via set_staff_list_order).
+ * The staff list in Library: the drinks every new hire should know, ranked to
+ * 50, with cut lines after 10 and 20. Everyone at the venue reads it; Drink
+ * Creators and up drag to reorder, add and remove (bar_off_menu, through
+ * set_staff_list_order). On native it must sit in a NestableScrollContainer.
  */
-export function StaffList({ barId, canEdit, opensAt }: { barId: string; canEdit: boolean; opensAt: string }) {
+export function StaffList({ barId, canEdit, onNow, past }: { barId: string; canEdit: boolean; onNow: ReadonlySet<string>; past: ReadonlySet<string> }) {
+  const router = useRouter();
+  const breakpoint = useBreakpoint();
+  const arrows = Platform.OS === 'web' && breakpoint !== 'phone';
   const picks = useStaffList(barId);
-  const [editing, setEditing] = useState(false);
-  const riffs = useBarRiffs(editing ? barId : null);
+  const [adding, setAdding] = useState(false);
+  const riffs = useBarRiffs(adding ? barId : null);
   const catalog = useDrinkLists();
   const edit = useStaffListEdit(barId);
   const [query, setQuery] = useState('');
@@ -37,129 +40,120 @@ export function StaffList({ barId, canEdit, opensAt }: { barId: string; canEdit:
   const ids = order.ranked.map((p) => p.itemId);
   const taken = useMemo(() => new Set(rows.map((p) => p.itemId)), [rows]);
   const results = useMemo(
-    () => (editing ? candidatesFor(riffs.data ?? [], catalog.data ?? [], query, taken) : []),
-    [editing, riffs.data, catalog.data, query, taken],
+    () => (adding ? candidatesFor(riffs.data ?? [], catalog.data ?? [], query, taken) : []),
+    [adding, riffs.data, catalog.data, query, taken],
   );
   const full = ids.length >= STAFF_LIST_MAX;
   const reorder = (itemIds: string[] | null) => itemIds && edit.mutate({ op: 'order', itemIds });
+  const remove = (pick: StaffPick) => {
+    // Close the gap first, so the places stay 1, 2, 3.
+    if (pick.rank != null) reorder(unranked(ids, pick.itemId));
+    edit.mutate({ op: 'remove', itemId: pick.itemId });
+  };
+  const row = (pick: StaffPick, place: number | null) => ({
+    pick,
+    place,
+    status: menuState(pick.itemId, onNow, past),
+    canEdit,
+    onOpen: () => router.push(itemHref('Cocktail', pick.itemId) as never),
+    onRemove: () => remove(pick),
+  });
 
   if (picks.isLoading) return <Caption tone="muted">Loading the staff list…</Caption>;
   if (picks.error) return <Body tone="muted">Couldn’t load the staff list. Check your connection and try again.</Body>;
 
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<StaffPick>) => {
+    const i = getIndex() ?? 0;
+    const cut = CUTS.find((c) => c === i + 1);
+    return (
+      <View>
+        <StaffRow
+          {...row(item, i + 1)}
+          active={isActive}
+          drag={drag}
+          arrows={arrows}
+          onMove={(by) => reorder(moved(ids, item.itemId, by))}
+          first={i === 0}
+          last={i === ids.length - 1}
+          onUnrank={() => reorder(unranked(ids, item.itemId))}
+        />
+        {cut && !isActive ? <CutLine label={`Top ${cut}`} /> : null}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.list}>
-      <Caption tone="muted">The drinks to know and suggest, in order. Start with the top 10.</Caption>
-      {canEdit ? (
-        <Button label={editing ? 'Done' : 'Edit the list'} icon={editing ? 'checkmark' : 'list.number'} variant="secondary" onPress={() => setEditing(!editing)} style={styles.start} />
-      ) : (
-        <Caption tone="muted">{`Ordering this list opens at ${opensAt}.`}</Caption>
-      )}
-      {editing ? (
-        <View style={styles.add}>
-          <Field label="Add a classic or your take on one" value={query} onChangeText={setQuery} placeholder="Martini, Negroni" autoCapitalize="none" autoCorrect={false} />
-          {results.map((c) => (
-            <View key={c.id} style={styles.addRow}>
-              <View style={styles.text}>
-                <Body>{c.name}</Body>
-                {c.classicName && c.classicName !== c.name ? <Caption tone="muted">{c.classicName}</Caption> : null}
-              </View>
-              <Button label="Add" variant="secondary" onPress={() => edit.mutate({ op: 'add', itemId: c.id }, { onSuccess: () => setQuery('') })} />
-            </View>
-          ))}
-          {query.trim() && !results.length ? <Caption tone="muted">Nothing matches that yet. Link a drink to a classic first, or search the classic’s name.</Caption> : null}
-        </View>
-      ) : null}
+      <Body tone="muted">The drinks every new hire should know, in order. Drink Creators and Admins can drag to reorder.</Body>
       {edit.error ? <Caption>{plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}</Caption> : null}
       {!rows.length ? <Body tone="muted">Nothing on the staff list yet.</Body> : null}
-
-      {order.ranked.map((pick, i) => {
-        const cut = cutOf(pick.rank);
-        const opens = cut !== cutOf(order.ranked[i - 1]?.rank ?? null);
-        return (
-          <View key={pick.itemId}>
-            {opens && cut ? <CutLine title={`Top ${cut}`} hint={CUT_HINT[cut]} /> : null}
-            <Row pick={pick} editing={editing}>
-              <IconButton icon="chevron.up" label={`Move ${pick.name} up`} disabled={i === 0} onPress={() => reorder(moved(ids, pick.itemId, -1))} />
-              <IconButton icon="chevron.down" label={`Move ${pick.name} down`} disabled={i === ids.length - 1} onPress={() => reorder(moved(ids, pick.itemId, 1))} />
-              <IconButton icon="minus" label={`Take ${pick.name} out of the ranking`} onPress={() => reorder(unranked(ids, pick.itemId))} />
-            </Row>
-          </View>
-        );
-      })}
-      {order.unranked.length ? <CutLine title="Also on the list" hint="Not ranked" /> : null}
-      {order.unranked.map((pick) => (
-        <Row key={pick.itemId} pick={pick} editing={editing}>
-          <IconButton icon="plus" label={`Rank ${pick.name} at the end`} disabled={full} onPress={() => reorder(ranked(ids, pick.itemId))} />
-          <IconButton icon="trash" label={`Remove ${pick.name} from the staff list`} onPress={() => edit.mutate({ op: 'remove', itemId: pick.itemId })} />
-        </Row>
-      ))}
-      {editing && full ? <Caption tone="muted">{`The ranking is full at ${STAFF_LIST_MAX}. Take one out to rank another.`}</Caption> : null}
+      {order.ranked.length ? (
+        <List
+          data={order.ranked}
+          keyExtractor={(p) => p.itemId}
+          renderItem={renderItem}
+          onDragEnd={({ data }) => reorder(data.map((p) => p.itemId))}
+          scrollEnabled={false}
+          // It doesn't scroll itself, so nothing may be held back: render all 50.
+          initialNumToRender={STAFF_LIST_MAX}
+          activationDistance={10}
+        />
+      ) : null}
+      {order.unranked.length ? (
+        <>
+          <CutLine label="Not ranked" quiet />
+          {order.unranked.map((pick) => (
+            <StaffRow key={pick.itemId} {...row(pick, null)} onRank={full ? undefined : () => reorder(ranked(ids, pick.itemId))} />
+          ))}
+        </>
+      ) : null}
+      {canEdit ? (
+        <View style={styles.add}>
+          <Caption tone="muted">{`Up to ${STAFF_LIST_MAX} drinks. ${ids.length} ranked.`}</Caption>
+          {adding ? (
+            <>
+              <Field label="Add a classic or your take on one" value={query} onChangeText={setQuery} placeholder="Martini, Negroni" autoCapitalize="none" autoCorrect={false} />
+              {results.map((c) => (
+                <View key={c.id} style={styles.result}>
+                  <View style={styles.flex}>
+                    <Body>{c.name}</Body>
+                    {c.classicName && c.classicName !== c.name ? <Caption tone="muted">{c.classicName}</Caption> : null}
+                  </View>
+                  <Button label="Add" variant="secondary" onPress={() => edit.mutate({ op: 'add', itemId: c.id }, { onSuccess: () => setQuery('') })} />
+                </View>
+              ))}
+              {query.trim() && !results.length ? <Caption tone="muted">Nothing matches that yet. Link a drink to a classic first, or search the classic’s name.</Caption> : null}
+            </>
+          ) : (
+            <Button label="Add a drink" icon="plus" variant="secondary" onPress={() => setAdding(true)} style={styles.start} />
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
 
-function CutLine({ title, hint }: { title: string; hint: string }) {
+/** "TOP 10" with a rule after it, in the accent: where the ranking is cut. */
+function CutLine({ label, quiet }: { label: string; quiet?: boolean }) {
   const ds = useDs();
+  const color = quiet ? ds.c.muted : ds.accentText;
   return (
-    <View style={[styles.cut, { borderTopColor: ds.c.lineStrong }]}>
-      <Headline role="heading">{title}</Headline>
-      <Caption tone="muted">{hint}</Caption>
-    </View>
-  );
-}
-
-/** One drink: a row that opens it, or, while editing, its name and the controls. */
-function Row({ pick, editing, children }: { pick: StaffPick; editing: boolean; children: ReactNode }) {
-  const ds = useDs();
-  const caption = pick.classicName && pick.classicName !== pick.name ? pick.classicName : undefined;
-  return (
-    <View style={styles.row}>
-      <Caption tone="muted" style={styles.rank}>
-        {pick.rank ?? '·'}
+    <View style={styles.cut} role="heading" aria-label={label}>
+      <Caption color={color} style={styles.cutText}>
+        {label.toUpperCase()}
       </Caption>
-      {editing ? (
-        <View style={[styles.editRow, { borderBottomColor: ds.c.line }]}>
-          <View style={styles.text}>
-            <Body numberOfLines={1}>{pick.name}</Body>
-            {caption ? <Caption tone="muted">{caption}</Caption> : null}
-          </View>
-          {children}
-        </View>
-      ) : (
-        <View style={styles.text}>
-          <DrinkRow
-            name={pick.name}
-            caption={caption}
-            href={itemHref('Cocktail', pick.itemId)}
-            imageUrl={pick.imageUrl}
-            itemId={pick.itemId}
-            glass="Coupe"
-            label={pick.rank ? `${pick.rank}. ${pick.name}` : pick.name}
-          />
-        </View>
-      )}
+      <View style={[styles.rule, { backgroundColor: color, opacity: 0.4 }]} />
     </View>
-  );
-}
-
-function IconButton({ icon, label, disabled, onPress }: { icon: 'chevron.up' | 'chevron.down' | 'minus' | 'plus' | 'trash'; label: string; disabled?: boolean; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale accessibilityLabel={label} aria-disabled={disabled} disabled={disabled} onPress={onPress} style={[styles.icon, { opacity: disabled ? 0.3 : 1 }]}>
-      <IconSymbol name={icon} size={20} color={ds.c.ink} />
-    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { gap: space.sm },
+  list: { gap: space.xs },
+  cut: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginVertical: space.sm },
+  cutText: { fontFamily: fontFamilies.bodySemiBold, letterSpacing: 0.6 },
+  rule: { flex: 1, height: StyleSheet.hairlineWidth },
+  add: { gap: space.sm, paddingTop: space.md },
+  result: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  flex: { flex: 1, gap: space.xs },
   start: { alignSelf: 'flex-start' },
-  add: { gap: space.sm },
-  addRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  text: { flex: 1, gap: space.xs },
-  cut: { gap: space.xs, paddingTop: space.md, marginTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  rank: { width: 24, textAlign: 'right' },
-  editRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });

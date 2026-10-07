@@ -1,12 +1,10 @@
 /**
- * The staff list: the venue's drinks to know and suggest, ranked. Cut lines at
- * 10, 20 and 50 (bar_off_menu.sort_rank runs 1 to 50); a drink with no rank is
- * on the list but not in the ranking.
+ * The staff list: the venue's drinks to know and suggest, ranked 1 to 50
+ * (bar_off_menu.sort_rank), with cut lines after 10 and 20. A drink with no
+ * rank is on the list but not in the ranking.
  */
-export const CUTS = [10, 20, 50] as const;
+export const CUTS = [10, 20] as const;
 export const STAFF_LIST_MAX = 50;
-
-export type Cut = (typeof CUTS)[number];
 
 export interface NamedPick {
   rank: number | null;
@@ -17,12 +15,6 @@ export interface StaffListCandidate {
   id: string;
   name: string;
   classicName: string | null;
-}
-
-/** The smallest cut a rank sits inside: 3 is Top 10, 14 is Top 20, 31 is Top 50. Null when unranked. */
-export function cutOf(rank: number | null): Cut | null {
-  if (rank == null) return null;
-  return CUTS.find((cut) => rank <= cut) ?? null;
 }
 
 /** Ranked drinks in rank order, then the unranked ones A to Z. */

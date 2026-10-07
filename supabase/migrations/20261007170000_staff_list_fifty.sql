@@ -1,11 +1,23 @@
 -- DRAFT. Local stack only until Kevin's OK.
 --
 -- The off-menu list becomes the staff list in Library: ranked to 50 (cut lines
--- at 10, 20 and 50), and reordered in one go. The table keeps its name.
+-- after 10 and 20), and reordered in one go. The table keeps its name.
 
 ALTER TABLE "public"."bar_off_menu"
     DROP CONSTRAINT "bar_off_menu_rank_range",
     ADD CONSTRAINT "bar_off_menu_rank_range" CHECK ("sort_rank" IS NULL OR "sort_rank" BETWEEN 1 AND 50);
+
+-- Ranks are places now: 1, 2, 3 with no gaps. The old top 10 / top 40 bands
+-- could leave gaps (1, 2, 11), so close them up, keeping the order. Cleared
+-- first so the unique rank index never sees two drinks on one rank.
+CREATE TEMP TABLE "staff_list_places" ON COMMIT DROP AS
+    SELECT "bar_id", "item_id", row_number() OVER (PARTITION BY "bar_id" ORDER BY "sort_rank") AS "place"
+    FROM "public"."bar_off_menu"
+    WHERE "sort_rank" IS NOT NULL;
+UPDATE "public"."bar_off_menu" SET "sort_rank" = NULL WHERE "sort_rank" IS NOT NULL;
+UPDATE "public"."bar_off_menu" o SET "sort_rank" = p."place"
+    FROM "staff_list_places" p
+    WHERE o."bar_id" = p."bar_id" AND o."item_id" = p."item_id";
 
 -- The ranked part of the list, in order: ranks 1..n, everything else unranked.
 -- Security invoker, so the table's write policy decides who may. Clearing first

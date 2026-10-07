@@ -1,5 +1,5 @@
 // The staff list in Library (bar_off_menu, migration
-// 20261007100000_staff_list_fifty): ranked to 50, reordered in one call, and
+// 20261007170000_staff_list_fifty): ranked to 50, reordered in one call, and
 // only by people who can build menus. Runs against the local stack only:
 // `npm run test:security`.
 import assert from 'node:assert/strict';

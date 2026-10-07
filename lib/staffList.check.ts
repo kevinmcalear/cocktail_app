@@ -1,14 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { appendRank, candidatesFor, cutOf, moved, patronGroups, ranked, staffOrder, unranked } from './staffList';
+import { appendRank, candidatesFor, moved, patronGroups, ranked, staffOrder, unranked } from './staffList';
 
-assert.equal(cutOf(1), 10);
-assert.equal(cutOf(10), 10);
-assert.equal(cutOf(11), 20);
-assert.equal(cutOf(20), 20);
-assert.equal(cutOf(21), 50);
-assert.equal(cutOf(50), 50);
-assert.equal(cutOf(null), null);
 
 const rows = [
   { rank: 12, name: 'House Daiquiri' },

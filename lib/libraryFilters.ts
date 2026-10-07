@@ -46,12 +46,24 @@ export interface OnMenu {
  * The venue's drinks by menu: the menus on now, the drinks on them (or on the
  * one picked), and the drinks that were on a past menu and aren't on now.
  */
-export function menuDrinks(menus: MenuSummary[], now: number, picked: string | null): { onMenus: OnMenu[]; on: string[]; past: string[] } {
+export function menuDrinks(
+  menus: MenuSummary[],
+  now: number,
+  picked: string | null
+): { onMenus: OnMenu[]; on: string[]; onNow: string[]; past: string[] } {
   const groups = groupMenus(menus, now);
   const onMenus = groups.on.map((m) => ({ id: m.id, name: m.name, itemIds: [...new Set(m.itemIds)] }));
   const onNow = new Set(onMenus.flatMap((m) => m.itemIds));
   const pick = onMenus.find((m) => m.id === picked);
   const on = pick ? pick.itemIds : [...onNow];
   const past = [...new Set(groups.previous.flatMap((m) => m.itemIds))].filter((id) => !onNow.has(id));
-  return { onMenus, on, past };
+  return { onMenus, on, onNow: [...onNow], past };
+}
+
+export type MenuState = 'On menu' | 'Past' | 'Off menu';
+
+/** Where a drink stands with the menus: on one now, on one before, or never. */
+export function menuState(itemId: string, onNow: ReadonlySet<string>, past: ReadonlySet<string>): MenuState {
+  if (onNow.has(itemId)) return 'On menu';
+  return past.has(itemId) ? 'Past' : 'Off menu';
 }

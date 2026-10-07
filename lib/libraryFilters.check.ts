@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { menuDrinks, parseShow } from './libraryFilters';
+import { menuDrinks, menuState, parseShow } from './libraryFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');
@@ -46,4 +46,12 @@ assert.deepEqual(all.past.sort(), ['daiquiri', 'paloma']);
 
 assert.deepEqual(menuDrinks(menus, now, 'autumn').on, ['martini', 'negroni']);
 assert.deepEqual(menuDrinks(menus, now, 'summer').on.sort(), ['martini', 'negroni', 'spritz'], 'a menu that isn’t on is no pick');
-assert.deepEqual(menuDrinks([], now, null), { onMenus: [], on: [], past: [] });
+assert.deepEqual(menuDrinks([], now, null), { onMenus: [], on: [], onNow: [], past: [] });
+// Picking a menu narrows the list, not what counts as on now.
+assert.deepEqual(menuDrinks(menus, now, 'autumn').onNow.sort(), ['martini', 'negroni', 'spritz']);
+
+const onNow = new Set(all.onNow);
+const past = new Set(all.past);
+assert.equal(menuState('spritz', onNow, past), 'On menu');
+assert.equal(menuState('paloma', onNow, past), 'Past');
+assert.equal(menuState('secret', onNow, past), 'Off menu');
