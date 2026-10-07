@@ -34,7 +34,7 @@ function Sheet({ barName, drinks, onPick, onClose }: Omit<RankPickSheetProps, 'v
       <Pressable
         role="dialog"
         aria-label="Rank a drink"
-        style={[styles.sheet, { backgroundColor: ds.c.ground, paddingBottom: insets.bottom + space.lg }]}
+        style={[styles.sheet, { backgroundColor: ds.c.surface, paddingBottom: insets.bottom + space.lg }]}
         onPress={(e) => e.stopPropagation()}
       >
         <ScrollView contentContainerStyle={styles.body}>
