@@ -296,6 +296,11 @@ export function build(bars) {
 -- Seeded drinks don't queue automatic sketches (nobody to bill for them).
 SET "app.image_worker" = 'on';
 
+-- Nor flavour jobs: with CATALOG_AI_FILL=on each one is a paid AI fill and
+-- drawing for a drink with no venue. The queue goes back to how it was at
+-- the end; the backfill for these drinks runs separately, once it's OK'd.
+CREATE TEMP TABLE "bh_flavor_jobs" AS SELECT * FROM "private"."item_flavor_jobs";
+
 CREATE TEMP TABLE "bh_editions" ("handle" text, "name" text, "year" int, "month" int, "end_year" int, "end_month" int,
     "is_current" boolean, "source_url" text, "old_name" text, "old_year" int, "old_month" int);
 CREATE TEMP TABLE "bh_drinks" ("handle" text, "name" text, "notes" text, "origin_year" int, "glass" text);
@@ -543,7 +548,17 @@ BEGIN
     END IF;
 END $$;
 
-DROP TABLE "bh_menu_rows", "bh_ingredients", "bh_bars", "bh_variants", "bh_glassware", "bh_removes", "bh_renames",
+-- --- Put the flavour queue back ---
+
+DELETE FROM "private"."item_flavor_jobs" j
+WHERE NOT EXISTS (SELECT 1 FROM "bh_flavor_jobs" o WHERE o.item_id = j.item_id);
+UPDATE "private"."item_flavor_jobs" j SET
+    "status" = o.status, "revision" = o.revision, "attempts" = o.attempts, "run_after" = o.run_after,
+    "lease_until" = o.lease_until, "last_error" = o.last_error, "updated_at" = o.updated_at
+FROM "bh_flavor_jobs" o
+WHERE o.item_id = j.item_id AND o.revision <> j.revision;
+
+DROP TABLE "bh_flavor_jobs", "bh_menu_rows", "bh_ingredients", "bh_bars", "bh_variants", "bh_glassware", "bh_removes", "bh_renames",
     "bh_menu", "bh_lines", "bh_drinks", "bh_editions";
 
 RESET "app.image_worker";
