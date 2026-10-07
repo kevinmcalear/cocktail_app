@@ -37,17 +37,23 @@ function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
   const open = () => router.push((user ? `/p/${profile.id}/claim` : '/auth/login') as Href);
   if (latest?.status === 'pending') {
     return (
-      <View style={styles.box} role="status">
-        <Tag label="Claim sent" style={styles.hug} />
-        <Caption tone="muted">{latest.code ? 'Your code is on the claim screen.' : 'A moderator is checking it.'}</Caption>
-        <Button label="See your claim" variant="secondary" onPress={open} style={styles.hug} />
+      <View style={styles.centered} role="status">
+        <Tag label="Claim sent" />
+        <Caption tone="muted" align="center">
+          {latest.code ? 'Your code is on the claim screen.' : 'A moderator is checking it.'}
+        </Caption>
+        <Button label="See your claim" variant="secondary" onPress={open} />
       </View>
     );
   }
   return (
-    <View style={styles.box}>
-      {latest?.status === 'rejected' ? <Caption tone="muted">Your last claim wasn’t approved. You can try another way.</Caption> : null}
-      <Button label={label} variant="secondary" icon="checkmark" accessibilityHint="Prove you work here and take over this page" onPress={open} style={styles.hug} />
+    <View style={styles.centered}>
+      {latest?.status === 'rejected' ? (
+        <Caption tone="muted" align="center">
+          Your last claim wasn’t approved. You can try another way.
+        </Caption>
+      ) : null}
+      <Button label={label} variant="secondary" icon="checkmark" accessibilityHint="Prove you work here and take over this page" onPress={open} />
     </View>
   );
 }
@@ -120,6 +126,7 @@ function ClaimPerson({ profile, label }: { profile: Profile; label: string }) {
 
 const styles = StyleSheet.create({
   box: { gap: space.sm },
+  centered: { gap: space.sm, alignItems: 'center' },
   hug: { alignSelf: 'flex-start' },
   actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
 });

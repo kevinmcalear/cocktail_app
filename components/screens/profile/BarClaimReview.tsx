@@ -26,10 +26,10 @@ function Link({ label, href }: { label: string; href: string }) {
 }
 
 /** A column of evidence: what the page says, or what the claimant gave. */
-function Column({ title, children }: { title: string; children: ReactNode }) {
+function Column({ title, wide, children }: { title: string; wide: boolean; children: ReactNode }) {
   const ds = useDs();
   return (
-    <View style={[styles.column, { borderColor: ds.c.line }]}>
+    <View style={[styles.column, wide && styles.flex, { borderColor: ds.c.line }]}>
       <Caption tone="muted" style={styles.eyebrow}>
         {title}
       </Caption>
@@ -84,7 +84,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
         </Caption>
 
         <View style={[styles.columns, wide && styles.columnsWide]}>
-          <Column title="On the page">
+          <Column title="On the page" wide={wide}>
             <Fact label="Website">{host ? <Link label={host} href={page!.website!} /> : 'None'}</Fact>
             <Fact label="Instagram">{handle ? <Link label={`@${handle}`} href={instagramUrl(handle)} /> : 'None'}</Fact>
             {place ? <Fact label="Where">{place}</Fact> : null}
@@ -92,7 +92,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
               <Link label="Find its number" href={mapSearch} />
             </Fact>
           </Column>
-          <Column title="From them">
+          <Column title="From them" wide={wide}>
             <Fact label="Who">{claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'No profile of their own yet'}</Fact>
             <Fact label="Note">{claim.message ? `“${claim.message}”` : 'No note'}</Fact>
             {method === 'email' ? <Fact label="Sign-in email">{`At ${claim.evidence?.email_domain ?? 'an unknown domain'}`}</Fact> : null}
@@ -133,7 +133,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   columns: { gap: space.md },
   columnsWide: { flexDirection: 'row', alignItems: 'stretch' },
-  column: { flex: 1, gap: space.sm, padding: space.md, borderWidth: 1, borderRadius: radius.control, borderCurve: 'continuous' },
+  flex: { flex: 1 },
+  column: { gap: space.sm, padding: space.md, borderWidth: 1, borderRadius: radius.control, borderCurve: 'continuous' },
   eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase' },
   fact: { gap: space.xs },
   link: { textDecorationLine: 'underline' },

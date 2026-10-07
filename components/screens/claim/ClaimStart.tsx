@@ -32,7 +32,7 @@ function methodDetails(profile: Profile, email: string | null | undefined) {
       available: check.ok !== false,
       detail:
         check.ok === 'instant'
-          ? `Instant. You signed in with an address at ${check.domain}, the bar’s own website.`
+          ? `You signed in with an address at ${check.domain}, the bar’s own website.`
           : check.ok === 'review'
             ? `You signed in at ${check.domain}. A moderator checks it, because ${REVIEW_REASON[check.reason]}.`
             : emailUnavailable(check),
