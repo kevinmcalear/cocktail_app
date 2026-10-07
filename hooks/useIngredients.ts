@@ -13,6 +13,8 @@ export function useIngredients(options?: { allContexts?: boolean }) {
 
     return useQuery({
         queryKey: ['ingredients', selectedContextIds, options, viewAsRoleLevel],
+        // Too big to save between launches (lib/queryCachePersist.ts).
+        meta: { persist: false },
         queryFn: async () => {
             let query = supabase
                 .from('app_item_presentation')
