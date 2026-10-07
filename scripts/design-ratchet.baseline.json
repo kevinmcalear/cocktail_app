@@ -39,8 +39,6 @@
     "components/auth/EmailLinkGate.tsx": 9,
     "components/auth/PasswordField.tsx": 2,
     "components/auth/SignInScreen.tsx": 6,
-    "components/bar/BarInlineEditor.tsx": 22,
-    "components/bar/StaffLinkCard.tsx": 6,
     "components/cocktail/CocktailDetailContent.tsx": 32,
     "components/cocktail/CocktailIngredientList.tsx": 20,
     "components/cocktail/CocktailPhotoPlaceholder.tsx": 2,
@@ -86,9 +84,9 @@
     "store/useCreatorNavStore.ts": 1
   },
   "longFiles": {
-    "app/add-ingredient.tsx": 758,
+    "app/add-ingredient.tsx": 756,
     "app/edit-mode/index.tsx": 1072,
-    "app/ingredient/[id]/edit.tsx": 708,
+    "app/ingredient/[id]/edit.tsx": 706,
     "app/menus/create-template.tsx": 495,
     "app/menus/create/index.tsx": 905,
     "components/CommandSearch.tsx": 1093,
@@ -97,7 +95,6 @@
     "components/ItemDetailLayout.tsx": 725,
     "components/SettingsScreen.tsx": 770,
     "components/VenueContextPicker.tsx": 349,
-    "components/bar/BarInlineEditor.tsx": 348,
     "components/cocktail/CocktailDetailContent.tsx": 550,
     "components/cocktail/CocktailIngredientList.tsx": 499,
     "components/cocktail/SpecPickerSheet.tsx": 336,

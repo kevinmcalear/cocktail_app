@@ -18,11 +18,13 @@ export interface ButtonProps {
   size?: 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;
+  /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
+  accessibilityLabel?: string;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityHint, style }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
   const ds = useDs();
   const fill = variant === 'primary' ? ds.accentFill.fill : 'transparent';
   const text = variant === 'primary' ? ds.accentFill.text : ds.c.ink;
@@ -30,7 +32,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
     <PressableScale
       onPress={onPress}
       disabled={disabled}
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       aria-disabled={disabled}
       style={[
