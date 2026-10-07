@@ -106,7 +106,7 @@ function ClaimPerson({ profile, label }: { profile: Profile; label: string }) {
         numberOfLines={3}
         maxLength={1000}
       />
-      {isBar ? null : <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>}
+      <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>
       {claim.error ? (
         <Caption tone="accent" role="alert">
           {claimError(claim.error)}
