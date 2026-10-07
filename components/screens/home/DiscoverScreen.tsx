@@ -1,58 +1,59 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Field, GlassButton, GlassSurface, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
-import { areaStatus, DiscoverArea } from '@/components/screens/home/DiscoverArea';
-import { DiscoverBest, useDrinkPick } from '@/components/screens/home/DiscoverBest';
-import { DiscoverDrinkFilters, DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
+import { areaStatus } from '@/components/screens/home/DiscoverArea';
+import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchResults } from '@/components/screens/home/DiscoverSearchResults';
+import { DiscoverSearchSheet, type SearchScope } from '@/components/screens/home/DiscoverSearchSheet';
+import { AreaSheet, FiltersSheet } from '@/components/screens/home/DiscoverSheet';
 import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
-import { ForYou, MostCreative } from '@/components/screens/home/FlavorRails';
-import { NewFromBars } from '@/components/screens/home/NewFromBars';
+import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
-import { layout, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
-import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
-import { useMyBar } from '@/hooks/useHomeBar';
 import { useNearMe, type NearMe } from '@/hooks/useNearMe';
-import { findDrinks } from '@/lib/discover';
-import { kindLabel, STYLES } from '@/lib/drinkStyles';
-import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
-import { itemHref } from '@/lib/itemRoutes';
+import { kindsTitle } from '@/lib/discoverDrinks';
+import { areaFromViewport, type Viewport } from '@/lib/discoverMap';
+import { STYLES } from '@/lib/drinkStyles';
 import { areaLabel, NEAR_ME_KM, type Area } from '@/lib/nearMe';
+import { useDiscoverView } from '@/store/useDiscoverView';
+
+const ANYWHERE: Area = { kind: 'anywhere' };
 
 /**
- * Discover, the first tab in home mode, in the order people use it: search
- * drinks or bars, say where (near me by default, a city, anywhere) and what
- * (a style like Martinis, a spirit like Gin, or a tasting note like Smoky),
- * then the drinks bars pour there, the best-ranked of a drink, the top bars,
- * drinks for your taste and new releases, and last the drinks you can make
- * yourself. Typing swaps the browsing sections for search results. The map
- * (full screen on phones, beside the list on wide screens) pins the bars
- * pouring those drinks.
+ * Discover, the first tab in home mode. One search pill (bars and the drinks
+ * bars pour, here or everywhere), then where and Filters (styles, spirits,
+ * tasting notes) in one row. Below: the drinks that match, the top bars, and
+ * drinks for your taste. Phones switch between this list and a full-screen
+ * map (the map first once location is on; the last choice is remembered);
+ * wide screens show both. Search, where and filters are shared by both.
  */
 export function DiscoverScreen() {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
   const bottom = useTabBarInset();
-  const bar = useMyBar();
   const signedIn = !!useAuth().user;
   const breakpoint = useBreakpoint();
-  const [area, setArea] = useState<Area>({ kind: 'anywhere' });
+  const [area, setArea] = useState<Area>(ANYWHERE);
   const [preferNear, setPreferNear] = useState(true);
-  const [kind, setKind] = useState<string | null>(null);
+  const [kinds, setKinds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
-  const [adding, setAdding] = useState(false);
-  const [view, setView] = useState<'list' | 'map'>('list');
+  const [scope, setScope] = useState<SearchScope>('here');
+  const [sheet, setSheet] = useState<'search' | 'filters' | 'area' | 'add' | null>(null);
+  const viewport = useRef<Viewport | null>(null);
+  const onViewport = useCallback((v: Viewport | null) => {
+    viewport.current = v;
+  }, []);
   const touched = useRef(false);
   const { state: near, locate } = useNearMe();
   const place = useCallback((found: NearMe) => {
@@ -83,41 +84,93 @@ export function DiscoverScreen() {
       live = false;
     };
   }, [locate, place]);
-  const searching = search.trim().length > 0;
-  // Search stands alone: a style picked while browsing doesn't narrow it.
-  const results = useDiscoverResults({ kind: searching ? null : kind, search, area });
-  const title = `${searching ? `"${search.trim()}"` : kind ? kindLabel(kind) : 'Drinks'} ${areaLabel(area)}`;
-  const pick = useDrinkPick(search.trim() || STYLES.find((s) => s.id === kind)?.classics[0] || '');
-  const pickKind = (k: string | null) => {
-    setKind(k);
-    setSearch('');
-  };
-  const openMap = async () => {
-    setView('map');
+
+  // Phones: the map once location is on, unless this device last picked the list.
+  const saved = useDiscoverView((s) => s.view);
+  const saveView = useDiscoverView((s) => s.setView);
+  const split = mapAvailable && breakpoint !== 'phone';
+  const phoneMap = mapAvailable && !split && (saved ?? (near.status === 'ready' ? 'map' : 'list')) === 'map';
+  const onMap = split || phoneMap;
+  const toggleView = async () => {
+    if (phoneMap) return saveView('list');
+    saveView('map');
     if (area.kind !== 'anywhere') return;
     touched.current = true;
     place(await locate());
   };
+
+  const searching = search.trim().length > 0;
+  const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
+  const results = useDiscoverResults({ kinds, search, area: shownArea });
+  const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${areaLabel(shownArea)}`;
+  const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
+  const drink = pick ? { id: pick.id, name: pick.name } : null;
+  const hereLabel = onMap ? 'This area' : areaChipLabel(area, preferNear);
+  const note = areaStatus(near);
+
+  const openSearch = () => {
+    // On the map, "this area" is what the map shows: search it, as "Search this area" would.
+    if (onMap && viewport.current) onArea(areaFromViewport(viewport.current));
+    if (!searching) setScope(onMap || area.kind !== 'anywhere' ? 'here' : 'everywhere');
+    setSheet('search');
+  };
+  // "Search this area" on the map searches here, even after "Everywhere".
+  const onMapArea = (next: Area) => {
+    setScope('here');
+    onArea(next);
+  };
+  const close = () => setSheet(null);
   const openBar = (ref: string) => {
-    setAdding(false);
+    setSheet(null);
     router.push(`/p/${ref}`);
   };
-  const split = mapAvailable && breakpoint !== 'phone';
-  const drink = pick.drink ? { id: pick.drink.id, name: pick.drink.name } : null;
-  const sheet = adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null;
 
-  const { data: me } = useMyTaste();
-  const catalog = useFlavorCatalog();
-  // Match percentages only once your taste comes from enough rankings.
-  const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
-  const matchFor = (id: string) => {
-    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
-    return profile ? `${matchPercent(scored, profile)}% match` : null;
-  };
+  const controls = (
+    <View style={styles.controls}>
+      <SearchPill query={search} placeholder={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={openSearch} onClear={() => setSearch('')} />
+      <FilterRow
+        area={area}
+        preferNear={preferNear}
+        filters={kinds.length}
+        onArea={() => setSheet('area')}
+        onFilters={() => setSheet('filters')}
+        view={mapAvailable && !split ? { showing: phoneMap ? 'map' : 'list', onToggle: () => void toggleView() } : undefined}
+      />
+    </View>
+  );
+
+  let overlay = null;
+  if (sheet === 'search') {
+    overlay = (
+      <DiscoverSearchSheet
+        query={search}
+        onQuery={setSearch}
+        scope={scope}
+        onScope={setScope}
+        hereLabel={onMap || area.kind !== 'anywhere' ? hereLabel : null}
+        area={shownArea}
+        kinds={kinds}
+        onClearKinds={() => setKinds([])}
+        results={results}
+        signedIn={signedIn}
+        onKind={(k) => {
+          setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
+          setSearch('');
+          close();
+        }}
+        onClose={close}
+      />
+    );
+  } else if (sheet === 'filters') {
+    overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && !results.isLoading ? new Set(results.drinks.map((d) => d.barId)).size : null} onClose={close} />;
+  } else if (sheet === 'area') {
+    overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onClose={close} />;
+  } else if (sheet === 'add') {
+    overlay = <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} />;
+  }
 
   // Phones: the map fills the screen, with the results in a sheet over it.
-  if (mapAvailable && !split && view === 'map') {
-    const note = areaStatus(near);
+  if (phoneMap) {
     return (
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
         <View style={{ paddingHorizontal: gutter }}>
@@ -125,138 +178,92 @@ export function DiscoverScreen() {
         </View>
         <DiscoverMapPane
           mode="sheet"
-          area={area}
-          onArea={onArea}
+          area={shownArea}
+          onArea={onMapArea}
           drink={drink}
           results={{ ...results, title }}
-          kind={kind}
-          onKind={setKind}
+          onViewport={onViewport}
           bottomInset={bottom}
           top={
-            <View style={styles.mapBar}>
-              <GlassSurface style={styles.mapTop}>
-                <DiscoverArea compact area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
-                <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={() => setView('list')} />
-              </GlassSurface>
+            <>
+              {controls}
               {note ? (
                 // On glass: bare text over the map is lost under the pins.
                 <GlassSurface style={styles.mapNote}>
                   <Caption role="status">{note}</Caption>
                 </GlassSurface>
               ) : null}
-            </View>
+            </>
           }
         />
+        {overlay}
       </View>
     );
   }
-
-  const browse = (
-    <>
-      <DiscoverKinds kind={kind} onChange={setKind} />
-      <DrinksHere
-        title={title}
-        drinks={results.drinks}
-        barsById={results.barsById}
-        isLoading={results.isLoading}
-        signedIn={signedIn}
-        empty={`No ${kind ? kindLabel(kind).toLowerCase() : 'drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
-      />
-      <DiscoverBest area={area} pick={pick} />
-      <TopBars area={area} />
-      <ForYou />
-      <NewFromBars />
-      <MostCreative />
-      {signedIn ? (
-        <View style={styles.add}>
-          <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
-          <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setAdding(true)} />
-        </View>
-      ) : null}
-    </>
-  );
 
   const list = (
-      <FlatList
-        data={searching ? findDrinks(bar.drinks, search) : bar.drinks}
-        keyboardShouldPersistTaps="handled"
-        keyExtractor={(d) => d.id}
-        style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <ScreenHeaderSpacer />
-            <Display>Discover</Display>
-            <Field
-              label="Search drinks or bars"
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Martini, gin, yuzu, a bar or a city"
-              autoCorrect={false}
-              autoCapitalize="none"
-              returnKeyType="search"
-              clearButtonMode="while-editing"
-            />
-            {searching ? null : <DiscoverDrinkFilters kind={kind} onChange={setKind} />}
-            <DiscoverArea area={area} onChange={onArea} near={near} preferNear={preferNear} onNearMe={onNearMe} />
-            {searching ? (
-              <DiscoverSearchResults
-                search={search}
-                area={area}
-                drinks={results.drinks}
-                bars={results.bars}
-                barsById={results.barsById}
-                isLoading={results.isLoading}
-                signedIn={signedIn}
-                onKind={pickKind}
-              />
-            ) : (
-              browse
-            )}
-            <View style={styles.library}>
-              <Headline role="heading">Make it yourself</Headline>
-              <Caption tone="muted">
-                {bar.shelf.length ? `${bar.canMake.length} of these you can make tonight` : 'Classics and drinks shared with you'}
-              </Caption>
-            </View>
-          </View>
-        }
-        ListEmptyComponent={bar.isLoading ? undefined : <Body tone="muted">No drinks to show yet.</Body>}
-        renderItem={({ item }) => (
-          <DrinkRow
-            name={item.name}
-            href={itemHref('Cocktail', item.id)}
-            itemId={item.id}
-            imageUrl={item.imageUrl}
-            glass={item.glass}
-            caption={[bar.canMakeIds.has(item.id) ? 'You can make this' : null, matchFor(item.id)].filter(Boolean).join(' · ') || undefined}
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      stickyHeaderIndices={[1]}
+      style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
+      contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
+    >
+      <View>
+        <ScreenHeaderSpacer />
+        <Display>Discover</Display>
+      </View>
+      <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
+      <View style={styles.body}>
+        {note ? (
+          <Caption tone="muted" role="status">
+            {note}
+          </Caption>
+        ) : null}
+        {searching ? (
+          <DiscoverSearchResults
+            search={search}
+            area={shownArea}
+            drinks={results.drinks}
+            bars={results.bars}
+            barsById={results.barsById}
+            isLoading={results.isLoading}
+            signedIn={signedIn}
+            onKind={(k) => {
+              setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
+              setSearch('');
+            }}
+          />
+        ) : (
+          <DrinksHere
+            title={title}
+            drinks={results.drinks}
+            barsById={results.barsById}
+            isLoading={results.isLoading}
+            signedIn={signedIn}
+            empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}
-      />
+        <TopBars area={area} />
+        <ForYou />
+        {signedIn ? (
+          <View style={styles.add}>
+            <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
+            <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setSheet('add')} />
+          </View>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 
-  // Wide screens: the list on the left, the map on the right.
-  if (split) {
-    return (
-      <View style={[styles.screen, styles.row, { backgroundColor: ds.c.ground }]}>
-        {list}
-        <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={area} onArea={onArea} drink={drink} results={{ ...results, title }} kind={kind} onKind={setKind} />
-        </View>
-        {sheet}
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    <View style={[styles.screen, split ? styles.row : null, { backgroundColor: ds.c.ground }]}>
       {list}
-      {mapAvailable ? (
-        <View pointerEvents="box-none" style={[styles.toggle, { bottom: bottom - space.md }]}>
-          <GlassButton accessibilityLabel="Show the map" label="Map" icon="map.fill" onPress={() => void openMap()} />
+      {split ? (
+        <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} results={{ ...results, title }} onViewport={onViewport} />
         </View>
       ) : null}
-      {sheet}
+      {overlay}
     </View>
   );
 }
@@ -266,11 +273,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },
-  mapBar: { gap: space.sm },
   mapNote: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
-  mapTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.xs, height: layout.minTapTarget + space.xs * 2 },
-  toggle: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  header: { gap: space.lg, paddingBottom: space.lg },
-  add: { gap: space.sm, alignItems: 'flex-start', marginTop: space.md },
-  library: { gap: space.xs, marginTop: space.xl },
+  controls: { gap: space.sm },
+  sticky: { paddingVertical: space.md },
+  body: { gap: space.xl, paddingTop: space.sm },
+  add: { gap: space.sm, alignItems: 'flex-start' },
 });
