@@ -16,6 +16,7 @@ import { barsCrediting } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
+import { BarRankings } from './BarRankings';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
@@ -176,7 +177,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           />
         )
       ) : tab === 'rankings' ? (
-        <ComingSoon text={`${profile.display_name}'s rankings will show here once ranking opens.`} />
+        <BarRankings bar={profile} />
       ) : (
         <ComingSoon text={profile.kind === 'bar' ? "What's on the back bar will show here." : "What's on their shelf will show here."} />
       )}
