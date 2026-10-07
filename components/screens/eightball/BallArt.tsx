@@ -9,7 +9,7 @@ const BALL = 260;
 const WINDOW = 150;
 
 /** Long names step down a size so they stay inside the triangle (web can't shrink text to fit). */
-const fit = (text: string) => (text.length > 18 ? 'caption' : text.length > 10 ? 'body' : 'headline');
+const fit = (text: string) => (text.length > 14 ? 'caption' : text.length > 8 ? 'body' : 'headline');
 
 /**
  * The ball itself, as the Shake design draws it: a lit black sphere, an
@@ -54,6 +54,6 @@ const styles = StyleSheet.create({
   ball: { width: BALL, height: BALL, alignItems: 'center', justifyContent: 'center' },
   window: { width: WINDOW, height: WINDOW, borderRadius: WINDOW / 2, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: WINDOW / 2, borderWidth: 2, opacity: 0.35 },
-  // The triangle points down, so the words sit in its wide top half.
-  answer: { position: 'absolute', top: 30, width: 96, height: 64, alignItems: 'center', justifyContent: 'center' },
+  // The triangle points down, so the words hang from its wide top edge.
+  answer: { position: 'absolute', top: 34, width: 84, alignItems: 'center' },
 });
