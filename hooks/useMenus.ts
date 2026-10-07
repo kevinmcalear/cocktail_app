@@ -44,10 +44,16 @@ function toSummaryBase(row: MenuRow) {
   };
 }
 
+/** How many drinks a cover-less menu shows as its visual. */
+export const MENU_PICTURES = 4;
+
+type PictureItem = { id: string; name: string; item_images: ItemImageLink[] | ItemImageLink | null };
+
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue', barId, userId] as const,
+  // 'venue-2': summaries gained pictures, so a persisted older list isn't read back.
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-2', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
@@ -67,15 +73,26 @@ export function useVenueMenus(barId: string | null | undefined) {
       const scope = barId ? `bar_id.eq.${barId},and(bar_id.is.null,created_by.eq.${userId})` : `and(bar_id.is.null,created_by.eq.${userId})`;
       const { data, error } = await supabase
         .from('menus')
-        .select(`${MENU_COLUMNS}, menu_drinks(item_id), events(id, name, starts_at)`)
+        // ponytail: every drink's hero links ride along for the visual of a
+        // menu with no cover. Fine at a handful of menus; select them only for
+        // cover-less menus if a venue's list gets long.
+        .select(`${MENU_COLUMNS}, menu_drinks(item_id, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at)`)
         .or(scope)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => {
         const event = one(row.events as { id: string; name: string; starts_at: string }[] | null);
+        type Drink = { item_id: string | null; item: PictureItem | PictureItem[] | null };
+        const drinks = (row.menu_drinks ?? []) as unknown as Drink[];
         return {
           ...toSummaryBase(row as MenuRow),
-          itemIds: ((row.menu_drinks ?? []) as { item_id: string | null }[]).map((d) => d.item_id).filter((id): id is string => !!id),
+          itemIds: drinks.map((d) => d.item_id).filter((id): id is string => !!id),
+          pictures: drinks.flatMap((d) => {
+            const item = one(d.item);
+            if (!item) return [];
+            const hero = heroPicture(Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : []);
+            return [{ id: item.id, name: item.name, imageUrl: hero?.url ?? null, isSketch: hero?.isSketch ?? false }];
+          }).slice(0, MENU_PICTURES),
           event: event ? { id: event.id, name: event.name, startsAt: event.starts_at } : null,
         };
       });

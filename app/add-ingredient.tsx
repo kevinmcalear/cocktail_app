@@ -481,9 +481,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 images={[]}
                 emptyPhotoPlaceholder
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
                 embedded={!!isInline}
                 isEditing
                 editableTitle={{

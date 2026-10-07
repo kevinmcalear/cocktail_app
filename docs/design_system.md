@@ -79,7 +79,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 | 768 to 1199 | Icon rail | Two panes. Service mode can fill the screen on a station iPad. |
 | 1200 and up | Branded sidebar with ⌘K search | Content plus an inspector (photos, locations, "view as") |
 
-Venue mode tabs: Tonight, Library, Prep, Study. Home mode tabs: Discover, My Bar, Collection, You. The venue chip in the corner switches between venues and modes.
+Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
 
 ## Permissions in the UI
 

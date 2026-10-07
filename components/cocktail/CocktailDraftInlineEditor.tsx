@@ -138,9 +138,7 @@ export function CocktailDraftInlineEditor({
                 images={displayImages}
                 emptyPhotoPlaceholder={displayImages.length === 0}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
                 embedded={embedded}
                 isEditing
                 onBack={embedded ? undefined : handleClose}

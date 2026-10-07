@@ -1,6 +1,21 @@
 import assert from 'node:assert/strict';
 
-import { applyMenuPaste, compileBringIn, matchByName, matchIngredient, parseAmount, parseBringIn, parseMenuPaste, parseSpecLine, type CatalogItem } from './paste';
+import {
+  applyMenuPaste,
+  bringInText,
+  compileBringIn,
+  matchByName,
+  matchIngredient,
+  appendReading,
+  pasteRows,
+  placedGroups,
+  parseAmount,
+  parseBringIn,
+  parseMenuPaste,
+  parseSpecLine,
+  type CatalogItem,
+  type ParsedMenuSection,
+} from './paste';
 import { blankSection, type MenuLayout } from './menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -122,3 +137,42 @@ const pickedWrite = compileBringIn(
   [],
 );
 assert.equal(pickedWrite.write?.items[0].lines[0].ingredientKey, 'id:beef');
+
+// A photo reading is matched like a paste: library drinks link, the rest
+// come back missing with what the menu listed in them.
+const read: ParsedMenuSection[] = [
+  { name: 'Signatures', lines: [{ name: 'Paper Plane', price: '18', ingredients: ['Bourbon', 'Aperol'] }, { name: 'negroni', price: '16' }] },
+  { name: 'Classics', lines: [{ name: 'Negroni', price: null }] },
+];
+const rows = pasteRows(read, [drink('n', 'Negroni')], {});
+assert.deepEqual(rows.map((r) => r.status), ['missing', 'add', 'skip']);
+assert.deepEqual(rows[0].status === 'missing' && rows[0].ingredients, ['Bourbon', 'Aperol']);
+assert.equal(rows[1].status === 'add' && rows[1].price, '16');
+assert.deepEqual(placedGroups(rows, false), [{ name: 'Signatures', drinks: [{ ...drink('n', 'Negroni'), price: '16' }] }]);
+
+// Another page carries on the section it ends in, unless it starts a new one.
+assert.deepEqual(
+  appendReading(read, [{ name: null, lines: [{ name: 'Martini', price: null }] }, { name: 'Low', lines: [{ name: 'Spritz', price: null }] }]).map((s) => [s.name, s.lines.length]),
+  [['Signatures', 2], ['Classics', 2], ['Low', 1]],
+);
+assert.equal(appendReading(read, [{ name: 'Classics', lines: [{ name: 'Martini', price: null }] }]).length, 2);
+assert.equal(appendReading([], read).length, 2);
+
+// A new menu's empty section gives way to the paste's own headings; drinks
+// with no heading still land in it.
+const fromPhoto = applyMenuPaste(layout, null, [{ name: 'Signatures', drinks: [drink('m', 'Martini')] }]);
+assert.deepEqual(fromPhoto.sections.map((s) => s.name), ['Signatures']);
+
+// Missing drinks go to Bring in with their listed ingredients as "- " lines.
+assert.equal(bringInText([{ name: 'Negroni', ingredients: [] }, { name: 'Martini', ingredients: [] }]), 'Negroni\nMartini');
+const listed = parseBringIn(bringInText([{ name: 'Paper Plane', ingredients: ['Bourbon', 'Aperol'] }, { name: 'Daiquiri', ingredients: [] }]), 'drinks');
+assert.equal(listed.length, 2);
+assert.deepEqual(listed[0].lines, [
+  { amount: null, unit: null, name: 'Bourbon' },
+  { amount: null, unit: null, name: 'Aperol' },
+]);
+assert.equal(listed[1].name, 'Daiquiri');
+assert.equal(listed[1].lines.length, 0);
+const unmeasured = compileBringIn(listed, catalog, 'bar', {}, {}, [], []);
+assert.equal(unmeasured.error, null);
+assert.deepEqual(unmeasured.write?.items[0].lines.map((l) => [l.amount, l.unit]), [[null, null], [null, null]]);
