@@ -5,7 +5,7 @@ import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
-import { sortEditions, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
+import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
@@ -149,6 +149,37 @@ export function useMenuEditions(profileId: string | null | undefined) {
       const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
       if (error) throw error;
       return sortEditions((data ?? []) as MenuEdition[]);
+    },
+  });
+}
+
+export interface DrinkMenuRun extends MenuDates {
+  barId: string;
+  barName: string;
+  /** The menu to open: the one on now, else the latest it was on. */
+  editionId: string;
+  editionName: string;
+}
+
+/** The bar menus a drink was on, and when (menu_drink_runs). Empty for a drink no menu lists. */
+export function useDrinkMenuRuns(itemId: string | null) {
+  const viewer = viewerScoped(useAuth().user?.id);
+  return useQuery({
+    queryKey: ['drink-menu-runs', itemId, viewer.key],
+    meta: viewer.meta,
+    enabled: !!itemId,
+    queryFn: async (): Promise<DrinkMenuRun[]> => {
+      const { data, error } = await supabase
+        .from('menu_drink_runs')
+        .select('profile_id, edition_id, edition_name, start_year, start_month, end_year, end_month, is_current')
+        .eq('item_id', itemId!);
+      if (error) throw error;
+      const rows = (data ?? []) as (MenuRunRow & { profile_id: string; edition_id: string; edition_name: string })[];
+      if (!rows.length) return [];
+      const bars = await supabase.from('profiles').select('id, display_name').in('id', rows.map((r) => r.profile_id));
+      if (bars.error) throw bars.error;
+      const names = new Map((bars.data ?? []).map((b) => [b.id as string, b.display_name as string]));
+      return rows.map((r) => ({ ...runDates(r), barId: r.profile_id, barName: names.get(r.profile_id) ?? 'A bar', editionId: r.edition_id, editionName: r.edition_name }));
     },
   });
 }

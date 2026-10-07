@@ -10,10 +10,12 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useMode } from '@/hooks/useMode';
+import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { withPastMenuTag } from '@/lib/menuEditions';
 import { specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -36,6 +38,7 @@ import { SpecLockPanel } from './SpecLockPanel';
 import { SpecSection } from './SpecSection';
 import { GlassSheet } from './GlassSheet';
 import { HistorySection } from './HistorySection';
+import { MenuRuns } from './MenuRuns';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkFacts } from './useDrinkFacts';
 
@@ -109,6 +112,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const role = useEffectiveRole(item.bar_id);
   const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
+  // A bar's drink: when it was on the bar's menus. Ranking and collecting stay open either way.
+  const { data: menuRuns = [] } = useDrinkMenuRuns(preview || item.bar_id ? null : item.id);
 
   const { facts, tags, glass, ice, method, strength } = useDrinkFacts(item, {
     lines,
@@ -148,7 +153,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
 
   const body = (
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
-      <DrinkTags tags={tags} />
+      <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
       {!preview && heroPic?.credit ? (
@@ -160,6 +165,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           Photo: {heroPic.credit}
         </Caption>
       ) : null}
+      <MenuRuns runs={menuRuns} />
       <View style={styles.actions}>
         {FEATURES.service ? (
           <GlassButton
@@ -226,9 +232,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     </View>
   );
 
-  const hero = (
-    <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />
-  );
+  const hero = <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

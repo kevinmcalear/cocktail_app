@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/ctx/AuthContext';
 import { useFlavorCatalog } from '@/hooks/useFlavor';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { menuOrder, runDates, searchMenuTag, type MenuRunRow } from '@/lib/menuEditions';
 import { filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { noteDimension } from '@/lib/flavor';
 import { supabase } from '@/lib/supabase';
@@ -34,7 +35,7 @@ export function useDiscoverDrinks() {
     enabled: signedIn,
     staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<{ drinks: DiscoverDrink[]; bars: DiscoverBar[] }> => {
-      const bars = await readBars();
+      const [bars, runs] = await Promise.all([readBars(), readMenuRuns()]);
       const byId = new Map(bars.map((b) => [b.id, b]));
       const drinks: DiscoverDrink[] = [];
       for (let from = 0; ; from += PAGE) {
@@ -62,6 +63,7 @@ export function useDiscoverDrinks() {
               ingredients: (r.recipes ?? []).map((x) => x.display_ingredient?.name).filter((n): n is string => !!n),
               imageUrl: heroPicture(r.item_images)?.url ?? null,
               barId: bar.id,
+              menu: menuOf(runs.get(r.id)),
             })
           );
         }
@@ -100,6 +102,33 @@ async function readBars(): Promise<DiscoverBar[]> {
     if ((data ?? []).length < PAGE) break;
   }
   return bars;
+}
+
+/**
+ * When each bar drink was on its bar's menus (menu_drink_runs), by drink.
+ * ponytail: a few thousand short rows read with the drinks; fold them into a
+ * discover_drinks RPC with the rest when that lands.
+ */
+async function readMenuRuns(): Promise<Map<string, MenuRunRow>> {
+  const runs = new Map<string, MenuRunRow>();
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('menu_drink_runs')
+      .select('item_id, start_year, start_month, end_year, end_month, is_current')
+      .order('item_id')
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    for (const r of (data ?? []) as (MenuRunRow & { item_id: string })[]) runs.set(r.item_id, r);
+    if ((data ?? []).length < PAGE) break;
+  }
+  return runs;
+}
+
+/** Plain JSON for the persisted cache: on now, or past with its dates, and where it sorts. */
+function menuOf(run: MenuRunRow | undefined): DiscoverDrink['menu'] {
+  const dates = run ? runDates(run) : null;
+  const tag = searchMenuTag(dates);
+  return { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) };
 }
 
 /**
