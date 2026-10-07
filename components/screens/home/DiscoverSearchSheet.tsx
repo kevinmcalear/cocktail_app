@@ -151,7 +151,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
   },
-  input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
+  // The field's accent border shows focus, so the browser's own ring is off.
+  input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md, outlineWidth: 0 },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   switch: { flexDirection: 'row', gap: space.xs, padding: space.xs, borderRadius: radius.pill },
   side: { flex: 1, minHeight: layout.minTapTarget - space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },

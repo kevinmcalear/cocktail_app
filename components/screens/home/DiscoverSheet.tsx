@@ -61,7 +61,7 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
   return (
     <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[StyleSheet.absoluteFill, styles.layer]}>
       {page ? null : <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />}
-      <View role="dialog" aria-label={label} style={frame}>
+      <View role="dialog" aria-modal aria-label={label} style={frame}>
         {wide || page ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
         <View style={[styles.gap, { paddingHorizontal: gutter, paddingBottom: space.md }]}>
           {head ?? (
