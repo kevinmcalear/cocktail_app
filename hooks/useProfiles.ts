@@ -348,6 +348,8 @@ export interface Position {
   id: string;
   title: string;
   is_current: boolean;
+  /** The person's switch for a past job. Others read a past job only while it's on. */
+  is_shown: boolean;
   person: PositionProfile;
   bar: PositionProfile;
 }
@@ -421,7 +423,7 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
     queryFn: async (): Promise<Position[]> => {
       const { data, error } = await supabase
         .from('profile_positions')
-        .select(`id, title, is_current, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
+        .select(`id, title, is_current, is_shown, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
         .eq(profile!.kind === 'person' ? 'person_profile_id' : 'bar_profile_id', profile!.id)
         .limit(50);
       if (error) throw error;
@@ -429,5 +431,19 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
       const other = (p: Position) => (profile!.kind === 'person' ? p.bar : p.person).display_name;
       return ((data ?? []) as unknown as Position[]).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
     },
+  });
+}
+
+/** The person's switch on one past job. Only they can turn it on (a trigger checks). */
+export function useShowPosition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, shown }: { id: string; shown: boolean }) => {
+      const { data, error } = await supabase.from('profile_positions').update({ is_shown: shown }).eq('id', id).select('id');
+      if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-positions'] }),
+    // Shown inline by PastJobs, not as the global toast.
+    onError: () => {},
   });
 }

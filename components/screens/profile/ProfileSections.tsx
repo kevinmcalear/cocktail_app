@@ -2,15 +2,17 @@ import { useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
-import { peopleCount } from '@/lib/nearMe';
+import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
+import { isShownPosition } from './Positions';
 
 /** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
@@ -96,31 +98,35 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
 }
 
 /**
- * A bar's score is its drinks' scores averaged, weighted by how many people
- * ranked each; it sits in BarStats. Early (under MIN_RANKERS people) says so
- * here, without a number.
+ * A bar's name with its score and how many people have ranked drinks there.
+ * The score is its drinks' scores averaged, weighted by how many people
+ * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarScore({ profileId }: { profileId: string }) {
-  const { data } = useVenueScore(profileId);
-  if (!data || data.score !== null) return null;
-  const drinks = data.drinks === 1 ? '1 drink' : `${data.drinks} drinks`;
+export function BarHeader({ profile, detail }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string }) {
+  const { data } = useVenueScore(profile.id);
+  const score = data?.score ?? null;
+  const ranked = data?.rankers ? rankedCount(data.rankers) : null;
+  const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
   return (
-    <Caption tone="muted" align="center">
-      {`Early: ${peopleCount(data.rankers)} ranked ${drinks} here so far. A bar score shows once ${MIN_RANKERS} people have.`}
-    </Caption>
+    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
+      <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+      <View style={styles.flex}>
+        <Title>{profile.display_name}</Title>
+        <Caption tone="muted">{[detail, ranked].filter(Boolean).join(' · ')}</Caption>
+      </View>
+      {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
+    </View>
   );
 }
 
-/** The numbers under a bar's name: its score once it has one, awards, people and originals. */
+/** The numbers under a bar's name (its score sits in BarHeader): awards, people and originals. */
 export function BarStats({ profile, originals }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number }) {
-  const { data: score } = useVenueScore(profile.id);
   const { data: awards = [] } = useProfileAwards(profile.id);
-  const { data: people = [] } = useProfilePositions(profile);
+  const people = (useProfilePositions(profile).data ?? []).filter(isShownPosition).length;
   return (
     <Stats>
-      {score?.score != null ? <Stat value={formatScore(score.score)} label="score" /> : null}
       <Stat value={awards.length} label={awards.length === 1 ? 'award' : 'awards'} />
-      <Stat value={people.length} label={people.length === 1 ? 'person' : 'people'} />
+      <Stat value={people} label={people === 1 ? 'person' : 'people'} />
       <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} />
     </Stats>
   );
@@ -163,7 +169,8 @@ const styles = StyleSheet.create({
   menus: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xl },
-  stat: { alignItems: 'center', minWidth: 64 },
+  barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
+  stat: { alignItems: 'center', minWidth: 72 },
   soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });
