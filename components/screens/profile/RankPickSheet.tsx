@@ -74,6 +74,6 @@ const styles = StyleSheet.create({
   sheet: { width: '100%', maxWidth: 560, maxHeight: '85%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
   body: { padding: space.lg, gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  thumb: { width: 44 },
+  thumb: { width: 52 },
   text: { flex: 1, minWidth: 0 },
 });
