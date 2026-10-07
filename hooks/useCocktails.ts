@@ -1,5 +1,6 @@
 import { useAuth } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
+import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
@@ -17,7 +18,8 @@ export const COCKTAIL_LIST_COLUMNS = `
     family_id,
     ice_id,
     item_methods!item_methods_item_id_fkey (
-        method_item_id
+        method_item_id,
+        sort_order
     ),
     recipes:app_recipe_presentation!recipe_item_id (
         sort_order,
@@ -76,23 +78,23 @@ export function useCocktails(options?: { allContexts?: boolean }) {
     return useQuery({
         queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel, userId],
         queryFn: async () => {
-            let query = supabase
-                .from('app_item_presentation')
-                .select(COCKTAIL_LIST_COLUMNS)
-                .eq('item_type', 'cocktail')
-                // Drinks credited to another bar or person with no venue behind them (a
-                // bar's signatures, a bartender's originals) stay on that public profile,
-                // out of the Library. Search lists them apart, under "From bars" (usePublicDrinks).
-                .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
+            const data = await allRows((from, to) => {
+                let query = supabase
+                    .from('app_item_presentation')
+                    .select(COCKTAIL_LIST_COLUMNS)
+                    .eq('item_type', 'cocktail')
+                    // Drinks credited to another bar or person with no venue behind them (a
+                    // bar's signatures, a bartender's originals) stay on that public profile,
+                    // out of the Library. Search lists them apart, under "From bars" (usePublicDrinks).
+                    .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
-            if (!options?.allContexts) {
-                query = applyBarContextFilter(query, selectedContextIds);
-            }
+                if (!options?.allContexts) {
+                    query = applyBarContextFilter(query, selectedContextIds);
+                }
 
-            const { data, error } = await query.order('name', { ascending: true });
+                return query.order('name', { ascending: true }).order('id').range(from, to);
+            });
 
-            if (error) throw error;
-            
             return withListRecipes(data);
         }
     });
@@ -147,6 +149,7 @@ export function useCocktail(id?: string | string[]) {
                     ),
                     item_methods!item_methods_item_id_fkey (
                         method_item_id,
+                        sort_order,
                         method:items!item_methods_method_item_id_fkey (
                             name
                         )

@@ -105,7 +105,7 @@ export function CocktailDraftInlineEditor({
                     description: editor.description,
                     origin: editor.origin,
                     notes: editor.notes,
-                    methodId: editor.methodId,
+                    methodIds: editor.methodIds,
                     glasswareId: editor.glasswareId,
                     familyId: editor.familyId,
                     iceId: editor.iceId,

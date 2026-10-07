@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space, springs } from '@/constants/tokens';
+import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -19,6 +20,7 @@ import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
 import { GarnishStep } from './GarnishStep';
+import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
@@ -59,13 +61,16 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
   const clear = useDrinkWizardStore((s) => s.clear);
-  const draft: WizardDraft = kept?.draft ?? EMPTY_DRAFT;
+  // Filled out with today's fields: a draft kept by an older version of the app may lack some.
+  const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
   const [resumed, setResumed] = useState(() => hasContent(draft));
   const [direction, setDirection] = useState<1 | -1>(1);
   const dropdowns = useDropdowns().data;
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
+  const barGlasses = useBarGlassware(barId).data;
+  const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
 
   const windowHeight = useWindowDimensions().height;
   const [height, setHeight] = useState(0);
@@ -135,7 +140,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
       case 'method':
         return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
       case 'glass':
-        return <PickStep label="Glass" ownLabel="Another glass" options={choiceList(COMMON_GLASSES, dropdowns?.glassware ?? [])} selected={draft.glass ? [draft.glass] : []} onChange={([glass]) => set({ glass: glass ?? null })} />;
+        return <GlassStep draft={draft} set={set} options={choiceList(COMMON_GLASSES, dropdowns?.glassware ?? [])} barGlasses={barGlasses} barVariants={barVariants} />;
       case 'ice':
         return <PickStep label="Ice" ownLabel="Other ice" options={choiceList(COMMON_ICE, dropdowns?.iceTypes ?? [])} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} />;
       case 'garnish':
@@ -164,7 +169,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={sheetGap}
       testID="add-drink"
       onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
@@ -184,6 +190,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
             side={column ? space.lg : gutter}
             rounded={column}
             folded={typing && !column}
+            barVariants={barVariants}
           />
           <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
             <Animated.View key={step} entering={entering} style={styles.body}>

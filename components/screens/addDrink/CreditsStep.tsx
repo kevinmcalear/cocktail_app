@@ -13,14 +13,16 @@ import { Eyebrow, WizardChip } from './WizardChrome';
 
 
 /**
- * Who made it (you by default, someone with a profile, or nobody yet), and
- * the classic it's a riff on. A venue's drink is credited to the venue too.
+ * Who made it (you by default, someone with a profile, or nobody yet), who
+ * made it with them, and the classic it's a riff on. A venue's drink is credited to the venue too.
  */
 export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: boolean }) {
   const me = useMyProfile().data ?? null;
   const [who, setWho] = useState('');
   const people = usePublicPeople(who).data ?? [];
   const classics = useDrinkLists().data ?? [];
+  const [also, setAlso] = useState('');
+  const alsoPeople = usePublicPeople(also).data ?? [];
   const [riff, setRiff] = useState('');
   const suggested = draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined;
   const riffResults = searchByName(riff, classics, 5);
@@ -50,6 +52,29 @@ export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: bool
           />
         ) : null}
         {atVenue ? <Caption tone="muted">It’s credited to the venue too.</Caption> : null}
+      </View>
+
+      <View style={styles.section}>
+        <Eyebrow>Made with</Eyebrow>
+        {draft.coCreators.length ? (
+          <View role="group" accessibilityLabel="Made with" style={styles.chips}>
+            {draft.coCreators.map((c) => (
+              <WizardChip key={c.id ?? c.name} kind="checkbox" label={c.name} selected onPress={() => set({ coCreators: draft.coCreators.filter((x) => x !== c) })} />
+            ))}
+          </View>
+        ) : null}
+        <Field label="Who else made it?" value={also} onChangeText={setAlso} placeholder="Search people" autoCorrect={false} maxLength={60} />
+        {also.trim().length >= 2 ? (
+          <Results
+            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name }))}
+            empty="Nobody by that name has a public profile yet."
+            onPick={(id) => {
+              const p = alsoPeople.find((x) => x.id === id);
+              if (p) set({ coCreators: [...draft.coCreators, { id: p.id, name: p.display_name }] });
+              setAlso('');
+            }}
+          />
+        ) : null}
       </View>
 
       <View style={styles.section}>

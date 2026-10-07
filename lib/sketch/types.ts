@@ -27,6 +27,12 @@ export interface SketchInputs {
   garnish: SketchGarnish | null;
   from: Record<'glass' | 'ice' | 'method' | 'liquid' | 'garnish', 'data' | 'rules' | 'ai' | 'default'>;
   coverage: number;
+  /**
+   * Which drawing of the glass ('martini_pony', lib/sketch/geometry.ts
+   * GLASS_VARIANTS): the drink's own pick, else its bar's glassware. Set by the
+   * database, not the worker; null draws the default.
+   */
+  variant: string | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -51,5 +57,6 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
     garnish: has(SKETCH_GARNISHES, x.garnish) ? x.garnish : null,
     from: (x.from ?? {}) as SketchInputs['from'],
     coverage: Number(x.coverage) || 0,
+    variant: typeof x.variant === 'string' && x.variant.startsWith(`${x.glass}_`) ? x.variant : null,
   };
 }

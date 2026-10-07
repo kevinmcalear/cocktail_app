@@ -44,11 +44,15 @@ export interface WizardDraft {
   /** In order: "Dry shake" then "Shake". */
   methods: WizardPick[];
   glass: WizardPick | null;
+  /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
+  glassVariant?: string | null;
   ice: WizardPick | null;
   /** Saved as spec lines with a count unit (peel, twist, wheel), the way specs already write them. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
   creator: 'me' | 'nobody' | WizardPick | null;
+  /** Everyone else who made it with them (person profiles). */
+  coCreators: WizardPick[];
   riffOf: WizardPick | null;
   description: string;
   notes: string;
@@ -61,9 +65,11 @@ export const EMPTY_DRAFT: WizardDraft = {
   lines: [],
   methods: [],
   glass: null,
+  glassVariant: null,
   ice: null,
   garnishes: [],
   creator: null,
+  coCreators: [],
   riffOf: null,
   description: '',
   notes: '',
@@ -86,7 +92,7 @@ export function stepFilled(step: WizardStep, d: WizardDraft): boolean {
     case 'garnish':
       return d.garnishes.length > 0;
     case 'credits':
-      return d.creator !== null || !!d.riffOf;
+      return d.creator !== null || d.coCreators.length > 0 || !!d.riffOf;
     case 'notes':
       return !!(d.description.trim() || d.notes.trim());
     case 'publish':
@@ -238,7 +244,7 @@ const amountOf = (s: string): number | null => {
 };
 
 /** What the live sketch is drawn from. */
-export function sketchLook(d: WizardDraft): DraftLook {
+export function sketchLook(d: WizardDraft, barVariants: readonly string[] = []): DraftLook {
   return {
     name: d.name.trim() || 'New drink',
     description: d.description,
@@ -246,6 +252,8 @@ export function sketchLook(d: WizardDraft): DraftLook {
     ice: d.ice?.name ?? null,
     methods: d.methods.map((m) => m.name),
     lines: [...d.lines, ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
+    variant: d.glassVariant ?? null,
+    barVariants,
   };
 }
 

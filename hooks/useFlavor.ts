@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { allRows } from '@/lib/allRows';
 import { blendTaste, DIMENSIONS, MIN_COVERAGE, type FlavorDrink, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
@@ -101,9 +102,8 @@ interface CatalogRow extends FlavorRow {
 }
 
 /**
- * Every drink you can see that has a usable profile. ponytail: one
- * unpaginated read, matched on the device; fine for a few thousand drinks.
- * Upgrade path: rank by match in SQL and page it.
+ * Every drink you can see that has a usable profile (~2,000 and growing, so
+ * paged). ponytail: matched on the device; fine for a few thousand drinks. Upgrade path: rank by match in SQL and page it.
  */
 export function useFlavorCatalog() {
   const userId = useAuth().user?.id ?? null;
@@ -111,12 +111,15 @@ export function useFlavorCatalog() {
     queryKey: ['flavor-catalog', userId],
     enabled: !!userId,
     queryFn: async (): Promise<FlavorDrink[]> => {
-      const { data, error } = await supabase
-        .from('item_flavors')
-        .select(`${DIM_COLUMNS}, coverage, source, item:items!item_id ( id, name, bar_id, riff_of_id, item_images ( angle, sort_order, is_generated, images ( url ) ) )`)
-        .gte('coverage', MIN_COVERAGE);
-      if (error) throw error;
-      return ((data ?? []) as unknown as CatalogRow[])
+      const data = await allRows((from, to) =>
+        supabase
+          .from('item_flavors')
+          .select(`${DIM_COLUMNS}, coverage, source, item:items!item_id ( id, name, bar_id, riff_of_id, item_images ( angle, sort_order, is_generated, images ( url ) ) )`)
+          .gte('coverage', MIN_COVERAGE)
+          .order('item_id')
+          .range(from, to)
+      );
+      return (data as unknown as CatalogRow[])
         .filter((r) => r.item)
         .map((r) => ({
           id: r.item!.id,

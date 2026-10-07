@@ -2,19 +2,22 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useFinishOnboarding, useSaveOnboardingName } from '@/hooks/useOnboarding';
+import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
+import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { handleFromName } from '@/lib/profiles';
-import { MEASURE_UNITS, handleError, nameError, needsOnboarding, nextStep, type MeasureUnit, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { useAppStore } from '@/store/useAppStore';
 
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
+import { InviteBrand, InviteWelcome } from './InviteWelcome';
+import { NameStep, UnitsStep } from './ProfileSteps';
 
 const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
+  invite: { title: 'You’re invited' },
   name: { title: 'Your name', intro: 'How you show up on your profile and on drinks.' },
   hospitality: { title: 'Do you work in hospitality?' },
   find: {
@@ -25,7 +28,7 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
     title: 'Where do you work?',
     intro: 'Pick a bar, even one that has closed. Picking one doesn’t open its menus. Adding a bar makes you its admin.',
   },
-  past: { title: 'Anywhere else you’ve worked?', intro: 'Earlier bars count, including ones that have closed.' },
+  past: { title: 'Where you’ve worked', intro: 'Your profile shows where you work now. Past jobs stay hidden unless you choose to show them.' },
   menus: { title: 'Menus you worked on', intro: 'Name the list and the bar. A closed bar is fine.' },
   drinks: {
     title: 'Cocktails you worked on',
@@ -34,14 +37,27 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
 };
 
-/** After the age check, once, for a new account: name, work, and units. */
+/**
+ * After the age check, once, for a new account: name, work, and units. A
+ * venue's invite comes first (InviteWelcome) and, once joined, shortens it to
+ * name and units; their job at that venue is saved for them.
+ */
 export function OnboardingScreen() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, updatePassword } = useAuth();
   const profile = useMyProfile();
+  const invites = useMyInvites();
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
-  const [step, setStep] = useState<OnboardingStep>('name');
+  const saveJob = useSaveWorkplace();
+  const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
+  const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
+  const [chosen, setStep] = useState<OnboardingStep | null>(null);
+  const [joined, setJoined] = useState<MyInvite | null>(null);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordProblem, setPasswordProblem] = useState<string | null>(null);
+  const invite = invites.data?.[0] ?? null;
+  const step: OnboardingStep = chosen ?? (invite ? 'invite' : 'name');
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ name: string; handle: string } | null>(null);
   const [handleTaken, setHandleTaken] = useState(false);
@@ -53,25 +69,25 @@ export function OnboardingScreen() {
   }, [loading, user, router]);
 
   const go = (from: OnboardingStep, choice: StepChoice = 'no') => {
-    const next = nextStep(from, choice);
+    const next = nextStep(from, choice, !!joined);
     if (next === 'done') finish.mutate();
     else setStep(next);
   };
 
   // A claim needs them to have no profile yet, so the profile is created only
   // once they aren't taking an existing one.
-  const createProfile = (then: () => void) => {
+  const createProfile = (then: (id: string) => void, named = draft) => {
     if (personId) {
-      then();
+      then(personId);
       return;
     }
-    if (!draft) return;
+    if (!named) return;
     saveProfile.mutate(
-      { name: draft.name, handle: draft.handle, profileId: profile.data?.id ?? null },
+      { name: named.name, handle: named.handle, profileId: profile.data?.id ?? null },
       {
         onSuccess: (id) => {
           setCreatedId(id);
-          then();
+          then(id);
         },
         onError: (e) => {
           if (/handle/i.test(e.message)) {
@@ -83,8 +99,35 @@ export function OnboardingScreen() {
     );
   };
 
+  // An account made from an invite email has no password yet.
+  const askPassword = !!joined && !!user?.invited_at && !passwordSaved;
+  const saveName = async (name: string, handle: string, password: string) => {
+    setDraft({ name, handle });
+    setHandleTaken(false);
+    if (!joined) {
+      go('name');
+      return;
+    }
+    if (askPassword) {
+      setPasswordProblem(null);
+      const { error } = await updatePassword(password);
+      if (error) {
+        setPasswordProblem(error.message);
+        return;
+      }
+      setPasswordSaved(true);
+    }
+    // Their job at the venue, when it has a public bar profile. A failure here
+    // isn't worth stopping setup for: they can add it on their profile.
+    const bar = joined.bar_profile_id;
+    createProfile((id) => {
+      if (!bar) go('name');
+      else saveJob.mutate({ personId: id, barId: bar, title: inviteJobTitle(joined.role_level) }, { onSettled: () => go('name') });
+    }, { name, handle });
+  };
+
   const copy = COPY[step];
-  if (profile.isPending) {
+  if (profile.isPending || (invites.isLoading && !chosen)) {
     return (
       <SafetyPage title="Welcome" noBack>
         <Body tone="muted">One moment…</Body>
@@ -102,18 +145,34 @@ export function OnboardingScreen() {
     );
   }
 
-  return (
-    <SafetyPage title={copy.title} intro={copy.intro} noBack>
+  if (step === 'invite' && invite) {
+    return (
+      <InviteWelcome
+        invite={invite}
+        onJoined={() => {
+          setJoined(invite);
+          setSelectedContextIds([invite.bar_id]);
+          markContextDefaultApplied();
+          setStep('name');
+        }}
+        onDeclined={() => setStep('name')}
+      />
+    );
+  }
+
+  const page = (
+    <SafetyPage title={copy.title} intro={copy.intro} kicker={joined ? inviteStepLabel(step) : null} noBack>
       {step === 'name' ? (
         <NameStep
-          initialName={draft?.name || profile.data?.displayName || ''}
+          // A taken handle can come back while this step is still showing (the
+          // invited path saves here), so remount it to show the handle field.
+          key={handleTaken ? 'handle' : 'name'}
+          initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
-          pendingFinish={finish.isPending}
-          onSaved={(name, handle) => {
-            setDraft({ name, handle });
-            setHandleTaken(false);
-            go('name');
-          }}
+          askPassword={askPassword}
+          passwordProblem={passwordProblem}
+          pendingFinish={finish.isPending || saveProfile.isPending}
+          onSaved={saveName}
           onSkip={() => finish.mutate()}
         />
       ) : null}
@@ -147,78 +206,8 @@ export function OnboardingScreen() {
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
     </SafetyPage>
   );
-}
-
-function NameStep({
-  initialName,
-  forceHandle,
-  pendingFinish,
-  onSaved,
-  onSkip,
-}: {
-  initialName: string;
-  forceHandle: boolean;
-  pendingFinish: boolean;
-  onSaved: (name: string, handle: string) => void;
-  onSkip: () => void;
-}) {
-  const [name, setName] = useState(initialName);
-  const [handle, setHandle] = useState<string | null>(forceHandle ? handleFromName(initialName) : null);
-  const [tried, setTried] = useState(false);
-  const chosen = handle ?? handleFromName(name);
-  const problem = tried ? nameError(name) : null;
-  const handleProblem = tried && handle !== null ? handleError(handle) : undefined;
-
-  const submit = () => {
-    setTried(true);
-    if (nameError(name) || (handle !== null && handleError(handle))) return;
-    onSaved(name.trim(), chosen);
-  };
-
-  return (
-    <View style={styles.stack}>
-      <Field label="Name" value={name} onChangeText={setName} error={problem ?? undefined} autoComplete="name" maxLength={80} />
-      {handle !== null ? (
-        <Field
-          label="Handle"
-          value={handle}
-          onChangeText={setHandle}
-          error={handleProblem}
-          hint="Letters, numbers, dots and underscores. Yours was taken."
-          autoCapitalize="none"
-          autoCorrect={false}
-          maxLength={31}
-        />
-      ) : null}
-      <Button label="Continue" onPress={submit} />
-      <Button label="Not now" variant="ghost" onPress={onSkip} disabled={pendingFinish} />
-    </View>
-  );
-}
-
-function UnitsStep({ onDone, pending, error }: { onDone: () => void; pending: boolean; error?: string }) {
-  const specUnit = useSettingsStore((s) => s.specUnit);
-  const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
-  const setDefaultUnit = useSettingsStore((s) => s.setDefaultUnit);
-  const [unit, setUnit] = useState<MeasureUnit>(specUnit);
-
-  const save = () => {
-    setSpecUnit(unit);
-    setDefaultUnit(unit);
-    onDone();
-  };
-
-  return (
-    <View style={styles.stack}>
-      <View role="radiogroup" accessibilityLabel="How do you measure?" style={styles.chips}>
-        {MEASURE_UNITS.map((u) => (
-          <Chip key={u.id} label={u.label} selected={unit === u.id} onPress={() => setUnit(u.id)} />
-        ))}
-      </View>
-      {error ? <Caption tone="accent">{error}</Caption> : null}
-      <Button label={pending ? 'Saving…' : 'Continue'} onPress={save} disabled={pending} />
-    </View>
-  );
+  // Joined: the short setup stays in the venue's colours.
+  return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
 }
 
 function Answer({ label, onPress }: { label: string; onPress: () => void }) {
@@ -232,7 +221,6 @@ function Answer({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   answer: {
     minHeight: layout.minTapTarget,

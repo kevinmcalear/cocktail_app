@@ -73,7 +73,7 @@ export function CocktailDetailContent({
     }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, attachSelfId]);
 
     const viewSpec = {
-        method: cocktail.item_methods?.[0]?.method?.name,
+        method: (cocktail.item_methods as { method?: { name?: string } }[] | undefined)?.map((m) => m.method?.name).filter(Boolean).join(", ") || null,
         glassware: cocktail.glassware?.name,
         family: cocktail.family?.name,
         ice: cocktail.ice?.name,

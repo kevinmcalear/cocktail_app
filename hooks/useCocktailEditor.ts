@@ -10,6 +10,7 @@ import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { isHeroLink } from "@/lib/itemImages";
 import { plainDbMessage } from "@/lib/dbError";
+import { findByName, orderedMethodIds, toggleId } from "@/lib/drinkMethods";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
@@ -19,16 +20,8 @@ import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
-export type SpecDbField = "method_id" | "glassware_id" | "family_id" | "ice_id";
 
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
-
-const SPEC_DB_FIELD: Record<SpecCategory, SpecDbField> = {
-    method: "method_id",
-    glassware: "glassware_id",
-    family: "family_id",
-    ice: "ice_id",
-};
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();
@@ -45,10 +38,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const [origin, setOrigin] = useState("");
     const [notes, setNotes] = useState("");
 
-    const [methodId, setMethodId] = useState<string | null>(null);
+    const [methodIds, setMethodIds] = useState<string[]>([]);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
+    // How its glass is drawn (lib/sketch/geometry.ts GLASS_VARIANTS); null is the bar's glass or the default.
+    const [sketchVariant, setSketchVariant] = useState<string | null>(null);
 
     const [barId, setBarId] = useState<string | null>(null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
@@ -71,10 +66,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const setDescriptionDirty = wrap(setDescription);
     const setOriginDirty = wrap(setOrigin);
     const setNotesDirty = wrap(setNotes);
-    const setMethodIdDirty = wrap(setMethodId);
+    const setMethodIdsDirty = wrap(setMethodIds);
     const setGlasswareIdDirty = wrap(setGlasswareId);
     const setFamilyIdDirty = wrap(setFamilyId);
     const setIceIdDirty = wrap(setIceId);
+    const setSketchVariantDirty = wrap(setSketchVariant);
     const setBarIdDirty = wrap(setBarId);
     const setOverrideVisibilityDirty = wrap(setOverrideVisibility);
     const setOverrideGenericDirty = wrap(setOverrideGeneric);
@@ -101,7 +97,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setDescription(c.description || "");
         setOrigin(c.origin || "");
         setNotes(c.notes || "");
-        setMethodId(c.item_methods?.[0]?.method_item_id || null);
+        setMethodIds(orderedMethodIds(c.item_methods));
         setGlasswareId(c.glassware_id);
         setFamilyId(c.family_id);
         setIceId(c.ice_id);
@@ -125,7 +121,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             supabase
                 .from("items")
                 .select(
-                    "bar_id, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
+                    "bar_id, sketch_variant, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
                 )
                 .eq("id", id)
                 .single(),
@@ -138,6 +134,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     ) as SortableRecipeItem[]
                 );
                 setBarId(data.bar_id);
+                setSketchVariant(data.sketch_variant ?? null);
                 setOverrideVisibility(data.override_visibility_level?.toString() || null);
                 setOverrideGeneric(data.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(data.override_specific_brand_level?.toString() || null);
@@ -209,25 +206,25 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         }
     };
 
+    /** Finds or creates a shared method, glass, family or ice by name. The picker selects the id it returns. */
     const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
         if (!newItemName.trim()) throw new Error("Name is required");
-        const { data, error } = await supabase
-            .from("items")
-            .insert({
-                name: capitalize(newItemName.trim()),
-                item_type: type,
-            })
-            .select("id")
-            .single();
-        if (error || !data) throw error || new Error(`Failed to create ${type}`);
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
-        ({
-            method: setMethodIdDirty,
-            glassware: setGlasswareIdDirty,
-            family: setFamilyIdDirty,
-            ice: setIceIdDirty,
-        })[type](data.id);
-        return data.id;
+        const lists = { method: "methods", glassware: "glassware", family: "families", ice: "iceTypes" } as const;
+        let newId = findByName(dropdowns?.[lists[type]] ?? [], newItemName)?.id;
+        if (!newId) {
+            const { data, error } = await supabase
+                .from("items")
+                .insert({
+                    name: capitalize(newItemName.trim()),
+                    item_type: type,
+                })
+                .select("id")
+                .single();
+            if (error || !data) throw error || new Error(`Failed to create ${type}`);
+            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            newId = data.id;
+        }
+        return newId;
     };
 
     const identifyGlassware = identifyGlasswareFromPhoto;
@@ -253,65 +250,23 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         return data.id;
     };
 
-    const confirmDeletePill = async (field: SpecDbField, pillId: string) => {
-        await supabase.from("items").update({ [field]: null }).eq(field, pillId);
-        const { error } = await supabase.from("items").delete().eq("id", pillId);
-        if (error) throw error;
-
-        if (field === "method_id" && methodId === pillId) setMethodIdDirty(null);
-        if (field === "glassware_id" && glasswareId === pillId) setGlasswareIdDirty(null);
-        if (field === "family_id" && familyId === pillId) setFamilyIdDirty(null);
-        if (field === "ice_id" && iceId === pillId) setIceIdDirty(null);
-
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
-    };
-
-    const handleDeletePill = async (category: SpecCategory, item: { id: string; name: string }) => {
-        const field = SPEC_DB_FIELD[category];
-        try {
-            const { data: affected, error } = await supabase
-                .from("items")
-                .select("id, name")
-                .eq(field, item.id)
-                .eq("item_type", "cocktail");
-            if (error) throw error;
-
-            const confirm = () => confirmDeletePill(field, item.id);
-            if (affected && affected.length > 0) {
-                const names = affected.map((c: any) => c.name).join(", ");
-                Alert.alert(
-                    "Warning",
-                    `Deleting this item will remove it from ${affected.length} cocktail(s):\n\n${names}\n\nAre you sure?`,
-                    [
-                        { text: "Cancel", style: "cancel" },
-                        { text: "Delete", style: "destructive", onPress: confirm },
-                    ]
-                );
-            } else {
-                Alert.alert("Confirm Delete", `Delete "${item.name}"?`, [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: confirm },
-                ]);
-            }
-        } catch {
-            Alert.alert("Error", "Could not check affected cocktails.");
-        }
-    };
-
-    const setSpecId = (category: SpecCategory, value: string | null) => {
+    function setSpecId(category: SpecCategory, value: string | null) {
         const setters = {
-            method: setMethodIdDirty,
+            method: (id: string | null) => setMethodIdsDirty(id ? [id] : []),
             glassware: setGlasswareIdDirty,
             family: setFamilyIdDirty,
             ice: setIceIdDirty,
         };
         setters[category](value);
-    };
+    }
 
     const getSpecId = (category: SpecCategory) => {
-        const ids = { method: methodId, glassware: glasswareId, family: familyId, ice: iceId };
+        const ids = { method: methodIds[0] ?? null, glassware: glasswareId, family: familyId, ice: iceId };
         return ids[category];
     };
+
+    /** Adds a method to this drink, or takes it off. Never touches the method itself. */
+    const toggleMethod = (methodItemId: string) => setMethodIdsDirty((prev) => toggleId(prev, methodItemId));
 
     const handleSave = async (): Promise<boolean> => {
         if (!rawLoaded) {
@@ -348,6 +303,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
+                    sketch_variant: sketchVariant,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
                     override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
@@ -370,12 +326,14 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
                 })),
-                methodId,
+                methodIds,
                 null
             );
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
+            // The database redraws it in the chosen glass as the row saves.
+            await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
             setIsDirty(false);
             isLoaded.current = false;
             return true;
@@ -405,10 +363,13 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setOrigin: setOriginDirty,
         notes,
         setNotes: setNotesDirty,
-        methodId,
+        methodIds,
+        toggleMethod,
         glasswareId,
         familyId,
         iceId,
+        sketchVariant,
+        setSketchVariant: setSketchVariantDirty,
         setSpecId,
         getSpecId,
         barId,
@@ -432,7 +393,6 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         handleAddPill,
         handleAddGlassware,
         identifyGlassware,
-        handleDeletePill,
         handleSave,
         resetLoaded,
         discardChanges,

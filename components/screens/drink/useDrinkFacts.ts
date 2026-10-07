@@ -1,5 +1,6 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { classifyMethod, type BatchMethod } from '@/lib/batch';
+import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import { formatIce, glassFit } from '@/lib/glass';
 import type { SpecLine } from '@/lib/spec';
@@ -27,6 +28,8 @@ interface Options {
   dilutionDefaults: DilutionDefaults | undefined;
   openStrength: () => void;
   openGlass?: () => void;
+  /** The bar keeps the spec back, so the figures worked out from it stay back too. */
+  specLocked?: boolean;
 }
 
 /**
@@ -35,7 +38,7 @@ interface Options {
  * dropdown items. Strength comes from the server's figures for every role;
  * the line-by-line sheet needs the amounts.
  */
-export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass }: Options) {
+export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked }: Options) {
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -44,10 +47,10 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     : null;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
   const family = find(dropdowns?.families as Named[], item.family_id);
-  const methods = (item.item_methods ?? []).map((m) => find(dropdowns?.methods as Named[], m.method_item_id)?.name).filter((n): n is string => !!n);
+  const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
   const method: BatchMethod = classifyMethod(methods);
   const strength: Strength | null = amounts ? drinkStrength(lines, method, { dilutionPct: item.dilution_pct, defaults: dilutionDefaults }) : null;
-  const abv = formatAbv(item.abv);
+  const abv = specLocked ? null : formatAbv(item.abv);
   const strengthPress = strength ? openStrength : undefined;
   const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
   const fit = glass ? glassFit(item.serve_ml, glass, hasIce(ice?.name)) : null;
@@ -59,10 +62,10 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
       ice && { label: 'Ice', value: ice.name, sub: item.ice_per_serve_g ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined, onPress: openGlass, accessibilityHint: glassHint },
       family && { label: 'Family', value: family.name },
       abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: strengthPress, accessibilityHint: strengthHint } : null,
-      item.serve_ml != null
+      item.serve_ml != null && !specLocked
         ? { label: 'Serve', value: formatAmount(item.serve_ml, 'ml'), sub: strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', onPress: strengthPress, accessibilityHint: strengthHint }
         : null,
-      item.serve_abv != null ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: strengthPress, accessibilityHint: strengthHint } : null,
+      item.serve_abv != null && !specLocked ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: strengthPress, accessibilityHint: strengthHint } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);

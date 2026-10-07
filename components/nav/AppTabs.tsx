@@ -4,6 +4,8 @@ import { useDs } from '@/components/ds';
 import { FEATURES } from '@/constants/features';
 import { useMode } from '@/hooks/useMode';
 
+import { EightBallProvider } from '@/components/screens/eightball/EightBallProvider';
+
 import { VenueBrandProvider } from './VenueBrandProvider';
 
 /**
@@ -16,7 +18,9 @@ import { VenueBrandProvider } from './VenueBrandProvider';
 export function AppTabs() {
   return (
     <VenueBrandProvider>
-      <Tabs />
+      <EightBallProvider>
+        <Tabs />
+      </EightBallProvider>
     </VenueBrandProvider>
   );
 }

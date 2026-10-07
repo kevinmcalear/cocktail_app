@@ -15,6 +15,7 @@ import {
     updateMenuDraftsWithPublishedId,
     updateParentDraftsWithPublishedId,
 } from "@/lib/drafts";
+import { draftMethodIds, findByName, toggleId } from "@/lib/drinkMethods";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { withDrinkInSection } from "@/lib/menuDrinkAttach";
@@ -22,14 +23,7 @@ import { capitalize } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
-import type { SpecCategory, SpecDbField } from "@/hooks/useCocktailEditor";
-
-const SPEC_DB_FIELD: Record<SpecCategory, SpecDbField> = {
-    method: "method_id",
-    glassware: "glassware_id",
-    family: "family_id",
-    ice: "ice_id",
-};
+import type { SpecCategory } from "@/hooks/useCocktailEditor";
 
 export interface UseCocktailDraftEditorOptions {
     draftId?: string | null;
@@ -61,7 +55,7 @@ export function useCocktailDraftEditor({
     const [description, setDescription] = useState("");
     const [origin, setOrigin] = useState("");
     const [notes, setNotes] = useState("");
-    const [methodId, setMethodId] = useState<string | null>(null);
+    const [methodIds, setMethodIds] = useState<string[]>([]);
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
@@ -136,7 +130,7 @@ export function useCocktailDraftEditor({
                 description,
                 origin,
                 notes,
-                methodId,
+                methodIds,
                 glasswareId,
                 familyId,
                 iceId,
@@ -154,7 +148,7 @@ export function useCocktailDraftEditor({
             description,
             origin,
             notes,
-            methodId,
+            methodIds,
             glasswareId,
             familyId,
             iceId,
@@ -185,7 +179,7 @@ export function useCocktailDraftEditor({
             setDescription(data.description || "");
             setOrigin(data.origin || "");
             setNotes(data.notes || "");
-            setMethodId(data.methodId || null);
+            setMethodIds(draftMethodIds(data));
             setGlasswareId(data.glasswareId || null);
             setFamilyId(data.familyId || null);
             setIceId(data.iceId || null);
@@ -209,7 +203,7 @@ export function useCocktailDraftEditor({
                 description: data.description || "",
                 origin: data.origin || "",
                 notes: data.notes || "",
-                methodId: data.methodId || null,
+                methodIds: draftMethodIds(data),
                 glasswareId: data.glasswareId || null,
                 familyId: data.familyId || null,
                 iceId: data.iceId || null,
@@ -235,7 +229,7 @@ export function useCocktailDraftEditor({
                 description,
                 origin,
                 notes,
-                methodId,
+                methodIds,
                 glasswareId,
                 familyId,
                 iceId,
@@ -286,7 +280,7 @@ export function useCocktailDraftEditor({
             description,
             origin,
             notes,
-            methodId,
+            methodIds,
             glasswareId,
             familyId,
             iceId,
@@ -387,8 +381,12 @@ export function useCocktailDraftEditor({
         }
     };
 
+    /** Finds or creates a shared method, glass, family or ice by name. The picker selects the id it returns. */
     const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
         if (!newItemName.trim()) throw new Error("Name is required");
+        const lists = { method: methods, glassware, family: families, ice: iceTypes };
+        const existing = findByName(lists[type], newItemName);
+        if (existing) return existing.id;
         const { data, error } = await supabase
             .from("items")
             .insert({
@@ -399,13 +397,6 @@ export function useCocktailDraftEditor({
             .single();
         if (error || !data) throw error || new Error(`Failed to create ${type}`);
         await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
-        ({
-            method: setMethodId,
-            glassware: setGlasswareId,
-            family: setFamilyId,
-            ice: setIceId,
-        })[type](data.id);
-        markDirty();
         return data.id;
     };
 
@@ -433,53 +424,9 @@ export function useCocktailDraftEditor({
         return data.id;
     };
 
-    const confirmDeletePill = async (field: SpecDbField, pillId: string) => {
-        await supabase.from("items").update({ [field]: null }).eq(field, pillId);
-        const { error } = await supabase.from("items").delete().eq("id", pillId);
-        if (error) throw error;
-        if (field === "method_id" && methodId === pillId) setMethodId(null);
-        if (field === "glassware_id" && glasswareId === pillId) setGlasswareId(null);
-        if (field === "family_id" && familyId === pillId) setFamilyId(null);
-        if (field === "ice_id" && iceId === pillId) setIceId(null);
-        markDirty();
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
-    };
-
-    const handleDeletePill = async (category: SpecCategory, item: { id: string; name: string }) => {
-        const field = SPEC_DB_FIELD[category];
-        try {
-            const { data: affected, error } = await supabase
-                .from("items")
-                .select("id, name")
-                .eq(field, item.id)
-                .eq("item_type", "cocktail");
-            if (error) throw error;
-
-            const confirm = () => confirmDeletePill(field, item.id);
-            if (affected && affected.length > 0) {
-                const names = affected.map((c: any) => c.name).join(", ");
-                Alert.alert(
-                    "Warning",
-                    `Deleting this item will remove it from ${affected.length} cocktail(s):\n\n${names}\n\nAre you sure?`,
-                    [
-                        { text: "Cancel", style: "cancel" },
-                        { text: "Delete", style: "destructive", onPress: confirm },
-                    ]
-                );
-            } else {
-                Alert.alert("Confirm Delete", `Delete "${item.name}"?`, [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: confirm },
-                ]);
-            }
-        } catch {
-            Alert.alert("Error", "Could not check affected cocktails.");
-        }
-    };
-
     const setSpecId = (category: SpecCategory, value: string | null) => {
         const setters = {
-            method: setMethodId,
+            method: (id: string | null) => setMethodIds(id ? [id] : []),
             glassware: setGlasswareId,
             family: setFamilyId,
             ice: setIceId,
@@ -489,8 +436,14 @@ export function useCocktailDraftEditor({
     };
 
     const getSpecId = (category: SpecCategory) => {
-        const ids = { method: methodId, glassware: glasswareId, family: familyId, ice: iceId };
+        const ids = { method: methodIds[0] ?? null, glassware: glasswareId, family: familyId, ice: iceId };
         return ids[category];
+    };
+
+    /** Adds a method to this drink, or takes it off. Never touches the method itself. */
+    const toggleMethod = (methodItemId: string) => {
+        setMethodIds((prev) => toggleId(prev, methodItemId));
+        markDirty();
     };
 
     const performPublish = async (): Promise<boolean> => {
@@ -552,12 +505,14 @@ export function useCocktailDraftEditor({
                 });
             }
 
-            if (methodId) {
-                await supabase.from("item_methods").insert({
-                    item_id: cocktailId,
-                    method_item_id: methodId,
-                    sort_order: 0,
-                });
+            if (methodIds.length) {
+                await supabase.from("item_methods").insert(
+                    methodIds.map((methodItemId, index) => ({
+                        item_id: cocktailId,
+                        method_item_id: methodItemId,
+                        sort_order: index,
+                    }))
+                );
             }
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
@@ -671,7 +626,7 @@ export function useCocktailDraftEditor({
             setDescription(snap.description || "");
             setOrigin(snap.origin || "");
             setNotes(snap.notes || "");
-            setMethodId(snap.methodId || null);
+            setMethodIds(draftMethodIds(snap));
             setGlasswareId(snap.glasswareId || null);
             setFamilyId(snap.familyId || null);
             setIceId(snap.iceId || null);
@@ -718,7 +673,8 @@ export function useCocktailDraftEditor({
         setOrigin: wrap(setOrigin),
         notes,
         setNotes: wrap(setNotes),
-        methodId,
+        methodIds,
+        toggleMethod,
         glasswareId,
         familyId,
         iceId,
@@ -757,7 +713,6 @@ export function useCocktailDraftEditor({
         handleAddPill,
         handleAddGlassware,
         identifyGlassware,
-        handleDeletePill,
         handleSave,
         handleSaveDraft,
         handlePublish,

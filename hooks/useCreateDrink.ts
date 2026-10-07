@@ -115,6 +115,7 @@ export function useCreateDrink() {
           description: draft.description.trim() || null,
           notes: draft.notes.trim() || null,
           glassware_id: glassId,
+          sketch_variant: draft.glassVariant ?? null,
           ice_id: iceId,
           riff_of_id: draft.riffOf?.id ?? null,
           creator_profile_id: creatorId,
@@ -128,7 +129,7 @@ export function useCreateDrink() {
       const id = item.id as string;
 
       try {
-        await saveDrinkSpec(id, lines, methodIds[0] ?? null, null);
+        await saveDrinkSpec(id, lines, methodIds, null);
         // ponytail: save_drink_spec takes one method; the rest follow it in
         // order. Upgrade path: an array argument on the RPC (and the editor).
         if (methodIds.length > 1) {
@@ -145,6 +146,13 @@ export function useCreateDrink() {
       if (draft.publish) {
         const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
         if (error) warnings.push(plainDbMessage(error) ?? 'It’s saved as private: who can see it didn’t change.');
+      }
+
+      // Not the person credited first, and only people with a profile (the database checks both).
+      const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
+      if (coIds.length) {
+        const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
+        if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
       if (menuSectionId) {

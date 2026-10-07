@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
@@ -34,6 +35,8 @@ interface SketchHeaderProps {
   rounded: boolean;
   /** Just the controls, while the keyboard is up on a phone. */
   folded?: boolean;
+  /** The bar's glasses' drawings (bar_glassware), drawn when no shape is picked. */
+  barVariants?: readonly string[];
 }
 
 /**
@@ -42,11 +45,11 @@ interface SketchHeaderProps {
  * with the rules the saved drink is drawn with; a new drawing fades in over
  * the old one and gives a small pour bounce, so each choice lands.
  */
-export function SketchHeader({ draft, step, onBack, top, side, rounded, folded }: SketchHeaderProps) {
+export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, barVariants }: SketchHeaderProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
-  const inputs = inputsFor(sketchLook(draft));
+  const inputs = inputsFor(sketchLook(draft, barVariants));
   const drawKey = JSON.stringify(inputs);
   const at = WIZARD_STEPS.indexOf(step);
   const counted = Math.min(at + 1, COUNTED_STEPS);
@@ -61,6 +64,8 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded }
 
   return (
     <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
+      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes. */}
+      {Platform.OS === 'android' && !rounded ? <StatusBar style="dark" /> : null}
       <View style={styles.controls}>
         <PressableScale
           onPress={onBack}

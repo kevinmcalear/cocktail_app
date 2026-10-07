@@ -471,6 +471,28 @@ describe('venue invites', () => {
     assert.ok(!raised?.length);
   });
 
+  test('an invite carries a name, and only the invitee reads their invites with the venue name', async () => {
+    const named = (name) =>
+      users.otherAdmin.client.rpc('add_user_to_bar_by_email', { p_email: users.outsider.email, p_bar_id: ids.barTwo, p_role_level: 20, p_name: name });
+    assert.ifError((await named('  Ollie Outsider ')).error);
+    assert.ifError((await add('otherAdmin', users.outsider.email)).error, 'the three-argument call still works');
+    assert.ok((await named('x'.repeat(81))).error);
+    const { data: row } = await service.from('bar_invites').select('name').eq('bar_id', ids.barTwo).eq('email', users.outsider.email).single();
+    assert.equal(row.name, 'Ollie Outsider', 'trimmed, and kept when re-invited without a name');
+
+    const { data: mine, error } = await users.outsider.client.rpc('my_bar_invites');
+    assert.ifError(error);
+    assert.deepEqual(
+      mine.map((i) => ({ bar_id: i.bar_id, bar_name: i.bar_name, role_level: i.role_level, name: i.name })),
+      [{ bar_id: ids.barTwo, bar_name: `Bar Two ${run}`, role_level: 20, name: 'Ollie Outsider' }]
+    );
+    for (const who of ['bartender', 'otherAdmin']) {
+      const { data } = await users[who].client.rpc('my_bar_invites');
+      assert.ok(!data.some((i) => i.bar_id === ids.barTwo), who);
+    }
+    assert.ok((await anon.rpc('my_bar_invites')).error, 'anon can\'t call it');
+  });
+
   test('someone else can\'t accept an invite; the invitee joins at the invited role', async () => {
     const { error: stolen } = await users.bartender.client.rpc('accept_bar_invite', { p_bar_id: ids.barTwo });
     assert.ok(stolen);

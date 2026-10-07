@@ -1,18 +1,6 @@
-import { Stack } from 'expo-router';
+import { Redirect } from 'expo-router';
 
-import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { OffMenuScreen } from '@/components/screens/off-menu/OffMenuScreen';
-import { WebHead } from '@/components/WebHead';
-
-/** Classics the venue can make that aren't on the menu. From the sidebar, and from Menus on a phone. */
+/** Off menu became the staff list in Library. Old links and bookmarks land there. */
 export default function OffMenuRoute() {
-  return (
-    <VenueBrandProvider>
-      <Stack.Screen options={{ headerShown: false, title: 'Off menu' }} />
-      <WebHead>
-        <title>Off menu</title>
-      </WebHead>
-      <OffMenuScreen />
-    </VenueBrandProvider>
-  );
+  return <Redirect href="/library?show=staff" />;
 }
