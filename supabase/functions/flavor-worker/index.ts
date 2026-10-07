@@ -8,11 +8,13 @@ import {
   partWeight,
   profileFromSpec,
   RULES_VERSION,
+  TASTE_DIMENSIONS,
   type IngredientFlavor,
   type SpecPart,
   type SpecProfile,
 } from "../_shared/flavor.ts";
 import {
+  aiAnswerSchema,
   parseAiDrink,
   parseAiLooks,
   SKETCH_VERSION,
@@ -53,6 +55,7 @@ const FN = "flavor-worker";
 const DEFAULT_VENUE_DAILY_LIMIT = 50;
 const DEFAULT_USER_DAILY_LIMIT = 40;
 const TIME_BUDGET_MS = 60_000;
+const CONCURRENCY = 4;
 
 function authorized(req: Request): boolean {
   const expected = Deno.env.get("FLAVOR_WORKER_SECRET") || (isLocalStack() ? LOCAL_FLAVOR_WORKER_SECRET : "");
@@ -185,19 +188,22 @@ Deno.serve(async (req) => {
   const started = Date.now();
   const tally = { rules: 0, ai: 0, over_quota: 0, gone: 0, failed: 0, sketches: 0 };
 
-  while (Date.now() - started < TIME_BUDGET_MS) {
+  let claimFailed = false;
+  // One job from claim to save. False when there's nothing left to claim.
+  const workOne = async (): Promise<boolean> => {
     const { data, error: claimError } = await admin.rpc("claim_item_flavor_job");
     if (claimError) {
       console.error(`${FN}: claim failed:`, claimError);
-      return json({ error: "Could not claim a job." }, 500);
+      claimFailed = true;
+      return false;
     }
     const job = (data as Job[] | null)?.[0];
-    if (!job) break;
+    if (!job) return false;
     if (!job.spec_fingerprint) {
       // Deleted, or no longer a cocktail.
       await release(job, "gone", "Nothing to compute.");
       tally.gone++;
-      continue;
+      return true;
     }
 
     let charged = false;
@@ -224,7 +230,7 @@ Deno.serve(async (req) => {
         await save(job, rules, true);
         tally.rules++;
         tally.sketches++;
-        continue;
+        return true;
       }
 
       // Something to show while the AI fill runs, or if it never succeeds.
@@ -241,20 +247,20 @@ Deno.serve(async (req) => {
       if (quota === "limit") {
         await release(job, "over_quota", "Daily AI allowance used up.");
         tally.over_quota++;
-        continue;
+        return true;
       }
       if (quota === "no_payer" && !catalogAi) {
         // A catalog drink with no venue or creator: the rules stand.
         await save(job, rules, true);
         tally.rules++;
         tally.sketches++;
-        continue;
+        return true;
       }
       charged = quota !== "no_payer";
 
       const drinkForPrompt = askDrink ? sketchDrink(ctx, parts, null) : null;
       const prompt = aiPrompt(ask, sketchPromptAddendum(drinkForPrompt));
-      const text = model === "mock" ? mockAnswer(ask, drinkForPrompt) : await askJson(prompt);
+      const text = model === "mock" ? mockAnswer(ask, drinkForPrompt) : await askJson(prompt, aiAnswerSchema(TASTE_DIMENSIONS, !!drinkForPrompt));
       const answers = parseAiFlavors(text, ask.map((p) => p.id));
       const lookAnswers = parseAiLooks(text, ask.map((p) => p.id));
       const drinkAnswer = askDrink ? parseAiDrink(text) : null;
@@ -279,7 +285,16 @@ Deno.serve(async (req) => {
       await release(job, "failed", err instanceof Error ? err.message : String(err));
       tally.failed++;
     }
-  }
+    return true;
+  };
+
+  // A few jobs at a time: most of a job is waiting on the model.
+  await Promise.all(
+    Array.from({ length: CONCURRENCY }, async () => {
+      while (Date.now() - started < TIME_BUDGET_MS && (await workOne()));
+    }),
+  );
+  if (claimFailed) return json({ error: "Could not claim a job.", ...tally }, 500);
 
   return json(tally);
 });

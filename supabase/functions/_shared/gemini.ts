@@ -112,14 +112,24 @@ export function flavorModel(): "mock" | "live" | "off" {
   return "off";
 }
 
-/** Asks Gemini Flash a text question and returns its JSON reply as text. */
-export async function askJson(prompt: string): Promise<string> {
+/**
+ * Asks Gemini Flash a text question and returns its JSON reply as text. With
+ * a schema, the reply can only take that shape (enums included). Thinking is
+ * off: these are lookups, and thinking made each call slow and billed it.
+ */
+export async function askJson(prompt: string, schema?: Record<string, unknown>): Promise<string> {
   const res = await fetch(`${API_BASE}/gemini-2.5-flash:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },
+    signal: AbortSignal.timeout(45_000),
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0 },
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0,
+        thinkingConfig: { thinkingBudget: 0 },
+        ...(schema ? { responseSchema: schema } : {}),
+      },
     }),
   });
   if (!res.ok) throw new Error(`Gemini failed: ${res.status} ${await res.text()}`);
