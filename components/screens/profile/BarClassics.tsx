@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, PressableScale } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { usePublicClassics, type PublicClassic } from '@/hooks/useOffMenu';
-import { patronGroups } from '@/lib/offMenu';
+import { usePublicClassics, type PublicClassic } from '@/hooks/useStaffList';
+import { patronGroups } from '@/lib/staffList';
 
 /**
  * On a bar's public page: the classics they can make off the menu, with the
@@ -17,7 +17,7 @@ export function BarClassics({ barId }: { barId: string | null }) {
   return (
     <View style={styles.block}>
       <Group title="Top 10" hint="The ones to ask for first" rows={groups.top10} />
-      <Group title={groups.top10.length ? 'The rest of the top 40' : 'Top 40'} hint="More they do well" rows={groups.top40} />
+      <Group title={groups.top10.length ? 'The rest of the top 50' : 'Top 50'} hint="More they do well" rows={groups.top50} />
       <Group title="We also make" hint="Other classics, if you ask" rows={groups.also} />
     </View>
   );
