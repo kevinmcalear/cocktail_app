@@ -8,6 +8,8 @@ export const DROPDOWNS_QUERY_KEY = ['dropdowns_v6'] as const;
 export function useDropdowns() {
     return useQuery({
         queryKey: DROPDOWNS_QUERY_KEY,
+        // Too big to save between launches (lib/queryCachePersist.ts).
+        meta: { persist: false },
         queryFn: async () => {
             // ponytail: fetch all menus; Current sidebar filters is_active (inactive stay in creator tree)
             const menusQuery = async () => {

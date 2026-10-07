@@ -3,7 +3,9 @@ import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { defaultShouldDehydrateQuery, onlineManager, QueryClient, type Query } from '@tanstack/react-query';
+import { onlineManager, QueryClient } from '@tanstack/react-query';
+
+import { guardStorage, serializeCache, shouldPersistQuery } from '@/lib/queryCachePersist';
 
 // Setup network listener for TanStack Query
 onlineManager.setEventListener((setOnline) => {
@@ -55,21 +57,17 @@ export const queryClient = new QueryClient({
 });
 
 export const asyncStoragePersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
+  storage: guardStorage(AsyncStorage),
+  // The cache is one storage row; Android can't read one over about 2 MB back.
+  serialize: serializeCache,
   // Throttling saves performance by not writing to local storage too frequently
   throttleTime: 1000,
 });
 
-/**
- * What's saved to storage between launches: every successful query except
- * those marked `meta: { persist: false }`, such as ones keyed by where the
- * person is standing (hooks/useDiscover.ts), which must never be stored.
- */
+/** What's saved to storage between launches: see lib/queryCachePersist.ts. */
 export const persistOptions = {
   persister: asyncStoragePersister,
-  dehydrateOptions: {
-    shouldDehydrateQuery: (query: Query) => defaultShouldDehydrateQuery(query) && query.meta?.persist !== false,
-  },
+  dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
 // Register mutation defaults so they can resume offline

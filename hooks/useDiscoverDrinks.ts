@@ -32,6 +32,8 @@ export function useDiscoverDrinks() {
   const signedIn = !!useAuth().user;
   return useQuery({
     queryKey: ['discover-drinks'],
+    // Too big to save between launches (lib/queryCachePersist.ts).
+    meta: { persist: false },
     enabled: signedIn,
     staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<{ drinks: DiscoverDrink[]; bars: DiscoverBar[] }> => {
