@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import { partWeight } from '../supabase/functions/_shared/flavor';
 import {
+  aiAnswerSchema,
   GLASSES,
   glassFromName,
   iceFromName,
@@ -150,10 +151,22 @@ assert.deepEqual(looks.get('a'), { color: '#8a1040', tint: 1, foam: 'cap' });
 assert.equal(looks.has('b'), false, 'a colour must be a hex');
 assert.equal(looks.has('zz'), false, 'only asked ids');
 assert.equal(looks.get('c')?.foam, null, 'off-list foam is dropped');
-assert.deepEqual(parseAiDrink(JSON.stringify({ drink: { glass: 'flute', ice: 'iceberg', method: 'build', garnish: 'a twist of fate', color: '#F0E4B0' } })), {
+assert.deepEqual(parseAiDrink(JSON.stringify({ drink: { glass: 'flute', ice: 'lava', method: 'build', garnish: 'a twist of fate', color: '#F0E4B0' } })), {
   glass: 'flute', ice: undefined, method: 'build', garnish: null, color: '#f0e4b0', foam: null,
 });
 assert.equal(parseAiDrink('not json'), null);
+// Near misses are read like the drink's own data, not thrown away.
+assert.deepEqual(parseAiDrink(JSON.stringify({ drink: { glass: 'Coupe glass', ice: 'Large Cube', method: 'Shaken', garnish: 'Lemon twist', color: '#FC9' } })), {
+  glass: 'coupe', ice: 'large', method: 'shake', garnish: 'lemon_peel', color: '#ffcc99', foam: null,
+});
+assert.equal(parseAiLooks(JSON.stringify({ ingredients: [{ id: 'a', color: '#ABC', tint: 0.5 }] }), ['a']).get('a')?.color, '#aabbcc');
+
+// The answer schema pins every enum to its list.
+const schema = aiAnswerSchema(['sweet', 'sour'], true) as { properties: { drink: { properties: { glass: { enum: string[] } } }; ingredients: { items: { required: string[] } } }; required: string[] };
+assert.deepEqual(schema.properties.drink.properties.glass.enum, [...GLASSES]);
+assert.ok(schema.properties.ingredients.items.required.includes('sweet'));
+assert.deepEqual(schema.required, ['ingredients', 'drink']);
+assert.deepEqual((aiAnswerSchema(['sweet'], false) as { required: string[] }).required, ['ingredients']);
 assert.equal(parseAiDrink(JSON.stringify({ drink: { garnish: 'cherry' } })), null, 'an answer with nothing to draw is no answer');
 
 // Nothing but enums, numbers, booleans and hex colours ever comes out.

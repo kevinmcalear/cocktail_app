@@ -684,8 +684,48 @@ export function sketchPromptAddendum(drink: SketchDrink | null): string[] {
   return out;
 }
 
-const pick = <T extends string>(list: readonly T[], v: unknown): T | undefined =>
-  typeof v === 'string' && (list as readonly string[]).includes(v) ? (v as T) : undefined;
+const pick = <T extends string>(list: readonly T[], v: unknown): T | undefined => {
+  if (typeof v !== 'string') return undefined;
+  const t = v.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return (list as readonly string[]).includes(t) ? (t as T) : undefined;
+};
+/** A colour as '#rrggbb', from '#RRGGBB' or '#rgb'. */
+const hexOf = (v: unknown): string | undefined => {
+  if (typeof v !== 'string') return undefined;
+  const t = v.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(t)) return t;
+  if (/^#[0-9a-f]{3}$/.test(t)) return '#' + [...t.slice(1)].map((c) => c + c).join('');
+  return undefined;
+};
+
+/**
+ * The shape the model must answer in (Gemini's responseSchema), so every
+ * enum comes back from its list. Taste dimensions come from flavor.ts.
+ */
+export function aiAnswerSchema(tasteDimensions: readonly string[], withDrink: boolean): Record<string, unknown> {
+  const str = (values?: readonly string[], nullable = false) => ({ type: 'STRING', ...(values ? { enum: [...values] } : {}), ...(nullable ? { nullable: true } : {}) });
+  const num = { type: 'NUMBER' };
+  const ingredient = {
+    type: 'OBJECT',
+    properties: {
+      id: str(), abv: num, ...Object.fromEntries(tasteDimensions.map((d) => [d, num])),
+      color: str(), tint: num, foam: str(FOAMS, true),
+    },
+    required: ['id', 'abv', ...tasteDimensions, 'color', 'tint'],
+  };
+  const drink = {
+    type: 'OBJECT',
+    properties: {
+      glass: str(GLASSES), ice: str(ICES), method: str(METHODS), garnish: str(GARNISHES, true), color: str(), foam: str(FOAMS, true),
+    },
+    required: ['glass', 'ice', 'method', 'color'],
+  };
+  return {
+    type: 'OBJECT',
+    properties: { ingredients: { type: 'ARRAY', items: ingredient }, ...(withDrink ? { drink } : {}) },
+    required: withDrink ? ['ingredients', 'drink'] : ['ingredients'],
+  };
+}
 
 /** Reads the colour half of the AI fill's answer per asked id. Anything off-list is dropped. */
 export function parseAiLooks(text: string, askedIds: readonly string[]): Map<string, IngredientLook> {
@@ -697,9 +737,10 @@ export function parseAiLooks(text: string, askedIds: readonly string[]): Map<str
   const asked = new Set(askedIds);
   for (const row of rows as Record<string, unknown>[]) {
     const id = typeof row?.id === 'string' ? row.id : null;
-    if (!id || !asked.has(id) || out.has(id) || !isHex(row.color)) continue;
+    const color = hexOf(row.color);
+    if (!id || !asked.has(id) || out.has(id) || !color) continue;
     const tint = typeof row.tint === 'number' && Number.isFinite(row.tint) ? round3(clamp01(row.tint)) : 0.3;
-    out.set(id, { color: (row.color as string).toLowerCase(), tint, foam: pick(FOAMS, row.foam) ?? null });
+    out.set(id, { color, tint, foam: pick(FOAMS, row.foam) ?? null });
   }
   return out;
 }
@@ -710,12 +751,14 @@ export function parseAiDrink(text: string): DrinkLook | null {
   try { data = JSON.parse(text); } catch { return null; }
   const d = (data as { drink?: Record<string, unknown> })?.drink;
   if (!d || typeof d !== 'object') return null;
+  // Near misses ("Coupe glass", "large cube") are read the way the drink's own data is.
+  const said = (v: unknown) => (typeof v === 'string' ? v : '');
   const look: DrinkLook = {
-    glass: pick(GLASSES, d.glass),
-    ice: pick(ICES, d.ice),
-    method: pick(METHODS, d.method),
-    garnish: pick(GARNISHES, d.garnish) ?? null,
-    color: isHex(d.color) ? (d.color as string).toLowerCase() : undefined,
+    glass: pick(GLASSES, d.glass) ?? glassFromName(said(d.glass)) ?? undefined,
+    ice: pick(ICES, d.ice) ?? iceFromName(said(d.ice)) ?? undefined,
+    method: pick(METHODS, d.method) ?? methodFromNames([said(d.method)]) ?? undefined,
+    garnish: pick(GARNISHES, d.garnish) ?? (said(d.garnish) ? first(GARNISH_RULES, said(d.garnish)) : null),
+    color: hexOf(d.color),
     foam: pick(FOAMS, d.foam) ?? null,
   };
   return look.glass || look.ice || look.method || look.color ? look : null;
