@@ -332,16 +332,18 @@ describe('flavor worker', { skip: workerSkip }, () => {
   test('asks the AI fill about unknown ingredients once, billed to the venue', async () => {
     const bar = (await serviceInsert('bars', { name: `AI Bar ${run}` })).id;
     const secret = await newItem({ name: 'House Tincture', item_type: 'ingredient' });
-    const first = await drink('Tinctured', [[ids.gin, 45], [secret, 15]], { bar_id: bar });
+    // With a glass set, the drawing inputs don't need the AI fill's help with the drink itself.
+    const glass = await newItem({ name: 'Rocks', item_type: 'glassware' });
+    const first = await drink('Tinctured', [[ids.gin, 45], [secret, 15]], { bar_id: bar, glassware_id: glass });
     await work(first);
     let row = await flavorRow(first);
     assert.equal(row.source, 'ai');
     assert.equal(row.coverage, 1);
     assert.equal(await usage(bar), 1);
     const { rows } = await db.query('SELECT flavor FROM private.ingredient_flavors WHERE item_id = $1', [secret]);
-    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0 });
+    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0, look: { color: '#c0392b', tint: 0.8, foam: null } });
 
-    const second = await drink('Tinctured Again', [[ids.rum, 45], [secret, 15]], { bar_id: bar });
+    const second = await drink('Tinctured Again', [[ids.rum, 45], [secret, 15]], { bar_id: bar, glassware_id: glass });
     await work(second);
     row = await flavorRow(second);
     assert.equal(row.source, 'ai');

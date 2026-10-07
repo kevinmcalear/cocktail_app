@@ -38,6 +38,8 @@ export const RULES_VERSION = 1;
 export interface IngredientFlavor {
   taste: Partial<Record<TasteDimension, number>>;
   abv: number;
+  /** What it looks like, from the same AI answer (see sketch.ts IngredientLook). */
+  look?: { color: string; tint: number; foam?: string | null } | null;
 }
 
 interface Rule extends IngredientFlavor {
@@ -321,7 +323,7 @@ export function parseAiFlavors(text: string, askedIds: readonly string[]): Map<s
 }
 
 /** The AI fill's prompt for the lines the rules don't know. Names go to the model only, never back to the app. */
-export function aiPrompt(parts: readonly SpecPart[]): string {
+export function aiPrompt(parts: readonly SpecPart[], extra: readonly string[] = []): string {
   const lines = parts.map((p) =>
     JSON.stringify({ id: p.id, name: p.name, generic: p.genericName ?? null, categories: p.categories ?? [] })
   );
@@ -331,6 +333,7 @@ export function aiPrompt(parts: readonly SpecPart[]): string {
     `${TASTE_DIMENSIONS.join(', ')}; and abv, its alcohol by volume from 0 to 1 (0.4 for a 40% spirit, 0 for a syrup).`,
     'House-made ingredients are often syrups, cordials, infusions or tinctures: judge from the name.',
     'Answer with JSON only: {"ingredients": [{"id": "...", "abv": 0, "sweet": 0, ...}]}, one entry per id, numbers only.',
+    ...extra,
     '',
     ...lines,
   ].join('\n');
