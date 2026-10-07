@@ -20,6 +20,8 @@ export interface BarGlass {
   source_urls: string[];
   /** The glass of its type the bar's drinks are drawn in. */
   is_default: boolean;
+  /** The bar's name, for "Little Rye uses this". */
+  bar_name: string;
 }
 
 /** A venue's glasses (through its profile), in its order. Pass null to skip. */
@@ -31,12 +33,13 @@ export function useBarGlassware(barId: string | null | undefined) {
     queryFn: async (): Promise<BarGlass[]> => {
       const { data, error } = await supabase
         .from('bar_glassware')
-        .select('id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default, profiles!inner(bar_id)')
+        .select('id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default, profiles!inner(bar_id, display_name)')
         .eq('profiles.bar_id', barId!)
         .order('sort_order')
         .order('created_at');
       if (error) throw error;
-      return (data ?? []).map(({ profiles: _bar, ...row }) => row) as BarGlass[];
+      type Row = Omit<BarGlass, 'bar_name'> & { profiles: { display_name: string } | null };
+      return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...row, bar_name: profiles?.display_name ?? '' }));
     },
   });
 }

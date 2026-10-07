@@ -24,6 +24,10 @@ export interface DraftLook {
   ice?: string | null;
   methods?: readonly string[];
   lines: readonly DraftLine[];
+  /** The glass drawing picked ('martini_pony', lib/sketch/geometry.ts); counts only for the glass it's drawn in. */
+  variant?: string | null;
+  /** The bar's own glasses' drawings, for when nothing is picked (bar_glassware). */
+  barVariants?: readonly string[];
 }
 
 export function draftSketchInputs(draft: DraftLook): SketchInputs {
@@ -42,6 +46,8 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
       volume: partWeight({ name: l.name, amount: l.amount, unit: l.unit }).volume,
     })),
   });
-  // The glass shape comes from the drink's pick or its bar's glass, not the rules.
-  return { ...inputs, variant: null };
+  // As the database resolves it after a save: the pick, else the bar's glass of this type.
+  const forGlass = (v: string | null | undefined) => (v?.startsWith(`${inputs.glass}_`) ? v : null);
+  const variant = forGlass(draft.variant) ?? (draft.barVariants ?? []).map(forGlass).find(Boolean) ?? null;
+  return { ...inputs, variant };
 }
