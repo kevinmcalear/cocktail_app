@@ -196,6 +196,7 @@ function RootLayoutNav() {
             <Stack.Screen name="bring-in" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
+            <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="you" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />

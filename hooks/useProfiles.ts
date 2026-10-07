@@ -6,6 +6,7 @@ import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMe
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import { sortEditions, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
+import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
@@ -215,9 +216,16 @@ export interface ProfileClaim {
   message: string | null;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  /** How a bar proves it's theirs; 'note' for a person's claim. */
+  method: ClaimMethod;
+  /** The six digits for an Instagram bio or a call. */
+  code: string | null;
+  evidence: ClaimEvidence | null;
+  /** A moderator's words when they turn it down. */
+  decline_reason: string | null;
 }
 
-const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at';
+export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason';
 
 /** The signed-in person's claims on one profile, newest first. */
 export function useMyClaims(profileId: string | null | undefined) {
@@ -266,8 +274,23 @@ export function useClaimProfile() {
   });
 }
 
+/** What a moderator checks a claim against: the page as it stands. */
+export interface ClaimPage {
+  id: string;
+  kind: 'person' | 'bar';
+  handle: string;
+  display_name: string;
+  website: string | null;
+  instagram: string | null;
+  social_links: string[] | null;
+  locality: string | null;
+  city: string | null;
+  country_code: string | null;
+  is_closed: boolean;
+}
+
 export interface ClaimForReview extends ProfileClaim {
-  profile: { id: string; kind: 'person' | 'bar'; handle: string; display_name: string } | null;
+  profile: ClaimPage | null;
   bar: { name: string } | null;
   /** The claimant's own person profile, if they have one. */
   claimant: { display_name: string; handle: string } | null;
@@ -287,7 +310,7 @@ export function usePendingClaims() {
     queryFn: async (): Promise<ClaimForReview[]> => {
       const { data, error } = await supabase
         .from('profile_claims')
-        .select(`${CLAIM_COLUMNS}, profile:profiles(id, kind, handle, display_name), bar:bars(name)`)
+        .select(`${CLAIM_COLUMNS}, profile:profiles(id, kind, handle, display_name, website, instagram, social_links, locality, city, country_code, is_closed), bar:bars(name)`)
         .eq('status', 'pending')
         .neq('user_id', user!.id)
         .order('created_at')
@@ -305,20 +328,34 @@ export function usePendingClaims() {
   });
 }
 
+export interface ClaimReview {
+  claimId: string;
+  approve: boolean;
+  /** For a phone claim: the code the bar read out. */
+  code?: string;
+  /** For turning one down: what the claimant will see. */
+  reason?: string;
+}
+
 /** Approves (hands the profile over) or turns down a claim. Moderators only. */
 export function useReviewClaim() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async ({ claimId, approve }: { claimId: string; approve: boolean }) => {
+    mutationFn: async ({ claimId, approve, code, reason }: ClaimReview) => {
       if (approve) {
-        const { error } = await supabase.rpc('approve_profile_claim', { p_claim_id: claimId });
+        const { error } = await supabase.rpc('approve_profile_claim', { p_claim_id: claimId, p_code: code ?? null });
         if (error) throw error;
         return;
       }
       const { data, error } = await supabase
         .from('profile_claims')
-        .update({ status: 'rejected', reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() })
+        .update({
+          status: 'rejected',
+          decline_reason: reason?.trim().slice(0, 300) || null,
+          reviewed_by: user?.id ?? null,
+          reviewed_at: new Date().toISOString(),
+        })
         .eq('id', claimId)
         .eq('status', 'pending')
         .select('id');

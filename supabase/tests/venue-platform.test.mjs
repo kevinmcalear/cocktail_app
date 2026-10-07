@@ -621,20 +621,21 @@ describe('profiles and credit', () => {
     // A bar that isn't on the app as a profile yet.
     const barFive = (await serviceInsert('bars', { name: `Fifth Bar ${run}` })).id;
     await serviceInsert('user_bars', { user_id: users.admin.id, bar_id: barFive, role_level: 40 });
-    const own = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: barFive }).select('id');
+    const claimBar = (who, profileId, barId) => who.client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_bar_id: barId });
+    const own = await claimBar(users.admin, venue, barFive);
     assert.ifError(own.error);
-    assert.equal(own.data.length, 1);
+    assert.equal(own.data.status, 'pending');
 
     const secondVenue = (await serviceInsert('profiles', { kind: 'bar', handle: `venuetwo${run}`, display_name: 'Older Haunt' })).id;
-    const hasProfile = await users.admin.client.from('profile_claims').insert({ profile_id: secondVenue, bar_id: ids.barOne });
+    const hasProfile = await claimBar(users.admin, secondVenue, ids.barOne);
     assert.ok(hasProfile.error, 'a bar that already has a profile cannot claim a second one');
 
-    const noPublish = await users.maker.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barOne });
+    const noPublish = await claimBar(users.maker, venue, ids.barOne);
     assert.ok(noPublish.error, 'Drink Creators cannot claim for their bar');
-    const otherBar = await users.admin.client.from('profile_claims').insert({ profile_id: venue, bar_id: ids.barTwo });
-    assert.ok(otherBar.error, 'nobody claims for a bar they cannot publish for');
-    const withoutBar = await users.outsider.client.from('profile_claims').insert({ profile_id: venue });
-    assert.ok(withoutBar.error, 'a venue claim names the bar');
+    const otherBar = await claimBar(users.outsider, venue, ids.barTwo);
+    assert.ok(otherBar.error, 'nobody claims for a bar they cannot run');
+    const direct = await users.outsider.client.from('profile_claims').insert({ profile_id: venue });
+    assert.ok(direct.error, 'bar claims go through start_bar_claim');
     const personWithBar = await users.admin.client.from('profile_claims').insert({ profile_id: historic, bar_id: ids.barOne });
     assert.ok(personWithBar.error, 'a person claim carries no bar');
   });
