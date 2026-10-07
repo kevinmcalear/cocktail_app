@@ -1,3 +1,4 @@
+import { FEATURES } from '@/constants/features';
 import { DEFAULT_SEARCH_ALL } from '@/lib/barContextFilter';
 import { DEFAULT_UNIT } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -57,6 +58,11 @@ export const useSettingsStore = create<SettingsState>()(
         {
             name: 'settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            // Service mode is switched off for launch: don't bring back a stored "on".
+            merge: (persisted, current) => {
+                const saved = persisted as Partial<SettingsState> | undefined;
+                return { ...current, ...saved, serviceMode: FEATURES.service && !!saved?.serviceMode };
+            },
         }
     )
 );

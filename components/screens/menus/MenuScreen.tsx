@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, useGutter, type IconName } from '@/components/ds';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { FEATURES } from '@/constants/features';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -97,8 +98,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
             {/* Your home menu shares as a link or a card; a venue's menu as its guest card. */}
             <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (canEdit && !menu.barId ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
-            {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
-            {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+            {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
+            {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
             {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
           </View>
           {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" />}

@@ -95,9 +95,7 @@ export function CocktailInlineEditor({
                 images={images}
                 emptyPhotoPlaceholder={images.length === 0}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
                 embedded={embedded}
                 isEditing
                 editableTitle={{
