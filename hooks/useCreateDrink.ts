@@ -147,6 +147,13 @@ export function useCreateDrink() {
         if (error) warnings.push(plainDbMessage(error) ?? 'It’s saved as private: who can see it didn’t change.');
       }
 
+      // Not the person credited first, and only people with a profile (the database checks both).
+      const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
+      if (coIds.length) {
+        const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
+        if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
+      }
+
       if (menuSectionId) {
         const menuDraft = menuDraftId ? drafts.find((d) => d.id === menuDraftId) : null;
         if (menuDraft) {

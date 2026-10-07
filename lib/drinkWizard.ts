@@ -49,6 +49,8 @@ export interface WizardDraft {
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
   creator: 'me' | 'nobody' | WizardPick | null;
+  /** Everyone else who made it with them (person profiles). */
+  coCreators: WizardPick[];
   riffOf: WizardPick | null;
   description: string;
   notes: string;
@@ -64,6 +66,7 @@ export const EMPTY_DRAFT: WizardDraft = {
   ice: null,
   garnishes: [],
   creator: null,
+  coCreators: [],
   riffOf: null,
   description: '',
   notes: '',
@@ -86,7 +89,7 @@ export function stepFilled(step: WizardStep, d: WizardDraft): boolean {
     case 'garnish':
       return d.garnishes.length > 0;
     case 'credits':
-      return d.creator !== null || !!d.riffOf;
+      return d.creator !== null || d.coCreators.length > 0 || !!d.riffOf;
     case 'notes':
       return !!(d.description.trim() || d.notes.trim());
     case 'publish':
