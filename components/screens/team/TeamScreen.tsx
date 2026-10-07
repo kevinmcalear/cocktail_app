@@ -16,7 +16,7 @@ import { confirmAsync } from '@/lib/dialogs';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 import { canManageTeam, canSeeTeam, joinedLabel, personName, roster, TEAM_MANAGE } from '@/lib/team';
 
-const EMPLOYEE = 20;
+import { InviteSheet, type InviteNote } from './InviteSheet';
 
 function problem(error: unknown): string | null {
   if (!error) return null;
@@ -66,20 +66,20 @@ export function TeamScreen() {
   const barId = visible ? active.id : null;
   const members = useBarMembers(barId);
   const change = useSetMemberRole(barId ?? '');
-  const add = useSetMemberRole(barId ?? '');
   const remove = useRemoveMember(barId ?? '');
   const { data: invites = [] } = useBarInvites(barId ?? '', manage);
   const cancel = useRemoveInvite(barId ?? '');
   const send = useSendInviteEmail(barId ?? '');
   const [query, setQuery] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState<string | null>(null);
-  const [newRole, setNewRole] = useState(EMPLOYEE);
-  const busy = change.isPending || add.isPending || remove.isPending || cancel.isPending || send.isPending;
+  const [inviting, setInviting] = useState(false);
+  const [note, setNote] = useState<InviteNote | null>(null);
+  const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
   const emailInvite = (to: string) => {
-    setSent(null);
-    send.mutate(to, { onSuccess: () => setSent(`Invite emailed to ${to}.`) });
+    setNote(null);
+    send.mutate(to, {
+      onSuccess: () => setNote({ text: `Invite emailed to ${to}.` }),
+      onError: (e) => setNote({ text: `The email didn’t send (${e.message}). They can still join from your staff link.`, failed: true }),
+    });
   };
   const people = roster(members.data ?? [], manage ? query : '');
 
@@ -101,42 +101,12 @@ export function TeamScreen() {
       <>
         <LockedSection title="Manage the team" unlocked={manage} opensAt="Admin">
           <Field label="Look up" value={query} onChangeText={setQuery} placeholder="Name or email" autoCapitalize="none" autoCorrect={false} />
-          <Field label="Name" value={name} onChangeText={setName} placeholder="Sam Rivera" autoComplete="off" maxLength={80} />
-          <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="name@bar.com"
-            hint="We email them a link to join. Your staff link works too, signed in with this email."
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-          />
-          <Roles label="Role for the new member" value={newRole} ceiling={role} disabled={busy} onPick={setNewRole} />
-          {problem(add.error) ? <Caption tone="accent" role="alert">{problem(add.error)}</Caption> : null}
-          {send.error ? (
-            <Caption tone="accent" role="alert">{`The invite is saved, but the email didn’t send (${send.error.message}). They can still join from your staff link.`}</Caption>
+          <Button label="Invite someone" onPress={() => setInviting(true)} disabled={busy} style={styles.invite} />
+          {note ? (
+            <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
+              {note.text}
+            </Caption>
           ) : null}
-          {sent ? <Caption tone="muted" role="status">{sent}</Caption> : null}
-          <Button
-            label="Invite"
-            disabled={busy || !email.trim()}
-            onPress={async () => {
-              const to = email.trim().toLowerCase();
-              if (!(await confirmRole(name.trim() || to, newRole))) return;
-              add.mutate(
-                { email: to, roleLevel: newRole, name },
-                {
-                  onSuccess: (invited) => {
-                    setEmail('');
-                    setName('');
-                    if (invited) emailInvite(to);
-                  },
-                }
-              );
-            }}
-            style={styles.invite}
-          />
           {invites.map((i) => (
             <View key={i.id} style={styles.inviteRow}>
               <Caption>{`${i.name ? `${i.name}, ` : ''}${i.email} · invited as ${roleLabel(i.role_level)}`}</Caption>
@@ -147,6 +117,9 @@ export function TeamScreen() {
             </View>
           ))}
         </LockedSection>
+        {manage && active ? (
+          <InviteSheet visible={inviting} onClose={() => setInviting(false)} barId={active.id} barName={active.name} ceiling={role} onDone={setNote} />
+        ) : null}
         {problem(change.error) || problem(remove.error) || problem(cancel.error) ? (
           <Caption tone="accent" role="alert">{problem(change.error) || problem(remove.error) || problem(cancel.error)}</Caption>
         ) : null}

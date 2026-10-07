@@ -7,14 +7,13 @@ import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
-import { useFinishOnboarding, useSaveOnboardingName } from '@/hooks/useOnboarding';
+import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { roleLabel } from '@/lib/roles';
 import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
-import { InviteStep } from './InviteStep';
+import { InviteWelcome } from './InviteWelcome';
 import { NameStep, UnitsStep } from './ProfileSteps';
 
 const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
@@ -38,24 +37,10 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
 };
 
-/** Invited: the venue in the title, and the job step is about that venue. */
-function inviteCopy(step: OnboardingStep, invite: MyInvite | null, joined: MyInvite | null): { title: string; intro?: string } | null {
-  if (step === 'invite' && invite) {
-    return {
-      title: `You’re invited to ${invite.bar_name}`,
-      intro: `${invite.bar_name} added you to the team as ${roleLabel(invite.role_level)}. Join, then set up your profile in three short steps.`,
-    };
-  }
-  if (step === 'work' && joined) {
-    return { title: `Your job at ${joined.bar_name}`, intro: 'It shows on your profile. Put what you do, like Bartender or Bar manager.' };
-  }
-  return null;
-}
-
 /**
  * After the age check, once, for a new account: name, work, and units. A
- * venue's invite comes first and, once joined, shortens it to name, their job
- * there, and units.
+ * venue's invite comes first (InviteWelcome) and, once joined, shortens it to
+ * name and units; their job at that venue is saved for them.
  */
 export function OnboardingScreen() {
   const router = useRouter();
@@ -64,6 +49,7 @@ export function OnboardingScreen() {
   const invites = useMyInvites();
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
+  const saveJob = useSaveWorkplace();
   const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
   const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
   const [chosen, setStep] = useState<OnboardingStep | null>(null);
@@ -90,9 +76,9 @@ export function OnboardingScreen() {
 
   // A claim needs them to have no profile yet, so the profile is created only
   // once they aren't taking an existing one.
-  const createProfile = (then: () => void, named = draft) => {
+  const createProfile = (then: (id: string) => void, named = draft) => {
     if (personId) {
-      then();
+      then(personId);
       return;
     }
     if (!named) return;
@@ -101,7 +87,7 @@ export function OnboardingScreen() {
       {
         onSuccess: (id) => {
           setCreatedId(id);
-          then();
+          then(id);
         },
         onError: (e) => {
           if (/handle/i.test(e.message)) {
@@ -131,10 +117,16 @@ export function OnboardingScreen() {
       }
       setPasswordSaved(true);
     }
-    createProfile(() => go('name'), { name, handle });
+    // Their job at the venue, when it has a public bar profile. A failure here
+    // isn't worth stopping setup for: they can add it on their profile.
+    const bar = joined.bar_profile_id;
+    createProfile((id) => {
+      if (!bar) go('name');
+      else saveJob.mutate({ personId: id, barId: bar, title: inviteJobTitle(joined.role_level) }, { onSettled: () => go('name') });
+    }, { name, handle });
   };
 
-  const copy = inviteCopy(step, invite, joined) ?? COPY[step];
+  const copy = COPY[step];
   if (profile.isPending || (invites.isLoading && !chosen)) {
     return (
       <SafetyPage title="Welcome" noBack>
@@ -153,20 +145,23 @@ export function OnboardingScreen() {
     );
   }
 
+  if (step === 'invite' && invite) {
+    return (
+      <InviteWelcome
+        invite={invite}
+        onJoined={() => {
+          setJoined(invite);
+          setSelectedContextIds([invite.bar_id]);
+          markContextDefaultApplied();
+          setStep('name');
+        }}
+        onDeclined={() => setStep('name')}
+      />
+    );
+  }
+
   return (
-    <SafetyPage title={copy.title} intro={copy.intro} kicker={joined || step === 'invite' ? inviteStepLabel(step) : null} noBack>
-      {step === 'invite' && invite ? (
-        <InviteStep
-          invite={invite}
-          onJoined={() => {
-            setJoined(invite);
-            setSelectedContextIds([invite.bar_id]);
-            markContextDefaultApplied();
-            setStep('name');
-          }}
-          onDeclined={() => setStep('name')}
-        />
-      ) : null}
+    <SafetyPage title={copy.title} intro={copy.intro} kicker={joined ? inviteStepLabel(step) : null} noBack>
       {step === 'name' ? (
         <NameStep
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
@@ -200,24 +195,7 @@ export function OnboardingScreen() {
           onSkip={() => createProfile(() => setStep('units'))}
         />
       ) : null}
-      {step === 'work' ? (
-        <PlaceStep
-          personId={personId}
-          isCurrent
-          onDone={() => go('work')}
-          initial={
-            joined
-              ? {
-                  bar: joined.bar_profile_id
-                    ? { id: joined.bar_profile_id, display_name: joined.bar_name, locality: null, postcode: null, city: null, country_code: null }
-                    : null,
-                  search: joined.bar_name,
-                  role: inviteJobTitle(joined.role_level),
-                }
-              : undefined
-          }
-        />
-      ) : null}
+      {step === 'work' ? <PlaceStep personId={personId} isCurrent onDone={() => go('work')} /> : null}
       {step === 'past' ? <PlaceStep personId={personId} isCurrent={false} onDone={() => go('past')} /> : null}
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}

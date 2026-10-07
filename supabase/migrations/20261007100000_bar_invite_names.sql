@@ -7,10 +7,11 @@
 --     send three arguments keep working. Re-inviting without a name keeps
 --     the one already on the invite. A role change for a current member
 --     ignores it: they already have a name.
---   * my_bar_invites(): the caller's own pending invites, with the venue's
---     name and its public bar profile (if it has one). An invitee can't read
---     the bars row before joining, so this is how onboarding says
---     "You're invited to <bar>".
+--   * my_bar_invites(): the caller's own pending invites, with what the
+--     welcome screen shows: the venue's name and brand (logo, accent, display
+--     face, ground tint), who invited them, and the venue's public bar
+--     profile if it has one (where their job goes). An invitee can't read the
+--     bars row before joining, so this is how onboarding says "Join <bar>".
 
 ALTER TABLE "public"."bar_invites" ADD COLUMN "name" "text"
     CHECK ("name" IS NULL OR ("name" = btrim("name") AND char_length("name") BETWEEN 1 AND 80));
@@ -68,25 +69,36 @@ REVOKE EXECUTE ON FUNCTION "public"."add_user_to_bar_by_email"("text", "uuid", i
 GRANT EXECUTE ON FUNCTION "public"."add_user_to_bar_by_email"("text", "uuid", integer, "text") TO "authenticated", "service_role";
 
 -- The caller's own invites, matched on their confirmed email like
--- accept_bar_invite. Nothing here the invitee couldn't learn by opening the
--- venue's staff link, except the bar profile id, which is public anyway.
+-- accept_bar_invite. The brand is what the venue's staff link already shows
+-- signed out; the bar profile id is public; the inviter's name is what the
+-- invitee sees on the roster once they join.
 CREATE FUNCTION "public"."my_bar_invites"() RETURNS TABLE (
     "id" "uuid",
     "bar_id" "uuid",
     "bar_name" "text",
     "bar_slug" "text",
+    "bar_logo_url" "text",
+    "bar_color" "text",
+    "bar_display_face" "text",
+    "bar_ground_tint" "text",
     "bar_profile_id" "uuid",
     "role_level" integer,
     "name" "text",
+    "invited_by_name" "text",
     "created_at" timestamp with time zone
 )
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
-    SELECT i.id, i.bar_id, b.name, b.slug, p.id, i.role_level, i.name, i.created_at
+    SELECT i.id, i.bar_id, b.name, b.slug, b.logo_url, b.primary_color, b.display_face::text, b.ground_tint,
+        p.id, i.role_level, i.name,
+        COALESCE(nullif(btrim(ip.display_name), ''), nullif(btrim(iu.raw_user_meta_data ->> 'full_name'), '')),
+        i.created_at
     FROM public.bar_invites i
     JOIN public.bars b ON b.id = i.bar_id
     LEFT JOIN public.profiles p ON p.bar_id = i.bar_id AND p.kind = 'bar'
+    LEFT JOIN auth.users iu ON iu.id = i.invited_by
+    LEFT JOIN public.profiles ip ON ip.user_id = i.invited_by AND ip.kind = 'person'
     WHERE i.email = (
         SELECT lower(u.email) FROM auth.users u
         WHERE u.id = auth.uid() AND u.email_confirmed_at IS NOT NULL

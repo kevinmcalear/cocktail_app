@@ -24,10 +24,16 @@ export interface MyInvite {
   bar_id: string;
   bar_name: string;
   bar_slug: string | null;
+  bar_logo_url: string | null;
+  bar_color: string | null;
+  bar_display_face: string | null;
+  bar_ground_tint: string | null;
   /** The venue's public bar profile, when it has one: where their job goes. */
   bar_profile_id: string | null;
   role_level: number;
   name: string | null;
+  /** The Admin who sent it, by the name they go by. */
+  invited_by_name: string | null;
 }
 
 /** A venue's open invites. RLS shows them to the venue's admins only. */

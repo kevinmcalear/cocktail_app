@@ -38,8 +38,8 @@ export function afterAgeCheck(metadata: unknown): '/onboarding' | '/(tabs)' {
  * The next screen. Hospitality looks for an existing profile first. A claim
  * skips the career steps (they don't own that profile until it's approved).
  * Otherwise: current job, earlier jobs, menus, drinks, then units.
- * Someone who joined a venue from an invite takes the short way: name, their
- * job at that venue, units (INVITE_STEPS).
+ * Someone who joined a venue from an invite takes the short way: name, units,
+ * then the app (INVITE_STEPS). Their job at that venue is saved for them.
  */
 export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined = false): OnboardingStep | 'done' {
   if (joined) {
@@ -57,23 +57,32 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined
   return 'done';
 }
 
-/** The invited path, in order, for its "Step 2 of 4". */
-export const INVITE_STEPS: OnboardingStep[] = ['invite', 'name', 'work', 'units'];
+/** The invited path after the welcome. Its third step is the app itself ("Have a look around"). */
+export const INVITE_STEPS: OnboardingStep[] = ['name', 'units'];
 
-/** "Step 2 of 4" on the invited path, or null on any other step. */
+/** The welcome's list of what's next. */
+export const INVITE_STEP_NAMES = ['Check your name', 'Pick ml or oz', 'Have a look around'];
+
+/** "Step 1 of 3" on the invited path, or null on any other step. */
 export function inviteStepLabel(step: OnboardingStep): string | null {
   const at = INVITE_STEPS.indexOf(step);
-  return at < 0 ? null : `Step ${at + 1} of ${INVITE_STEPS.length}`;
+  return at < 0 ? null : `Step ${at + 1} of ${INVITE_STEP_NAMES.length}`;
 }
 
 /**
- * The job title to suggest at the venue they were invited to: the role, when
- * it reads as one. Guest, Employee and Admin are access levels, not jobs.
+ * The job title saved at the venue they joined: the role, when it reads as
+ * one. Guest, Employee and Admin are access levels, not jobs. They can change
+ * it on their profile.
  */
 export function inviteJobTitle(roleLevel: number): string {
   if (roleLevel === 30) return 'Bartender';
   if (roleLevel === 35) return 'Drink Creator';
-  return '';
+  return 'Team member';
+}
+
+/** "a Bartender", "an Admin": the welcome's "Join <bar> as …". */
+export function withArticle(word: string): string {
+  return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${word}`;
 }
 
 /** A password for an account made from an invite (Auth's minimum is 6). */
