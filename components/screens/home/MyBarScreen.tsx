@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, Headline, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
+import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
+import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { AddBottlesSheet } from './AddBottlesSheet';
@@ -35,7 +37,8 @@ function ShelfChip({ item, onRemove }: { item: BarItem; onRemove: () => void }) 
 
 /**
  * My Bar, in home mode: the bottles on your shelf, what they make (house-made
- * syrups included), and what one more bottle would unlock.
+ * syrups included), what one more bottle would unlock, and then every other
+ * drink you could make at home (classics and drinks shared with you).
  */
 export function MyBarScreen() {
   const ds = useDs();
@@ -45,12 +48,21 @@ export function MyBarScreen() {
   const { add, remove } = useShelfEdit();
   const [adding, setAdding] = useState(false);
   const empty = !bar.isLoading && bar.shelf.length === 0;
+  const others = bar.drinks.filter((d) => !bar.canMakeIds.has(d.id));
 
-  return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader />
-        <View style={[styles.body, { paddingHorizontal: gutter }]}>
+  const { data: me } = useMyTaste();
+  const catalog = useFlavorCatalog();
+  // Match percentages only once your taste comes from enough rankings.
+  const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const matchFor = (id: string) => {
+    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
+    return profile ? `${matchPercent(scored, profile)}% match` : undefined;
+  };
+
+  const header = (
+    <>
+      <ScreenHeaderSpacer />
+      <View style={styles.body}>
           <View>
             <Display>My Bar</Display>
             <Caption tone="muted">
@@ -98,12 +110,32 @@ export function MyBarScreen() {
             <View>
               <Headline role="heading">You can make</Headline>
               {bar.canMake.map((d) => (
-                <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} />
+                <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} />
               ))}
             </View>
           ) : null}
-        </View>
-      </ScrollView>
+
+          {others.length ? (
+            <View style={styles.more}>
+              <Headline role="heading">Make it yourself</Headline>
+              <Caption tone="muted">{bar.shelf.length ? 'Classics and drinks shared with you, for when you have the bottles' : 'Classics and drinks shared with you'}</Caption>
+            </View>
+          ) : null}
+      </View>
+    </>
+  );
+
+  return (
+    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      <FlatList
+        data={others}
+        keyExtractor={(d) => d.id}
+        ListHeaderComponent={header}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
+        renderItem={({ item }) => (
+          <DrinkRow name={item.name} itemId={item.id} href={itemHref('Cocktail', item.id)} imageUrl={item.imageUrl} glass={item.glass} caption={matchFor(item.id)} />
+        )}
+      />
       <AddBottlesSheet
         visible={adding}
         bottles={bar.bottles}
@@ -117,7 +149,8 @@ export function MyBarScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.xl, maxWidth: 760, width: '100%' },
+  body: { gap: space.xl },
+  more: { gap: space.xs },
   section: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {

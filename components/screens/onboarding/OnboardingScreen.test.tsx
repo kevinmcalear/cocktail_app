@@ -47,6 +47,10 @@ jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? mockPeople : [] }),
   useClaimProfile: () => ({ mutate: mockClaim, isPending: false, error: null }),
 }));
+jest.mock('@/components/screens/profile/PastJobs', () => {
+  const { Text } = jest.requireActual('react-native');
+  return { CLAIM_PAST_JOBS: 'Past jobs stay hidden', PastJobs: ({ personId }: { personId: string }) => <Text>{`Jobs of ${personId}`}</Text> };
+});
 jest.mock('@/hooks/useRankings', () => ({
   usePublicBars: (term: string) => ({ data: term.trim().length >= 2 ? mockBars : [] }),
 }));
@@ -118,6 +122,7 @@ describe('OnboardingScreen', () => {
     expect(screen.getByText('Do we already have you?')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Jo Juniper, London' }));
+    expect(screen.getByText('Past jobs stay hidden')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
     expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '', bar_id: null }, expect.anything());
     expect(mockSaveName).not.toHaveBeenCalled();
@@ -144,7 +149,8 @@ describe('OnboardingScreen', () => {
     mockBars = [{ ...attaboy, display_name: 'Milk & Honey', locality: 'New York', is_closed: true, id: 'closed' }];
     await newCareer();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
-    expect(screen.getByText('Anywhere else you’ve worked?')).toBeTruthy();
+    expect(screen.getByText('Where you’ve worked')).toBeTruthy();
+    expect(screen.getByText('Jobs of p1')).toBeTruthy();
 
     await fireEvent.changeText(screen.getByLabelText('Search bars'), 'Mi');
     await fireEvent.press(screen.getByRole('radio', { name: 'Milk & Honey, New York, closed' }));

@@ -7,6 +7,7 @@ import { uploadMenuCover } from '@/hooks/useMenuEditor';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
+import { readMenuPhotos } from '@/lib/readMenu';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
@@ -286,4 +287,14 @@ export function usePickMenuCover(menuId: string) {
     },
     onError: () => {},
   });
+}
+
+/** Reads photos of a printed menu (read-menu): one AI unit a call. */
+export function useReadMenu() {
+  return useMutation({ mutationFn: readMenuPhotos, onError: () => {} });
+}
+
+/** Uploads a local photo as a new menu's cover; resolves its public URL. */
+export function useUploadMenuCover() {
+  return useMutation({ mutationFn: (uri: string) => uploadMenuCover(uri, null), onError: () => {} });
 }

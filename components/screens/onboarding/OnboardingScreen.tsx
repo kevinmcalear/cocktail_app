@@ -28,7 +28,7 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
     title: 'Where do you work?',
     intro: 'Pick a bar, even one that has closed. Picking one doesn’t open its menus. Adding a bar makes you its admin.',
   },
-  past: { title: 'Anywhere else you’ve worked?', intro: 'Earlier bars count, including ones that have closed.' },
+  past: { title: 'Where you’ve worked', intro: 'Your profile shows where you work now. Past jobs stay hidden unless you choose to show them.' },
   menus: { title: 'Menus you worked on', intro: 'Name the list and the bar. A closed bar is fine.' },
   drinks: {
     title: 'Cocktails you worked on',

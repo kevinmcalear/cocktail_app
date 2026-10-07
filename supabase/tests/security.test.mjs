@@ -410,6 +410,21 @@ describe('members of a bar', () => {
     assert.deepEqual(data, [{ role_level: 20 }]);
   });
 
+  test('an admin (40) deletes a bar drink someone else made, on a menu and with a spec; staff and other bars cannot', async () => {
+    const drink = (await serviceInsert('items', { name: `Doomed sour ${run}`, item_type: 'cocktail', bar_id: ids.barOne })).id;
+    await serviceInsert('recipes', { recipe_item_id: drink, ingredient_item_id: ids.legacyGlobal, amount: 1, unit: 'oz', sort_order: 0 });
+    await serviceInsert('menu_drinks', { menu_id: ids.barMenu, item_id: drink, sort_order: 1 });
+
+    for (const label of ['bartender', 'otherAdmin']) {
+      const { data } = await users[label].client.from('items').delete().eq('id', drink).select('id');
+      assert.deepEqual(data ?? [], [], `${label} must not delete it`);
+    }
+    const { data, error } = await users.owner.client.from('items').delete().eq('id', drink).select('id');
+    assert.ifError(error);
+    assert.deepEqual(data, [{ id: drink }]);
+    assert.equal(await itemName(drink), undefined);
+  });
+
   test('an admin still cannot move the shared catalog into their bar', async () => {
     const { error } = await users.owner.client.rpc('assign_item_to_bar', {
       p_item_id: ids.legacyGlobal, p_bar_id: ids.barOne,

@@ -6,7 +6,7 @@
  */
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
-import { spiritsOf, stylesOf } from './drinkStyles';
+import { kindLabel, spiritsOf, STYLES, stylesOf } from './drinkStyles';
 import { NOTE_MIN, noteDimension, type Profile } from './flavor';
 import type { Area } from './nearMe';
 
@@ -33,6 +33,8 @@ export interface DiscoverDrink {
   spirits: string[];
   /** Folded name, description and ingredients, for search. */
   haystack: string;
+  /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past. */
+  menu?: { onNow: boolean; past: string | null; order: number };
 }
 
 export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'haystack'> & { riffOf: string | null }): DiscoverDrink {
@@ -48,10 +50,27 @@ export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'h
 
 const KM_PER_DEG = 111.045;
 
-function matchesKind(d: DiscoverDrink, f: DrinkFilter): boolean {
-  const note = noteDimension(f.kind ?? '');
-  if (note) return (f.profiles?.get(d.id)?.[note] ?? 0) >= NOTE_MIN;
-  return d.styles.includes(f.kind!) || d.spirits.includes(f.kind!);
+const STYLE_IDS = new Set(STYLES.map((s) => s.id));
+const kindGroup = (kind: string) => (noteDimension(kind) ? 'note' : STYLE_IDS.has(kind) ? 'style' : 'spirit');
+
+function matchesKind(d: DiscoverDrink, kind: string, profiles: DrinkFilter['profiles']): boolean {
+  const note = noteDimension(kind);
+  if (note) return (profiles?.get(d.id)?.[note] ?? 0) >= NOTE_MIN;
+  return d.styles.includes(kind) || d.spirits.includes(kind);
+}
+
+/** Any pick within a group (Martinis or Negronis), every group picked (and Gin, and Bitter). */
+function matchesKinds(d: DiscoverDrink, f: DrinkFilter): boolean {
+  const groups = new Map<string, string[]>();
+  for (const k of f.kinds) groups.set(kindGroup(k), [...(groups.get(kindGroup(k)) ?? []), k]);
+  return [...groups.values()].every((ks) => ks.some((k) => matchesKind(d, k, f.profiles)));
+}
+
+/** What the picked filters are called in a heading: "Drinks", "Martinis", "Martinis & Gin", "Drinks, 3 filters". */
+export function kindsTitle(kinds: readonly string[]): string {
+  if (!kinds.length) return 'Drinks';
+  if (kinds.length > 2) return `Drinks, ${kinds.length} filters`;
+  return kinds.map(kindLabel).join(' & ');
 }
 
 /** Great-circle distance in km. */
@@ -74,8 +93,8 @@ export function barInArea(bar: DiscoverBar, area: Area): boolean {
 }
 
 export interface DrinkFilter {
-  /** A style, spirit or tasting-note id, or null for every drink. */
-  kind: string | null;
+  /** Style, spirit and tasting-note ids; empty for every drink. */
+  kinds: readonly string[];
   /** Typed search: every word must match the drink's name, description, ingredients or bar. */
   search: string;
   area: Area;
@@ -92,14 +111,16 @@ export function filterDrinks(drinks: readonly DiscoverDrink[], bars: ReadonlyMap
   const hits = drinks.filter((d) => {
     const bar = bars.get(d.barId);
     if (!bar || !barInArea(bar, f.area)) return false;
-    if (f.kind && !matchesKind(d, f)) return false;
+    if (f.kinds.length && !matchesKinds(d, f)) return false;
     if (!words.length) return true;
     const text = `${d.haystack} | ${foldName(bar.name)}`;
     return words.every((w) => text.includes(w));
   });
   const q = words.join(' ');
-  // Name matches, then pictures, then names that start with a letter ("&thesea" and "1986" last).
-  const rank = (d: DiscoverDrink) => (q && foldName(d.name).includes(q) ? 0 : 4) + (d.imageUrl ? 0 : 2) + (/^\p{L}/u.test(d.name) ? 0 : 1);
+  // Name matches, then drinks on a menu now before past ones, then pictures,
+  // then names that start with a letter ("&thesea" and "1986" last).
+  const rank = (d: DiscoverDrink) =>
+    (q && foldName(d.name).includes(q) ? 0 : 12) + (d.menu?.order ?? 1) * 4 + (d.imageUrl ? 0 : 2) + (/^\p{L}/u.test(d.name) ? 0 : 1);
   return hits.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
 }
 

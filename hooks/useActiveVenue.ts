@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { useBars } from '@/hooks/useBars';
+import { useAuth } from '@/ctx/AuthContext';
 import type { DisplayFace } from '@/constants/tokens';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
@@ -24,7 +25,11 @@ export interface Venue {
  * switching here also scopes search and editing to that venue.
  */
 export function useActiveVenue() {
-  const { data, isLoading } = useBars();
+  const { data, isError } = useBars();
+  // Not known until auth settles and a signed-in person's bars arrive. A disabled or
+  // cache-restoring query reports isLoading false, which briefly put venue staff in home mode.
+  const { loading: authLoading, user } = useAuth();
+  const isLoading = authLoading || (!!user && data === undefined && !isError);
   const selectedBarId = useAppStore((s) => s.selectedBarId);
   const setActive = useAppStore((s) => s.setSelectedBarId);
 
