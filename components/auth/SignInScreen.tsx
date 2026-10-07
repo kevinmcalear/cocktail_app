@@ -1,17 +1,15 @@
-import { AuthField, AuthMessage, AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
+import { AuthLink, AuthMessage, AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { Button, Field } from '@/components/ds';
 import { useAuth } from '@/ctx/AuthContext';
-import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
-import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
+import { StyleSheet, View } from 'react-native';
 
 /**
  * Email and password sign-in. With a `brand`, it wears the venue's name and
  * logo (the venue staff link, /v/<slug>).
  */
 export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?: string } = {}) {
-  const theme = useTheme();
   const { signIn, resendConfirmation } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,38 +51,20 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
       title="Sign in"
       subtitle={subtitle ?? 'Access your bars, menus, and recipes.'}
       brand={brand}
-      footer={
-        <XStack alignItems="center" gap="$1">
-          <Text color="$color11" fontSize={14}>
-            No account?
-          </Text>
-          <Link href="/auth/sign-up" asChild>
-            <Pressable>
-              <Text color="$color8" fontSize={14} fontWeight="700">
-                Create one
-              </Text>
-            </Pressable>
-          </Link>
-        </XStack>
-      }
+      footer={<AuthLink lead="No account?" label="Create one" href="/auth/sign-up" />}
     >
-      <YStack gap="$3">
-        <AuthField label="Email">
-          <Input
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@venue.com"
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-            height={44}
-          />
-        </AuthField>
+      <Field
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="you@venue.com"
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        textContentType="emailAddress"
+      />
 
+      <View style={styles.password}>
         <PasswordField
           label="Password"
           value={password}
@@ -94,45 +74,24 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
           textContentType="password"
           onSubmitEditing={handleSignIn}
         />
+        <View style={styles.forgot}>
+          <AuthLink label="Forgot password?" href="/auth/forgot-password" muted />
+        </View>
+      </View>
 
-        <XStack justifyContent="flex-end">
-          <Link href="/auth/forgot-password" asChild>
-            <Pressable>
-              <Text fontSize={13} color="$color8" fontWeight="600">
-                Forgot password?
-              </Text>
-            </Pressable>
-          </Link>
-        </XStack>
+      {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+      {info ? <AuthMessage tone="info">{info}</AuthMessage> : null}
 
-        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
-        {info ? <AuthMessage tone="info">{info}</AuthMessage> : null}
+      {needsConfirm ? (
+        <Button label="Resend confirmation email" variant="secondary" onPress={handleResend} disabled={loading} />
+      ) : null}
 
-        {needsConfirm ? (
-          <Pressable onPress={handleResend} disabled={loading}>
-            <Text fontSize={13} color="$color8" fontWeight="600">
-              Resend confirmation email
-            </Text>
-          </Pressable>
-        ) : null}
-
-        <Button
-          backgroundColor="$color8"
-          onPress={handleSignIn}
-          disabled={loading}
-          borderRadius={8}
-          height={44}
-          opacity={loading ? 0.7 : 1}
-        >
-          {loading ? (
-            <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-          ) : (
-            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-              Sign in
-            </Text>
-          )}
-        </Button>
-      </YStack>
+      <Button label={loading ? 'Signing in…' : 'Sign in'} size="lg" onPress={handleSignIn} disabled={loading} />
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  password: { gap: 0 },
+  forgot: { alignItems: 'flex-end' },
+});
