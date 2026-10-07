@@ -1,13 +1,13 @@
-import { AuthField, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
+import { AuthLink, AuthMessage, AuthShell } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { Button, Caption, Field } from '@/components/ds';
+import { fontFamilies } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
-import { Button, Input, Text, XStack, YStack, useTheme } from 'tamagui';
+import { StyleSheet } from 'react-native';
 
 export default function SignUp() {
-  const theme = useTheme();
   const { signUp, resendConfirmation } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,35 +56,10 @@ export default function SignUp() {
       <AuthShell
         title="Check your email"
         subtitle={`We sent a confirmation link to ${email.trim()}. Open it to activate your account.`}
-        footer={
-          <Link href="/auth/login" asChild>
-            <Pressable>
-              <Text color="$color8" fontSize={14} fontWeight="700">
-                Back to sign in
-              </Text>
-            </Pressable>
-          </Link>
-        }
+        footer={<AuthLink label="Back to sign in" href="/auth/login" />}
       >
-        <YStack gap="$3">
-          {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
-          <Button
-            backgroundColor="$color8"
-            onPress={handleResend}
-            disabled={loading}
-            borderRadius={8}
-            height={44}
-            opacity={loading ? 0.7 : 1}
-          >
-            {loading ? (
-              <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-            ) : (
-              <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-                Resend email
-              </Text>
-            )}
-          </Button>
-        </YStack>
+        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+        <Button label={loading ? 'Sending…' : 'Resend email'} variant="secondary" size="lg" onPress={handleResend} disabled={loading} />
       </AuthShell>
     );
   }
@@ -93,92 +68,57 @@ export default function SignUp() {
     <AuthShell
       title="Create account"
       subtitle="Email and password. That’s it."
-      footer={
-        <XStack alignItems="center" gap="$1">
-          <Text color="$color11" fontSize={14}>
-            Already have an account?
-          </Text>
-          <Link href="/auth/login" asChild>
-            <Pressable>
-              <Text color="$color8" fontSize={14} fontWeight="700">
-                Sign in
-              </Text>
-            </Pressable>
-          </Link>
-        </XStack>
-      }
+      footer={<AuthLink lead="Already have an account?" label="Sign in" href="/auth/login" />}
     >
-      <YStack gap="$3">
-        <AuthField label="Email">
-          <Input
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@venue.com"
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            backgroundColor="$background"
-            borderColor="$borderColor"
-            color="$color"
-            height={44}
-          />
-        </AuthField>
+      <Field
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="you@venue.com"
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        textContentType="emailAddress"
+      />
 
-        <PasswordField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="At least 6 characters"
-          autoComplete="new-password"
-          textContentType="newPassword"
-        />
+      <PasswordField
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        placeholder="At least 6 characters"
+        autoComplete="new-password"
+        textContentType="newPassword"
+      />
 
-        <PasswordField
-          label="Confirm password"
-          value={confirm}
-          onChangeText={setConfirm}
-          placeholder="Re-enter password"
-          autoComplete="new-password"
-          textContentType="newPassword"
-          onSubmitEditing={handleSignUp}
-        />
+      <PasswordField
+        label="Confirm password"
+        value={confirm}
+        onChangeText={setConfirm}
+        placeholder="Re-enter password"
+        autoComplete="new-password"
+        textContentType="newPassword"
+        onSubmitEditing={handleSignUp}
+      />
 
-        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+      {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
 
-        <Button
-          backgroundColor="$color8"
-          onPress={handleSignUp}
-          disabled={loading}
-          borderRadius={8}
-          height={44}
-          opacity={loading ? 0.7 : 1}
-        >
-          {loading ? (
-            <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-          ) : (
-            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-              Create account
-            </Text>
-          )}
-        </Button>
+      <Button label={loading ? 'Creating account…' : 'Create account'} size="lg" onPress={handleSignUp} disabled={loading} />
 
-        <Text fontSize={12} color="$color11" textAlign="center">
-          By creating an account you agree to the{' '}
-          <Link href="/legal/terms">
-            <Text fontSize={12} color="$color8">
-              Terms of use
-            </Text>
-          </Link>{' '}
-          and{' '}
-          <Link href="/legal/privacy">
-            <Text fontSize={12} color="$color8">
-              Privacy policy
-            </Text>
-          </Link>
-          .
-        </Text>
-      </YStack>
+      <Caption tone="muted" align="center">
+        By creating an account you agree to the{' '}
+        <Link href="/legal/terms">
+          <Caption style={styles.legal}>Terms of use</Caption>
+        </Link>{' '}
+        and{' '}
+        <Link href="/legal/privacy">
+          <Caption style={styles.legal}>Privacy policy</Caption>
+        </Link>
+        .
+      </Caption>
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  legal: { fontFamily: fontFamilies.bodySemiBold, textDecorationLine: 'underline' },
+});
