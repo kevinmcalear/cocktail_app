@@ -10,13 +10,16 @@ import { useMenu } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
 import { groupMenus, homeNight, plural } from '@/lib/menus';
+import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
+import type { MenuPhoto } from '@/lib/readMenu';
 import type { MenuSummary } from '@/types/menus';
 
 import { EMPTY_NIGHT, HomeNightFields } from './HomeNight';
+import { MenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
 
-type Start = { kind: 'copy'; menuId: string } | { kind: 'layout'; layoutId: string } | { kind: 'blank' };
+type Start = { kind: 'copy'; menuId: string } | { kind: 'layout'; layoutId: string } | { kind: 'photo' } | { kind: 'blank' };
 
 interface NewMenuSheetProps {
   visible: boolean;
@@ -31,7 +34,9 @@ const BUILDS_MENUS = 35;
 
 /**
  * A new menu starts as a draft: a name, whose it is, and what it starts from
- * (a copy of another menu, a saved layout, or one empty section).
+ * (a copy of another menu, a saved layout, photos of a printed menu, or one
+ * empty section). Photos go to a review of what was read (/menus/from-photo),
+ * which makes the menu.
  */
 export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
   const router = useRouter();
@@ -49,20 +54,28 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const { data: layouts = [] } = useMenuLayouts(barId);
   const { data: source } = useMenu(start.kind === 'copy' ? start.menuId : null);
   const create = useCreateMenu();
+  const [photos, setPhotos] = useState<MenuPhoto[]>([]);
   const [night, setNight] = useState(EMPTY_NIGHT);
   const [error, setError] = useState<string | null>(null);
 
   const pickVenue = (id: string | null) => {
     setBarId(id);
     const first = menus.find((m) => m.barId === id);
-    setStart(first ? { kind: 'copy', menuId: first.id } : { kind: 'blank' });
+    if (start.kind !== 'photo') setStart(first ? { kind: 'copy', menuId: first.id } : { kind: 'blank' });
   };
 
   const submit = async () => {
-    if (!name.trim()) return setError('Give the menu a name.');
+    // From photos, the menu's printed title can name it.
+    if (!name.trim() && start.kind !== 'photo') return setError('Give the menu a name.');
     const when = home ? homeNight(night, Date.now()) : null;
     if (when && 'error' in when) return setError(when.error);
     let layout: MenuLayout = { name, coverUrl: null, coverPosition: 50, sections: [blankSection()] };
+    if (start.kind === 'photo') {
+      if (!photos.length) return setError('Add a photo of the menu first.');
+      stageMenuPhotos({ photos, barId, name: name.trim(), night: when ?? undefined });
+      onClose();
+      return router.push('/menus/from-photo');
+    }
     if (start.kind === 'copy') {
       if (!source) return setError('Still loading that menu. Try again in a moment.');
       layout = { name, coverUrl: source.coverUrl, coverPosition: source.coverPosition, sections: copySections(source.sections, true) };
@@ -87,9 +100,16 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       title="New menu"
       subtitle={home ? 'Only you see it. Share the menu card with your guests when it’s ready.' : 'It starts as a draft. Nobody sees it until it goes on.'}
       onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
-      footer={<Button label={create.isPending ? 'Making the draft…' : 'Create draft'} size="lg" onPress={submit} disabled={create.isPending} />}
+      footer={
+        <Button
+          label={create.isPending ? 'Making the draft…' : start.kind === 'photo' ? 'Read the menu' : 'Create draft'}
+          size="lg"
+          onPress={submit}
+          disabled={create.isPending}
+        />
+      }
     >
-      <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder={home ? 'Friday at ours' : 'Winter menu'} autoFocus={MODAL_AUTOFOCUS} />
+      <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder={start.kind === 'photo' ? 'Or use the one on the menu' : home ? 'Friday at ours' : 'Winter menu'} autoFocus={MODAL_AUTOFOCUS} />
       {home ? <HomeNightFields value={night} onChange={setNight} /> : null}
       {buildable.length ? (
         <>
@@ -122,8 +142,10 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
             onPress={() => setStart({ kind: 'layout', layoutId: l.id })}
           />
         ))}
+        <Choice label="From a photo" detail="Read a printed menu: its sections, drinks and prices." selected={start.kind === 'photo'} onPress={() => setStart({ kind: 'photo' })} />
         <Choice label="Blank" detail="One section. Add more as you go." selected={start.kind === 'blank'} onPress={() => setStart({ kind: 'blank' })} />
       </View>
+      {start.kind === 'photo' ? <MenuPhotos photos={photos} onChange={setPhotos} onError={setError} /> : null}
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
   );

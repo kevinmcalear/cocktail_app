@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,6 +6,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
+
+import { MenuVisual } from './MenuVisual';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
@@ -27,15 +28,7 @@ export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
       onPress={() => router.push(menuHref(menu.id))}
       style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
     >
-      {menu.coverUrl ? (
-        <Image
-          source={{ uri: menu.coverUrl }}
-          contentFit="cover"
-          contentPosition={{ top: `${menu.coverPosition}%`, left: '50%' }}
-          style={styles.cover}
-          accessible={false}
-        />
-      ) : null}
+      <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={112} />
       <View style={styles.cardBody}>
         <View style={styles.flex}>
           <DsText variant="title" numberOfLines={1}>
@@ -92,7 +85,6 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
 
 const styles = StyleSheet.create({
   card: { borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', borderCurve: 'continuous' },
-  cover: { width: '100%', height: 112 },
   cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg },
   flex: { flex: 1, gap: 2 },
   row: {
