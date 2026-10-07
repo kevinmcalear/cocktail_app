@@ -1,10 +1,11 @@
 import { CommandSearch } from '@/components/CommandSearch';
+import { BackbarTheme, Title, useDs } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { space } from '@/constants/tokens';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { Stack, useIsFocused } from 'expo-router';
-import { Keyboard, Platform, Pressable } from 'react-native';
+import { Keyboard, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, YStack } from 'tamagui';
 
 /**
  * Phone search tab: behind the bar the main job is finding a spec fast. On web
@@ -14,47 +15,40 @@ import { Text, YStack } from 'tamagui';
  * uses ⌘K / the sidebar.
  */
 export default function SearchScreen() {
+  return (
+    <BackbarTheme>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Search />
+    </BackbarTheme>
+  );
+}
+
+function Search() {
+  const ds = useDs();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const isFocused = useIsFocused();
   const { items } = useSearchCatalog();
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <Pressable
-        onPress={Keyboard.dismiss}
-        accessible={false}
-        tabIndex={-1}
-        style={{ flex: 1 }}
-      >
-        <YStack
-          flex={1}
-          backgroundColor="$background"
-          paddingTop={insets.top + 12}
-          paddingHorizontal={12}
-          gap={8}
-        >
-          <Text
-            fontSize={28}
-            fontWeight="700"
-            color="$color"
-            letterSpacing={-0.4}
-            paddingHorizontal={8}
-            role="heading"
-          >
-            Search
-          </Text>
-          {isFocused ? (
-            <CommandSearch
-              items={items}
-              autoFocus={Platform.OS === 'web'}
-              showFooter={false}
-              bottomInset={tabBarInset}
-            />
-          ) : null}
-        </YStack>
-      </Pressable>
-    </>
+    <Pressable onPress={Keyboard.dismiss} accessible={false} tabIndex={-1} style={styles.fill}>
+      <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.md }]}>
+        <Title style={styles.title}>Search</Title>
+        {isFocused ? (
+          <CommandSearch
+            items={items}
+            autoFocus={Platform.OS === 'web'}
+            showFooter={false}
+            bottomInset={tabBarInset}
+          />
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  screen: { flex: 1, paddingHorizontal: space.md, gap: space.sm },
+  title: { paddingHorizontal: space.xs },
+});

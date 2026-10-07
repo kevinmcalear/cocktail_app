@@ -28,10 +28,10 @@ import { ReportAction } from '../safety/ReportSheet';
 import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
+import { AllergensSection } from './AllergensSection';
 import { ClassicLink } from './ClassicLink';
 import { CostSection } from './CostSection';
 import { FamilyTree } from './FamilyTree';
-import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecLockPanel } from './SpecLockPanel';
@@ -187,7 +187,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
-      <FloorSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
+      <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
       {lock ? (
         <SpecLockPanel

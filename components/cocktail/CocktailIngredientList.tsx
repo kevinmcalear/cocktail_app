@@ -4,6 +4,7 @@ import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-n
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { Text, XStack, YStack, useTheme } from "tamagui";
 
+import { dragGripStyle, gripOnly } from "@/components/recipe/FormScrollContainer";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { UnitPicker } from "@/components/recipe/UnitPicker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -123,7 +124,7 @@ function EditIngredientRow({
                         onLongPress={Platform.OS === "web" ? undefined : drag}
                         onPressIn={Platform.OS === "web" ? drag : undefined}
                         disabled={isActive}
-                        style={[styles.grabber, Platform.OS === "web" && styles.grabberWeb]}
+                        style={[styles.grabber, Platform.OS === "web" && styles.grabberWeb, dragGripStyle]}
                         hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                         accessibilityLabel="Drag to reorder"
                     >
@@ -371,6 +372,7 @@ export function CocktailIngredientList({
                     style={{ height: listHeight, flexGrow: 0 }}
                     containerStyle={{ flexGrow: 0 }}
                     activationDistance={10}
+                    dragHitSlop={gripOnly(20)}
                 />
             </View>
         );
@@ -456,9 +458,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    grabberWeb: {
-        cursor: "grab",
-    } as object,
+    grabberWeb: { cursor: "grab" } as object,
     image: {
         width: 64,
         height: 64,

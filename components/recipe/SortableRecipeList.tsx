@@ -1,6 +1,6 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { dragGripStyle, gripOnly } from '@/components/recipe/FormScrollContainer';
 import { UnitPicker } from '@/components/recipe/UnitPicker';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { calculateDraftProgress } from '@/lib/draftProgress';
@@ -10,10 +10,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import DraggableFlatList, {
-    NestableDraggableFlatList,
-    RenderItemParams,
-} from 'react-native-draggable-flatlist';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import { Input, Text, XStack, useTheme } from 'tamagui';
 import { STATUS } from '@/constants/palette';
 
@@ -96,7 +93,7 @@ function DetailRecipeRow({
                     onLongPress={Platform.OS === 'web' ? undefined : drag}
                     onPressIn={Platform.OS === 'web' ? drag : undefined}
                     disabled={isActive}
-                    style={styles.detailGrabOnImage}
+                    style={[styles.detailGrabOnImage, dragGripStyle]}
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
                     accessibilityLabel="Drag to reorder"
                 >
@@ -401,7 +398,7 @@ export function SortableRecipeList({
                     onLongPress={Platform.OS === 'web' ? undefined : drag}
                     onPressIn={Platform.OS === 'web' ? drag : undefined}
                     disabled={isActive}
-                    style={[styles.dragHandle, Platform.OS === 'web' && styles.dragHandleWeb]}
+                    style={[styles.dragHandle, Platform.OS === 'web' && styles.dragHandleWeb, dragGripStyle]}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityLabel="Drag to reorder"
                     accessibilityRole="button"
@@ -420,8 +417,6 @@ export function SortableRecipeList({
         );
     };
 
-    const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
-
     if (items.length === 0) return null;
 
     return (
@@ -437,7 +432,8 @@ export function SortableRecipeList({
                           : 'Long press handle to reorder'}
                 </Text>
             )}
-            <ListComponent
+            {/* Not the nestable list: these screens scroll in a plain ScrollView, where it threw. */}
+            <DraggableFlatList
                 data={items}
                 onDragBegin={dwell.onDragBegin}
                 onPlaceholderIndexChange={dwell.onPlaceholderIndexChange}
@@ -456,6 +452,7 @@ export function SortableRecipeList({
                 renderItem={renderItem}
                 scrollEnabled={false}
                 activationDistance={10}
+                dragHitSlop={gripOnly(variant === 'detail' ? 18 : 52)}
                 style={styles.list}
             />
         </View>
