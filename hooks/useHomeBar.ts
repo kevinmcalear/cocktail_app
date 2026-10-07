@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { allRows } from '@/lib/allRows';
 import { canMake, type RecipeRow } from '@/lib/canMake';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
@@ -74,23 +75,29 @@ export function useShelfEdit() {
 /**
  * Every cocktail and ingredient the person can see, with recipe rows as the
  * role-masked presentation shows them, so "can make" never needs a spec the
- * person isn't allowed to read. ponytail: one unpaginated read; fine for a
- * few hundred drinks, and the SQL version in the schema proposal is the
- * upgrade when libraries get large.
+ * person isn't allowed to read. ~11,000 rows (~3 MB), so it's paged and kept
+ * in memory only. ponytail: a dozen page reads per load; the upgrade is the
+ * SQL "can make" in the schema proposal.
  */
 function useCatalog() {
   return useQuery({
     queryKey: ['home-bar-catalog'],
+    meta: { persist: false },
     queryFn: async (): Promise<CatalogRow[]> => {
-      const { data, error } = await supabase
-        .from('app_item_presentation')
-        .select(
-          'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(display_ingredient_id, parent_ingredient_id, is_optional)'
-        )
-        .in('item_type', ['cocktail', 'ingredient'])
-        .order('name', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as CatalogRow[];
+      const ofType = (type: CatalogRow['item_type']) =>
+        allRows((from, to) =>
+          supabase
+            .from('app_item_presentation')
+            .select(
+              'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(display_ingredient_id, parent_ingredient_id, is_optional)'
+            )
+            .eq('item_type', type)
+            .order('name', { ascending: true })
+            .order('id')
+            .range(from, to)
+        );
+      const [drinks, ingredients] = await Promise.all([ofType('cocktail'), ofType('ingredient')]);
+      return [...drinks, ...ingredients] as unknown as CatalogRow[];
     },
   });
 }
