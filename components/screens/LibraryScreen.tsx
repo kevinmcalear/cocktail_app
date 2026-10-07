@@ -19,7 +19,7 @@ import { useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { DRINK_CATEGORIES, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 
@@ -95,7 +95,7 @@ export function LibraryScreen() {
     const priced = new Set(pricedIds ?? []);
     const inSet = (ids: string[]) => {
       const set = new Set(ids);
-      return published.filter((i) => set.has(i.id));
+      return published.filter((i) => set.has(itemIdOf(i.id)));
     };
     const out: Record<Show, typeof published> = {
       all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory)),

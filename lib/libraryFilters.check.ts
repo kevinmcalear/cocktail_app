@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { menuDrinks, menuState, parseShow } from './libraryFilters';
+import { itemIdOf, menuDrinks, menuState, parseShow } from './libraryFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');
@@ -55,3 +55,7 @@ const past = new Set(all.past);
 assert.equal(menuState('spritz', onNow, past), 'On menu');
 assert.equal(menuState('paloma', onNow, past), 'Past');
 assert.equal(menuState('secret', onNow, past), 'Off menu');
+
+assert.equal(itemIdOf('beer-0000-1'), '0000-1');
+assert.equal(itemIdOf('wine-0000-2'), '0000-2');
+assert.equal(itemIdOf('0000-3'), '0000-3');

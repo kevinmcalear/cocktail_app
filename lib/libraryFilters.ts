@@ -36,6 +36,11 @@ export function parseShow(param: string | string[] | undefined, atVenue: boolean
   return show;
 }
 
+/** The items row id behind a catalog card: beer and wine cards carry a `beer-`/`wine-` prefix. */
+export function itemIdOf(cardId: string): string {
+  return cardId.replace(/^(beer|wine)-/, '');
+}
+
 export interface OnMenu {
   id: string;
   name: string;

@@ -31,8 +31,7 @@ export interface StaffRowProps {
 
 /**
  * One drink on the staff list: its place, its name, where it stands with the
- * menus, and for editors a grip. Drag the grip (press on web, long-press on a
- * phone) to move it; tap it for buttons that do the same, and screen readers
+ * menus, and for editors a grip. Hold the grip and drag to move it; tap it for buttons that do the same, and screen readers
  * get Move up and Move down as actions.
  */
 export function StaffRow({ pick, place, status, onOpen, canEdit, active, drag, arrows, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
@@ -67,10 +66,11 @@ export function StaffRow({ pick, place, status, onOpen, canEdit, active, drag, a
             aria-expanded={open}
             accessibilityActions={drag && onMove ? [{ name: 'moveUp', label: 'Move up' }, { name: 'moveDown', label: 'Move down' }] : undefined}
             onAccessibilityAction={(e) => onMove?.(e.nativeEvent.actionName === 'moveUp' ? -1 : 1)}
-            onLongPress={!web && drag ? drag : undefined}
-            onPressIn={web && drag ? drag : undefined}
+            // Hold, then drag: a quick tap (or Enter) opens the buttons instead.
+            // Web holds for less, since a mouse press is deliberate.
+            onLongPress={drag}
+            delayLongPress={web ? 150 : 300}
             onPress={() => setOpen(!open)}
-            disabled={active}
             style={styles.grip}
           >
             <IconSymbol name={drag ? 'line.3.horizontal' : 'ellipsis'} size={20} color={ds.c.muted} />
