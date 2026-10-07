@@ -17,7 +17,7 @@ import { plural } from '@/lib/menus';
 import { appendReading, applyMenuPaste, bringInText, pasteRows, placedGroups, type ParsedMenuSection } from '@/lib/paste';
 import { MAX_MENU_PHOTOS, pickMenuPhotos, takeMenuPhoto, type MenuPhoto } from '@/lib/readMenu';
 
-import { PhotoRow } from './MenuPhotoRows';
+import { PhotoRow, TextLink } from './MenuPhotoRows';
 import { useMenuPhotoDrop } from './useMenuPhotoDrop';
 
 const message = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
@@ -132,7 +132,7 @@ export function MenuFromPhotoScreen() {
             <Title>{name}</Title>
             {status ? <Body tone="muted">{status}</Body> : null}
             {pages.length < MAX_MENU_PHOTOS && !read.isPending ? (
-              <Button label="Add another page" variant="ghost" onPress={addAnother} style={styles.link} />
+              <TextLink label="Add another page" onPress={addAnother} />
             ) : null}
           </View>
         </View>
@@ -173,7 +173,8 @@ const styles = StyleSheet.create({
   dragging: { borderWidth: 2, borderStyle: 'dashed' },
   body: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.sm },
   head: { flexDirection: 'row', gap: space.md, alignItems: 'center', marginTop: space.md },
-  thumb: { width: 84, height: 110, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
+  // A slight tilt, like a menu set down on the bar.
+  thumb: { width: 84, height: 110, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous', transform: [{ rotate: '-3deg' }] },
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   flex: { flex: 1, gap: space.xs },
   link: { alignSelf: 'flex-start' },

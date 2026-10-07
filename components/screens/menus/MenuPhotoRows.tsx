@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -13,6 +13,18 @@ interface PhotoRowProps {
   onPick: (drinkId: string) => void;
   /** A drink that isn't in the library yet: finish it in Bring in. */
   onFinish: (name: string, ingredients: string[]) => void;
+}
+
+/** A text action in the venue's accent ("Add another page", "Finish"), at least 44 tall. */
+export function TextLink({ label, onPress, accessibilityHint }: { label: string; onPress: () => void; accessibilityHint?: string }) {
+  const ds = useDs();
+  return (
+    <PressableScale accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress} style={styles.link}>
+      <DsText variant="body" color={ds.accentText}>
+        {label}
+      </DsText>
+    </PressableScale>
+  );
 }
 
 /** One drink read from the photo: matched (a check), new (a dashed plus), a pick, or skipped. */
@@ -51,7 +63,7 @@ export function PhotoRow({ row, onPick, onFinish }: PhotoRowProps) {
         <Body tone={row.status === 'skip' ? 'muted' : 'ink'}>{name}</Body>
         <Caption tone="muted">{detail}</Caption>
       </View>
-      {row.status === 'missing' ? <Button label="Finish" variant="ghost" accessibilityHint={`Adds ${row.name} to the library`} onPress={() => onFinish(row.name, row.ingredients)} /> : null}
+      {row.status === 'missing' ? <TextLink label="Finish" accessibilityHint={`Adds ${row.name} to the library`} onPress={() => onFinish(row.name, row.ingredients)} /> : null}
     </View>
   );
 }
@@ -63,4 +75,5 @@ const styles = StyleSheet.create({
   dashed: { borderWidth: 1.5, borderStyle: 'dashed' },
   faded: { opacity: 0.5 },
   flex: { flex: 1, gap: 2 },
+  link: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignSelf: 'flex-start' },
 });

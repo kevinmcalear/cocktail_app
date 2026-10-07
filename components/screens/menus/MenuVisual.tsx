@@ -52,7 +52,7 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
         ))
       )}
       {fade ? <LinearGradient colors={[withAlpha(ds.c.ground, 0.35), withAlpha(ds.c.ground, 0), ds.c.ground]} locations={[0, 0.4, 1]} style={styles.fill} /> : null}
-      {sketched ? <Tag label="Sketch" tone="sketch" style={[styles.tag, fade && styles.tagAboveFade]} /> : null}
+      {sketched ? <Tag label="Sketch" tone="sketch" style={fade ? styles.tagOnPage : styles.tag} /> : null}
     </View>
   );
 }
@@ -63,6 +63,6 @@ const styles = StyleSheet.create({
   tile: { flex: 1 },
   // Bottom left: the editor's cover buttons sit bottom right.
   tag: { position: 'absolute', left: space.sm, bottom: space.sm },
-  // Clear of the fade and the page body that overlaps it.
-  tagAboveFade: { bottom: space.xxl + space.md, left: space.lg },
+  // On the menu page: right, above the page body that overlaps the hero's last 84 points.
+  tagOnPage: { position: 'absolute', right: space.lg, bottom: 84 + space.xl },
 });
