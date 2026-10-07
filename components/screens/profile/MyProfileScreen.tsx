@@ -10,6 +10,7 @@ import { handleFromName, normalizeHandle, profileDraftErrors, type ProfileDraft 
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SafetyPage } from '../safety/SafetyPage';
+import { PastJobs } from './PastJobs';
 
 const PUBLIC_MEANS =
   'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
@@ -120,6 +121,13 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         ) : null}
       </View>
       {saved ? <Caption tone="muted">Saved.</Caption> : null}
+      {profile ? (
+        <View style={styles.visibility}>
+          <Headline role="heading">Where you’ve worked</Headline>
+          <Caption tone="muted">Where you work now always shows. Switch on a past job to show it too. Each switch saves straight away.</Caption>
+          <PastJobs personId={profile.id} />
+        </View>
+      ) : null}
     </View>
   );
 }

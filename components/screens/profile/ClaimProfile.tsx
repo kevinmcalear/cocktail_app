@@ -7,6 +7,8 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClaimProfile, useMyClaims, type Profile } from '@/hooks/useProfiles';
 
+import { CLAIM_PAST_JOBS } from './PastJobs';
+
 /** Postgres errors from the claim insert, in words. */
 function claimError(error: unknown, kind: Profile['kind']): string {
   const code = (error as { code?: string } | null)?.code;
@@ -91,6 +93,7 @@ export function ClaimProfile({ profile }: { profile: Profile }) {
         numberOfLines={3}
         maxLength={1000}
       />
+      {isBar ? null : <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>}
       {claim.error ? (
         <Caption tone="accent" role="alert">
           {claimError(claim.error, profile.kind)}
