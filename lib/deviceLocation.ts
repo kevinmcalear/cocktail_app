@@ -21,3 +21,14 @@ export async function getDeviceLocation(): Promise<DeviceLocation> {
     return { ok: false, reason: 'unavailable' };
   }
 }
+
+/** The position only if location is already allowed: never asks. For extras like the eight ball. */
+export async function getKnownDeviceLocation(): Promise<DeviceLocation> {
+  try {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') return { ok: false, reason: 'denied' };
+    return await getDeviceLocation();
+  } catch {
+    return { ok: false, reason: 'unavailable' };
+  }
+}

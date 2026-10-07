@@ -4,14 +4,19 @@ import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { FEATURES } from '@/constants/features';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useMode } from '@/hooks/useMode';
+import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { withPastMenuTag } from '@/lib/menuEditions';
+import { specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
@@ -29,9 +34,11 @@ import { FamilyTree } from './FamilyTree';
 import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
+import { SpecLockPanel } from './SpecLockPanel';
 import { SpecSection } from './SpecSection';
 import { GlassSheet } from './GlassSheet';
 import { HistorySection } from './HistorySection';
+import { MenuRuns } from './MenuRuns';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkFacts } from './useDrinkFacts';
 
@@ -93,16 +100,20 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why.
+  const lock = useSpecLock(preview ? null : item).data;
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
-  const canBatch = access.amounts && lines.some((l) => l.value !== null);
+  const canBatch = FEATURES.prep && access.amounts && lines.some((l) => l.value !== null);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
   const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
+  // A bar's drink: when it was on the bar's menus. Ranking and collecting stay open either way.
+  const { data: menuRuns = [] } = useDrinkMenuRuns(preview || item.bar_id ? null : item.id);
 
   const { facts, tags, glass, ice, method, strength } = useDrinkFacts(item, {
     lines,
@@ -110,6 +121,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     dilutionDefaults,
     openStrength: () => setStrengthOpen(true),
     openGlass: preview ? undefined : () => setGlassOpen(true),
+    specLocked: !!lock,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
@@ -131,7 +143,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       />
       <View style={styles.controlsRight}>
         <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={toggleFavorite} />
-        <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
+        {FEATURES.study ? (
+          <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
+        ) : null}
         {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" onMedia={onPhoto && !wide} onPress={onEdit} /> : null}
       </View>
     </View>
@@ -139,7 +153,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
 
   const body = (
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
-      <DrinkTags tags={tags} />
+      <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
       {!preview && heroPic?.credit ? (
@@ -151,13 +165,16 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           Photo: {heroPic.credit}
         </Caption>
       ) : null}
+      <MenuRuns runs={menuRuns} />
       <View style={styles.actions}>
-        <GlassButton
-          accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
-          label={serviceMode ? 'Service mode on' : 'Service mode'}
-          icon="sun.max.fill"
-          onPress={toggleServiceMode}
-        />
+        {FEATURES.service ? (
+          <GlassButton
+            accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
+            label={serviceMode ? 'Service mode on' : 'Service mode'}
+            icon="sun.max.fill"
+            onPress={toggleServiceMode}
+          />
+        ) : null}
         {canBatch ? (
           <GlassButton
             accessibilityLabel="Batch: scale this drink for prep"
@@ -172,26 +189,41 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <FloorSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
-      <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
-      {item.notes ? (
+      {lock ? (
+        <SpecLockPanel
+          note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
+          action={
+            <Button
+              label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'}
+              variant="secondary"
+              onPress={() => router.push(`/p/${lock.bar.handle}` as Href)}
+            />
+          }
+        />
+      ) : (
+        <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
+      )}
+      {item.notes && !lock ? (
         <View style={styles.notes}>
           <Headline role="heading">Bartender notes</Headline>
           <Body>{item.notes}</Body>
         </View>
       ) : null}
-      <ServiceSection
-        itemId={item.id}
-        barId={item.bar_id}
-        name={item.name}
-        links={links}
-        canEdit={canEdit}
-        glass={glass?.icon_key || glass?.name || null}
-        wide={wide}
-        lines={access.names ? lines : []}
-        showLines={access.amounts}
-        serviceStyle={item.service_style}
-        preview={preview}
-      />
+      {FEATURES.service ? (
+        <ServiceSection
+          itemId={item.id}
+          barId={item.bar_id}
+          name={item.name}
+          links={links}
+          canEdit={canEdit}
+          glass={glass?.icon_key || glass?.name || null}
+          wide={wide}
+          lines={access.names ? lines : []}
+          showLines={access.amounts}
+          serviceStyle={item.service_style}
+          preview={preview}
+        />
+      ) : null}
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}
@@ -200,9 +232,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     </View>
   );
 
-  const hero = (
-    <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />
-  );
+  const hero = <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

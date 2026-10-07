@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/ctx/AuthContext';
 import type { RankVenue } from '@/hooks/useRankings';
 import { viewerScoped } from '@/lib/authCache';
-import { citiesFrom, orderDrinks, type City } from '@/lib/discover';
+import { citiesFrom, findDrinks, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
   ADDRESS_DEBOUNCE_MS,
@@ -44,6 +44,15 @@ export function useDrinkLists() {
       return orderDrinks(rows.map((r) => ({ id: r.id, name: r.name, imageUrl: heroPicture(r.item_images)?.url ?? null })));
     },
   });
+}
+
+/**
+ * Which classic the map's "Best …" layer is about: the best match for what's
+ * searched (or the picked style's classic), else the best-known drink.
+ */
+export function useDrinkPick(hint: string): DrinkList | null {
+  const all = useDrinkLists().data ?? [];
+  return findDrinks(all, hint)[0] ?? all[0] ?? null;
 }
 
 /**

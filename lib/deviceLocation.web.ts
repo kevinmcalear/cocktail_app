@@ -16,3 +16,14 @@ export function getDeviceLocation(): Promise<DeviceLocation> {
     );
   });
 }
+
+/** The position only if the browser already allows it: never prompts. */
+export async function getKnownDeviceLocation(): Promise<DeviceLocation> {
+  try {
+    const { state } = await navigator.permissions.query({ name: 'geolocation' });
+    if (state !== 'granted') return { ok: false, reason: 'denied' };
+    return await getDeviceLocation();
+  } catch {
+    return { ok: false, reason: 'unavailable' };
+  }
+}

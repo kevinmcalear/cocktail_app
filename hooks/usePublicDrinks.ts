@@ -1,40 +1,53 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { COCKTAIL_LIST_COLUMNS, withListRecipes } from '@/hooks/useCocktails';
+import { useDebounced } from '@/hooks/useDiscover';
 import { toCocktailSearchItem } from '@/hooks/useSearchCatalog';
-import { creditName, type PublicDrinkCredit } from '@/lib/publicDrinks';
+import { menuOrder, runDates, searchMenuTag, type MenuRunRow } from '@/lib/menuEditions';
 import { supabase } from '@/lib/supabase';
 import type { SearchItem } from '@/types/search';
 
+const SEARCH_DEBOUNCE_MS = 250;
+
+/** A search_bar_drinks row: the run columns are null for a drink no menu lists. */
+type FoundDrink = { item_id: string; credit: string | null } & { [K in keyof MenuRunRow]: MenuRunRow[K] | null };
+
 /**
  * Drinks credited to a bar or bartender with no venue behind them: the
- * signatures and originals on public profiles. The Library leaves these out;
- * search lists them under "From bars", each tagged with who it's credited to.
- * ponytail: loads the whole set (a few hundred) once and filters on the
- * client like the rest of search. Past a few thousand, search on the server.
+ * signatures and originals on public profiles, current and past menus. The
+ * Library leaves these out; search lists them under "From bars", each tagged
+ * with who it's credited to and when it was on the menu. Searched on the
+ * server (search_bar_drinks), since there are thousands: drinks on a menu
+ * now come first.
  */
-export function usePublicDrinks(enabled: boolean) {
+export function usePublicDrinks(text: string) {
+  const query = useDebounced(text.trim(), SEARCH_DEBOUNCE_MS);
   return useQuery({
-    queryKey: ['public-drinks'],
-    enabled,
+    queryKey: ['public-drinks', query],
+    enabled: query.length > 0,
+    placeholderData: keepPreviousData,
+    meta: { persist: false },
     queryFn: async (): Promise<SearchItem[]> => {
+      const found = await supabase.rpc('search_bar_drinks', { p_query: query });
+      if (found.error) throw found.error;
+      const rows = (found.data ?? []) as FoundDrink[];
+      if (!rows.length) return [];
+
       const { data, error } = await supabase
         .from('app_item_presentation')
-        .select(`${COCKTAIL_LIST_COLUMNS}, origin_bar_profile_id, creator_profile_id`)
-        .eq('item_type', 'cocktail')
-        .is('bar_id', null)
-        .or('origin_bar_profile_id.not.is.null,creator_profile_id.not.is.null')
-        .order('name')
-        .limit(1000);
+        .select(COCKTAIL_LIST_COLUMNS)
+        .in('id', rows.map((r) => r.item_id));
       if (error) throw error;
-      const drinks = withListRecipes(data) as unknown as (PublicDrinkCredit & Record<string, unknown>)[];
+      const drinks = new Map(withListRecipes(data).map((d) => [d.id, d]));
 
-      const ids = [...new Set(drinks.flatMap((d) => [d.origin_bar_profile_id, d.creator_profile_id]).filter((id): id is string => !!id))];
-      const profiles = ids.length ? await supabase.from('profiles').select('id, display_name').in('id', ids) : { data: [], error: null };
-      if (profiles.error) throw profiles.error;
-      const names: Record<string, string> = Object.fromEntries((profiles.data ?? []).map((p) => [p.id, p.display_name]));
-
-      return drinks.map((d) => ({ ...toCocktailSearchItem(d), fromBar: creditName(d, names) ?? 'A bar' }));
+      return rows.flatMap((r) => {
+        const drink = drinks.get(r.item_id);
+        if (!drink) return [];
+        const dates = r.start_year === null ? null : runDates(r as MenuRunRow);
+        const tag = searchMenuTag(dates);
+        const menuRun = tag ? (tag.onNow ? 'on now' : tag.past) : undefined;
+        return [{ ...toCocktailSearchItem(drink), fromBar: r.credit ?? 'A bar', menuRun, menuOrder: menuOrder(dates) }];
+      });
     },
   });
 }

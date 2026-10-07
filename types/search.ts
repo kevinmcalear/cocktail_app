@@ -34,4 +34,8 @@ export interface SearchItem {
   ice_id?: string | null;
   /** A public drink (not in the library): the bar or bartender it's credited to. */
   fromBar?: string;
+  /** A bar's drink on a menu: "on now", or "Past · Mar 2024 to Jan 2025". */
+  menuRun?: string;
+  /** Sorts a bar's drinks: on a menu now first, past menus last. */
+  menuOrder?: number;
 }

@@ -44,6 +44,8 @@ export interface WizardDraft {
   /** In order: "Dry shake" then "Shake". */
   methods: WizardPick[];
   glass: WizardPick | null;
+  /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
+  glassVariant?: string | null;
   ice: WizardPick | null;
   /** Saved as spec lines with a count unit (peel, twist, wheel), the way specs already write them. */
   garnishes: WizardLine[];
@@ -63,6 +65,7 @@ export const EMPTY_DRAFT: WizardDraft = {
   lines: [],
   methods: [],
   glass: null,
+  glassVariant: null,
   ice: null,
   garnishes: [],
   creator: null,
@@ -241,7 +244,7 @@ const amountOf = (s: string): number | null => {
 };
 
 /** What the live sketch is drawn from. */
-export function sketchLook(d: WizardDraft): DraftLook {
+export function sketchLook(d: WizardDraft, barVariants: readonly string[] = []): DraftLook {
   return {
     name: d.name.trim() || 'New drink',
     description: d.description,
@@ -249,6 +252,8 @@ export function sketchLook(d: WizardDraft): DraftLook {
     ice: d.ice?.name ?? null,
     methods: d.methods.map((m) => m.name),
     lines: [...d.lines, ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
+    variant: d.glassVariant ?? null,
+    barVariants,
   };
 }
 

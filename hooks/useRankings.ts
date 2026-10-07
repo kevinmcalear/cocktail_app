@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
+import { viewerScoped } from '@/lib/authCache';
+import { toTopDrink, type BarTopDrink } from '@/lib/barTopDrinks';
 import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { SENTIMENTS, type Sentiment } from '@/lib/ranking';
@@ -303,6 +305,26 @@ export function useDrinkRankings(rankedAsItemId: string | null | undefined, area
       const { data, error } = await supabase.rpc('get_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...area, p_limit: 20 });
       if (error) throw error;
       return ((data ?? []) as AreaRanking[]).map((r) => ({ ...r, score: Number(r.score) }));
+    },
+  });
+}
+
+/**
+ * A bar's drinks by how people rank them there: scored ones best first, then
+ * early ones (a count, no score), then ones nobody has ranked yet, current
+ * menu first. Only drinks anyone may see by name. Works signed out; refreshed
+ * hourly on the server like every shared score.
+ */
+export function useBarTopDrinks(profileId: string | null | undefined, limit = 30) {
+  const viewer = viewerScoped(useAuth().user?.id);
+  return useQuery({
+    queryKey: ['bar-top-drinks', profileId, limit, viewer.key],
+    meta: viewer.meta,
+    enabled: !!profileId,
+    queryFn: async (): Promise<BarTopDrink[]> => {
+      const { data, error } = await supabase.rpc('get_bar_top_drinks', { p_profile_id: profileId!, p_limit: limit });
+      if (error) throw error;
+      return ((data ?? []) as BarTopDrink[]).map(toTopDrink);
     },
   });
 }

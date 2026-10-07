@@ -29,6 +29,7 @@ const MAPPING = {
   'plus.circle.fill': 'add-circle',
   'trash': 'delete',
   'xmark': 'close',
+  'arrow.clockwise': 'refresh',
   'pencil': 'edit',
   'heart': 'favorite-border',
   'heart.fill': 'favorite',
