@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, Spec, useDs, type IconName } from '@/components/ds';
+import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import type { StaffPick } from '@/hooks/useStaffList';
@@ -71,7 +72,7 @@ export function StaffRow({ pick, place, status, onOpen, canEdit, active, drag, a
             onLongPress={drag}
             delayLongPress={web ? 150 : 300}
             onPress={() => setOpen(!open)}
-            style={styles.grip}
+            style={[styles.grip, drag && dragGripStyle]}
           >
             <IconSymbol name={drag ? 'line.3.horizontal' : 'ellipsis'} size={20} color={ds.c.muted} />
           </PressableScale>
