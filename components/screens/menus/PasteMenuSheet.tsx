@@ -8,7 +8,7 @@ import { space } from '@/constants/tokens';
 import { stageBringIn } from '@/lib/bringInHandoff';
 import { plainDbMessage } from '@/lib/dbError';
 import type { EditSection } from '@/lib/menuLayout';
-import { matchByName, parseMenuPaste, type PlacedGroup } from '@/lib/paste';
+import { bringInText, parseMenuPaste, pasteRows, placedGroups, type PasteRow, type PlacedGroup } from '@/lib/paste';
 import type { MenuDrink } from '@/types/menus';
 
 import { Choice, MenuSheet } from './MenuSheet';
@@ -23,12 +23,6 @@ interface PasteMenuSheetProps {
   onApply: (groups: PlacedGroup[]) => void;
 }
 
-type Row =
-  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string }
-  | { key: string; section: string | null; status: 'pick'; name: string; options: MenuDrink[] }
-  | { key: string; section: string | null; status: 'missing'; name: string }
-  | { key: string; section: string | null; status: 'skip'; name: string; note: string };
-
 /** Paste drink names onto the menu. Specs stay in the library; this only attaches them. */
 export function PasteMenuSheet({ into, library, already = [], onClose, onApply }: PasteMenuSheetProps) {
   const router = useRouter();
@@ -38,51 +32,14 @@ export function PasteMenuSheet({ into, library, already = [], onClose, onApply }
   const [error, setError] = useState<string | null>(null);
   const sections = useMemo(() => parseMenuPaste(text, !!into), [text, into]);
 
-  const rows = useMemo(() => {
-    const out: Row[] = [];
-    const seen = new Set(into?.drinks.map((drink) => drink.id) ?? []);
-    const parked = new Set(already);
-    sections.forEach((section, si) => {
-      section.lines.forEach((line, li) => {
-        const key = `${si}:${li}`;
-        const match = matchByName(line.name, library);
-        const place = (drink: MenuDrink) => {
-          if (into && !into.allowedTypes.includes(drink.kind)) {
-            out.push({ key, section: section.name, status: 'skip', name: drink.name, note: `${into.name} doesn’t take ${drink.kind}` });
-            return;
-          }
-          if (seen.has(drink.id) || (!into && !section.name && parked.has(drink.id))) {
-            out.push({ key, section: section.name, status: 'skip', name: drink.name, note: 'Already on this menu' });
-            return;
-          }
-          seen.add(drink.id);
-          const price = !drink.price && line.price ? line.price : null;
-          const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : 'In the library';
-          out.push({ key, section: section.name, status: 'add', drink: price ? { ...drink, price } : drink, price, note });
-        };
-        if (match.kind === 'one') place(match.item);
-        else if (match.kind === 'many') {
-          const chosen = match.items.find((item) => item.id === picks[key]);
-          if (chosen) place(chosen);
-          else out.push({ key, section: section.name, status: 'pick', name: line.name, options: match.items });
-        } else out.push({ key, section: section.name, status: 'missing', name: line.name });
-      });
-    });
-    return out;
-  }, [sections, library, picks, into, already]);
+  const rows = useMemo(() => pasteRows(sections, library, picks, into, already), [sections, library, picks, into, already]);
 
-  const adding = rows.filter((row): row is Extract<Row, { status: 'add' }> => row.status === 'add');
-  const missing = rows.flatMap((row) => (row.status === 'missing' ? [row.name] : []));
+  const adding = rows.filter((row): row is Extract<PasteRow, { status: 'add' }> => row.status === 'add');
+  const missing = rows.flatMap((row) => (row.status === 'missing' ? [{ name: row.name, ingredients: row.ingredients }] : []));
   const unresolved = rows.some((row) => row.status === 'pick');
 
   const confirm = async () => {
-    const groups: PlacedGroup[] = [];
-    for (const row of adding) {
-      const name = into ? null : row.section;
-      const last = groups[groups.length - 1];
-      if (last && last.name === name) last.drinks.push(row.drink);
-      else groups.push({ name, drinks: [row.drink] });
-    }
+    const groups = placedGroups(rows, !!into);
     setError(null);
     try {
       const prices = adding.flatMap((row) => (row.price ? [{ id: row.drink.id, price: row.price }] : []));
@@ -108,7 +65,7 @@ export function PasteMenuSheet({ into, library, already = [], onClose, onApply }
               label={`Make ${missing.length} missing ${missing.length === 1 ? 'drink' : 'drinks'}`}
               variant="secondary"
               onPress={() => {
-                stageBringIn(missing);
+                stageBringIn(bringInText(missing));
                 onClose();
                 router.push('/bring-in' as Href);
               }}

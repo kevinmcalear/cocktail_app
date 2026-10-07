@@ -38,12 +38,10 @@ const PERSON_TABS = [
 ] as const;
 /** Someone who keeps their drinks to themselves, or a profile nobody has claimed (a historic bartender). */
 const QUIET_TABS = PERSON_TABS.filter((t) => t.value !== 'had' && t.value !== 'bars');
-/** A bar's page leads with its menus. */
+/** A bar's page leads with its menus. Rankings and Shelf come back once they have something to show. */
 const BAR_TABS = [
   { value: 'menus', label: 'Menus' },
   { value: 'originals', label: 'Originals' },
-  { value: 'rankings', label: 'Rankings' },
-  { value: 'shelf', label: 'Shelf' },
 ] as const;
 
 /**
