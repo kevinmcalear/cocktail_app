@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, useGutter, type IconName } from '@/components/ds';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { FEATURES } from '@/constants/features';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -17,6 +18,7 @@ import type { MenuStatus } from '@/types/menus';
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuSections } from './MenuSections';
+import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
 const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
@@ -74,14 +76,22 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const status = menuStatus(menu, now);
   const venue = venues.find((v) => v.id === menu.barId);
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
-  const hero = menu.coverUrl ?? menu.sections.flatMap((s) => s.drinks).find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
+  // Its cover photo, or with none, its first drinks' own pictures (sketches where there's no photo).
+  const pictures = menu.sections.flatMap((s) => s.drinks);
+  const hero = !!menu.coverUrl || pictures.length > 0;
   const go = (href: string) => router.push(href as Href);
   const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-        {hero ? <DrinkHero name={menu.name} pictures={[{ url: hero, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade /> : <View style={{ height: insets.top + 72 }} />}
+        {menu.coverUrl ? (
+          <DrinkHero name={menu.name} pictures={[{ url: menu.coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade />
+        ) : hero ? (
+          <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
+        ) : (
+          <View style={{ height: insets.top + 72 }} />
+        )}
         <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
           {/* A home menu is always a draft to the venue calendar: its night is in the line below. */}
@@ -97,8 +107,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
             {/* Your home menu shares as a link or a card; a venue's menu as its guest card. */}
             <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (canEdit && !menu.barId ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
-            {status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
-            {status === 'on' || status === 'upcoming' ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+            {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
+            {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
             {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
           </View>
           {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" />}

@@ -26,16 +26,22 @@ const MOCK_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR42mN4//IuSYhhVMOohuGrAQB7O7UfT213LwAAAABJRU5ErkJggg==";
 
 /**
- * Whether image generation is mocked: always on a local stack unless
- * IMAGE_MODEL=live (in supabase/functions/.env), never in production.
+ * Whether the model named by `env` is mocked: always on a local stack unless
+ * that variable is "live" (in supabase/functions/.env), never in production.
  */
-export function mockImages(): boolean {
-  const model = Deno.env.get("IMAGE_MODEL");
+function mocked(env: string): boolean {
+  const model = Deno.env.get(env);
   if (model === "live") return false;
   if (isLocalStack()) return true;
-  if (model === "mock") throw new Error("IMAGE_MODEL=mock is only allowed on a local stack");
+  if (model === "mock") throw new Error(`${env}=mock is only allowed on a local stack`);
   return false;
 }
+
+/** Image generation is mocked on a local stack unless IMAGE_MODEL=live. */
+export const mockImages = (): boolean => mocked("IMAGE_MODEL");
+
+/** Reading menu photos is mocked on a local stack unless MENU_MODEL=live. */
+export const mockMenuReads = (): boolean => mocked("MENU_MODEL");
 
 export interface GeneratedImage {
   bytes: Uint8Array;
@@ -81,13 +87,30 @@ export async function generateImage(prompt: string): Promise<GeneratedImage> {
 }
 
 /** Asks Gemini Flash about an image and returns its JSON reply as text. */
-export async function describeImageAsJson(imageBase64: string, mimeType: string, prompt: string): Promise<string> {
+export function describeImageAsJson(imageBase64: string, mimeType: string, prompt: string): Promise<string> {
+  return describeImagesAsJson([{ base64: imageBase64, mimeType }], prompt);
+}
+
+/**
+ * Asks Gemini Flash about one or more images (in order) and returns its JSON
+ * reply as text. With a schema, the reply can only take that shape; thinking
+ * is off then too, since a schema means reading, not judging.
+ */
+export async function describeImagesAsJson(
+  images: { base64: string; mimeType: string }[],
+  prompt: string,
+  schema?: Record<string, unknown>,
+): Promise<string> {
   const res = await fetch(`${API_BASE}/gemini-2.5-flash:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },
+    signal: AbortSignal.timeout(90_000),
     body: JSON.stringify({
-      contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: imageBase64 } }, { text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json" },
+      contents: [{ parts: [...images.map((i) => ({ inline_data: { mime_type: i.mimeType, data: i.base64 } })), { text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        ...(schema ? { responseSchema: schema, temperature: 0, thinkingConfig: { thinkingBudget: 0 } } : {}),
+      },
     }),
   });
   if (!res.ok) throw new Error(`Gemini vision failed: ${res.status} ${await res.text()}`);

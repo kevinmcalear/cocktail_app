@@ -1,5 +1,5 @@
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { Text, YStack } from "tamagui";
@@ -9,12 +9,13 @@ import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailConte
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
-import { useCocktail } from "@/hooks/useCocktails";
+import { useCocktail, useDeleteCocktail } from "@/hooks/useCocktails";
 import { useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
+import { confirmAsync } from "@/lib/dialogs";
 import { heroPicture, orderedPictures, pictureTag } from "@/lib/itemImages";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
@@ -51,6 +52,26 @@ export default function CocktailDetailsScreen() {
         if (ok) setShowPhotoSheet(false);
     };
 
+    const router = useRouter();
+    const deleteCocktail = useDeleteCocktail();
+    const handleDelete = async () => {
+        if (!cocktail) return;
+        const ok = await confirmAsync({
+            title: `Delete ${cocktail.name}?`,
+            message: "This removes the drink, its spec and its photos for everyone at the venue. It can't be undone.",
+            confirmText: "Delete",
+            destructive: true,
+        });
+        if (!ok) return;
+        try {
+            await deleteCocktail.mutateAsync(cocktail.id);
+        } catch {
+            return; // the global mutation handler shows the error
+        }
+        if (router.canGoBack()) router.back();
+        else router.replace("/(tabs)");
+    };
+
     const handleCancelEdit = () => {
         editor.discardChanges();
         setIsEditing(false);
@@ -84,9 +105,7 @@ export default function CocktailDetailsScreen() {
                 images={[]}
                 isLoading={isLoading}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
             >
                 <YStack style={styles.container}>
                     {error ? (
@@ -115,14 +134,13 @@ export default function CocktailDetailsScreen() {
                 imageTags={imageTags}
                 emptyPhotoPlaceholder={isEditing && images.length === 0}
                 isFavorite={isFavorite(cocktail.id)}
-                isInStudyPile={isInStudyPile(cocktail.id)}
                 onToggleFavorite={toggleFavorite}
-                onToggleStudyPile={toggleStudyPile}
                 canEdit={canEdit}
                 onStartEdit={() => setIsEditing(true)}
                 onCancelEdit={handleCancelEdit}
                 isEditing={isEditing}
                 onSave={isEditing ? handleSave : undefined}
+                onDelete={isEditing && canEdit ? () => void handleDelete() : undefined}
                 saving={editor.saving}
                 isDirty={editor.isDirty}
                 editableTitle={
