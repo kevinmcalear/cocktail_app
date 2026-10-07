@@ -5,7 +5,8 @@ import type { SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { useMenuEditDropStore } from '@/store/useMenuEditDropStore';
 import { useEffect } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import { useTheme } from 'tamagui';
+import { BackbarTheme, useDs } from '@/components/ds';
+import { radius } from '@/constants/tokens';
 
 type SearchPopoverProps = {
   visible: boolean;
@@ -36,7 +37,7 @@ export function SearchPopover({
   onCreateNew,
   lockedContextId,
 }: SearchPopoverProps) {
-  const theme = useTheme();
+  const ds = useDs();
   const { width, height } = useWindowDimensions();
   const { items: catalogItems, error } = useSearchCatalog();
   const items = itemsProp ?? catalogItems;
@@ -63,43 +64,45 @@ export function SearchPopover({
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose} accessibilityLabel="Dismiss search">
-        <Pressable
-          style={[
-            styles.panel,
-            {
-              width: panelW,
-              height: panelH,
-              backgroundColor: theme.backgroundStrong?.get() as string,
-              borderColor: theme.borderColor?.get() as string,
-            },
-          ]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <CommandSearch
-            key={`${initialQuery}|${initialFilter}|${filters?.join(',') ?? ''}|${visible}`}
-            items={items}
-            initialQuery={initialQuery}
-            initialFilter={initialFilter}
-            filters={filters}
-            autoFocus
-            showFooter
-            onSelect={onClose}
-            onItemSelect={onItemSelect}
-            onItemDragStart={
-              // ponytail: ⌘K + window pointer tracking is web; native still taps Add → select
-              canDropOnMenu && Platform.OS === 'web'
-                ? (item, pos) => {
-                    onClose();
-                    requestAnimationFrame(() => startDrag(item, pos.x, pos.y));
-                  }
-                : undefined
-            }
-            onCreateNew={onCreateNew}
-            lockedContextId={lockedContextId}
-          />
+      <BackbarTheme>
+        <Pressable style={[styles.overlay, { backgroundColor: ds.c.scrim }]} onPress={onClose} accessibilityLabel="Dismiss search">
+          <Pressable
+            style={[
+              styles.panel,
+              {
+                width: panelW,
+                height: panelH,
+                backgroundColor: ds.c.surface,
+                borderColor: ds.c.line,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <CommandSearch
+              key={`${initialQuery}|${initialFilter}|${filters?.join(',') ?? ''}|${visible}`}
+              items={items}
+              initialQuery={initialQuery}
+              initialFilter={initialFilter}
+              filters={filters}
+              autoFocus
+              showFooter
+              onSelect={onClose}
+              onItemSelect={onItemSelect}
+              onItemDragStart={
+                // ponytail: ⌘K + window pointer tracking is web; native still taps Add → select
+                canDropOnMenu && Platform.OS === 'web'
+                  ? (item, pos) => {
+                      onClose();
+                      requestAnimationFrame(() => startDrag(item, pos.x, pos.y));
+                    }
+                  : undefined
+              }
+              onCreateNew={onCreateNew}
+              lockedContextId={lockedContextId}
+            />
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </BackbarTheme>
     </Modal>
   );
 }
@@ -107,16 +110,16 @@ export function SearchPopover({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 80,
   },
   panel: {
-    borderRadius: 12,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
     borderWidth: 1,
     overflow: 'hidden',
     maxWidth: '100%',
     boxShadow: '0 16px 48px rgba(0,0,0,0.45)',
-  } as any,
+  },
 });

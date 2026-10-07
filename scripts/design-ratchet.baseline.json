@@ -1,6 +1,5 @@
 {
   "violations": {
-    "app/(tabs)/search.tsx": 1,
     "app/+html.tsx": 2,
     "app/+not-found.tsx": 3,
     "app/add-ingredient.tsx": 19,
@@ -18,7 +17,7 @@
     "components/BarAssignmentAccordion.tsx": 9,
     "components/CategoryPickerModal.tsx": 5,
     "components/CategoryTree.tsx": 2,
-    "components/CommandSearch.tsx": 35,
+    "components/CommandSearch.tsx": 12,
     "components/CreatorWorkspace.tsx": 19,
     "components/CurrentMenuList.tsx": 29,
     "components/DialogHost.tsx": 8,
@@ -30,7 +29,6 @@
     "components/ItemDetailLayout.tsx": 34,
     "components/OfflineBanner.tsx": 3,
     "components/SearchBar.tsx": 8,
-    "components/SearchPopover.tsx": 3,
     "components/SettingsScreen.tsx": 45,
     "components/UniversalCreateButton.tsx": 24,
     "components/VenueContextPicker.tsx": 9,
@@ -86,12 +84,12 @@
     "store/useCreatorNavStore.ts": 1
   },
   "longFiles": {
-    "app/add-ingredient.tsx": 758,
+    "app/add-ingredient.tsx": 756,
     "app/edit-mode/index.tsx": 1072,
-    "app/ingredient/[id]/edit.tsx": 708,
+    "app/ingredient/[id]/edit.tsx": 706,
     "app/menus/create-template.tsx": 495,
     "app/menus/create/index.tsx": 905,
-    "components/CommandSearch.tsx": 1093,
+    "components/CommandSearch.tsx": 995,
     "components/CurrentMenuList.tsx": 517,
     "components/DraftFolderTree.tsx": 1324,
     "components/ItemDetailLayout.tsx": 725,
