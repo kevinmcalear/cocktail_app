@@ -11,12 +11,13 @@ import { useDs } from './theme';
  * row of them in a view with role="radiogroup" and an accessible name. The
  * selected one is solid ink, so selection never depends on the accent.
  * `quiet` rests as a line instead of a fill, for a long browse row.
+ * `multi` makes it a checkbox, for a group where several can be on (role="group").
  */
-export function Chip({ label, selected, onPress, quiet }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean }) {
+export function Chip({ label, selected, onPress, quiet, multi }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean }) {
   const ds = useDs();
   return (
     <PressableScale
-      role="radio"
+      role={multi ? 'checkbox' : 'radio'}
       aria-checked={selected}
       accessibilityLabel={label}
       onPress={onPress}
