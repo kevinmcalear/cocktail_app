@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
+import { useMemo, useState, type ReactElement } from 'react';
+import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Body, Button, Caption, Field, useBreakpoint, useDs } from '@/components/ds';
-import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
@@ -16,15 +15,24 @@ import { candidatesFor, CUTS, moved, ranked, STAFF_LIST_MAX, staffOrder, unranke
 import { StaffRow } from './StaffRow';
 
 const NO_PICKS: StaffPick[] = [];
-const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
 /**
  * The staff list in Library: the drinks every new hire should know, ranked to
  * 50, with cut lines after 10 and 20. Everyone at the venue reads it; Drink
  * Creators and up drag to reorder, add and remove (bar_off_menu, through
- * set_staff_list_order). On native it must sit in a NestableScrollContainer.
+ * set_staff_list_order). It is the screen's scroll view, with the screen's
+ * header above it: nested in another scroll view, its drag gesture takes
+ * every vertical swipe on Android and the page stops scrolling.
  */
-export function StaffList({ barId, canEdit, onNow, past }: { barId: string; canEdit: boolean; onNow: ReadonlySet<string>; past: ReadonlySet<string> }) {
+export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle }: {
+  barId: string;
+  canEdit: boolean;
+  onNow: ReadonlySet<string>;
+  past: ReadonlySet<string>;
+  /** The screen above the list (Library's title and filters). */
+  header?: ReactElement;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+}) {
   const router = useRouter();
   const breakpoint = useBreakpoint();
   const arrows = Platform.OS === 'web' && breakpoint !== 'phone';
@@ -59,9 +67,6 @@ export function StaffList({ barId, canEdit, onNow, past }: { barId: string; canE
     onRemove: () => remove(pick),
   });
 
-  if (picks.isLoading) return <Caption tone="muted">Loading the staff list…</Caption>;
-  if (picks.error) return <Body tone="muted">Couldn’t load the staff list. Check your connection and try again.</Body>;
-
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<StaffPick>) => {
     const i = getIndex() ?? 0;
     const cut = CUTS.find((c) => c === i + 1);
@@ -82,23 +87,18 @@ export function StaffList({ barId, canEdit, onNow, past }: { barId: string; canE
     );
   };
 
-  return (
-    <View style={styles.list}>
+  const top = (
+    <View style={styles.top}>
+      {header}
       <Body tone="muted">The drinks every new hire should know, in order. Drink Creators and Admins can drag to reorder.</Body>
+      {picks.isLoading ? <Caption tone="muted">Loading the staff list…</Caption> : null}
+      {picks.error ? <Body tone="muted">Couldn’t load the staff list. Check your connection and try again.</Body> : null}
       {edit.error ? <Caption>{plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}</Caption> : null}
-      {!rows.length ? <Body tone="muted">Nothing on the staff list yet.</Body> : null}
-      {order.ranked.length ? (
-        <List
-          data={order.ranked}
-          keyExtractor={(p) => p.itemId}
-          renderItem={renderItem}
-          onDragEnd={({ data }) => reorder(data.map((p) => p.itemId))}
-          scrollEnabled={false}
-          // It doesn't scroll itself, so nothing may be held back: render all 50.
-          initialNumToRender={STAFF_LIST_MAX}
-          activationDistance={10}
-        />
-      ) : null}
+      {picks.data && !rows.length ? <Body tone="muted">Nothing on the staff list yet.</Body> : null}
+    </View>
+  );
+  const bottom = (
+    <View style={styles.list}>
       {order.unranked.length ? (
         <>
           <CutLine label="Not ranked" quiet />
@@ -131,6 +131,21 @@ export function StaffList({ barId, canEdit, onNow, past }: { barId: string; canE
       ) : null}
     </View>
   );
+
+  return (
+    <DraggableFlatList
+      data={order.ranked}
+      keyExtractor={(p) => p.itemId}
+      renderItem={renderItem}
+      onDragEnd={({ data }) => reorder(data.map((p) => p.itemId))}
+      ListHeaderComponent={top}
+      ListFooterComponent={bottom}
+      contentContainerStyle={contentContainerStyle}
+      // Fifty rows at most: render them all, so a drag never lands on an unrendered row.
+      initialNumToRender={STAFF_LIST_MAX}
+      activationDistance={10}
+    />
+  );
 }
 
 /** "TOP 10" with a rule after it, in the accent: where the ranking is cut. */
@@ -149,6 +164,7 @@ function CutLine({ label, quiet }: { label: string; quiet?: boolean }) {
 
 const styles = StyleSheet.create({
   list: { gap: space.xs },
+  top: { gap: space.md, paddingBottom: space.sm },
   cut: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginVertical: space.sm },
   cutText: { fontFamily: fontFamilies.bodySemiBold, letterSpacing: 0.6 },
   rule: { flex: 1, height: StyleSheet.hairlineWidth },

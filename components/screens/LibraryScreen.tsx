@@ -6,7 +6,6 @@ import { Body, Button, Caption, Display, DrinkImage, PressableScale, useBreakpoi
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { StaffList } from '@/components/screens/library/StaffList';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { fontFamilies, radius, space } from '@/constants/tokens';
@@ -155,11 +154,8 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {staffView && activeId ? (
-        // The staff list drags to reorder, which needs a nestable scroll container on native.
-        <FormScrollContainer contentContainerStyle={content}>
-          {header}
-          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} />
-        </FormScrollContainer>
+        // The staff list drags to reorder, so it is the scroll view itself.
+        <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
       ) : (
         <FlatList
           key={columns}

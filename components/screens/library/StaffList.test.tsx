@@ -10,8 +10,6 @@ const mockMutate = jest.fn();
 const onNow = new Set(['d1']);
 const past = new Set(['paloma']);
 
-// The nestable list's hover offset loops under the reanimated mock; the plain one renders.
-jest.mock('@/components/recipe/FormScrollContainer', () => ({ supportsNestableDrag: false }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useDiscover', () => ({
   useDrinkLists: () => ({ data: [{ id: 'catalog-daiquiri', name: 'Daiquiri' }] }),
