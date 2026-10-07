@@ -104,7 +104,7 @@ function SideNavBody() {
         {(mode === 'home' ? HOME_TABS : VENUE_TABS).map((t) => (
           <NavRow key={t.name} label={t.label} icon={t.icon} current={pathname === hrefFor(t.name)} onPress={() => go(t.name)} />
         ))}
-        {/* Phones reach menus from Tonight and the back bar from Prep; wide web has both here, as in the brief. */}
+        {/* Phones reach menus from Tonight; wide web has them here, with the back bar, as in the brief. */}
         {mode === 'venue' ? (
           <>
             <NavRow label="Menus" icon="list.bullet" current={pathname.startsWith('/menus')} onPress={() => go('menus/all')} />

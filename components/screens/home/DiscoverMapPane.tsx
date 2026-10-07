@@ -1,15 +1,14 @@
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { DiscoverDrinkFilters, DiscoverKinds } from '@/components/screens/home/DiscoverKinds';
 import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { layout, space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
 import { drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
@@ -17,6 +16,7 @@ import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
+import { BarTopDrinks } from './BarTopDrinks';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
 
@@ -25,16 +25,15 @@ interface DiscoverMapPaneProps {
   onArea: (area: Area) => void;
   /** The drink picked on Discover, for "Best Martini" pins. */
   drink: { id: string; name: string } | null;
-  /** Drinks at bars matching Discover's search and style, in the area: the default layer. */
+  /** Drinks at bars matching Discover's search and filters, in the area: the default layer. */
   results: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string };
-  /** The style or spirit picked; the phone sheet can change it. */
-  kind: string | null;
-  onKind: (kind: string | null) => void;
+  /** What the map shows once the person has moved it (null after a refit), so search can stay in view. */
+  onViewport?: (viewport: Viewport | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
   mode: 'sheet' | 'side';
-  /** Controls over the top of the map (phones: where, and back to the list). */
+  /** Controls over the top of the map (phones: search, where, filters, and back to the list). */
   top?: ReactNode;
-  /** The floating tab bar's height: the sheet runs behind it, so its content is padded by this much. */
+  /** Room for the tab bar: the phone sheet floats above it rather than behind it. */
   bottomInset?: number;
 }
 
@@ -42,7 +41,7 @@ interface DiscoverMapPaneProps {
 const PREVIEW_DRINKS = 3;
 
 /** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
-const SHEET_PEEK = layout.minTapTarget + space.xl;
+const SHEET_PEEK = layout.minTapTarget + space.sm;
 
 /** The bar a pin stands for, the drinks there on the drinks layer, and a way in. */
 function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; onClose: () => void }) {
@@ -70,6 +69,7 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
           </View>
         )}
       </View>
+      <BarTopDrinks barId={pin.id} />
       {shown.map((d) => (
         <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={null} note={d.description ?? undefined} />
       ))}
@@ -89,7 +89,7 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
  * area, drink or layer changes, but never after "Search this area", so the
  * view the person chose stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
   const ds = useDs();
   const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
   const byDrinks = layer === 'drinks';
@@ -102,7 +102,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
   const selected = pins.find((p) => p.id === selectedId) ?? null;
 
   // Refit when what's shown changes, not when the person searched the view they're on.
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : kind, results.title]);
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title]);
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   if (fitKey !== null && fit?.key !== fitKey && !rows.isLoading) {
@@ -112,7 +112,9 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
   // The maps report only the person's own moves, so any settled move since
   // the last fit or search is worth offering.
   const settled = useDebounced(viewport, 350);
-  const offer = viewport && settled === viewport ? viewport : null;  const searchArea = (v: Viewport) => {
+  const offer = viewport && settled === viewport ? viewport : null;
+  useEffect(() => onViewport?.(settled), [settled, onViewport]);
+  const searchArea = (v: Viewport) => {
     setViewport(null);
     setSelectedId(null);
     onArea(areaFromViewport(v));
@@ -139,8 +141,8 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
   const list = rows.isLoading ? (
     <ListNote>Loading…</ListNote>
   ) : byDrinks ? (
-    // A selected pin already lists its drinks in the card.
-    selected ? null : barDrinks.length ? (
+    // Wide screens list a selected bar's drinks in its card; phones keep the card small and list them here.
+    selected && mode === 'side' ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} />
     ) : (
       <ListNote>{`No drinks ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
@@ -193,22 +195,37 @@ export function DiscoverMapPane({ area, onArea, drink, results, kind, onKind, mo
         {top}
         {searchHere}
       </View>
-      <BottomSheet
-        snapPoints={[SHEET_PEEK + bottomInset, '50%', '88%']}
-        backgroundStyle={{ backgroundColor: ds.c.surface }}
-        handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
-        accessibilityLabel="Results"
-      >
-        <BottomSheetScrollView contentContainerStyle={[styles.sheet, { paddingBottom: bottomInset }]}>
-          {selected ? <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} /> : null}
-          {byDrinks ? <DiscoverDrinkFilters kind={kind} onChange={onKind} /> : null}
-          <Title role="heading">{title}</Title>
-          {layers}
-          {byDrinks ? <DiscoverKinds kind={kind} onChange={onKind} /> : null}
-          {list}
-          <MapCredit />
-        </BottomSheetScrollView>
-      </BottomSheet>
+      {selected ? (
+        // Floats over the map just above the peek, so the map and the card share the screen.
+        <View pointerEvents="box-none" style={[styles.overlay, { bottom: bottomInset + SHEET_PEEK + space.sm }]}>
+          <SelectedBar key={selected.id} pin={selected} drinks={[]} onClose={() => setSelectedId(null)} />
+        </View>
+      ) : null}
+      {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
+      <View pointerEvents="box-none" style={[styles.sheetBox, { bottom: bottomInset }]}>
+        <BottomSheet
+          snapPoints={[SHEET_PEEK, '50%', '88%']}
+          backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
+          handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
+          accessibilityLabel="Results"
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.sheet}>
+            <Caption tone="muted" numberOfLines={1}>
+              {rows.isLoading
+                ? 'Loading…'
+                : selected && byDrinks
+                  ? `${drinkCount(barDrinks.length)} at ${selected.name} · swipe up for them`
+                  : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
+            </Caption>
+            <Title role="heading" numberOfLines={1}>
+              {title}
+            </Title>
+            {layers}
+            {list}
+            <MapCredit />
+          </BottomSheetScrollView>
+        </BottomSheet>
+      </View>
     </View>
   );
 }
@@ -227,5 +244,7 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   cardActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
   score: { alignItems: 'flex-end' },
-  sheet: { paddingHorizontal: space.lg, gap: space.md },
+  sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: space.md },
+  // Floats above the tab bar, clear of the screen edges, like the tab bar itself.
+  sheetBox: { position: 'absolute', top: 0, left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
 });

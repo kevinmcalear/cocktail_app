@@ -46,7 +46,7 @@ function Review({
           <Headline>{block.name || 'Needs a name'}</Headline>
           {block.kind === 'bottle' ? <Bottle name={block.name} catalog={catalog} venueId={venueId} pickKey={lineKey(i, 0)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} /> : null}
           {block.lines.map((line, j) => (
-            <Line key={lineKey(i, j)} name={line.name} amount={`${line.amount} ${line.unit}`} catalog={catalog} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
+            <Line key={lineKey(i, j)} name={line.name} amount={line.amount === null ? '' : `${line.amount} ${line.unit}`} catalog={catalog} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
           ))}
           {block.notes.map((note) => (
             <Caption key={note} tone="muted">
@@ -115,7 +115,7 @@ function BringInBody() {
   const { catalog, methods, glasses, isLoading } = useSpecCatalog();
   const bring = useBringIn(barId);
   const [mode, setMode] = useState<Mode>('drinks');
-  const [text, setText] = useState(() => takeBringIn()?.join('\n') ?? '');
+  const [text, setText] = useState(() => takeBringIn() ?? '');
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [kinds, setKinds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
@@ -152,7 +152,7 @@ function BringInBody() {
             minLines={6}
             placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
           />
-          <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
+          <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
           {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
           {message ? <Caption tone="accent">{message}</Caption> : null}

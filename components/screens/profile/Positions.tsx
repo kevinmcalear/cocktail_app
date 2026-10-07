@@ -4,13 +4,22 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
-import { useProfilePositions, type Profile } from '@/hooks/useProfiles';
+import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
+
+/**
+ * Only where someone works now. Past jobs (many from public research on
+ * unclaimed profiles) stay off until the person opts in.
+ * ponytail: no opt-in yet, so past jobs never show. The upgrade is a
+ * per-job switch the person turns on.
+ */
+export const isShownPosition = (p: Pick<Position, 'is_current'>) => p.is_current;
 
 /** "Works at" on a person, "People" on a bar. Each row opens the other profile. */
 export function Positions({ profile }: { profile: Pick<Profile, 'id' | 'kind'> }) {
   const ds = useDs();
   const router = useRouter();
-  const { data: positions = [] } = useProfilePositions(profile);
+  // Filtered here, not in the query, so a persisted cache from before can't show them either.
+  const positions = (useProfilePositions(profile).data ?? []).filter(isShownPosition);
   if (!positions.length) return null;
   const onPerson = profile.kind === 'person';
   return (

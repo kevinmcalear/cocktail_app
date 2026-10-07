@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
+import { batchedDrinkName, nameKey, orderedPictures, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { useAppStore } from '@/store/useAppStore';
 
 // Standard ingredient list query
@@ -40,6 +41,24 @@ export function useIngredients(options?: { allContexts?: boolean }) {
             return data;
         }
     });
+}
+
+/**
+ * The photos of the drink a batch makes ("Aperol Fizz" for "Aperol Fizz Batch"),
+ * from the same venue. Null when it isn't a batch, or already has a photo.
+ */
+async function batchDrinkImages(item: { name: string; bar_id: string | null; item_images?: ItemImageLink[] | null }) {
+    const drink = batchedDrinkName(item.name);
+    if (!drink || orderedPictures(item.item_images).some((p) => !p.isSketch)) return null;
+    let query = supabase
+        .from('app_item_presentation')
+        .select('name, item_images ( angle, sort_order, is_generated, images ( url ) )')
+        .eq('item_type', 'cocktail')
+        .ilike('name', drink.replace(/[\\%_]/g, '\\$&'));
+    query = item.bar_id ? query.eq('bar_id', item.bar_id) : query.is('bar_id', null);
+    // A missing photo is not worth failing the page over.
+    const { data } = await query.limit(5);
+    return (data ?? []).find((d) => nameKey(d.name ?? '') === nameKey(drink))?.item_images as ItemImageLink[] | null ?? null;
 }
 
 // Single ingredient detail query, including where it's used
@@ -131,6 +150,8 @@ export function useIngredient(id?: string | string[]) {
 
             return {
                 ingredient: { ...ingredient, generic },
+                // Shown in place of a batch's sketch; kept apart so the edit screen never saves them.
+                heroImages: withDrinkPhotos(ingredient.item_images, await batchDrinkImages(ingredient)),
                 recipe: recipe || [],
                 usedIn
             };
