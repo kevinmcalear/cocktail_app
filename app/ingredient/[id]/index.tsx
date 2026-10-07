@@ -60,7 +60,7 @@ export default function IngredientDetailScreen() {
         !!ingredient,
         ingredient
             ? recentEntry('ingredient', ingredient.id, ingredient.name, {
-                imageUrl: heroPicture(ingredient.item_images)?.url,
+                imageUrl: heroPicture(data?.heroImages)?.url,
                 barId: ingredient.bar_id ?? null,
               })
             : null
@@ -95,7 +95,7 @@ export default function IngredientDetailScreen() {
         );
     }
 
-    const pictures = orderedPictures(ingredient.item_images);
+    const pictures = orderedPictures(data?.heroImages);
 
     return (
         <ItemDetailLayout
