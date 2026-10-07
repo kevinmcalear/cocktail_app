@@ -9,11 +9,11 @@
 // every platform.
 
 import { SKETCH } from '@/constants/sketch';
-import { band, ell, GLASS_SHAPES, hw, type Pt } from './geometry';
+import { band, ell, glassShape, hw, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
 import { paintIce } from './ice';
 import { makePainter, type LineOpts, type Painter } from './painter';
-import { gauss, hashString, mixHex, rng } from './random';
+import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { SceneBuilder, type Scene } from './scene';
 import { CRUMB, DEFAULT_SKETCH_STYLE, LIFT, SKETCH_STYLES, SMUDGE, type SketchStyleKey } from './styles';
 import type { SketchFoam, SketchInputs } from './types';
@@ -63,8 +63,8 @@ function glassParts(P: Painter): [Pt[], LineOpts][] {
 }
 
 /** Earlier tries at the shape, half rubbed out, with guide ellipses and eraser marks. */
-function searching(P: Painter, parts: [Pt[], LineOpts][]) {
-  const { S, r, g, e, Rr, bot } = P;
+function searching(P: Painter, parts: [Pt[], LineOpts][], r: Rng) {
+  const { S, g, e, Rr, bot } = P;
   for (let i = 0; i < S.ghosts; i++) {
     const dx = gauss(r) * 2.2;
     const dy = gauss(r) * 1.4;
@@ -108,18 +108,22 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const S = detail === 'thumb'
     ? { ...SKETCH_STYLES[style], ghosts: 0, construct: 0, hatch: 0, cross: false, blooms: 0, passes: 2, layers: SKETCH_STYLES[style].layers * 0.6, splatter: 0 }
     : SKETCH_STYLES[style];
-  const r = rng(hashString(`${seed}|${style}`));
-  const g = { ...GLASS_SHAPES[inputs.glass] };
+  // Three streams: where things go, the hand's wobble, and the searching
+  // lines a thumbnail leaves out. Detail changes only the last two, so a drink
+  // looks the same in a tile and on its page.
+  const key = `${seed}|${style}`;
+  const r = rng(hashString(key));
+  const g = { ...glassShape(inputs.glass, inputs.variant) };
   const ice = inputs.ice;
   if (ice === 'crushed' || ice === 'shaved') g.top = g.rim + 3;
   if (ice === 'pebble') g.top = g.rim + 5;
   if (inputs.glass === 'mug' && ice !== 'cubes') g.opaque = SKETCH.homeMug;
 
   const b = new SceneBuilder(`k${hashString(seed).toString(36)}`);
-  const P = makePainter(S, r, b, g);
+  const P = makePainter(S, r, rng(hashString(`${key}|hand`)), b, g);
   const { e, Rr, bot, ground } = P;
   const parts = glassParts(P);
-  if (S.ghosts) searching(P, parts);
+  if (S.ghosts) searching(P, parts, rng(hashString(`${key}|search`)));
   if (S.construct) {
     P.line([[50, g.rim - 9], [50, ground + 7]], { passes: 1, alpha: S.construct, weight: 0.5, gaps: 0, over: 0 });
     P.line([[50 - Rr - 14, g.rim], [50 + Rr + 12, g.rim]], { passes: 1, alpha: S.construct * 1.2, weight: 0.5, gaps: 0, over: 0 });

@@ -2,15 +2,7 @@
 import assert from 'node:assert/strict';
 
 import type { SearchItem } from '../types/search';
-import { creditName, matchesQuery, withPublicDrinks } from './publicDrinks';
-
-const names = { bar: 'Bar Leone', person: 'Lorenzo Antinori' };
-
-// The bar wins over the person; a person alone still gets credit; unknown ids get none.
-assert.equal(creditName({ origin_bar_profile_id: 'bar', creator_profile_id: 'person' }, names), 'Bar Leone');
-assert.equal(creditName({ origin_bar_profile_id: null, creator_profile_id: 'person' }, names), 'Lorenzo Antinori');
-assert.equal(creditName({ origin_bar_profile_id: 'gone', creator_profile_id: 'person' }, names), 'Lorenzo Antinori');
-assert.equal(creditName({ origin_bar_profile_id: null, creator_profile_id: null }, names), undefined);
+import { compareSearchItems, matchesQuery, searchCardMeta, withPublicDrinks } from './publicDrinks';
 
 const mine: SearchItem = { id: 'a', name: 'Negroni', category: 'Cocktail' };
 const theirs: SearchItem = { id: 'b', name: 'Coconut Negroni', category: 'Cocktail', fromBar: 'Bar Leone' };
@@ -28,5 +20,19 @@ assert.ok(!matchesQuery(mine, 'leone'));
 assert.ok(
   matchesQuery({ id: 'c', name: 'Paper Plane', recipes: [{ ingredient: { name: 'Aperol' } }] }, 'aperol')
 );
+
+// A bar's drink shows who it's credited to and when it was on the menu.
+assert.equal(searchCardMeta({ ...theirs, menuRun: 'Past · Mar 2024 to Jan 2025' }), 'Bar Leone · Past · Mar 2024 to Jan 2025');
+assert.equal(searchCardMeta(theirs), 'Bar Leone');
+assert.equal(searchCardMeta(mine), undefined);
+
+// Drinks on a menu now come first, past menus last, names in between and within.
+const order = [
+  { id: 'p', name: 'Alpha', menuOrder: 2 },
+  { id: 'u', name: 'Zulu', menuOrder: 1 },
+  { id: 'n', name: 'Mike' },
+  { id: 'c', name: 'Yankee', menuOrder: 0 },
+].sort(compareSearchItems);
+assert.deepEqual(order.map((i) => i.id), ['c', 'n', 'u', 'p']);
 
 console.log('publicDrinks checks passed');

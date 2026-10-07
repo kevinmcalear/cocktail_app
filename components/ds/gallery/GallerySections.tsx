@@ -14,6 +14,7 @@ import { Surface } from '../Surface';
 import { Tag } from '../Tag';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
+import { GlassVariants } from './GlassVariants';
 import { IMAGES, PENICILLIN } from './samples';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -132,6 +133,10 @@ export function GallerySections() {
             <Caption tone="muted">No image yet</Caption>
           </View>
         </View>
+      </Section>
+
+      <Section title="Drawn glassware">
+        <GlassVariants />
       </Section>
 
       <Section title="Glass over content">

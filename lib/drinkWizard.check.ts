@@ -89,6 +89,15 @@ assert.equal(drawn.ice, 'large');
 assert.equal(drawn.garnish, 'orange_peel');
 assert.equal(drawn.from.glass, 'data');
 
+// The glass shape: the pick for this glass, else the bar's glass of this
+// type, else the default; a pick for another glass is ignored, as the
+// database does after the save.
+assert.equal(drawn.variant, null);
+assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'rocks_heavy' })).variant, 'rocks_heavy');
+assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'martini_pony' })).variant, null);
+assert.equal(draftSketchInputs(sketchLook(negroni, ['martini_soft', 'rocks_tapered'])).variant, 'rocks_tapered');
+assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'rocks_heavy' }, ['rocks_tapered'])).variant, 'rocks_heavy');
+
 // The kept draft is plain JSON (it lives in storage until the drink is saved).
 assert.deepEqual(JSON.parse(JSON.stringify(negroni)), negroni);
 

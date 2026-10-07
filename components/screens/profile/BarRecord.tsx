@@ -4,9 +4,10 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
-import { menuDate, type MenuEdition } from '@/lib/menuEditions';
+import { editionDates, editionDrinkLine, timelineDates, type MenuEdition } from '@/lib/menuEditions';
 
 const FIRST_MENUS = 6;
 
@@ -77,7 +78,11 @@ function SourceLink({ url, label, children }: { url: string | null; label: strin
   );
 }
 
-/** Every cocktail menu the bar has put out, newest first, with the month and year it launched. Each opens its menu. */
+/**
+ * Every cocktail menu the bar has put out, newest first, as a timeline: the
+ * one on now lifted, the rest with when they ran ("Mar 2024 to Aug 2025 · 17
+ * months") or an unknown end said plainly. Each opens its menu.
+ */
 export function MenuHistory({ profileId, name }: { profileId: string; name: string }) {
   const { data = [], isLoading } = useMenuEditions(profileId);
   const [all, setAll] = useState(false);
@@ -88,41 +93,40 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
     <View style={styles.section}>
       <View role="list">
         {shown.map((m, i) => (
-          <EditionRow key={m.id} edition={m} current={i === 0} href={`/p/${profileId}/menus/${m.id}`} />
+          <EditionRow key={m.id} edition={m} last={i === shown.length - 1} href={`/p/${profileId}/menus/${m.id}`} />
         ))}
       </View>
       {data.length > FIRST_MENUS && !all ? (
         <Button label={`Show all ${data.length} menus`} variant="secondary" onPress={() => setAll(true)} />
       ) : null}
+      <Caption tone="muted">Researched from the bar’s site and press. Each menu links to its source.</Caption>
     </View>
   );
 }
 
-function EditionRow({ edition: m, current, href }: { edition: MenuEdition; current: boolean; href: string }) {
+function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: boolean; href: string }) {
   const ds = useDs();
   const router = useRouter();
-  const when = menuDate(m);
-  const drinkNames = m.drinks.map((d) => d.name);
+  const when = timelineDates(editionDates(m));
+  const drinks = editionDrinkLine(m.drinks.map((d) => d.name));
+  const now = m.is_current;
   return (
-    <View role="listitem">
+    <View role="listitem" style={styles.edition}>
+      <View style={styles.rail} aria-hidden>
+        <View style={[styles.node, { borderColor: now ? ds.accentText : ds.c.muted, backgroundColor: now ? ds.accentText : 'transparent' }]} />
+        {last ? null : <View style={[styles.line, { backgroundColor: ds.c.line }]} />}
+      </View>
       <PressableScale
         role="link"
-        accessibilityLabel={[`${m.name}, ${current ? 'latest menu, ' : ''}from ${when}`, m.theme, drinkNames.length ? `Drinks: ${drinkNames.join(', ')}` : null, 'Open the menu'].filter(Boolean).join('. ')}
+        accessibilityLabel={`${m.name}. ${when}. ${drinks}. Open the menu`}
         onPress={() => router.push(href as Href)}
-        style={[styles.edition, { borderBottomColor: ds.c.line }]}
+        style={[styles.entry, now ? [styles.nowCard, { backgroundColor: ds.c.surface, borderColor: withAlpha(ds.accentText, 0.4) }] : null]}
       >
-        <View style={styles.head}>
-          <DsText variant="headline" style={styles.flex}>
-            {m.name}
-          </DsText>
-          <Caption tone={current ? 'ink' : 'muted'}>{when}</Caption>
-        </View>
-        {m.theme ? <Body tone="muted">{m.theme}</Body> : null}
-        {drinkNames.length ? (
-          <Caption tone="muted" numberOfLines={2}>
-            {drinkNames.join(' · ')}
-          </Caption>
-        ) : null}
+        <Caption style={[styles.cap, { color: now ? ds.accentText : ds.c.muted }]}>{when}</Caption>
+        <DsText variant="title">{m.name}</DsText>
+        <Body tone="muted" numberOfLines={2}>
+          {drinks}
+        </Body>
       </PressableScale>
     </View>
   );
@@ -135,8 +139,12 @@ const styles = StyleSheet.create({
   award: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   awardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  edition: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  edition: { flexDirection: 'row', gap: space.md },
+  rail: { width: 14, alignItems: 'center' },
+  node: { width: 12, height: 12, borderRadius: radius.pill, borderWidth: 2, marginTop: space.lg },
+  line: { flex: 1, width: 2, marginTop: space.xs },
+  entry: { flex: 1, minWidth: 0, gap: space.xs, paddingTop: space.md, paddingBottom: space.lg },
+  nowCard: { paddingHorizontal: space.lg, marginBottom: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   start: { alignSelf: 'flex-start' },
 });

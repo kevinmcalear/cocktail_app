@@ -71,7 +71,7 @@ describe('signature drinks', () => {
     assert.deepEqual(rows.map((r) => r.name), []);
   });
 
-  test("a signed-in person reads a bar's drink with its spec, and signed out sees no spec", async () => {
+  test("the bar's spec is seeded, but stays with the bar until it claims its page", async () => {
     const { rows } = await db.query(`
       SELECT i.id FROM public.items i
       JOIN public.profiles p ON p.id = i.origin_bar_profile_id AND p.handle = 'superbuenonyc'
@@ -79,13 +79,13 @@ describe('signature drinks', () => {
     assert.equal(rows.length, 1, 'Superbueno has one Green Mango Martini');
     const id = rows[0].id;
 
-    const { data, error } = await user.client
-      .from('app_recipe_presentation')
-      .select('amount, unit, display_ingredient_id')
-      .eq('recipe_item_id', id);
+    const seeded = await db.query('SELECT count(*)::int AS n FROM public.recipes WHERE recipe_item_id = $1 AND ingredient_item_id IS NOT NULL', [id]);
+    assert.ok(seeded.rows[0].n >= 3);
+
+    // Superbueno hasn't claimed its page (20261007130000_bar_page_visibility.sql).
+    const { data, error } = await user.client.from('app_recipe_presentation').select('amount').eq('recipe_item_id', id);
     assert.ifError(error);
-    assert.ok(data.length >= 3);
-    assert.ok(data.every((r) => r.display_ingredient_id));
+    assert.deepEqual(data, []);
 
     const { data: signedOut } = await anon.from('recipes').select('id').eq('recipe_item_id', id);
     assert.deepEqual(signedOut ?? [], []);

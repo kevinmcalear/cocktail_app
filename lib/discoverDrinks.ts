@@ -33,6 +33,8 @@ export interface DiscoverDrink {
   spirits: string[];
   /** Folded name, description and ingredients, for search. */
   haystack: string;
+  /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past. */
+  menu?: { onNow: boolean; past: string | null; order: number };
 }
 
 export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'haystack'> & { riffOf: string | null }): DiscoverDrink {
@@ -115,8 +117,10 @@ export function filterDrinks(drinks: readonly DiscoverDrink[], bars: ReadonlyMap
     return words.every((w) => text.includes(w));
   });
   const q = words.join(' ');
-  // Name matches, then pictures, then names that start with a letter ("&thesea" and "1986" last).
-  const rank = (d: DiscoverDrink) => (q && foldName(d.name).includes(q) ? 0 : 4) + (d.imageUrl ? 0 : 2) + (/^\p{L}/u.test(d.name) ? 0 : 1);
+  // Name matches, then drinks on a menu now before past ones, then pictures,
+  // then names that start with a letter ("&thesea" and "1986" last).
+  const rank = (d: DiscoverDrink) =>
+    (q && foldName(d.name).includes(q) ? 0 : 12) + (d.menu?.order ?? 1) * 4 + (d.imageUrl ? 0 : 2) + (/^\p{L}/u.test(d.name) ? 0 : 1);
   return hits.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
 }
 

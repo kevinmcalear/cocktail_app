@@ -5,6 +5,7 @@ export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
 export { Field } from './Field';
 export { GlassButton, GlassSurface } from './Glass';
+export { GlassVariantPicker } from './GlassVariantPicker';
 export { LockedSection } from './LockedSection';
 export { PressableScale } from './PressableScale';
 export { Segmented } from './Segmented';

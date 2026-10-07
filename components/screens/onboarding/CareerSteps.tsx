@@ -8,6 +8,8 @@ import { useClaimProfile, usePublicPeople, type PublicPerson } from '@/hooks/use
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import { barNameError, drinkNameError, menuNameError, roleError, venueLabel, yearError } from '@/lib/onboarding';
 
+import { CLAIM_PAST_JOBS, PastJobs } from '../profile/PastJobs';
+
 /** Search for a profile we already have. Claiming it does not make a second one. */
 export function FindStep({
   name,
@@ -44,6 +46,7 @@ export function FindStep({
               multiline
               maxLength={1000}
             />
+            <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>
             {claim.error ? <Caption tone="accent">{claimMessage(claim.error)}</Caption> : null}
             <Button
               label={claim.isPending ? 'Sending…' : 'Send claim'}
@@ -109,7 +112,8 @@ export function PlaceStep({ personId, isCurrent, onDone }: { personId: string | 
 
   return (
     <View style={styles.stack}>
-      {!isCurrent ? <Caption tone="muted">A closed bar we already know still shows up here.</Caption> : null}
+      {!isCurrent && personId ? <PastJobs personId={personId} /> : null}
+      {!isCurrent ? <Caption tone="muted">Add a past job. A closed bar we already know still shows up here.</Caption> : null}
       {!bar && !adding ? (
         <>
           <Field label="Search bars" value={search} onChangeText={setSearch} placeholder="Bar name" autoCorrect={false} />
