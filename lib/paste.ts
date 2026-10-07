@@ -1,4 +1,4 @@
-import { addDrink, addSection, type MenuLayout } from '@/lib/menuLayout';
+import { addDrink, addSection, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { RECIPE_UNITS } from '@/lib/units';
 import type { MenuDrink } from '@/types/menus';
 
@@ -48,8 +48,9 @@ export function parseAmount(raw: string): number | null {
 }
 
 export interface SpecLine {
-  amount: number;
-  unit: string;
+  /** Null for an ingredient listed without an amount ("- Campari"). */
+  amount: number | null;
+  unit: string | null;
   name: string;
 }
 
@@ -63,9 +64,17 @@ export function parseSpecLine(row: string): SpecLine | null {
   return { amount, unit, name: match[3].trim() };
 }
 
+/** A spec line, or "- Campari" (an ingredient with no amount, as a printed menu lists it). */
+function parseBringRow(row: string): SpecLine | null {
+  const listed = row.trim().match(/^[-•*]\s*(.+)$/);
+  return listed ? { amount: null, unit: null, name: listed[1].trim() } : parseSpecLine(row);
+}
+
 export interface ParsedMenuLine {
   name: string;
   price: string | null;
+  /** What a printed menu lists under the drink (read-menu only). */
+  ingredients?: string[];
 }
 
 export interface ParsedMenuSection {
@@ -109,6 +118,90 @@ export function parseMenuPaste(text: string, intoSection: boolean): ParsedMenuSe
   return sections;
 }
 
+export type PasteRow =
+  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string }
+  | { key: string; section: string | null; status: 'pick'; name: string; options: MenuDrink[] }
+  | { key: string; section: string | null; status: 'missing'; name: string; ingredients: string[] }
+  | { key: string; section: string | null; status: 'skip'; name: string; note: string };
+
+/**
+ * Each pasted (or photographed) line against the library: added, a pick
+ * between same-named drinks, missing, or skipped. `into` is the section a
+ * paste fills (null for a whole menu); `already` the drinks already in the
+ * section a heading-less paste lands in; `picks` line key -> drink id.
+ */
+export function pasteRows(
+  sections: ParsedMenuSection[],
+  library: MenuDrink[],
+  picks: Record<string, string>,
+  into: EditSection | null = null,
+  already: string[] = [],
+): PasteRow[] {
+  const out: PasteRow[] = [];
+  const seen = new Set(into?.drinks.map((drink) => drink.id) ?? []);
+  const parked = new Set(already);
+  sections.forEach((section, si) => {
+    section.lines.forEach((line, li) => {
+      const key = `${si}:${li}`;
+      const match = matchByName(line.name, library);
+      const place = (drink: MenuDrink) => {
+        if (into && !into.allowedTypes.includes(drink.kind)) {
+          out.push({ key, section: section.name, status: 'skip', name: drink.name, note: `${into.name} doesn’t take ${drink.kind}` });
+          return;
+        }
+        if (seen.has(drink.id) || (!into && !section.name && parked.has(drink.id))) {
+          out.push({ key, section: section.name, status: 'skip', name: drink.name, note: 'Already on this menu' });
+          return;
+        }
+        seen.add(drink.id);
+        const price = !drink.price && line.price ? line.price : null;
+        const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : 'In the library';
+        out.push({ key, section: section.name, status: 'add', drink: price ? { ...drink, price } : drink, price, note });
+      };
+      if (match.kind === 'one') place(match.item);
+      else if (match.kind === 'many') {
+        const chosen = match.items.find((item) => item.id === picks[key]);
+        if (chosen) place(chosen);
+        else out.push({ key, section: section.name, status: 'pick', name: line.name, options: match.items });
+      } else out.push({ key, section: section.name, status: 'missing', name: line.name, ingredients: line.ingredients ?? [] });
+    });
+  });
+  return out;
+}
+
+/** The added rows, in order, as groups for applyMenuPaste. Into one section, headings don't matter. */
+export function placedGroups(rows: PasteRow[], intoSection: boolean): PlacedGroup[] {
+  const groups: PlacedGroup[] = [];
+  for (const row of rows) {
+    if (row.status !== 'add') continue;
+    const name = intoSection ? null : row.section;
+    const last = groups[groups.length - 1];
+    if (last && last.name === name) last.drinks.push(row.drink);
+    else groups.push({ name, drinks: [row.drink] });
+  }
+  return groups;
+}
+
+/** A second reading (another page) after the first: a heading carried over the page break joins its section. */
+export function appendReading(sections: ParsedMenuSection[], more: ParsedMenuSection[]): ParsedMenuSection[] {
+  const [first, ...rest] = more;
+  const last = sections[sections.length - 1];
+  if (!first) return sections;
+  if (last && (first.name === null || first.name === last.name)) {
+    return [...sections.slice(0, -1), { ...last, lines: [...last.lines, ...first.lines] }, ...rest];
+  }
+  return [...sections, ...more];
+}
+
+/**
+ * Drinks for Bring in: a name a line, or, when any has ingredients, a block
+ * each with its ingredients as "- " lines (no amounts yet).
+ */
+export function bringInText(drinks: { name: string; ingredients: string[] }[]): string {
+  if (!drinks.some((drink) => drink.ingredients.length)) return drinks.map((drink) => drink.name).join('\n');
+  return drinks.map((drink) => [drink.name, ...drink.ingredients.map((name) => `- ${name}`)].join('\n')).join('\n\n');
+}
+
 export interface PlacedGroup {
   name: string | null;
   drinks: MenuDrink[];
@@ -117,7 +210,9 @@ export interface PlacedGroup {
 /** Adds the checked drinks to the layout. Named groups become new sections. */
 export function applyMenuPaste(layout: MenuLayout, intoKey: string | null, groups: PlacedGroup[]): MenuLayout {
   if (intoKey) return groups.reduce((acc, group) => group.drinks.reduce((next, drink) => addDrink(next, intoKey, drink), acc), layout);
-  let next = layout;
+  // A new menu's one empty section gives way when the paste brings its own headings.
+  const fresh = layout.sections.length === 1 && !layout.sections[0].drinks.length && !!groups[0]?.name;
+  let next = fresh ? { ...layout, sections: [] } : layout;
   const intoLast = (drinks: MenuDrink[]) => {
     if (!drinks.length) return;
     if (!next.sections.length) next = addSection(next, 'Drinks');
@@ -216,13 +311,13 @@ export interface BringBlock {
   kind: 'cocktail' | 'house' | 'bottle';
 }
 
-/** Blank line, next drink. No amounts at all: one bottle or empty drink per line. */
+/** Blank line, next drink. No amounts (or "- " lines) at all: one bottle or empty drink per line. */
 export function parseBringIn(text: string, mode: 'drinks' | 'ingredients'): BringBlock[] {
   const rows = text.split('\n').map((line) => line.trim());
   const filled = rows.filter(Boolean);
   if (!filled.length) return [];
   const asBottle = (name: string): BringBlock => ({ name, lines: [], notes: [], kind: mode === 'ingredients' ? 'bottle' : 'cocktail' });
-  if (!filled.some((row) => parseSpecLine(row))) return filled.map(asBottle);
+  if (!filled.some((row) => parseBringRow(row))) return filled.map(asBottle);
 
   const groups: string[][] = [[]];
   for (const row of rows) {
@@ -234,11 +329,11 @@ export function parseBringIn(text: string, mode: 'drinks' | 'ingredients'): Brin
   }
   return groups.filter((group) => group.length).map((group) => {
     const [first, ...rest] = group;
-    if (parseSpecLine(first)) return { name: '', lines: [], notes: [], kind: 'cocktail' as const };
+    if (parseBringRow(first)) return { name: '', lines: [], notes: [], kind: 'cocktail' as const };
     const lines: SpecLine[] = [];
     const notes: string[] = [];
     for (const row of rest) {
-      const spec = parseSpecLine(row);
+      const spec = parseBringRow(row);
       if (spec) lines.push(spec);
       else notes.push(row);
     }

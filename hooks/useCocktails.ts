@@ -197,12 +197,15 @@ export const updateCocktailFn = async ({ id, updates }: { id: string, updates: P
 };
 
 export const deleteCocktailFn = async (id: string) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('items')
         .delete()
-        .eq('id', id);
-        
+        .eq('id', id)
+        .select('id');
+
     if (error) throw error;
+    // RLS turns a delete you can't make into "0 rows", not an error.
+    if (!data?.length) throw new Error("You don't have permission to delete this drink.");
 };
 
 // Additional mutations (add, update, delete) can be added here
@@ -276,7 +279,11 @@ export function useDeleteCocktail() {
                 queryClient.invalidateQueries({ queryKey: ['cocktails'] });
             }
         },
+        onSuccess: (_data, id) => {
+             queryClient.removeQueries({ queryKey: ['cocktail', id] });
+        },
         onSettled: () => {
+             queryClient.invalidateQueries({ queryKey: ['menu-library'] });
              queryClient.invalidateQueries({ queryKey: ['cocktails'] });
         }
     });

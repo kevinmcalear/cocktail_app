@@ -50,8 +50,6 @@ function renderPane(drinks: DiscoverDrink[]) {
       area={area}
       onArea={() => {}}
       drink={null}
-      kind={null}
-      onKind={() => {}}
       results={{ drinks, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
     />
   );
