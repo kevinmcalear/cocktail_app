@@ -27,6 +27,7 @@ const menu = (id: string, startsAt: string | null, endsAt: string | null, itemId
   guestCount: null,
   sharedAt: null,
   itemIds,
+  pictures: [],
   event: null,
 });
 
