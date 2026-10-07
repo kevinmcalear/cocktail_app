@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, Headline, PressableScale, useDs } from '@/components/ds';
+import { Caption, DrinkImage, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 
 export interface DrinkRowProps {
@@ -16,6 +16,8 @@ export interface DrinkRowProps {
   /** The drink's id, so a drink with no photo shows its drawn sketch. */
   itemId?: string | null;
   caption?: string;
+  /** A small pill after the caption: "Past · Mar 2024 to Jan 2025". */
+  tag?: string;
   /** A second, longer line: a note of your own. */
   note?: string;
   /** At the end of the row: a score. Say it in `caption` or `label` too, for screen readers. */
@@ -25,12 +27,12 @@ export interface DrinkRowProps {
 }
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, note, trailing, label }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, tag, note, trailing, label }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
-      accessibilityLabel={`${label ?? [name, caption, note].filter(Boolean).join('. ')}, open`}
+      accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
       onPress={onPress ?? (() => href && router.push(href as never))}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
@@ -39,7 +41,14 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{name}</Headline>
-        {caption ? <Caption tone="muted">{caption}</Caption> : null}
+        {tag ? (
+          <View style={styles.captionRow}>
+            {caption ? <Caption tone="muted">{caption}</Caption> : null}
+            <Tag label={tag} />
+          </View>
+        ) : caption ? (
+          <Caption tone="muted">{caption}</Caption>
+        ) : null}
         {note ? (
           <Caption numberOfLines={2}>
             {note}
@@ -55,4 +64,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: 56 },
   text: { flex: 1, gap: 2 },
+  captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
 });

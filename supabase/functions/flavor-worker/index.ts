@@ -86,6 +86,8 @@ interface SketchContext {
   ice: string | null;
   methods: string[];
   hasImage: boolean;
+  /** Whether the drink already has a drawing (20261007100000_glass_variants). */
+  hasSketch?: boolean;
   ai: { basis: string; answer: DrinkLook } | null;
 }
 
@@ -234,8 +236,10 @@ Deno.serve(async (req) => {
         return true;
       }
 
-      // Something to show while the AI fill runs, or if it never succeeds.
-      await saveSketch(job, looks);
+      // Something to show while the AI fill runs, or if it never succeeds. Not
+      // over a drawing the drink already has: re-queued, it would swap that for
+      // a rougher one and back again, and people saw it change on refresh.
+      if (!ctx.hasSketch) await saveSketch(job, looks);
       await save(job, rules, false);
 
       const { data: quota, error: quotaError } = await admin.rpc("consume_item_ai_quota", {
@@ -252,6 +256,7 @@ Deno.serve(async (req) => {
       }
       if (quota === "no_payer" && !catalogAi) {
         // A catalog drink with no venue or creator: the rules stand.
+        if (ctx.hasSketch) await saveSketch(job, looks);
         await save(job, rules, true);
         tally.rules++;
         tally.sketches++;

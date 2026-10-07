@@ -55,3 +55,11 @@ export const SKETCH = {
   chili: '#C0301E',
   apple: '#E8E0A8',
 } as const;
+
+/** Drink colours for the gallery's sample sketches (components/ds/gallery). */
+export const SKETCH_SAMPLES = {
+  martini: '#efe3b0',
+  daiquiri: '#e6e4a6',
+  manhattan: '#8a3a16',
+  negroni: '#a8202e',
+} as const;

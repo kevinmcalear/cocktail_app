@@ -42,6 +42,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
+    // How its glass is drawn (lib/sketch/geometry.ts GLASS_VARIANTS); null is the bar's glass or the default.
+    const [sketchVariant, setSketchVariant] = useState<string | null>(null);
 
     const [barId, setBarId] = useState<string | null>(null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
@@ -68,6 +70,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const setGlasswareIdDirty = wrap(setGlasswareId);
     const setFamilyIdDirty = wrap(setFamilyId);
     const setIceIdDirty = wrap(setIceId);
+    const setSketchVariantDirty = wrap(setSketchVariant);
     const setBarIdDirty = wrap(setBarId);
     const setOverrideVisibilityDirty = wrap(setOverrideVisibility);
     const setOverrideGenericDirty = wrap(setOverrideGeneric);
@@ -118,7 +121,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             supabase
                 .from("items")
                 .select(
-                    "bar_id, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
+                    "bar_id, sketch_variant, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
                 )
                 .eq("id", id)
                 .single(),
@@ -131,6 +134,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     ) as SortableRecipeItem[]
                 );
                 setBarId(data.bar_id);
+                setSketchVariant(data.sketch_variant ?? null);
                 setOverrideVisibility(data.override_visibility_level?.toString() || null);
                 setOverrideGeneric(data.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(data.override_specific_brand_level?.toString() || null);
@@ -299,6 +303,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
+                    sketch_variant: sketchVariant,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
                     override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
@@ -327,6 +332,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
+            // The database redraws it in the chosen glass as the row saves.
+            await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
             setIsDirty(false);
             isLoaded.current = false;
             return true;
@@ -361,6 +368,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         glasswareId,
         familyId,
         iceId,
+        sketchVariant,
+        setSketchVariant: setSketchVariantDirty,
         setSpecId,
         getSpecId,
         barId,

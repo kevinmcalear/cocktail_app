@@ -6,6 +6,7 @@ import { Text, YStack } from "tamagui";
 
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
+import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
@@ -164,6 +165,13 @@ export default function CocktailDetailsScreen() {
                 {isEditing ? (
                     <View style={styles.servicePhotos}>
                         <ShotList itemId={cocktail.id} barId={cocktail.bar_id ?? null} links={cocktail.item_images} />
+                        <SketchGlassPicker
+                            itemId={cocktail.id}
+                            barId={editor.barId}
+                            glasswareName={editor.glassware.find((g) => g.id === editor.glasswareId)?.name ?? null}
+                            value={editor.sketchVariant}
+                            onChange={editor.setSketchVariant}
+                        />
                     </View>
                 ) : null}
                 <CocktailDetailContent cocktail={cocktail} isEditing={isEditing} editor={isEditing ? editor : null} />
