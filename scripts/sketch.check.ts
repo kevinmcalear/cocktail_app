@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { partWeight } from '../supabase/functions/_shared/flavor';
 import {
   aiAnswerSchema,
+  DRINK_COLORS,
   GLASSES,
   glassFromName,
   iceFromName,
@@ -161,9 +162,17 @@ assert.deepEqual(parseAiDrink(JSON.stringify({ drink: { glass: 'Coupe glass', ic
 });
 assert.equal(parseAiLooks(JSON.stringify({ ingredients: [{ id: 'a', color: '#ABC', tint: 0.5 }] }), ['a']).get('a')?.color, '#aabbcc');
 
+// A drink's colour comes by name; the pure black and white the model fell back to count as no answer.
+assert.equal(parseAiDrink(JSON.stringify({ drink: { glass: 'coupe', ice: 'none', method: 'shake', color: 'blush' } }))?.color, DRINK_COLORS.blush.toLowerCase());
+assert.equal(parseAiDrink(JSON.stringify({ drink: { glass: 'coupe', ice: 'none', method: 'shake', color: '#000000' } }))?.color, undefined);
+assert.equal(parseAiDrink(JSON.stringify({ drink: { glass: 'coupe', ice: 'none', method: 'shake', color: '#FFFFFF' } }))?.color, undefined);
+const clearDrink = sketchFromDrink({ name: 'Mystery', lines: [], ai: { glass: 'highball', color: DRINK_COLORS.clear.toLowerCase() } });
+assert.ok(clearDrink.inputs.liquid.alpha <= 0.2, 'a clear drink reads clear');
+
 // The answer schema pins every enum to its list.
 const schema = aiAnswerSchema(['sweet', 'sour'], true) as { properties: { drink: { properties: { glass: { enum: string[] } } }; ingredients: { items: { required: string[] } } }; required: string[] };
 assert.deepEqual(schema.properties.drink.properties.glass.enum, [...GLASSES]);
+assert.deepEqual((schema.properties.drink.properties as unknown as { color: { enum: string[] } }).color.enum, Object.keys(DRINK_COLORS));
 assert.ok(schema.properties.ingredients.items.required.includes('sweet'));
 assert.deepEqual(schema.required, ['ingredients', 'drink']);
 assert.deepEqual((aiAnswerSchema(['sweet'], false) as { required: string[] }).required, ['ingredients']);
