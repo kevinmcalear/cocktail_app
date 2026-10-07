@@ -1,10 +1,11 @@
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
@@ -74,16 +75,17 @@ export function DiscoverScreen() {
     setPreferNear(true);
     void locate().then(place);
   };
+  // Ask once Discover is on screen, not when it mounts: native tabs mount every tab up front, so in
+  // venue mode it sits behind Tonight (and their per-tab focus isn't reliable for this).
+  const onScreen = usePathname() === '/discover';
+  const asked = useRef(false);
   useEffect(() => {
-    let live = true;
+    if (!onScreen || asked.current) return;
+    asked.current = true;
     void locate().then((found) => {
-      if (!live || touched.current) return;
-      place(found);
+      if (!touched.current) place(found);
     });
-    return () => {
-      live = false;
-    };
-  }, [locate, place]);
+  }, [onScreen, locate, place]);
 
   // Phones: the map once location is on, unless this device last picked the list.
   const saved = useDiscoverView((s) => s.view);
@@ -210,7 +212,10 @@ export function DiscoverScreen() {
     >
       <View>
         <ScreenHeaderSpacer />
-        <Display>Discover</Display>
+        <View style={styles.titleRow}>
+          <Display>Discover</Display>
+          <EightBallButton />
+        </View>
       </View>
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
@@ -270,6 +275,7 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },

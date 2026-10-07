@@ -5,6 +5,7 @@ import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { FEATURES } from '@/constants/features';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
@@ -97,7 +98,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
-  const canBatch = access.amounts && lines.some((l) => l.value !== null);
+  const canBatch = FEATURES.prep && access.amounts && lines.some((l) => l.value !== null);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
@@ -131,7 +132,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       />
       <View style={styles.controlsRight}>
         <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={toggleFavorite} />
-        <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
+        {FEATURES.study ? (
+          <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
+        ) : null}
         {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" onMedia={onPhoto && !wide} onPress={onEdit} /> : null}
       </View>
     </View>
@@ -152,12 +155,14 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         </Caption>
       ) : null}
       <View style={styles.actions}>
-        <GlassButton
-          accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
-          label={serviceMode ? 'Service mode on' : 'Service mode'}
-          icon="sun.max.fill"
-          onPress={toggleServiceMode}
-        />
+        {FEATURES.service ? (
+          <GlassButton
+            accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
+            label={serviceMode ? 'Service mode on' : 'Service mode'}
+            icon="sun.max.fill"
+            onPress={toggleServiceMode}
+          />
+        ) : null}
         {canBatch ? (
           <GlassButton
             accessibilityLabel="Batch: scale this drink for prep"
@@ -179,19 +184,21 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
-      <ServiceSection
-        itemId={item.id}
-        barId={item.bar_id}
-        name={item.name}
-        links={links}
-        canEdit={canEdit}
-        glass={glass?.icon_key || glass?.name || null}
-        wide={wide}
-        lines={access.names ? lines : []}
-        showLines={access.amounts}
-        serviceStyle={item.service_style}
-        preview={preview}
-      />
+      {FEATURES.service ? (
+        <ServiceSection
+          itemId={item.id}
+          barId={item.bar_id}
+          name={item.name}
+          links={links}
+          canEdit={canEdit}
+          glass={glass?.icon_key || glass?.name || null}
+          wide={wide}
+          lines={access.names ? lines : []}
+          showLines={access.amounts}
+          serviceStyle={item.service_style}
+          preview={preview}
+        />
+      ) : null}
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}

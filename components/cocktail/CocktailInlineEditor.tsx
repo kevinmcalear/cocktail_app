@@ -5,6 +5,7 @@ import { YStack, useTheme } from "tamagui";
 import { ShotList } from "@/components/screens/drink/ShotList";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
+import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
@@ -95,9 +96,7 @@ export function CocktailInlineEditor({
                 images={images}
                 emptyPhotoPlaceholder={images.length === 0}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
                 embedded={embedded}
                 isEditing
                 editableTitle={{
@@ -114,6 +113,13 @@ export function CocktailInlineEditor({
             >
                 <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
                     <ShotList itemId={cocktail.id} barId={cocktail.bar_id ?? null} links={cocktail.item_images} />
+                    <SketchGlassPicker
+                        itemId={cocktail.id}
+                        barId={editor.barId}
+                        glasswareName={editor.glassware.find((g) => g.id === editor.glasswareId)?.name ?? null}
+                        value={editor.sketchVariant}
+                        onChange={editor.setSketchVariant}
+                    />
                 </View>
                 <CocktailDetailContent
                     cocktail={cocktail}

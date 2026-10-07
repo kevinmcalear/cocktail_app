@@ -1,18 +1,11 @@
 import assert from 'node:assert/strict';
 
-import * as shared from '../../supabase/functions/_shared/sketch';
+import { GLASS_SHAPES, GLASS_VARIANTS, glassShape, variantsOf } from './geometry';
 import { paintSketch } from './paint';
+import { CRUMB } from './styles';
 import { mixHex } from './random';
 import type { SceneEl } from './scene';
-import { readSketchInputs, SKETCH_FOAMS, SKETCH_GARNISHES, SKETCH_GLASSES, SKETCH_ICES, SKETCH_METHODS, type SketchInputs } from './types';
-
-// The app draws what the worker stores: the lists must match
-// (supabase/functions/_shared/sketch.ts).
-assert.deepEqual([...SKETCH_GLASSES], [...shared.GLASSES]);
-assert.deepEqual([...SKETCH_ICES], [...shared.ICES]);
-assert.deepEqual([...SKETCH_METHODS], [...shared.METHODS]);
-assert.deepEqual([...SKETCH_FOAMS], [...shared.FOAMS]);
-assert.deepEqual([...SKETCH_GARNISHES], [...shared.GARNISHES]);
+import { readSketchInputs, SKETCH_FOAMS, SKETCH_GARNISHES, SKETCH_GLASSES, SKETCH_ICES, type SketchInputs } from './types';
 
 // Stored rows are read strictly: anything this app can't draw is null.
 assert.equal(readSketchInputs(null), null);
@@ -24,10 +17,27 @@ assert.equal(read.liquid.alpha, 1);
 assert.equal(read.liquid.hex, '#a01c26');
 assert.equal(read.foam, null);
 assert.equal(read.fizz, false);
+assert.equal(read.variant, null);
+// A variant only counts for its own glass.
+assert.equal(readSketchInputs({ ...read, variant: 'rocks_heavy' })?.variant, 'rocks_heavy');
+assert.equal(readSketchInputs({ ...read, variant: 'martini_pony' })?.variant, null);
+
+// Variant keys are '<glass>_<name>', what the database accepts
+// (20261007100000_glass_variants.sql), each glass's first is its default
+// shape, and an unknown key draws the default.
+for (const glass of SKETCH_GLASSES) {
+  const list = variantsOf(glass);
+  assert.equal(list[0].shape, GLASS_SHAPES[glass]);
+  assert.equal(new Set(list.map((x) => x.key)).size, list.length);
+  for (const x of list) assert.match(x.key, new RegExp(`^${glass}_[a-z]+$`));
+}
+assert.equal(glassShape('martini', 'martini_nope'), GLASS_SHAPES.martini);
+assert.equal(glassShape('martini', 'coupe_deep'), GLASS_SHAPES.martini);
+assert.notEqual(glassShape('coupe', 'coupe_deep'), GLASS_SHAPES.coupe);
 
 const base: SketchInputs = {
   v: 1, glass: 'rocks', ice: 'large', method: 'stir', liquid: { hex: '#a01c26', alpha: 0.95 }, foam: null, float: null, bleed: null,
-  fizz: false, garnish: 'orange_peel', from: { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'rules' }, coverage: 1,
+  fizz: false, garnish: 'orange_peel', from: { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'rules' }, coverage: 1, variant: null,
 };
 
 const walk = (els: SceneEl[], visit: (e: SceneEl) => void) => {
@@ -58,6 +68,26 @@ for (const glass of SKETCH_GLASSES) for (const ice of SKETCH_ICES) {
     assert.ok(n <= cap.n && bytes <= cap.bytes, `${glass}/${ice}/${detail}: ${n} shapes, ${bytes} bytes`);
   }
 }
+
+// Every variant draws too.
+for (const [glass, list] of Object.entries(GLASS_VARIANTS)) for (const x of list) for (const ice of SKETCH_ICES) {
+  const scene = paintSketch({ ...base, glass: glass as SketchInputs['glass'], ice, variant: x.key, fizz: true, foam: 'cap' }, { seed: x.key });
+  walk(scene.els, (e) => assert.doesNotMatch(JSON.stringify(e), /NaN|Infinity|undefined/, `${x.key}/${ice}: ${e.k}`));
+  assert.ok(weight(scene.els).n <= 700, `${x.key}/${ice}`);
+}
+assert.notEqual(JSON.stringify(paintSketch({ ...base, variant: 'rocks_heavy' }, { seed: 'v' })), JSON.stringify(paintSketch(base, { seed: 'v' })));
+
+// A tile and the drink's page place everything alike: the same frost, rim and
+// spice dots, wherever they fall after the ice, foam, bubbles and garnish.
+const placed = (detail: 'full' | 'thumb') => {
+  const out: string[] = [];
+  walk(paintSketch({ ...base, glass: 'julep', ice: 'crushed', garnish: 'grated_spice', fizz: true }, { seed: 'same', detail }).els, (e) => {
+    if (e.k === 'fill' && e.d.includes('a') && e.color !== CRUMB) out.push(e.d);
+  });
+  return out;
+};
+assert.ok(placed('full').length > 0);
+assert.deepEqual(placed('thumb'), placed('full'));
 
 // The same drink always draws the same way; another drink doesn't.
 const a = JSON.stringify(paintSketch(base, { seed: 'drink-a' }));

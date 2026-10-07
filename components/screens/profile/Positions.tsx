@@ -4,7 +4,14 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
-import { useProfilePositions, type Profile } from '@/hooks/useProfiles';
+import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
+
+/**
+ * Where someone works now, and each past job (many from public research on
+ * unclaimed profiles) only once the person switches it on. RLS hides the rest
+ * from everyone else; this keeps the owner's own view the same as theirs.
+ */
+export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'>) => p.is_current || p.is_shown;
 
 /**
  * "Works at" on a person, "People" on a bar. Each row opens the other
@@ -13,7 +20,8 @@ import { useProfilePositions, type Profile } from '@/hooks/useProfiles';
 export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' | 'kind'>; emptyText?: string }) {
   const ds = useDs();
   const router = useRouter();
-  const { data: positions = [] } = useProfilePositions(profile);
+  // Filtered here, not in the query, so a persisted cache from before can't show them either.
+  const positions = (useProfilePositions(profile).data ?? []).filter(isShownPosition);
   if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   const onPerson = profile.kind === 'person';
   return (

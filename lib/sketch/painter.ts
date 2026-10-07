@@ -32,6 +32,7 @@ export interface WashOpts {
 
 export interface Painter {
   S: SketchStyle;
+  /** Where things go: ice, bubbles, garnish. The hand's own wobble draws from another stream, so a thumbnail and the full drawing place everything alike. */
   r: Rng;
   b: SceneBuilder;
   g: GlassShape;
@@ -76,7 +77,7 @@ function deform(poly: PtV[], depth: number, variance: number, r: Rng): PtV[] {
 }
 const xy = (p: PtV[]): Pt[] => p.map(([x, y]) => [x, y]);
 
-export function makePainter(S: SketchStyle, r: Rng, b: SceneBuilder, g: GlassShape): Painter {
+export function makePainter(S: SketchStyle, layout: Rng, r: Rng, b: SceneBuilder, g: GlassShape): Painter {
   const W = SCENE_SIZE;
   const k = (W / 100) * 1.06;
   const U = ([u, v]: Pt): Pt => [(u - 50) * k + W / 2, (v - 51) * k + W / 2];
@@ -248,5 +249,5 @@ export function makePainter(S: SketchStyle, r: Rng, b: SceneBuilder, g: GlassSha
     for (let i = 0; i < n; i++) b.end();
   };
 
-  return { S, r, b, g, k, U, e, Rr, bot, ground, silhouette, inner, line, wash, glaze, soft, hatch, dots, clipInner, clipAbove, end };
+  return { S, r: layout, b, g, k, U, e, Rr, bot, ground, silhouette, inner, line, wash, glaze, soft, hatch, dots, clipInner, clipAbove, end };
 }

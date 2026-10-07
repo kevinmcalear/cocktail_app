@@ -1,10 +1,11 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, DrinkImage, GlassButton, useDs } from '@/components/ds';
+import { Button, GlassButton, useDs } from '@/components/ds';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
 import { useMode } from '@/hooks/useMode';
 
 import { EditorSection } from './EditorSection';
+import { MenuVisual } from './MenuVisual';
 import type { LayoutEditor } from './useLayoutEditor';
 
 /** The name, in the venue's display face, edited in place. */
@@ -22,14 +23,17 @@ export function MenuNameInput({ editor }: { editor: LayoutEditor }) {
   );
 }
 
+/** The cover, or with none, the menu's first drinks (what guests see in its place). */
 export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height: number }) {
   const ds = useDs();
-  const { coverUrl } = editor.layout;
+  const { coverUrl, name, sections } = editor.layout;
+  const pictures = sections.flatMap((s) => s.drinks);
+  const onMedia = !!coverUrl || pictures.length > 0;
   return (
     <View style={[styles.cover, { height, backgroundColor: ds.c.surface }]}>
-      {coverUrl ? <DrinkImage source={coverUrl} accessibilityLabel="Menu cover" radius={0} style={{ height, aspectRatio: undefined }} /> : null}
+      <MenuVisual name={name || 'Menu'} coverUrl={coverUrl} coverPosition={editor.layout.coverPosition} pictures={pictures} height={height} />
       <View style={styles.coverButtons}>
-        <GlassButton label={editor.coverBusy ? 'Uploading…' : coverUrl ? 'Change cover' : 'Add a cover'} accessibilityLabel={coverUrl ? 'Change cover' : 'Add a cover'} onPress={editor.pickCover} onMedia={!!coverUrl} />
+        <GlassButton label={editor.coverBusy ? 'Uploading…' : coverUrl ? 'Change cover' : 'Add a cover'} accessibilityLabel={coverUrl ? 'Change cover' : 'Add a cover'} onPress={editor.pickCover} onMedia={onMedia} />
         {coverUrl ? <GlassButton icon="xmark" accessibilityLabel="Remove cover" onPress={editor.removeCover} onMedia /> : null}
       </View>
     </View>
