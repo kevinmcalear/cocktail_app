@@ -124,6 +124,7 @@ export function LibraryScreen() {
               style={[styles.tile, { maxWidth: `${100 / columns}%` }]}
             >
               <DrinkImage
+                itemId={item.id}
                 source={heroPicture(item.item_images)?.url ?? null}
                 glass={fallbackGlass(category)}
                 accessibilityLabel={item.name}

@@ -226,6 +226,7 @@ export function DiscoverScreen() {
           <DrinkRow
             name={item.name}
             href={itemHref('Cocktail', item.id)}
+            itemId={item.id}
             imageUrl={item.imageUrl}
             glass={item.glass}
             caption={[bar.canMakeIds.has(item.id) ? 'You can make this' : null, matchFor(item.id)].filter(Boolean).join(' · ') || undefined}

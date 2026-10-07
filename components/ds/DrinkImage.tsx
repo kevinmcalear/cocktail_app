@@ -4,6 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii, space } from '@/constants/tokens';
 
+import { DrawnSketch } from './DrawnSketch';
 import { Tag } from './Tag';
 import { useDs } from './theme';
 
@@ -12,8 +13,10 @@ export interface DrinkImageProps {
   source?: string | number | null;
   /** Drawn by the image generator, not photographed. Always tagged "Sketch". */
   generated?: boolean;
-  /** Glassware icon key (CustomIcons) drawn on paper when there's no image yet. */
+  /** Glassware icon key (CustomIcons) drawn on paper when there's no image and no drawing yet. */
   glass?: string | null;
+  /** The drink's id: with no image, it's drawn from its drawing inputs (item_sketches). */
+  itemId?: string | null;
   /** What the image shows, for screen readers (usually the drink's name). */
   accessibilityLabel: string;
   aspectRatio?: number;
@@ -25,12 +28,18 @@ export interface DrinkImageProps {
 
 /**
  * A drink's picture. Never falls back to another drink's photo: with no image
- * yet, it shows the drink's own glass drawn on the house-style paper.
+ * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
+ * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = source ?? null;
+  const glassIcon = (
+    <View style={styles.empty}>
+      <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
+    </View>
+  );
   return (
     <View
       accessible
@@ -40,10 +49,10 @@ export function DrinkImage({ source, generated, glass, accessibilityLabel, aspec
     >
       {uri ? (
         <Image source={typeof uri === 'string' ? { uri } : uri} style={styles.fill} contentFit="cover" transition={200} />
+      ) : itemId ? (
+        <DrawnSketch itemId={itemId} fallback={glassIcon} />
       ) : (
-        <View style={styles.empty}>
-          <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
-        </View>
+        glassIcon
       )}
       {uri && generated && !hideTag ? <Tag label="Sketch" tone="sketch" style={styles.tag} /> : null}
     </View>

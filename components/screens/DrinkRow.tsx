@@ -11,8 +11,10 @@ export interface DrinkRowProps {
   href?: string;
   onPress?: () => void;
   imageUrl: string | null;
-  /** CustomIcons glass key for the drawn placeholder. */
+  /** CustomIcons glass key for the placeholder, until the drink has a drawing. */
   glass: string | null;
+  /** The drink's id, so a drink with no photo shows its drawn sketch. */
+  itemId?: string | null;
   caption?: string;
   /** A second, longer line: a note of your own. */
   note?: string;
@@ -23,7 +25,7 @@ export interface DrinkRowProps {
 }
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note, trailing, label }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, note, trailing, label }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   return (
@@ -33,7 +35,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, caption, note, 
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <View style={styles.thumb}>
-        <DrinkImage source={imageUrl} glass={glass} accessibilityLabel={name} radius="control" hideTag />
+        <DrinkImage source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" hideTag />
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{name}</Headline>

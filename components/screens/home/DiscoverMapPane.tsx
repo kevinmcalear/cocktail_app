@@ -71,7 +71,7 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
         )}
       </View>
       {shown.map((d) => (
-        <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={null} note={d.description ?? undefined} />
+        <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={null} note={d.description ?? undefined} />
       ))}
       {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} /> : null}
       <View style={styles.cardActions}>

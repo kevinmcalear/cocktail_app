@@ -30,7 +30,7 @@ export function OriginalsGrid({ originals, columns, emptyText, selfId }: { origi
             onPress={() => router.push(`/cocktail/${d.id}` as Href)}
             style={[styles.tile, { width: `${100 / columns}%` }]}
           >
-            <DrinkImage source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} accessibilityLabel={d.name} />
+            <DrinkImage source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
             <DsText variant="headline" numberOfLines={2}>
               {d.name}
             </DsText>

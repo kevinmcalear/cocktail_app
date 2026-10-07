@@ -65,7 +65,7 @@ export function CollectionCollected() {
         <Section title="Drinks" note={`${plural(live.length, 'drink')} from bars`}>
           {live.map((d) => (
             <View role="listitem" key={d.id}>
-              <DrinkRow name={d.name} href={`/d/${d.itemId}`} imageUrl={d.imageUrl} glass={null} caption={memoryLine(d, true)} note={d.note ?? undefined} />
+              <DrinkRow name={d.name} itemId={d.itemId} href={`/d/${d.itemId}`} imageUrl={d.imageUrl} glass={null} caption={memoryLine(d, true)} note={d.note ?? undefined} />
             </View>
           ))}
         </Section>
@@ -84,6 +84,7 @@ export function CollectionCollected() {
                   <View role="listitem" key={d.id}>
                     <DrinkRow
                       name={d.name}
+                      itemId={d.itemId}
                       onPress={() => setEditing(d)}
                       imageUrl={d.imageUrl}
                       glass={null}

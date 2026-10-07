@@ -98,7 +98,7 @@ export function MyBarScreen() {
             <View>
               <Headline role="heading">You can make</Headline>
               {bar.canMake.map((d) => (
-                <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} />
+                <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} />
               ))}
             </View>
           ) : null}

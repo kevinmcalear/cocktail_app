@@ -15,6 +15,8 @@ interface DrinkHeroProps {
   /** In orderedPictures order: the first is the hero. */
   pictures: ShownPicture[];
   glass: string | null;
+  /** The drink's id: with no pictures, its drawn sketch fills the hero. */
+  itemId?: string | null;
   /** Colours from the photo (images.palette), once they exist. */
   palette?: string[] | null;
   height: number;
@@ -28,7 +30,7 @@ interface DrinkHeroProps {
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
  * "Drink field").
  */
-export function DrinkHero({ name, pictures, glass, palette, height, fade }: DrinkHeroProps) {
+export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade }: DrinkHeroProps) {
   const ds = useDs();
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
@@ -44,7 +46,7 @@ export function DrinkHero({ name, pictures, glass, palette, height, fade }: Drin
   return (
     <View style={{ height, backgroundColor: ds.c.paper }}>
       {total === 0 ? (
-        <DrinkImage source={null} glass={glass} accessibilityLabel={name} radius={0} style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
+        <DrinkImage source={null} glass={glass} itemId={itemId} accessibilityLabel={name} radius={0} style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
       ) : (
         <PicturePager
           count={total}

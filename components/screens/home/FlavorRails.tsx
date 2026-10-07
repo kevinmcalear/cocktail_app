@@ -32,7 +32,7 @@ export function RailCard({ id, name, imageUrl, badge, reason, href }: RailCardPr
       onPress={() => router.push((href ?? itemHref('Cocktail', id)) as never)}
       style={styles.card}
     >
-      <DrinkImage source={imageUrl} accessibilityLabel={name} hideTag />
+      <DrinkImage source={imageUrl} itemId={id} accessibilityLabel={name} hideTag />
       <Headline numberOfLines={1}>{name}</Headline>
       <Caption>{badge}</Caption>
       <Caption tone="muted" numberOfLines={4}>
