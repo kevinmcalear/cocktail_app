@@ -67,7 +67,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 ## Images
 
 - Every drink has a hero plus four service angles: side, top, garnish, hand-off.
-- Missing images are drawn automatically in the house pencil-sketch style and carry a visible **Sketch** tag everywhere, including the public app. Real photos replace sketches; sketches never replace photos. When a spec changes, photos are flagged "may be out of date" rather than swapped.
+- Missing images are drawn automatically in the house pencil-sketch style and carry a visible **Sketch** tag everywhere, including the public app. Real photos replace sketches; sketches never replace photos. When a spec changes, photos are flagged "may be out of date" rather than swapped. A drawn sketch uses the drink's own glass: martini, coupe, Nick and Nora, rocks and highball each have a few drawings (`lib/sketch/geometry.ts` GLASS_VARIANTS, side by side in the gallery). A drink takes its bar's glassware (`bar_glassware`) unless its editor picks one.
 - No drink ever falls back to another drink's photo.
 - Photos are lifted from their background and set on a field of the drink's own colour, so different phones look like one shoot.
 
@@ -79,7 +79,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 | 768 to 1199 | Icon rail | Two panes. Service mode can fill the screen on a station iPad. |
 | 1200 and up | Branded sidebar with ⌘K search | Content plus an inspector (photos, locations, "view as") |
 
-Venue mode tabs: Tonight, Library, Prep, Study. Home mode tabs: Discover, My Bar, Collection, You. The venue chip in the corner switches between venues and modes.
+Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
 
 ## Permissions in the UI
 

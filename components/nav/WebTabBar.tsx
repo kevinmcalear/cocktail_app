@@ -4,21 +4,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { FEATURES } from '@/constants/features';
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 
 export type WebTab = { name: string; label: string; icon: IconName };
 
+const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'safari' };
+
+/** Prep and Study only when they're switched on (constants/features.ts). */
 export const VENUE_TABS: WebTab[] = [
   { name: 'index', label: 'Tonight', icon: 'moon.stars' },
   { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
-  { name: 'prep', label: 'Prep', icon: 'flask' },
-  { name: 'test', label: 'Study', icon: 'rectangle.stack' },
-];
+  FEATURES.prep && { name: 'prep', label: 'Prep', icon: 'flask' },
+  FEATURES.study && { name: 'test', label: 'Study', icon: 'rectangle.stack' },
+  DISCOVER,
+].filter((t): t is WebTab => !!t);
 
 export const HOME_TABS: WebTab[] = [
-  { name: 'index', label: 'Discover', icon: 'safari' },
+  DISCOVER,
   { name: 'bar', label: 'My Bar', icon: 'wineglass' },
   { name: 'collection', label: 'Collection', icon: 'bookmark' },
   { name: 'profile', label: 'You', icon: 'person.crop.circle' },

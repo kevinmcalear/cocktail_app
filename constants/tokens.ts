@@ -117,6 +117,19 @@ export const layout = {
   maxScreenLines: 300,
 } as const;
 
+/**
+ * The magic eight ball (components/screens/eightball). A black ball with an
+ * ink-blue window in both themes, like the toy; its ring and triangle edge
+ * take the venue accent.
+ */
+export const eightBall = {
+  shine: '#3A352F',
+  body: '#141210',
+  edge: '#0A0908',
+  window: '#0F131C',
+  triangle: '#1F2E4A',
+} as const;
+
 /** Reanimated withSpring configs. Use these three and nothing else. */
 export const springs = {
   /** Taps, toggles, chips. */

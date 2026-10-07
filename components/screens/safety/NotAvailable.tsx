@@ -28,7 +28,7 @@ export function NotAvailable({ what }: { what: keyof typeof WHY }) {
     <SafetyPage title="Not available" intro={`This ${what} isn’t available to you. ${WHY[what]}${blocked}`} backTo="/">
       <View style={styles.actions}>
         {signedIn ? (
-          <Button label="Discover drinks" onPress={() => router.replace('/')} />
+          <Button label="Discover drinks" onPress={() => router.replace('/discover')} />
         ) : (
           <Button label="Sign in to find more" onPress={() => router.replace('/auth/login')} />
         )}

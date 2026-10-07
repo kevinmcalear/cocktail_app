@@ -12,6 +12,7 @@ import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { instagramProblem } from '@/lib/profiles';
 
+import { PageVisibilityChoice } from './PageVisibilityChoice';
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
 
@@ -78,7 +79,7 @@ function PublishingPage({ barId }: { barId: string }) {
   const canPublish = caps.includes('publish');
   const errorFor = (key: string) => {
     const v = set.variables;
-    return set.error && v && (v.level === 'bar' ? 'bar' : v.id) === key ? set.error.message : null;
+    return set.error && v && (v.level === 'bar' || v.level === 'page' ? v.level : v.id) === key ? set.error.message : null;
   };
 
   return (
@@ -112,6 +113,16 @@ function PublishingPage({ barId }: { barId: string }) {
                 )}
                 {canPublish ? null : <Caption tone="muted">You can look, but changing these needs the publish permission at this venue.</Caption>}
               </Surface>
+
+              {data.profile ? (
+                <PageVisibilityChoice
+                  venueName={venue?.name ?? 'the venue'}
+                  value={data.pageVisibility}
+                  disabled={!canPublish || set.isPending}
+                  error={errorFor('page')}
+                  onChange={(visibility) => set.mutate({ level: 'page', visibility })}
+                />
+              ) : null}
 
               <View style={styles.group}>
                 <Headline role="heading">The bar’s default</Headline>

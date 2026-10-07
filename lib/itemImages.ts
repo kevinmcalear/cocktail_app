@@ -76,3 +76,31 @@ export function pictureLabel(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated
   const position = total > 1 ? `Photo ${index + 1} of ${total}` : 'Photo';
   return tag ? `${position}, ${tag.toLowerCase()}` : position;
 }
+
+/** A name folded for matching: lower case, no accents, single spaces ("Apérol  Fizz" is "aperol fizz"). */
+export function nameKey(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** The drink a prep batches, from its name: "Aperol Fizz Batch" and "Aperol Fizz (batch)" batch "Aperol Fizz". */
+export function batchedDrinkName(name: string): string | null {
+  return /^(.+?)[\s(-]+batch(?:ed)?\)?\s*$/i.exec(name.trim())?.[1] ?? null;
+}
+
+/** batchedDrinkName as a nameKey, for matching against drinks. */
+export function batchedDrinkKey(name: string): string | null {
+  const drink = batchedDrinkName(name);
+  return drink ? nameKey(drink) : null;
+}
+
+/**
+ * A batch's hero links with its drink's photos in front, when the batch has no
+ * photo of its own. Sketches of the drink stay with the drink: a batch's own
+ * sketch is no worse than the drink's.
+ * ponytail: matched by name at the same venue; a real batch-to-drink link is the upgrade if names drift.
+ */
+export function withDrinkPhotos(own: ItemImageLink[] | null | undefined, drink: ItemImageLink[] | null | undefined): ItemImageLink[] {
+  const ownLinks = own ?? [];
+  if (orderedPictures(ownLinks).some((p) => !p.isSketch)) return ownLinks;
+  return [...(drink ?? []).filter((link) => !link.is_generated), ...ownLinks];
+}
