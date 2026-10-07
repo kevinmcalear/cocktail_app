@@ -117,6 +117,7 @@ export function CocktailInlineEditor({
                     <ShotList itemId={cocktail.id} barId={cocktail.bar_id ?? null} links={cocktail.item_images} />
                     <SketchGlassPicker
                         itemId={cocktail.id}
+                        barId={editor.barId}
                         glasswareName={editor.glassware.find((g) => g.id === editor.glasswareId)?.name ?? null}
                         value={editor.sketchVariant}
                         onChange={editor.setSketchVariant}

@@ -4,13 +4,16 @@
 --
 --   items.sketch_variant    the drink editor's pick of how its glass is drawn,
 --                           a key from lib/sketch/geometry.ts GLASS_VARIANTS
---                           ('martini_petite'). It only counts while the drink
+--                           ('martini_pony'). It only counts while the drink
 --                           is drawn in that glass.
---   bar_glassware           the glasses a bar pours into: maker, series, what
---                           the bar calls it, and which drawing each one is.
+--   bar_glassware           the glasses a bar pours into, one row per shape:
+--                           maker, designer, series, the shape's name and a
+--                           note on it, sources, and which drawing it is.
 --                           The default glass of each type is what the bar's
 --                           drinks are drawn in. A research pass fills real
---                           data later; bar admins (brand) can edit it.
+--                           data later (its glassware[].shapes[] load one row
+--                           each, sketch_shape as glass); bar admins (brand)
+--                           can edit it.
 --   item_sketches.inputs    gains "variant": the drink's pick, else its bar's
 --                           default glass of that type, else nothing (the
 --                           default drawing). Set here by a trigger, never by
@@ -101,6 +104,13 @@ $$;
 -- A bar's glassware
 -- ---------------------------------------------------------------------------
 
+CREATE FUNCTION "private"."valid_source_urls"("p_urls" "text"[]) RETURNS boolean
+    LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO ''
+    AS $$
+  SELECT NOT EXISTS (SELECT 1 FROM unnest(p_urls) u WHERE u !~ '^https?://[^\s]+$' OR char_length(u) > 500);
+$$;
+
 CREATE TABLE "public"."bar_glassware" (
     "id" "uuid" DEFAULT "gen_random_uuid"() PRIMARY KEY,
     "bar_id" "uuid" NOT NULL REFERENCES "public"."bars"("id") ON DELETE CASCADE,
@@ -108,11 +118,18 @@ CREATE TABLE "public"."bar_glassware" (
                                                'wine', 'spritz', 'snifter', 'julep', 'tiki', 'mug', 'ceramic', 'beer')),
     -- How it's drawn; null is the default drawing of its type.
     "variant" "text" CHECK ("variant" IS NULL OR "private"."valid_glass_variant"("glass", "variant")),
-    -- What the bar calls it, and who makes it: "Savage coupe", Nude, Savage.
+    -- The shape's name, and who makes and designed it: "Coupe", a maker, its
+    -- designer, the series.
     "name" "text" CHECK ("name" IS NULL OR char_length(btrim("name")) BETWEEN 1 AND 80),
     "maker" "text" CHECK ("maker" IS NULL OR char_length(btrim("maker")) BETWEEN 1 AND 80),
+    "designer" "text" CHECK ("designer" IS NULL OR char_length(btrim("designer")) BETWEEN 1 AND 80),
     "series" "text" CHECK ("series" IS NULL OR char_length(btrim("series")) BETWEEN 1 AND 80),
-    "notes" "text" CHECK ("notes" IS NULL OR char_length("notes") <= 500),
+    -- What the shape is like, in words ("tall, narrow V on a short stem"):
+    -- what a person or the research pass picks the variant from.
+    "shape_note" "text" CHECK ("shape_note" IS NULL OR char_length("shape_note") <= 500),
+    -- Where it was found: web pages only.
+    "source_urls" "text"[] DEFAULT '{}'::"text"[] NOT NULL
+        CHECK (cardinality("source_urls") <= 10 AND "private"."valid_source_urls"("source_urls")),
     -- The glass of its type the bar's drinks are drawn in.
     "is_default" boolean DEFAULT true NOT NULL,
     "sort_order" integer DEFAULT 0 NOT NULL,
@@ -140,8 +157,9 @@ CREATE FUNCTION "private"."screen_bar_glassware_text"() RETURNS "trigger"
 BEGIN
     PERFORM private.refuse_screened(NEW.name, 'name', 'name');
     PERFORM private.refuse_screened(NEW.maker, 'maker', 'maker');
+    PERFORM private.refuse_screened(NEW.designer, 'designer', 'designer');
     PERFORM private.refuse_screened(NEW.series, 'series', 'series');
-    PERFORM private.refuse_screened(NEW.notes, 'note', 'notes');
+    PERFORM private.refuse_screened(NEW.shape_note, 'note', 'shape_note');
     NEW.updated_at := now();
     RETURN NEW;
 END;
@@ -244,6 +262,8 @@ $$;
 -- valid_glass_variant backs CHECK constraints on items and bar_glassware, which
 -- run as whoever writes the row: it must stay executable by them.
 REVOKE EXECUTE ON FUNCTION "private"."valid_glass_variant"("p_glass" "text", "p_variant" "text") FROM PUBLIC, "anon";
+REVOKE EXECUTE ON FUNCTION "private"."valid_source_urls"("p_urls" "text"[]) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."valid_source_urls"("p_urls" "text"[]) TO "authenticated", "service_role";
 GRANT EXECUTE ON FUNCTION "private"."valid_glass_variant"("p_glass" "text", "p_variant" "text") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."item_sketch_variant"("p_item_id" "uuid", "p_glass" "text") FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "private"."item_sketches_set_variant"() FROM PUBLIC, "anon", "authenticated";

@@ -20,10 +20,22 @@ interface GlassVariantPickerProps {
   value: string | null;
   /** Without it the row is just a picture of the variants. */
   onChange?: (key: string) => void;
+  /** A line under a variant, by key: "The bar's glass". */
+  notes?: Partial<Record<string, string>>;
   accessibilityLabel: string;
 }
 
-function Tile({ variant, inputs, seed, selected, onChange }: { variant: GlassVariant; inputs: SketchInputs; seed: string; selected: boolean; onChange?: (key: string) => void }) {
+interface TileProps {
+  variant: GlassVariant;
+  inputs: SketchInputs;
+  seed: string;
+  selected: boolean;
+  onChange?: (key: string) => void;
+  /** Undefined: no tile in the row has a note. An empty string keeps the row aligned. */
+  note?: string;
+}
+
+function Tile({ variant, inputs, seed, selected, onChange, note }: TileProps) {
   const ds = useDs();
   const drawn = useMemo(() => ({ ...inputs, variant: variant.key }), [inputs, variant.key]);
   // The ring sits a gap outside the paper, so it reads on light and dark grounds alike.
@@ -35,6 +47,7 @@ function Tile({ variant, inputs, seed, selected, onChange }: { variant: GlassVar
         </View>
       </View>
       <Caption tone={selected ? undefined : 'muted'}>{variant.label}</Caption>
+      {note === undefined ? null : <Caption tone="muted" align="center">{note}</Caption>}
     </>
   );
   if (!onChange) return <View style={styles.tile}>{body}</View>;
@@ -49,14 +62,15 @@ function Tile({ variant, inputs, seed, selected, onChange }: { variant: GlassVar
  * The ways a glass can be drawn, side by side, as a row of radio tiles: the
  * drink editor's "Glass drawing", and the gallery's glassware section.
  */
-export function GlassVariantPicker({ glass, inputs, seed, value, onChange, accessibilityLabel }: GlassVariantPickerProps) {
+export function GlassVariantPicker({ glass, inputs, seed, value, onChange, notes, accessibilityLabel }: GlassVariantPickerProps) {
   const list = variantsOf(glass);
   const chosen = list.find((x) => x.key === value)?.key ?? list[0].key;
   const base = useMemo(() => ({ ...inputs, glass }), [inputs, glass]);
+  const noted = list.some((x) => notes?.[x.key]);
   return (
     <View role={onChange ? 'radiogroup' : undefined} accessibilityLabel={accessibilityLabel} style={styles.row}>
       {list.map((x) => (
-        <Tile key={x.key} variant={x} inputs={base} seed={seed} selected={!!onChange && x.key === chosen} onChange={onChange} />
+        <Tile key={x.key} variant={x} inputs={base} seed={seed} selected={!!onChange && x.key === chosen} onChange={onChange} note={noted ? notes?.[x.key] ?? '' : undefined} />
       ))}
     </View>
   );

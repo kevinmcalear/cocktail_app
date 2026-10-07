@@ -29,7 +29,7 @@ assert.equal(read.fizz, false);
 assert.equal(read.variant, null);
 // A variant only counts for its own glass.
 assert.equal(readSketchInputs({ ...read, variant: 'rocks_heavy' })?.variant, 'rocks_heavy');
-assert.equal(readSketchInputs({ ...read, variant: 'martini_petite' })?.variant, null);
+assert.equal(readSketchInputs({ ...read, variant: 'martini_pony' })?.variant, null);
 
 // Variant keys are '<glass>_<name>', what the database accepts
 // (20261007100000_glass_variants.sql), each glass's first is its default

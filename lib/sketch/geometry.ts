@@ -65,9 +65,10 @@ const v = (glass: SketchGlass, name: string, label: string, shape: GlassShape = 
  */
 export const GLASS_VARIANTS: Partial<Record<SketchGlass, GlassVariant[]>> = {
   martini: [
-    v('martini', 'classic', 'Classic'),
-    v('martini', 'rounded', 'Rounded', { rim: 24, prof: [[24, 26], [30, 25], [36, 23], [42, 19.5], [48, 14.5], [52, 10], [55.5, 5], [57, 0]], top: 28, stem: [57, 85], foot: [86, 13], stemmed: true, stemW: 0.75, flare: 2.5 }),
-    v('martini', 'petite', 'Petite', { rim: 28, prof: [[28, 21], [34, 17.6], [40, 14], [46, 10.2], [51, 6.6], [55, 3.4], [57.5, 0.8], [58, 0]], top: 32, stem: [58, 85], foot: [86, 11.5], stemmed: true, stemW: 0.95, flare: 2.8 }),
+    v('martini', 'classic', 'Classic V'),
+    v('martini', 'soft', 'Soft bowl', { rim: 24, prof: [[24, 25], [30, 24.6], [36, 23.2], [42, 20.6], [47, 17], [51, 12.4], [54, 7], [55.5, 2.5], [56, 0]], top: 28, stem: [56, 85], foot: [86, 13], stemmed: true, stemW: 0.75, flare: 2.5 }),
+    // Small and low: a short stem, so it sits lower than the others.
+    v('martini', 'pony', 'Little pony', { rim: 42, prof: [[42, 20], [47, 16.6], [52, 12.8], [57, 8.8], [61, 5.2], [64, 2], [65.4, 0]], top: 45.5, stem: [65.4, 85], foot: [86, 11], stemmed: true, stemW: 0.9, flare: 2.6 }),
   ],
   coupe: [
     v('coupe', 'wide', 'Wide'),

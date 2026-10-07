@@ -40,6 +40,7 @@ export function GlassVariants() {
               seed={`gallery-${glass}`}
               value={chosen[glass] ?? null}
               onChange={(key) => setChosen((c) => ({ ...c, [glass]: key }))}
+              notes={glass === 'martini' ? { martini_pony: 'Little Rye uses this' } : undefined}
               accessibilityLabel={`${sample.name} glass`}
             />
           </View>

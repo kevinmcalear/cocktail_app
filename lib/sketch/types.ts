@@ -34,7 +34,7 @@ export interface SketchInputs {
   from: Record<'glass' | 'ice' | 'method' | 'liquid' | 'garnish', 'data' | 'rules' | 'ai' | 'default'>;
   coverage: number;
   /**
-   * Which drawing of the glass ('martini_petite', lib/sketch/geometry.ts
+   * Which drawing of the glass ('martini_pony', lib/sketch/geometry.ts
    * GLASS_VARIANTS): the drink's own pick, else its bar's glassware. Set by the
    * database, not the worker; null draws the default.
    */
