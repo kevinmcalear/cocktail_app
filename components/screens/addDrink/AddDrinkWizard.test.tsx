@@ -33,11 +33,14 @@ beforeEach(() => {
   useSettingsStore.setState({ defaultUnit: 'ml' });
 });
 
+// iOS draws the screen after its first layout (the keyboard offset needs it).
+const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
 
 describe('AddDrinkWizard', () => {
   test('a name, then each step keeps what was added through Back, and saves once at the end', async () => {
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
     expect(screen.getByText('What’s it called?')).toBeTruthy();
 
     await fireEvent.changeText(screen.getByLabelText('Name'), 'house negroni');
@@ -97,6 +100,7 @@ describe('AddDrinkWizard', () => {
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Paloma');
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));
     expect(screen.getByLabelText('Name').props.value).toBe('');

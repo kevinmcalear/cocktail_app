@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   canSave, choiceList, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
-  QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
+  likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -25,6 +25,10 @@ assert.deepEqual(ice.slice(0, 4), [
 assert.equal(ice.at(-1)?.name, 'Shaved', 'other rows follow the common ones');
 assert.equal(new Set(ice.map((p) => p.name.toLowerCase())).size, ice.length, 'no duplicates');
 assert.deepEqual(pickByName(' large cube ', rows), { id: 'i1', name: 'Large Cube' });
+
+// A typed name is looked up as itself: no wildcards, spaces tidied.
+assert.equal(likeExactly('  Freezer   pour '), 'Freezer pour');
+assert.equal(likeExactly('50%_off'), '50\\%\\_off');
 
 // Search: names that start with it first, shortest first.
 const ingredients = [{ id: 'a', name: 'Sloe Gin' }, { id: 'b', name: 'Gin' }, { id: 'c', name: 'Ginger syrup' }, { id: 'd', name: 'Lime' }];

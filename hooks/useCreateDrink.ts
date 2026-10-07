@@ -6,7 +6,7 @@ import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
-import { creatorProfileId, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
+import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { withDrinkInSection } from '@/lib/menuDrinkAttach';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -55,9 +55,22 @@ export function useCreateDrink() {
       const made = new Map<string, string>();
       const ensure = async (pick: WizardPick, type: ItemType): Promise<string> => {
         if (pick.id) return pick.id;
-        const key = `${type}:${pick.name.trim().toLowerCase()}`;
+        const key = `${type}:${pick.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
         const known = made.get(key);
         if (known) return known;
+        // The dropdown lists stop at 1,000 rows, so a name missing from them may
+        // still exist: look it up (any case) before making another "Freezer Pour".
+        const { data: found } = await supabase
+          .from('items')
+          .select('id')
+          .eq('item_type', type)
+          .ilike('name', likeExactly(pick.name))
+          .limit(1)
+          .maybeSingle();
+        if (found) {
+          made.set(key, found.id);
+          return found.id;
+        }
         const { data, error } = await supabase
           .from('items')
           .insert({ name: capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })

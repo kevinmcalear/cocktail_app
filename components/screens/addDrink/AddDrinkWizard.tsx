@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -67,6 +67,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
 
+  const windowHeight = useWindowDimensions().height;
+  const [height, setHeight] = useState(0);
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
   const go = (to: WizardStep) => {
@@ -152,38 +154,52 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const entering = (direction > 0 ? FadeInRight : FadeInLeft).springify().damping(springs.glide.damping).stiffness(springs.glide.stiffness);
   // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
   const column = wide || !!embedded;
+  // On iOS the screen is a page sheet that starts below the status bar. Its gap
+  // to the window's top is both the inset it doesn't need and what
+  // KeyboardAvoidingView (which assumes it starts at the top) must add.
+  const sheetGap = Platform.OS === 'ios' && !embedded && height ? Math.max(0, windowHeight - height) : 0;
+  const statusBar = sheetGap > 0 ? 0 : insets.top;
   const side = column ? 0 : gutter;
   const bottom = embedded ? space.lg : Math.max(insets.bottom, space.lg);
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={sheetGap}
+      testID="add-drink"
+      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+      style={[styles.screen, { backgroundColor: ds.c.ground }]}
+    >
       <WebHead>
         <title>Add a drink</title>
       </WebHead>
-      <View style={[styles.column, column && { paddingTop: embedded ? space.lg : insets.top + space.lg, paddingHorizontal: gutter }, { paddingBottom: bottom }]}>
-        <SketchHeader
-          draft={draft}
-          step={step}
-          onBack={back}
-          top={column ? space.lg : insets.top + space.sm}
-          side={column ? space.lg : gutter}
-          rounded={column}
-          folded={typing && !column}
-        />
-        <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
-          <Animated.View key={step} entering={entering} style={styles.body}>
-            <View style={styles.heading}>
-              <Eyebrow>{draft.name.trim() || 'New drink'}</Eyebrow>
-              <Title role="heading">{copy.title}</Title>
-              {copy.intro ? <Body tone="muted">{copy.intro}</Body> : null}
-            </View>
-            {body}
-          </Animated.View>
-        </ScrollView>
-        <View style={{ paddingHorizontal: side }}>
-          <WizardFooter step={step} canNext={step === 'name' || step === 'review' ? canSave(draft) : true} saving={create.isPending} onSkip={next} onNext={next} />
+      {/* iOS: after the first layout, so the name field's autofocus meets the right keyboard offset. */}
+      {Platform.OS === 'ios' && !height ? null : (
+        <View style={[styles.column, column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, { paddingBottom: bottom }]}>
+          <SketchHeader
+            draft={draft}
+            step={step}
+            onBack={back}
+            top={column ? space.lg : statusBar + space.sm}
+            side={column ? space.lg : gutter}
+            rounded={column}
+            folded={typing && !column}
+          />
+          <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
+            <Animated.View key={step} entering={entering} style={styles.body}>
+              <View style={styles.heading}>
+                <Eyebrow>{draft.name.trim() || 'New drink'}</Eyebrow>
+                <Title role="heading">{copy.title}</Title>
+                {copy.intro ? <Body tone="muted">{copy.intro}</Body> : null}
+              </View>
+              {body}
+            </Animated.View>
+          </ScrollView>
+          <View style={{ paddingHorizontal: side }}>
+            <WizardFooter step={step} canNext={step === 'name' || step === 'review' ? canSave(draft) : true} saving={create.isPending} onSkip={next} onNext={next} />
+          </View>
         </View>
-      </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
