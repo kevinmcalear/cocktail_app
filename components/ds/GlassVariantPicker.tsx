@@ -26,11 +26,13 @@ interface GlassVariantPickerProps {
 function Tile({ variant, inputs, seed, selected, onChange }: { variant: GlassVariant; inputs: SketchInputs; seed: string; selected: boolean; onChange?: (key: string) => void }) {
   const ds = useDs();
   const drawn = useMemo(() => ({ ...inputs, variant: variant.key }), [inputs, variant.key]);
-  const frame = [styles.frame, { backgroundColor: ds.c.paper, borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : StyleSheet.hairlineWidth }];
+  // The ring sits a gap outside the paper, so it reads on light and dark grounds alike.
   const body = (
     <>
-      <View style={frame}>
-        <SketchDrawing inputs={drawn} seed={seed} />
+      <View style={[styles.ring, { borderColor: selected ? ds.c.ink : 'transparent' }]}>
+        <View style={[styles.frame, { backgroundColor: ds.c.paper }]}>
+          <SketchDrawing inputs={drawn} seed={seed} />
+        </View>
       </View>
       <Caption tone={selected ? undefined : 'muted'}>{variant.label}</Caption>
     </>
@@ -63,5 +65,6 @@ export function GlassVariantPicker({ glass, inputs, seed, value, onChange, acces
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, maxWidth: 140, gap: space.xs, alignItems: 'center' },
+  ring: { width: '100%', padding: 2, borderWidth: 2, borderRadius: radius.control + 4, borderCurve: 'continuous' },
   frame: { width: '100%', aspectRatio: 1, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
 });
