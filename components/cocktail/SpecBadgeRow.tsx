@@ -10,11 +10,13 @@ import { capitalize } from "@/lib/stringUtils";
 
 type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 
-const SPEC_FIELDS: { key: SpecCategory; label: string; allowDeselect?: boolean }[] = [
+// Methods, glasses, families and ice are shared by every drink, so this row
+// only adds them to or takes them off this drink; it never deletes one.
+const SPEC_FIELDS: { key: SpecCategory; label: string }[] = [
     { key: "method", label: "Method" },
     { key: "glassware", label: "Glassware" },
     { key: "family", label: "Family" },
-    { key: "ice", label: "Ice", allowDeselect: true },
+    { key: "ice", label: "Ice" },
 ];
 
 interface ViewSpec {
@@ -45,6 +47,10 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
     };
 
     const getEditorName = (key: SpecCategory, id: string | null) => {
+        if (editor && key === "method") {
+            const names = editor.methodIds.map((m) => editor.methods.find((o) => o.id === m)?.name).filter(Boolean);
+            return names.length ? names.join(", ") : null;
+        }
         if (!editor || !id) return null;
         const lists = {
             method: editor.methods,
@@ -75,7 +81,7 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
                 justifyContent="flex-start"
                 alignItems="flex-start"
             >
-                {SPEC_FIELDS.map(({ key, label, allowDeselect }) => {
+                {SPEC_FIELDS.map(({ key, label }) => {
                     const specId = isEditing && editor ? editor.getSpecId(key) : null;
                     const value =
                         isEditing && editor
@@ -111,7 +117,7 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
             </XStack>
 
             {editor &&
-                SPEC_FIELDS.map(({ key, label, allowDeselect }) => (
+                SPEC_FIELDS.map(({ key, label }) => (
                     <SpecPickerSheet
                         key={key}
                         visible={activePicker === key}
@@ -127,10 +133,12 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
                                     : editor.iceTypes
                         }
                         selectedId={editor.getSpecId(key)}
-                        allowDeselect={allowDeselect}
-                        onSelect={(id) => editor.setSpecId(key, id)}
+                        selectedIds={key === "method" ? editor.methodIds : undefined}
+                        allowDeselect
+                        onSelect={(id) =>
+                            key === "method" ? id && editor.toggleMethod(id) : editor.setSpecId(key, id)
+                        }
                         onClose={() => setActivePicker(null)}
-                        onDelete={(item) => editor.handleDeletePill(key, item)}
                         onAdd={(name) => editor.handleAddPill(key, name)}
                         onAddGlassware={key === "glassware" ? editor.handleAddGlassware : undefined}
                         onIdentifyGlassware={key === "glassware" ? editor.identifyGlassware : undefined}

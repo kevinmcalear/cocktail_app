@@ -129,7 +129,7 @@ export function useCreateDrink() {
       const id = item.id as string;
 
       try {
-        await saveDrinkSpec(id, lines, methodIds[0] ?? null, null);
+        await saveDrinkSpec(id, lines, methodIds, null);
         // ponytail: save_drink_spec takes one method; the rest follow it in
         // order. Upgrade path: an array argument on the RPC (and the editor).
         if (methodIds.length > 1) {

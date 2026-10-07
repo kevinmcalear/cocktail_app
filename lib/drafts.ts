@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { draftMethodIds } from '@/lib/drinkMethods';
 import { capitalize } from '@/lib/stringUtils';
 
 /**
@@ -276,13 +277,12 @@ export async function resolveCocktailId(id: string, drafts: any[]): Promise<stri
         if (recipeError) throw recipeError;
     }
     
-    // Insert method
-    if (data.methodId) {
-        await supabase.from('item_methods').insert({
-            item_id: cocktailId,
-            method_item_id: data.methodId,
-            sort_order: 0
-        });
+    // Insert methods
+    const methodIds = draftMethodIds(data);
+    if (methodIds.length) {
+        await supabase.from('item_methods').insert(
+            methodIds.map((methodItemId, index) => ({ item_id: cocktailId, method_item_id: methodItemId, sort_order: index }))
+        );
     }
     
     // Delete the draft from the drafts table

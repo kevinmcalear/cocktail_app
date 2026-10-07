@@ -6,12 +6,11 @@ interface SpecPillButtonProps {
     name: string;
     selected: boolean;
     onPress: () => void;
-    onLongPress?: () => void;
     iconKey?: string | null;
     iconUrl?: string | null;
 }
 
-export function SpecPillButton({ name, selected, onPress, onLongPress, iconKey, iconUrl }: SpecPillButtonProps) {
+export function SpecPillButton({ name, selected, onPress, iconKey, iconUrl }: SpecPillButtonProps) {
     const theme = useTheme();
     const iconColor = selected ? theme.backgroundStrong?.get() as string : theme.color?.get() as string;
     const showIcon = !!(iconUrl || iconKey || hasCustomIcon(name));
@@ -23,8 +22,11 @@ export function SpecPillButton({ name, selected, onPress, onLongPress, iconKey, 
             backgroundColor={selected ? "$color8" : "$backgroundStrong"}
             borderColor={selected ? "$color8" : "$borderColor"}
             borderWidth={1}
+            // Keep the selected colours under the pointer: the default hover is a pale
+            // background behind the selected pill's light text (multi-select stays open).
+            hoverStyle={selected ? { backgroundColor: "$color8", borderColor: "$color8" } : undefined}
+            pressStyle={selected ? { backgroundColor: "$color8", borderColor: "$color8" } : undefined}
             onPress={onPress}
-            onLongPress={onLongPress}
         >
             <XStack gap="$2" alignItems="center">
                 {showIcon && (

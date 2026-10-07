@@ -6,6 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext } from '@/lib/barContextFilter';
+import { draftMethodIds } from '@/lib/drinkMethods';
 import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize } from '@/lib/stringUtils';
@@ -169,7 +170,7 @@ export function useSearchCatalog(contextIds?: string[]) {
           image: data.localImages?.[0]?.url
             ? { uri: data.localImages[0].url }
             : undefined,
-          method_id: data.methodId ?? data.method_id ?? null,
+          method_id: draftMethodIds(data)[0] ?? data.method_id ?? null,
           glassware_id: data.glasswareId ?? data.glassware_id ?? null,
           family_id: data.familyId ?? data.family_id ?? null,
           ice_id: data.iceId ?? data.ice_id ?? null,

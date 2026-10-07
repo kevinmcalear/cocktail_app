@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useDropdowns, DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
+import { orderedMethodIds } from '@/lib/drinkMethods';
 import type { BringWrite, CatalogItem, NamedItem } from '@/lib/paste';
 import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { capitalize } from '@/lib/stringUtils';
@@ -112,17 +113,13 @@ export function useSwapSource(barId: string | null) {
         });
         byDrink.set(line.recipe_item_id, list);
       }
-      const methodOf = new Map<string, { id: string; order: number }>();
-      for (const row of methodRows) {
-        const order = row.sort_order ?? 0;
-        const current = methodOf.get(row.item_id);
-        if (!current || order < current.order) methodOf.set(row.item_id, { id: row.method_item_id, order });
-      }
+      const methodRowsOf = new Map<string, typeof methodRows>();
+      for (const row of methodRows) methodRowsOf.set(row.item_id, [...(methodRowsOf.get(row.item_id) ?? []), row]);
       const drinks: SwapDrink[] = rows.map((row) => ({
         id: row.id,
         name: row.name,
         itemType: row.item_type === 'ingredient' ? 'ingredient' : 'cocktail',
-        methodId: methodOf.get(row.id)?.id ?? null,
+        methodIds: orderedMethodIds(methodRowsOf.get(row.id)),
         lines: byDrink.get(row.id) ?? [],
       }));
       const lineOrder = new Map(lineRows.map((line) => [line.id, line.sort_order ?? 0]));
@@ -145,7 +142,7 @@ export function useApplySwap() {
       const undone: SwapResult['undone'] = [];
       try {
         for (const drink of input.drinks) {
-          const version = await saveDrinkSpec(drink.id, swappedLines(drink, input.findId, input.replaceId, input.mode), drink.methodId, input.note);
+          const version = await saveDrinkSpec(drink.id, swappedLines(drink, input.findId, input.replaceId, input.mode), drink.methodIds, input.note);
           undone.push({ itemId: drink.id, version: version - 1 });
         }
         return { undone, error: null };
@@ -207,7 +204,7 @@ export function useBringIn(barId: string | null) {
             if (!ingredientId) throw new Error(`Couldn’t find ${line.ingredientKey}.`);
             return { ingredient_item_id: ingredientId, amount: line.amount, unit: line.unit, preparation_notes: null, is_optional: false };
           });
-          await saveDrinkSpec(data.id, lines, item.methodId, 'Brought in');
+          await saveDrinkSpec(data.id, lines, item.methodId ? [item.methodId] : [], 'Brought in');
           added += 1;
         }
         return { added, error: null };

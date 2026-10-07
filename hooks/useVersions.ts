@@ -55,9 +55,9 @@ export interface SpecLineInput {
   is_optional: boolean;
 }
 
-/** The editor's save: lines and method in one transaction, versioned. Returns the version number. */
-export async function saveDrinkSpec(itemId: string, lines: SpecLineInput[], methodId: string | null, note: string | null): Promise<number> {
-  const { data, error } = await supabase.rpc('save_drink_spec', { p_item: itemId, p_lines: lines, p_method_id: methodId, p_note: note });
+/** The editor's save: lines and methods (in order) in one transaction, versioned. Returns the version number. */
+export async function saveDrinkSpec(itemId: string, lines: SpecLineInput[], methodIds: string[], note: string | null): Promise<number> {
+  const { data, error } = await supabase.rpc('save_drink_spec', { p_item: itemId, p_lines: lines, p_method_ids: methodIds, p_note: note });
   if (error) throw error;
   return data as number;
 }

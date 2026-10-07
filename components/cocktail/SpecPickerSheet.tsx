@@ -25,10 +25,11 @@ interface SpecPickerSheetProps {
     category: SpecCategory;
     options: SpecOption[];
     selectedId: string | null;
+    /** Pick several: a tap adds or removes one, and the sheet stays open until Done. */
+    selectedIds?: string[];
     onSelect: (id: string | null) => void;
     onClose: () => void;
     allowDeselect?: boolean;
-    onDelete?: (item: SpecOption) => void;
     onAdd?: (name: string) => Promise<string | void>;
     onAddGlassware?: (payload: {
         name: string;
@@ -49,10 +50,10 @@ export function SpecPickerSheet({
     category,
     options,
     selectedId,
+    selectedIds,
     onSelect,
     onClose,
     allowDeselect,
-    onDelete,
     onAdd,
     onAddGlassware,
     onIdentifyGlassware,
@@ -86,8 +87,8 @@ export function SpecPickerSheet({
             const newId = await onAdd(newName.trim());
             setNewName("");
             setAdding(false);
-            if (typeof newId === "string" && newId) onSelect(newId);
-            onClose();
+            if (typeof newId === "string" && newId && !selectedIds?.includes(newId)) onSelect(newId);
+            if (!selectedIds) onClose();
         } catch (err: any) {
             showError("Error", err?.message || `Could not add ${title.toLowerCase()}.`);
         } finally {
@@ -245,16 +246,11 @@ export function SpecPickerSheet({
                                     name={opt.name}
                                     iconKey={opt.icon_key}
                                     iconUrl={opt.icon_url}
-                                    selected={selectedId === opt.id}
+                                    selected={selectedIds ? selectedIds.includes(opt.id) : selectedId === opt.id}
                                     onPress={() => {
-                                        if (allowDeselect && selectedId === opt.id) {
-                                            onSelect(null);
-                                        } else {
-                                            onSelect(opt.id);
-                                        }
-                                        onClose();
+                                        onSelect(!selectedIds && allowDeselect && selectedId === opt.id ? null : opt.id);
+                                        if (!selectedIds) onClose();
                                     }}
-                                    onLongPress={onDelete ? () => onDelete(opt) : undefined}
                                 />
                             ))}
                             {onAdd && !adding && (
@@ -301,6 +297,9 @@ export function SpecPickerSheet({
                                 </Button>
                             </XStack>
                         </YStack>
+                    )}
+                    {selectedIds && !adding && (
+                        <Button backgroundColor="$color8" onPress={onClose}><Text color="$backgroundStrong" fontWeight="bold">Done</Text></Button>
                     )}
                 </YStack>
 
