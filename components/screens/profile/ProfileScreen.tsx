@@ -16,15 +16,16 @@ import { barsCrediting } from '@/lib/profiles';
 
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
+import { BarRankings } from './BarRankings';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
 import { WorkedMenus } from './WorkedMenus';
-import { BarScore, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
+import { BarHeader, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
-type Tab = 'menus' | 'originals' | 'rankings' | 'shelf' | 'had' | 'bars';
+type Tab = 'menus' | 'originals' | 'rankings' | 'people' | 'shelf' | 'had' | 'bars';
 /** A person's page has the drinks they've had and how each bar did. */
 const PERSON_TABS = [
   { value: 'had', label: 'Had' },
@@ -34,10 +35,12 @@ const PERSON_TABS = [
 ] as const;
 /** Someone who keeps their drinks to themselves, or a profile nobody has claimed (a historic bartender). */
 const QUIET_TABS = PERSON_TABS.filter((t) => t.value !== 'had' && t.value !== 'bars');
-/** A bar's page leads with its menus. Rankings and Shelf come back once they have something to show. */
+/** A bar's page leads with its menus. Shelf comes back once it has something to show. */
 const BAR_TABS = [
   { value: 'menus', label: 'Menus' },
   { value: 'originals', label: 'Originals' },
+  { value: 'rankings', label: 'Top drinks' },
+  { value: 'people', label: 'People' },
 ] as const;
 
 /**
@@ -114,21 +117,27 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       <WebHead>
         <title>{`${profile.display_name} (@${profile.handle})`}</title>
       </WebHead>
-      <View style={styles.header}>
-        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
-        <Title align="center">{profile.display_name}</Title>
-        <Caption tone="muted" align="center">
-          {[`@${profile.handle}`, KIND[profile.kind], place].filter(Boolean).join(' · ')}
-        </Caption>
-        <View style={styles.chips}>
+      <View style={person ? styles.header : styles.barHead}>
+        {person ? (
+          <>
+            <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
+            <Title align="center">{profile.display_name}</Title>
+            <Caption tone="muted" align="center">
+              {[`@${profile.handle}`, KIND[profile.kind], place].filter(Boolean).join(' · ')}
+            </Caption>
+          </>
+        ) : (
+          <BarHeader profile={profile} detail={[place || KIND.bar, unclaimed ? 'Not claimed yet' : 'Claimed'].join(' · ')} />
+        )}
+        <View style={[styles.chips, !person && styles.chipsStart]}>
           {originals.length > 0 && profile.kind === 'person' ? <Tag label="Creator" /> : null}
           {onMenus ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
           {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
-          {unclaimed ? <Tag label="Not claimed yet" /> : null}
+          {unclaimed && person ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
-        {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
-        <ProfileLinks profile={profile} />
+        {profile.bio ? <Body align={person ? 'center' : undefined}>{profile.bio}</Body> : null}
+        <ProfileLinks profile={profile} align={person ? 'center' : 'start'} />
       </View>
 
       <Stats>
@@ -137,14 +146,13 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <Stat value={onMenus} label={onMenus === 1 ? 'bar menu' : 'bar menus'} />
       </Stats>
 
-      {profile.kind === 'bar' ? <BarScore profileId={profile.id} /> : null}
       {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
 
       {unclaimed ? <ClaimProfile profile={profile} /> : null}
 
-      <Positions profile={profile} />
+      {person ? <Positions profile={profile} /> : null}
 
       {profile.kind === 'person' ? <WorkedMenus profileId={profile.id} /> : null}
 
@@ -174,9 +182,11 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
           />
         )
       ) : tab === 'rankings' ? (
-        <ComingSoon text={`${profile.display_name}'s rankings will show here once ranking opens.`} />
+        <BarRankings bar={profile} />
+      ) : tab === 'people' ? (
+        <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
       ) : (
-        <ComingSoon text={profile.kind === 'bar' ? "What's on the back bar will show here." : "What's on their shelf will show here."} />
+        <ComingSoon text="What's on their shelf will show here." />
       )}
     </View>
   );
@@ -188,6 +198,8 @@ const styles = StyleSheet.create({
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
+  barHead: { gap: space.sm },
+  chipsStart: { justifyContent: 'flex-start' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
   favourites: { gap: space.md },
 });
