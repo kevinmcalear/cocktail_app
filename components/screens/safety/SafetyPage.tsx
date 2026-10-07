@@ -3,13 +3,15 @@ import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 
 interface SafetyPageProps {
   title: string;
   intro?: string;
+  /** A small line above the title, like "Step 2 of 4". */
+  kicker?: string | null;
   children: ReactNode;
   /** Hide the back button (the age check after sign-up has its own way on). */
   noBack?: boolean;
@@ -26,7 +28,7 @@ export function SafetyPage(props: SafetyPageProps) {
   );
 }
 
-function Page({ title, intro, children, noBack, backTo = '/settings' }: SafetyPageProps) {
+function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -41,6 +43,7 @@ function Page({ title, intro, children, noBack, backTo = '/settings' }: SafetyPa
         contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
         <View style={styles.readable}>
+          {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
           <Title role="heading">{title}</Title>
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}

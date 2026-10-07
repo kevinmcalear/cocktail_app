@@ -61,21 +61,24 @@ export function useBarDetail(barId: string) {
 }
 
 /**
- * Changes a member's role, or invites anyone else by email (they join when they
- * accept). The add_user_to_bar_by_email RPC decides who may: only the venue's
+ * Changes a member's role, or invites anyone else by email and name (they join
+ * when they accept). The add_user_to_bar_by_email RPC decides who may: only the venue's
  * real Admins, and only to a valid role level. Errors show inline, not as the
  * global toast.
  */
 export function useSetMemberRole(barId: string) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ email, roleLevel }: { email: string; roleLevel: number }) => {
-            const { error } = await supabase.rpc('add_user_to_bar_by_email', {
+        /** Resolves to true when it made an invite, false when it changed a member's role. */
+        mutationFn: async ({ email, roleLevel, name }: { email: string; roleLevel: number; name?: string }): Promise<boolean> => {
+            const { data, error } = await supabase.rpc('add_user_to_bar_by_email', {
                 p_email: email.trim().toLowerCase(),
                 p_bar_id: barId,
                 p_role_level: roleLevel,
+                p_name: name?.trim() || undefined,
             });
             if (error) throw error;
+            return !data?.user_id;
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['bar', barId] });

@@ -15,7 +15,7 @@ export const MEASURE_UNITS: { id: MeasureUnit; label: string }[] = [
   { id: 'g', label: 'g' },
 ];
 
-export type OnboardingStep = 'name' | 'hospitality' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'units';
+export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'units';
 
 /** What the person picked on a step that branches. */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new';
@@ -38,8 +38,15 @@ export function afterAgeCheck(metadata: unknown): '/onboarding' | '/(tabs)' {
  * The next screen. Hospitality looks for an existing profile first. A claim
  * skips the career steps (they don't own that profile until it's approved).
  * Otherwise: current job, earlier jobs, menus, drinks, then units.
+ * Someone who joined a venue from an invite takes the short way: name, their
+ * job at that venue, units (INVITE_STEPS).
  */
-export function nextStep(step: OnboardingStep, choice: StepChoice = 'no'): OnboardingStep | 'done' {
+export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined = false): OnboardingStep | 'done' {
+  if (joined) {
+    const at = INVITE_STEPS.indexOf(step);
+    if (at >= 0) return INVITE_STEPS[at + 1] ?? 'done';
+  }
+  if (step === 'invite') return 'name';
   if (step === 'name') return 'hospitality';
   if (step === 'hospitality') return choice === 'yes' ? 'find' : 'units';
   if (step === 'find') return choice === 'claim' ? 'units' : 'work';
@@ -48,6 +55,31 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no'): Onboa
   if (step === 'menus') return 'drinks';
   if (step === 'drinks') return 'units';
   return 'done';
+}
+
+/** The invited path, in order, for its "Step 2 of 4". */
+export const INVITE_STEPS: OnboardingStep[] = ['invite', 'name', 'work', 'units'];
+
+/** "Step 2 of 4" on the invited path, or null on any other step. */
+export function inviteStepLabel(step: OnboardingStep): string | null {
+  const at = INVITE_STEPS.indexOf(step);
+  return at < 0 ? null : `Step ${at + 1} of ${INVITE_STEPS.length}`;
+}
+
+/**
+ * The job title to suggest at the venue they were invited to: the role, when
+ * it reads as one. Guest, Employee and Admin are access levels, not jobs.
+ */
+export function inviteJobTitle(roleLevel: number): string {
+  if (roleLevel === 30) return 'Bartender';
+  if (roleLevel === 35) return 'Drink Creator';
+  return '';
+}
+
+/** A password for an account made from an invite (Auth's minimum is 6). */
+export function passwordError(password: string): string | null {
+  if (password.length < 6) return 'Use at least 6 characters.';
+  return null;
 }
 
 /** "Attaboy, New York" and ", closed" when the bar has shut. Closed bars stay pickable. */

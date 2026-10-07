@@ -72,13 +72,27 @@ export function FindStep({
   );
 }
 
-/** Where they work now, or a bar they used to. Closed bars stay in the search. */
-export function PlaceStep({ personId, isCurrent, onDone }: { personId: string | null; isCurrent: boolean; onDone: () => void }) {
-  const [search, setSearch] = useState('');
+/**
+ * Where they work now, or a bar they used to. Closed bars stay in the search.
+ * An invite starts it on the venue they joined (or a search for its name) and
+ * hides "Add your bar".
+ */
+export function PlaceStep({
+  personId,
+  isCurrent,
+  onDone,
+  initial,
+}: {
+  personId: string | null;
+  isCurrent: boolean;
+  onDone: () => void;
+  initial?: { bar: RankVenue | null; search: string; role: string };
+}) {
+  const [search, setSearch] = useState(initial?.search ?? '');
   const [adding, setAdding] = useState(false);
   const [barName, setBarName] = useState('');
-  const [bar, setBar] = useState<RankVenue | null>(null);
-  const [role, setRole] = useState('');
+  const [bar, setBar] = useState<RankVenue | null>(initial?.bar ?? null);
+  const [role, setRole] = useState(initial?.role ?? '');
   const [tried, setTried] = useState(false);
   const { data: found } = usePublicBars(bar || adding ? '' : search);
   const save = useSaveWorkplace();
@@ -119,7 +133,7 @@ export function PlaceStep({ personId, isCurrent, onDone }: { personId: string | 
             ))}
           </View>
           {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No bars by that name.</Caption> : null}
-          {isCurrent ? <Button label="Add your bar" variant="secondary" onPress={() => setAdding(true)} /> : null}
+          {isCurrent && !initial ? <Button label="Add your bar" variant="secondary" onPress={() => setAdding(true)} /> : null}
         </>
       ) : null}
       {bar ? (

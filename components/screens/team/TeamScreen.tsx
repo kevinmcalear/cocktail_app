@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, Chip, Display, Field, Headline, LockedSection, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useBarInvites, useRemoveInvite } from '@/hooks/useBarInvites';
+import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
 import { useBarMembers, useRemoveMember, useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -48,7 +48,8 @@ function Roles({ label, value, ceiling, disabled, onPick }: {
 
 /**
  * My team, for the venue in the sidebar. Employee and above see who is on it.
- * An Admin can look someone up, invite by email, change a role, or remove them.
+ * An Admin can look someone up, invite by name and email (we email them the
+ * invite), change a role, or remove them.
  * The database decides who may; this only hides the controls.
  */
 export function TeamScreen() {
@@ -69,10 +70,17 @@ export function TeamScreen() {
   const remove = useRemoveMember(barId ?? '');
   const { data: invites = [] } = useBarInvites(barId ?? '', manage);
   const cancel = useRemoveInvite(barId ?? '');
+  const send = useSendInviteEmail(barId ?? '');
   const [query, setQuery] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [sent, setSent] = useState<string | null>(null);
   const [newRole, setNewRole] = useState(EMPLOYEE);
-  const busy = change.isPending || add.isPending || remove.isPending || cancel.isPending;
+  const busy = change.isPending || add.isPending || remove.isPending || cancel.isPending || send.isPending;
+  const emailInvite = (to: string) => {
+    setSent(null);
+    send.mutate(to, { onSuccess: () => setSent(`Invite emailed to ${to}.`) });
+  };
   const people = roster(members.data ?? [], manage ? query : '');
 
   const confirmRole = (who: string, level: number) =>
@@ -93,31 +101,49 @@ export function TeamScreen() {
       <>
         <LockedSection title="Manage the team" unlocked={manage} opensAt="Admin">
           <Field label="Look up" value={query} onChangeText={setQuery} placeholder="Name or email" autoCapitalize="none" autoCorrect={false} />
+          <Field label="Name" value={name} onChangeText={setName} placeholder="Sam Rivera" autoComplete="off" maxLength={80} />
           <Field
             label="Email"
             value={email}
             onChangeText={setEmail}
             placeholder="name@bar.com"
-            hint="They join when they open your staff link and sign in with this email."
+            hint="We email them a link to join. Your staff link works too, signed in with this email."
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
           />
           <Roles label="Role for the new member" value={newRole} ceiling={role} disabled={busy} onPick={setNewRole} />
           {problem(add.error) ? <Caption tone="accent" role="alert">{problem(add.error)}</Caption> : null}
+          {send.error ? (
+            <Caption tone="accent" role="alert">{`The invite is saved, but the email didn’t send (${send.error.message}). They can still join from your staff link.`}</Caption>
+          ) : null}
+          {sent ? <Caption tone="muted" role="status">{sent}</Caption> : null}
           <Button
             label="Invite"
             disabled={busy || !email.trim()}
             onPress={async () => {
-              if (!(await confirmRole(email.trim(), newRole))) return;
-              add.mutate({ email, roleLevel: newRole }, { onSuccess: () => setEmail('') });
+              const to = email.trim().toLowerCase();
+              if (!(await confirmRole(name.trim() || to, newRole))) return;
+              add.mutate(
+                { email: to, roleLevel: newRole, name },
+                {
+                  onSuccess: (invited) => {
+                    setEmail('');
+                    setName('');
+                    if (invited) emailInvite(to);
+                  },
+                }
+              );
             }}
             style={styles.invite}
           />
           {invites.map((i) => (
             <View key={i.id} style={styles.inviteRow}>
-              <Caption>{`${i.email} · invited as ${roleLabel(i.role_level)}`}</Caption>
-              <Button label="Cancel invite" variant="ghost" disabled={busy} onPress={() => cancel.mutate(i.id)} />
+              <Caption>{`${i.name ? `${i.name}, ` : ''}${i.email} · invited as ${roleLabel(i.role_level)}`}</Caption>
+              <View style={styles.inviteActions}>
+                <Button label="Email again" variant="ghost" disabled={busy} onPress={() => emailInvite(i.email)} />
+                <Button label="Cancel invite" variant="ghost" disabled={busy} onPress={() => cancel.mutate(i.id)} />
+              </View>
             </View>
           ))}
         </LockedSection>
@@ -205,6 +231,7 @@ const styles = StyleSheet.create({
   roles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   invite: { alignSelf: 'flex-start' },
   inviteRow: { gap: space.xs },
+  inviteActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   person: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   remove: { alignSelf: 'flex-start' },
 });

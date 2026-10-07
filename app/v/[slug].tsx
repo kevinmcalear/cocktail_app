@@ -6,7 +6,7 @@ import { Button, Text, XStack, YStack, useTheme } from 'tamagui';
 
 import { AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
 import { JoinInvite } from '@/components/auth/JoinInvite';
-import { SignInScreen } from '@/components/auth/SignInScreen';
+import { StaffLinkSignIn } from '@/components/auth/StaffLinkSignIn';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyBarInvite } from '@/hooks/useBarInvites';
@@ -79,7 +79,7 @@ export default function VenueStaffLink() {
     return (
       <>
         {head}
-        <SignInScreen brand={brand} subtitle={`Drinks, menus and training for the ${venue.name} team.`} />
+        <StaffLinkSignIn slug={venue.slug} brand={brand} />
       </>
     );
   }

@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
+import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { OnboardingScreen } from './OnboardingScreen';
@@ -13,12 +14,24 @@ const mockFinish = jest.fn();
 const mockClaim = jest.fn();
 const mockSaveMenu = jest.fn();
 const mockSaveDrink = jest.fn();
+const mockAccept = jest.fn();
+const mockDecline = jest.fn();
+const mockUpdatePassword = jest.fn();
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
+let mockInvitedAt: string | undefined;
+let mockInvites: { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_profile_id: string | null; role_level: number; name: string | null }[] = [];
 let mockPeople: { id: string; handle: string; display_name: string; city: string | null; is_claimed: boolean }[] = [];
 let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean }[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta }, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updatePassword: mockUpdatePassword }),
+}));
+jest.mock('@/hooks/useBarInvites', () => ({
+  useMyInvites: () => ({ data: mockInvites, isLoading: false }),
+  useAcceptInvite: () => ({ mutate: mockAccept, isPending: false, error: null }),
+  useRemoveInvite: () => ({ mutate: mockDecline, isPending: false, error: null }),
+}));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useOnboarding', () => ({
   useSaveOnboardingName: () => ({ mutate: mockSaveName, isPending: false, error: null }),
@@ -40,6 +53,12 @@ const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postc
 
 beforeEach(() => {
   mockMeta = { onboarded: false };
+  mockInvitedAt = undefined;
+  mockInvites = [];
+  mockAccept.mockReset();
+  mockDecline.mockReset();
+  mockUpdatePassword.mockReset();
+  mockUpdatePassword.mockResolvedValue({ error: null });
   mockPeople = [];
   mockBars = [attaboy];
   mockReplace.mockClear();
@@ -159,6 +178,51 @@ describe('OnboardingScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Bar name'), 'Little Rye');
     await fireEvent.press(screen.getByRole('button', { name: 'Add bar' }));
     expect(mockCreateBar).toHaveBeenCalledWith('Little Rye', expect.anything());
+  });
+
+  test('an invitee joins, then names themselves, sets a password, takes the job there, and picks units', async () => {
+    mockInvitedAt = '2026-10-07T00:00:00Z';
+    mockInvites = [{ id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_profile_id: 'bp', role_level: 30, name: 'Sam Rivera' }];
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockSaveWork.mockImplementation((_input, opts) => opts?.onSuccess?.());
+    await renderWithTamagui(<OnboardingScreen />);
+    expect(screen.getByText('You’re invited to Caretakers')).toBeTruthy();
+    expect(screen.getByText('Step 1 of 4')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Join the team' }));
+    expect(useAppStore.getState().selectedContextIds).toEqual(['venue']);
+
+    expect(screen.getByText('Step 2 of 4')).toBeTruthy();
+    expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Use at least 6 characters.')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'local-pass');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockUpdatePassword).toHaveBeenCalledWith('local-pass');
+    expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
+
+    expect(await screen.findByText('Your job at Caretakers')).toBeTruthy();
+    expect(screen.queryByText('Do you work in hospitality?')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add your bar' })).toBeNull();
+    expect(screen.getByLabelText('Your role').props.value).toBe('Bartender');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender', isCurrent: true }, expect.anything());
+
+    expect(screen.getByText('Step 4 of 4')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockFinish).toHaveBeenCalled();
+  });
+
+  test('declining an invite runs the usual setup', async () => {
+    mockInvites = [{ id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_profile_id: null, role_level: 20, name: null }];
+    mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.());
+    await renderWithTamagui(<OnboardingScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'No thanks' }));
+    expect(mockDecline).toHaveBeenCalledWith('i1', expect.anything());
+    expect(screen.queryByText(/Step \d of 4/)).toBeNull();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
   });
 
   test('a finished account leaves setup', async () => {

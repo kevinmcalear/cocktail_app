@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { getAuthSite } from '@/lib/authRedirect';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
 
 /** Someone invited to a venue who hasn't accepted yet (bar_invites). */
@@ -9,10 +11,24 @@ export interface BarInvite {
   bar_id: string;
   email: string;
   role_level: number;
+  /** What the admin called them, if anything. */
+  name: string | null;
   created_at: string;
 }
 
-const COLUMNS = 'id, bar_id, email, role_level, created_at';
+const COLUMNS = 'id, bar_id, email, role_level, name, created_at';
+
+/** One of the signed-in person's own invites, with the venue it's for (my_bar_invites). */
+export interface MyInvite {
+  id: string;
+  bar_id: string;
+  bar_name: string;
+  bar_slug: string | null;
+  /** The venue's public bar profile, when it has one: where their job goes. */
+  bar_profile_id: string | null;
+  role_level: number;
+  name: string | null;
+}
 
 /** A venue's open invites. RLS shows them to the venue's admins only. */
 export function useBarInvites(barId: string, enabled = true) {
@@ -39,6 +55,7 @@ export function useRemoveInvite(barId: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
       await queryClient.invalidateQueries({ queryKey: ['my-bar-invite', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['my-invites'] });
     },
     onError: () => {},
   });
@@ -71,7 +88,35 @@ export function useAcceptInvite(barId: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['bars'] });
       await queryClient.invalidateQueries({ queryKey: ['my-bar-invite', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['my-invites'] });
     },
+    onError: () => {},
+  });
+}
+
+/** Every venue that has invited the signed-in person and is still waiting. */
+export function useMyInvites(enabled = true) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['my-invites', userId],
+    enabled: !!userId && enabled,
+    staleTime: 0,
+    queryFn: async (): Promise<MyInvite[]> => {
+      const { data, error } = await supabase.rpc('my_bar_invites');
+      if (error) throw error;
+      return (data ?? []) as MyInvite[];
+    },
+  });
+}
+
+/**
+ * Emails an invite that already exists (send-bar-invite): a new account gets
+ * the invite email, an existing one a sign-in link to the staff link.
+ */
+export function useSendInviteEmail(barId: string) {
+  return useMutation({
+    mutationFn: (email: string) =>
+      invokeFunction<{ sent: boolean }>('send-bar-invite', { bar_id: barId, email: email.trim().toLowerCase(), site: getAuthSite() }),
     onError: () => {},
   });
 }
