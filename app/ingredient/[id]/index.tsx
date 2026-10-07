@@ -16,6 +16,7 @@ import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
+import { FEATURES } from "@/constants/features";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
@@ -80,9 +81,7 @@ export default function IngredientDetailScreen() {
                 images={[]}
                 isLoading={loading}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
             >
                 <YStack flex={1} justifyContent="center" alignItems="center">
                     {error ? (
@@ -106,7 +105,7 @@ export default function IngredientDetailScreen() {
             isFavorite={isFavorite(`ingredient-${ingredient.id}`)}
             isInStudyPile={isInStudyPile(`ingredient-${ingredient.id}`)}
             onToggleFavorite={toggleFavorite}
-            onToggleStudyPile={toggleStudyPile}
+            onToggleStudyPile={FEATURES.study ? toggleStudyPile : undefined}
             onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">

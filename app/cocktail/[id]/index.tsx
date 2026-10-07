@@ -84,9 +84,7 @@ export default function CocktailDetailsScreen() {
                 images={[]}
                 isLoading={isLoading}
                 isFavorite={false}
-                isInStudyPile={false}
                 onToggleFavorite={() => {}}
-                onToggleStudyPile={() => {}}
             >
                 <YStack style={styles.container}>
                     {error ? (
@@ -115,9 +113,7 @@ export default function CocktailDetailsScreen() {
                 imageTags={imageTags}
                 emptyPhotoPlaceholder={isEditing && images.length === 0}
                 isFavorite={isFavorite(cocktail.id)}
-                isInStudyPile={isInStudyPile(cocktail.id)}
                 onToggleFavorite={toggleFavorite}
-                onToggleStudyPile={toggleStudyPile}
                 canEdit={canEdit}
                 onStartEdit={() => setIsEditing(true)}
                 onCancelEdit={handleCancelEdit}
