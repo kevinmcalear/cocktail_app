@@ -4,15 +4,17 @@ import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FEATURES } from '@/constants/features';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
@@ -30,6 +32,7 @@ import { FamilyTree } from './FamilyTree';
 import { FloorSection } from './FloorSection';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
+import { SpecLockPanel } from './SpecLockPanel';
 import { SpecSection } from './SpecSection';
 import { GlassSheet } from './GlassSheet';
 import { HistorySection } from './HistorySection';
@@ -94,6 +97,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why.
+  const lock = useSpecLock(preview ? null : item).data;
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
@@ -111,6 +116,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     dilutionDefaults,
     openStrength: () => setStrengthOpen(true),
     openGlass: preview ? undefined : () => setGlassOpen(true),
+    specLocked: !!lock,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
@@ -177,8 +183,21 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <FloorSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
-      <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
-      {item.notes ? (
+      {lock ? (
+        <SpecLockPanel
+          note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
+          action={
+            <Button
+              label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'}
+              variant="secondary"
+              onPress={() => router.push(`/p/${lock.bar.handle}` as Href)}
+            />
+          }
+        />
+      ) : (
+        <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
+      )}
+      {item.notes && !lock ? (
         <View style={styles.notes}>
           <Headline role="heading">Bartender notes</Headline>
           <Body>{item.notes}</Body>

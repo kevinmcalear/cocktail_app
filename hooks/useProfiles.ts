@@ -8,6 +8,7 @@ import { sortAwards, type Award } from '@/lib/awards';
 import { sortEditions, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { LineageDrink } from '@/lib/lineage';
+import type { PageVisibility } from '@/lib/pageVisibility';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
@@ -35,9 +36,11 @@ export interface Profile {
   closed_year: number | null;
   /** A person who shows the drinks they've had, with their scores. */
   shares_rankings: boolean;
+  /** A bar's: who outside it sees its page. Null for a person. */
+  page_visibility: PageVisibility | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, page_visibility';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -60,11 +63,12 @@ export function useProfile(ref: string | string[] | null | undefined) {
 
 export interface Original extends LineageDrink {
   item_type: string;
+  description: string | null;
   glass: { icon_key: string | null } | null;
   item_images: ItemImageLink[] | null;
 }
 
-const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`;
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`;
 
 /** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators. */
 async function creditedTo(profileId: string): Promise<string[]> {

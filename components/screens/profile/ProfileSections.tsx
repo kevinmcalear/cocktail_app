@@ -6,12 +6,13 @@ import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs }
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
-import type { MenuCreditWithProfile, Original } from '@/hooks/useProfiles';
+import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
+import { isShownPosition } from './Positions';
 
 /** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
@@ -115,6 +116,19 @@ export function BarHeader({ profile, detail }: { profile: { id: string; display_
       </View>
       {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
     </View>
+  );
+}
+
+/** The numbers under a bar's name (its score sits in BarHeader): awards, people and originals. */
+export function BarStats({ profile, originals }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number }) {
+  const { data: awards = [] } = useProfileAwards(profile.id);
+  const people = (useProfilePositions(profile).data ?? []).filter(isShownPosition).length;
+  return (
+    <Stats>
+      <Stat value={awards.length} label={awards.length === 1 ? 'award' : 'awards'} />
+      <Stat value={people} label={people === 1 ? 'person' : 'people'} />
+      <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} />
+    </Stats>
   );
 }
 
