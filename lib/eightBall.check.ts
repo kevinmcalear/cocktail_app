@@ -1,7 +1,7 @@
 // Checks for lib/eightBall.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildPool, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
+import { buildPool, makeA, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
 
 // --- shakes: three strong jolts close together, then a cooldown ---
 const rest = (at: number): Motion => ({ x: 0, y: 0, z: -1, at });
@@ -47,7 +47,7 @@ const byId = new Map(pool.map((c) => [c.id, c]));
 assert.equal(byId.get('negroni')?.weight, WEIGHT.canMake);
 assert.equal(byId.get('negroni')?.reason, 'You have all the bottles at home.', 'can make wins over a bar drink of the same id');
 assert.equal(byId.get('daiquiri')?.weight, WEIGHT.any);
-assert.equal(byId.get('daiquiri')?.reason, null);
+assert.equal(byId.get('daiquiri')?.reason, 'Picked from every drink you can open.');
 assert.equal(byId.get('paloma-limantour')?.weight, WEIGHT.ratedBar * 2, 'a 10 bar doubles the rated weight');
 assert.equal(byId.get('paloma-limantour')?.reason, 'Well rated near you, at Licorería Limantour.');
 assert.ok(!byId.has('closed-bar-drink'), 'drinks at bars outside the rated list stay out');
@@ -57,10 +57,17 @@ assert.equal(
   'Well rated, at B.'
 );
 
+assert.equal(makeA('Negroni'), 'Make a Negroni');
+assert.equal(makeA('Old Fashioned'), 'Make an Old Fashioned');
+assert.equal(makeA('Annibale'), 'Make an Annibale');
+assert.equal(makeA('A Bird in the Hand'), 'Make A Bird in the Hand');
+assert.equal(makeA('The Last Word'), 'Make The Last Word');
+assert.equal(makeA('Aviation'), 'Make an Aviation');
+
 // --- picking: by weight, skipping recent ones ---
 const weighted = [
-  { ...d('a'), weight: 1, reason: null },
-  { ...d('b'), weight: 3, reason: null },
+  { ...d('a'), weight: 1, reason: '' },
+  { ...d('b'), weight: 3, reason: '' },
 ];
 assert.equal(pickDrink(weighted, [], () => 0)?.id, 'a');
 assert.equal(pickDrink(weighted, [], () => 0.24)?.id, 'a');
@@ -69,7 +76,7 @@ assert.equal(pickDrink(weighted, [], () => 0.999)?.id, 'b');
 assert.equal(pickDrink(weighted, ['b'], () => 0.9)?.id, 'a', 'recent drinks are skipped');
 assert.equal(pickDrink(weighted, ['a', 'b'], () => 0)?.id, 'a', 'when everything is recent, pick from everything');
 assert.equal(pickDrink([], [], () => 0), null);
-assert.equal(pickDrink([{ ...d('z'), weight: 0, reason: null }]), null);
+assert.equal(pickDrink([{ ...d('z'), weight: 0, reason: '' }]), null);
 
 // Over many picks, the can-make drink comes up about six times as often.
 let seed = 7;

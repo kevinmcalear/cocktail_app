@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
 import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
-import { FORTUNES, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
+import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { BallArt } from './BallArt';
@@ -73,7 +73,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     bringUp(card);
     if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     // Android and web read the live region; iOS needs telling.
-    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `Make a ${drink.name}. ${drink.reason ?? ''}` : 'Nothing to pick yet');
+    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `${makeA(drink.name)}. ${drink.reason}` : 'Nothing to pick yet');
   }
 
   function think() {
@@ -130,7 +130,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
         <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
           {shown ? (
             <>
-              <Title align="center">{drink ? `Make a ${drink.name}` : 'Nothing to pick yet'}</Title>
+              <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
               <Body tone="muted" align="center">
                 {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
               </Body>

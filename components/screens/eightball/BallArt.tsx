@@ -8,6 +8,9 @@ import { displayFaces, eightBall } from '@/constants/tokens';
 const BALL = 260;
 const WINDOW = 150;
 
+/** Long names step down a size so they stay inside the triangle (web can't shrink text to fit). */
+const fit = (text: string) => (text.length > 18 ? 'caption' : text.length > 10 ? 'body' : 'headline');
+
 /**
  * The ball itself, as the Shake design draws it: a lit black sphere, an
  * ink-blue window ringed in the accent, and the triangle with the answer in
@@ -38,7 +41,7 @@ export function BallArt({ text, wobble, rise, still }: { text: string; wobble: S
           <Path d="M60 98 L6 6 L114 6 Z" fill={eightBall.triangle} stroke={ds.accentText} strokeWidth={1.5} />
         </Svg>
         <Animated.View style={[styles.answer, riseStyle]}>
-          <DsText variant="headline" align="center" numberOfLines={3} adjustsFontSizeToFit style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+          <DsText variant={fit(text)} align="center" numberOfLines={3} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
             {text}
           </DsText>
         </Animated.View>

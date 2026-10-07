@@ -61,7 +61,7 @@ export interface EightBallDrink {
 export interface Candidate extends EightBallDrink {
   weight: number;
   /** Why this drink, in a line: "You have all the bottles at home.", "Well rated near you, at Licorería Limantour." */
-  reason: string | null;
+  reason: string;
 }
 
 export interface RatedBar {
@@ -87,16 +87,25 @@ export interface PoolInput {
 /** Weights: what you can make tonight first, then what's well rated nearby, then anything. */
 export const WEIGHT = { canMake: 6, ratedBar: 2, any: 1 } as const;
 
+const ANY_REASON = 'Picked from every drink you can open.';
+
+/** "Make a Negroni", "Make an Old Fashioned", "Make A Bird in the Hand". */
+export function makeA(name: string): string {
+  if (/^(a|an|the)\s/i.test(name)) return `Make ${name}`;
+  return `Make ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`;
+}
+
 export function buildPool({ drinks, canMake, barDrinks, ratedBars, near }: PoolInput): Candidate[] {
   const pool = new Map<string, Candidate>();
   for (const d of drinks) {
     const can = canMake.has(d.id);
-    pool.set(d.id, { ...d, weight: can ? WEIGHT.canMake : WEIGHT.any, reason: can ? 'You have all the bottles at home.' : null });
+    pool.set(d.id, { ...d, weight: can ? WEIGHT.canMake : WEIGHT.any, reason: can ? 'You have all the bottles at home.' : ANY_REASON });
   }
   const bars = new Map(ratedBars.map((b) => [b.id, b]));
   for (const d of barDrinks) {
     const bar = bars.get(d.barId);
-    if (!bar || pool.get(d.id)?.reason) continue;
+    const known = pool.get(d.id);
+    if (!bar || (known && known.weight > WEIGHT.any)) continue;
     // A 9.5 bar's drink comes up about twice as often as a 5's.
     const weight = WEIGHT.ratedBar * (1 + Math.max(0, Math.min(bar.score, 10)) / 10);
     pool.set(d.id, { ...d, weight, reason: `${near ? 'Well rated near you' : 'Well rated'}, at ${bar.name}.` });
