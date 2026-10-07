@@ -27,7 +27,7 @@ import {
 import { capitalize } from '@/lib/stringUtils';
 import { usePublicDrinks } from '@/hooks/usePublicDrinks';
 import { caretCanMove, chunk, gridColumns, timeAgo } from '@/lib/commandSearchGrid';
-import { matchesQuery, withPublicDrinks } from '@/lib/publicDrinks';
+import { compareSearchItems, matchesQuery, searchCardMeta, withPublicDrinks } from '@/lib/publicDrinks';
 import { useAppStore } from '@/store/useAppStore';
 import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -230,7 +230,7 @@ export function CommandSearch({
   const { drafts } = useDrafts();
   // Other bars' drinks, while typing. Not when picking for a menu or a venue's section.
   const showPublic = !onItemSelect && !lockedContextId && !!query.trim();
-  const { data: publicDrinks } = usePublicDrinks(showPublic);
+  const { data: publicDrinks } = usePublicDrinks(showPublic ? query : '');
 
   const color = theme.color?.get() as string;
   const muted = theme.color11?.get() as string;
@@ -382,7 +382,7 @@ export function CommandSearch({
       );
     }
 
-    return [...result].sort((a, b) => a.name.localeCompare(b.name));
+    return [...result].sort(compareSearchItems);
   }, [items, showPublic, publicDrinks, filter, query, attrs]);
 
   const recentFiltered = useMemo(() => {
@@ -623,7 +623,7 @@ export function CommandSearch({
       cell.kind === 'recent'
         ? categoryIcon(cell.recent.kind)
         : categoryIcon(cell.item.category);
-    const meta = cell.kind === 'recent' ? timeAgo(cell.recent.at) : cell.item.fromBar;
+    const meta = cell.kind === 'recent' ? timeAgo(cell.recent.at) : searchCardMeta(cell.item);
     const metaLine = meta ? <Text fontSize={9} color="$color11" numberOfLines={1}>{meta}</Text> : null;
     const dragItem = onItemDragStart ? drinkFromCell(cell) : null;
 
