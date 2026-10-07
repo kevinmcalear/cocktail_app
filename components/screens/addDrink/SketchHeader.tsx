@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
@@ -63,6 +64,8 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
 
   return (
     <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
+      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes. */}
+      {Platform.OS === 'android' && !rounded ? <StatusBar style="dark" /> : null}
       <View style={styles.controls}>
         <PressableScale
           onPress={onBack}
