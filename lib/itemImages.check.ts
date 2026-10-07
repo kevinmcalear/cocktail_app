@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { heroPicture, orderedPictures, pictureLabel, pictureTag } from './itemImages';
+import { batchedDrinkKey, heroPicture, orderedPictures, pictureLabel, pictureTag, withDrinkPhotos } from './itemImages';
 
 const sketch = { sort_order: 0, is_generated: true, images: { url: 'sketch.png' } };
 const photoB = { sort_order: 2, is_generated: false, images: { url: 'b.jpg' } };
@@ -44,5 +44,16 @@ const borrowed = { is_generated: false, images: { url: 'c.jpg', credit: 'Imbibe'
 assert.equal(heroPicture([borrowed])?.credit, 'Imbibe');
 assert.equal(heroPicture([borrowed])?.sourceUrl, 'https://imbibemagazine.com/x');
 assert.equal(heroPicture([photoB])?.credit, null);
+
+// A batch borrows its drink's photos until it has one of its own.
+assert.equal(batchedDrinkKey('Aperol Fizz Batch'), 'aperol fizz');
+assert.equal(batchedDrinkKey('Apérol Fizz (Batch)'), 'aperol fizz');
+assert.equal(batchedDrinkKey('Gin Martini - batched'), 'gin martini');
+assert.equal(batchedDrinkKey('Four Roses Small Batch Bourbon'), null);
+assert.equal(batchedDrinkKey('Batch'), null);
+assert.equal(heroPicture(withDrinkPhotos([sketch], [photoB, { ...sketch, images: { url: 'drink-sketch.png' } }]))?.url, 'b.jpg');
+assert.deepEqual(orderedPictures(withDrinkPhotos([sketch], [{ ...sketch, images: { url: 'drink-sketch.png' } }])).map((p) => p.url), ['sketch.png']);
+assert.equal(heroPicture(withDrinkPhotos([photoA], [photoB]))?.url, 'a.jpg');
+assert.equal(heroPicture(withDrinkPhotos(null, [photoB]))?.url, 'b.jpg');
 
 console.log('itemImages.check: ok');

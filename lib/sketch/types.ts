@@ -1,19 +1,13 @@
 // A drink's drawing inputs, as the flavor-worker stores them in item_sketches
-// (supabase/functions/_shared/sketch.ts, which lib/sketch/sketch.check.ts
-// keeps in step with these lists).
+// and as the add-drink wizard works them out live (lib/sketch/draft.ts). The
+// lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
+import { FOAMS, GARNISHES, GLASSES, ICES, METHODS } from '../../supabase/functions/_shared/sketchRules';
 
-export const SKETCH_GLASSES = [
-  'coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'fizz', 'flute',
-  'wine', 'spritz', 'snifter', 'julep', 'tiki', 'mug', 'ceramic', 'beer',
-] as const;
-export const SKETCH_ICES = ['none', 'cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'] as const;
-export const SKETCH_METHODS = ['shake', 'stir', 'build', 'blend', 'swizzle', 'throw', 'pour'] as const;
-export const SKETCH_FOAMS = ['cap', 'crema', 'froth', 'silk', 'sheen'] as const;
-export const SKETCH_GARNISHES = [
-  'orange_peel', 'lemon_peel', 'grapefruit_peel', 'lime_wheel', 'lemon_wheel', 'orange_wheel', 'lime_wedge',
-  'cherry', 'olive', 'onion', 'mint', 'herb', 'berries', 'strawberry', 'pineapple', 'coffee_beans',
-  'grated_spice', 'flower', 'cucumber', 'salt_rim', 'sugar_rim', 'ginger', 'chili', 'apple',
-] as const;
+export const SKETCH_GLASSES = GLASSES;
+export const SKETCH_ICES = ICES;
+export const SKETCH_METHODS = METHODS;
+export const SKETCH_FOAMS = FOAMS;
+export const SKETCH_GARNISHES = GARNISHES;
 
 export type SketchGlass = (typeof SKETCH_GLASSES)[number];
 export type SketchIce = (typeof SKETCH_ICES)[number];

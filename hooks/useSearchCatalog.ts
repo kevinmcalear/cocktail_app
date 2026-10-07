@@ -6,7 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useIngredients } from '@/hooks/useIngredients';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext } from '@/lib/barContextFilter';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize } from '@/lib/stringUtils';
 import { useAppStore } from '@/store/useAppStore';
@@ -112,6 +112,16 @@ export function useSearchCatalog(contextIds?: string[]) {
         ...searchImage(w.item_images),
       }));
 
+    // A batch shows its drink's photo until it has its own ("Aperol Fizz Batch" shows the Aperol Fizz).
+    type Pictured = { name: string | null; bar_id: string | null; item_images?: ItemImageLink[] | null };
+    const drinkImages = new Map(
+      ((cocktailsData || []) as Pictured[]).map((c) => [`${c.bar_id}|${nameKey(c.name ?? '')}`, c.item_images])
+    );
+    const batchImages = (i: Pictured) => {
+      const drink = batchedDrinkKey(i.name ?? '');
+      return drink ? withDrinkPhotos(i.item_images, drinkImages.get(`${i.bar_id}|${drink}`)) : i.item_images;
+    };
+
     const mappedIngredients: SearchItem[] = (ingredientsData || [])
       .filter(
         (i: any) =>
@@ -123,7 +133,7 @@ export function useSearchCatalog(contextIds?: string[]) {
         description: i.description,
         category: 'Ingredient' as const,
         item_categories: i.item_categories,
-        ...searchImage(i.item_images),
+        ...searchImage(batchImages(i)),
       }));
 
     const mappedMenus: SearchItem[] = (dropdowns?.menus || [])

@@ -1,20 +1,11 @@
 import assert from 'node:assert/strict';
 
-import * as shared from '../../supabase/functions/_shared/sketch';
 import { GLASS_SHAPES, GLASS_VARIANTS, glassShape, variantsOf } from './geometry';
 import { paintSketch } from './paint';
 import { CRUMB } from './styles';
 import { mixHex } from './random';
 import type { SceneEl } from './scene';
-import { readSketchInputs, SKETCH_FOAMS, SKETCH_GARNISHES, SKETCH_GLASSES, SKETCH_ICES, SKETCH_METHODS, type SketchInputs } from './types';
-
-// The app draws what the worker stores: the lists must match
-// (supabase/functions/_shared/sketch.ts).
-assert.deepEqual([...SKETCH_GLASSES], [...shared.GLASSES]);
-assert.deepEqual([...SKETCH_ICES], [...shared.ICES]);
-assert.deepEqual([...SKETCH_METHODS], [...shared.METHODS]);
-assert.deepEqual([...SKETCH_FOAMS], [...shared.FOAMS]);
-assert.deepEqual([...SKETCH_GARNISHES], [...shared.GARNISHES]);
+import { readSketchInputs, SKETCH_FOAMS, SKETCH_GARNISHES, SKETCH_GLASSES, SKETCH_ICES, type SketchInputs } from './types';
 
 // Stored rows are read strictly: anything this app can't draw is null.
 assert.equal(readSketchInputs(null), null);

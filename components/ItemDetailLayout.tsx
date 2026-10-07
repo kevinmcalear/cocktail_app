@@ -26,9 +26,9 @@ export interface ItemDetailLayoutProps {
     imageTags?: (string | null)[];
     isLoading?: boolean;
     isFavorite: boolean;
-    isInStudyPile: boolean;
+    isInStudyPile?: boolean;
     onToggleFavorite: (id: string) => void;
-    onToggleStudyPile: (id: string) => void;
+    onToggleStudyPile?: (id: string) => void; // leave out to hide the study button
     /** Shows the "…" actions. Pass only when the viewer's effective role can edit. */
     onEditPress?: () => void;
     canEdit?: boolean;
@@ -161,7 +161,7 @@ export function ItemDetailLayout({
                     <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={24} color="#FFF" />
                     <Text style={[styles.actionText, { color: '#FFF' }]}>{isFavorite ? "Unfav" : "Fav"}</Text>
                 </RectButton>
-                <RectButton
+                {onToggleStudyPile && <RectButton
                     style={[styles.actionButton, { backgroundColor: STATUS.info }]}
                     onPress={() => {
                         onToggleStudyPile(id);
@@ -171,7 +171,7 @@ export function ItemDetailLayout({
                 >
                     <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={24} color="#FFF" />
                     <Text style={[styles.actionText, { color: '#FFF' }]}>{isInStudyPile ? "Remove" : "Study"}</Text>
-                </RectButton>
+                </RectButton>}
             </View>
         );
     };
@@ -309,46 +309,6 @@ export function ItemDetailLayout({
     const renderDesktopHeaderAction = () => {
         if (embedded) return null;
         if (isEditing && onSave) {
-            if (onPublish) {
-                return (
-                    <XStack alignItems="center" gap="$2">
-                        {onCancelEdit && (
-                            <TouchableOpacity
-                                onPress={handleCancelEdit}
-                                style={[styles.actionButtonDesktop, { backgroundColor: theme.backgroundStrong?.get() as string, width: 'auto', paddingHorizontal: 16 }]}
-                            >
-                                <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
-                            </TouchableOpacity>
-                        )}
-                        {onDelete && (
-                            <TouchableOpacity
-                                onPress={onDelete}
-                                style={[styles.actionButtonDesktop, { backgroundColor: 'rgba(255, 68, 68, 0.08)', width: 'auto', paddingHorizontal: 16 }]}
-                            >
-                                <Text color="$red10" fontWeight="600" fontSize={14}>Delete</Text>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity
-                            onPress={onSave}
-                            disabled={saving || !isDirty}
-                            style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4, width: 'auto', paddingHorizontal: 16 }]}
-                        >
-                            <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
-                                {saving ? "…" : "Save Draft"}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={onPublish}
-                            disabled={saving || !canPublish}
-                            style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: canPublish ? 1 : 0.4, width: 'auto', paddingHorizontal: 20 }]}
-                        >
-                            <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
-                                {saving ? "…" : "Publish"}
-                            </Text>
-                        </TouchableOpacity>
-                    </XStack>
-                );
-            }
             return (
                 <XStack alignItems="center" gap="$2">
                     {onCancelEdit && (
@@ -359,15 +319,35 @@ export function ItemDetailLayout({
                             <Text color={theme.color11?.get() as string} fontWeight="600" fontSize={14}>Cancel</Text>
                         </TouchableOpacity>
                     )}
+                    {onDelete && (
+                        <TouchableOpacity
+                            onPress={onDelete}
+                            role="button"
+                            style={[styles.actionButtonDesktop, { backgroundColor: 'rgba(255, 68, 68, 0.08)', width: 'auto', paddingHorizontal: 16 }]}
+                        >
+                            <Text color="$red10" fontWeight="600" fontSize={14}>Delete</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         onPress={onSave}
                         disabled={saving || !isDirty}
-                        style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4, width: 'auto', paddingHorizontal: 20 }]}
+                        style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: isDirty ? 1 : 0.4, width: 'auto', paddingHorizontal: onPublish ? 16 : 20 }]}
                     >
                         <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
-                            {saving ? "…" : "Save"}
+                            {saving ? "…" : onPublish ? "Save Draft" : "Save"}
                         </Text>
                     </TouchableOpacity>
+                    {onPublish && (
+                        <TouchableOpacity
+                            onPress={onPublish}
+                            disabled={saving || !canPublish}
+                            style={[styles.actionButtonDesktop, { backgroundColor: theme.color8?.get() as string, opacity: canPublish ? 1 : 0.4, width: 'auto', paddingHorizontal: 20 }]}
+                        >
+                            <Text color={theme.backgroundStrong?.get() as string} fontWeight="bold" fontSize={14}>
+                                {saving ? "…" : "Publish"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </XStack>
             );
         }
@@ -437,12 +417,12 @@ export function ItemDetailLayout({
                                 }} accessibilityRole="button" accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"} style={[styles.actionButtonDesktop, { backgroundColor: isFavorite ? 'rgba(255, 75, 75, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isFavorite ? "heart.fill" : "heart"} size={22} color={isFavorite ? STATUS.danger : theme.color?.get() as string} />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => {
+                                {onToggleStudyPile && <TouchableOpacity onPress={() => {
                                     onToggleStudyPile(id);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                 }} accessibilityRole="button" accessibilityLabel={isInStudyPile ? "Remove from study pile" : "Add to study pile"} style={[styles.actionButtonDesktop, { backgroundColor: isInStudyPile ? 'rgba(74, 144, 226, 0.1)' : theme.backgroundStrong?.get() as string }]}>
                                     <IconSymbol name={isInStudyPile ? "book.fill" : "book"} size={22} color={isInStudyPile ? STATUS.info : theme.color?.get() as string} />
-                                </TouchableOpacity>
+                                </TouchableOpacity>}
                             </>
                         )}
                         {renderDesktopHeaderAction()}
@@ -536,7 +516,7 @@ export function ItemDetailLayout({
                 {isEditing && onDelete && !embedded ? (
                     <TouchableOpacity
                         onPress={onDelete}
-                        accessibilityRole="button"
+                        role="button"
                         style={styles.phoneDeleteButton}
                     >
                         <Text color="$red10" fontWeight="600" fontSize={16}>Delete</Text>

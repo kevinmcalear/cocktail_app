@@ -7,6 +7,7 @@ import { ItemDetailLayout } from '@/components/ItemDetailLayout';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
+import { FEATURES } from '@/constants/features';
 import { useStudyPile } from '@/hooks/useStudyPile';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem } from '@/hooks/useViewAs';
@@ -72,9 +73,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
         images={[]}
         isLoading={isLoading}
         isFavorite={false}
-        isInStudyPile={false}
         onToggleFavorite={() => {}}
-        onToggleStudyPile={() => {}}
       >
         <YStack style={styles.container} justifyContent="center" alignItems="center">
           <Text color="$color">{`${kind.label} not found.`}</Text>
@@ -100,7 +99,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
       isFavorite={isFavorite(prefixedId)}
       isInStudyPile={isInStudyPile(prefixedId)}
       onToggleFavorite={toggleFavorite}
-      onToggleStudyPile={toggleStudyPile}
+      onToggleStudyPile={FEATURES.study ? toggleStudyPile : undefined}
       onEditPress={canEdit ? () => router.push(`/${kind.kind}/${id}/edit`) : undefined}
     >
       <XStack flexWrap="wrap" gap="$2" paddingHorizontal="$4" marginBottom="$4">
