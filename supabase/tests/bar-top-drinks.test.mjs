@@ -1,5 +1,5 @@
 // A bar's drinks by how people rank them
-// (supabase/migrations/20261007100000_bar_top_drinks.sql). Runs through the
+// (supabase/migrations/20261007110000_bar_top_drinks.sql). Runs through the
 // real API, signed out and signed in. Local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
