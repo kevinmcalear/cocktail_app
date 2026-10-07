@@ -27,6 +27,11 @@ const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOpti
 const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 const db = new pg.Client({ connectionString: status.DB_URL });
 
+// Other test files add catalog fixtures named with their run id (no origin,
+// and an automatic sketch job), and they run in parallel with this one.
+// Assertions about the seeded classics leave those out.
+const FIXTURE_NAME = / [0-9a-f]{8}$/;
+
 const users = {};
 const ids = {};
 const itemIds = [];
@@ -78,7 +83,8 @@ describe('drink catalog', () => {
     assert.ifError(error);
     const names = new Set(data.map((r) => r.name));
     for (const n of ['Martini', 'Negroni', 'Old Fashioned', 'Penicillin', 'Espresso Martini']) assert.ok(names.has(n), `${n} is in the catalog`);
-    assert.ok(data.every((r) => r.origin === 'Classic' || r.origin === 'Modern Classic'));
+    const seeded = data.filter((r) => !FIXTURE_NAME.test(r.name));
+    assert.deepEqual(seeded.filter((r) => r.origin !== 'Classic' && r.origin !== 'Modern Classic'), []);
 
     const { data: signedOut } = await anon.from('items').select('id').eq('is_catalog', true);
     assert.deepEqual(signedOut ?? [], []);
@@ -86,7 +92,9 @@ describe('drink catalog', () => {
 
   test('queued no automatic sketches for the seeded classics', async () => {
     const { rows } = await db.query(
-      'SELECT count(*)::int AS n FROM private.item_image_jobs j JOIN public.items i ON i.id = j.item_id WHERE i.is_catalog'
+      `SELECT count(*)::int AS n FROM private.item_image_jobs j JOIN public.items i ON i.id = j.item_id
+       WHERE i.is_catalog AND i.name !~ $1`,
+      [FIXTURE_NAME.source]
     );
     assert.equal(rows[0].n, 0);
   });
