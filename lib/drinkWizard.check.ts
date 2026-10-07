@@ -69,6 +69,8 @@ assert.equal(creatorProfileId(named, null), null);
 assert.equal(creatorProfileId({ ...named, creator: 'nobody' }, 'me-1'), null);
 assert.equal(creatorProfileId({ ...named, creator: { id: 'p-9', name: 'Sam' } }, 'me-1'), 'p-9');
 
+assert.ok(stepFilled('credits', { ...named, coCreators: [{ id: 'p-2', name: 'Ali' }] }), 'naming who else made it fills the step');
+
 // The spec saves ingredients then garnishes, and the sketch sees both.
 const negroni: WizardDraft = {
   ...named,

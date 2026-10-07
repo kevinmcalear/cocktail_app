@@ -8,8 +8,9 @@ import { PUBLISH_COPY } from '@/lib/publishing';
 
 function credits(d: WizardDraft, hasProfile: boolean): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
+  const withThem = d.coCreators.length ? `with ${d.coCreators.map((c) => c.name).join(', ')}` : '';
   const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
-  return [by, riff].filter(Boolean).join(', ');
+  return [[by, withThem].filter(Boolean).join(' '), riff].filter(Boolean).join(', ');
 }
 
 /** Every answer on one screen; tap a row to go back and change it. */
