@@ -193,7 +193,6 @@ INSERT INTO "cc_menu" VALUES
     ('Opening menu', 2022, 2, 1, 'Chrysanthemum'),
     ('Second-year list', 2023, 2, 0, 'House Martini'),
     ('Second-year list', 2023, 2, 1, 'Home Comforts'),
-    ('Second-year list', 2023, 2, 2, 'Frantic Atlantic'),
     ('July 2023 menu', 2023, 7, 0, 'House Martini'),
     ('July 2023 menu', 2023, 7, 1, 'Pimm''s Winter Milk Punch'),
     ('July 2023 menu', 2023, 7, 2, 'Painkiller'),

@@ -31,6 +31,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const DIR = 'scripts/data/bar-history';
+const GENERICS = 'supabase/migrations/20260930960000_ingredient_generics.sql';
 const OUT = 'supabase/migrations/20261007190000_bar_history.sql';
 const SHAPES = new Set([
   'coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'fizz', 'flute', 'wine', 'spritz',
@@ -57,6 +58,23 @@ export function parseDate(value, where) {
 
 function clean(text) {
   return typeof text === 'string' ? text.replace(/\s+/g, ' ').trim() : text;
+}
+
+// The generics backfill's known bottles: lowercase name -> { generic, category }.
+// A new ingredient named like one takes the same generic and category here,
+// so re-running that backfill stays a no-op.
+export function knownIngredients(file = GENERICS) {
+  const list = readFileSync(file, 'utf8').split('INSERT INTO "known_ingredients" VALUES')[1].split(';\n')[0];
+  const str = "'((?:[^']|'')*)'";
+  const known = new Map();
+  for (const m of list.matchAll(new RegExp(`\\(${str}, (?:${str}|NULL), (?:${str}|NULL)\\)`, 'g'))) {
+    const un = (v) => (v == null ? null : v.replaceAll("''", "'"));
+    // A bottle can be listed twice, once for its generic and once for its category.
+    const key = un(m[1]).toLowerCase();
+    const prev = known.get(key);
+    known.set(key, { generic: prev?.generic ?? un(m[2]), category: prev?.category ?? un(m[3]) });
+  }
+  return known;
 }
 
 // How a menu name matches a bar's drink: public.menu_name_key
@@ -279,8 +297,12 @@ export function build(bars) {
   }
 
   const drinkRows = [...drinks.values()].map((d) => [q(d.handle), q(d.name), q(d.note), n(d.year), q(d.glass)]);
+  const known = knownIngredients();
   for (const d of drinks.values()) {
-    d.ingredients.forEach((ing, i) => lines.push([q(d.handle), q(d.name), n(i), q(ing), q(titleCase(ing))]));
+    d.ingredients.forEach((ing, i) => {
+      const k = known.get(ing.toLowerCase());
+      lines.push([q(d.handle), q(d.name), n(i), q(ing), q(titleCase(ing)), q(k?.generic), q(k?.category)]);
+    });
   }
 
   return `-- DRAFT. Local stack only until Kevin's OK.
@@ -300,7 +322,8 @@ SET "app.image_worker" = 'on';
 CREATE TEMP TABLE "bh_editions" ("handle" text, "name" text, "year" int, "month" int, "end_year" int, "end_month" int,
     "is_current" boolean, "source_url" text, "old_name" text, "old_year" int, "old_month" int);
 CREATE TEMP TABLE "bh_drinks" ("handle" text, "name" text, "notes" text, "origin_year" int, "glass" text);
-CREATE TEMP TABLE "bh_lines" ("handle" text, "drink" text, "pos" int, "ingredient" text, "new_name" text);
+CREATE TEMP TABLE "bh_lines" ("handle" text, "drink" text, "pos" int, "ingredient" text, "new_name" text,
+    "generic" text, "category" text);
 CREATE TEMP TABLE "bh_menu" ("handle" text, "edition" text, "year" int, "month" int, "pos" int, "drink" text);
 CREATE TEMP TABLE "bh_renames" ("handle" text, "from_name" text, "to_name" text);
 CREATE TEMP TABLE "bh_removes" ("handle" text, "edition" text, "year" int, "month" int, "drink" text);
@@ -490,10 +513,31 @@ SELECT DISTINCT ON (lower(name)) lower(name) AS key, id
 FROM "public"."items" WHERE item_type = 'ingredient' AND bar_id IS NULL
 ORDER BY lower(name), is_catalog DESC, created_at;
 
-INSERT INTO "public"."recipes" ("recipe_item_id", "ingredient_item_id", "amount", "unit", "is_optional", "sort_order")
-SELECT DISTINCT ON (l.item_id, i.id) l.item_id, i.id, NULL, NULL, false, l.pos
+-- A bottle the generics backfill (20260930960000) knows takes its generic
+-- and spirit category as that backfill would, only where it has none.
+UPDATE "public"."items" i SET "generic_id" = g.id
+FROM (SELECT DISTINCT lower(ingredient) AS key, lower(generic) AS generic FROM "bh_lines" WHERE generic IS NOT NULL) l
+JOIN "bh_ingredients" s ON s.key = l.key
+JOIN "bh_ingredients" g ON g.key = l.generic
+WHERE i.id = s.id AND i.generic_id IS NULL AND g.id <> i.id;
+
+INSERT INTO "public"."item_categories" ("item_id", "category_id", "is_primary")
+SELECT DISTINCT ON (s.id) s.id, c.id, true
+FROM "bh_lines" l
+JOIN "bh_ingredients" s ON s.key = lower(l.ingredient)
+JOIN LATERAL (
+    SELECT c.id FROM "public"."categories" c WHERE c.domain = 'spirit' AND c.name = l.category ORDER BY c.created_at LIMIT 1
+) c ON true
+WHERE l.category IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "public"."item_categories" x WHERE x.item_id = s.id)
+ORDER BY s.id
+ON CONFLICT DO NOTHING;
+
+INSERT INTO "public"."recipes" ("recipe_item_id", "ingredient_item_id", "parent_ingredient_id", "amount", "unit",
+                                "is_optional", "sort_order")
+SELECT DISTINCT ON (l.item_id, i.id) l.item_id, i.id, ii.generic_id, NULL, NULL, false, l.pos
 FROM "bh_lines" l
 JOIN "bh_ingredients" i ON i.key = lower(l.ingredient)
+JOIN "public"."items" ii ON ii.id = i.id
 ORDER BY l.item_id, i.id, l.pos;
 
 -- --- The drinks on each menu, after anything already on it ---
