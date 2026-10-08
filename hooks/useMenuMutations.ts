@@ -1,16 +1,34 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
-import { uploadMenuCover } from '@/hooks/useMenuEditor';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { readMenuPhotos } from '@/lib/readMenu';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
-import { supabase } from '@/lib/supabase';
+import { uriToBase64 } from '@/lib/imageBase64';
+import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
+
+/** Uploads a cover picture to the drinks bucket: under the menu, or loose before the menu exists. */
+async function uploadMenuCover(uri: string, menuId?: string | null): Promise<string> {
+  const ext = (uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
+  const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+  const path = menuId
+    ? `menus/${menuId}/${Date.now()}.${safeExt}`
+    : `menus/drafts/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+  const base64 = await uriToBase64(uri);
+  const { error } = await supabase.storage.from('drinks').upload(path, decode(base64), {
+    contentType: `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`,
+    upsert: false,
+    cacheControl: UPLOAD_CACHE_SECONDS,
+  });
+  if (error) throw error;
+  return supabase.storage.from('drinks').getPublicUrl(path).data.publicUrl;
+}
 
 /** A database error, said the way a person would want to hear it. */
 function readable(error: { code?: string; message: string }): Error {

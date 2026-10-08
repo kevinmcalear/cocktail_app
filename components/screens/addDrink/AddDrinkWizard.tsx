@@ -34,7 +34,6 @@ import { WizardFrame } from './WizardFrame';
 export interface AddDrinkWizardProps {
   /** The venue it's added at; null or missing for a drink at home. */
   barId?: string | null;
-  menuDraftId?: string | null;
   menuSectionId?: string | null;
   initialName?: string | null;
   /** Inside the desktop workspace: no safe-area padding. */
@@ -53,7 +52,7 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedded, onClose, onSaved }: AddDrinkWizardProps) {
+function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, onSaved }: AddDrinkWizardProps) {
   const place = wizardPlace(barId);
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
@@ -86,7 +85,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
 
   const save = () =>
     create.mutate(
-      { draft, barId, myProfileId: me?.id ?? null, menuDraftId, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
+      { draft, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
       {
         onSuccess: ({ id, warnings }) => {
           clear(place);

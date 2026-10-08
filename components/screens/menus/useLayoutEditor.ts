@@ -21,7 +21,7 @@ import {
 } from '@/lib/menuLayout';
 import { groupMenus, menuStatus } from '@/lib/menus';
 import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | null;
@@ -49,9 +49,9 @@ export function useLayoutEditor(menu: MenuDetail) {
   // in that section once it's saved. This screen stays mounted under the wizard.
   useEffect(
     () =>
-      useCreatorNavStore.subscribe(async (s) => {
-        if (!s.pendingMenuDrink) return;
-        const handoff = useCreatorNavStore.getState().consumeMenuDrink();
+      useMenuDrinkHandoff.subscribe(async (s) => {
+        if (!s.pending) return;
+        const handoff = useMenuDrinkHandoff.getState().consume();
         if (!handoff) return;
         const { data } = await refetchLibrary();
         const drink = data?.find((d) => d.id === handoff.drinkId);

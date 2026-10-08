@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AddDrinkScreen, type AddDrinkProps } from '@/components/drink/AddDrinkScreen';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import type { DrinkKind } from '@/lib/drinkKinds';
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 
 import { AddBeerWineWizard } from './AddBeerWineWizard';
 
@@ -30,7 +30,7 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
         if (props.onSave) props.onSave();
         else if (params.menuSectionId) {
           // Made from a menu section: back to the menu editor, which puts it in that section.
-          useCreatorNavStore.getState().deliverMenuDrink(params.menuSectionId, id);
+          useMenuDrinkHandoff.getState().deliver(params.menuSectionId, id);
           goBack();
         } else router.replace(`/${kind}/${id}`);
       }}

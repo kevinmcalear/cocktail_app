@@ -119,10 +119,6 @@ function RootLayoutNav() {
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen
-              name="menus/create/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
             />

@@ -5,47 +5,16 @@ import { CocktailDraftInlineEditor } from "@/components/cocktail/CocktailDraftIn
 import { VenueBrandProvider } from "@/components/nav/VenueBrandProvider";
 import { AddDrinkWizard } from "@/components/screens/addDrink/AddDrinkWizard";
 
-interface AddCocktailProps {
-    isInline?: boolean;
-    draftIdProp?: string;
-    barIdProp?: string;
-    menuDraftIdProp?: string;
-    menuSectionIdProp?: string;
-    initialNameProp?: string;
-    onClose?: () => void;
-    onSave?: () => void;
-    onNestedItemPress?: (ingredientId: string) => void;
-    onChromeState?: (state: import("@/lib/editorChrome").EditorChromeState | null) => void;
-}
-
 /**
- * A new drink is added with the step-by-step wizard (full page and in the
- * workspace). A draft saved by the older editor still opens in it.
+ * A new drink is added with the step-by-step wizard. A draft saved by the
+ * older editor (New > Drafts) still opens in it.
  */
-export default function AddCocktailScreen({
-    isInline,
-    draftIdProp,
-    barIdProp,
-    menuDraftIdProp,
-    menuSectionIdProp,
-    initialNameProp,
-    onClose,
-    onSave,
-    onNestedItemPress,
-    onChromeState,
-}: AddCocktailProps = {}) {
+export default function AddCocktailScreen() {
     const router = useRouter();
-    const {
-        barId: barIdParam,
-        draftId: draftIdParam,
-        name: nameParam,
-        menuDraftId: menuDraftIdParam,
-        menuSectionId: menuSectionIdParam,
-    } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId } = useLocalSearchParams<{
         barId?: string;
         draftId?: string;
         name?: string;
-        menuDraftId?: string;
         menuSectionId?: string;
     }>();
 
@@ -54,42 +23,24 @@ export default function AddCocktailScreen({
         else router.replace("/(tabs)");
     };
 
-    const draftId = draftIdProp !== undefined ? draftIdProp : draftIdParam;
-    const barId = barIdProp !== undefined ? barIdProp : barIdParam;
-    const menuSectionId = menuSectionIdProp !== undefined ? menuSectionIdProp : menuSectionIdParam;
-
     if (!draftId) {
-        const wizard = (
-            <AddDrinkWizard
-                barId={barId || null}
-                menuDraftId={menuDraftIdProp !== undefined ? menuDraftIdProp : menuDraftIdParam}
-                menuSectionId={menuSectionId}
-                initialName={initialNameProp !== undefined ? initialNameProp : nameParam}
-                embedded={!!isInline}
-                onClose={onClose ?? goBack}
-                onSaved={(id) => {
-                    if (onSave) onSave();
-                    // From a menu, back to the menu; otherwise to the new drink.
-                    else if (menuSectionId) goBack();
-                    else router.replace(`/cocktail/${id}`);
-                }}
-            />
+        return (
+            <VenueBrandProvider>
+                <AddDrinkWizard
+                    barId={barId || null}
+                    menuSectionId={menuSectionId}
+                    initialName={name}
+                    embedded={false}
+                    onClose={goBack}
+                    onSaved={(id) => {
+                        // From a menu, back to the menu; otherwise to the new drink.
+                        if (menuSectionId) goBack();
+                        else router.replace(`/cocktail/${id}`);
+                    }}
+                />
+            </VenueBrandProvider>
         );
-        return isInline ? wizard : <VenueBrandProvider>{wizard}</VenueBrandProvider>;
     }
 
-    return (
-        <CocktailDraftInlineEditor
-            draftId={draftId}
-            barId={barId}
-            menuDraftId={menuDraftIdProp !== undefined ? menuDraftIdProp : menuDraftIdParam}
-            menuSectionId={menuSectionId}
-            initialName={initialNameProp !== undefined ? initialNameProp : nameParam}
-            embedded={!!isInline}
-            onClose={onClose ?? goBack}
-            onSave={onSave ?? goBack}
-            onNestedItemPress={onNestedItemPress}
-            onChromeState={onChromeState}
-        />
-    );
+    return <CocktailDraftInlineEditor draftId={draftId} barId={barId} initialName={name} embedded={false} onClose={goBack} onSave={goBack} />;
 }
