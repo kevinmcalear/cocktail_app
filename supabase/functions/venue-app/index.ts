@@ -4,6 +4,8 @@ import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 import { drinksBucketUrl } from "../_shared/drinksUrl.ts";
 import { decodableSize } from "../_shared/imageSize.ts";
 import { corsHeaders } from "../_shared/http.ts";
+import { isLocalStack } from "../_shared/localStack.ts";
+import { DEFAULT_SITE, siteOrigin } from "../_shared/site.ts";
 
 /**
  * Public (no sign-in): what a phone needs to install a venue's staff web app
@@ -13,11 +15,13 @@ import { corsHeaders } from "../_shared/http.ts";
  *   GET /venue-app/icon?slug=<slug>&size=<180|192|512>          square PNG icon
  *
  * Only a venue's name, logo and colours are exposed, and only by exact slug.
+ * The manifest always points at the app's own site (a localhost origin only
+ * on a local stack), whatever origin the page passes.
  */
 
 const ICON_SIZES = new Set([180, 192, 512]);
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const FALLBACK_SITE = Deno.env.get("SITE_URL") ?? "https://babyvom.it";
+const SITE = Deno.env.get("SITE_URL") || DEFAULT_SITE;
 
 interface Branding {
   name: string;
@@ -58,22 +62,8 @@ async function getBranding(slug: string): Promise<Branding | null> {
   return (data as Branding | null) ?? null;
 }
 
-/** The site the staff link lives on: the page passes its own origin. */
-function siteOrigin(url: URL): string {
-  const origin = url.searchParams.get("origin");
-  if (origin) {
-    try {
-      const parsed = new URL(origin);
-      if (parsed.protocol === "https:" || parsed.hostname === "localhost") return parsed.origin;
-    } catch {
-      // fall through
-    }
-  }
-  return FALLBACK_SITE;
-}
-
 function manifest(branding: Branding, url: URL): Response {
-  const site = siteOrigin(url);
+  const site = siteOrigin(url.searchParams.get("origin"), SITE, isLocalStack());
   const iconSrc = (size: number) => `icon?slug=${branding.slug}&size=${size}`; // relative to this manifest
   const body = {
     id: `/v/${branding.slug}`,
@@ -99,22 +89,59 @@ function manifest(branding: Branding, url: URL): Response {
   });
 }
 
+/** Browsers and the CDN keep an icon a day; it changes only with the venue's logo. */
+const ICON_CACHE = "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+
+/**
+ * Icons already drawn by this instance, by logo URL and size (a new logo is a
+ * new URL), with the request in flight shared, so a burst of requests decodes
+ * a logo once. null means the network icon.
+ * ponytail: per instance and capped at ICON_MEMO_MAX entries; put drawn icons
+ * in storage if instances churn enough for decoding to show up in costs.
+ */
+const iconMemo = new Map<string, Promise<Uint8Array<ArrayBuffer> | null>>();
+const ICON_MEMO_MAX = 200;
+
 /**
  * The venue's home-screen icon (or its logo) centred on a square, padded with its own
  * background (its corner pixel) or white if the logo is transparent.
  * Opaque, as iOS fills transparency with black. Venues without a logo, or
- * with one too big to decode, get the network icon.
+ * with one too big to fetch or decode, get the network icon.
  */
 async function icon(branding: Branding, size: number): Promise<Response> {
   if (!ICON_SIZES.has(size)) return new Response("Unsupported size", { status: 400, headers: corsHeaders });
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const source = drinksBucketUrl(branding.icon_url ?? branding.logo_url ?? "", supabaseUrl);
-  const networkIcon = () => Response.redirect(`${FALLBACK_SITE}/icon-${size === 180 ? 192 : size}.png`, 302);
-  if (!source) return networkIcon();
+  const png = source ? await memoIcon(source, size, supabaseUrl) : null;
+  if (!png) {
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, Location: `${SITE}/icon-${size === 180 ? 192 : size}.png`, "Cache-Control": ICON_CACHE },
+    });
+  }
+  return new Response(png, { headers: { ...corsHeaders, "Content-Type": "image/png", "Cache-Control": ICON_CACHE } });
+}
 
+function memoIcon(source: string, size: number, supabaseUrl: string): Promise<Uint8Array<ArrayBuffer> | null> {
+  const key = `${size} ${source}`;
+  let drawn = iconMemo.get(key);
+  if (!drawn) {
+    if (iconMemo.size >= ICON_MEMO_MAX) iconMemo.delete(iconMemo.keys().next().value!);
+    drawn = drawIcon(source, size, supabaseUrl).catch((err) => {
+      // A logo that can't be fetched now may be back later: don't keep the miss.
+      iconMemo.delete(key);
+      console.error("venue-app icon:", err);
+      return null;
+    });
+    iconMemo.set(key, drawn);
+  }
+  return drawn;
+}
+
+async function drawIcon(source: string, size: number, supabaseUrl: string): Promise<Uint8Array<ArrayBuffer> | null> {
   const bytes = await fetchLogo(source, supabaseUrl);
   // A small file can still decode to an enormous bitmap: check the header first.
-  if (!decodableSize(bytes)) return networkIcon();
+  if (!bytes || !decodableSize(bytes)) return null;
   const logo = await Image.decode(bytes);
 
   const corner = logo.getPixelAt(1, 1);
@@ -128,17 +155,17 @@ async function icon(branding: Branding, size: number): Promise<Response> {
   const canvas = new Image(size, size).fill(background);
   canvas.composite(fitted, Math.round((size - fitted.width) / 2), Math.round((size - fitted.height) / 2));
   // Copy into an ArrayBuffer-backed array, which Response accepts as a body.
-  const png = new Uint8Array(await canvas.encode());
-
-  return new Response(png, {
-    headers: { ...corsHeaders, "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" },
-  });
+  return new Uint8Array(await canvas.encode());
 }
 
-const MAX_LOGO_BYTES = 8_000_000;
+/** The largest logo it fetches: 5 MB, as upload-bar-logo allows. */
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
-/** Follows at most one redirect, and only to another drinks-bucket URL. */
-async function fetchLogo(source: string, supabaseUrl: string): Promise<Uint8Array> {
+/**
+ * Follows at most one redirect, and only to another drinks-bucket URL. null
+ * when the logo is over MAX_LOGO_BYTES.
+ */
+async function fetchLogo(source: string, supabaseUrl: string): Promise<Uint8Array | null> {
   let current = source;
   for (let hop = 0; hop < 2; hop++) {
     const res = await fetch(current, { redirect: "manual" });
@@ -156,7 +183,11 @@ async function fetchLogo(source: string, supabaseUrl: string): Promise<Uint8Arra
   throw new Error("Too many logo redirects");
 }
 
-async function readCapped(res: Response): Promise<Uint8Array> {
+async function readCapped(res: Response): Promise<Uint8Array | null> {
+  if (Number(res.headers.get("content-length")) > MAX_LOGO_BYTES) {
+    await res.body?.cancel();
+    return null;
+  }
   const reader = res.body?.getReader();
   if (!reader) throw new Error("Logo response had no body");
   const chunks: Uint8Array[] = [];
@@ -167,7 +198,7 @@ async function readCapped(res: Response): Promise<Uint8Array> {
     total += value.byteLength;
     if (total > MAX_LOGO_BYTES) {
       await reader.cancel();
-      throw new Error("Logo is too large");
+      return null;
     }
     chunks.push(value);
   }
