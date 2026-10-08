@@ -130,9 +130,11 @@ export function DiscoverScreen() {
     setSearch('');
     close();
   };
-  // Discover's part in the one search: its area (when it isn't everywhere) and filters.
-  const searchArea: SearchArea | null = onMap || area.kind !== 'anywhere' ? { label: hereLabel, area, kinds, onKind: addKind } : null;
-  const searchProps = { query: search, onQuery: setSearch, scope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
+  // Discover's part in the one search: its filters, and its area when it isn't everywhere.
+  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? hereLabel : null, area, kinds, onKind: addKind };
+  // "This area" with no area left (it went back to Anywhere) searches everywhere.
+  const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
+  const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
   const openBar = (ref: string) => {
     setSheet(null);
     router.push(`/p/${ref}`);
@@ -220,7 +222,7 @@ export function DiscoverScreen() {
           </Caption>
         ) : null}
         {searching ? (
-          <SearchBody query={search} scope={scope} onScope={setScope} mine={mine} area={searchArea} />
+          <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} />
         ) : (
           <DrinksHere
             title={title}
