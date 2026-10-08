@@ -73,6 +73,41 @@ export interface ProfileDraft {
   isPublic: boolean;
   /** Show the drinks you've had, with your scores, on the public profile. */
   sharesRankings: boolean;
+  /** Show the bars you've had drinks at, with your average at each. */
+  sharesBars: boolean;
+  /** Show the drinks you've made (Originals and menu credits). */
+  sharesMade: boolean;
+}
+
+/** What a new profile shows: the drinks you've made, and nothing you've had. */
+export const DEFAULT_SHARING = { sharesRankings: false, sharesBars: false, sharesMade: true } as const;
+
+/** What a public profile shows besides who you are, in a few sentences for the settings form. */
+export function sharingSummary(draft: Pick<ProfileDraft, 'sharesRankings' | 'sharesBars' | 'sharesMade'>): string {
+  const shown = [
+    draft.sharesRankings ? 'your score for every drink you’ve ranked' : null,
+    draft.sharesBars ? 'your average at each bar you’ve had drinks at' : null,
+    draft.sharesMade ? 'the drinks you’ve made' : null,
+  ].filter((x): x is string => !!x);
+  const lines = [
+    shown.length
+      ? `Your profile shows ${shown.length > 2 ? `${shown.slice(0, -1).join(', ')}, and ${shown.at(-1)}` : shown.join(' and ')}.`
+      : 'Your profile shows who you are and where you work, nothing more.',
+  ];
+  if (draft.sharesRankings || draft.sharesBars) lines.push('Only people signed in to the app see what you’ve had, and drinks a bar hasn’t published stay out.');
+  if (draft.sharesRankings && !draft.sharesBars) lines.push('A drink you had at a bar says “At a bar”, not which one.');
+  if (!draft.sharesMade) lines.push('Your credits still show on each drink’s own page.');
+  if (!draft.sharesRankings && !draft.sharesBars) lines.push('Your scores still count, without your name, towards each bar’s score.');
+  return lines.join(' ');
+}
+
+/**
+ * The tabs a person's profile shows a reader, in order: only what they share,
+ * or everything to the owner (who gets a note on a tab others don't see).
+ */
+export function personTabs(p: { shares_rankings: boolean; shares_bars: boolean; shares_made: boolean }, mine: boolean): ('had' | 'bars' | 'originals')[] {
+  const shows = { had: p.shares_rankings, bars: p.shares_bars, originals: p.shares_made };
+  return (['had', 'bars', 'originals'] as const).filter((t) => mine || shows[t]);
 }
 
 const INSTAGRAM = /^[a-z0-9._]+$/;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_SHARING, personTabs, sharingSummary, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -51,11 +51,35 @@ assert.equal(handleFromName('Zoë  O’Brien!'), 'zoe.o.brien');
 assert.equal(handleFromName('Al'), '', 'too short for a handle');
 assert.equal(handleFromName('大'), '');
 assert.equal(handleFromName('x'.repeat(40)).length, 30);
-const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, sharesRankings: false };
+const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING };
 assert.deepEqual(profileDraftErrors(draft), {});
 assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501), instagram: 'a..b' })), ['name', 'handle', 'bio', 'instagram']);
 assert.ok(profileDraftErrors({ ...draft, handle: 'jo.' }).handle, 'no trailing dot');
 assert.ok(profileDraftErrors({ ...draft, name: 'x'.repeat(81) }).name);
+
+// What a public profile shows: each switch on its own.
+assert.equal(
+  sharingSummary(DEFAULT_SHARING),
+  'Your profile shows the drinks you’ve made. Your scores still count, without your name, towards each bar’s score.'
+);
+assert.equal(
+  sharingSummary({ sharesRankings: true, sharesBars: true, sharesMade: true }),
+  'Your profile shows your score for every drink you’ve ranked, your average at each bar you’ve had drinks at, and the drinks you’ve made. Only people signed in to the app see what you’ve had, and drinks a bar hasn’t published stay out.'
+);
+assert.match(sharingSummary({ sharesRankings: true, sharesBars: false, sharesMade: true }), /says “At a bar”, not which one/);
+assert.equal(
+  sharingSummary({ sharesRankings: false, sharesBars: true, sharesMade: false }),
+  'Your profile shows your average at each bar you’ve had drinks at. Only people signed in to the app see what you’ve had, and drinks a bar hasn’t published stay out. Your credits still show on each drink’s own page.'
+);
+assert.match(sharingSummary({ sharesRankings: false, sharesBars: false, sharesMade: false }), /^Your profile shows who you are and where you work, nothing more\./);
+
+// A person's tabs: only what they share, everything to the owner.
+const sharing = (r: boolean, b: boolean, m: boolean) => ({ shares_rankings: r, shares_bars: b, shares_made: m });
+assert.deepEqual(personTabs(sharing(false, false, true), false), ['originals'], 'the default');
+assert.deepEqual(personTabs(sharing(false, true, false), false), ['bars']);
+assert.deepEqual(personTabs(sharing(true, true, true), false), ['had', 'bars', 'originals']);
+assert.deepEqual(personTabs(sharing(false, false, false), false), [], 'shares nothing: no tabs');
+assert.deepEqual(personTabs(sharing(false, false, false), true), ['had', 'bars', 'originals'], 'the owner sees every tab');
 
 // Instagram: a name, an @name, or an instagram.com link. Blank is fine. The CHECK in the migration is the same rule.
 assert.equal(normalizeInstagram('  @Foo.Bar '), 'foo.bar');

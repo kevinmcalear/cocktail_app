@@ -1,5 +1,6 @@
-// Showing the drinks you've had on your profile
-// (supabase/migrations/20261001190000_shared_rankings.sql).
+// Showing the drinks you've had, and the bars you had them at, on your profile
+// (supabase/migrations/20261001220000_shared_rankings.sql,
+// 20261009900000_profile_sharing_choices.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -53,7 +54,15 @@ const drinks = async (client, profileId = ids.rankerProfile) => {
 };
 const names = (rows) => rows.map((r) => r.name).sort();
 
-const setSharing = (on) => users.ranker.client.from('profiles').update({ shares_rankings: on }).eq('id', ids.rankerProfile).select('shares_rankings');
+/** The bars a reader gets for the ranker's profile. */
+const bars = async (client, profileId = ids.rankerProfile) => {
+  const { data, error } = await client.rpc('get_profile_bars', { p_profile_id: profileId });
+  assert.ifError(error);
+  return data;
+};
+
+const share = (patch) => users.ranker.client.from('profiles').update(patch).eq('id', ids.rankerProfile).select('shares_rankings, shares_bars, shares_made');
+const setSharing = (on) => share({ shares_rankings: on, shares_bars: on });
 
 before(async () => {
   await db.connect();
@@ -114,16 +123,19 @@ describe('showing the drinks you’ve had', () => {
   test('off by default: nobody else gets anything, and the tables stay the owner’s', async () => {
     assert.deepEqual(await drinks(users.reader.client), []);
     assert.deepEqual(await drinks(users.ranker.client), [], 'the owner reads their own list from rank_entry_scores, not from here');
+    assert.deepEqual(await bars(users.reader.client), []);
     for (const table of ['rank_entries', 'rank_entry_scores']) {
       const { data } = await users.reader.client.from(table).select('id').eq('user_id', users.ranker.id);
       assert.deepEqual(data ?? [], [], `a reader gets no ${table} rows`);
     }
   });
 
-  test('signed-out visitors can’t call it, shared or not', async () => {
-    const { data, error } = await anon.rpc('get_profile_drinks', { p_profile_id: ids.rankerProfile });
-    assert.ok(error, 'anon is refused');
-    assert.equal(data, null);
+  test('signed-out visitors can’t call either, shared or not', async () => {
+    for (const fn of ['get_profile_drinks', 'get_profile_bars']) {
+      const { data, error } = await anon.rpc(fn, { p_profile_id: ids.rankerProfile });
+      assert.ok(error, `anon is refused ${fn}`);
+      assert.equal(data, null);
+    }
   });
 
   test('only the owner turns sharing on, and only on a person’s profile', async () => {
@@ -132,14 +144,16 @@ describe('showing the drinks you’ve had', () => {
     assert.deepEqual(await drinks(users.reader.client), []);
 
     await assert.rejects(db.query('UPDATE public.profiles SET shares_rankings = true WHERE id = $1', [ids.openBarProfile]), /profiles_shares_rankings_person/);
+    await assert.rejects(db.query('UPDATE public.profiles SET shares_bars = true WHERE id = $1', [ids.openBarProfile]), /profiles_shares_bars_person/);
+    await assert.rejects(db.query('UPDATE public.profiles SET shares_made = false WHERE id = $1', [ids.openBarProfile]), /profiles_shares_made_person/);
 
     const on = await setSharing(true);
     assert.ifError(on.error);
     assert.equal(on.data[0].shares_rankings, true);
     // The flag itself is readable signed out, with the rest of the public profile.
-    const seen = await anon.from('profiles').select('shares_rankings').eq('id', ids.rankerProfile).single();
+    const seen = await anon.from('profiles').select('shares_rankings, shares_bars, shares_made').eq('id', ids.rankerProfile).single();
     assert.ifError(seen.error);
-    assert.equal(seen.data.shares_rankings, true);
+    assert.deepEqual(seen.data, { shares_rankings: true, shares_bars: true, shares_made: true });
   });
 
   test('a reader sees the drinks that can be named, with scores from the whole list', async () => {
@@ -169,6 +183,38 @@ describe('showing the drinks you’ve had', () => {
     const everything = JSON.stringify(rows);
     for (const secret of ['Staff Secret', 'Staff Original', 'Kitchen Negroni']) assert.ok(!everything.includes(secret), `${secret} stays private`);
     assert.ok(!rows.some((r) => 'user_id' in r), 'no user ids');
+  });
+
+  test('bars: one row per public bar with the average there, best drink named only with drinks shared', async () => {
+    const rows = await bars(users.reader.client);
+    // Staff Bar: the riff (10) and the unpublished original, which is left out as it is from the drinks.
+    assert.deepEqual(
+      rows.map((r) => [r.venue_name, r.drinks, Number(r.average), r.best_name]),
+      [
+        [`Open Bar ${run}`, 1, 10, `Open Fizz ${run}`],
+        [`Staff Bar ${run}`, 1, 10, `Classic ${run}`],
+        [`Gone Bar ${run}`, 1, Number(rows.find((r) => r.venue_name === `Gone Bar ${run}`).average), `Gone Signature ${run}`],
+      ].sort((a, b) => b[2] - a[2] || b[1] - a[1] || a[0].localeCompare(b[0]))
+    );
+    assert.ok(!rows.some((r) => r.venue_id === null), 'home is not a bar');
+
+    // Bars without drinks: the tally stays, no drink is named, and the drinks list is empty.
+    assert.ifError((await share({ shares_rankings: false })).error);
+    const only = await bars(users.reader.client);
+    assert.equal(only.length, 3);
+    assert.ok(only.every((r) => r.best_name === null && r.best_score === null));
+    assert.deepEqual(await drinks(users.reader.client), []);
+
+    // Drinks without bars: every drink still shows, but no bar is named; a bar drink says it was at a bar.
+    assert.ifError((await share({ shares_rankings: true, shares_bars: false })).error);
+    assert.deepEqual(await bars(users.reader.client), []);
+    const unplaced = await drinks(users.reader.client);
+    assert.equal(unplaced.length, 4);
+    assert.ok(unplaced.every((r) => r.venue_id === null && r.venue_name === null && r.venue_handle === null));
+    assert.deepEqual(unplaced.map((r) => r.at_bar).sort(), [false, true, true, true]);
+    assert.ok(!JSON.stringify(unplaced).includes('Bar '), 'no bar names anywhere');
+
+    assert.ifError((await setSharing(true)).error);
   });
 
   test('a bar whose profile is hidden or private takes its entries with it', async () => {
@@ -202,6 +248,7 @@ describe('showing the drinks you’ve had', () => {
 
     assert.ifError((await setSharing(false)).error);
     assert.deepEqual(await drinks(users.reader.client), []);
+    assert.deepEqual(await bars(users.reader.client), []);
   });
 
   test('someone who hasn’t confirmed their age shares nothing', async () => {
