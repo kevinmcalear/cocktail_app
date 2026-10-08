@@ -14,7 +14,7 @@ import { paintGarnish } from './garnish';
 import { paintIce } from './ice';
 import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
-import { SceneBuilder, type Scene } from './scene';
+import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
 import { CRUMB, DEFAULT_SKETCH_STYLE, LIFT, SKETCH_STYLES, SMUDGE, type SketchStyleKey } from './styles';
 import type { SketchFoam, SketchInputs } from './types';
 
@@ -102,9 +102,11 @@ export interface PaintOptions {
   style?: SketchStyleKey;
   /** 'thumb' for small tiles: no searching lines or hatching, fewer layers and passes. */
   detail?: 'full' | 'thumb';
+  /** Keep the pencil in bands, top to bottom, for AnimatedSketch to draw rim first. Costs a third more shapes, so only for the one drawing that moves. */
+  bands?: boolean;
 }
 
-export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH_STYLE, detail = 'full' }: PaintOptions): Scene {
+export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH_STYLE, detail = 'full', bands = false }: PaintOptions): Scene {
   const S = detail === 'thumb'
     ? { ...SKETCH_STYLES[style], ghosts: 0, construct: 0, hatch: 0, cross: false, blooms: 0, passes: 2, layers: SKETCH_STYLES[style].layers * 0.6, splatter: 0 }
     : SKETCH_STYLES[style];
@@ -122,8 +124,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
 
   const b = new SceneBuilder(`k${hashString(seed).toString(36)}`);
   const P = makePainter(S, r, rng(hashString(`${key}|hand`)), b, g);
-  const { e, Rr, bot, ground } = P;
+  const { e, Rr, bot, ground, U } = P;
+  // Each part on its own stage (lib/sketch/scene.ts StageName), anchored where it moves from.
+  const banded = (name: StageName) => bands && (name === 'glass' || name === 'search');
+  const stage = (name: StageName, v = 51) => b.stage(name, ...U([50, v]), banded(name) ? GLASS_BANDS : 0);
   const parts = glassParts(P);
+  stage('search');
   if (S.ghosts) searching(P, parts, rng(hashString(`${key}|search`)));
   if (S.construct) {
     P.line([[50, g.rim - 9], [50, ground + 7]], { passes: 1, alpha: S.construct, weight: 0.5, gaps: 0, over: 0 });
@@ -139,8 +145,10 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const floor = g.stemmed ? bot : g.base!;
   if (g.opaque) {
     P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
+    stage('liquid', g.top + 3.2);
     P.wash(band(g, g.top, g.top + 3.2), tone, strength, { layers: 0.6, spill: 0.2, n: 12, blooms: 0 });
   } else {
+    stage('liquid', floor);
     P.wash(band(g, g.top, floor), tone, strength);
     P.wash(band(g, g.top + (floor - g.top) * 0.45, floor), mixHex(tone, SKETCH.pool, 0.15), strength * 0.3, { layers: 0.5, spill: 0.5, n: 12, fadeAngle: -Math.PI / 2, fadeTo: 0, blooms: 0.3, v1: 0.2 });
   }
@@ -150,6 +158,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const foam = ice === 'crushed' || ice === 'pebble' || ice === 'shaved' ? null : inputs.foam;
   let surface = g.top;
   if (foam) {
+    stage('foam', g.top);
     const F = FOAM[foam];
     const y0 = g.top - F.rise;
     const y1 = g.top + F.depth;
@@ -176,10 +185,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   }
 
   // --- ice, bubbles, drizzle ---
+  stage('ice', g.rim);
   const Rt0 = hw(g, g.top);
   P.line(ell(50, g.top, Rt0, Rt0 * e, Math.PI + 0.3, Math.PI * 2 - 0.4, 24), { weight: 0.5, alpha: 0.5, gaps: 1.5 });
   const iced = paintIce(P, ice, inputs.glass);
   if (inputs.fizz && !g.opaque) {
+    stage('fizz', floor);
     const n = P.clipInner();
     for (let t = 0; t < 4; t++) {
       const x = 50 + (r() * 2 - 1) * (hw(g, g.top) - 5);
@@ -191,6 +202,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
       }
     }
     P.end(n);
+    stage('ice', g.rim);
   }
   if (inputs.bleed && !g.opaque) {
     const Rm = Rr * 0.96;
@@ -216,7 +228,9 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   for (const [p, o] of iced.late) P.line(p, o);
 
   // --- garnish colour, shadow, then the pencil on top ---
+  stage('garnish', g.rim);
   const garnishLines = paintGarnish(P, inputs.garnish, iced.crown, surface);
+  stage('glass', ground);
   {
     P.soft(50 + Rr * 0.25, ground + 1.4, Rr * 1.25, 4 * (1 + S.shadow) / P.k, 0, S.ink, 0.1 * S.shadow);
     const n = Math.round(6 + 10 * S.shadow);
@@ -253,8 +267,10 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   }
   if (!g.stemmed) P.hatch(band(g, g.base! + 1, bot - 0.5), 50 - Rr, -0.25, 0.9 + S.hatch * 0.6);
   if (!g.opaque) P.line([[50 - Rr * 0.62, g.rim + 3], [50 - hw(g, g.rim + 3 + (bot - g.rim) * 0.35) * 0.7, g.rim + (bot - g.rim) * 0.42]], { passes: 1, weight: 0.4, alpha: 0.45, gaps: 0.5 });
+  stage('garnish', g.rim);
   for (const p of garnishLines) P.line(p, { weight: 0.7, alpha: 0.9, over: 3, passes: Math.max(1, S.passes - 1) });
   if (S.splatter) {
+    stage('finish');
     P.dots(Array.from({ length: S.splatter }, () => {
       const a = r() * Math.PI * 2;
       const dist = Rr * (1 + r() * 0.9);

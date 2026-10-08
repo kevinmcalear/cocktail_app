@@ -43,7 +43,7 @@ const base: SketchInputs = {
 const walk = (els: SceneEl[], visit: (e: SceneEl) => void) => {
   for (const e of els) {
     visit(e);
-    if (e.k === 'group') walk(e.children, visit);
+    if (e.k === 'group' || e.k === 'stage') walk(e.children, visit);
   }
 };
 const weight = (els: SceneEl[]) => {
@@ -105,5 +105,23 @@ walk(paintSketch(base, { seed: 'c' }).els, (e) => {
   if (e.k === 'wash' && e.color === muted) sawLiquid = true;
 });
 assert.ok(sawLiquid, `the liquid is washed in as ${muted}`);
+
+
+// Stages: every drink drawing is split into the parts AnimatedSketch moves,
+// and only a drawing asked for bands keeps its pencil in bands (stills stay light).
+{
+  const still = paintSketch({ ...base, foam: 'cap', fizz: true }, { seed: 'stages' });
+  const moving = paintSketch({ ...base, foam: 'cap', fizz: true }, { seed: 'stages', bands: true });
+  const names = (s: typeof still) => s.els.flatMap((e) => (e.k === 'stage' ? [e.name] : []));
+  for (const name of ['search', 'liquid', 'foam', 'ice', 'garnish', 'glass'] as const) assert.ok(names(still).includes(name), `has a ${name} stage`);
+  let bandedStill = 0;
+  let bandedMoving = 0;
+  walk(still.els, (e) => { if (e.k === 'stroke' && e.band !== undefined) bandedStill++; });
+  walk(moving.els, (e) => { if (e.k === 'stroke' && e.band !== undefined) bandedMoving++; });
+  assert.equal(bandedStill, 0);
+  assert.ok(bandedMoving > 0);
+  const [a, b] = [weight(still.els).bytes, weight(moving.els).bytes];
+  assert.ok(Math.abs(a - b) / a < 0.05, `same drawing either way (${a} vs ${b} bytes)`);
+}
 
 console.log('sketch renderer: ok');

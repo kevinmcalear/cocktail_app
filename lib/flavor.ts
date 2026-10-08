@@ -5,8 +5,9 @@
  * dimensions, 0 to 1 (supabase/functions/_shared/flavor.ts has the rules).
  * Your taste is the same twelve dimensions, averaged over the drinks you ranked
  * and weighted by their score, so the drinks at the top of your lists count
- * most (get_my_taste). Until you've ranked enough drinks, a few quick
- * questions stand in for it, and we don't show a match percentage.
+ * most (get_my_taste). Your answers to a few questions (asked at setup, and
+ * changeable on /taste) start it off and count for less with every drink you
+ * rank. Until you've ranked enough drinks we don't show a match percentage.
  */
 
 export const DIMENSIONS = [
@@ -137,30 +138,80 @@ export function matchReasons(taste: Taste, profile: Profile, basis: TasteBasis, 
   return 'Nothing far from what you usually enjoy.';
 }
 
+/** Your answers count as this many ranked drinks: half your taste at five, a fifth at twenty. */
+export const ANSWER_WEIGHT = COLD_START_DRINKS;
+
+/** How much of your taste comes from your answers, 0 to 1. */
+export function answerShare(rankedDrinks: number): number {
+  return ANSWER_WEIGHT / (ANSWER_WEIGHT + Math.max(0, rankedDrinks));
+}
+
 /**
- * Your taste: from your rankings once there are enough, otherwise your quick
- * answers, blended in as rankings arrive.
+ * Your taste: your answers blended with your rankings, the answers counting
+ * for less with every drink you rank (answerShare) but never dropped, so
+ * changing them always moves it. Basis 'answers' until there are enough
+ * rankings for a match percentage.
  */
 export function blendTaste(ranked: Taste | null, rankedDrinks: number, answers: Taste | null): { taste: Taste; basis: TasteBasis } {
-  if (rankedDrinks >= COLD_START_DRINKS || !answers || !dimsIn(answers).length) return { taste: ranked ?? {}, basis: 'ranked' };
-  const share = ranked ? rankedDrinks / COLD_START_DRINKS : 0;
+  const said = answers && dimsIn(answers).length ? answers : null;
+  const basis: TasteBasis = rankedDrinks >= COLD_START_DRINKS || !said ? 'ranked' : 'answers';
+  if (!said) return { taste: ranked ?? {}, basis };
+  const share = ranked && rankedDrinks > 0 ? answerShare(rankedDrinks) : 1;
   const taste: Taste = {};
   for (const d of DIMENSIONS) {
     const r = ranked?.[d];
-    const a = answers[d];
-    if (typeof a === 'number' && typeof r === 'number') taste[d] = r * share + a * (1 - share);
+    const a = said[d];
+    if (typeof a === 'number' && typeof r === 'number' && share < 1) taste[d] = a * share + r * (1 - share);
     else if (typeof a === 'number') taste[d] = a;
-    else if (typeof r === 'number' && share > 0) taste[d] = r;
+    else if (typeof r === 'number' && share < 1) taste[d] = r;
   }
-  return { taste, basis: 'answers' };
+  return { taste, basis };
 }
 
-/** A quick question for the cold start. Each answer sets one dimension of your taste. */
+/** Where your taste comes from, in a sentence for the taste page. */
+export function tasteSource(rankedDrinks: number, hasAnswers: boolean): string {
+  const drinks = `${rankedDrinks} drink${rankedDrinks === 1 ? '' : 's'} you've ranked`;
+  if (!rankedDrinks && !hasAnswers) return "Answer a few questions, or rank drinks you've had, and your taste shows here.";
+  if (!rankedDrinks) return 'From your answers. Every drink you rank moves it.';
+  if (!hasAnswers) return `From the ${drinks}, the ones you score highest counting most.`;
+  const fromRanked = Math.round(100 * (1 - answerShare(rankedDrinks)));
+  return `From your answers and the ${drinks}. Your rankings are ${fromRanked}% of it now, and count for more with every drink you rank.`;
+}
+
+/**
+ * "Bitter, herbal and sweet": what stands out in a taste, or null when nothing
+ * does yet. Strong is left out, as in NOTE_KINDS: nearly every cocktail is.
+ */
+export function tasteHeadline(taste: Taste): string | null {
+  const top = dimsIn(taste)
+    .filter((d) => d !== 'strong' && taste[d]! >= NOTE_MIN)
+    .sort((a, b) => taste[b]! - taste[a]!)
+    .slice(0, 3);
+  return top.length ? capital(list(top.map((d) => LABEL[d]))) : null;
+}
+
+/**
+ * Where your rankings have moved you away from what you said: "Your rankings
+ * lean more smoky and less bitter than you said." Null until they differ by
+ * a clear step, or without both.
+ */
+export function rankingsDrift(ranked: Taste | null, answers: Taste | null): string | null {
+  if (!ranked || !answers) return null;
+  const gap = (d: Dimension) => ranked[d]! - answers[d]!;
+  const dims = dimsIn(answers).filter((d) => typeof ranked[d] === 'number' && Math.abs(gap(d)) >= 0.3);
+  const more = dims.filter((d) => gap(d) > 0).sort((a, b) => gap(b) - gap(a)).slice(0, 2);
+  const less = dims.filter((d) => gap(d) < 0).sort((a, b) => gap(a) - gap(b)).slice(0, 2);
+  const parts = [more.length ? `more ${list(more.map((d) => LABEL[d]))}` : null, less.length ? `less ${list(less.map((d) => LABEL[d]))}` : null].filter(Boolean);
+  return parts.length ? `Your rankings lean ${parts.join(' and ')} than you said.` : null;
+}
+
+/** A question about one dimension of your taste. Each answer sets it. */
 export interface TasteQuestion {
   dim: Dimension;
   prompt: string;
 }
 
+/** One per dimension. Setup asks the first six (QUICK_QUESTIONS); the taste page asks them all. */
 export const QUESTIONS: readonly TasteQuestion[] = [
   { dim: 'bitter', prompt: 'Bitter, like a Negroni?' },
   { dim: 'sour', prompt: 'Sour and bright, like a Daiquiri?' },
@@ -168,7 +219,15 @@ export const QUESTIONS: readonly TasteQuestion[] = [
   { dim: 'strong', prompt: 'Strong and stirred, like an Old Fashioned?' },
   { dim: 'smoky', prompt: 'Smoky, like mezcal?' },
   { dim: 'creamy', prompt: 'Creamy, like a Piña Colada?' },
+  { dim: 'botanical', prompt: 'Botanical, like a gin Martini?' },
+  { dim: 'herbal', prompt: 'Herbal, like a Last Word or a Mojito?' },
+  { dim: 'fruity', prompt: 'Fruity, like a Bramble?' },
+  { dim: 'spiced', prompt: 'Warmly spiced, like a Zombie?' },
+  { dim: 'spicy', prompt: 'Chili hot, like a Spicy Margarita?' },
+  { dim: 'savory', prompt: 'Savory, like a Bloody Mary?' },
 ];
+
+export const QUICK_QUESTIONS = QUESTIONS.slice(0, 6);
 
 export const ANSWERS = [
   { label: 'Love it', value: 0.8 },

@@ -16,6 +16,8 @@ interface GlassStepProps extends StepProps {
   /** The venue's glassware (bar_glassware): its glass of this type is marked, and drawn until another is picked. */
   barGlasses?: readonly BarGlass[];
   barVariants: readonly string[];
+  /** Our guess from the spec, while no glass is picked. */
+  suggested?: string | null;
 }
 
 /**
@@ -23,7 +25,7 @@ interface GlassStepProps extends StepProps {
  * (lib/sketch/geometry.ts GLASS_VARIANTS), the bar's own marked. The sketch
  * at the top redraws with the pick. Saved as items.sketch_variant.
  */
-export function GlassStep({ draft, set, options, barGlasses, barVariants }: GlassStepProps) {
+export function GlassStep({ draft, set, options, barGlasses, barVariants, suggested }: GlassStepProps) {
   // Stable while the drink is: the tiles' drawings are cached by this object.
   const key = JSON.stringify(sketchLook(draft, barVariants));
   const inputs = useMemo(() => draftSketchInputs(JSON.parse(key)), [key]);
@@ -37,6 +39,7 @@ export function GlassStep({ draft, set, options, barGlasses, barVariants }: Glas
         ownLabel="Another glass"
         options={options}
         selected={draft.glass ? [draft.glass] : []}
+        suggested={suggested}
         // A shape belongs to its glass: a new glass starts from the bar's (or the default).
         onChange={([glass]) => set({ glass: glass ?? null, glassVariant: null })}
       />

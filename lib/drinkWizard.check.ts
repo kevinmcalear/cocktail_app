@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import {
-  canSave, choiceList, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
+  canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
   newDraftId,
 } from './drinkWizard';
@@ -110,3 +110,33 @@ assert.equal(ids.size, 200);
 for (const id of ids) assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 
 console.log('drink wizard: ok');
+
+// --- starting from a classic ---
+{
+  assert.deepEqual(convertPour(22.5, 'ml', 'oz'), { amount: '0.75', unit: 'oz' });
+  assert.deepEqual(convertPour(60, 'ml', 'cl'), { amount: '6', unit: 'cl' });
+  assert.deepEqual(convertPour(2, 'dash', 'oz'), { amount: '2', unit: 'dash' });
+  assert.deepEqual(convertPour(null, 'top', 'ml'), { amount: '', unit: 'top' });
+
+  const negroni = draftFromSpec(
+    {
+      id: 'c-negroni',
+      name: 'Negroni',
+      recipes: [
+        { amount: 30, unit: 'ml', ingredient: { id: 'gin', name: 'Gin' } },
+        { amount: 30, unit: 'ml', ingredient: { id: 'campari', name: 'Campari' } },
+        { amount: 1, unit: 'peel', ingredient: { id: 'orange', name: 'Orange' } },
+        { amount: null, unit: null, ingredient: null },
+      ],
+      item_methods: [{ method_item_id: 'm-stir', sort_order: 1, method: { name: 'Stir' } }, { method_item_id: 'm-build', sort_order: 0, method: { name: 'Build' } }],
+      glassware: { id: 'g-rocks', name: 'Rocks' },
+      ice: null,
+    },
+    'oz'
+  );
+  assert.deepEqual(negroni.lines?.map((l) => [l.name, l.amount, l.unit]), [['Gin', '1', 'oz'], ['Campari', '1', 'oz']]);
+  assert.deepEqual(negroni.garnishes?.map((l) => [l.name, l.amount, l.unit]), [['Orange', '1', 'peel']]);
+  assert.deepEqual(negroni.methods?.map((m) => m.name), ['Build', 'Stir'], 'methods in their order');
+  assert.deepEqual(negroni.riffOf, { id: 'c-negroni', name: 'Negroni' });
+  assert.equal(negroni.ice, null);
+}

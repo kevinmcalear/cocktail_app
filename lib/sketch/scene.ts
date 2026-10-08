@@ -9,7 +9,7 @@ export const SCENE_SIZE = 512;
 
 export type SceneEl =
   | { k: 'fill'; d: string; color: string; o: number }
-  | { k: 'stroke'; d: string; color: string; o: number; w: number; dash: string | null }
+  | { k: 'stroke'; d: string; color: string; o: number; w: number; dash: string | null; band?: number }
   | {
       k: 'wash';
       id: string;
@@ -25,7 +25,18 @@ export type SceneEl =
       fadeTo: number;
     }
   | { k: 'soft'; id: string; cx: number; cy: number; rx: number; ry: number; rot: number; color: string; o: number }
-  | { k: 'group'; id: string; clip: string; children: SceneEl[] };
+  | { k: 'group'; id: string; clip: string; children: SceneEl[] }
+  | { k: 'stage'; name: StageName; ox: number; oy: number; children: SceneEl[] };
+
+/**
+ * The parts of a drawing, in the order a hand would make them. A still drawing
+ * ignores them; an animated one (components/ds/AnimatedSketch) brings each in
+ * on its own beat: the pencil finds the glass, the drink pours, the ice drops.
+ */
+/** How many bands the glass's pencil is drawn in, top to bottom. */
+export const GLASS_BANDS = 10;
+
+export type StageName = 'search' | 'liquid' | 'foam' | 'ice' | 'fizz' | 'garnish' | 'glass' | 'finish';
 
 export interface Scene {
   size: number;
@@ -45,6 +56,7 @@ interface Pending {
   o: number;
   w: number;
   dash: string | null;
+  band?: number;
   parts: string[];
 }
 
@@ -52,6 +64,10 @@ export class SceneBuilder {
   private readonly root: SceneEl[] = [];
   private readonly stack: SceneEl[][] = [this.root];
   private pending = new Map<string, Pending>();
+  /** How deep end() may pop: past the open stage, never into it. */
+  private floor = 1;
+  /** Horizontal bands the open stage's strokes are kept in (0: none). */
+  private bands = 0;
   private n = 0;
 
   constructor(private readonly prefix: string) {}
@@ -65,7 +81,9 @@ export class SceneBuilder {
   }
 
   private flush() {
-    for (const p of this.pending.values()) this.cur.push({ k: 'stroke', d: p.parts.join(''), color: p.color, o: p.o, w: p.w, dash: p.dash });
+    for (const p of this.pending.values()) {
+      this.cur.push({ k: 'stroke', d: p.parts.join(''), color: p.color, o: p.o, w: p.w, dash: p.dash, ...(p.band === undefined ? {} : { band: p.band }) });
+    }
     this.pending.clear();
   }
 
@@ -74,10 +92,12 @@ export class SceneBuilder {
     if (pts.length < 2 || o <= 0.004) return;
     const wq = nearest(WEIGHTS, w);
     const oq = nearest(TONES, o);
-    const key = `${color}|${wq}|${oq}|${dash ?? ''}`;
+    // In a banded stage, by where the stroke starts: band 0 is the top.
+    const band = this.bands ? Math.min(this.bands - 1, Math.max(0, Math.floor((pts[0][1] / SCENE_SIZE) * this.bands))) : undefined;
+    const key = `${color}|${wq}|${oq}|${dash ?? ''}|${band ?? ''}`;
     let p = this.pending.get(key);
     if (!p) {
-      p = { color, o: oq, w: wq, dash, parts: [] };
+      p = { color, o: oq, w: wq, dash, band, parts: [] };
       this.pending.set(key, p);
     }
     p.parts.push(pathOf(pts, false));
@@ -109,6 +129,23 @@ export class SceneBuilder {
     this.cur.push({ k: 'soft', id: this.id('s'), cx, cy, rx, ry, rot, color, o });
   }
 
+  /**
+   * Everything drawn from here until the next stage belongs to `name`, which
+   * moves about (ox, oy) in scene units: where the liquid rises from, where
+   * the garnish lands. Only at the top level, outside any clip. With `bands`,
+   * its strokes stay apart by height (each carries its band), so a hand can
+   * draw them from the top down.
+   */
+  stage(name: StageName, ox = SCENE_SIZE / 2, oy = SCENE_SIZE / 2, bands = 0) {
+    this.flush();
+    while (this.stack.length > 1) this.stack.pop();
+    const st: SceneEl = { k: 'stage', name, ox: n1(ox), oy: n1(oy), children: [] };
+    this.root.push(st);
+    this.stack.push(st.children);
+    this.floor = 2;
+    this.bands = bands;
+  }
+
   /** Everything until end() is clipped to this outline. */
   begin(clip: Pt[]) {
     this.flush();
@@ -119,7 +156,8 @@ export class SceneBuilder {
 
   end() {
     this.flush();
-    if (this.stack.length > 1) this.stack.pop();
+    // A stage isn't a clip: end() leaves it open.
+    if (this.stack.length > this.floor) this.stack.pop();
   }
 
   done(): Scene {
