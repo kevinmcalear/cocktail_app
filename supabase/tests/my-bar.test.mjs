@@ -1,6 +1,7 @@
 // My Bar's "can make" and an ingredient's "Used in" in SQL
 // (supabase/migrations/20261008340000_my_bar_rpc.sql, and the kind-of tree,
-// two away and uses from 20261009950000_my_bar_kinds.sql). The can-make cases are
+// two away and uses from 20261009950000_my_bar_kinds.sql, garnishes from
+// 20261009960000_my_bar_garnish.sql). The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -49,9 +50,9 @@ const item = async (key, row) => {
   ids[key] = (await serviceInsert('items', { ...row, name: `${row.name} ${run}` })).id;
 };
 
-/** Lines as [ingredient key, generic key or null, optional]. */
+/** Lines as [ingredient key, generic key or null, optional, other columns]. */
 async function recipe(key, lines) {
-  for (const [i, [ingredient, generic = null, optional = false]] of lines.entries()) {
+  for (const [i, [ingredient, generic = null, optional = false, more = {}]] of lines.entries()) {
     await serviceInsert('recipes', {
       recipe_item_id: ids[key],
       ingredient_item_id: ids[ingredient],
@@ -60,6 +61,7 @@ async function recipe(key, lines) {
       amount: 30,
       unit: 'ml',
       sort_order: i,
+      ...more,
     });
   }
 }
@@ -110,6 +112,14 @@ before(async () => {
   await recipe('buffalo-sour', [['buffalo'], ['lemon']]);
   await recipe('any-spirit', [['spirit'], ['lime']]);
   await recipe('yuzu-sour', [['yuzu'], ['lemon']]);
+  // Garnishes: a twist by unit and a cherry by its notes never block a drink; in a prep they still count.
+  for (const name of ['cherry', 'peel']) await item(name, { name, item_type: 'ingredient' });
+  await item('peel-syrup', { name: 'peel syrup', item_type: 'ingredient' });
+  await item('garnished-sour', { name: 'garnished sour', item_type: 'cocktail' });
+  await item('peel-sour', { name: 'peel sour', item_type: 'cocktail' });
+  await recipe('garnished-sour', [['whiskey'], ['lemon'], ['peel', null, false, { amount: 1, unit: 'twist' }], ['cherry', null, false, { amount: 1, unit: 'each', preparation_notes: 'to garnish' }]]);
+  await recipe('peel-syrup', [['peel', null, false, { amount: 1, unit: 'peel' }], ['water']]);
+  await recipe('peel-sour', [['whiskey'], ['peel-syrup']]);
   await recipe('negroni', [['tanqueray', 'gin'], ['carpano', 'sweet-vermouth'], ['campari']]);
   await recipe('martini', [['gin'], ['dry-vermouth'], ['olive', null, true]]);
   await recipe('gold-rush', [['bourbon'], ['lemon'], ['honey-syrup']]);
@@ -209,6 +219,13 @@ describe('my_bar_drinks', () => {
     const r = await myBar('home');
     assert.equal(r.away['rye-sour'], 'rye-whiskey', 'bourbon is a whiskey, but a rye line wants rye, and says so');
     assert.equal(r.away['yuzu-sour'], 'yuzu', 'a lime is citrus, but covers no yuzu');
+  });
+
+  test('a drink\'s garnish never blocks it, but a prep\'s peel still does', async () => {
+    await shelve('home', ['woodford', 'lemon', 'water']);
+    const r = await myBar('home');
+    assert.ok(r.canMake.includes('garnished-sour'), 'the twist and the cherry are garnishes');
+    assert.equal(r.away['peel-sour'], 'peel', 'the syrup needs its peel');
   });
 
   test('two away only when asked, so older apps see the same rows', async () => {
