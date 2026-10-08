@@ -194,7 +194,7 @@ describe('picture metadata', () => {
   test('is_generated on a link always comes from its image, even when re-linked', async () => {
     const drink = await newItem({ name: 'Relinked', item_type: 'cocktail', bar_id: ids.bar });
     const { data: photo, error } = await users.creator.client
-      .from('images').insert({ url: `http://127.0.0.1/photo-${run}.jpg` }).select('id').single();
+      .from('images').insert({ url: `${status.API_URL}/storage/v1/object/public/drinks/cocktails/photo-${run}.jpg` }).select('id').single();
     assert.ifError(error);
     const { data: sketchId } = await service.rpc('attach_generated_item_image', {
       p_item_id: drink, p_url: `http://127.0.0.1/sketch-${run}.png`,

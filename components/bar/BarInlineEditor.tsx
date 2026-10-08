@@ -88,7 +88,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                     <Caption tone="muted">Your access level</Caption>
                     <Body>{roleLabel(editor.roleLevel)}</Body>
                     {!editor.canEdit ? (
-                        <Caption tone="muted">Drink Creator role or above required to edit venue settings.</Caption>
+                        <Caption tone="muted">Admin role required to edit venue settings.</Caption>
                     ) : null}
                 </View>
             </Surface>
