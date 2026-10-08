@@ -1,5 +1,5 @@
-// The cocktail family tree (20261008950000_drink_lineage.sql and
-// 20261008950100_cocktail_family_tree.sql): every classic in the tree has a
+// The cocktail family tree (20261008835000_drink_lineage.sql and
+// 20261008835100_cocktail_family_tree.sql): every classic in the tree has a
 // family and a parent that is a classic or a style, the lines end at a root
 // without loops, only catalog admins change lineage, and loading it again
 // adds nothing.
@@ -25,7 +25,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run family tree tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20261008950100_cocktail_family_tree.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20261008835100_cocktail_family_tree.sql', import.meta.url);
 const run = randomUUID().slice(0, 8);
 const PASSWORD = `pw-${randomUUID()}`;
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };

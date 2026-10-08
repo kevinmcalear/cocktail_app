@@ -58,7 +58,7 @@ describe('signature drinks', () => {
       JOIN public.profiles p ON p.id = i.origin_bar_profile_id AND p.kind = 'bar'
       LEFT JOIN private.item_image_jobs j ON j.item_id = i.id
       WHERE i.item_type = 'cocktail' AND i.name !~ ' [0-9a-f]{8}$' -- other test files' fixtures, named with a run id
-        AND NOT i.is_catalog -- classics credited to the bar they were first made at (20261008950100)`);
+        AND NOT i.is_catalog -- classics credited to the bar they were first made at (20261008835100)`);
     assert.ok(rows[0].n >= 100, `expected the seeded drinks, found ${rows[0].n}`);
     assert.equal(rows[0].wrong, 0);
     assert.equal(rows[0].sketches, 0);
