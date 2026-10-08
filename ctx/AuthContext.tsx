@@ -1,8 +1,9 @@
 import { track } from '@/lib/analytics';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
-import { readStoredUser, supabase } from '@/lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
+import { isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
+import { onlineManager } from '@tanstack/react-query';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 type AuthContextType = {
   /** The confirmed session. Null until auth-js has settled (refreshed an expired token, if it had to). */
@@ -12,10 +13,16 @@ type AuthContextType = {
    * on this device, read before auth-js has refreshed it, so the first screen
    * paints their cached data instead of waiting on the network. Requests still
    * wait: the Supabase client refreshes before reading its token. If the
-   * refresh fails, it becomes null as auth settles, as for any sign-out.
+   * server rejects the refresh, it becomes null as auth settles, as for any
+   * sign-out. If the server can't be reached, it stays (see `loading`).
    */
   user: User | null;
-  /** True until auth-js settles. `user` may be the saved one until then; `session` is null. */
+  /**
+   * True until auth-js settles. `user` may be the saved one until then; `session` is null.
+   * Launched offline with an expired token, it stays true (with the saved
+   * user) until the refresh gets through: cached screens stay up under the
+   * offline banner instead of signing out and forgetting them.
+   */
   loading: boolean;
   passwordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -60,15 +67,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  /** Signed out on this device only (offline), until someone signs in. */
+  const forgotLocally = useRef(false);
 
   useEffect(() => {
     let settled = false;
+    let waitingForNetwork = false;
     const settle = (next: Session | null) => {
       settled = true;
       setSession(next);
       setUser(next?.user ?? null);
       setLoading(false);
     };
+
+    // getSession() answers null both when the server rejects the refresh
+    // token (auth-js has then deleted the saved session and announced
+    // SIGNED_OUT) and when it can't be reached (offline, flaky wifi): auth-js
+    // keeps the saved session and returns an AuthRetryableFetchError. Only the
+    // first is a sign-out. For the second, stay unsettled with the saved user
+    // and try again once back online. auth-js's own 30s refresh ticker also
+    // keeps trying, for wifi that's connected but not getting through.
+    const load = () =>
+      supabase.auth
+        .getSession()
+        .then(async ({ data: { session: next }, error }) => {
+          if (!next && isAuthRetryableFetchError(error)) {
+            const stored = await readStoredUser().catch(() => null);
+            if (stored && !settled) {
+              setUser(stored);
+              waitingForNetwork = true;
+              return;
+            }
+          }
+          settle(next);
+        })
+        .catch(() => settle(null));
+    const retryOnline = onlineManager.subscribe((online) => {
+      if (!online || !waitingForNetwork || settled) return;
+      waitingForNetwork = false;
+      load();
+    });
 
     // getSession() waits on auth-js's initialization, which refreshes an
     // expired access token (they last an hour) over the network first. Read
@@ -80,17 +118,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {});
 
-    supabase.auth.getSession().then(({ data: { session: next } }) => settle(next));
+    load();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, next) => {
+      // Says the same as getSession() above, minus the error that tells
+      // offline apart from signed out.
+      if (event === 'INITIAL_SESSION') return;
+      // A refresh auth-js started before an offline sign-out can get through
+      // after it and save the session again. Nobody is signed in to refresh.
+      if (event === 'TOKEN_REFRESHED' && forgotLocally.current) {
+        forgetStoredSession().catch(() => {});
+        return;
+      }
+      if (event === 'SIGNED_IN') forgotLocally.current = false;
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
       if (event === 'SIGNED_OUT') setPasswordRecovery(false);
       settle(next);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      retryOnline();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -110,7 +161,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setPasswordRecovery(false);
-    await supabase.auth.signOut();
+    // Offline, auth-js can't sign out (it calls the server first, after
+    // refreshing an expired token) and keeps the saved session. Bar iPads are
+    // shared, so forget it here and sign out now. ponytail: that refresh token
+    // isn't revoked on the server; it lapses on its own. Revoke it on the next
+    // online launch if that ever matters.
+    if (session) {
+      const { error } = await supabase.auth.signOut();
+      if (!error) return;
+    }
+    forgotLocally.current = true;
+    await forgetStoredSession();
+    setSession(null);
+    setUser(null);
+    setLoading(false);
   };
 
   const resetPassword = async (email: string) => {
