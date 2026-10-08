@@ -51,6 +51,8 @@ function ScreenTracker() {
 
 // No GeoIP: PostHog would otherwise add the city each event came from, which
 // the privacy policy and store labels don't declare.
+const HIDDEN = { position: 'absolute', width: 0, height: 0 } as const;
+
 const withoutGeoip = (props: PostHogCustomAppProperties) => Object.assign({}, props, { $geoip_disable: true });
 
 /**
@@ -61,7 +63,11 @@ const withoutGeoip = (props: PostHogCustomAppProperties) => Object.assign({}, pr
  */
 export default function Analytics({ apiKey, host }: { apiKey: string; host: string }) {
   return (
+    // PostHogProvider wraps its children in a View that defaults to flex: 1, and
+    // it sits beside the app (ObservabilityProvider), so it would take half the
+    // screen. Its children render nothing, so a zero-size view is enough.
     <PostHogProvider
+      style={HIDDEN}
       apiKey={apiKey}
       options={{ host, customAppProperties: withoutGeoip }}
       autocapture={{ captureScreens: false, captureTouches: false }}
