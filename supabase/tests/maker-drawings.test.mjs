@@ -1,4 +1,4 @@
-// Maker drawings (20261009950000_maker_drawings.sql): the add-drink wizard's
+// Maker drawings (20261009750000_maker_drawings.sql): the add-drink wizard's
 // drawing is saved for the drink as source 'maker', only by someone who can
 // edit it, and the flavor-worker leaves it alone until the drink changes.
 // Runs against the local stack.

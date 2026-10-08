@@ -172,7 +172,7 @@ export function useCreateDrink() {
       }
 
       // The drawing the wizard showed stays the drink's: the worker won't
-      // repaint it until the drink changes (20261009950000_maker_drawings).
+      // repaint it until the drink changes (20261009750000_maker_drawings).
       // Decorative, so a failure only means the worker draws it as usual.
       if (sketch) await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: sketch });
 
