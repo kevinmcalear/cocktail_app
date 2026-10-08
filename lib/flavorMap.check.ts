@@ -29,33 +29,39 @@ assert.deepEqual(placePairs([]), []);
 // Labels point away from the middle and stay on the map.
 const at = (angle: number) => ({ x: 0.5 + 0.38 * Math.cos(angle), y: 0.5 + 0.38 * Math.sin(angle), dot: 0.02, angle });
 const right = labelPos(at(0), 'Smoked Salt', 340, 13);
-assert.equal(right.anchor, 'start');
-assert.ok(right.x + 11 * 7.4 <= 340, 'a right-hand label ends on the map');
+assert.equal(right.anchor, 'start', 'a right-hand label goes to the right of its dot');
 const left = labelPos(at(Math.PI), 'Smoked Salt', 340, 13);
-assert.equal(left.anchor, 'end');
-assert.ok(left.x - 11 * 7.4 >= 0, 'a left-hand label starts on the map');
+assert.equal(left.anchor, 'end', 'a left-hand label goes to the left of its dot');
+// One too long for its side moves above or below, or hides; it's never clamped back over the middle.
+const longRight = layoutLabels([{ ...at(0), id: 'x', name: 'Orange Blossom Water', score: 1, together: [1], ring: 0 }], 340, 13, 7.4, 40)[0];
+assert.ok(longRight.hidden || longRight.anchor === 'middle', 'no side label that runs off the map');
+const roomy = layoutLabels([{ ...at(-0.6), id: 'y', name: 'Orange Blossom Water', score: 1, together: [1], ring: 0 }], 340, 13, 7.4, 40)[0];
+assert.equal(roomy.hidden, false, 'with room above, it shows');
 const top = labelPos(at(-Math.PI / 2), 'Salt', 340, 13);
 assert.equal(top.anchor, 'middle');
 assert.ok(top.y < 340 * at(-Math.PI / 2).y, 'a top label sits above its dot');
 assert.equal(mapSizeFor(375), 14);
 assert.equal(mapSizeFor(800), MAP_SIZE);
 
-// No two shown labels overlap, on a phone-sized map with real-length names.
-const long = placePairs(pairs.map((p) => ({ ...p, name: `Orange Liqueur ${p.id}` })).slice(0, 14));
-const labels = layoutLabels(long, 340, 13);
+// No two shown labels overlap, on a phone-sized map with real names (mezcal and lime's top pairs).
+const names = ['Agave Syrup', 'Chilli', 'Tequila', 'Agave Nectar', 'Pineapple Juice', 'Salt', 'Blanco Tequila', 'Chile Liqueur', 'Orange Liqueur', 'Curaçao', 'Ginger Beer', 'Passion Fruit', 'Mango', 'Grapefruit Soda'];
+const real = placePairs(names.map((name, i) => ({ id: `n${i}`, name, score: 14 - i, together: [14 - i] })));
+const labels = layoutLabels(real, 340, 13, 7.4, 40);
 const shown = labels.filter((l) => !l.hidden);
-assert.ok(shown.length >= 9, `most labels fit (${shown.length} of 14)`);
+assert.ok(shown.length >= 10, `most labels fit (${shown.length} of 14)`);
 const span = (l: (typeof labels)[number]) => {
-  const w = 'Orange Liqueur p10'.length * 7.4;
+  const w = names[Number(l.id.slice(1))].length * 7.4;
   const x0 = l.anchor === 'start' ? l.x : l.anchor === 'end' ? l.x - w : l.x - w / 2;
   return { x0, x1: x0 + w, y0: l.y - 13, y1: l.y + 3 };
 };
-for (let i = 0; i < shown.length; i++)
+for (let i = 0; i < shown.length; i++) {
+  const a = span(shown[i]);
+  assert.ok(a.x0 >= 0 && a.x1 <= 340, `${shown[i].id} stays on the map`);
   for (let j = i + 1; j < shown.length; j++) {
-    const a = span(shown[i]);
     const b = span(shown[j]);
-    assert.ok(!(a.x0 < b.x1 - 4 && b.x0 < a.x1 - 4 && a.y0 < b.y1 && b.y0 < a.y1), `${shown[i].id} and ${shown[j].id} overlap`);
+    assert.ok(!(a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1), `${shown[i].id} and ${shown[j].id} overlap`);
   }
+}
 
 // The list groups the same way the rings do.
 assert.deepEqual(groupByRing(pairs).map((g) => g.items.length), [4, 6, 8]);

@@ -15,13 +15,13 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
   const ds = useDs();
   const [w, setW] = useState(0);
   const placed = placePairs(pairs.slice(0, mapSizeFor(w)));
-  const labels = new Map(layoutLabels(placed, w, type.caption.fontSize).map((l) => [l.id, l]));
+  const centreR = Math.max(w * 0.11, 40);
+  const labels = new Map(layoutLabels(placed, w, type.caption.fontSize, 7.4, centreR).map((l) => [l.id, l]));
   const c = w / 2;
   const font = {
     fontFamily: fontFamilies.body,
     fontSize: type.caption.fontSize,
   };
-  const centreR = Math.max(w * 0.11, 40);
 
   return (
     <View style={styles.box} onLayout={(e) => setW(Math.min(e.nativeEvent.layout.width, 560))}>
@@ -33,18 +33,22 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
           {placed.map((p) => (
             <Line key={`l-${p.id}`} x1={c} y1={c} x2={p.x * w} y2={p.y * w} stroke={ds.c.line} strokeWidth={1} />
           ))}
+          {placed.map((p) => (
+            <Circle key={p.id} cx={p.x * w} cy={p.y * w} r={p.dot * w} fill={p.ring === 0 ? ds.c.ink : p.ring === 1 ? ds.c.muted : ds.c.faint} />
+          ))}
+          {/* Names after every dot, each over a halo of the ground, so an outer dot under an inner name stays readable. */}
           {placed.map((p) => {
-            const r = p.dot * w;
-            const ink = p.ring === 0 ? ds.c.ink : p.ring === 1 ? ds.c.muted : ds.c.faint;
             const label = labels.get(p.id);
+            if (!label || label.hidden) return null;
+            const props = { x: label.x, y: label.y, textAnchor: label.anchor, fontWeight: p.ring === 0 ? ('600' as const) : ('400' as const), ...font };
             return (
-              <G key={p.id}>
-                <Circle cx={p.x * w} cy={p.y * w} r={r} fill={ink} />
-                {label && !label.hidden ? (
-                  <SvgText x={label.x} y={label.y} textAnchor={label.anchor} fill={ds.c.ink} fontWeight={p.ring === 0 ? '600' : '400'} {...font}>
-                    {p.name}
-                  </SvgText>
-                ) : null}
+              <G key={`n-${p.id}`}>
+                <SvgText {...props} stroke={ds.c.ground} strokeWidth={4} strokeLinejoin="round" fill={ds.c.ground}>
+                  {label.text}
+                </SvgText>
+                <SvgText {...props} fill={ds.c.ink}>
+                  {label.text}
+                </SvgText>
               </G>
             );
           })}

@@ -76,19 +76,33 @@ export interface LabelPos {
  * of stacking.
  */
 export function labelPos(p: Pick<PlacedPair, 'x' | 'y' | 'dot' | 'angle'>, name: string, width: number, fontSize: number, charWidth = 7.4): LabelPos {
+  return labelSpots(p, name, width, fontSize, charWidth)[0];
+}
+
+/** Every spot a label could take, best first: beside the dot (away from the middle), above, below. */
+function labelSpots(p: Pick<PlacedPair, 'x' | 'y' | 'dot' | 'angle'>, name: string, width: number, fontSize: number, charWidth = 7.4): LabelPos[] {
   const r = p.dot * width;
   const est = name.length * charWidth;
   const cx = p.x * width;
   const cy = p.y * width;
   const cos = Math.cos(p.angle);
-  if (cos > 0.4) return { x: Math.min(cx + r + 5, width - est - 2), y: cy + fontSize / 3, anchor: 'start' };
-  if (cos < -0.4) return { x: Math.max(cx - r - 5, est + 2), y: cy + fontSize / 3, anchor: 'end' };
   const half = est / 2 + 4;
-  return { x: Math.min(Math.max(cx, half), width - half), y: Math.sin(p.angle) > 0 ? cy + r + fontSize + 2 : cy - r - 6, anchor: 'middle' };
+  const mid = Math.min(Math.max(cx, half), width - half);
+  const above: LabelPos = { x: mid, y: cy - r - 6, anchor: 'middle' };
+  const below: LabelPos = { x: mid, y: cy + r + fontSize + 2, anchor: 'middle' };
+  const side: LabelPos[] =
+    cos > 0.4
+      ? [{ x: cx + r + 5, y: cy + fontSize / 3, anchor: 'start' }]
+      : cos < -0.4
+        ? [{ x: cx - r - 5, y: cy + fontSize / 3, anchor: 'end' }]
+        : [];
+  return Math.sin(p.angle) > 0 ? [...side, below, above] : [...side, above, below];
 }
 
 export interface PlacedLabel extends LabelPos {
   id: string;
+  /** The name, shortened with an ellipsis when only that fits. */
+  text: string;
   /** No room without covering another: the dot stays, the name is in the list under the map. */
   hidden: boolean;
 }
@@ -97,30 +111,50 @@ export interface PlacedLabel extends LabelPos {
  * Every label's spot, best pair first: a label that would cover one already
  * placed moves a line up or down, and if neither is free it's hidden.
  */
-export function layoutLabels(placed: readonly PlacedPair[], width: number, fontSize: number, charWidth = 7.4): PlacedLabel[] {
-  // Dots are in the way too: a label may not cover another pair's dot.
-  const boxes: { x0: number; x1: number; y0: number; y1: number }[] = placed.map((p) => {
+export function layoutLabels(placed: readonly PlacedPair[], width: number, fontSize: number, charWidth = 7.4, centreR = 0): PlacedLabel[] {
+  // The middle and the dots are in the way too. A ring's labels only dodge
+  // the dots of its own ring and those inside it: inner names matter most,
+  // and they're drawn with a halo, so an outer dot under one stays readable.
+  const c = width / 2;
+  const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [{ x0: c - centreR, x1: c + centreR, y0: c - centreR, y1: c + centreR }];
+  const dotBox = (p: PlacedPair) => {
     const r = p.dot * width + 2;
     return { x0: p.x * width - r, x1: p.x * width + r, y0: p.y * width - r, y1: p.y * width + r };
-  });
+  };
+  let dotsUpTo = -1;
   const boxOf = (l: LabelPos, len: number) => {
     const w = len * charWidth;
     const x0 = l.anchor === 'start' ? l.x : l.anchor === 'end' ? l.x - w : l.x - w / 2;
     return { x0: x0 - 2, x1: x0 + w + 2, y0: l.y - fontSize, y1: l.y + 3 };
   };
   const clash = (b: (typeof boxes)[number]) => boxes.some((o) => b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1);
+  const fits = (b: (typeof boxes)[number]) => b.x0 >= 0 && b.x1 <= width && b.y0 >= 0 && b.y1 <= width;
+  const step = fontSize + 3;
   return placed.map((p) => {
-    const base = labelPos(p, p.name, width, fontSize, charWidth);
-    const step = fontSize + 3;
-    for (const dy of [0, -step, step, -2 * step, 2 * step]) {
-      const at = { ...base, y: base.y + dy };
+    for (; dotsUpTo < p.ring; dotsUpTo++) for (const d of placed) if (d.ring === dotsUpTo + 1) boxes.push(dotBox(d));
+    const spots = labelSpots(p, p.name, width, fontSize, charWidth).flatMap((at) => [0, -step, step].map((dy) => ({ ...at, y: at.y + dy })));
+    for (const at of spots) {
       const box = boxOf(at, p.name.length);
-      if (box.y0 >= 0 && box.y1 <= width && !clash(box)) {
+      if (fits(box) && !clash(box)) {
         boxes.push(box);
-        return { ...at, id: p.id, hidden: false };
+        return { ...at, id: p.id, text: p.name, hidden: false };
       }
     }
-    return { ...base, id: p.id, hidden: true };
+    // Last try: beside the dot, shortened to the room there (the list under the map has the full name).
+    const side = spots.find((at) => at.anchor !== 'middle');
+    if (side) {
+      const room = side.anchor === 'start' ? width - side.x - 4 : side.x - 4;
+      const chars = Math.floor(room / charWidth) - 1;
+      if (chars >= 6 && chars < p.name.length) {
+        const text = `${p.name.slice(0, chars).trimEnd()}…`;
+        const box = boxOf(side, text.length);
+        if (fits(box) && !clash(box)) {
+          boxes.push(box);
+          return { ...side, id: p.id, text, hidden: false };
+        }
+      }
+    }
+    return { ...spots[0], id: p.id, text: p.name, hidden: true };
   });
 }
 
