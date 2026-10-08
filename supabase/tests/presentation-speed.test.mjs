@@ -9,6 +9,10 @@
 // visibility, menu-published drinks, credited drinks of claimed and unclaimed
 // bars, classics, personal drinks (published, private, moderated, by a
 // blocked maker) and the glass, ice, family, methods and ingredients they use.
+// Since 20261009300000_signed_out_drink_cards.sql the shared drinks (no venue,
+// no creator, no publish mode) are listed too, as description-only cards; the
+// comparison leaves them and the glass only they use out, and a test of its
+// own checks them.
 // Fixtures go in directly (no write guards) and are removed afterwards; each
 // reader's checks run in their own short transaction, so no lock is held for long.
 // Runs against the local stack only: `npm run test:security`.
@@ -170,6 +174,12 @@ async function seed() {
 }
 
 const itemIds = () => Object.entries(id).filter(([k]) => k.startsWith('item:')).map(([, v]) => v);
+// Shared drinks with no publish mode, listed as cards since 20261009300000, and the glass only 'shared' uses.
+const SHARED_CARDS = ['creditedUnclaimed', 'creditedOpen', 'classic', 'shared'];
+const unchangedIds = () => {
+  const skip = [...SHARED_CARDS, 'glass2'].map((key) => uid(`item:${key}`));
+  return itemIds().filter((x) => !skip.includes(x));
+};
 const drinkKeys = [];
 const drinkIds = () => drinkKeys.map((key) => uid(`item:${key}`));
 
@@ -214,7 +224,7 @@ after(async () => {
 describe('old and new definitions agree for every reader', () => {
   for (const reader of READERS) {
     test(`${reader}: published_items`, async () => {
-      const ids = itemIds();
+      const ids = unchangedIds();
       const cols = 'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, icon_key, icon_url, publish_mode, published_at, riff_of_id, creator_profile_id, origin_bar_profile_id, origin_year, credit_status, is_reference, image_url, image_is_generated';
       await asReader(reader, async () => {
         const before = await rows(`SELECT row(${cols})::text FROM old_published_items WHERE id = ANY($1)`, [ids]);
@@ -225,6 +235,20 @@ describe('old and new definitions agree for every reader', () => {
         const one = [];
         for (const itemId of ids) one.push(...(await rows(`SELECT row(${cols})::text FROM public.published_items WHERE id = $1`, [itemId])));
         assert.deepEqual(one.sort(), before);
+      });
+    });
+
+    test(`${reader}: shared drinks are listed as cards, never with their spec`, async () => {
+      await asReader(reader, async () => {
+        const { rows: cards } = await db.query(
+          'SELECT id::text, publish_mode, is_shared FROM public.published_items WHERE NOT is_reference AND id = ANY($1) ORDER BY id',
+          [SHARED_CARDS.map((key) => uid(`item:${key}`))]
+        );
+        assert.equal(cards.length, SHARED_CARDS.length);
+        for (const card of cards) {
+          assert.equal(card.publish_mode, 'description');
+          assert.equal(card.is_shared, true);
+        }
       });
     });
 
@@ -291,7 +315,9 @@ describe('the fixtures cover the branches', () => {
       for (const key of ['glassware', 'ice', 'family', 'method', 'gin', 'citrus']) assert.ok(refs.includes(uid(`item:${key}`)), key);
       assert.ok(!refs.includes(uid('item:lemon')), 'a line with a parent shows the parent');
       assert.ok(!refs.includes(uid('item:vermouth')), 'a description-level drink shows no spec');
-      assert.ok(!refs.includes(uid('item:glass2')), 'an unpublished drink makes no reference rows');
+      assert.ok(refs.includes(uid('item:glass2')), "a shared drink's card names its glass");
+      const listed = await rows('SELECT id::text FROM public.published_items WHERE NOT is_reference AND id = ANY($1)', [[uid('item:openPrivate'), uid('item:personalPrivate')]]);
+      assert.deepEqual(listed, [], 'unpublished drinks are not listed');
     });
   });
 
