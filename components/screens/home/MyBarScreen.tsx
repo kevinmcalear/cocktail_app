@@ -12,6 +12,7 @@ import { useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
+import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddBottlesSheet } from './AddBottlesSheet';
 
 /** "Negroni, Old Pal and 4 more" */
@@ -47,6 +48,7 @@ export function MyBarScreen() {
   const bar = useMyBar();
   const { add, remove } = useShelfEdit();
   const [adding, setAdding] = useState(false);
+  const [snapping, setSnapping] = useState(false);
   const empty = !bar.isLoading && bar.shelf.length === 0;
   const others = bar.drinks.filter((d) => !bar.canMakeIds.has(d.id));
 
@@ -82,13 +84,10 @@ export function MyBarScreen() {
                 <ShelfChip key={item.id} item={item} onRemove={() => remove.mutate(item.id)} />
               ))}
             </View>
-            <Button
-              label={empty ? 'Add your bottles' : 'Add bottles'}
-              icon="plus"
-              variant={empty ? 'primary' : 'secondary'}
-              onPress={() => setAdding(true)}
-              style={styles.start}
-            />
+            <View style={styles.chips}>
+              <Button label={empty ? 'Add your bottles' : 'Add bottles'} icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding(true)} />
+              <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
+            </View>
           </View>
 
           {bar.oneAway.length ? (
@@ -143,6 +142,7 @@ export function MyBarScreen() {
         onToggle={(item, on) => (on ? add.mutate(item.id) : remove.mutate(item.id))}
         onClose={() => setAdding(false)}
       />
+      <BottlePhotoSheet visible={snapping} target={{ kind: 'home' }} onClose={() => setSnapping(false)} />
     </View>
   );
 }
@@ -162,7 +162,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  start: { alignSelf: 'flex-start' },
   away: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   awayText: { flex: 1, gap: 2 },
 });
