@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useDrinkLists, useTopBars } from '@/hooks/useDiscover';
-import { useBarDrinks } from '@/hooks/useHomeBar';
+import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
 import { getKnownDeviceLocation } from '@/lib/deviceLocation';
 import { buildPool, type Candidate } from '@/lib/eightBall';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
@@ -51,6 +51,7 @@ function useRatedBarDrinks(barIds: string[]) {
  * is used only if it's already allowed; a playful extra never asks for it.
  */
 export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
+  const shelf = useShelf();
   const bar = useBarDrinks();
   const [area, setArea] = useState<Area | null>(null);
   useEffect(() => {
@@ -88,7 +89,9 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
       }),
     [bar.canMake, bar.oneAway, bar.canMakeIds, classics.data, barDrinks.data, ranked, area]
   );
-  // Wait for the shelf (EightBall gives up on it after a while) and location
-  // so the first pick is already weighted; bar drinks join when they arrive.
-  return { pool, isLoading: bar.isLoading || area === null };
+  // Wait for what the shelf makes (an empty shelf makes nothing, so not
+  // then; EightBall gives up on a slow one) and location, so the first pick
+  // is already weighted. Bar drinks join when they arrive.
+  const shelfLoading = shelf.isLoading || (!!shelf.data?.length && bar.isLoading);
+  return { pool, isLoading: shelfLoading || area === null };
 }
