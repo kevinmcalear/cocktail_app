@@ -1,5 +1,5 @@
 // The catalog classics have a spec and no outside citation
-// (20261008830000_classic_specs.sql).
+// (20261008840000_classic_specs.sql).
 //
 //   supabase start && supabase db reset
 //   npm run test:security
