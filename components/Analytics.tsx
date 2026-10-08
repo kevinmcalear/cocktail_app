@@ -10,9 +10,11 @@ import { appVariant } from '@/lib/appVariant';
 /** Identifies the signed-in user in PostHog by id, and forgets them on sign-out. */
 function AnalyticsIdentity() {
   const posthog = usePostHog();
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
+  // Once auth settles: until then `user` can be the saved session's, not yet confirmed.
+  const { session, loading } = useAuth();
+  const userId = loading ? undefined : (session?.user.id ?? null);
   useEffect(() => {
+    if (userId === undefined) return;
     if (userId) posthog.identify(userId);
     else posthog.reset();
   }, [posthog, userId]);

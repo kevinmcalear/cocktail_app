@@ -26,10 +26,12 @@ export interface Venue {
  */
 export function useActiveVenue() {
   const { data, isError } = useBars();
-  // Not known until auth settles and a signed-in person's bars arrive. A disabled or
-  // cache-restoring query reports isLoading false, which briefly put venue staff in home mode.
+  // Not known until a signed-in person's bars arrive. A disabled or cache-restoring
+  // query reports isLoading false, which briefly put venue staff in home mode.
+  // While auth settles, `user` can already be the saved session's user, whose
+  // cached bars count as known; with no user yet, nothing is.
   const { loading: authLoading, user } = useAuth();
-  const isLoading = authLoading || (!!user && data === undefined && !isError);
+  const isLoading = user ? data === undefined && !isError : authLoading;
   const selectedBarId = useAppStore((s) => s.selectedBarId);
   const setActive = useAppStore((s) => s.setSelectedBarId);
 
