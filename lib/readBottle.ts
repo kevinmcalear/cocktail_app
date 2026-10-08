@@ -1,7 +1,9 @@
 import * as ImagePicker from 'expo-image-picker';
 
+import { ensureAiConsent } from '@/lib/aiConsent';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
+import { AI_DECLINED } from '@/lib/readMenu';
 import type { BottleReading } from '@/supabase/functions/_shared/bottleRead';
 
 export type { BottleReading };
@@ -34,6 +36,7 @@ export async function takeBottlePhoto(): Promise<BottlePhoto | null> {
 
 /** Reads the labels in the photo (read-bottle): brand, name, kind and ABV of each bottle. */
 export async function readBottlePhoto(photo: BottlePhoto): Promise<BottleReading[]> {
+  if (!(await ensureAiConsent())) throw new Error(AI_DECLINED);
   const base64 = await uriToBase64(photo.uri);
   const reading = await invokeFunction<{ bottles?: BottleReading[] }>('read-bottle', { photo: { base64, mime_type: photo.mimeType } });
   if (!reading?.bottles?.length) throw new Error('Couldn’t read a label in that photo. Try closer, with the front label facing you.');

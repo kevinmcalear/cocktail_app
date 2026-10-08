@@ -14,6 +14,8 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { matchIngredient, matchKey, type CatalogItem } from '@/lib/match';
 import { compileBringIn, parseBringIn, type BringBlock } from '@/lib/paste';
 
+import { BringInRead, type BringInReadResult } from './BringInRead';
+
 type Mode = 'drinks' | 'ingredients';
 
 function lineKey(block: number, line: number): string {
@@ -125,6 +127,7 @@ function BringInBody() {
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [kinds, setKinds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [lastRead, setLastRead] = useState<BringInReadResult | null>(null);
   const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
   const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses, aliases), [blocks, catalog, barId, picks, kinds, methods, glasses, aliases]);
   const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
@@ -135,6 +138,17 @@ function BringInBody() {
     const result = await bring.mutateAsync(compiled.write);
     if (result.error) setMessage(result.error);
     else router.back();
+  };
+
+  const onRead = (result: BringInReadResult, replace: boolean) => {
+    const fresh = replace || result.mode !== mode || !text.trim();
+    setMode(result.mode);
+    setText(fresh ? result.text : `${text.trim()}\n\n${result.text}`);
+    if (fresh) {
+      setPicks({});
+      setKinds({});
+    }
+    setLastRead(result);
   };
 
   return (
@@ -159,6 +173,9 @@ function BringInBody() {
             placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
           />
           <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
+          <BringInRead mode={mode} text={text} onRead={onRead} />
+          {lastRead?.kind === 'menu' ? <Caption tone="muted">Read as a menu: its drinks and the ingredients it lists. Add the amounts when you have them.</Caption> : null}
+          {lastRead?.unsure.length ? <Caption tone="accent">{`Hard to read, check these: ${lastRead.unsure.join(', ')}.`}</Caption> : null}
           {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} aliases={aliases} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
           {message ? <Caption tone="accent">{message}</Caption> : null}

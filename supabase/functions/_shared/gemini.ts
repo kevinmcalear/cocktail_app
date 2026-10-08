@@ -46,6 +46,9 @@ export const mockMenuReads = (): boolean => mocked("MENU_MODEL");
 /** Reading bottle labels is mocked on a local stack unless BOTTLE_MODEL=live. */
 export const mockBottleReads = (): boolean => mocked("BOTTLE_MODEL");
 
+/** Bring in's reader (read-anything) is mocked on a local stack unless READ_MODEL=live. */
+export const mockAnythingReads = (): boolean => mocked("READ_MODEL");
+
 export interface GeneratedImage {
   bytes: Uint8Array;
   mimeType: "image/png" | "image/jpeg";
