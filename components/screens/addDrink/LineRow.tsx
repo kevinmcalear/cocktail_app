@@ -1,86 +1,149 @@
+import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DsText, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { amountLabel, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
+import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
+import { tidyAmount } from '@/lib/specDefaults';
 
 import { WizardChip } from './WizardChrome';
 
 interface LineRowProps {
   line: WizardLine;
-  /** Open: type an exact amount, pick the unit, or remove the line. */
-  open: boolean;
-  onToggle: () => void;
   onChange: (change: Partial<WizardLine>) => void;
   onRemove: () => void;
+  /** Tapping the name: swap it for another ingredient, keeping the amount. */
+  onSwap: () => void;
 }
 
-/** One spec line: its name and a − amount + stepper; tap either to open the rest. */
-export function LineRow({ line, open, onToggle, onChange, onRemove }: LineRowProps) {
+/**
+ * One spec line, everything in sight: the ingredient (tap to swap it), its
+ * amount (type it, or − and + through the pours bartenders use), its unit
+ * (tap to change) and remove. On a phone the controls sit under the name; on
+ * a wider screen they share its line.
+ */
+export function LineRow({ line, onChange, onRemove, onSwap }: LineRowProps) {
   const ds = useDs();
+  const [units, setUnits] = useState(false);
   const top = line.unit === 'top';
-  const shown = amountLabel(line) || `– ${line.unit}`;
+  const amountLabel = top ? 'Top' : line.amount ? `${line.amount} ${line.unit}` : `no amount, ${line.unit}`;
   return (
-    <View style={[styles.wrap, { borderBottomColor: ds.c.line }]}>
+    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line }]}>
       <View style={styles.row}>
-        <PressableScale onPress={onToggle} haptic={false} aria-expanded={open} accessibilityLabel={`${line.name}, ${shown}`} accessibilityHint="Shows the amount, unit and remove" style={styles.name}>
-          <Body numberOfLines={2}>{line.name}</Body>
-        </PressableScale>
-        <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
-          {top ? null : <Step label="−" name={`Less ${line.name}`} onPress={() => onChange({ amount: stepAmount(line.amount, line.unit, -1) })} />}
-          <PressableScale onPress={onToggle} haptic={false} accessibilityLabel={`Amount: ${shown}`} style={styles.amount}>
-            <DsText variant="spec" style={styles.mono} numberOfLines={1}>
-              {shown}
-            </DsText>
+        <IngredientThumb id={line.id} name={line.name} size={40} />
+        <View style={styles.main}>
+          <PressableScale
+            onPress={onSwap}
+            haptic={false}
+            role="button"
+            accessibilityLabel={`${line.name}, ${amountLabel}`}
+            accessibilityHint="Swaps it for another ingredient"
+            style={styles.name}
+          >
+            <Body numberOfLines={2}>{line.name}</Body>
+            {line.id ? null : <Caption tone="muted">New, added when you save</Caption>}
           </PressableScale>
-          {top ? null : <Step label="+" name={`More ${line.name}`} onPress={() => onChange({ amount: stepAmount(line.amount, line.unit, 1) })} />}
+          <View style={styles.controls}>
+            <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
+              {top ? (
+                <DsText variant="spec" style={[styles.mono, styles.topLabel]}>
+                  Top
+                </DsText>
+              ) : (
+                <>
+                  <Round icon="minus" label={`Less ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, -1) })} />
+                  <TextInput
+                    value={line.amount}
+                    onChangeText={(amount) => onChange({ amount: amount.replace(/[^0-9.,/ ¼½¾⅓⅔⅛]/g, '') })}
+                    onBlur={() => onChange({ amount: tidyAmount(line.amount) })}
+                    keyboardType="numbers-and-punctuation"
+                    returnKeyType="done"
+                    selectTextOnFocus
+                    placeholder="–"
+                    placeholderTextColor={ds.c.faint}
+                    aria-label={`Amount of ${line.name}`}
+                    maxLength={8}
+                    style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink }]}
+                  />
+                  <Round icon="plus" label={`More ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, 1) })} />
+                </>
+              )}
+            </View>
+            <PressableScale
+              onPress={() => setUnits(!units)}
+              haptic={false}
+              role="button"
+              aria-expanded={units}
+              accessibilityLabel={`Unit: ${line.unit}`}
+              accessibilityHint="Shows the units to pick from"
+              style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
+            >
+              <DsText variant="spec" style={styles.mono}>
+                {line.unit}
+              </DsText>
+              <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
+            </PressableScale>
+          </View>
         </View>
+        <PressableScale onPress={onRemove} role="button" accessibilityLabel={`Remove ${line.name}`} style={styles.remove}>
+          <IconSymbol name="xmark" size={16} color={ds.c.muted} />
+        </PressableScale>
       </View>
-      {open ? (
-        <View style={styles.panel}>
-          <View style={styles.exact}>
-            {top ? null : (
-              <TextInput
-                value={line.amount}
-                onChangeText={(amount) => onChange({ amount: amount.replace(/[^0-9.,]/g, '') })}
-                keyboardType="decimal-pad"
-                placeholder="Amount"
-                placeholderTextColor={ds.c.faint}
-                aria-label={`Amount of ${line.name}`}
-                style={[styles.input, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: ds.c.line }]}
-              />
-            )}
-            <Button label="Remove" variant="ghost" icon="trash" onPress={onRemove} />
-          </View>
-          <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={styles.units}>
-            {QUICK_UNITS.map((u) => (
-              <WizardChip key={u} label={u} selected={line.unit === u} onPress={() => onChange(u === 'top' ? { unit: u, amount: '' } : { unit: u })} />
-            ))}
-          </View>
+      {units ? (
+        <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={styles.units}>
+          {QUICK_UNITS.map((u) => (
+            <WizardChip
+              key={u}
+              label={u}
+              selected={line.unit === u}
+              onPress={() => {
+                // ml, cl and oz convert ("22.5" ml is "0.75" oz); other units keep the number.
+                const n = parseFloat(tidyAmount(line.amount));
+                const pour = Number.isFinite(n) ? convertPour(n, line.unit, u) : null;
+                onChange(u === 'top' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u });
+                setUnits(false);
+              }}
+            />
+          ))}
         </View>
       ) : null}
     </View>
   );
 }
 
-function Step({ label, name, onPress }: { label: string; name: string; onPress: () => void }) {
+function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string; onPress: () => void }) {
+  const ds = useDs();
   return (
-    <PressableScale onPress={onPress} accessibilityLabel={name} style={styles.step}>
-      <DsText variant="headline">{label}</DsText>
+    <PressableScale onPress={onPress} role="button" accessibilityLabel={label} style={styles.step}>
+      <IconSymbol name={icon} size={16} color={ds.c.ink} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingVertical: space.sm, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56 },
-  name: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  // Name and controls wrap: two lines on a phone, one on a wide screen.
+  main: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md, rowGap: space.xs },
+  name: { flexGrow: 1, flexBasis: 150, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
   step: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  amount: { minWidth: 64, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs },
+  amount: { width: 56, height: layout.minTapTarget, textAlign: 'center', padding: 0 },
+  topLabel: { paddingHorizontal: space.xl },
   mono: { fontFamily: fontFamilies.monoMedium },
-  panel: { gap: space.md, paddingBottom: space.sm },
-  exact: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  input: { width: 120, minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md },
-  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  unit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    minWidth: 64,
+    height: layout.minTapTarget,
+    paddingHorizontal: space.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    justifyContent: 'center',
+  },
+  remove: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: 40 + space.md },
 });

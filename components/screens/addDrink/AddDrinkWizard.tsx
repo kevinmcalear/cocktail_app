@@ -9,12 +9,15 @@ import { space, springs } from '@/constants/tokens';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
+import { suggestClassic } from '@/lib/classics';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, STEP_COPY, WIZARD_STEPS,
-  type WizardDraft, type WizardStep,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, sketchLook, STEP_COPY, WIZARD_STEPS,
+  type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
+import { serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -26,7 +29,9 @@ import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
 import { NameStep, NotesStep } from './TextSteps';
+import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
+import { StartFromClassic } from './StartFromClassic';
 import { Eyebrow, WizardFooter } from './WizardChrome';
 
 export interface AddDrinkWizardProps {
@@ -55,7 +60,8 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
+  const breakpoint = useBreakpoint();
+  const wide = breakpoint !== 'phone';
   const place = wizardPlace(barId);
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
@@ -132,18 +138,43 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const copy = STEP_COPY[step];
+  const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
+  const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
+  const ices = choiceList(COMMON_ICE, dropdowns?.iceTypes ?? []);
+  // How it's probably served, from the spec: offered on the method, glass and ice steps.
+  const guess = serveGuess(sketchLook(draft, barVariants));
+  const guessed = (name: string, options: WizardPick[]) => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
+  const serveCard = !draft.methods.length && !draft.glass && !draft.ice && !!guess.method && !!guess.glass && !!guess.ice;
+  const takeGuess = () => {
+    if (!guess.method || !guess.glass || !guess.ice) return;
+    set({ methods: [guessed(guess.method, methods)], glass: guessed(guess.glass, glasses), glassVariant: null, ice: guessed(guess.ice, ices) });
+    go('garnish');
+  };
+  // A name that is a classic ("House Negroni") offers its spec, until there's one.
+  const classics = useDrinkLists().data ?? [];
+  const classic = step === 'name' && !draft.lines.length ? suggestClassic(draft.name, classics) : null;
   const body = (() => {
     switch (step) {
       case 'name':
-        return <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />;
+        return (
+          <>
+            <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />
+            {classic ? <StartFromClassic set={set} match={classic} onStarted={() => go('ingredients')} /> : null}
+          </>
+        );
       case 'ingredients':
         return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'method':
-        return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
+        return (
+          <>
+            {serveCard ? <ServeGuessCard guess={guess} onUse={takeGuess} /> : null}
+            <PickStep label="Method" ownLabel="Your own method" multi options={methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={guess.method} why={serveCard ? null : guess.why} />
+          </>
+        );
       case 'glass':
-        return <GlassStep draft={draft} set={set} options={choiceList(COMMON_GLASSES, dropdowns?.glassware ?? [])} barGlasses={barGlasses} barVariants={barVariants} />;
+        return <GlassStep draft={draft} set={set} options={glasses} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <PickStep label="Ice" ownLabel="Other ice" options={choiceList(COMMON_ICE, dropdowns?.iceTypes ?? [])} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} />;
+        return <PickStep label="Ice" ownLabel="Other ice" options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} suggested={guess.ice} />;
       case 'garnish':
         return <GarnishStep draft={draft} set={set} ingredients={ingredients} />;
       case 'credits':
@@ -160,6 +191,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const entering = (direction > 0 ? FadeInRight : FadeInLeft).springify().damping(springs.glide.damping).stiffness(springs.glide.stiffness);
   // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
   const column = wide || !!embedded;
+  const sideBySide = breakpoint === 'desktop' && !embedded;
   // On iOS the screen is a page sheet that starts below the status bar. Its gap
   // to the window's top is both the inset it doesn't need and what
   // KeyboardAvoidingView (which assumes it starts at the top) must add.
@@ -182,29 +214,44 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
       </WebHead>
       {/* iOS: after the first layout, so the name field's autofocus meets the right keyboard offset. */}
       {Platform.OS === 'ios' && !height ? null : (
-        <View style={[styles.column, column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, { paddingBottom: bottom }]}>
-          <SketchHeader
-            draft={draft}
-            step={step}
-            onBack={back}
-            top={column ? space.lg : statusBar + space.sm}
-            side={column ? space.lg : gutter}
-            rounded={column}
-            folded={typing && !column}
-            barVariants={barVariants}
-          />
-          <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
-            <Animated.View key={step} entering={entering} style={styles.body}>
-              <View style={styles.heading}>
-                <Eyebrow>{draft.name.trim() || 'New drink'}</Eyebrow>
-                <Title role="heading">{copy.title}</Title>
-                {copy.intro ? <Body tone="muted">{copy.intro}</Body> : null}
+        <View
+          style={[
+            styles.column,
+            sideBySide && styles.wideColumn,
+            column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter },
+            { paddingBottom: bottom },
+          ]}
+        >
+          {/* A desktop browser keeps the drawing beside the step, big; elsewhere it's a band on top. */}
+          <View style={sideBySide ? styles.row : styles.flex}>
+            <View style={sideBySide && styles.aside}>
+              <SketchHeader
+                draft={draft}
+                step={step}
+                onBack={back}
+                top={column ? space.lg : statusBar + space.sm}
+                side={column ? space.lg : gutter}
+                rounded={column}
+                folded={typing && !column}
+                barVariants={barVariants}
+                size={sideBySide ? 300 : undefined}
+              />
+            </View>
+            <View style={styles.flex}>
+              <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }, sideBySide && styles.sideScroll]}>
+                <Animated.View key={step} entering={entering} style={styles.body}>
+                  <View style={styles.heading}>
+                    <Eyebrow>{draft.name.trim() || 'New drink'}</Eyebrow>
+                    <Title role="heading">{copy.title}</Title>
+                    {copy.intro ? <Body tone="muted">{copy.intro}</Body> : null}
+                  </View>
+                  {body}
+                </Animated.View>
+              </ScrollView>
+              <View style={{ paddingHorizontal: side }}>
+                <WizardFooter step={step} canNext={step === 'name' || step === 'review' ? canSave(draft) : true} saving={create.isPending} onSkip={next} onNext={next} />
               </View>
-              {body}
-            </Animated.View>
-          </ScrollView>
-          <View style={{ paddingHorizontal: side }}>
-            <WizardFooter step={step} canNext={step === 'name' || step === 'review' ? canSave(draft) : true} saving={create.isPending} onSkip={next} onNext={next} />
+            </View>
           </View>
         </View>
       )}
@@ -215,6 +262,10 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' },
+  wideColumn: { maxWidth: 1080 },
+  row: { flex: 1, flexDirection: 'row', gap: space.xxl },
+  aside: { width: 380 },
+  sideScroll: { paddingTop: 0 },
   flex: { flex: 1 },
   scroll: { paddingTop: space.lg, paddingBottom: space.xl },
   body: { gap: space.lg },
