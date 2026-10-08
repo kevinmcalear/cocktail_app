@@ -45,6 +45,8 @@ const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { per
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
 
 describe('AddDrinkWizard', () => {
+  // About 40 taps, each re-rendering the wizard: ~1.5 s locally, but past Jest's 5 s default on a
+  // busy 2-core CI runner. ponytail: a longer limit for this one walk; split it up if it grows.
   test('a name, then each step keeps what was added through Back, and saves once at the end', async () => {
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
@@ -121,7 +123,7 @@ describe('AddDrinkWizard', () => {
     await act(() => mockCreate.mock.calls[0][1].onSuccess({ id: 'new-drink', warnings: [] }));
     expect(mockSaved).toHaveBeenCalledWith('new-drink');
     expect(useDrinkWizardStore.getState().kept.home).toBeUndefined();
-  });
+  }, 20_000);
 
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
