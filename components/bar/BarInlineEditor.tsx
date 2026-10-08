@@ -1,23 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BrandColors, VenueIdentity } from '@/components/bar/BarBrandFields';
-import { BarSection, ChipGroup, RowDivider } from '@/components/bar/BarParts';
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
+import { VenueBasics } from '@/components/bar/VenueBasics';
 import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
+import { RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { TeamRoster } from '@/components/screens/team/TeamRoster';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarEditor } from '@/hooks/useBarEditor';
 import type { EditorChromeState } from '@/lib/editorChrome';
-import { roleLabel } from '@/lib/roles';
+import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
+
+const LEVEL_CHOICES = ROLE_LEVELS.map((r) => ({ id: String(r.level), label: roleLabel(r.level) }));
 
 interface BarInlineEditorProps {
     barId: string;
     onClose?: () => void;
     onChromeState?: (state: EditorChromeState | null) => void;
-    /** Skip own ScrollView when nested in a parent scroller (e.g. Settings). */
+    /** Skip own ScrollView when nested in a parent scroller (the venue settings page). */
     embedded?: boolean;
 }
 
@@ -26,7 +28,8 @@ export function BarInlineEditor(props: BarInlineEditorProps) {
     // brings the fonts and colours with it.
     return (
         <BackbarTheme>
-            <BarEditorBody {...props} />
+            {/* Keyed so a different venue starts from its own saved values. */}
+            <BarEditorBody key={props.barId} {...props} />
         </BackbarTheme>
     );
 }
@@ -66,7 +69,6 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
         );
     }
 
-    const levels = editor.roleOptions.map((o) => ({ value: o.value, label: o.name }));
     const disclosure = [
         ['General visibility', editor.visibilityLevel, editor.setVisibilityLevel],
         ['Generic ingredients', editor.genericLevel, editor.setGenericLevel],
@@ -77,11 +79,6 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
 
     const body = (
         <View style={styles.body}>
-            <VenueIdentity editor={editor} />
-            <BrandColors editor={editor} barId={barId} />
-
-            {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
-
             {/* On a page of its own (embedded), the header already says the role. */}
             {embedded ? (
                 editor.canEdit ? null : <Caption tone="muted">Only Admins can change venue settings.</Caption>
@@ -98,32 +95,20 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                 </Surface>
             )}
 
-            <BarSection title="Progressive disclosure defaults" note="The lowest role that sees each part of a drink, unless the drink sets its own.">
+            <VenueBasics editor={editor} barId={barId} />
+            {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
+
+            <SettingsSection title="Who sees what" note="The lowest role that sees each part of a drink, unless the drink sets its own.">
                 {disclosure.map(([label, value, setValue], i) => (
-                    <View key={label} style={styles.group}>
+                    <View key={label}>
                         {i > 0 ? <RowDivider /> : null}
-                        <Caption>{label}</Caption>
-                        <ChipGroup label={label} options={levels} value={value} onPick={setValue} disabled={!editor.canEdit} />
+                        <SelectRow label={label} options={LEVEL_CHOICES} value={value} onChange={setValue} disabled={!editor.canEdit} />
                     </View>
                 ))}
-            </BarSection>
+            </SettingsSection>
 
             <VenueSettingsLinks barId={barId} />
             <TeamRoster barId={barId} barName={editor.name || 'this venue'} role={editor.roleLevel} />
-
-            <BarSection title={`Assigned items (${editor.items.length})`}>
-                {editor.items.length > 0 ? (
-                    editor.items.map((item, i) => (
-                        <View key={item.id} style={styles.group}>
-                            {i > 0 ? <RowDivider /> : null}
-                            <Body>{item.name}</Body>
-                            <Caption tone="muted" style={styles.capitalize}>{item.item_type}</Caption>
-                        </View>
-                    ))
-                ) : (
-                    <Caption tone="muted">No items assigned to this venue yet.</Caption>
-                )}
-            </BarSection>
         </View>
     );
 
@@ -142,6 +127,4 @@ const styles = StyleSheet.create({
     body: { gap: space.xl },
     scroll: { padding: space.xl },
     access: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-    group: { gap: space.sm },
-    capitalize: { textTransform: 'capitalize' },
 });

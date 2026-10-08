@@ -14,11 +14,7 @@ import { backbar, layout, space } from '@/constants/tokens';
 export function SettingsSection({ title, note, children }: { title?: string; note?: string; children: ReactNode }) {
   return (
     <View style={styles.section}>
-      {title ? (
-        <Caption tone="muted" role="heading" style={styles.sectionTitle}>
-          {title}
-        </Caption>
-      ) : null}
+      {title ? <SectionHeading>{title}</SectionHeading> : null}
       <Surface style={styles.card}>{children}</Surface>
       {note ? (
         <Caption tone="muted" style={styles.note}>
@@ -26,6 +22,15 @@ export function SettingsSection({ title, note, children }: { title?: string; not
         </Caption>
       ) : null}
     </View>
+  );
+}
+
+/** The small uppercase label over a group, for a group that isn't one SettingsSection card. */
+export function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <Caption tone="muted" role="heading" style={styles.sectionTitle}>
+      {children}
+    </Caption>
   );
 }
 

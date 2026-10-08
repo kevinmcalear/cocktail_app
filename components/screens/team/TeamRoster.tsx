@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ErrorText, RowDivider, SectionTitle } from '@/components/bar/BarParts';
+import { RowDivider, SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { Body, Button, Caption, Field, PressableScale, Surface, Tag, useDs } from '@/components/ds';
 import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { STATUS } from '@/constants/palette';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
@@ -20,6 +21,15 @@ import { MemberSheet } from './MemberSheet';
 
 const AVATAR = 44;
 const CHEVRON = 16;
+
+/** What went wrong, read out when it appears. Status red, never the accent. */
+function ErrorText({ children }: { children: string }) {
+  return (
+    <Caption color={STATUS.danger} role="alert">
+      {children}
+    </Caption>
+  );
+}
 
 function problem(error: unknown): string | null {
   if (!error) return null;
@@ -89,7 +99,7 @@ export function TeamRoster({ barId, barName, role }: { barId: string; barName: s
   return (
     <View style={styles.roster}>
       <View style={styles.section}>
-        <SectionTitle>{`Team · ${all.length}`}</SectionTitle>
+        <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
         {manage ? (
           <View style={styles.toolbar}>
             <View style={styles.search}>
@@ -127,7 +137,7 @@ export function TeamRoster({ barId, barName, role }: { barId: string; barName: s
 
       {invites.length > 0 ? (
         <View style={styles.section}>
-          <SectionTitle>{`Invited, not joined yet · ${invites.length}`}</SectionTitle>
+          <SectionHeading>{`Invited, not joined yet · ${invites.length}`}</SectionHeading>
           <Surface style={styles.card}>
             {invites.map((inv, i) => (
               <View key={inv.id}>
