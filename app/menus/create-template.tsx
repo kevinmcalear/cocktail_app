@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { DROPDOWNS_QUERY_KEY } from "@/hooks/useDropdowns";
+import { dropdownKeys } from "@/hooks/useDropdowns";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -216,7 +216,7 @@ export default function CreateTemplateScreen() {
             }
 
             // Success
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
             
             Alert.alert("Success", `Template ${isEditing ? 'updated' : 'created'} successfully!`, [
                 { text: "OK", onPress: () => router.back() }

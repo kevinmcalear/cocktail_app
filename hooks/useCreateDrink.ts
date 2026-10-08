@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useDrafts } from '@/hooks/useDrafts';
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
@@ -54,7 +54,9 @@ export function useCreateDrink() {
     mutationFn: async ({ draft, barId, myProfileId, menuDraftId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
       const warnings: string[] = [];
-      let createdLookups = false;
+      // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
+      const newIngredients: string[] = [];
+      let newSpecs = false;
 
       // A picked row can be gone by now (merged into another ingredient since
       // the draft was made, 20261008100000): those go by name, like a typed one.
@@ -110,7 +112,8 @@ export function useCreateDrink() {
         }
         if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
         made.set(key, data.id);
-        createdLookups = true;
+        if (type === 'ingredient') newIngredients.push(data.id);
+        else newSpecs = true;
         return data.id;
       };
 
@@ -203,7 +206,8 @@ export function useCreateDrink() {
       useRecentActivityStore.getState().push(recentEntry('cocktail', id, capitalize(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: ['cocktails'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
-      if (createdLookups) void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+      if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
+      void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
       return { id, warnings };
     },

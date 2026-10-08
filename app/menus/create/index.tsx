@@ -4,7 +4,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBars } from "@/hooks/useBars";
 import { useBeers } from "@/hooks/useBeers";
 import { useCocktails } from "@/hooks/useCocktails";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useWines } from "@/hooks/useWines";
 import { uriToBase64 } from "@/lib/imageBase64";
@@ -713,7 +713,7 @@ export default function CreateMenuWizard({
                 })
             );
 
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await Promise.all([dropdownKeys.menus, dropdownKeys.currentMenuDrinks].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
             setExiting(true);
             allowExit();
             if (isInline) {

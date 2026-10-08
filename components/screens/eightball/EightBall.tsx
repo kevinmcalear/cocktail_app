@@ -12,6 +12,7 @@ import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightB
 import { itemHref } from '@/lib/itemRoutes';
 
 import { BallArt } from './BallArt';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** How long the ball "thinks" before it answers. */
 const THINK_MS = 1100;
@@ -44,6 +45,7 @@ export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: 
 function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {
   const ds = useDs();
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { pool, isLoading } = useEightBallPool();
@@ -72,6 +74,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     }
     const drink = pickDrink(latest.current.pool, recent.current);
     if (drink) recent.current = [drink.id, ...recent.current].slice(0, RECENT);
+    // Open recipe is a ds Button (no press-in): load the page as the answer shows.
+    if (drink) prefetch(drink.id, { name: drink.name, imageUrl: drink.imageUrl });
     setAnswer({ state: 'shown', drink });
     bringUp(rise);
     bringUp(card);

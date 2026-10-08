@@ -13,10 +13,12 @@ import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
 import { CreditTag } from '../drink/FamilyTree';
 import { isShownPosition } from './Positions';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
   return (
     <View role="list" style={styles.grid}>
@@ -29,6 +31,7 @@ export function OriginalsGrid({ originals, columns, emptyText, selfId }: { origi
             key={d.id}
             role="link"
             accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
+            onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
             onPress={() => router.push(`/cocktail/${d.id}` as Href)}
             style={[styles.tile, { width: `${100 / columns}%` }]}
           >

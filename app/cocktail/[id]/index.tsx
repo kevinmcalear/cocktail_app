@@ -33,7 +33,11 @@ export default function CocktailDetailsScreen() {
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
     // first paint, when nothing is fetching, and those must not read as not found.
-    const { data: cocktail, isPending: isLoading, error, refetch } = useCocktail(id as string);
+    // A placeholder (the tapped row's name and picture) paints the hero only: the rest waits for the drink.
+    const query = useCocktail(id as string, { seeded: true });
+    const { error, refetch } = query;
+    const isLoading = query.isPending || query.isPlaceholderData;
+    const cocktail = query.isPlaceholderData ? undefined : query.data;
 
     useTrackRecent(
         !!cocktail,
@@ -98,7 +102,7 @@ export default function CocktailDetailsScreen() {
                 sheet
             />
         ) : (
-            <DrinkLoading />
+            <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />
         );
     }
 

@@ -14,6 +14,8 @@ export interface StaffRowProps {
   /** On menu, Off menu or Past. */
   status: string;
   onOpen: () => void;
+  /** Starts loading the drink as it's pressed (usePrefetchCocktail). */
+  onPressIn?: () => void;
   /** Drink Creators and up: the grip, and its controls. */
   canEdit: boolean;
   /** Lifted while being dragged. */
@@ -35,7 +37,7 @@ export interface StaffRowProps {
  * menus, and for editors a grip. Hold the grip and drag to move it; tap it for buttons that do the same, and screen readers
  * get Move up and Move down as actions.
  */
-export function StaffRow({ pick, place, status, onOpen, canEdit, active, drag, arrows, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
+export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, active, drag, arrows, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
   const web = Platform.OS === 'web';
@@ -44,7 +46,7 @@ export function StaffRow({ pick, place, status, onOpen, canEdit, active, drag, a
   return (
     <View style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: active ? ds.c.raised : ds.c.ground }]}>
       <View style={styles.row}>
-        <PressableScale accessibilityLabel={`${label}, open`} onPress={onOpen} style={styles.main}>
+        <PressableScale accessibilityLabel={`${label}, open`} onPressIn={onPressIn} onPress={onOpen} style={styles.main}>
           <Spec color={place === 1 ? ds.accentText : ds.c.muted} style={styles.place}>
             {place ?? ''}
           </Spec>

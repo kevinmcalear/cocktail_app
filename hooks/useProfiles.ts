@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type Query } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
@@ -10,7 +10,7 @@ import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEdit
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
-import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
+import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
@@ -48,6 +48,12 @@ export interface Profile {
 const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, shares_bars, shares_made, page_visibility';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
+
+/** Filters for invalidateQueries: the cached profile pages a write changed, not every one opened. */
+export const changedProfiles = (change: ProfileChange) => ({
+  queryKey: ['profile'],
+  predicate: (query: Query) => profileQueryShows(query.queryKey, query.state.data, change),
+});
 
 /** A profile by id or handle (a /p/<ref> link). Public ones for anyone; private ones for their owner. */
 export function useProfile(ref: string | string[] | null | undefined) {
@@ -459,9 +465,10 @@ export function useReviewClaim() {
       // RLS turns a non-moderator's update into a silent no-op; say so.
       if (!data?.length) throw new Error('Only moderators can turn down claims, and only pending ones.');
     },
-    onSuccess: () => {
+    onSuccess: (_data, { approve }) => {
       qc.invalidateQueries({ queryKey: ['profile-claims'] });
-      qc.invalidateQueries({ queryKey: ['profile'] });
+      // An approval claims an unclaimed page; turning one down changes no page.
+      if (approve) qc.invalidateQueries(changedProfiles({ unclaimed: true }));
     },
     // Shown inline by ClaimsReview, not as the global toast.
     onError: () => {},

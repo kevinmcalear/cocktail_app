@@ -18,7 +18,6 @@ export function useDrinkHistory(itemIds: readonly string[]) {
   return useQuery({
     queryKey: ['drink-history', ids],
     enabled: ids.length > 0,
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<PrintedRecipe[]> => {
       const { data, error } = await supabase.from('source_recipes').select(RECIPE_COLUMNS).in('item_id', ids);
       if (error) throw error;
@@ -44,7 +43,6 @@ export function useBook(key: string | null | undefined) {
   return useQuery({
     queryKey: ['book', key],
     enabled: !!key,
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<{
       source: Source;
       drinks: BookDrink[];

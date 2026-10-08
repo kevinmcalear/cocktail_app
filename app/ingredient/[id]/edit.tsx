@@ -17,7 +17,7 @@ import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
 import { useDrafts } from "@/hooks/useDrafts";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { renameIngredientEntity } from "@/lib/drafts";
@@ -295,7 +295,7 @@ export default function EditIngredientScreen({
             await queryClient.invalidateQueries({ queryKey: ["ingredients"] });
             await queryClient.invalidateQueries({ queryKey: ["cocktail"] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await refreshIngredients(queryClient, [id]);
 
             cleanStateRef.current = currentStateStr;
 

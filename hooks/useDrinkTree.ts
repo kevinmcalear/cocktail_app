@@ -32,7 +32,6 @@ const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, line
 export function useDrinkTree() {
   return useQuery({
     queryKey: ['drink-tree'],
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<TreeNode[]> => {
       const [styles, drinks] = await Promise.all([
         fetchStyles(),

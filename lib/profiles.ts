@@ -196,3 +196,28 @@ export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: s
   if (instagram) errors.instagram = instagram;
   return errors;
 }
+
+/** Which cached profiles a write changed, for profileQueryShows. */
+export interface ProfileChange {
+  /** The profile written, by id. */
+  id?: string | null;
+  /** A bar's page, by the bar behind it. */
+  barId?: string | null;
+  /** Your own (['profile', 'mine', …]). */
+  mine?: boolean;
+  /** Any unclaimed page (an approved claim changes one). */
+  unclaimed?: boolean;
+}
+
+/**
+ * Whether a cached ['profile', …] query shows a profile a write changed, so a
+ * save refetches that page and not every profile anyone opened. Matches on
+ * the loaded row, which covers pages opened by id and by handle alike.
+ */
+export function profileQueryShows(key: readonly unknown[], data: unknown, change: ProfileChange): boolean {
+  if (key[0] !== 'profile') return false;
+  if (key[1] === 'mine') return !!change.mine || (!!change.id && (data as { id?: string } | null)?.id === change.id);
+  const row = data as { id?: string; bar_id?: string | null; is_claimed?: boolean } | null | undefined;
+  if (!row) return false;
+  return (!!change.id && row.id === change.id) || (!!change.barId && row.bar_id === change.barId) || (!!change.unclaimed && row.is_claimed === false);
+}

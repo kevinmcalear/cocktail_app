@@ -8,9 +8,11 @@ import { useAppStore } from '@/store/useAppStore';
 export function useBeers(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
+    // Every venue's list ignores the picked venues, so switching venue doesn't download it again.
+    const contexts = options?.allContexts ? null : selectedContextIds;
 
     return useQuery({
-        queryKey: ['beers', selectedContextIds, options, viewAsRoleLevel],
+        queryKey: ['beers', contexts, options, viewAsRoleLevel],
         queryFn: () =>
             allRows((from, to) => {
                 let query = supabase
@@ -18,9 +20,7 @@ export function useBeers(options?: { allContexts?: boolean }) {
                     .select('*, item_images(sort_order,image_id,is_generated,outdated_since,images(id,url,palette)), item_categories(category_id)')
                     .eq('item_type', 'beer');
 
-                if (!options?.allContexts) {
-                    query = applyBarContextFilter(query, selectedContextIds);
-                }
+                if (contexts) query = applyBarContextFilter(query, contexts);
 
                 return query.order('name', { ascending: true }).order('id').range(from, to);
             })

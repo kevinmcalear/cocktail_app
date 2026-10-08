@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { useDropdowns, DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { refreshIngredients, useDropdowns } from '@/hooks/useDropdowns';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
@@ -12,18 +12,19 @@ import { readAnything } from '@/lib/readAnything';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 
+/** After a bulk write: the lists it touches, the pages of the drinks it changed, and the ingredients it added or removed. */
 function useRefreshSpecs() {
   const queryClient = useQueryClient();
-  return () =>
+  return ({ drinkIds = [], ingredientIds = [] }: { drinkIds?: string[]; ingredientIds?: string[] } = {}) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['cocktails'] }),
-      queryClient.invalidateQueries({ queryKey: ['cocktail'] }),
+      ...drinkIds.map((id) => queryClient.invalidateQueries({ queryKey: ['cocktail', id] })),
       queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
       queryClient.invalidateQueries({ queryKey: ['ingredient'] }),
       queryClient.invalidateQueries({ queryKey: ['menu-library'] }),
       queryClient.invalidateQueries({ queryKey: ['swap-source'] }),
       queryClient.invalidateQueries({ queryKey: ['item-versions'] }),
-      queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY }),
+      refreshIngredients(queryClient, ingredientIds),
     ]);
 }
 
@@ -159,7 +160,7 @@ export function useApplySwap() {
         return { undone, error: undone.length ? `Changed ${undone.length}, then stopped. ${message}` : message };
       }
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (result) => void refresh({ drinkIds: result.undone.map((row) => row.itemId) }),
   });
 }
 
@@ -172,7 +173,7 @@ export function useUndoSwap() {
         if (error) throw error;
       }
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (_data, undone) => void refresh({ drinkIds: undone.map((row) => row.itemId) }),
   });
 }
 
@@ -180,7 +181,7 @@ export function useUndoSwap() {
 export function useBringIn(barId: string | null) {
   const refresh = useRefreshSpecs();
   return useMutation({
-    mutationFn: async (write: BringWrite): Promise<{ added: number; error: string | null }> => {
+    mutationFn: async (write: BringWrite): Promise<{ added: number; error: string | null; bottleIds: string[] }> => {
       const ids = new Map<string, string>();
       let added = 0;
       try {
@@ -215,13 +216,13 @@ export function useBringIn(barId: string | null) {
           await saveDrinkSpec(data.id, lines, item.methodId ? [item.methodId] : [], 'Brought in');
           added += 1;
         }
-        return { added, error: null };
+        return { added, error: null, bottleIds: [...ids.values()] };
       } catch (error) {
         const message = plainDbMessage(error) ?? 'Couldn’t bring that in.';
-        return { added, error: added ? `Brought in ${added}, then stopped. ${message}` : message };
+        return { added, error: added ? `Brought in ${added}, then stopped. ${message}` : message, bottleIds: [...ids.values()] };
       }
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (result) => void refresh({ ingredientIds: result.bottleIds }),
   });
 }
 
@@ -250,7 +251,7 @@ export function useVenueBottle(barId: string | null) {
       if (error) throw new Error(plainDbMessage(error) ?? 'Couldn’t add that bottle.');
       return data.id;
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (id) => void refresh({ ingredientIds: [id] }),
     onError: () => {},
   });
   const remove = useMutation({
@@ -258,7 +259,7 @@ export function useVenueBottle(barId: string | null) {
       const { error } = await supabase.from('items').delete().eq('id', itemId).eq('bar_id', barId!);
       if (error) throw new Error(plainDbMessage(error) ?? 'Couldn’t take that bottle back out.');
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (_data, itemId) => void refresh({ ingredientIds: [itemId] }),
     onError: () => {},
   });
   return { add, remove };
@@ -274,6 +275,6 @@ export function useSetMissingPrices() {
         if (error) throw error;
       }
     },
-    onSuccess: () => void refresh(),
+    onSuccess: (_data, updates) => void refresh({ drinkIds: updates.map((update) => update.id) }),
   });
 }
