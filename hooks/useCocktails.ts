@@ -144,6 +144,9 @@ export function useCocktail(id?: string | string[]) {
                             name,
                             abv,
                             item_images (
+                                angle,
+                                sort_order,
+                                is_generated,
                                 images (
                                     url
                                 )

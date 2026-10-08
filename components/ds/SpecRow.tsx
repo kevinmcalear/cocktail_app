@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { space, type } from '@/constants/tokens';
 
+import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
 
 import { Tag } from './Tag';
@@ -12,6 +13,11 @@ export interface SpecRowProps {
   /** Already formatted for the person's units, e.g. "22.5 ml" or "1 dash". */
   amount: string;
   ingredient: string;
+  /**
+   * The ingredient's picture, beside its name. Null shows its initial on the
+   * house paper (no picture yet); leave it out for a line with no picture at all.
+   */
+  picture?: string | null;
   /** Made in house from its own recipe (a syrup, a wash, a batch). */
   houseMade?: boolean;
   optional?: boolean;
@@ -37,7 +43,7 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, picture, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
@@ -45,7 +51,7 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, detail,
   const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
 
-  const name = (
+  const text = (
     <>
       <Body style={big(type.body)}>{ingredient}</Body>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
@@ -58,6 +64,15 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, detail,
       ) : null}
     </>
   );
+  const pictured = picture !== undefined;
+  const name = pictured ? (
+    <>
+      <IngredientThumb name={ingredient} url={picture} size={36 * scale} />
+      <View style={styles.text}>{text}</View>
+    </>
+  ) : (
+    text
+  );
 
   if (split) {
     const Name = onPress ? PressableScale : View;
@@ -68,7 +83,7 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, detail,
             {amount}
           </Spec>
         </PressableScale>
-        <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[styles.cell, styles.name]}>
+        <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[styles.cell, styles.name, pictured && styles.pictured]}>
           {name}
         </Name>
       </View>
@@ -90,7 +105,7 @@ export function SpecRow({ amount, ingredient, houseMade, optional, note, detail,
           {amount}
         </Spec>
       ) : null}
-      <View style={styles.name}>{name}</View>
+      <View style={[styles.name, pictured && styles.pictured]}>{name}</View>
     </Row>
   );
 }
@@ -105,5 +120,7 @@ const styles = StyleSheet.create({
   // In a split line each control carries the padding, so the whole line stays tappable.
   cell: { paddingVertical: space.md },
   name: { flex: 1, gap: space.xs },
+  pictured: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  text: { flex: 1, gap: space.xs },
   tags: { flexDirection: 'row', gap: space.xs, marginTop: space.xs },
 });
