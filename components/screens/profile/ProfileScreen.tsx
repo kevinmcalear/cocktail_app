@@ -17,6 +17,7 @@ import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageV
 import { barsCrediting } from '@/lib/profiles';
 
 import { SpecLockPanel } from '../drink/SpecLockPanel';
+import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
 import { BarRankings } from './BarRankings';
@@ -71,7 +72,10 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
+  const signedIn = !!useAuth().user;
   const { data: profile, isLoading, error } = useProfile(profileRef);
+  // A person's page is for people who've signed in; a bar's opens to anyone.
+  const gated = profile?.kind === 'person' && !signedIn;
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
@@ -80,12 +84,13 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
-      {profile ? <ProfileSafety profile={profile} /> : null}
+      {profile && !gated ? <ProfileSafety profile={profile} /> : null}
     </View>
   );
 
   let body;
-  if (profile) body = <ProfileBody profile={profile} columns={breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4} />;
+  if (profile && gated) body = <SignInCard text={`Sign in to see ${profile.display_name}’s profile: the drinks they’ve made, where they’ve worked and what they’re drinking.`} />;
+  else if (profile) body = <ProfileBody profile={profile} columns={breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4} />;
   else if (isLoading) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
   else
     body = (

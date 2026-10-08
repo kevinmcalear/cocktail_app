@@ -6,7 +6,7 @@ import {
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Toaster } from 'burnt/web';
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
@@ -48,6 +48,7 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { session, user, loading, passwordRecovery } = useAuth();
   const segments = useSegments();
+  const pathname = usePathname();
   const router = useRouter();
   useUserCacheSync();
 
@@ -61,6 +62,9 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>) and shared home menus
     // (/m/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm') return;
+    // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
+    const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
+    if (drink) return router.replace(`/d/${drink[1]}`);
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
@@ -78,7 +82,7 @@ function RootLayoutNav() {
       needsOnboarding: needsOnboarding(session?.user.user_metadata),
     });
     if (to) router.replace(to);
-  }, [session, loading, segments, passwordRecovery]);
+  }, [session, loading, segments, pathname, passwordRecovery]);
 
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).

@@ -177,11 +177,17 @@ describe('who can read drawing inputs', () => {
     for (const id of [ids.shared, ids.barDrink, ids.hiddenDrink]) assert.ifError((await saveSketch(id)).error);
   });
 
-  test('a shared drink\'s inputs are readable by anyone signed in, not signed out', async () => {
+  test('a shared drink\'s inputs are readable by anyone, signed out too (its public card is drawn)', async () => {
     const { data } = await users.outsider.client.from('item_sketches').select('item_id').eq('item_id', ids.shared);
     assert.equal(data.length, 1);
     const { data: anonData, error } = await anon.from('item_sketches').select('item_id').eq('item_id', ids.shared);
-    assert.ok(error || anonData.length === 0, 'anon reads nothing');
+    assert.ifError(error);
+    assert.equal(anonData.length, 1);
+  });
+
+  test('signed out reads no unpublished venue drink\'s inputs', async () => {
+    const { data, error } = await anon.from('item_sketches').select('item_id').in('item_id', [ids.barDrink, ids.hiddenDrink]);
+    assert.ok(error || data.length === 0, 'anon reads nothing');
   });
 
   test('a bar drink\'s inputs follow the drink: members at its level only', async () => {
