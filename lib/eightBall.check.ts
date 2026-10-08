@@ -1,7 +1,7 @@
 // Checks for lib/eightBall.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildPool, makeA, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
+import { buildPool, classicReason, makeA, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
 
 // --- shakes: three strong jolts close together, then a cooldown ---
 const rest = (at: number): Motion => ({ x: 0, y: 0, z: -1, at });
@@ -30,11 +30,19 @@ assert.deepEqual(
 );
 assert.deepEqual(feed([{ x: 0, y: 0, z: 0.4, at: 0 }, jolt(100), jolt(200)]), [], 'a soft dip under the threshold is not a jolt');
 
-// --- the pool: can make first, then well rated, then anything ---
+// --- the pool: can make first, then well rated, then the classics ---
 const d = (id: string) => ({ id, name: id, imageUrl: null, glass: null });
+const classic = (id: string, extra: Partial<{ year: number; approx: boolean; creator: string; bar: string }> = {}) => ({
+  ...d(id),
+  year: null,
+  approx: false,
+  creator: null,
+  bar: null,
+  ...extra,
+});
 const pool = buildPool({
-  drinks: [d('negroni'), d('daiquiri'), d('martini')],
-  canMake: new Set(['negroni']),
+  classics: [classic('negroni', { year: 1919 }), classic('daiquiri', { year: 1898, approx: true }), classic('martini')],
+  canMake: [d('negroni'), d('house-sour')],
   barDrinks: [
     { ...d('paloma-limantour'), barId: 'limantour' },
     { ...d('negroni'), barId: 'limantour' },
@@ -45,17 +53,28 @@ const pool = buildPool({
 });
 const byId = new Map(pool.map((c) => [c.id, c]));
 assert.equal(byId.get('negroni')?.weight, WEIGHT.canMake);
-assert.equal(byId.get('negroni')?.reason, 'You have all the bottles at home.', 'can make wins over a bar drink of the same id');
-assert.equal(byId.get('daiquiri')?.weight, WEIGHT.any);
-assert.equal(byId.get('daiquiri')?.reason, 'Picked from every drink you can open.');
+assert.equal(byId.get('negroni')?.reason, 'You have all the bottles at home.', 'can make wins over a classic and a bar drink of the same id');
+assert.equal(byId.get('house-sour')?.weight, WEIGHT.canMake, 'what the shelf makes is in, classic or not');
+assert.equal(byId.get('daiquiri')?.weight, WEIGHT.classic);
+assert.equal(byId.get('daiquiri')?.reason, 'A classic from about 1898.');
 assert.equal(byId.get('paloma-limantour')?.weight, WEIGHT.ratedBar * 2, 'a 10 bar doubles the rated weight');
 assert.equal(byId.get('paloma-limantour')?.reason, 'Well rated near you, at Licorería Limantour.');
 assert.ok(!byId.has('closed-bar-drink'), 'drinks at bars outside the rated list stay out');
+assert.deepEqual([...byId.keys()].sort(), ['daiquiri', 'house-sour', 'martini', 'negroni', 'paloma-limantour'], 'nothing else gets in');
 assert.equal(
-  buildPool({ drinks: [], canMake: new Set(), barDrinks: [{ ...d('x'), barId: 'b' }], ratedBars: [{ id: 'b', name: 'B', score: 5 }], near: false })[0]
-    .reason,
+  buildPool({ classics: [], canMake: [], barDrinks: [{ ...d('x'), barId: 'b' }], ratedBars: [{ id: 'b', name: 'B', score: 5 }], near: false })[0].reason,
   'Well rated, at B.'
 );
+// No rated bars (prod today): a classic from the history, or what the shelf makes.
+assert.deepEqual(
+  buildPool({ classics: [classic('martini')], canMake: [], barDrinks: [{ ...d('x'), barId: 'b' }], ratedBars: [], near: false }).map((c) => c.id),
+  ['martini']
+);
+
+assert.equal(classicReason({ year: 2005, approx: false, creator: 'Sam Ross', bar: 'Milk & Honey' }), 'A classic from 2005, by Sam Ross at Milk & Honey.');
+assert.equal(classicReason({ year: 1880, approx: true, creator: null, bar: null }), 'A classic from about 1880.');
+assert.equal(classicReason({ year: null, approx: false, creator: null, bar: 'Harry\'s New York Bar' }), "A classic, at Harry's New York Bar.");
+assert.equal(classicReason({ year: null, approx: false, creator: null, bar: null }), 'A classic from the drink history.');
 
 assert.equal(makeA('Negroni'), 'Make a Negroni');
 assert.equal(makeA('Old Fashioned'), 'Make an Old Fashioned');
