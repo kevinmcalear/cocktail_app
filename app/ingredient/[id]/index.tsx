@@ -12,6 +12,7 @@ import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { KindOfLink } from "@/components/ingredient/BrandAndKindFields";
+import { PairsWith } from "@/components/screens/pairings/PairsWith";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -95,7 +96,6 @@ export default function IngredientDetailScreen() {
     }
 
     const pictures = orderedPictures(data?.heroImages);
-
     return (
         <ItemDetailLayout
             id={`ingredient-${ingredient.id}`}
@@ -128,6 +128,7 @@ export default function IngredientDetailScreen() {
                 )}
 
                 {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
+                <PairsWith itemId={ingredient.id} name={ingredient.name} />
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
                 <PriceSection itemId={ingredient.id} />
