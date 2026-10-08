@@ -89,6 +89,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
               imageUrl={d.imageUrl}
               glass={null}
               caption={bar ? [bar.name, place([bar.locality, bar.city]), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined}
+              logo={bar ? { uri: bar.logo, name: bar.name } : undefined}
               tag={d.menu?.past ?? undefined}
             />
           );
