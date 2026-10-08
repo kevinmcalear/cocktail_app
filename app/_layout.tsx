@@ -11,7 +11,7 @@ import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { palette } from "@/constants/palette";
 import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
@@ -27,10 +27,9 @@ import { SearchPalette } from '@/components/search/SearchPalette';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
-import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
-import { clearUserData } from '@/lib/clearUserData';
 import { installWebAlert } from '@/lib/dialogs';
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
@@ -47,26 +46,10 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { session, loading, passwordRecovery } = useAuth();
+  const { session, user, loading, passwordRecovery } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-
-  // Signed out (button, expiry or another tab), or opened signed out: forget
-  // the previous user's cached data. Bar iPads are shared. Signed in as someone
-  // new: refetch everything, since screens mounted under the sign-in page
-  // (and requests racing the sign-in) cached what anon may see.
-  const userId = session?.user.id ?? null;
-  const settledUserId = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    if (loading) return;
-    const action = cacheActionOnAuth(settledUserId.current, userId);
-    settledUserId.current = userId;
-    if (action === 'clear') {
-      clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
-    } else if (action === 'reset') {
-      resetUserQueries(queryClient).catch((e) => console.warn('Refetching after sign-in failed', e));
-    }
-  }, [loading, userId]);
+  useUserCacheSync();
 
   useEffect(() => {
     if (loading) return;
@@ -100,7 +83,9 @@ function RootLayoutNav() {
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
-  const showWebSidebar = isWideWeb && !!session && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
+  // `user`, not `session`: at launch it can be the saved session's user, whose
+  // cached venues paint before auth-js finishes refreshing their token.
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

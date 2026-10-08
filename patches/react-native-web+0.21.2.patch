@@ -51,6 +51,30 @@ index 503513d..3f9338f 100644
  }
  module.exports = exports.default;
 \ No newline at end of file
+diff --git a/node_modules/react-native-web/dist/cjs/modules/useElementLayout/index.js b/node_modules/react-native-web/dist/cjs/modules/useElementLayout/index.js
+index f302870..2c88759 100644
+--- a/node_modules/react-native-web/dist/cjs/modules/useElementLayout/index.js
++++ b/node_modules/react-native-web/dist/cjs/modules/useElementLayout/index.js
+@@ -63,6 +63,10 @@ function getResizeObserver() {
+ }
+ function useElementLayout(ref, onLayout) {
+   var observer = getResizeObserver();
++  // Patched (patches/react-native-web+0.21.2.patch): upstream decided whether
++  // to observe only on mount, so a view that gained onLayout later (React
++  // reusing a View that had none) kept the handler but never fired it.
++  var hasOnLayout = typeof onLayout === 'function';
+   (0, _useLayoutEffect.default)(() => {
+     var node = ref.current;
+     if (node != null) {
+@@ -86,6 +90,6 @@ function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
+ }
+ module.exports = exports.default;
+\ No newline at end of file
 diff --git a/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js b/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js
 index 290ff81..6843e3c 100644
 --- a/node_modules/react-native-web/dist/exports/useWindowDimensions/index.js
@@ -108,5 +132,28 @@ index 290ff81..6843e3c 100644
 -  }, []);
 -  return dims;
 +  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+ }
+\ No newline at end of file
+diff --git a/node_modules/react-native-web/dist/modules/useElementLayout/index.js b/node_modules/react-native-web/dist/modules/useElementLayout/index.js
+index cd75e40..e614d89 100644
+--- a/node_modules/react-native-web/dist/modules/useElementLayout/index.js
++++ b/node_modules/react-native-web/dist/modules/useElementLayout/index.js
+@@ -58,6 +58,10 @@ function getResizeObserver() {
+ }
+ export default function useElementLayout(ref, onLayout) {
+   var observer = getResizeObserver();
++  // Patched (patches/react-native-web+0.21.2.patch): upstream decided whether
++  // to observe only on mount, so a view that gained onLayout later (React
++  // reusing a View that had none) kept the handler but never fired it.
++  var hasOnLayout = typeof onLayout === 'function';
+   useLayoutEffect(() => {
+     var node = ref.current;
+     if (node != null) {
+@@ -81,5 +85,5 @@ export default function useElementLayout(ref, onLayout) {
+         observer.unobserve(node);
+       }
+     };
+-  }, [ref, observer]);
++  }, [ref, observer, hasOnLayout]);
  }
 \ No newline at end of file

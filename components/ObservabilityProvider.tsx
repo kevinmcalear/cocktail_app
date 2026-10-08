@@ -13,10 +13,11 @@ const Analytics = lazy(() => import('@/components/Analytics'));
 
 /** Tags Sentry errors with the signed-in user's id. */
 function MonitoringIdentity() {
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
+  // Once auth settles: until then `user` can be the saved session's, not yet confirmed.
+  const { session, loading } = useAuth();
+  const userId = loading ? undefined : (session?.user.id ?? null);
   useEffect(() => {
-    setMonitoringUser(userId);
+    if (userId !== undefined) setMonitoringUser(userId);
   }, [userId]);
   return null;
 }

@@ -1,9 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { TouchableOpacity } from "react-native";
-import { Input, Label, Text, XStack, YStack, useTheme } from "tamagui";
-
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Input, Label, Text, XStack, YStack } from "tamagui";
 
 import { IngredientPickerSheet, type IngredientPickerItem } from "@/components/IngredientPickerSheet";
 import { nearIngredient, sameIngredient, type IngredientAlias, type IngredientRow } from "@/lib/ingredientNames";
@@ -116,25 +114,5 @@ function SameIngredientNotice({
                 <Text color="$color8" fontWeight="600" fontSize="$4" textAlign="left">Make this a kind of {label}</Text>
             </TouchableOpacity>
         </YStack>
-    );
-}
-
-/** On an ingredient's page: "A kind of Gin", opening the generic's page. */
-export function KindOfLink({ generic }: { generic: { id: string; name: string } }) {
-    const router = useRouter();
-    const theme = useTheme();
-    return (
-        <TouchableOpacity
-            role="link"
-            aria-label={`A kind of ${generic.name}, open`}
-            onPress={() => router.push(`/ingredient/${generic.id}`)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-        >
-            <IconSymbol name="link" size={18} color={theme.color11?.get() as string} />
-            <Text color="$color11">A kind of </Text>
-            <Text color="$color" fontWeight="600">
-                {generic.name}
-            </Text>
-        </TouchableOpacity>
     );
 }

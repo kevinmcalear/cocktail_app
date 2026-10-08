@@ -11,7 +11,7 @@ import { PrepCard } from "@/components/prep/PrepCard";
 import { WhereItLives } from "@/components/backbar/WhereItLives";
 import { PublishSection } from "@/components/screens/publishing/PublishSection";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
-import { KindOfLink } from "@/components/ingredient/BrandAndKindFields";
+import { IngredientFacts } from "@/components/ingredient/IngredientFacts";
 import { PairsWith } from "@/components/screens/pairings/PairsWith";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -127,7 +127,7 @@ export default function IngredientDetailScreen() {
                     </GlassView>
                 )}
 
-                {ingredient.generic ? <KindOfLink generic={ingredient.generic} /> : null}
+                <IngredientFacts ingredient={ingredient} bottles={data?.bottles ?? []} />
                 <PairsWith itemId={ingredient.id} name={ingredient.name} />
 
                 <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />

@@ -1,4 +1,28 @@
+import type { User } from '@supabase/supabase-js';
 import type { Query, QueryClient } from '@tanstack/react-query';
+
+/**
+ * The user in the session auth-js saved on this device (`raw` is its storage
+ * value), or null. It's who the persisted query cache belongs to, so the
+ * first screen can paint their cached data while auth-js refreshes an expired
+ * token. Only the user is read: the tokens stay with auth-js, which still
+ * refreshes before any request and drops the session if that fails. Mirrors
+ * auth-js's own check that a stored session is usable.
+ */
+export function storedSessionUser(raw: string | null | undefined): User | null {
+  if (!raw) return null;
+  try {
+    const s: unknown = JSON.parse(raw);
+    if (!s || typeof s !== 'object') return null;
+    const { access_token, refresh_token, expires_at, user } = s as Record<string, unknown>;
+    if (typeof access_token !== 'string' || typeof refresh_token !== 'string' || !refresh_token) return null;
+    if (typeof expires_at !== 'number') return null;
+    if (!user || typeof user !== 'object' || typeof (user as { id?: unknown }).id !== 'string') return null;
+    return user as User;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Queries whose rows depend on who is signed in (RLS). Queries marked
