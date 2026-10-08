@@ -55,6 +55,7 @@ export interface ItemDetailLayoutProps {
     embedded?: boolean;
     /** When true and images is empty, show a generic add-photo placeholder (draft create) */
     emptyPhotoPlaceholder?: boolean;
+    hero?: React.ReactNode; // in place of the photo when there are none: an ingredient's drawing
     children: React.ReactNode;
 }
 
@@ -85,6 +86,7 @@ export function ItemDetailLayout({
     onBack,
     embedded = false,
     emptyPhotoPlaceholder = false,
+    hero,
     children
 }: ItemDetailLayoutProps) {
     const router = useRouter();
@@ -385,10 +387,8 @@ export function ItemDetailLayout({
             );
         }
         // ponytail: edit with no photos always gets a tappable add affordance
-        if (emptyPhotoPlaceholder || (isEditing && onManageImages)) {
-            return <CocktailPhotoPlaceholder onPress={handleImagePress} onDropImages={onDropImages} />;
-        }
-        return isLoading ? null : <PicturePlaceholder />;
+        if (emptyPhotoPlaceholder || (isEditing && onManageImages)) return <CocktailPhotoPlaceholder onPress={handleImagePress} onDropImages={onDropImages} />;
+        return isLoading ? null : (hero ?? <PicturePlaceholder />);
     };
 
     const mainContent = isLargeScreen ? (

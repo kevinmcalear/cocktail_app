@@ -1,20 +1,44 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline } from '@/components/ds';
+import { Button, Caption, Headline, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
-import { drinkCount, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { drinkCount, type BarScore, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
+import { formatScore } from '@/lib/ranking';
 
 const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
 
 /** How many more drinks each "Show more" adds: "anywhere" can be thousands, too many to lay out at once. */
 const MORE = 40;
 
-/** Drinks, each with the bar that makes it; the first `limit`, then more a page at a time. */
-export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; limit?: number }) {
+/** "Best Martini" scores: each drink's own, and each bar's for the drink. A drink or bar nobody has scored has none. */
+export interface DrinkScores {
+  drinks: Readonly<Record<string, number>>;
+  bars: Readonly<Record<string, BarScore>>;
+}
+
+/** The scores at the end of a drink row: the drink's, then its bar's under it. Nothing when neither is scored. */
+export function DrinkScore({ drink, bar }: { drink?: number; bar?: number }) {
+  if (drink === undefined && bar === undefined) return null;
+  return (
+    <View style={styles.score}>
+      {drink !== undefined ? <Spec>{formatScore(drink)}</Spec> : null}
+      {bar !== undefined ? <Caption tone="muted">{`Bar ${formatScore(bar)}`}</Caption> : null}
+    </View>
+  );
+}
+
+/** What a screen reader hears for those scores. */
+export function scoreWords(drink?: number, bar?: number): string | null {
+  const words = [drink !== undefined ? `score ${formatScore(drink)}` : null, bar !== undefined ? `bar scores ${formatScore(bar)}` : null].filter(Boolean);
+  return words.length ? words.join(', ') : null;
+}
+
+/** Drinks, each with the bar that makes it (and their scores, when given); the first `limit`, then more a page at a time. */
+export function DrinkAtBarList({ drinks, barsById, limit = 8, scores }: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; limit?: number; scores?: DrinkScores }) {
   const [count, setCount] = useState(limit);
   const shown = drinks.slice(0, count);
   const next = Math.min(MORE, drinks.length - shown.length);
@@ -22,6 +46,10 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
     <View role="list">
       {shown.map((d) => {
         const bar = barsById.get(d.barId);
+        const caption = bar ? [bar.name, place(bar), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined;
+        const drinkScore = scores?.drinks[d.id];
+        const barScore = scores?.bars[d.barId]?.score;
+        const said = scoreWords(drinkScore, barScore);
         return (
           <DrinkRow
             key={d.id}
@@ -30,10 +58,12 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
             itemId={d.id}
             imageUrl={d.imageUrl}
             glass={null}
-            caption={bar ? [bar.name, place(bar), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined}
+            caption={caption}
             logo={bar ? { uri: bar.logo, name: bar.name } : undefined}
             tag={d.menu?.past ?? undefined}
             note={d.description ?? undefined}
+            trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
+            label={said ? [d.name, caption, d.menu?.past, said, d.description].filter(Boolean).join('. ') : undefined}
           />
         );
       })}
@@ -76,4 +106,5 @@ export function DrinksHere({ title, drinks, barsById, isLoading, signedIn, empty
 const styles = StyleSheet.create({
   section: { gap: space.xs },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
+  score: { alignItems: 'flex-end' },
 });

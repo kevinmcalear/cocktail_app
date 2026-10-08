@@ -5,6 +5,7 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii, space } from '@/constants/tokens';
 
 import { DrawnSketch } from './DrawnSketch';
+import { IngredientDrawing } from './IngredientDrawing';
 import { Tag } from './Tag';
 import { useDs } from './theme';
 
@@ -24,6 +25,8 @@ export interface DrinkImageProps {
   /** Hide the Sketch tag on tiny thumbnails; the drink page still shows it. */
   hideTag?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** An ingredient instead of a drink: always its drawing (lib/sketch/ingredientArt.ts), never a photo. */
+  ingredient?: { id: string | null; name: string } | null;
 }
 
 /**
@@ -31,10 +34,10 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
-  const uri = source ?? null;
+  const uri = ingredient ? null : (source ?? null);
   const glassIcon = (
     <View style={styles.empty}>
       <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
@@ -44,10 +47,12 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
     <View
       accessible
       role="img"
-      accessibilityLabel={uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
+      accessibilityLabel={ingredient ? `${accessibilityLabel}, drawing` : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
       style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: ds.c.paper }, style]}
     >
-      {uri ? (
+      {ingredient ? (
+        <IngredientDrawing id={ingredient.id} name={ingredient.name} />
+      ) : uri ? (
         // Memory and disk: lists scroll the same pictures back into view. The
         // recycling key blanks a recycled list cell instead of flashing its last drink.
         <Image

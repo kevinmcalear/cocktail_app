@@ -34,6 +34,8 @@ export interface MapPin {
   rankers: number;
   /** On the drinks layer: how many of the bar's drinks match. */
   drinks?: number;
+  /** On a "Best Martini" layer: how many of the bar's drinks are martinis (not on the pin, which shows the score). */
+  matches?: number;
   /** A closed bar: "Closed 2019". */
   closed?: string;
 }
@@ -67,7 +69,8 @@ export function pinLabel(pin: MapPin): string {
 /** What a screen reader says for a pin. */
 export function pinDescription(pin: MapPin): string {
   if (pin.closed) return `${pin.name}, ${pin.closed.toLowerCase()}`;
-  if (pin.drinks) return `${pin.name}, ${pin.drinks} ${pin.drinks === 1 ? 'drink' : 'drinks'}`;
+  const count = pin.drinks ?? (pin.score === null ? pin.matches : undefined);
+  if (count) return `${pin.name}, ${count} ${count === 1 ? 'drink' : 'drinks'}`;
   return pin.score === null ? `${pin.name}, early` : `${pin.name}, score ${formatScore(pin.score)}`;
 }
 
@@ -91,9 +94,11 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
     paddingRight: label ? space.sm : 0,
     gap: space.xs,
     borderColor: selected ? accent.fill : backbar.dark.ink,
-    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks ? backbar.light.muted : backbar.light.ink,
+    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
     opacity: pin.closed && !selected ? 0.6 : 1,
+    // Where pins overlap: the selected one, then scored bars (higher over lower), over plain and closed ones.
+    zIndex: selected ? 300 : pin.closed ? 0 : pin.score !== null ? 100 + Math.round(pin.score * 10) : 1,
   };
 }
 

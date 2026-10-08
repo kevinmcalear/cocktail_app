@@ -12,6 +12,8 @@ jest.mock('@/hooks/useDiscover', () => ({
   useDiscoverRankings: () => ({ data: undefined, isLoading: false }),
   useTopBars: () => ({ data: undefined, isLoading: false }),
 }));
+let mockScores: Record<string, number> = {};
+jest.mock('@/hooks/useFlavor', () => ({ useItemScores: () => ({ data: mockScores }) }));
 let mockTopDrinks: unknown[] = [];
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
 jest.mock('./DiscoverMap', () => {
@@ -43,17 +45,17 @@ const bar: DiscoverBar = {
   closedYear: null,
 };
 
-function drink(id: string, name: string): DiscoverDrink {
-  return { id, name, description: `${name} note`, imageUrl: null, barId: bar.id, ingredients: [], styles: [], spirits: [], haystack: '' };
+function drink(id: string, name: string, styles: string[] = []): DiscoverDrink {
+  return { id, name, description: `${name} note`, imageUrl: null, barId: bar.id, ingredients: [], styles, spirits: [], haystack: '' };
 }
 
-function renderPane(drinks: DiscoverDrink[]) {
+function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null) {
   return renderWithTamagui(
     <DiscoverMapPane
       mode="side"
       area={area}
       onArea={() => {}}
-      drink={null}
+      drink={pick}
       results={{ drinks, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
     />
   );
@@ -96,4 +98,21 @@ test('an early bar\'s card has no top drinks block', async () => {
   await renderPane([drink('d1', 'House Martini')]);
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
   expect(screen.queryByText('Top drinks here')).toBeNull();
+});
+
+test('Best Martini lists every martini at the bar, scores beside the scored ones only', async () => {
+  mockTopDrinks = [];
+  mockScores = { d2: 9.2 };
+  const drinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
+  await renderPane(drinks, { id: 'martini', name: 'Martini' });
+
+  await fireEvent.press(screen.getByRole('radio', { name: 'Best Martini' }));
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
+
+  // The bar's score is its best martini's, with no "ranked by" line; the scored martini leads.
+  expect(screen.getAllByText('9.2')).toHaveLength(2);
+  expect(screen.getByRole('button', { name: 'Gibson. score 9.2. Gibson note, open' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'House Martini. House Martini note, open' })).toBeTruthy();
+  expect(screen.queryByText('Bamboo')).toBeNull();
+  expect(screen.queryByText('Not ranked yet')).toBeNull();
 });

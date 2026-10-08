@@ -8,7 +8,7 @@ import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
 import { kindLabel, spiritsOf, STYLES, stylesOf } from './drinkStyles';
 import { noteDimension } from './flavor';
-import type { Area } from './nearMe';
+import type { Area, DiscoverRow } from './nearMe';
 
 export interface DiscoverBar {
   id: string;
@@ -179,6 +179,52 @@ export function drinkPins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<st
     });
   }
   return pins.sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
+}
+
+// --- "Best Martini": every martini, scored where people have ranked it ---
+
+/**
+ * The drinks a "Best Martini" list is about: the ones of that style when it
+ * leads a style (Martini: the Martinis style, so no Espresso Martinis), else
+ * the ones that mention it.
+ */
+export function drinksOfPick(drinks: readonly DiscoverDrink[], pickName: string): DiscoverDrink[] {
+  const style = STYLES.find((s) => s.classics[0] === pickName);
+  const q = foldName(pickName);
+  return drinks.filter((d) => (style ? d.styles.includes(style.id) : d.haystack.includes(q)));
+}
+
+export interface BarScore {
+  score: number;
+  /** 0 when the score is its best drink's, not the bar's own for the drink. */
+  rankers: number;
+}
+
+/**
+ * Each bar's score for the drink: its own (the ranked rows of
+ * discover_drink_rankings), else its best-scored drink there. Bars with
+ * neither have none.
+ */
+export function barScoresFor(drinks: readonly DiscoverDrink[], drinkScores: Readonly<Record<string, number>>, ranked: readonly DiscoverRow[]): Record<string, BarScore> {
+  const out: Record<string, BarScore> = {};
+  for (const d of drinks) {
+    const s = drinkScores[d.id];
+    if (s !== undefined && s > (out[d.barId]?.score ?? -1)) out[d.barId] = { score: s, rankers: 0 };
+  }
+  for (const r of ranked) if (r.score !== null) out[r.venue_profile_id] = { score: r.score, rankers: r.rankers };
+  return out;
+}
+
+/** Scored drinks first, best first; the rest stay in the order they came. */
+export function byScore(drinks: readonly DiscoverDrink[], drinkScores: Readonly<Record<string, number>>): DiscoverDrink[] {
+  return [...drinks].sort((a, b) => (drinkScores[b.id] ?? -1) - (drinkScores[a.id] ?? -1));
+}
+
+/** One pin per bar that pours the drink: its score when it has one, else just the bar. Scored bars first. */
+export function scorePins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>, barScores: Readonly<Record<string, BarScore>>): MapPin[] {
+  return drinkPins(drinks, bars)
+    .map(({ drinks: count, ...pin }) => ({ ...pin, score: barScores[pin.id]?.score ?? null, rankers: barScores[pin.id]?.rankers ?? 0, matches: count }))
+    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 }
 
 /** Pins for closed bars, faded and labelled Closed. */

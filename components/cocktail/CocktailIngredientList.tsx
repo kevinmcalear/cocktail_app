@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import React, { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
@@ -7,15 +6,14 @@ import { Text, XStack, YStack, useTheme } from "tamagui";
 import { dragGripStyle, gripOnly } from "@/components/recipe/FormScrollContainer";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { UnitPicker } from "@/components/recipe/UnitPicker";
+import { IngredientThumb } from "@/components/ds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDragMergeDwell } from "@/hooks/useDragMergeDwell";
 import { isDefaultBatchName } from "@/lib/mergeRecipeItems";
-import { buildIngredientImageMap } from "@/lib/recipeUtils";
 import { capitalize } from "@/lib/stringUtils";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { STATUS } from '@/constants/palette';
 
-export { buildIngredientImageMap };
 
 const EDIT_ROW_HEIGHT = 80;
 
@@ -23,7 +21,6 @@ interface CocktailIngredientListProps {
     isEditing: boolean;
     viewRecipes?: any[];
     editItems?: SortableRecipeItem[];
-    ingredientImageMap: Record<string, string>;
     onReorder?: (items: SortableRecipeItem[]) => void;
     onUpdateItem?: (index: number, updates: Partial<SortableRecipeItem>) => void;
     onRemove?: (index: number) => void;
@@ -36,7 +33,6 @@ interface CocktailIngredientListProps {
 function EditIngredientRow({
     item,
     index,
-    imageUrl,
     drag,
     isActive,
     isMergeTarget,
@@ -50,7 +46,6 @@ function EditIngredientRow({
 }: {
     item: SortableRecipeItem;
     index: number;
-    imageUrl?: string;
     drag: () => void;
     isActive: boolean;
     isMergeTarget?: boolean;
@@ -133,15 +128,9 @@ function EditIngredientRow({
                     <TouchableOpacity
                         onPress={() => onIngredientPress?.(item.ingredient_id)}
                         activeOpacity={0.7}
-                        accessibilityLabel={imageUrl ? "Open ingredient" : "Add ingredient photo"}
+                        accessibilityLabel="Open ingredient"
                     >
-                        {imageUrl ? (
-                            <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
-                        ) : (
-                            <View style={[styles.imagePlaceholder, { borderColor: muted }]}>
-                                <IconSymbol name="camera.fill" size={18} color={muted} style={{ opacity: 0.7 }} />
-                            </View>
-                        )}
+                        <IngredientThumb id={item.ingredient_id} name={item.name} size={64} />
                     </TouchableOpacity>
                 </View>
 
@@ -223,11 +212,9 @@ function EditIngredientRow({
 
 function ViewIngredientRow({
     recipe,
-    imageUrl,
     onIngredientPress,
 }: {
     recipe: any;
-    imageUrl?: string;
     onIngredientPress?: (id: string) => void;
 }) {
     const typeScale = useSettingsStore((s) => (s.serviceMode ? 1.25 : 1));
@@ -274,8 +261,8 @@ function ViewIngredientRow({
                 <Text flex={1} minWidth={0} textAlign="left" color="$color" fontSize={18 * typeScale} lineHeight={24 * typeScale} fontWeight="500">
                     {name}
                 </Text>
-                {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={styles.viewThumb} contentFit="cover" />
+                {ingredientId ? (
+                    <IngredientThumb id={ingredientId} name={name} size={44} />
                 ) : (
                     <View style={styles.viewThumbSpacer} />
                 )}
@@ -288,7 +275,6 @@ export function CocktailIngredientList({
     isEditing,
     viewRecipes,
     editItems = [],
-    ingredientImageMap,
     onReorder,
     onUpdateItem,
     onRemove,
@@ -332,7 +318,6 @@ export function CocktailIngredientList({
                 <EditIngredientRow
                     item={item}
                     index={index}
-                    imageUrl={ingredientImageMap[item.ingredient_id]}
                     drag={drag}
                     isActive={isActive}
                     isMergeTarget={dwell.mergeTargetIndex === index}
@@ -381,16 +366,10 @@ export function CocktailIngredientList({
     return (
         <YStack gap="$4">
             {viewRecipes?.map((recipe, index) => {
-                const id = recipe.ingredient?.id || recipe.display_ingredient_id;
-                const imageUrl =
-                    (id && ingredientImageMap[id]) ||
-                    recipe.ingredient?.item_images?.[0]?.images?.url ||
-                    undefined;
                 return (
                     <ViewIngredientRow
                         key={recipe.id || index}
                         recipe={recipe}
-                        imageUrl={imageUrl}
                         onIngredientPress={onIngredientPress}
                     />
                 );
@@ -400,12 +379,6 @@ export function CocktailIngredientList({
 }
 
 const styles = StyleSheet.create({
-    viewThumb: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        backgroundColor: "rgba(127,127,127,0.1)",
-    },
     viewThumbSpacer: {
         width: 44,
         height: 44,
@@ -459,22 +432,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     grabberWeb: { cursor: "grab" } as object,
-    image: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: "rgba(255,255,255,0.05)",
-    },
-    imagePlaceholder: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderWidth: 1,
-        borderStyle: "dashed",
-        justifyContent: "center",
-        alignItems: "center",
-    },
     measureInput: {
         fontSize: 13,
         fontWeight: "600",

@@ -15,6 +15,7 @@ import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
+import { IngredientDrawing } from "@/components/ds";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
@@ -25,7 +26,6 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { renameIngredientEntity, resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
-import { buildIngredientImageMap } from "@/lib/recipeUtils";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
@@ -114,10 +114,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     });
 
     const mergedIngredients = useMemo(() => {
-        const published = (dropdowns?.ingredients || []).map((i: any) => ({
-            id: i.id,
-            name: i.name, item_images: i.item_images,
-        }));
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({ id: i.id, name: i.name }));
 
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === 'ingredient')
@@ -147,11 +144,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
         );
         setRecentlyCreatedItem(null);
     }, [recentlyCreatedItem, setRecentlyCreatedItem, currentDraftId]);
-
-    const ingredientImageMap = useMemo(
-        () => buildIngredientImageMap(undefined, dropdowns?.ingredients),
-        [dropdowns?.ingredients]
-    );
 
     const draftLoadedRef = useRef<string | null>(null);
     const currentStateStr = JSON.stringify({ name, description, brandMaker, generic, abv, selectedCategories, recipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch });
@@ -477,7 +469,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 id={currentDraftId || "new-ingredient"}
                 title={name}
                 images={[]}
-                emptyPhotoPlaceholder
+                hero={<IngredientDrawing name={name || "Ingredient"} />}
                 isFavorite={false}
                 onToggleFavorite={() => {}}
                 embedded={!!isInline}
@@ -517,8 +509,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
                             variant="detail"
-                            allIngredients={dropdowns?.ingredients}
-                            ingredientImageMap={ingredientImageMap}
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {

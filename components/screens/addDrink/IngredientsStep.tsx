@@ -4,7 +4,6 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { getPreferredUnit } from '@/store/useSettingsStore';
@@ -89,10 +88,10 @@ export function IngredientsStep({
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
           {near && !results.includes(near) ? (
-            <ResultRow label={`Did you mean ${near.name}?`} onPress={() => add({ id: near.id, name: near.name ?? query })} />
+            <ResultRow id={near.id} label={`Did you mean ${near.name}?`} onPress={() => add({ id: near.id, name: near.name ?? query })} />
           ) : null}
           {results.map((r) => (
-            <ResultRow key={r.id} label={r.name ?? ''} imageUrl={heroPicture(r.item_images as ItemImageLink[] | null)?.url ?? null} onPress={() => add({ id: r.id, name: r.name ?? query })} />
+            <ResultRow key={r.id} id={r.id} label={r.name ?? ''} onPress={() => add({ id: r.id, name: r.name ?? query })} />
           ))}
           {loading ? (
             <Body tone="muted" style={styles.loading}>Loading ingredients…</Body>
@@ -118,13 +117,13 @@ export function IngredientsStep({
   );
 }
 
-/** A found ingredient, with its picture; `isNew` is the plain "add as new" row. */
-function ResultRow({ label, imageUrl, isNew, onPress }: { label: string; imageUrl?: string | null; isNew?: boolean; onPress: () => void }) {
+/** A found ingredient, with its drawing; `isNew` is the plain "add as new" row. */
+function ResultRow({ id, label, isNew, onPress }: { id?: string; label: string; isNew?: boolean; onPress: () => void }) {
   const ds = useDs();
   const found = !isNew;
   return (
     <PressableScale role="button" onPress={onPress} accessibilityLabel={label} style={[styles.result, found && styles.found, { borderBottomColor: ds.c.line }]}>
-      {found ? <IngredientThumb name={label} url={imageUrl} size={36} /> : null}
+      {found ? <IngredientThumb id={id} name={label} size={36} /> : null}
       <Body numberOfLines={1} style={styles.flex}>{label}</Body>
     </PressableScale>
   );

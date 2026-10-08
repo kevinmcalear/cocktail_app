@@ -48,7 +48,6 @@ export function FlavorSection({ itemId }: { itemId: string }) {
           </View>
         ))}
       </View>
-      {flavor.source === 'ai' ? <Caption tone="muted">Partly estimated by AI from house-made ingredients.</Caption> : null}
     </View>
   );
 }
