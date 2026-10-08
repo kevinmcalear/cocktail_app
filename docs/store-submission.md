@@ -55,7 +55,7 @@ Apple rejects template apps submitted on a client's behalf. Supported model:
 - **Age rating:** answer that alcohol references are *frequent*. The app is for adults working in hospitality.
 - **URLs:**
   - Privacy policy: `https://babyvom.it/legal/privacy`
-  - Support: `https://babyvom.it/legal/privacy`, which lists the contact email, until there is a support page
+  - Support: `https://babyvom.it/support` (`app/support.tsx`: the contact email and common questions). It moves with the domain if the app is renamed, so update it here and in both listings.
   - Account deletion is in the app: Settings → Account → Delete account.
 - **Sign-in for review:** App Review needs a working demo account.
   - Create `review@…` as a member of a demo bar with sample drinks and a menu.
@@ -75,6 +75,7 @@ Apple rejects template apps submitted on a client's behalf. Supported model:
 
 ## 5. Google Play listing
 
+- **Store contact details:** website `https://babyvom.it/support` and the `supportEmail` from `constants/brand.json`. The website moves with the domain if the app is renamed.
 - **Data safety:** declare the same data types as above. Data is encrypted in transit, and users can request deletion.
   - Deletion URL: `https://babyvom.it/legal/delete-account`
 - **Content rating (IARC):** answer yes to alcohol references.

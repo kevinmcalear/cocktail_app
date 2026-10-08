@@ -366,7 +366,6 @@ function Settings() {
       />
     </SettingsSection>
   );
-
   const linkRow = (label: string, onPress: () => void) => <SettingsRow label={label} onPress={onPress} />;
 
   const accountPanel = (
@@ -374,6 +373,7 @@ function Settings() {
       <View>
         {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
         {linkRow('Terms of use', () => router.push('/legal/terms'))}
+        {linkRow('Help and support', () => router.push('/support'))}
         <SafetyLinks row={linkRow} />
         <RowDivider />
         <SettingsRow
