@@ -15,6 +15,8 @@ interface PublicShellProps {
   imageUrl: string | null;
   generated?: boolean;
   glass?: string | null;
+  /** The drink's id: with no picture, its drawn sketch (signed in; signed out it's the glass). */
+  itemId?: string | null;
   children: ReactNode;
 }
 
@@ -34,7 +36,7 @@ export function PublicShell(props: PublicShellProps) {
   );
 }
 
-function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps) {
+function Frame({ title, imageUrl, generated, glass, itemId, children }: PublicShellProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -44,7 +46,7 @@ function Frame({ title, imageUrl, generated, glass, children }: PublicShellProps
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
   // Public pages show one picture: the drink's hero or the release cover.
   const pictures = imageUrl ? [{ url: imageUrl, isSketch: !!generated, isOutdated: false }] : [];
-  const hero = <DrinkHero name={title} pictures={pictures} glass={glass ?? null} height={heroHeight} fade={!wide} />;
+  const hero = <DrinkHero name={title} pictures={pictures} glass={glass ?? null} itemId={itemId} height={heroHeight} fade={!wide} />;
   const body = <View style={[styles.body, { paddingHorizontal: gutter }]}>{children}</View>;
 
   return (

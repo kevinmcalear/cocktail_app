@@ -69,6 +69,10 @@ export const GLASS_VARIANTS: Partial<Record<SketchGlass, GlassVariant[]>> = {
     v('martini', 'soft', 'Soft bowl', { rim: 24, prof: [[24, 25], [30, 24.6], [36, 23.2], [42, 20.6], [47, 17], [51, 12.4], [54, 7], [55.5, 2.5], [56, 0]], top: 28, stem: [56, 85], foot: [86, 13], stemmed: true, stemW: 0.75, flare: 2.5 }),
     // Small and low: a short stem, so it sits lower than the others.
     v('martini', 'pony', 'Little pony', { rim: 42, prof: [[42, 20], [47, 16.6], [52, 12.8], [57, 8.8], [61, 5.2], [64, 2], [65.4, 0]], top: 45.5, stem: [65.4, 85], foot: [86, 11], stemmed: true, stemW: 0.9, flare: 2.6 }),
+    // The big, shallow cosmo cone.
+    v('martini', 'wide', 'Wide V', { rim: 27, prof: [[27, 32], [32, 26], [38, 19.4], [44, 12.8], [49, 7.4], [52.5, 3.4], [54, 0]], top: 30.5, stem: [54, 86], foot: [87, 14.5], stemmed: true, stemW: 0.7, flare: 2.4 }),
+    // A small, deep cone high on a long stem, like the old cocktail glasses.
+    v('martini', 'tall', 'Long stem', { rim: 16, prof: [[16, 21], [21, 17.4], [27, 13.4], [33, 9.6], [38, 6.2], [42, 3.2], [44.5, 0.8], [45, 0]], top: 20, stem: [45, 87], foot: [88, 12.5], stemmed: true, stemW: 0.65, flare: 2.2 }),
   ],
   coupe: [
     v('coupe', 'wide', 'Wide'),
@@ -84,6 +88,71 @@ export const GLASS_VARIANTS: Partial<Record<SketchGlass, GlassVariant[]>> = {
     v('rocks', 'straight', 'Straight'),
     v('rocks', 'heavy', 'Heavy base', { rim: 42, prof: [[42, 27], [86, 26]], top: 54, base: 74, stemmed: false }),
     v('rocks', 'tapered', 'Tapered', { rim: 44, prof: [[44, 27.5], [86, 19]], top: 56, base: 80, stemmed: false }),
+    // The wide double old fashioned.
+    v('rocks', 'double', 'Double', { rim: 40, prof: [[40, 30], [86, 28.4]], top: 52, base: 80, stemmed: false }),
+    // A shot or a chaser.
+    v('rocks', 'shot', 'Shot', { rim: 57, prof: [[57, 12.6], [86, 10.4]], top: 62, base: 80.5, stemmed: false }),
+  ],
+  wine: [
+    v('wine', 'universal', 'Universal'),
+    // Tall, with the biggest bowl: reds with tannin.
+    v('wine', 'bordeaux', 'Bordeaux', { rim: 12, prof: [[12, 14.5], [20, 17.4], [29, 19.8], [38, 20.8], [46, 19.8], [53, 16.4], [58.5, 10.8], [62, 4.6], [63.4, 0]], top: 38, stem: [63.4, 87], foot: [88, 14], stemmed: true, stemW: 0.8, flare: 2.6 }),
+    // The wide balloon that closes in at the rim: pinot, burgundy.
+    v('wine', 'burgundy', 'Burgundy', { rim: 20, prof: [[20, 14.5], [25, 19.5], [31, 23.5], [38, 25.8], [45, 25], [51, 21], [55.5, 14.5], [58.5, 7], [59.6, 0]], top: 41, stem: [59.6, 87], foot: [88, 15], stemmed: true, stemW: 0.8, flare: 2.8 }),
+    // A smaller, narrower U for whites and rosé.
+    v('wine', 'white', 'White', { rim: 26, prof: [[26, 13.5], [32, 15.2], [39, 15.8], [46, 14.6], [52, 11.4], [56, 6.6], [58.2, 1.6], [58.6, 0]], top: 38, stem: [58.6, 86], foot: [87, 12], stemmed: true, stemW: 0.75, flare: 2.4 }),
+    // Sherry, port and fortified wines: a little tulip.
+    v('wine', 'copita', 'Copita', { rim: 38, prof: [[38, 8.2], [43, 9.6], [49, 10.8], [54, 10.4], [58, 8], [61, 4.4], [62.6, 0]], top: 48, stem: [62.6, 86], foot: [87, 10], stemmed: true, stemW: 0.7, flare: 2.2 }),
+    v('wine', 'stemless', 'Stemless', { rim: 36, prof: [[36, 15.5], [44, 18.8], [53, 20.6], [63, 20.6], [72, 19], [79, 15.6], [86, 11]], top: 54, base: 82.5, stemmed: false }),
+  ],
+  flute: [
+    v('flute', 'classic', 'Classic'),
+    // Wider in the middle and closing at the rim, to keep the nose: the modern Champagne glass.
+    v('flute', 'tulip', 'Tulip', { rim: 12, prof: [[12, 9.4], [19, 11.4], [28, 13], [37, 13.2], [45, 11.6], [51, 8.6], [55.5, 4.6], [57.6, 0]], top: 21, stem: [57.6, 86], foot: [87, 10.5], stemmed: true, stemW: 0.7, flare: 2.2 }),
+    // Opening out to the rim.
+    v('flute', 'trumpet', 'Trumpet', { rim: 12, prof: [[12, 12.6], [17, 10.6], [24, 9], [33, 7.8], [43, 6.8], [51, 5.4], [56.5, 3], [60, 0]], top: 17, stem: [60, 86], foot: [87, 10], stemmed: true, stemW: 0.65, flare: 2.2 }),
+    // A slim, straight-sided flute.
+    v('flute', 'slim', 'Slim', { rim: 10, prof: [[10, 7.6], [40, 7.4], [50, 6.6], [56, 4.6], [60, 2], [61, 0]], top: 16, stem: [61, 86], foot: [87, 9.5], stemmed: true, stemW: 0.65, flare: 2 }),
+  ],
+  spritz: [
+    v('spritz', 'balloon', 'Balloon'),
+    // The round Spanish gin-tonic copa on a short, sturdy stem.
+    v('spritz', 'copa', 'Copa', { rim: 18, prof: [[18, 18], [24, 23], [32, 26.6], [40, 27.2], [48, 25.2], [54.5, 20], [59.5, 12], [62, 4], [62.6, 0]], top: 29, stem: [62.6, 85], foot: [86, 15], stemmed: true, stemW: 1.1, flare: 3 }),
+    // A goblet: wide, straight-sided bowl, short heavy stem.
+    v('spritz', 'goblet', 'Goblet', { rim: 24, prof: [[24, 22], [31, 22], [38, 21], [45, 18.6], [51, 14.2], [55, 8], [56.8, 2], [57, 0]], top: 31, stem: [57, 82], foot: [83, 15], stemmed: true, stemW: 1.5, flare: 3.2 }),
+  ],
+  snifter: [
+    v('snifter', 'balloon', 'Snifter'),
+    // A whisky nosing glass: a tulip on a solid foot, no stem.
+    v('snifter', 'glencairn', 'Glencairn', { rim: 34, prof: [[34, 9], [40, 10.4], [48, 13.4], [56, 16.2], [62, 16.8], [67, 14.8], [71, 10.6], [74, 8], [79, 8.4], [86, 11.5]], top: 57, base: 71.5, stemmed: false }),
+    // A tall tasting tulip on a stem.
+    v('snifter', 'tulip', 'Tulip', { rim: 28, prof: [[28, 7.8], [36, 9.4], [44, 12], [51, 13.6], [57, 12.6], [61.5, 9], [65, 4.2], [66.4, 0]], top: 51, stem: [66.4, 86], foot: [87, 11], stemmed: true, stemW: 0.75, flare: 2.4 }),
+  ],
+  beer: [
+    v('beer', 'nonic', 'Nonic'),
+    v('beer', 'shaker', 'Shaker pint', { rim: 14, prof: [[14, 18.4], [88, 13.2]], top: 21, base: 84, stemmed: false }),
+    // Tall and tapering to a small foot.
+    v('beer', 'pilsner', 'Pilsner', { rim: 7, prof: [[7, 15], [30, 13.4], [56, 10.6], [74, 8.2], [81, 7.4], [85, 8.4], [88, 10]], top: 14, base: 80, stemmed: false }),
+    // The curvy wheat-beer vase.
+    v('beer', 'weizen', 'Weizen', { rim: 6, prof: [[6, 12.6], [15, 14.4], [26, 13.6], [40, 10.8], [52, 9.2], [64, 9.4], [75, 10.4], [83, 10.6], [88, 10.2]], top: 12, base: 83, stemmed: false }),
+    // The Belgian tulip on a short stem.
+    v('beer', 'tulip', 'Tulip', { rim: 22, prof: [[22, 14.6], [27, 16.4], [34, 18.4], [42, 19], [49, 17.4], [55, 13.4], [59.5, 7.4], [61.8, 0]], top: 29, stem: [61.8, 80], foot: [81, 13], stemmed: true, stemW: 1.6, flare: 3.2 }),
+    // A glass tankard with a handle.
+    v('beer', 'tankard', 'Tankard', { rim: 22, prof: [[22, 18.6], [86, 18.6]], top: 28, base: 80, stemmed: false, handle: true }),
+  ],
+  collins: [
+    v('collins', 'straight', 'Collins'),
+    // Taller and narrower still.
+    v('collins', 'zombie', 'Zombie', { rim: 9, prof: [[9, 11.6], [91, 11]], top: 13, base: 86, stemmed: false }),
+    // The hurricane: a curved tulip on a short foot.
+    v('collins', 'hurricane', 'Hurricane', { rim: 11, prof: [[11, 14.4], [16, 15.8], [25, 14.6], [34, 11.4], [42, 9.4], [50, 10.2], [58, 13.6], [66, 15.4], [72, 14], [76.5, 9.4], [79, 3.6], [79.6, 0]], top: 17, stem: [79.6, 86], foot: [87, 13.5], stemmed: true, stemW: 1.4, flare: 3 }),
+  ],
+  mug: [
+    v('mug', 'copper', 'Mug'),
+    // A stemmed glass with a handle.
+    v('mug', 'irish', 'Irish coffee', { rim: 20, prof: [[20, 16.4], [36, 16], [48, 15], [56, 12.4], [62, 7.4], [64.6, 2], [65, 0]], top: 25, stem: [65, 83], foot: [84, 13], stemmed: true, stemW: 1.2, flare: 3, handle: true }),
+    // A glass toddy mug.
+    v('mug', 'toddy', 'Glass mug', { rim: 30, prof: [[30, 17.4], [84, 15.8]], top: 35, base: 80, stemmed: false, handle: true }),
   ],
   highball: [
     v('highball', 'straight', 'Straight'),
