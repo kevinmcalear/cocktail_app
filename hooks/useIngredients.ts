@@ -6,6 +6,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useDebounced } from '@/hooks/useDiscover';
 import { batchedDrinkName, nameKey, orderedPictures, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 
+/** A row of ingredient_used_in. */
+interface UsedInRow {
+    id: string;
+    name: string;
+    image_url: string | null;
+    image_is_generated: boolean | null;
+}
+
 /**
  * The photos of the drink a batch makes ("Aperol Fizz" for "Aperol Fizz Batch"),
  * from the same venue. Null when it isn't a batch, or already has a photo.
@@ -80,36 +88,19 @@ export function useIngredient(id?: string | string[]) {
                 ingredient: resolvePresentationIngredient(r),
             }));
 
-            // 3. Fetch cocktails that use this ingredient
-            const { data: usedInData, error: usedInError } = await supabase
-                .from('app_recipe_presentation')
-                .select(`
-                    id,
-                    cocktail:app_item_presentation!new_recipes_recipe_item_id_fkey(
-                        id, 
-                        name,
-                        item_type,
-                        item_images (
-                            sort_order,
-                            is_generated,
-                            images ( url )
-                        )
-                    )
-                `)
-                .eq('display_ingredient_id', ingredientId)
-                .not('cocktail', 'is', null);
-
-            let usedIn: any[] = [];
-            if (!usedInError && usedInData) {
-                const uniqueCocktails = new Map();
-                usedInData.forEach((item: any) => {
-                    // Preps this goes into are listed on the prep card, not here.
-                    if (item.cocktail?.item_type === 'cocktail' && !uniqueCocktails.has(item.cocktail.id)) {
-                        uniqueCocktails.set(item.cocktail.id, item);
-                    }
-                });
-                usedIn = Array.from(uniqueCocktails.values());
-            }
+            // 3. Cocktails that use this ingredient, as the caller's recipe view shows them
+            // (ingredient_used_in, supabase/migrations/20261008340000_my_bar_rpc.sql). A
+            // failed read leaves the section out rather than failing the page.
+            const { data: usedInData } = await supabase.rpc('ingredient_used_in', { p_ingredient_id: ingredientId, p_limit: 200 });
+            const usedIn = ((usedInData ?? []) as UsedInRow[]).map((d) => ({
+                id: d.id,
+                cocktail: {
+                    id: d.id,
+                    name: d.name,
+                    item_type: 'cocktail' as const,
+                    item_images: d.image_url ? [{ angle: 'hero' as const, is_generated: d.image_is_generated, images: { url: d.image_url } }] : [],
+                },
+            }));
 
             return {
                 ingredient: { ...ingredient, generic },

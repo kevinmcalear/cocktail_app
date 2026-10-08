@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Chip, Display, Field, Headline, LockedSection, useDs, useGutter } from '@/components/ds';
+import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
@@ -116,6 +117,7 @@ export function TeamScreen() {
               </View>
             </View>
           ))}
+          {manage ? <JobRequests venueId={active.id} title="Job requests" /> : null}
         </LockedSection>
         {manage && active ? (
           <InviteSheet visible={inviting} onClose={() => setInviting(false)} barId={active.id} barName={active.name} ceiling={role} onDone={setNote} />

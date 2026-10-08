@@ -15,6 +15,7 @@ import { useMyHadDrinks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
 
 import { BarTallies, Favourites, HadList } from './HadDrinks';
+import { MyJobRequests } from './JobRequests';
 import { OriginalsGrid, Stat, Stats } from './ProfileSections';
 
 type Tab = 'had' | 'bars' | 'made';
@@ -90,6 +91,8 @@ function You({ inTabs }: { inTabs?: boolean }) {
               {profile && shown ? <Button label="See public page" variant="ghost" icon="globe" onPress={() => router.push(`/p/${profile.handle}` as Href)} /> : null}
             </View>
           </View>
+
+          {profile ? <MyJobRequests personId={profile.id} /> : null}
 
           <Stats>
             <Stat value={stats.drinks} label={stats.drinks === 1 ? 'drink had' : 'drinks had'} />

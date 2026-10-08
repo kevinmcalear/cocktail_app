@@ -451,7 +451,7 @@ export function useCocktailDraftEditor({
         try {
             const resolvedRecipeItems = [];
             for (const item of recipeItems) {
-                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
                 if (resolvedId !== item.ingredient_id) {
                     await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
                 }

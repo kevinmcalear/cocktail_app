@@ -7,7 +7,7 @@
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
 import { kindLabel, spiritsOf, STYLES, stylesOf } from './drinkStyles';
-import { NOTE_MIN, noteDimension, type Profile } from './flavor';
+import { noteDimension } from './flavor';
 import type { Area } from './nearMe';
 
 export interface DiscoverBar {
@@ -35,6 +35,8 @@ export interface DiscoverDrink {
   haystack: string;
   /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past. */
   menu?: { onNow: boolean; past: string | null; order: number };
+  /** Tasting notes it fairly tastes of (flavor dimensions at NOTE_MIN or more), worked out by discover_drinks. */
+  notes?: string[];
 }
 
 export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'haystack'> & { riffOf: string | null }): DiscoverDrink {
@@ -53,9 +55,9 @@ const KM_PER_DEG = 111.045;
 const STYLE_IDS = new Set(STYLES.map((s) => s.id));
 const kindGroup = (kind: string) => (noteDimension(kind) ? 'note' : STYLE_IDS.has(kind) ? 'style' : 'spirit');
 
-function matchesKind(d: DiscoverDrink, kind: string, profiles: DrinkFilter['profiles']): boolean {
+function matchesKind(d: DiscoverDrink, kind: string): boolean {
   const note = noteDimension(kind);
-  if (note) return (profiles?.get(d.id)?.[note] ?? 0) >= NOTE_MIN;
+  if (note) return !!d.notes?.includes(note);
   return d.styles.includes(kind) || d.spirits.includes(kind);
 }
 
@@ -63,7 +65,7 @@ function matchesKind(d: DiscoverDrink, kind: string, profiles: DrinkFilter['prof
 function matchesKinds(d: DiscoverDrink, f: DrinkFilter): boolean {
   const groups = new Map<string, string[]>();
   for (const k of f.kinds) groups.set(kindGroup(k), [...(groups.get(kindGroup(k)) ?? []), k]);
-  return [...groups.values()].every((ks) => ks.some((k) => matchesKind(d, k, f.profiles)));
+  return [...groups.values()].every((ks) => ks.some((k) => matchesKind(d, k)));
 }
 
 /** What the picked filters are called in a heading: "Drinks", "Martinis", "Martinis & Gin", "Drinks, 3 filters". */
@@ -98,8 +100,6 @@ export interface DrinkFilter {
   /** Typed search: every word must match the drink's name, description, ingredients or bar. */
   search: string;
   area: Area;
-  /** Drink id to flavor profile, used when kind is a tasting note. */
-  profiles?: ReadonlyMap<string, Profile>;
 }
 
 /**
