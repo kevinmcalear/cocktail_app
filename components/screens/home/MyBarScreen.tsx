@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, PalateFlower, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -55,6 +55,10 @@ export function MyBarScreen() {
   // Match percentages only once your taste comes from enough rankings.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
   const profiles = useItemFlavors([...bar.canMake, ...[...bar.oneAway, ...bar.twoAway].flatMap((g) => g.drinks)].map((d) => d.id), !!scored);
+  const glyphFor = (id: string) => {
+    const profile = profiles.data?.[id];
+    return profile ? <PalateFlower values={profile} size={28} rings={false} /> : null;
+  };
   const matchFor = (id: string) => {
     const profile = scored && profiles.data?.[id];
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
@@ -117,7 +121,7 @@ export function MyBarScreen() {
           </View>
         );
       case 'drink':
-        return <MakeDrink drink={item.drink} matchFor={matchFor} />;
+        return <MakeDrink drink={item.drink} matchFor={matchFor} glyphFor={glyphFor} />;
       case 'group':
         return (
           <BottleGroup
@@ -126,6 +130,7 @@ export function MyBarScreen() {
             open={openGroups.has(item.key)}
             onOpen={openGroup}
             matchFor={matchFor}
+            glyphFor={glyphFor}
             onAdd={addIds}
             style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null}
           />

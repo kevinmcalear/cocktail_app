@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DrinkImage, Headline, PressableScale, Title } from '@/components/ds';
+import { Button, Caption, DrinkImage, Headline, PalateFlower, PressableScale, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useFlavorBaseline, useForYouDrinks, useMyTaste } from '@/hooks/useFlavor';
-import { COLD_START_DRINKS, forYou } from '@/lib/flavor';
+import { COLD_START_DRINKS, forYou, type Profile } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { TasteQuestions } from './TasteQuestions';
@@ -20,10 +20,12 @@ interface RailCardProps {
   reason: string;
   /** Where it opens: the drink page unless it says otherwise. */
   href?: string;
+  /** Its flavor, drawn small beside the badge. */
+  profile?: Profile;
 }
 
 /** One drink in a rail: picture, name, and a line on why it's here. */
-export function RailCard({ id, name, imageUrl, badge, reason, href }: RailCardProps) {
+export function RailCard({ id, name, imageUrl, badge, reason, href, profile }: RailCardProps) {
   const router = useRouter();
   return (
     <PressableScale
@@ -34,7 +36,10 @@ export function RailCard({ id, name, imageUrl, badge, reason, href }: RailCardPr
     >
       <DrinkImage thumb source={imageUrl} itemId={id} accessibilityLabel={name} hideTag />
       <Headline numberOfLines={1}>{name}</Headline>
-      <Caption>{badge}</Caption>
+      <View style={styles.badge}>
+        {profile ? <PalateFlower values={profile} size={28} rings={false} /> : null}
+        <Caption>{badge}</Caption>
+      </View>
       <Caption tone="muted" numberOfLines={4}>
         {reason}
       </Caption>
@@ -90,7 +95,7 @@ export function ForYou() {
       <Rail title="For you" note={note}>
         {picks.map((p) => (
           <View role="listitem" key={p.id}>
-            <RailCard id={p.id} name={p.name} imageUrl={p.imageUrl} badge={p.match === null ? 'Your style' : `${p.match}% match`} reason={p.reason} />
+            <RailCard id={p.id} name={p.name} imageUrl={p.imageUrl} badge={p.match === null ? 'Your style' : `${p.match}% match`} reason={p.reason} profile={p.profile} />
           </View>
         ))}
       </Rail>
@@ -103,4 +108,5 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   rail: { flexDirection: 'row', gap: space.md, paddingVertical: space.xs },
   card: { width: CARD_WIDTH, gap: space.xs },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

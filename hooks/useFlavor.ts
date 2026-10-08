@@ -3,7 +3,10 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAuth } from '@/ctx/AuthContext';
 import { chunk } from '@/lib/commandSearchGrid';
 import { blendTaste, DIMENSIONS, MIN_COVERAGE, type FlavorDrink, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
+import { tasteFromRankings, type RankedFlavor } from '@/lib/palate';
 import { supabase } from '@/lib/supabase';
+
+import { useMyHadDrinks } from './useRankings';
 
 // Flavor profiles and your taste (supabase/migrations/20260928300000_flavor_profiles.sql).
 // Row shapes are written by hand until types/ is regenerated.
@@ -43,31 +46,30 @@ export function useItemFlavor(itemId: string | null | undefined) {
 export interface MyTaste {
   taste: Taste;
   basis: TasteBasis;
-  /** Ranked drinks that went into it. */
+  /** Ranked drinks (with a profile) that went into it. */
   rankedDrinks: number;
   /** What your rankings alone say, before your answers are blended in. */
   rankedTaste: Taste | null;
   /** The quick answers, if any. */
   answers: Taste | null;
+  /** Each drink you ranked that has a profile: what shaped it (lib/palate.ts). */
+  entries: RankedFlavor[];
+  /** The average drink your rankings are measured against. */
+  baseline: Profile | null;
 }
 
 /**
- * Your taste: the drinks you ranked (get_my_taste, which only ever reads your
- * own) blended with your answers (blendTaste). Signed out: null.
+ * Your taste: the drinks you ranked, loved ones pulling and disliked ones
+ * pushing (tasteFromRankings), blended with your answers (blendTaste).
+ * Built from your own rankings (useMyHadDrinks) and their profiles, so it
+ * moves the moment you rank. Signed out: null.
  */
 export function useMyTaste() {
   const userId = useAuth().user?.id ?? null;
-  const ranked = useQuery({
-    queryKey: ['my-taste', userId],
-    enabled: !!userId,
-    queryFn: async (): Promise<{ taste: Taste | null; drinks: number }> => {
-      const { data, error } = await supabase.rpc('get_my_taste');
-      if (error) throw error;
-      const row = ((data ?? []) as (Partial<FlavorRow> & { drinks: number })[])[0];
-      if (!row?.drinks) return { taste: null, drinks: 0 };
-      return { taste: profileOf(row), drinks: row.drinks };
-    },
-  });
+  const had = useMyHadDrinks();
+  const ids = (had.data ?? []).map((d) => d.itemId);
+  const flavors = useItemFlavors(ids, !!had.data, true);
+  const baseline = useFlavorBaseline();
   const answers = useQuery({
     queryKey: ['taste-answers', userId],
     enabled: !!userId,
@@ -77,10 +79,17 @@ export function useMyTaste() {
       return ((data as { taste_answers: Taste | null } | null)?.taste_answers ?? null);
     },
   });
-  const error = ranked.error ?? answers.error ?? null;
-  if (!userId || !ranked.data || answers.isLoading) return { data: null, isLoading: !!userId && (ranked.isLoading || answers.isLoading), error };
-  const { taste, basis } = blendTaste(ranked.data.taste, ranked.data.drinks, answers.data ?? null);
-  const data: MyTaste = { taste, basis, rankedDrinks: ranked.data.drinks, rankedTaste: ranked.data.taste, answers: answers.data ?? null };
+  const error = had.error ?? answers.error ?? flavors.error ?? null;
+  const waiting = !had.data || answers.isLoading || baseline.isLoading || (ids.length > 0 && !flavors.data);
+  if (!userId || waiting) return { data: null, isLoading: !!userId && !error, error };
+  const entries: RankedFlavor[] = had.data!.flatMap((d) => {
+    const profile = flavors.data?.[d.itemId];
+    return profile ? [{ itemId: d.itemId, name: d.name, score: d.score, sentiment: d.sentiment, createdAt: d.createdAt, profile }] : [];
+  });
+  const ranked = tasteFromRankings(entries, baseline.data ?? null);
+  const rankedDrinks = ranked?.drinks ?? 0;
+  const { taste, basis } = blendTaste(ranked?.taste ?? null, rankedDrinks, answers.data ?? null);
+  const data: MyTaste = { taste, basis, rankedDrinks, rankedTaste: ranked?.taste ?? null, answers: answers.data ?? null, entries, baseline: baseline.data ?? null };
   return { data, isLoading: false, error };
 }
 
@@ -172,15 +181,16 @@ export function useItemScores(itemIds: readonly string[]) {
 
 /**
  * Usable profiles for these drinks only ({ id: profile }), in URL-sized
- * batches: My Bar's match percentages for the drinks it has loaded.
+ * batches: My Bar's match percentages for the drinks it has loaded, and your
+ * taste's ranked drinks (kept between launches, so your taste works offline).
  */
-export function useItemFlavors(itemIds: readonly string[], enabled = true) {
+export function useItemFlavors(itemIds: readonly string[], enabled = true, keep = false) {
   const ids = [...new Set(itemIds)].sort();
   return useQuery({
-    queryKey: ['item-flavors', ids],
+    queryKey: ['item-flavors', ids, ...(keep ? ['kept'] : [])],
     enabled: enabled && ids.length > 0,
     placeholderData: keepPreviousData,
-    meta: { persist: false },
+    meta: { persist: keep },
     queryFn: async (): Promise<Record<string, Profile>> => {
       const batches = await Promise.all(
         chunk(ids, 150).map(async (batch) => {

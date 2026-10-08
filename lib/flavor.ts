@@ -3,11 +3,11 @@
  *
  * Every drink with a spec gets a flavor profile on the server: twelve
  * dimensions, 0 to 1 (supabase/functions/_shared/flavor.ts has the rules).
- * Your taste is the same twelve dimensions, averaged over the drinks you ranked
- * and weighted by their score, so the drinks at the top of your lists count
- * most (get_my_taste). Your answers to a few questions (asked at setup, and
- * changeable on /taste) start it off and count for less with every drink you
- * rank. Until you've ranked enough drinks we don't show a match percentage.
+ * Your taste is the same twelve dimensions: the average drink, pulled towards
+ * the drinks you love and pushed away from the ones you don't (lib/palate.ts).
+ * Your answers to a few questions (asked at setup, and changeable on /taste)
+ * start it off and count for less with every drink you rank. Until you've
+ * ranked enough drinks we don't show a match percentage.
  */
 
 export const DIMENSIONS = [
@@ -71,7 +71,7 @@ export function noteLabel(kind: string): string | null {
   return d ? noteWord(d) : null;
 }
 
-/** Profiles that understood less than this share of their spec aren't used. Mirrors get_my_taste. */
+/** Profiles that understood less than this share of their spec aren't used. Mirrors the server's flavor functions. */
 export const MIN_COVERAGE = 0.5;
 /** Ranked drinks (with a profile) before your taste comes from rankings and matches show a percentage. */
 export const COLD_START_DRINKS = 5;

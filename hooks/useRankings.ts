@@ -5,7 +5,7 @@ import { fetchPublished } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
 import { toTopDrink, type BarTopDrink } from '@/lib/barTopDrinks';
-import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
+import { fromSharedBarRow, fromSharedRow, toHadDrink, type BarTally, type HadDrink, type HadRow, type SharedBarRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { SENTIMENTS, type Sentiment } from '@/lib/ranking';
 import { supabase } from '@/lib/supabase';
@@ -131,6 +131,25 @@ export function useProfileDrinks(profileId: string | null | undefined, enabled: 
   });
 }
 
+/**
+ * The bars someone has had drinks at, with their average at each, from their
+ * public profile. Empty unless they show bars (profiles.shares_bars) and you're
+ * signed in; the best drink at each is named only when they show drinks too
+ * (get_profile_bars).
+ */
+export function useProfileBars(profileId: string | null | undefined, enabled: boolean) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['profile-bars', profileId, userId],
+    enabled: enabled && !!profileId && !!userId,
+    queryFn: async (): Promise<BarTally[]> => {
+      const { data, error } = await supabase.rpc('get_profile_bars', { p_profile_id: profileId });
+      if (error) throw error;
+      return ((data ?? []) as SharedBarRow[]).map(fromSharedBarRow);
+    },
+  });
+}
+
 export interface RankTarget {
   id: string;
   name: string;
@@ -249,8 +268,7 @@ export function useAddRankEntry() {
     onSuccess: (_, entry) => {
       track('drink_ranked', { rerank: !!entry.id, at_bar: !!entry.venue_profile_id });
       qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id });
-      // Your taste and For you follow your rankings.
-      qc.invalidateQueries({ queryKey: ['my-taste'] });
+      // Your taste (built from my-had) and For you follow your rankings.
       qc.invalidateQueries({ queryKey: ['flavor-for-you'] });
       qc.invalidateQueries({ queryKey: ['my-had'] });
     },

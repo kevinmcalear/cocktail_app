@@ -9,13 +9,12 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
-import { useMyTaste } from '@/hooks/useFlavor';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks } from '@/hooks/useProfiles';
 import { useMyHadDrinks } from '@/hooks/useRankings';
-import { tasteHeadline } from '@/lib/flavor';
-import { hadStats } from '@/lib/hadDrinks';
+import { hadStats, tallyBars } from '@/lib/hadDrinks';
 
+import { TasteCard } from '../taste/TasteCard';
 import { BarTallies, Favourites, HadList } from './HadDrinks';
 import { MyJobRequests } from './JobRequests';
 import { OriginalsGrid, Stat, Stats } from './ProfileSections';
@@ -102,7 +101,7 @@ function You({ inTabs }: { inTabs?: boolean }) {
             <Stat value={madeCount} label="made" />
           </Stats>
 
-          <YourTaste />
+          <TasteCard />
 
           {drinks.some((d) => d.sentiment === 'loved') ? (
             <View style={styles.section}>
@@ -128,13 +127,13 @@ function You({ inTabs }: { inTabs?: boolean }) {
             ) : tab === 'had' ? (
               <HadList drinks={drinks} />
             ) : (
-              <BarTallies drinks={drinks} whose="Your" />
+              <BarTallies bars={tallyBars(drinks)} whose="Your" />
             )}
             {drinks.length && tab !== 'made' ? (
               <Caption tone="muted">
-                {shown && profile?.sharesRankings
+                {shown && (tab === 'had' ? profile?.sharesRankings : profile?.sharesBars)
                   ? 'Shown on your public profile, apart from drinks a bar hasn’t published. Change it in Edit profile.'
-                  : 'Only you can see what you’ve had and your scores. You can show them on a public profile.'}
+                  : `Only you can see ${tab === 'had' ? 'what you’ve had and your scores' : 'your bars and your average at each'}. You can show them on a public profile.`}
               </Caption>
             ) : null}
           </View>
@@ -150,21 +149,6 @@ function You({ inTabs }: { inTabs?: boolean }) {
           <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />
         </View>
       )}
-    </View>
-  );
-}
-
-/** Your taste in a line, and the way to see and change it (/taste). */
-function YourTaste() {
-  const router = useRouter();
-  const { data: me } = useMyTaste();
-  if (!me) return null;
-  const headline = tasteHeadline(me.taste);
-  return (
-    <View style={styles.section}>
-      <Headline role="heading">Your taste</Headline>
-      <Body tone={headline ? undefined : 'muted'}>{headline ?? 'Tell us what you like and it starts here. Every drink you rank sharpens it.'}</Body>
-      <Button label={headline ? 'See and change it' : 'Tell us what you like'} variant="secondary" onPress={() => router.push('/taste')} style={styles.start} />
     </View>
   );
 }

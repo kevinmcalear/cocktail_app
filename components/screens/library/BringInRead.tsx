@@ -6,12 +6,13 @@ import { Button, Caption, TextLink, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useReadAnything } from '@/hooks/useBulk';
 import { parseBringIn, readingText } from '@/lib/paste';
-import { isReadableFile, MAX_READ_FILES, pickReadFiles, type ReadFile, type ReadKind } from '@/lib/readAnything';
+import { isReadableFile, MAX_READ_FILES, pickReadFiles, type AnythingReading, type ReadFile } from '@/lib/readAnything';
 import { takeMenuPhoto } from '@/lib/readMenu';
 
 import { useMenuPhotoDrop } from '../menus/useMenuPhotoDrop';
 
-export type BringInReadResult = ReturnType<typeof readingText> & { kind: ReadKind };
+/** The reading as Bring in text, plus the reading itself and the files it came from, for the menu and bottle checks. */
+export type BringInReadResult = ReturnType<typeof readingText> & { reading: AnythingReading; files: ReadFile[] };
 
 interface BringInReadProps {
   mode: 'drinks' | 'ingredients';
@@ -38,7 +39,7 @@ export function BringInRead({ mode, text, onRead }: BringInReadProps) {
     setError(null);
     try {
       const reading = await read.mutateAsync({ ...input, hint: mode === 'drinks' ? 'recipes' : 'bottles' });
-      onRead({ ...readingText(reading), kind: reading.kind }, replace);
+      onRead({ ...readingText(reading.recipes), reading, files: input.files ?? [] }, replace);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t read that. Try again.');
     }

@@ -46,8 +46,12 @@ interface StageProps {
 const ON_WEB = Platform.OS === 'web';
 
 const easePour = Easing.inOut(Easing.cubic);
-const easeRise = Easing.out(Easing.back(2.2));
-const easeLand = Easing.out(Easing.back(1.8));
+/** Eases out past 1 and settles back (Easing.out(Easing.back(s))), written out: Reanimated's test mock has no Easing.back. */
+function backOut(t: number, s: number) {
+  'worklet';
+  const u = t - 1;
+  return 1 + (s + 1) * u * u * u + s * u * u;
+}
 
 interface LayerProps {
   beat: Beat;
@@ -78,11 +82,11 @@ function Layer({ beat, ox, oy, size, t, bubble, children }: LayerProps) {
       case 'pour':
         return { opacity: shown(6), ...at2(1, Math.max(0.001, easePour(p)), 0) };
       case 'rise':
-        return { opacity: shown(4), ...at2(1, Math.max(0.001, easeRise(p)), 0) };
+        return { opacity: shown(4), ...at2(1, Math.max(0.001, backOut(p, 2.2)), 0) };
       case 'drop':
         return { opacity: shown(6), ...at2(1, 1, -size * 0.45 * (1 - Easing.bounce(p))) };
       case 'land': {
-        const e = easeLand(p);
+        const e = backOut(p, 1.8);
         return { opacity: shown(3), ...at2(0.6 + 0.4 * e, 0.6 + 0.4 * e, -size * 0.12 * (1 - e)) };
       }
       case 'fizz': {

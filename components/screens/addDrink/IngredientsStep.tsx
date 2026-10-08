@@ -24,6 +24,8 @@ interface IngredientsStepProps extends StepProps {
   loading?: boolean;
   aliases?: readonly IngredientAlias[];
   coreIds?: ReadonlySet<string>;
+  /** Off for a house recipe (a syrup, a batch): no cocktail pours, pairings, classics or balance. */
+  forDrink?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
   const add = (pick: WizardPick) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
-    const amount = suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
+    const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     set({ lines: [...draft.lines, newLine(pick, unit, amount)] });
     setRemoved(null);
   };
@@ -104,7 +106,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
       <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} />
 
-      {typing ? null : (
+      {typing || !forDrink ? null : (
         <>
           <GoesWith
             lines={draft.lines}
@@ -120,7 +122,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>
       )}
-      <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} />
+      {forDrink ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
     </View>
   );
 }

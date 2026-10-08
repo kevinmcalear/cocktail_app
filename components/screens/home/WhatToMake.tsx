@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
@@ -20,6 +20,8 @@ export interface AwayGroup {
 
 /** "92% match", once the person's taste is known. */
 type MatchFor = (id: string) => string | undefined;
+/** A small palate flower at the end of the row, when the drink's flavor is known. */
+type GlyphFor = (id: string) => ReactNode;
 
 /**
  * What the shelf makes now, and what one or two more bottles would open,
@@ -46,8 +48,8 @@ export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: Ma
 }
 
 /** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
-export const MakeDrink = memo(function MakeDrink({ drink, matchFor }: { drink: BarItem; matchFor: MatchFor }) {
-  return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={matchFor(drink.id)} />;
+export const MakeDrink = memo(function MakeDrink({ drink, matchFor, glyphFor }: { drink: BarItem; matchFor: MatchFor; glyphFor?: GlyphFor }) {
+  return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={matchFor(drink.id)} trailing={glyphFor?.(drink.id)} />;
 });
 
 /** A tab with nothing in it, and where to look instead. */
@@ -78,7 +80,7 @@ export function MakeFoot({ more, onMore }: { more: number; onMore: () => void })
 }
 
 /** The bottles to buy, what they open (three, then all on a tap), and Add. Memoized, as a list row. */
-export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, matchFor, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; matchFor: MatchFor; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
+export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, matchFor, glyphFor, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; matchFor: MatchFor; glyphFor?: GlyphFor; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
   const { bottles, drinks } = group;
   const names = bottles.map((b) => b.name).join(' + ');
   const rest = drinks.length - PER_BOTTLE;
@@ -106,7 +108,7 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
         </View>
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
-        <MakeDrink key={d.id} drink={d} matchFor={matchFor} />
+        <MakeDrink key={d.id} drink={d} matchFor={matchFor} glyphFor={glyphFor} />
       ))}
       {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => onOpen(id)} /> : null}
     </Surface>

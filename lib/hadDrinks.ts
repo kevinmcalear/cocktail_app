@@ -27,8 +27,10 @@ export interface HadDrink {
   listName: string | null;
   imageUrl: string | null;
   isSketch: boolean;
-  /** Null: made at home. */
+  /** Null: made at home, or at a bar they don't name (atBar). */
   venue: HadVenue | null;
+  /** Had at a bar that isn't named: their profile shows drinks but not bars. */
+  atBar?: boolean;
   sentiment: Sentiment;
   score: number;
   hadOn: string | null;
@@ -83,6 +85,8 @@ export interface SharedHadRow {
   list_name: string | null;
   image_url: string | null;
   image_is_generated: boolean | null;
+  /** At a bar, named or not (venue_id is null when they don't share bars). */
+  at_bar: boolean;
   venue_id: string | null;
   venue_handle: string | null;
   venue_name: string | null;
@@ -103,6 +107,7 @@ export function fromSharedRow(row: SharedHadRow): HadDrink {
     listName: row.list_name,
     imageUrl: row.image_url,
     isSketch: !!row.image_is_generated,
+    ...(!row.venue_id && row.at_bar ? { atBar: true } : null),
     venue: row.venue_id
       ? {
           id: row.venue_id,
@@ -149,7 +154,38 @@ export interface BarTally {
   drinks: number;
   /** The mean of their scores there, to one decimal. */
   average: number;
-  best: { name: string; score: number };
+  /** Null when they show bars but not drinks. */
+  best: { name: string; score: number } | null;
+}
+
+/** A get_profile_bars row: someone's average at one bar, cut down to what may be shown. */
+export interface SharedBarRow {
+  venue_id: string;
+  venue_handle: string | null;
+  venue_name: string;
+  venue_avatar_url: string | null;
+  venue_locality: string | null;
+  venue_city: string | null;
+  drinks: number;
+  average: number | string;
+  best_name: string | null;
+  best_score: number | string | null;
+}
+
+export function fromSharedBarRow(row: SharedBarRow): BarTally {
+  return {
+    key: row.venue_id,
+    venue: {
+      id: row.venue_id,
+      handle: row.venue_handle,
+      name: row.venue_name,
+      avatarUrl: row.venue_avatar_url,
+      place: [row.venue_locality, row.venue_city].filter(Boolean).join(', ') || null,
+    },
+    drinks: row.drinks,
+    average: Number(row.average),
+    best: row.best_name ? { name: row.best_name, score: Number(row.best_score) } : null,
+  };
 }
 
 const mean = (scores: number[]) => Math.round((scores.reduce((sum, s) => sum + s, 0) / scores.length) * 10) / 10;
@@ -174,7 +210,8 @@ export function hadStats(drinks: readonly HadDrink[]): { drinks: number; bars: n
   return { drinks: drinks.length, bars: new Set(drinks.map((d) => d.venue?.id).filter(Boolean)).size };
 }
 
-/** "Bar Bellamy, Carlton" or "At home". */
-export function whereLine(d: Pick<HadDrink, 'venue'>): string {
-  return d.venue ? [d.venue.name, d.venue.place?.split(', ')[0]].filter(Boolean).join(', ') : 'At home';
+/** "Bar Bellamy, Carlton", "At a bar" (not named) or "At home". */
+export function whereLine(d: Pick<HadDrink, 'venue' | 'atBar'>): string {
+  if (d.venue) return [d.venue.name, d.venue.place?.split(', ')[0]].filter(Boolean).join(', ');
+  return d.atBar ? 'At a bar' : 'At home';
 }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import { fixesFor, balanceOf } from './balance';
 import { serveGuess, suggestAmount, tidyAmount } from './specDefaults';
+import { capitalizeFirsts } from './stringUtils';
 
 const l = (name: string) => ({ name });
 
@@ -60,3 +61,7 @@ assert.deepEqual(fixesFor('sweet', [{ name: 'Mystery' }]), ['Simple syrup']);
 const named = serveGuess({ name: 'House Negroni', lines: [{ name: 'Tequila', amount: 60, unit: 'ml' }, { name: 'Lime Juice', amount: 22.5, unit: 'ml' }] });
 assert.equal(named.method, 'Stir');
 assert.equal(named.why, null);
+
+// Names from a catalog or label keep their own capitals.
+assert.equal(capitalizeFirsts(' brewDog punk IPA '), 'BrewDog Punk IPA');
+assert.equal(capitalizeFirsts('st-germain'), 'St-Germain');

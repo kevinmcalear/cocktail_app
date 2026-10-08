@@ -1,24 +1,27 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, PalateFlower, Surface, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { layout, space } from '@/constants/tokens';
+import { layout, palateHues, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyTaste, useSaveTasteAnswers } from '@/hooks/useFlavor';
-import { blendTaste, COLD_START_DRINKS, QUESTIONS, rankingsDrift, tasteHeadline, tasteSource, type Taste } from '@/lib/flavor';
+import { blendTaste, COLD_START_DRINKS, rankingsDrift, tasteHeadline, tasteSource, type Taste } from '@/lib/flavor';
+import { palateByMonth, shapedBy } from '@/lib/palate';
 
-import { FlavorBars } from './FlavorBars';
-import { TasteAnswers } from './TasteAnswers';
+import { PalateLegend } from './PalateParts';
+import { OverTime, SaidAnswers, ShapedBy } from './TasteSections';
 
 const same = (a: Taste, b: Taste) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
+const MAX_WIDTH = 640;
 
 /**
- * Your taste (palate): what it is now, where it comes from, and your answers,
- * which you can change. The bars move as you change an answer, blended with
- * your rankings the way For you and match scores use it (blendTaste).
+ * Your taste (palate), as the palate flower: what it is now, what shaped it,
+ * how it has moved, and what you said, which you can change. The flower moves
+ * as you change an answer, blended with your rankings the way For you and
+ * match scores use it. Design: lib/palate.ts.
  */
 export function TasteScreen() {
   return (
@@ -33,6 +36,7 @@ function TastePage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
   const { data: me, error } = useMyTaste();
   const save = useSaveTasteAnswers();
@@ -46,6 +50,9 @@ function TastePage() {
   const headline = tasteHeadline(preview);
   const toGo = me ? COLD_START_DRINKS - me.rankedDrinks : 0;
   const drift = me && !dirty ? rankingsDrift(me.rankedTaste, me.answers) : null;
+  // Once rankings move you, what you said shows as a dashed line beside your palate.
+  const showSaid = !!me && me.rankedDrinks > 0 && hasAnswers;
+  const flower = Math.min(width, MAX_WIDTH) - gutter * 2;
 
   const body = !me ? (
     <Body tone="muted">
@@ -54,10 +61,18 @@ function TastePage() {
   ) : (
     <>
       <View style={styles.section}>
-        <Headline>{headline ?? 'Nothing stands out yet.'}</Headline>
+        <Title role="heading">{headline ? `${headline}.` : 'Nothing stands out yet.'}</Title>
+        <View style={styles.center}>
+          <PalateFlower values={preview} said={showSaid ? answers : null} size={Math.min(flower, 420)} labels />
+        </View>
+        <PalateLegend items={showSaid ? ['palate', 'said'] : ['palate']} />
         <Caption tone="muted">{tasteSource(me.rankedDrinks, hasAnswers)}</Caption>
-        <FlavorBars values={preview} />
-        {drift ? <Body>{drift}</Body> : null}
+        {drift ? (
+          <Surface style={styles.drift}>
+            <View style={[styles.dot, { backgroundColor: palateHues[ds.scheme].fire }]} />
+            <Body style={styles.flex}>{drift}</Body>
+          </Surface>
+        ) : null}
         {toGo > 0 ? (
           <View style={styles.section}>
             <Caption tone="muted">{`Rank ${toGo} more drink${toGo === 1 ? '' : 's'} you've had to see match scores on drinks.`}</Caption>
@@ -66,11 +81,11 @@ function TastePage() {
         ) : null}
       </View>
 
+      <ShapedBy shapers={shapedBy(me.entries, me.baseline)} />
+      <OverTime months={palateByMonth(me.entries, me.baseline, me.answers)} />
+
       <View style={styles.section}>
-        <Headline role="heading">What you like</Headline>
-        <Caption tone="muted">Change an answer and your taste moves with it. Tap an answer again to leave that one to your rankings.</Caption>
-        <TasteAnswers
-          questions={QUESTIONS}
+        <SaidAnswers
           value={answers}
           onChange={(next) => {
             setDraft(next);
@@ -78,20 +93,22 @@ function TastePage() {
           }}
         />
         {save.error ? <Caption tone="accent">{`Couldn't save: ${save.error.message}`}</Caption> : null}
-        <Button
-          label={save.isPending ? 'Saving…' : 'Save'}
-          disabled={!dirty || save.isPending}
-          onPress={() =>
-            save.mutate(answers, {
-              onSuccess: () => {
-                setDraft(null);
-                setSaved(true);
-              },
-              onError: () => {},
-            })
-          }
-          style={styles.start}
-        />
+        {dirty || save.isPending ? (
+          <Button
+            label={save.isPending ? 'Saving…' : 'Save'}
+            disabled={save.isPending}
+            onPress={() =>
+              save.mutate(answers, {
+                onSuccess: () => {
+                  setDraft(null);
+                  setSaved(true);
+                },
+                onError: () => {},
+              })
+            }
+            style={styles.start}
+          />
+        ) : null}
         {saved ? <Caption tone="muted">Saved. For you and match scores use it now.</Caption> : null}
       </View>
     </>
@@ -104,7 +121,9 @@ function TastePage() {
       </WebHead>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.body}>
-          <Title role="heading">Your taste</Title>
+          <Caption tone="muted" style={styles.kicker}>
+            YOUR TASTE
+          </Caption>
           {body}
         </View>
       </ScrollView>
@@ -121,8 +140,13 @@ function TastePage() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.xl, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  section: { gap: space.sm },
+  body: { gap: space.xxl, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
+  section: { gap: space.md },
+  center: { alignItems: 'center', paddingVertical: space.sm },
+  kicker: { letterSpacing: 1.4, marginBottom: -space.lg },
+  drift: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
+  dot: { width: 10, height: 10, borderRadius: radius.pill, marginTop: 7 },
+  flex: { flex: 1 },
   controls: { position: 'absolute' },
   start: { alignSelf: 'flex-start' },
 });

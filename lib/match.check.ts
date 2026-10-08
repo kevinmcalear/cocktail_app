@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { kindForCopy, matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
+import { matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
 
 const item = (id: string, name: string, genericId: string | null = null, barId: string | null = null): CatalogItem => ({ id, name, genericId, barId });
 const catalog: CatalogItem[] = [
@@ -84,7 +84,5 @@ for (const name of ['Campari', 'Beefeater Gin', 'Codigo 1530 Blanco Tequila', 'G
   }
 }
 
-assert.equal(kindForCopy(item('a', 'Beefeater Gin', 'gin')), 'gin');
-assert.equal(kindForCopy(item('campari', 'Campari')), 'campari');
 
 console.log('match: ok');
