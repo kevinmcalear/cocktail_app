@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, Headline, PressableScale, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useFlavorCatalog, useMyRankedIds, useMyTaste } from '@/hooks/useFlavor';
+import { useFlavorBaseline, useForYouDrinks, useMyTaste } from '@/hooks/useFlavor';
 import { COLD_START_DRINKS, forYou } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
@@ -63,10 +63,11 @@ export function Rail({ title, note, children }: { title: string; note: string; c
  */
 export function ForYou() {
   const { data: me, isLoading } = useMyTaste();
-  const catalog = useFlavorCatalog();
-  const ranked = useMyRankedIds();
+  // The nearest drinks come from the server, which leaves out what you've ranked.
+  const nearest = useForYouDrinks(me?.taste);
+  const baseline = useFlavorBaseline();
   const [asking, setAsking] = useState(false);
-  if (isLoading || !me || !catalog.data) return null;
+  if (isLoading || !me || !nearest.data) return null;
 
   const cold = me.rankedDrinks < COLD_START_DRINKS;
   if (cold && (asking || !me.answers)) {
@@ -78,7 +79,7 @@ export function ForYou() {
     );
   }
 
-  const picks = forYou(catalog.data, me.taste, me.basis, ranked.data ?? []);
+  const picks = forYou(nearest.data, me.taste, me.basis, [], 10, baseline.data ?? null);
   if (!picks.length) return null;
   const toGo = COLD_START_DRINKS - me.rankedDrinks;
   const note = cold
