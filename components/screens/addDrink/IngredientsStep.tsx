@@ -1,25 +1,28 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, PressableScale, useDs } from '@/components/ds';
+import { Body, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, searchByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { LineRow } from './LineRow';
 import { WizardChip } from './WizardChrome';
 
-type Ingredient = { id: string; name: string | null };
+// The generated view types call `images` a list; it's one row per link.
+type Ingredient = { id: string; name: string | null; item_images?: unknown };
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
 
 /**
  * The spec so far, each line with a stepper; a field to find an ingredient
- * (or add a new one); and quick adds for the common ones.
+ * (or add a new one); and quick adds for the common ones. `loading` holds off
+ * offering a new one until the list is in, so a known bottle isn't added twice.
  */
-export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingredients: readonly Ingredient[] }) {
+export function IngredientsStep({ draft, set, ingredients, loading }: StepProps & { ingredients: readonly Ingredient[]; loading?: boolean }) {
   const ds = useDs();
   const [query, setQuery] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -64,7 +67,7 @@ export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingre
           maxLength={80}
           onSubmitEditing={() => {
             if (results[0]) add({ id: results[0].id, name: results[0].name ?? query });
-            else if (query.trim()) add({ id: null, name: query.trim() });
+            else if (query.trim() && !loading) add({ id: null, name: query.trim() });
           }}
           style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
         />
@@ -73,9 +76,13 @@ export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingre
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
           {results.map((r) => (
-            <ResultRow key={r.id} label={r.name ?? ''} onPress={() => add({ id: r.id, name: r.name ?? query })} />
+            <ResultRow key={r.id} label={r.name ?? ''} imageUrl={heroPicture(r.item_images as ItemImageLink[] | null)?.url ?? null} onPress={() => add({ id: r.id, name: r.name ?? query })} />
           ))}
-          {exact ? null : <ResultRow label={`Add “${query.trim()}” as new`} onPress={() => add({ id: null, name: query.trim() })} />}
+          {loading ? (
+            <Body tone="muted" style={styles.loading}>Loading ingredients…</Body>
+          ) : exact ? null : (
+            <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => add({ id: null, name: query.trim() })} />
+          )}
         </View>
       ) : (
         <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
@@ -88,11 +95,14 @@ export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingre
   );
 }
 
-function ResultRow({ label, onPress }: { label: string; onPress: () => void }) {
+/** A found ingredient, with its picture; `isNew` is the plain "add as new" row. */
+function ResultRow({ label, imageUrl, isNew, onPress }: { label: string; imageUrl?: string | null; isNew?: boolean; onPress: () => void }) {
   const ds = useDs();
+  const found = !isNew;
   return (
-    <PressableScale role="button" onPress={onPress} accessibilityLabel={label} style={[styles.result, { borderBottomColor: ds.c.line }]}>
-      <Body numberOfLines={1}>{label}</Body>
+    <PressableScale role="button" onPress={onPress} accessibilityLabel={label} style={[styles.result, found && styles.found, { borderBottomColor: ds.c.line }]}>
+      {found ? <IngredientThumb name={label} url={imageUrl} size={36} /> : null}
+      <Body numberOfLines={1} style={styles.flex}>{label}</Body>
     </PressableScale>
   );
 }
@@ -103,5 +113,8 @@ const styles = StyleSheet.create({
   input: { flex: 1, minHeight: layout.minTapTarget },
   results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
   result: { minHeight: layout.minTapTarget + 4, justifyContent: 'center', paddingHorizontal: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  found: { flexDirection: 'row', alignItems: 'center', gap: space.md, justifyContent: 'flex-start', paddingVertical: space.xs },
+  flex: { flex: 1 },
+  loading: { padding: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

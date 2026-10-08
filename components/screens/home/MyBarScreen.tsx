@@ -138,7 +138,6 @@ export function MyBarScreen() {
       />
       <AddBottlesSheet
         visible={adding}
-        bottles={bar.bottles}
         onShelf={bar.shelfIds}
         onToggle={(item, on) => (on ? add.mutate(item.id) : remove.mutate(item.id))}
         onClose={() => setAdding(false)}

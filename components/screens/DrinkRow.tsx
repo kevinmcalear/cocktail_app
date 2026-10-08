@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 
 export interface DrinkRowProps {
@@ -16,6 +17,8 @@ export interface DrinkRowProps {
   /** The drink's id, so a drink with no photo shows its drawn sketch. */
   itemId?: string | null;
   caption?: string;
+  /** A small logo before the caption, for the bar that pours the drink (initials when it has none). */
+  logo?: { uri: string | null; name: string };
   /** A small pill after the caption: "Past · Mar 2024 to Jan 2025". */
   tag?: string;
   /** A second, longer line: a note of your own. */
@@ -26,10 +29,26 @@ export interface DrinkRowProps {
   label?: string;
 }
 
+/** The caption's bar logo: one line of caption text tall. */
+const LOGO = 18;
+
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, tag, note, trailing, label }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, trailing, label }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
+  // The logo sits on the caption's first line and the caption wraps beside it, never under it.
+  const byline = logo ? (
+    <View style={styles.byline}>
+      <UserAvatar uri={logo.uri} name={logo.name} size={LOGO} />
+      {caption ? (
+        <Caption tone="muted" style={styles.shrink}>
+          {caption}
+        </Caption>
+      ) : null}
+    </View>
+  ) : caption ? (
+    <Caption tone="muted">{caption}</Caption>
+  ) : null;
   return (
     <PressableScale
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
@@ -43,12 +62,12 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
         <Headline numberOfLines={1}>{name}</Headline>
         {tag ? (
           <View style={styles.captionRow}>
-            {caption ? <Caption tone="muted">{caption}</Caption> : null}
+            {byline}
             <Tag label={tag} />
           </View>
-        ) : caption ? (
-          <Caption tone="muted">{caption}</Caption>
-        ) : null}
+        ) : (
+          byline
+        )}
         {note ? (
           <Caption numberOfLines={2}>
             {note}
@@ -64,5 +83,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: 56 },
   text: { flex: 1, gap: 2 },
+  byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },
+  shrink: { flexShrink: 1 },
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
 });

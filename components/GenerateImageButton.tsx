@@ -18,7 +18,8 @@ import { GlassView } from './ui/GlassView';
 import { IconSymbol } from './ui/icon-symbol';
 
 interface GenerateImageButtonProps {
-    type: 'cocktail' | 'ingredient' | 'beer' | 'wine';
+    /** Drinks are drawn in the app from their spec (components/ds/DrawnSketch), never by AI. */
+    type: 'ingredient' | 'beer' | 'wine';
     id: string;
     name?: string;
     subIngredients?: string[];
@@ -42,9 +43,6 @@ export function GenerateImageButton({ type, id, name, subIngredients = [], style
             let body: any = {};
 
             switch (type) {
-                case 'cocktail':
-                    body = { cocktail_id: id };
-                    break;
                 case 'beer':
                     body = { beer_id: id };
                     break;
