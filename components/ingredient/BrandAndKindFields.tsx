@@ -6,6 +6,7 @@ import { Input, Label, Text, XStack, YStack, useTheme } from "tamagui";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 import { IngredientPickerSheet, type IngredientPickerItem } from "@/components/IngredientPickerSheet";
+import { nearIngredient, sameIngredient, type IngredientAlias, type IngredientRow } from "@/lib/ingredientNames";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
     ingredients: IngredientPickerItem[];
     /** Left out of the list: the ingredient itself. */
     excludeId?: string | null;
+    /** The name being typed, to say when it's already an ingredient (and where it lives). */
+    sameAs?: { name: string; barId?: string | null; rows: readonly IngredientRow[]; aliases?: readonly IngredientAlias[] };
 }
 
 /**
@@ -25,10 +28,11 @@ interface Props {
  * generic ingredient it's a kind of. The generic drives brand masking (staff
  * below the brand level see "Gin"), spirit search and flavor profiles.
  */
-export function BrandAndKindFields({ brandMaker, onBrandMaker, generic, onGeneric, ingredients, excludeId }: Props) {
+export function BrandAndKindFields({ brandMaker, onBrandMaker, generic, onGeneric, ingredients, excludeId, sameAs }: Props) {
     const [picking, setPicking] = useState(false);
     return (
         <>
+            {sameAs ? <SameIngredientNotice {...sameAs} excludeId={excludeId} generic={generic} onGeneric={onGeneric} /> : null}
             <YStack gap="$2">
                 <Label color="$color11">Brand / Maker</Label>
                 <Input
@@ -70,6 +74,48 @@ export function BrandAndKindFields({ brandMaker, onBrandMaker, generic, onGeneri
                 onSelect={(item) => onGeneric({ id: item.id, name: capitalize(item.name) })}
             />
         </>
+    );
+}
+
+/**
+ * One of each ingredient: when the name typed is already an ingredient (by
+ * another spelling or name), say so before saving. A venue can keep its own
+ * version under that name as a kind of it; anywhere else it needs its own name,
+ * because the shared list holds one of each.
+ */
+function SameIngredientNotice({
+    name,
+    barId,
+    rows,
+    aliases,
+    excludeId,
+    generic,
+    onGeneric,
+}: NonNullable<Props["sameAs"]> & Pick<Props, "excludeId" | "generic" | "onGeneric">) {
+    const router = useRouter();
+    const same = sameIngredient(name, rows, aliases);
+    const match = same && same.id !== excludeId ? same : null;
+    const near = match ? null : nearIngredient(name, rows, aliases);
+    const shown = match ?? (near && near.id !== excludeId ? near : null);
+    if (!shown || generic?.id === shown.id) return null;
+    const label = capitalize(shown.name ?? "");
+    return (
+        <YStack gap="$2" padding="$3" borderRadius="$4" borderWidth={1} borderColor="$borderColor" role="alert">
+            <Text color="$color" fontWeight="600">
+                {match ? `Already here: ${label}` : `Did you mean ${label}?`}
+            </Text>
+            <Text color="$color11">
+                {match && !barId
+                    ? `Use it in your drinks. Making your own version? Give it its own name, like "House ${label}", and it'll be a kind of ${label}.`
+                    : `Use it, or keep this as your own version: a kind of ${label}.`}
+            </Text>
+            <TouchableOpacity onPress={() => router.push(`/ingredient/${shown.id}`)} role="link" aria-label={`Open ${label}`} style={{ alignSelf: "flex-start" }}>
+                <Text color="$color8" fontWeight="600" fontSize="$4" textAlign="left">Open {label}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onGeneric({ id: shown.id, name: label })} role="button" aria-label={`Make this a kind of ${label}`} style={{ alignSelf: "flex-start" }}>
+                <Text color="$color8" fontWeight="600" fontSize="$4" textAlign="left">Make this a kind of {label}</Text>
+            </TouchableOpacity>
+        </YStack>
     );
 }
 

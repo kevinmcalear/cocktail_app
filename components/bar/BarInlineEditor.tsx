@@ -1,17 +1,18 @@
-import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { Button, Card, Input, Label, ScrollView, Text, XStack, YStack, useTheme } from 'tamagui';
+import { useEffect, useRef } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
+import { BrandColors, VenueIdentity } from '@/components/bar/BarBrandFields';
+import { BarSection, ChipGroup, RowDivider } from '@/components/bar/BarParts';
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { TeamMembers } from '@/components/bar/TeamMembers';
-import { GlassView } from '@/components/ui/GlassView';
+import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
+import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { space } from '@/constants/tokens';
 import { useBarEditor } from '@/hooks/useBarEditor';
 import type { EditorChromeState } from '@/lib/editorChrome';
 import { roleLabel } from '@/lib/roles';
-import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
+
 interface BarInlineEditorProps {
     barId: string;
     onClose?: () => void;
@@ -20,77 +21,18 @@ interface BarInlineEditorProps {
     embedded?: boolean;
 }
 
-function ColorSwatchPicker({
-    value,
-    onChange,
-    disabled,
-}: {
-    value: string;
-    onChange: (v: string) => void;
-    disabled?: boolean;
-}) {
-    const display = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : '#888888';
-
-    if (Platform.OS === 'web' && !disabled) {
-        return (
-            <View style={styles.colorSwatchWrap}>
-                <View style={[styles.colorSwatch, { backgroundColor: display }]} />
-                <input
-                    type="color"
-                    value={display}
-                    onChange={(e) => onChange(e.target.value)}
-                    aria-label="Pick color"
-                    style={styles.colorSwatchInput}
-                />
-            </View>
-        );
-    }
-
+export function BarInlineEditor(props: BarInlineEditorProps) {
+    // Settings and the creator workspace aren't Back Bar screens yet; this
+    // brings the fonts and colours with it.
     return (
-        <View
-            style={[
-                styles.colorSwatch,
-                { backgroundColor: display, opacity: disabled ? 0.5 : 1 },
-            ]}
-        />
+        <BackbarTheme>
+            <BarEditorBody {...props} />
+        </BackbarTheme>
     );
 }
 
-function ColorField({
-    label,
-    value,
-    onChange,
-    disabled,
-}: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    disabled?: boolean;
-}) {
-    return (
-        <YStack gap="$2">
-            <Label color="$color11" marginLeft="$2">{label}</Label>
-            <XStack alignItems="center" gap="$3">
-                <ColorSwatchPicker value={value} onChange={onChange} disabled={disabled} />
-                <Input
-                    flex={1}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder="#RRGGBB"
-                    autoCapitalize="none"
-                    readOnly={disabled}
-                    backgroundColor="$background"
-                    borderColor="$borderColor"
-                    focusStyle={{ borderColor: '$color8' }}
-                />
-            </XStack>
-        </YStack>
-    );
-}
-
-export function BarInlineEditor({ barId, onClose, onChromeState, embedded = false }: BarInlineEditorProps) {
-    const theme = useTheme();
-    const router = useRouter();
+function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarInlineEditorProps) {
+    const ds = useDs();
     const editor = useBarEditor(barId);
     const saveRef = useRef(editor.handleSave);
     const discardRef = useRef(editor.discardChanges);
@@ -118,230 +60,84 @@ export function BarInlineEditor({ barId, onClose, onChromeState, embedded = fals
 
     if (editor.loading) {
         return (
-            <YStack flex={1} justifyContent="center" alignItems="center">
-                <ActivityIndicator size="large" color={theme.color?.get() as string} />
-            </YStack>
+            <View style={styles.loading}>
+                <ActivityIndicator size="large" color={ds.c.ink} />
+            </View>
         );
     }
 
-    const logoPreview = editor.localLogoUri || editor.logoUrl;
-
-    const renderPills = (label: string, value: string, setValue: (v: string) => void) => (
-        <YStack gap="$2" marginBottom="$4">
-            <Label color="$color11" marginLeft="$2">{label}</Label>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8 }}>
-                <XStack gap="$2">
-                    {editor.roleOptions.map((opt) => (
-                        <Button
-                            key={opt.value}
-                            size="$3"
-                            borderRadius="$10"
-                            disabled={!editor.canEdit}
-                            backgroundColor={value === opt.value ? theme.color8?.get() as string : '$background'}
-                            borderColor={value === opt.value ? theme.color8?.get() as string : '$borderColor'}
-                            borderWidth={1}
-                            onPress={() => setValue(opt.value)}
-                        >
-                            <Text
-                                color={value === opt.value ? theme.backgroundStrong?.get() as string : theme.color?.get() as string}
-                                fontWeight={value === opt.value ? 'bold' : 'normal'}
-                            >
-                                {opt.name}
-                            </Text>
-                        </Button>
-                    ))}
-                </XStack>
-            </ScrollView>
-        </YStack>
-    );
+    const levels = editor.roleOptions.map((o) => ({ value: o.value, label: o.name }));
+    const disclosure = [
+        ['General visibility', editor.visibilityLevel, editor.setVisibilityLevel],
+        ['Generic ingredients', editor.genericLevel, editor.setGenericLevel],
+        ['Specific brands', editor.specificLevel, editor.setSpecificLevel],
+        ['Measurements', editor.measurementLevel, editor.setMeasurementLevel],
+        ['Prep instructions', editor.prepLevel, editor.setPrepLevel],
+    ] as const;
 
     const body = (
-        <YStack gap="$4">
-            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                <YStack gap="$4" alignItems="center">
-                    <TouchableOpacity
-                        onPress={editor.pickLogo}
-                        disabled={!editor.canEdit}
-                        activeOpacity={editor.canEdit ? 0.8 : 1}
-                    >
-                        <View style={[styles.logoBox, { borderColor: theme.borderColor?.get() as string }]}>
-                            {logoPreview ? (
-                                <Image
-                                    source={{ uri: logoPreview, cacheKey: logoPreview }}
-                                    style={styles.logoImage}
-                                    contentFit="cover"
-                                />
-                            ) : (
-                                <YStack alignItems="center" gap="$2">
-                                    <IconSymbol name="building.2.fill" size={32} color={theme.color11?.get() as string} />
-                                    <Text color="$color11" fontSize={12}>No logo</Text>
-                                </YStack>
-                            )}
-                        </View>
-                    </TouchableOpacity>
-                    {editor.canEdit && (
-                        <Text color="$color8" fontSize={12} fontWeight="600">
-                            {editor.extractingColors ? 'Analyzing logo colors…' : 'Tap to upload logo'}
-                        </Text>
-                    )}
-                </YStack>
-            </Card>
-
-            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                <YStack gap="$3">
-                    <Label color="$color11">Venue Name</Label>
-                    <Input
-                        value={editor.name}
-                        onChangeText={editor.setName}
-                        readOnly={!editor.canEdit}
-                        backgroundColor="$background"
-                        borderColor="$borderColor"
-                        focusStyle={{ borderColor: '$color8' }}
-                    />
-                </YStack>
-            </Card>
-
-            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                <YStack gap="$4">
-                    <XStack justifyContent="space-between" alignItems="center"><Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>Brand Colors</Text><Button size="$2" chromeless role="link" aria-label="Brand and look: accent, display face, dark ground and home-screen icon" onPress={() => router.push(`/settings/bar/${barId}/brand` as never)}>Brand and look</Button></XStack>
-                    <ColorField
-                        label="Primary"
-                        value={editor.primaryColor}
-                        onChange={editor.setPrimaryColor}
-                        disabled={!editor.canEdit}
-                    />
-                    <ColorField
-                        label="Secondary"
-                        value={editor.secondaryColor}
-                        onChange={editor.setSecondaryColor}
-                        disabled={!editor.canEdit}
-                    />
-                    {(editor.primaryColor || editor.secondaryColor) && (
-                        <XStack gap="$2" marginTop="$1">
-                            {editor.primaryColor ? (
-                                <View style={[styles.colorPreviewBar, { backgroundColor: editor.primaryColor, flex: 1 }]} />
-                            ) : null}
-                            {editor.secondaryColor ? (
-                                <View style={[styles.colorPreviewBar, { backgroundColor: editor.secondaryColor, flex: 1 }]} />
-                            ) : null}
-                        </XStack>
-                    )}
-                </YStack>
-            </Card>
+        <View style={styles.body}>
+            <VenueIdentity editor={editor} />
+            <BrandColors editor={editor} barId={barId} />
 
             {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
 
-            <GlassView style={styles.card} intensity={10}>
-                <XStack alignItems="center" gap="$3">
-                    <IconSymbol name="person.circle.fill" size={24} color={theme.color8?.get() as string} />
-                    <YStack>
-                        <Text fontSize={11} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
-                            Your Access Level
-                        </Text>
-                        <Text fontSize={15} fontWeight="bold" color="$color">{roleLabel(editor.roleLevel)}</Text>
-                        {!editor.canEdit && (
-                            <Text fontSize={12} color="$color11" marginTop="$1">Drink Creator role or above required to edit venue settings.</Text>
-                        )}
-                    </YStack>
-                </XStack>
-            </GlassView>
+            <Surface raised style={styles.access}>
+                <IconSymbol name="person.circle.fill" size={24} color={ds.c.muted} />
+                <View style={styles.fill}>
+                    <Caption tone="muted">Your access level</Caption>
+                    <Body>{roleLabel(editor.roleLevel)}</Body>
+                    {!editor.canEdit ? (
+                        <Caption tone="muted">Admin role required to edit venue settings.</Caption>
+                    ) : null}
+                </View>
+            </Surface>
 
-            <Card borderWidth={1} borderColor="$borderColor" padding="$4" backgroundColor="$backgroundStrong" borderRadius="$4">
-                <YStack gap="$0" paddingTop="$2">
-                    <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5} marginBottom="$3">
-                        Progressive Disclosure Defaults
-                    </Text>
-                    {renderPills('General Visibility', editor.visibilityLevel, editor.setVisibilityLevel)}
-                    {renderPills('Generic Ingredients', editor.genericLevel, editor.setGenericLevel)}
-                    {renderPills('Specific Brands', editor.specificLevel, editor.setSpecificLevel)}
-                    {renderPills('Measurements', editor.measurementLevel, editor.setMeasurementLevel)}
-                    {renderPills('Prep Instructions', editor.prepLevel, editor.setPrepLevel)}
-                </YStack>
-            </Card>
+            <BarSection title="Progressive disclosure defaults" note="The lowest role that sees each part of a drink, unless the drink sets its own.">
+                {disclosure.map(([label, value, setValue], i) => (
+                    <View key={label} style={styles.group}>
+                        {i > 0 ? <RowDivider /> : null}
+                        <Caption>{label}</Caption>
+                        <ChipGroup label={label} options={levels} value={value} onPick={setValue} disabled={!editor.canEdit} />
+                    </View>
+                ))}
+            </BarSection>
 
             <VenueSettingsLinks barId={barId} />
             <TeamMembers barId={barId} members={editor.members} myRole={editor.roleLevel} />
 
-            <YStack gap="$3">
-                <Text fontSize={14} fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
-                    Assigned Items ({editor.items.length})
-                </Text>
+            <BarSection title={`Assigned items (${editor.items.length})`}>
                 {editor.items.length > 0 ? (
-                    editor.items.map((item: any) => (
-                        <Card key={item.id} padding="$3" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius={12}>
-                            <Text fontWeight="600" color="$color">{item.name}</Text>
-                            <Text color="$color11" fontSize={12} textTransform="capitalize">{item.item_type}</Text>
-                        </Card>
+                    editor.items.map((item, i) => (
+                        <View key={item.id} style={styles.group}>
+                            {i > 0 ? <RowDivider /> : null}
+                            <Body>{item.name}</Body>
+                            <Caption tone="muted" style={styles.capitalize}>{item.item_type}</Caption>
+                        </View>
                     ))
                 ) : (
-                    <Text color="$color11" fontStyle="italic" fontSize={13}>No items assigned to this venue yet.</Text>
+                    <Caption tone="muted">No items assigned to this venue yet.</Caption>
                 )}
-            </YStack>
-        </YStack>
+            </BarSection>
+        </View>
     );
 
-    if (embedded) {
-        return <YStack padding="$2">{body}</YStack>;
-    }
+    if (embedded) return <View style={styles.embedded}>{body}</View>;
 
     return (
-        <YStack flex={1}>
-            <ScrollView flex={1} contentContainerStyle={{ padding: 24, gap: 20 }} showsVerticalScrollIndicator={false}>
-                {body}
-            </ScrollView>
-        </YStack>
+        <ScrollView style={styles.fill} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            {body}
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        borderRadius: 16,
-        padding: 16,
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-        overflow: 'hidden',
-    },
-    logoBox: {
-        width: 120,
-        height: 120,
-        borderRadius: 20,
-        borderWidth: 1,
-        overflow: 'hidden',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
-    },
-    logoImage: {
-        width: '100%',
-        height: '100%',
-    },
-    colorSwatch: {
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-    },
-    colorSwatchWrap: {
-        position: 'relative',
-        width: 36,
-        height: 36,
-    },
-    colorSwatchInput: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        opacity: 0,
-        cursor: 'pointer',
-        border: 'none',
-        padding: 0,
-        margin: 0,
-    } as any,
-    colorPreviewBar: {
-        height: 8,
-        borderRadius: 4,
-    },
+    fill: { flex: 1 },
+    loading: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: space.xl },
+    body: { gap: space.xl },
+    embedded: { padding: space.sm },
+    scroll: { padding: space.xl },
+    access: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+    group: { gap: space.sm },
+    capitalize: { textTransform: 'capitalize' },
 });

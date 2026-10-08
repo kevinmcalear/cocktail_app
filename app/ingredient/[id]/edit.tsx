@@ -128,7 +128,7 @@ export default function EditIngredientScreen({
     });
 
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: true });
     const { data, isLoading: loadingIngredient } = useIngredient(id as string);
     const [rawLoaded, setRawLoaded] = useState(false);
     const loading = loadingDropdowns || loadingIngredient || (!!data?.ingredient && !rawLoaded);
@@ -157,7 +157,7 @@ export default function EditIngredientScreen({
     const pickerIngredients = useMemo(() => {
         const published = (dropdowns?.ingredients || []).map((i: any) => ({
             id: i.id,
-            name: i.name,
+            name: i.name, item_images: i.item_images,
         }));
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === "ingredient")
@@ -294,7 +294,6 @@ export default function EditIngredientScreen({
                 .insert({ url: publicUrlData.publicUrl })
                 .select()
                 .single();
-
             if (imgError || !imgData) return null;
 
             return imgData.id;
@@ -548,6 +547,7 @@ export default function EditIngredientScreen({
                             onGeneric={setGeneric}
                             ingredients={pickerIngredients}
                             excludeId={id}
+                            sameAs={{ name, barId, rows: dropdowns?.ingredients ?? [], aliases: dropdowns?.ingredientAliases }}
                         />
 
                         <YStack gap="$2">
@@ -664,7 +664,7 @@ export default function EditIngredientScreen({
                 ingredients={pickerIngredients}
                 excludeId={id}
                 drafts={drafts}
-                dropdowns={dropdowns}
+                dropdowns={dropdowns} loading={!dropdowns?.ingredients}
                 onSelect={(item) => {
                     setRecipeItems([
                         ...recipeItems,

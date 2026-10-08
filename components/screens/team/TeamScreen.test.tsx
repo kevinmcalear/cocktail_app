@@ -10,6 +10,7 @@ const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
 let mockRole = 40;
 
+jest.mock('@/components/screens/profile/JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true }));

@@ -1,7 +1,8 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -16,7 +17,7 @@ import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
-import { specLockNote } from '@/lib/pageVisibility';
+import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
@@ -25,6 +26,7 @@ import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
+import { DrinkControls } from './DrinkControls';
 import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
@@ -100,7 +102,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
-  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why.
+  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
   const lock = useSpecLock(preview ? null : item).data;
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
@@ -122,6 +124,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     openStrength: () => setStrengthOpen(true),
     openGlass: preview ? undefined : () => setGlassOpen(true),
     specLocked: !!lock,
+    measures: access.amounts && !lock,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);
@@ -129,33 +132,16 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const heroPic = itemPictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : itemPictures;
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
-
-  // Controls over the photo use dark glass and light ink; on wide screens the
-  // right-hand ones sit over the page instead.
-  const onPhoto = pictures.length > 0;
-  const controls = (
-    <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
-      <GlassButton
-        accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-        icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-        onMedia={onPhoto}
-        onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-      />
-      <View style={styles.controlsRight}>
-        <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} onMedia={onPhoto && !wide} onPress={toggleFavorite} />
-        {FEATURES.study ? (
-          <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} onMedia={onPhoto && !wide} onPress={() => onToggleStudyPile()} />
-        ) : null}
-        {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" onMedia={onPhoto && !wide} onPress={onEdit} /> : null}
-      </View>
-    </View>
-  );
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   const body = (
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
       <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
-      {item.description ? <Body tone="muted">{item.description}</Body> : null}
+      {item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null}
       {!preview && heroPic?.credit ? (
         <Caption
           tone="muted"
@@ -245,12 +231,23 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           </ScrollView>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
+        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
           {hero}
           <View style={{ marginTop: -space.xxl }}>{body}</View>
-        </ScrollView>
+        </Animated.ScrollView>
       )}
-      {controls}
+      <DrinkControls
+        media={pictures[0] && !pictures[0].isSketch ? 'photo' : 'paper'}
+        heroHeight={heroHeight}
+        scrollY={scrollY}
+        wide={wide}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+        inStudyPile={inStudyPile}
+        onToggleStudyPile={onToggleStudyPile}
+        canEdit={canEdit}
+        onEdit={onEdit}
+      />
       {ageGate.sheet}
       {glassOpen ? (
         <GlassSheet
@@ -293,6 +290,4 @@ const styles = StyleSheet.create({
   body: { gap: space.lg },
   notes: { gap: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
-  controlsRight: { flexDirection: 'row', gap: space.sm },
 });

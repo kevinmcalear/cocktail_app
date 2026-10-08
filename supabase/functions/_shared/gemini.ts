@@ -43,6 +43,9 @@ export const mockImages = (): boolean => mocked("IMAGE_MODEL");
 /** Reading menu photos is mocked on a local stack unless MENU_MODEL=live. */
 export const mockMenuReads = (): boolean => mocked("MENU_MODEL");
 
+/** Reading bottle labels is mocked on a local stack unless BOTTLE_MODEL=live. */
+export const mockBottleReads = (): boolean => mocked("BOTTLE_MODEL");
+
 export interface GeneratedImage {
   bytes: Uint8Array;
   mimeType: "image/png" | "image/jpeg";
@@ -132,6 +135,18 @@ export function flavorModel(): "mock" | "live" | "off" {
   if (model === "live") return "live";
   if (isLocalStack()) return "mock";
   if (model === "mock") throw new Error("FLAVOR_MODEL=mock is only allowed on a local stack");
+  return "off";
+}
+
+/**
+ * The pair-notes writer: like the flavor fill, mocked on a local stack unless
+ * PAIR_NOTES_MODEL=live, and off in production until that's set.
+ */
+export function pairNotesModel(): "mock" | "live" | "off" {
+  const model = Deno.env.get("PAIR_NOTES_MODEL");
+  if (model === "live") return "live";
+  if (isLocalStack()) return "mock";
+  if (model === "mock") throw new Error("PAIR_NOTES_MODEL=mock is only allowed on a local stack");
   return "off";
 }
 

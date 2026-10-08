@@ -8,7 +8,7 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useBars } from '@/hooks/useBars';
 import { useAuth } from '@/ctx/AuthContext';
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from '@/hooks/useDropdowns';
+import { DROPDOWNS_QUERY_KEY, useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
@@ -28,7 +28,6 @@ import {
 import { useCocktails } from '@/hooks/useCocktails';
 import { useBeers } from '@/hooks/useBeers';
 import { useWines } from '@/hooks/useWines';
-import { useIngredients } from '@/hooks/useIngredients';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { EditorChromeState } from '@/lib/editorChrome';
@@ -61,12 +60,12 @@ export default function EditModeDashboard() {
     }>();
     const { drafts, isLoading: loadingDrafts, deleteDraft } = useDrafts();
     const { data: userBars, isLoading: loadingBars } = useBars();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ menus: true });
 
     const { data: publishedCocktails, isLoading: loadingCocktails } = useCocktails({ allContexts: true });
     const { data: publishedBeers, isLoading: loadingBeers } = useBeers({ allContexts: true });
     const { data: publishedWines, isLoading: loadingWines } = useWines({ allContexts: true });
-    const { data: publishedIngredients, isLoading: loadingIngredients } = useIngredients({ allContexts: true });
+    const { data: publishedIngredients, isLoading: loadingIngredients } = useAllIngredients();
 
     const isLoading = loadingDrafts || loadingBars || loadingDropdowns || loadingCocktails || loadingBeers || loadingWines || loadingIngredients;
 
@@ -244,7 +243,7 @@ export default function EditModeDashboard() {
                     if (entityType === 'cocktail') queryClient.invalidateQueries({ queryKey: ['cocktails'] });
                     if (entityType === 'beer') queryClient.invalidateQueries({ queryKey: ['beers'] });
                     if (entityType === 'wine') queryClient.invalidateQueries({ queryKey: ['wines'] });
-                    if (entityType === 'ingredient') queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+                    if (entityType === 'ingredient') queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
                 }
                 
                 clearWorkspaceIfContains(id);

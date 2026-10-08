@@ -2,21 +2,11 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { requireUser } from "../_shared/auth.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
+import { isLocalStack } from "../_shared/localStack.ts";
+import { DEFAULT_SITE, siteOrigin } from "../_shared/site.ts";
 
 // ponytail: copied from lib/roles.ts (functions can't import app code); keep in step.
 const ROLE_LABELS: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "Bartender", 35: "Drink Creator", 40: "Admin" };
-
-/** The app's own origin, which the email links back to. Auth also checks it against its redirect allowlist. */
-function siteOrigin(value: unknown): string {
-  try {
-    const url = new URL(String(value));
-    const local = url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1");
-    if (url.protocol === "https:" || local) return url.origin;
-  } catch {
-    // fall through
-  }
-  throw new HttpError(400, "site is required.");
-}
 
 /**
  * Emails someone their invite to a venue. The invite itself is made first by
@@ -33,7 +23,7 @@ serveJson("send-bar-invite", async (req) => {
   const body = await req.json().catch(() => ({}));
   const barId = requireUuid(body?.bar_id, "bar_id");
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
-  const site = siteOrigin(body?.site);
+  const site = siteOrigin(body?.site, Deno.env.get("SITE_URL") || DEFAULT_SITE, isLocalStack());
   if (!email) throw new HttpError(400, "email is required.");
 
   // bar_invites RLS shows a venue's invites to its Admins and an invite to
@@ -47,6 +37,18 @@ serveJson("send-bar-invite", async (req) => {
     .maybeSingle();
   if (inviteError) throw inviteError;
   if (!invite) throw new HttpError(404, "There's no invite for that email. Invite them first.");
+
+  // Each email takes one of today's: a few per invite, a few dozen per Admin.
+  // ponytail: a send that then fails still uses its slot; hand it back if
+  // mailer outages ever make that matter.
+  const { data: slot, error: slotError } = await caller.admin.rpc("take_invite_email_slot", {
+    p_sender: caller.user.id,
+    p_bar_id: barId,
+    p_email: email,
+  });
+  if (slotError) throw slotError;
+  if (slot === "invite") throw new HttpError(429, "That invite has been emailed enough today. Try again tomorrow.");
+  if (slot !== "ok") throw new HttpError(429, "You've sent enough invite emails today. Try again tomorrow.");
 
   const { data: bar, error: barError } = await caller.admin.from("bars").select("name, slug").eq("id", barId).single();
   if (barError) throw barError;

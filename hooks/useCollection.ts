@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishMode } from '@/hooks/usePublished';
+import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -115,6 +116,9 @@ export function useCollect() {
             : await supabase.from(change.kind === 'remove-drink' ? 'collected_items' : 'collected_releases').delete().eq('id', change.id);
       // Already collected (a double tap, or another device): nothing to do.
       if (error && error.code !== '23505') throw new Error(error.message);
+    },
+    onSuccess: (_, change) => {
+      if (change.kind === 'drink' || change.kind === 'release') track('drink_collected', { kind: change.kind });
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['collection'] }),
     onError: () => {},

@@ -5,6 +5,7 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
@@ -85,6 +86,7 @@ export function LibraryScreen() {
   const canEdit = !!capabilities?.includes('edit_drinks');
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
+  const [snapping, setSnapping] = useState(false);
   // Library browses; finding by name is the one search, opened on this venue.
   const mine = useSearchMine();
   const [searching, setSearching] = useState(false);
@@ -154,7 +156,10 @@ export function LibraryScreen() {
       {show === 'past' ? <Caption tone="muted">Drinks from menus that have finished, and aren’t on one now.</Caption> : null}
       {show === 'ingredients' && activeId ? (
         canEdit ? (
-          <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} style={styles.start} />
+          <View style={styles.actions}>
+            <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
+            <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} />
+          </View>
         ) : capsLoading ? null : (
           <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
         )
@@ -199,6 +204,7 @@ export function LibraryScreen() {
         />
       )}
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
+      {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
       {searching ? (
         <DiscoverOverlay
           label="Search"
@@ -219,6 +225,6 @@ const styles = StyleSheet.create({
   filters: { flexDirection: 'row', gap: space.sm },
   filter: { minHeight: 38, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   picked: { fontFamily: fontFamilies.bodySemiBold },
-  start: { alignSelf: 'flex-start' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { flex: 1, gap: space.sm },
 });

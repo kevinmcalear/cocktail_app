@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Button, Card, Input, Text, XStack, YStack } from 'tamagui';
+import { StyleSheet, View } from 'react-native';
 
+import { ChipGroup, ErrorText, RowDivider, SectionTitle } from '@/components/bar/BarParts';
+import { Body, Button, Caption, Field, Surface } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
 import { useBarInvites, useRemoveInvite } from '@/hooks/useBarInvites';
-import { pressedProps } from '@/lib/a11yState';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
@@ -15,39 +17,6 @@ const ADMIN = 40;
 function roleError(error: unknown): string | null {
   if (!error) return null;
   return plainDbMessage(error) ?? "Couldn't save that. Check your connection and try again.";
-}
-
-function RolePills({ label, value, choices, disabled, onPick }: {
-  label: string;
-  value: number;
-  choices: readonly { level: number; label: string }[];
-  disabled: boolean;
-  onPick: (level: number) => void;
-}) {
-  return (
-    <XStack gap="$2" flexWrap="wrap" role="group" aria-label={label}>
-      {choices.map((r) => {
-        const on = r.level === value;
-        return (
-          <Button
-            key={r.level}
-            size="$2"
-            borderRadius="$10"
-            borderWidth={1}
-            disabled={disabled}
-            backgroundColor={on ? '$color8' : '$background'}
-            borderColor={on ? '$color8' : '$borderColor'}
-            onPress={() => !on && onPick(r.level)}
-            {...pressedProps(on)}
-          >
-            <Text color={on ? '$backgroundStrong' : '$color'} fontWeight={on ? 'bold' : 'normal'}>
-              {r.label}
-            </Text>
-          </Button>
-        );
-      })}
-    </XStack>
-  );
 }
 
 /**
@@ -63,7 +32,7 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
   const [email, setEmail] = useState('');
   const [newRole, setNewRole] = useState(10);
   const canManage = myRole >= ADMIN;
-  const choices = ROLE_LEVELS.filter((r) => r.level <= myRole);
+  const choices = ROLE_LEVELS.filter((r) => r.level <= myRole).map((r) => ({ value: r.level, label: r.label }));
   const { data: invites = [] } = useBarInvites(barId, canManage);
   const remove = useRemoveInvite(barId);
   const busy = change.isPending || add.isPending || remove.isPending;
@@ -78,80 +47,95 @@ export function TeamMembers({ barId, members, myRole }: { barId: string; members
     });
 
   return (
-    <YStack gap="$3">
-      <Text fontSize="$3" fontWeight="bold" color="$color11" textTransform="uppercase" letterSpacing={0.5}>
-        Members ({members.length})
-      </Text>
+    <View style={styles.section}>
+      <SectionTitle>{`Members (${members.length})`}</SectionTitle>
       {canManage ? (
-        <Card padding="$3" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
-          <Text fontSize="$3" fontWeight="600" color="$color">Invite someone</Text>
-          <Text fontSize="$2" color="$color11">They join when they open your staff link and sign in with this email.</Text>
-          <Input
+        <Surface style={styles.card}>
+          <View style={styles.rowText}>
+            <Body>Invite someone</Body>
+            <Caption tone="muted">They join when they open your staff link and sign in with this email.</Caption>
+          </View>
+          <Field
+            label="Email"
             value={email}
             onChangeText={setEmail}
-            placeholder="Email"
-            aria-label="Email of the person to invite"
+            placeholder="name@example.com"
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
-            textAlign="left"
-            backgroundColor="$background"
-            borderColor="$borderColor"
           />
-          <RolePills label="Role for the new member" value={newRole} choices={choices} disabled={busy} onPick={setNewRole} />
-          {add.error ? <Text fontSize="$2" color="$red10" role="alert">{roleError(add.error)}</Text> : null}
+          <ChipGroup label="Role for the new member" options={choices} value={newRole} onPick={setNewRole} disabled={busy} />
+          {add.error ? <ErrorText>{roleError(add.error)}</ErrorText> : null}
           <Button
-            size="$3"
-            backgroundColor="$color8"
+            label="Invite"
             disabled={busy || !email.trim()}
-            opacity={busy || !email.trim() ? 0.5 : 1}
             onPress={async () => {
               if (!(await confirmRole(email.trim(), newRole))) return;
               add.mutate({ email, roleLevel: newRole }, { onSuccess: () => setEmail('') });
             }}
-          >
-            <Text color="$backgroundStrong" fontWeight="bold">Invite</Text>
-          </Button>
-        </Card>
+          />
+        </Surface>
       ) : null}
-      {change.error ? <Text fontSize="$2" color="$red10" role="alert">{roleError(change.error)}</Text> : null}
-      {members.length === 0 ? <Text color="$color11" fontStyle="italic" fontSize="$2">No members found.</Text> : null}
-      {members.map((m) => {
-        const me = m.user_id === myId;
-        // Emails are only returned to venue admins (and your own row).
-        const who = m.email ?? 'Team member';
-        const editable = canManage && !me && !!m.email && m.role_level <= myRole;
-        return (
-          <Card key={m.user_id} padding="$3" gap="$2" backgroundColor="$backgroundStrong" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
-            <XStack justifyContent="space-between" alignItems="center" gap="$2">
-              <Text flexShrink={1} fontSize="$3" fontWeight="600" color="$color">{me ? `${who} (you)` : who}</Text>
-              {editable ? null : <Text fontSize="$2" color="$color11">{roleLabel(m.role_level)}</Text>}
-            </XStack>
-            {editable ? (
-              <RolePills
-                label={`Role for ${who}`}
-                value={m.role_level}
-                choices={choices}
-                disabled={busy}
-                onPick={async (level) => {
-                  if (await confirmRole(who, level)) change.mutate({ email: m.email!, roleLevel: level });
-                }}
-              />
-            ) : null}
-          </Card>
-        );
-      })}
-      {remove.error ? <Text fontSize="$2" color="$red10" role="alert">{roleError(remove.error)}</Text> : null}
-      {invites.map((i) => (
-        <Card key={i.id} padding="$3" gap="$1" backgroundColor="$background" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
-          <Text fontSize="$3" color="$color">{i.email}</Text>
-          <XStack justifyContent="space-between" alignItems="center" gap="$2">
-            <Text fontSize="$2" color="$color11">{`Invited as ${roleLabel(i.role_level)}, not joined yet`}</Text>
-            <Button size="$2" chromeless disabled={busy} aria-label={`Cancel the invite for ${i.email}`} onPress={() => remove.mutate(i.id)}>
-              <Text fontSize="$2" color="$color">Cancel</Text>
-            </Button>
-          </XStack>
-        </Card>
-      ))}
-    </YStack>
+      {change.error ? <ErrorText>{roleError(change.error)}</ErrorText> : null}
+      <Surface style={styles.card}>
+        {members.length === 0 ? <Caption tone="muted">No members found.</Caption> : null}
+        {members.map((m, i) => {
+          const me = m.user_id === myId;
+          // Emails are only returned to venue admins (and your own row).
+          const who = m.email ?? 'Team member';
+          const editable = canManage && !me && !!m.email && m.role_level <= myRole;
+          return (
+            <View key={m.user_id} style={styles.card}>
+              {i > 0 ? <RowDivider /> : null}
+              <View style={styles.row}>
+                <Body style={styles.rowText}>{me ? `${who} (you)` : who}</Body>
+                {editable ? null : <Caption tone="muted">{roleLabel(m.role_level)}</Caption>}
+              </View>
+              {editable ? (
+                <ChipGroup
+                  label={`Role for ${who}`}
+                  options={choices}
+                  value={m.role_level}
+                  disabled={busy}
+                  onPick={async (level) => {
+                    if (await confirmRole(who, level)) change.mutate({ email: m.email!, roleLevel: level });
+                  }}
+                />
+              ) : null}
+            </View>
+          );
+        })}
+      </Surface>
+      {remove.error ? <ErrorText>{roleError(remove.error)}</ErrorText> : null}
+      {invites.length > 0 ? (
+        <Surface style={styles.card}>
+          {invites.map((inv, i) => (
+            <View key={inv.id} style={styles.card}>
+              {i > 0 ? <RowDivider /> : null}
+              <View style={styles.row}>
+                <View style={styles.rowText}>
+                  <Body>{inv.email}</Body>
+                  <Caption tone="muted">{`Invited as ${roleLabel(inv.role_level)}, not joined yet`}</Caption>
+                </View>
+                <Button
+                  variant="ghost"
+                  label="Cancel"
+                  accessibilityLabel={`Cancel the invite for ${inv.email}`}
+                  disabled={busy}
+                  onPress={() => remove.mutate(inv.id)}
+                />
+              </View>
+            </View>
+          ))}
+        </Surface>
+      ) : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  section: { gap: space.sm },
+  card: { gap: space.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  rowText: { flex: 1, gap: 2 },
+});

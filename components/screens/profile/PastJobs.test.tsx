@@ -11,8 +11,10 @@ const bar = (name: string) => ({ id: name, handle: name.toLowerCase(), display_n
 jest.mock('@/hooks/useProfiles', () => ({
   useProfilePositions: () => ({
     data: [
-      { id: 'now', title: 'Head bartender', is_current: true, is_shown: false, person: jo, bar: bar('Little Rye') },
-      { id: 'pm', title: 'Bartender', is_current: false, is_shown: false, person: jo, bar: bar('Pale Moth') },
+      { id: 'now', title: 'Head bartender', is_current: true, is_shown: false, person_accepted: true, bar_accepted: true, person: jo, bar: bar('Little Rye') },
+      { id: 'pm', title: 'Bartender', is_current: false, is_shown: false, person_accepted: true, bar_accepted: true, person: jo, bar: bar('Pale Moth') },
+      { id: 'new', title: 'Bar manager', is_current: true, is_shown: false, person_accepted: true, bar_accepted: false, person: jo, bar: bar('Attaboy') },
+      { id: 'asked', title: 'Barback', is_current: true, is_shown: false, person_accepted: false, bar_accepted: true, person: jo, bar: bar('Dante') },
     ],
   }),
   useShowPosition: () => ({ mutate: mockShow, isPending: false, error: null }),
@@ -30,4 +32,11 @@ test('the current job always shows; each past job has its own switch, off to sta
   expect(screen.queryByLabelText('Show Little Rye on my profile')).toBeNull();
   await fireEvent(toggle, 'valueChange', true);
   expect(mockShow).toHaveBeenCalledWith({ id: 'pm', shown: true });
+});
+
+test("a job the bar hasn't confirmed says so; one waiting on the person is left to Jobs waiting", async () => {
+  await renderWithTamagui(<PastJobs personId="jo" />);
+  expect(screen.getByText('Bar manager, Attaboy')).toBeTruthy();
+  expect(screen.getByText('Pending: shows once the bar confirms it')).toBeTruthy();
+  expect(screen.queryByText('Barback, Dante')).toBeNull();
 });

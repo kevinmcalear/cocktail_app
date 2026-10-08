@@ -19,8 +19,8 @@ interface AllergensSectionProps {
 /**
  * Allergens rolled up from the recipe, so a server can answer a guest. Opens
  * at Floor (the talking_points capability) on venue drinks, so it's readable
- * even when the spec is locked. Hidden when there's no spec to check.
- * Unchecked ingredients are said out loud, never hidden.
+ * even when the spec is locked. Hidden when nothing in the spec declares an
+ * allergen; once one does, unchecked ingredients are said out loud too.
  */
 export function AllergensSection({ itemId, barId, preview }: AllergensSectionProps) {
   const { data: capabilities } = useCapabilities(preview ? null : barId);
@@ -28,7 +28,7 @@ export function AllergensSection({ itemId, barId, preview }: AllergensSectionPro
   const unlocked = !barId || !!capabilities?.includes('talking_points');
   const { data, isPending } = useDrinkAllergens(preview || !unlocked ? null : itemId);
   if (preview) return null;
-  if (unlocked && !isPending && !data?.lines) return null;
+  if (unlocked && !isPending && !data?.allergens.length) return null;
   const opensAt = opensAtLevel ? roleLabel(opensAtLevel) : 'Employee';
   return (
     <LockedSection title="Allergens" unlocked={unlocked} opensAt={opensAt}>

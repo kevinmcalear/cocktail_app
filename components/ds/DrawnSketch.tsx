@@ -19,9 +19,12 @@ function Loaded({ itemId, fallback }: DrawnSketchProps) {
   const sketch = useItemSketch(itemId).data ?? null;
   const [width, setWidth] = useState(0);
   if (!sketch) return <>{fallback}</>;
+  // Draws straight away as a thumb and adds the full detail once it's measured
+  // wide. Waiting for a width left blank paper on web, where onLayout never
+  // fires for a view that mounts late inside a Suspense boundary.
   return (
     <View style={styles.fill} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {width > 0 ? <SketchDrawing inputs={sketch} seed={itemId} detail={width < THUMB_WIDTH ? 'thumb' : 'full'} /> : null}
+      <SketchDrawing inputs={sketch} seed={itemId} detail={width < THUMB_WIDTH ? 'thumb' : 'full'} />
     </View>
   );
 }

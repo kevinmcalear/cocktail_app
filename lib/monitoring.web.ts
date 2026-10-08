@@ -6,6 +6,7 @@
 // The SDK is about a tenth of the web bundle, so it's loaded as a separate
 // chunk, and only when a DSN is configured.
 import { appVariant } from '@/lib/appVariant';
+import { scrubBreadcrumb, scrubEvent } from '@/lib/monitoringScrub';
 
 type SentryModule = typeof import('@sentry/react');
 
@@ -19,14 +20,28 @@ let sentry: SentryModule | null = null;
 const pendingErrors: { error: unknown; context?: Record<string, unknown> }[] = [];
 let pendingUserId: string | null | undefined;
 
+/** Runs once the browser is idle (or after a few seconds at most). */
+function whenIdle(run: () => void): void {
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 4000 });
+  else setTimeout(run, 1500); // Safari has no requestIdleCallback
+}
+
 export function initMonitoring(): void {
   if (!enabled) return;
-  import('@sentry/react')
+  // The SDK chunk is about 1.3 MB: fetch it after the first paint, not
+  // alongside it. Errors and the user from before then are queued below.
+  whenIdle(() => void loadSentry());
+}
+
+function loadSentry() {
+  return import('@sentry/react')
     .then((Sentry) => {
       Sentry.init({
         dsn,
         environment: appVariant,
         sendDefaultPii: false,
+        beforeBreadcrumb: scrubBreadcrumb,
+        beforeSend: scrubEvent,
       });
       sentry = Sentry;
       if (pendingUserId !== undefined) Sentry.setUser(pendingUserId ? { id: pendingUserId } : null);

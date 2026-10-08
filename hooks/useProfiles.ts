@@ -418,6 +418,9 @@ export interface Position {
   is_current: boolean;
   /** The person's switch for a past job. Others read a past job only while it's on. */
   is_shown: boolean;
+  /** Both sides have said yes. Until then only they (and moderators) read it. */
+  person_accepted: boolean;
+  bar_accepted: boolean;
   person: PositionProfile;
   bar: PositionProfile;
 }
@@ -491,13 +494,15 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
     queryFn: async (): Promise<Position[]> => {
       const { data, error } = await supabase
         .from('profile_positions')
-        .select(`id, title, is_current, is_shown, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
+        .select(`id, title, is_current, is_shown, person_accepted, bar_accepted, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
         .eq(profile!.kind === 'person' ? 'person_profile_id' : 'bar_profile_id', profile!.id)
         .limit(50);
       if (error) throw error;
-      // RLS hides a row whose other side is private, so both are present.
+      // Everyone else's rows need both profiles visible (RLS). The two sides of
+      // a job that isn't confirmed yet can read it even when the other
+      // profile is private, without that profile: leave those out here.
       const other = (p: Position) => (profile!.kind === 'person' ? p.bar : p.person).display_name;
-      return ((data ?? []) as unknown as Position[]).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
+      return ((data ?? []) as unknown as Position[]).filter((p) => p.person && p.bar).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
     },
   });
 }

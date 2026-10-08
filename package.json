@@ -10,6 +10,7 @@
     "lint": "expo lint",
     "build:web": "APP_VARIANT=production TAMAGUI_DISABLE_SLIDER_INTERVAL=1 expo export -p web && node scripts/write-web-manifest.mjs && cp dist/+not-found.html dist/404.html",
     "typecheck": "tsc --noEmit",
+    "sentry:sourcemaps": "sentry-expo-upload-sourcemaps dist",
     "test:unit": "node scripts/run-checks.mjs && node --test \"scripts/__tests__/*.test.mjs\"",
     "check:design": "node --no-warnings=ExperimentalWarning scripts/design-ratchet.mjs",
     "test:jest": "jest",

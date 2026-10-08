@@ -1,3 +1,4 @@
+import { track } from '@/lib/analytics';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       options: { emailRedirectTo: getAuthRedirectTo('/auth/callback'), data: { onboarded: false } },
     });
+    if (!error) track('sign_up');
     return { session: data.session, error: asError(error) };
   };
 

@@ -1,14 +1,7 @@
-import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque';
-import { Fraunces_400Regular, Fraunces_400Regular_Italic } from '@expo-google-fonts/fraunces';
-import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
-import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
-import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
-import { useFonts } from 'expo-font';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { Platform } from 'react-native';
 import { Theme } from 'tamagui';
 
-import { backbar, DEFAULT_ACCENT, fontFamilies, type BackbarColors, type BackbarScheme, type DisplayFace } from '@/constants/tokens';
+import { backbar, DEFAULT_ACCENT, type BackbarColors, type BackbarScheme, type DisplayFace } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { accentFill, readableAccent } from '@/lib/color';
 
@@ -20,19 +13,6 @@ interface Brand {
   /** A venue's tint for the dark ground; callers pass only readable ones (lib/brand). */
   groundTint?: string;
 }
-
-const BACKBAR_FONTS = {
-  [fontFamilies.instrument]: InstrumentSerif_400Regular,
-  [fontFamilies.instrumentItalic]: InstrumentSerif_400Regular_Italic,
-  [fontFamilies.fraunces]: Fraunces_400Regular,
-  [fontFamilies.frauncesItalic]: Fraunces_400Regular_Italic,
-  [fontFamilies.bricolage]: BricolageGrotesque_600SemiBold,
-  [fontFamilies.body]: Geist_400Regular,
-  [fontFamilies.bodyMedium]: Geist_500Medium,
-  [fontFamilies.bodySemiBold]: Geist_600SemiBold,
-  [fontFamilies.mono]: GeistMono_400Regular,
-  [fontFamilies.monoMedium]: GeistMono_500Medium,
-};
 
 const BrandContext = createContext<Brand>({ accent: DEFAULT_ACCENT, displayFace: 'instrument' });
 const SchemeContext = createContext<BackbarScheme | null>(null);
@@ -59,11 +39,6 @@ export function BrandProvider({ accent, displayFace, groundTint, children }: Par
 export function BackbarTheme({ scheme, children }: { scheme?: BackbarScheme; children: ReactNode }) {
   const appScheme = useColorScheme();
   const resolved = scheme ?? appScheme;
-  // ponytail: the redesign's fonts load here rather than in the root layout, so
-  // the current screens don't wait for them. Native waits (no fallback flash);
-  // web renders straight away and swaps when they arrive.
-  const [fontsLoaded] = useFonts(BACKBAR_FONTS);
-  if (!fontsLoaded && Platform.OS !== 'web') return null;
   return (
     <SchemeContext.Provider value={resolved}>
       <Theme {...backbarThemeProps(resolved)}>{children}</Theme>

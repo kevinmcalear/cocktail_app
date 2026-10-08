@@ -78,8 +78,8 @@ export function DiscoverScreen() {
     setPreferNear(true);
     void locate().then(place);
   };
-  // Ask once Discover is on screen, not when it mounts: native tabs mount every tab up front, so in
-  // venue mode it sits behind Tonight (and their per-tab focus isn't reliable for this).
+  // Ask once Discover is on screen. The tab mounts on its first focus (MountOnFocus), and this
+  // guards anywhere else it's rendered off screen.
   const onScreen = usePathname() === '/discover';
   const asked = useRef(false);
   useEffect(() => {
@@ -106,7 +106,16 @@ export function DiscoverScreen() {
 
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
-  const results = useDiscoverResults({ kinds, search, area: shownArea });
+  // Until location answers, Anywhere is only a stand-in: wait rather than load every bar drink,
+  // but not for long (a web location prompt can sit unanswered).
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    if (near.status !== 'locating') return;
+    const t = setTimeout(() => setWaited(true), 2500);
+    return () => clearTimeout(t);
+  }, [near.status]);
+  const locating = area.kind === 'anywhere' && (near.status === 'idle' || (near.status === 'locating' && !waited));
+  const results = useDiscoverResults({ kinds, search, area: shownArea }, !locating || searching);
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;

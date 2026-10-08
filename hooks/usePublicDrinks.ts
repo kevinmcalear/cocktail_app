@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { COCKTAIL_LIST_COLUMNS, withListRecipes } from '@/hooks/useCocktails';
 import { useDebounced } from '@/hooks/useDiscover';
 import { toCocktailSearchItem } from '@/hooks/useSearchCatalog';
+import { useTrackSearch } from '@/hooks/useTrackSearch';
 import { menuOrder, runDates, searchMenuTag, type MenuRunRow } from '@/lib/menuEditions';
 import { supabase } from '@/lib/supabase';
 import type { SearchItem } from '@/types/search';
@@ -22,6 +23,7 @@ type FoundDrink = { item_id: string; credit: string | null } & { [K in keyof Men
  */
 export function usePublicDrinks(text: string) {
   const query = useDebounced(text.trim(), SEARCH_DEBOUNCE_MS);
+  useTrackSearch(query, 'search');
   return useQuery({
     queryKey: ['public-drinks', query],
     enabled: query.length > 0,

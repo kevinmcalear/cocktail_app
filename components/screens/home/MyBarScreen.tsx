@@ -7,11 +7,12 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
-import { useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
+import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
+import { useAllDrinks, useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
+import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddBottlesSheet } from './AddBottlesSheet';
 
 /** "Negroni, Old Pal and 4 more" */
@@ -47,15 +48,17 @@ export function MyBarScreen() {
   const bar = useMyBar();
   const { add, remove } = useShelfEdit();
   const [adding, setAdding] = useState(false);
+  const [snapping, setSnapping] = useState(false);
   const empty = !bar.isLoading && bar.shelf.length === 0;
-  const others = bar.drinks.filter((d) => !bar.canMakeIds.has(d.id));
+  const all = useAllDrinks();
+  const others = all.drinks.filter((d) => !bar.canMakeIds.has(d.id));
 
   const { data: me } = useMyTaste();
-  const catalog = useFlavorCatalog();
-  // Match percentages only once your taste comes from enough rankings.
+  // Match percentages only once your taste comes from enough rankings, for the drinks loaded so far.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const profiles = useItemFlavors([...bar.canMake, ...others].map((d) => d.id), !!scored);
   const matchFor = (id: string) => {
-    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
+    const profile = scored && profiles.data?.[id];
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
   };
 
@@ -82,13 +85,10 @@ export function MyBarScreen() {
                 <ShelfChip key={item.id} item={item} onRemove={() => remove.mutate(item.id)} />
               ))}
             </View>
-            <Button
-              label={empty ? 'Add your bottles' : 'Add bottles'}
-              icon="plus"
-              variant={empty ? 'primary' : 'secondary'}
-              onPress={() => setAdding(true)}
-              style={styles.start}
-            />
+            <View style={styles.chips}>
+              <Button label={empty ? 'Add your bottles' : 'Add bottles'} icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding(true)} />
+              <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
+            </View>
           </View>
 
           {bar.oneAway.length ? (
@@ -130,6 +130,8 @@ export function MyBarScreen() {
       <FlatList
         data={others}
         keyExtractor={(d) => d.id}
+        onEndReached={all.loadMore}
+        onEndReachedThreshold={1}
         ListHeaderComponent={header}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
         renderItem={({ item }) => (
@@ -138,11 +140,11 @@ export function MyBarScreen() {
       />
       <AddBottlesSheet
         visible={adding}
-        bottles={bar.bottles}
         onShelf={bar.shelfIds}
         onToggle={(item, on) => (on ? add.mutate(item.id) : remove.mutate(item.id))}
         onClose={() => setAdding(false)}
       />
+      <BottlePhotoSheet visible={snapping} target={{ kind: 'home' }} onClose={() => setSnapping(false)} />
     </View>
   );
 }
@@ -162,7 +164,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  start: { alignSelf: 'flex-start' },
   away: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   awayText: { flex: 1, gap: 2 },
 });

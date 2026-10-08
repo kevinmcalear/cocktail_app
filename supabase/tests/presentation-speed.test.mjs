@@ -1,5 +1,5 @@
 // Faster drink reads, same visibility
-// (supabase/migrations/20261008310000_presentation_rls_speed.sql).
+// (supabase/migrations/20261008810000_presentation_rls_speed.sql).
 //
 // Loads the definitions that migration replaced (fixtures/presentation-before.sql,
 // as temp views) and checks that every reader gets exactly the same rows from
@@ -9,7 +9,8 @@
 // visibility, menu-published drinks, credited drinks of claimed and unclaimed
 // bars, classics, personal drinks (published, private, moderated, by a
 // blocked maker) and the glass, ice, family, methods and ingredients they use.
-// Everything happens in one transaction that is rolled back.
+// Fixtures go in directly (no write guards) and are removed afterwards; each
+// reader's checks run in their own short transaction, so no lock is held for long.
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -35,14 +36,14 @@ const FOLLOWERS = ['item_images', 'item_categories', 'item_methods'];
 const READERS = ['anon', 'admin', 'manager', 'bartender', 'expired', 'stranger', 'blocker', 'maker', 'catalogAdmin', 'viewAs'];
 
 async function asReader(reader, fn) {
-  await db.query('SAVEPOINT reader');
+  await db.query('BEGIN');
   try {
     const claims = reader === 'anon' ? { role: 'anon' } : { sub: uid(`user:${reader}`), role: 'authenticated' };
     await db.query(`SELECT set_config('request.jwt.claims', $1, true)`, [JSON.stringify(claims)]);
     await db.query(`SET LOCAL ROLE ${reader === 'anon' ? 'anon' : 'authenticated'}`);
     return await fn();
   } finally {
-    await db.query('ROLLBACK TO SAVEPOINT reader');
+    await db.query('ROLLBACK');
   }
 }
 
@@ -174,16 +175,39 @@ const drinkIds = () => drinkKeys.map((key) => uid(`item:${key}`));
 
 before(async () => {
   await db.connect();
-  await db.query('BEGIN');
   // Fixtures go straight in: this file checks reads, not the write guards.
-  await db.query('SET LOCAL session_replication_role = replica');
+  await db.query('SET session_replication_role = replica');
   await seed();
-  await db.query('SET LOCAL session_replication_role = origin');
+  await db.query('SET session_replication_role = origin');
   await db.query(readFileSync(new URL('./fixtures/presentation-before.sql', import.meta.url), 'utf8'));
 });
 
 after(async () => {
-  await db.query('ROLLBACK').catch(() => {});
+  const of = (prefix) => Object.entries(id).filter(([k]) => k.startsWith(prefix)).map(([, v]) => v);
+  const items = of('item:');
+  const users = of('user:');
+  await db.query('SET session_replication_role = replica');
+  for (const [sql, ids] of [
+    ['DELETE FROM public.recipes WHERE recipe_item_id = ANY($1)', items],
+    ['DELETE FROM public.item_methods WHERE item_id = ANY($1)', items],
+    ['DELETE FROM public.item_images WHERE item_id = ANY($1)', items],
+    ['DELETE FROM public.item_categories WHERE item_id = ANY($1)', items],
+    ['DELETE FROM public.menu_drinks WHERE item_id = ANY($1)', items],
+    ['DELETE FROM public.items WHERE id = ANY($1)', items],
+    ['DELETE FROM public.images WHERE id = ANY($1)', of('image:')],
+    ['DELETE FROM public.categories WHERE id = ANY($1)', of('category')],
+    ['DELETE FROM public.menus WHERE id = ANY($1)', of('menu')],
+    ['DELETE FROM public.user_prefs WHERE user_id = ANY($1)', users],
+    ['DELETE FROM public.user_blocks WHERE blocker_id = ANY($1)', users],
+    ['DELETE FROM public.user_bars WHERE user_id = ANY($1)', users],
+    ['DELETE FROM public.venue_roles WHERE id = ANY($1)', of('role:')],
+    ['DELETE FROM public.profiles WHERE id = ANY($1)', [...of('profile:'), ...of('person:')]],
+    ['DELETE FROM public.bars WHERE id = ANY($1)', of('bar:')],
+    ['DELETE FROM private.app_admins WHERE user_id = ANY($1)', users],
+    ['DELETE FROM auth.users WHERE id = ANY($1)', users],
+  ]) {
+    await db.query(sql, [ids]);
+  }
   await db.end();
 });
 
