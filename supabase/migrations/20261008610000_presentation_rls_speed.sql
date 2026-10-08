@@ -29,7 +29,7 @@
 --   * Indexes for the lookups the views now make: menu_drinks.item_id,
 --     items.glassware_id / ice_id / family_id, item_methods.method_item_id,
 --     and recipes.ingredient_item_id / parent_ingredient_id. The two recipes
---     indexes are also in 20261008300000_db_indexes.sql (IF NOT EXISTS, same
+--     indexes are also in 20261008600000_db_indexes.sql (IF NOT EXISTS, same
 --     names), so either PR can land first.
 --
 -- app_item_presentation still calls effective_bar_role(), only for venue items
