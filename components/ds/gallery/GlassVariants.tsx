@@ -27,7 +27,7 @@ const SAMPLES: Record<string, { name: string; inputs: SketchInputs }> = {
   spritz: { name: 'Aperol spritz', inputs: drink('spritz', { ice: 'cubes', method: 'build', liquid: { hex: SKETCH_SAMPLES.spritz, alpha: 0.6 }, fizz: true, garnish: 'orange_wheel' }) },
   snifter: { name: 'Cognac', inputs: drink('snifter', { liquid: { hex: SKETCH_SAMPLES.brandy, alpha: 0.85 } }) },
   beer: { name: 'Lager', inputs: drink('beer', { method: 'build', liquid: { hex: SKETCH_SAMPLES.lager, alpha: 0.75 }, foam: 'cap', fizz: true }) },
-  mug: { name: 'Irish coffee', inputs: drink('mug', { method: 'build', liquid: { hex: SKETCH_SAMPLES.irishCoffee, alpha: 0.95 }, float: '#f4eedd' }) },
+  mug: { name: 'Irish coffee', inputs: drink('mug', { method: 'build', liquid: { hex: SKETCH_SAMPLES.irishCoffee, alpha: 0.95 }, float: SKETCH_SAMPLES.cream }) },
 };
 
 /** Every glass that has variants, drawn side by side; tap one to see it chosen. */

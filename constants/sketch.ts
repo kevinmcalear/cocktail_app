@@ -68,4 +68,5 @@ export const SKETCH_SAMPLES = {
   brandy: '#8a4a12',
   lager: '#d9961c',
   irishCoffee: '#3a2010',
+  cream: '#f4eedd',
 } as const;
