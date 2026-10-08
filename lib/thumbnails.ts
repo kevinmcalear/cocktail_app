@@ -14,3 +14,18 @@ export function thumbUrl(url: string): string | null {
   if (!path || path.startsWith('thumbs/')) return null;
   return `${url.slice(0, at + PUBLIC_DRINKS.length)}thumbs/${path.replace(/\.[^./]+$/, '')}.jpg${query ? `?${query}` : ''}`;
 }
+
+// Originals whose copy failed (not made yet, or a format the worker can't
+// read), for this session: a remount (a list scrolling back, a page opened
+// again) goes straight to the original instead of asking for the 404 again.
+const missing = new Set<string>();
+
+/** The copy to ask for first, or null to show the original: none can exist, or it failed before. */
+export function thumbToTry(url: string): string | null {
+  return missing.has(url) ? null : thumbUrl(url);
+}
+
+/** Remembers that this original's copy failed, so thumbToTry skips it from now on. */
+export function markNoThumb(url: string): void {
+  missing.add(url);
+}

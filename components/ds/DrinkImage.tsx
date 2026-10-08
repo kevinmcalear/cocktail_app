@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii, space } from '@/constants/tokens';
-import { thumbUrl } from '@/lib/thumbnails';
+import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
 import { IngredientDrawing } from './IngredientDrawing';
@@ -36,6 +36,10 @@ export interface DrinkImageProps {
   thumb?: boolean;
   /** With no image: draw the sketch in front of you (AnimatedSketch). One per screen. */
   animate?: boolean;
+  /** The photo's own colour (images.palette[0]) behind it while it loads, instead of plain paper. */
+  placeholderColor?: string | null;
+  /** Load order: 'high' for the one picture a screen is about (a drink page's hero). */
+  priority?: 'low' | 'normal' | 'high';
 }
 
 /**
@@ -43,13 +47,14 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate, placeholderColor, priority }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
-  // The original whose thumbnail failed (not made yet, or a format the worker can't read).
+  // The original whose thumbnail failed here; thumbToTry remembers it past this mount.
+  // Read in the condition so the compiler recomputes `small` when it changes.
   const [noThumb, setNoThumb] = useState<string | null>(null);
-  const small = thumb && typeof uri === 'string' && noThumb !== uri ? thumbUrl(uri) : null;
+  const small = thumb && typeof uri === 'string' && noThumb !== uri ? thumbToTry(uri) : null;
   const shown = small ?? uri;
   const glassIcon = (
     <View style={styles.empty}>
@@ -61,7 +66,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       accessible
       role="img"
       accessibilityLabel={ingredient ? `${accessibilityLabel}, drawing` : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
-      style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: ds.c.paper }, style]}
+      style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: (uri && placeholderColor) || ds.c.paper }, style]}
     >
       {ingredient ? (
         <IngredientDrawing id={ingredient.id} name={ingredient.name} />
@@ -75,7 +80,15 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
           transition={200}
           cachePolicy="memory-disk"
           recyclingKey={String(uri)}
-          onError={small ? () => setNoThumb(uri as string) : undefined}
+          priority={priority}
+          onError={
+            small
+              ? () => {
+                  markNoThumb(uri as string);
+                  setNoThumb(uri as string);
+                }
+              : undefined
+          }
         />
       ) : itemId ? (
         <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} />

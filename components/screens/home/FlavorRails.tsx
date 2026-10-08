@@ -9,6 +9,7 @@ import { COLD_START_DRINKS, forYou, type Profile } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { TasteQuestions } from './TasteQuestions';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const CARD_WIDTH = 168;
 
@@ -27,10 +28,12 @@ interface RailCardProps {
 /** One drink in a rail: picture, name, and a line on why it's here. */
 export function RailCard({ id, name, imageUrl, badge, reason, href, profile }: RailCardProps) {
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   return (
     <PressableScale
       role="link"
       accessibilityLabel={`${name}. ${badge}. ${reason}`}
+      onPressIn={href ? undefined : () => prefetch(id, { name, imageUrl })}
       onPress={() => router.push((href ?? itemHref('Cocktail', id)) as never)}
       style={styles.card}
     >

@@ -8,7 +8,7 @@ import { Alert, Platform } from "react-native";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { useDrafts } from "@/hooks/useDrafts";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import {
     resolveIngredientId,
@@ -397,7 +397,7 @@ export function useCocktailDraftEditor({
             .select("id")
             .single();
         if (error || !data) throw error || new Error(`Failed to create ${type}`);
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
         return data.id;
     };
 
@@ -419,7 +419,7 @@ export function useCocktailDraftEditor({
             .select("id")
             .single();
         if (error || !data) throw error || new Error("Failed to create glassware");
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
         setGlasswareId(data.id);
         markDirty();
         return data.id;
@@ -517,7 +517,7 @@ export function useCocktailDraftEditor({
             }
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks });
 
             const activeDraftId = currentDraftId;
             if (menuSectionId) {

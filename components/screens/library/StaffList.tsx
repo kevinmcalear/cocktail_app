@@ -13,6 +13,7 @@ import { menuState } from '@/lib/libraryFilters';
 import { candidatesFor, CUTS, moved, ranked, STAFF_LIST_MAX, staffOrder, unranked } from '@/lib/staffList';
 
 import { StaffRow } from './StaffRow';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const NO_PICKS: StaffPick[] = [];
 
@@ -34,6 +35,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   contentContainerStyle?: StyleProp<ViewStyle>;
 }) {
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   const breakpoint = useBreakpoint();
   const arrows = Platform.OS === 'web' && breakpoint !== 'phone';
   const picks = useStaffList(barId);
@@ -64,6 +66,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     status: menuState(pick.itemId, onNow, past),
     canEdit,
     onOpen: () => router.push(itemHref('Cocktail', pick.itemId) as never),
+    onPressIn: () => prefetch(pick.itemId, { name: pick.name, imageUrl: pick.imageUrl }),
     onRemove: () => remove(pick),
   });
 

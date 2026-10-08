@@ -1,11 +1,8 @@
 import { CustomIcon } from "@/components/ui/CustomIcons";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import {
-    allowedTypesLabel,
-    itemAllowedInSection,
-    normalizeAllowedTypes,
-    type SectionDrinkType,
-} from "@/lib/sectionAllowedTypes";
+import { allowedTypesLabel, itemAllowedInSection, normalizeAllowedTypes, type SectionDrinkType } from "@/lib/sectionAllowedTypes";
+import { usePrefetchCocktail } from "@/hooks/useCocktails";
+import { drinkIdFromHref } from "@/lib/itemRoutes";
 import { capitalize } from "@/lib/stringUtils";
 import { useMenuEditDropStore } from "@/store/useMenuEditDropStore";
 import { Image } from "expo-image";
@@ -171,6 +168,7 @@ export function CurrentMenuList({
     onAddToSection,
 }: CurrentMenuListProps) {
     const router = useRouter();
+    const prefetch = usePrefetchCocktail();
     const theme = useTheme();
     const [panelWidth, setPanelWidth] = useState(0);
     const drag = useMenuEditDropStore((s) => s.drag);
@@ -304,6 +302,7 @@ export function CurrentMenuList({
                                     <Pressable
                                         key={item.id}
                                         onPress={() => openItem(item)}
+                                        onPressIn={() => { const id = isEditing ? null : drinkIdFromHref(openHref(item)); if (id) prefetch(id, { name: item.name, imageUrl: typeof item.image === "string" ? item.image : null }); }}
                                         role="button"
                                         aria-label={title}
                                         style={[

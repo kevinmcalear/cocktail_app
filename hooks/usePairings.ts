@@ -36,7 +36,6 @@ export function usePairings(ids: readonly string[], { era = 'now', limit = 18 }:
   return useQuery({
     queryKey: ['pairings', era, limit, asked],
     enabled: asked.length > 0,
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<Pairing[]> => {
       // Ask in the order given, so together[] lines up with `ids`.
       const { data, error } = await supabase.rpc('get_pairings', { p_ids: [...new Set(ids)], p_era: era, p_limit: limit });
@@ -63,7 +62,6 @@ export function usePairDrinks(a: string | null, b: string | null) {
   return useQuery({
     queryKey: ['pair-drinks', a, b],
     enabled: !!a && !!b,
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<PairDrink[]> => {
       const { data, error } = await supabase.rpc('get_pair_drinks', { p_a: a!, p_b: b!, p_limit: 12 });
       if (error) throw error;
@@ -77,7 +75,6 @@ export function usePairNote(a: string | null, b: string | null) {
   return useQuery({
     queryKey: ['pair-note', a, b],
     enabled: !!a && !!b,
-    staleTime: 1000 * 60 * 60,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase.rpc('get_pair_note', { p_a: a!, p_b: b! });
       if (error) throw error;

@@ -74,7 +74,6 @@ export function useIngredientChain(id: string | null | undefined) {
   return useQuery({
     queryKey: ['ingredient-chain', id],
     enabled: !!id,
-    staleTime: 60 * 60_000,
     queryFn: () => load(id!),
   });
 }

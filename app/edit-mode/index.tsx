@@ -8,7 +8,7 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useBars } from '@/hooks/useBars';
 import { useAuth } from '@/ctx/AuthContext';
-import { DROPDOWNS_QUERY_KEY, useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
+import { dropdownKeys, refreshIngredients, useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { capitalize } from '@/lib/stringUtils';
 import { UniversalCreateButton } from '@/components/UniversalCreateButton';
@@ -236,14 +236,15 @@ export default function EditModeDashboard() {
                 if (entityType === 'menu') {
                     const { error } = await supabase.from('menus').delete().eq('id', id);
                     if (error) throw error;
-                    queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+                    queryClient.invalidateQueries({ queryKey: dropdownKeys.menus });
+                    queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks });
                 } else {
                     const { error } = await supabase.from('items').delete().eq('id', id);
                     if (error) throw error;
                     if (entityType === 'cocktail') queryClient.invalidateQueries({ queryKey: ['cocktails'] });
                     if (entityType === 'beer') queryClient.invalidateQueries({ queryKey: ['beers'] });
                     if (entityType === 'wine') queryClient.invalidateQueries({ queryKey: ['wines'] });
-                    if (entityType === 'ingredient') queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+                    if (entityType === 'ingredient') void refreshIngredients(queryClient, [id]);
                 }
                 
                 clearWorkspaceIfContains(id);
@@ -390,8 +391,9 @@ export default function EditModeDashboard() {
         });
     };
 
+    // Each editor refreshes what its save changed (its drink, ingredient or
+    // menu and the lists showing it), so nothing else is refetched here.
     const handleSaveComplete = () => {
-        queryClient.invalidateQueries();
         if (navigationStack.length > 1) {
             handleEditorClose();
             return;
