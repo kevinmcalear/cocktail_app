@@ -10,11 +10,13 @@ import { FEATURES } from '@/constants/features';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
+import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useMode } from '@/hooks/useMode';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
 import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
@@ -127,10 +129,10 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     specLocked: !!lock,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
-  const itemPictures = orderedPictures(links);
-  // The hero (first) picture's credit shows under the name.
-  const heroPic = itemPictures[0] ?? null;
-  const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : itemPictures;
+  // No photo of its own: the newest one someone posted leads, credited under the name.
+  const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
+  const heroPic = shown.pictures[0] ?? null;
+  const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
   const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -142,13 +144,13 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
       {item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null}
-      {!preview && heroPic?.credit ? (
+      {!preview && shown.credit ? (
         <Caption
           tone="muted"
-          role={heroPic.sourceUrl ? 'link' : undefined}
-          onPress={heroPic.sourceUrl ? () => void Linking.openURL(heroPic.sourceUrl!) : undefined}
+          role={heroPic?.sourceUrl ? 'link' : undefined}
+          onPress={heroPic?.sourceUrl ? () => void Linking.openURL(heroPic.sourceUrl!) : undefined}
         >
-          Photo: {heroPic.credit}
+          {shown.credit}
         </Caption>
       ) : null}
       <MenuRuns runs={menuRuns} />
@@ -169,7 +171,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
             onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
           />
         ) : null}
-        {preview ? null : <RankActions item={item} picture={itemPictures[0] ?? null} />}
+        {preview ? null : <RankActions item={item} picture={heroPic} />}
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
