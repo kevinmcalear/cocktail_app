@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -67,7 +67,6 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
     };
   }, []);
 
-  const entering = (direction > 0 ? FadeInRight : FadeInLeft).springify().damping(springs.glide.damping).stiffness(springs.glide.stiffness);
   // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
   const column = breakpoint !== 'phone' || !!embedded;
   const sideBySide = breakpoint === 'desktop' && !embedded;
@@ -114,14 +113,14 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
             </View>
             <View style={styles.flex}>
               <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }, sideBySide && styles.sideScroll]}>
-                <Animated.View key={stepKey} entering={entering} style={styles.body}>
+                <SlideIn key={stepKey} direction={direction}>
                   <View style={styles.heading}>
                     <Eyebrow>{eyebrow}</Eyebrow>
                     <Title role="heading">{title}</Title>
                     {intro ? <Body tone="muted">{intro}</Body> : null}
                   </View>
                   {children}
-                </Animated.View>
+                </SlideIn>
               </ScrollView>
               <View style={{ paddingHorizontal: side }}>{footer}</View>
             </View>
@@ -130,6 +129,22 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
       )}
     </KeyboardAvoidingView>
   );
+}
+
+/**
+ * A step sliding in from the side it comes from. Plain opacity and translate,
+ * not Reanimated's entering animations: a layout-animated parent whose children
+ * change while typing (balance hints, the folding band) broke Reanimated 4.7's
+ * view bookkeeping and crashed iOS (as in #298).
+ */
+function SlideIn({ direction, children }: { direction: 1 | -1; children: ReactNode }) {
+  const reduceMotion = useReducedMotion();
+  const shown = useSharedValue(reduceMotion ? 1 : 0);
+  useEffect(() => {
+    shown.set(withSpring(1, { damping: springs.glide.damping, stiffness: springs.glide.stiffness, overshootClamping: true }));
+  }, [shown]);
+  const slide = useAnimatedStyle(() => ({ opacity: shown.get(), transform: [{ translateX: (1 - shown.get()) * space.xxl * direction }] }));
+  return <Animated.View style={[styles.body, slide]}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({

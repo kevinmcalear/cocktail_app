@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import {
-  canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
+  amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
@@ -134,3 +134,12 @@ console.log('drink wizard: ok');
   assert.deepEqual(negroni.riffOf, { id: 'c-negroni', name: 'Negroni' });
   assert.equal(negroni.ice, null);
 }
+
+// Amounts read as typed, even before the field tidies them on blur.
+assert.equal(amountOf('3/4'), 0.75);
+assert.equal(amountOf('22,5'), 22.5);
+assert.equal(amountOf('1½'), 1.5);
+assert.equal(amountOf(''), null);
+assert.equal(amountLabel({ amount: '22,5', unit: 'ml' }), '22.5 ml', 'labels read tidied');
+assert.deepEqual(convertPour(0.75, 'ml', 'oz'), { amount: '0.03', unit: 'oz' }, 'a tiny amount is not snapped up to a pour');
+assert.deepEqual(convertPour(22, 'ml', 'oz'), { amount: '0.75', unit: 'oz' });
