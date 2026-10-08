@@ -21,6 +21,10 @@ import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 import { ShotList } from "@/components/screens/drink/ShotList";
 
+// For /dev/drink, which loads it through this route so the web build reuses this
+// route's chunk instead of putting the whole drink page in the shared one.
+export { DrinkScreen };
+
 export default function CocktailDetailsScreen() {
     const { id } = useLocalSearchParams();
 
