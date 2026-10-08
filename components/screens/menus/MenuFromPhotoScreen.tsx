@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, GlassButton, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useSetMissingPrices } from '@/hooks/useBulk';
 import { useCreateMenu, useMenuLibrary, useReadMenu, useUploadMenuCover } from '@/hooks/useMenuMutations';
@@ -17,7 +17,7 @@ import { plural } from '@/lib/menus';
 import { appendReading, applyMenuPaste, bringInText, pasteRows, placedGroups, type ParsedMenuSection } from '@/lib/paste';
 import { MAX_MENU_PHOTOS, pickMenuPhotos, takeMenuPhoto, type MenuPhoto } from '@/lib/readMenu';
 
-import { PhotoRow, TextLink } from './MenuPhotoRows';
+import { PhotoRow } from './MenuPhotoRows';
 import { useMenuPhotoDrop } from './useMenuPhotoDrop';
 
 const message = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);

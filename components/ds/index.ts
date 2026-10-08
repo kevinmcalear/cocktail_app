@@ -10,6 +10,7 @@ export { IngredientThumb } from './IngredientThumb';
 export { GlassVariantPicker } from './GlassVariantPicker';
 export { LockedSection } from './LockedSection';
 export { PressableScale } from './PressableScale';
+export { ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';
 export { SpecRow, type SpecRowProps } from './SpecRow';
 export { Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, ReviewRow, Segmented, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
@@ -13,8 +13,6 @@ import { takeBringIn } from '@/lib/bringInHandoff';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { matchIngredient, matchKey, type CatalogItem } from '@/lib/match';
 import { compileBringIn, parseBringIn, type BringBlock } from '@/lib/paste';
-
-import { Choice } from '../menus/MenuSheet';
 
 type Mode = 'drinks' | 'ingredients';
 
@@ -47,7 +45,7 @@ function Review({
     <View style={{ gap: space.md }}>
       {blocks.map((block, i) => (
         <View key={`${block.name}-${i}`} style={{ gap: space.sm }}>
-          <Headline>{block.name || 'Needs a name'}</Headline>
+          {block.kind === 'bottle' ? null : <Headline>{block.name || 'Needs a name'}</Headline>}
           {block.kind === 'bottle' ? <Bottle name={block.name} catalog={catalog} aliases={aliases} venueId={venueId} pickKey={lineKey(i, 0)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} /> : null}
           {block.lines.map((line, j) => (
             <Line key={lineKey(i, j)} name={line.name} amount={line.amount === null ? '' : `${line.amount} ${line.unit}`} catalog={catalog} aliases={aliases} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
@@ -83,29 +81,31 @@ interface LineProps {
 
 function Line({ name, amount, catalog, aliases, venueId, pickKey, picks, kinds, shown, onPick, onKind }: LineProps) {
   const match = matchIngredient(name, catalog, venueId, aliases);
-  const prefix = amount ? `${amount} ` : '';
-  if (match.kind === 'one') return <Caption>{`${prefix}${name}. In the library`}</Caption>;
+  const label = name.trim();
+  if (match.kind === 'one') return <ReviewRow state="have" amount={amount} title={label} detail="In the library" />;
   if (match.kind === 'pick') {
+    const chosen = match.items.some((item) => item.id === picks[pickKey]) ? picks[pickKey] : null;
     return (
-      <View style={{ gap: space.sm }}>
-        <Caption>{`${prefix}${name}. Which one?`}</Caption>
-        {match.items.map((item) => (
-          <Choice key={item.id} label={item.name} selected={picks[pickKey] === item.id} onPress={() => onPick(pickKey, item.id)} />
-        ))}
-      </View>
+      <ReviewRow
+        state={chosen ? 'have' : 'pick'}
+        amount={amount}
+        title={label}
+        detail={chosen ? 'In the library' : 'Which one?'}
+        choices={match.items.map((item) => ({ id: item.id, label: item.name }))}
+        chosen={chosen}
+        onChoose={(id) => onPick(pickKey, id)}
+      />
     );
   }
-  const label = name.trim();
   const key = matchKey(label);
   const kindField = !shown.has(key);
   if (kindField) shown.add(key);
   return (
-    <View style={{ gap: space.sm }}>
-      <Caption>{`${prefix}${label}. New`}</Caption>
+    <ReviewRow state="new" amount={amount} title={label} detail="New">
       {kindField ? (
         <Field label={`Kind of ${label}`} value={key in kinds ? kinds[key] : (match.kindItem?.name ?? '')} onChangeText={(value) => onKind(key, value)} placeholder="Gin" autoCapitalize="words" />
       ) : null}
-    </View>
+    </ReviewRow>
   );
 }
 

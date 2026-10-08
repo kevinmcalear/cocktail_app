@@ -99,9 +99,13 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 ## Building a redesigned screen
 
 - Wrap it in `BackbarTheme` (fonts, the Back Bar colours, and the Tamagui sub-theme). Tab screens already sit inside `VenueBrandProvider`. A drink page passes that venue's `BrandProvider`.
-- Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
+- Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `ReviewRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
 - Accessibility props: use `role` and `aria-*` (`aria-selected`, `aria-disabled`). The legacy `accessibilityRole`/`accessibilityState` props don't reach the DOM on web.
 - A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both are contrast-checked by `lib/color.ts`.
+
+## Bring in: reviewing what was read
+
+Anything read from a photo or a paste (a menu, a spec, a shelf of bottles) is checked line by line with `ReviewRow`, matched through `lib/match.ts`. Each line is in one of four states, the same everywhere: **have** (already yours, ticked), **new** (will be made, in the accent), **pick** (two or more fit; the choices sit inline and hold the save button), **skip** (left out). The words in the detail line carry the state; the mark only echoes it. Design: https://claude.ai/artifact/9HUsf2Ydyfm4MPe8nCe6of
 
 ## The gallery
 
