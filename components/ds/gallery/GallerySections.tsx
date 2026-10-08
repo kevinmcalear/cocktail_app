@@ -14,7 +14,7 @@ import { Surface } from '../Surface';
 import { Tag } from '../Tag';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
-import { GlassVariants } from './GlassVariants';
+import { AnimatedDrawings, GlassVariants } from './GlassVariants';
 import { IMAGES, PENICILLIN } from './samples';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -137,6 +137,10 @@ export function GallerySections() {
 
       <Section title="Drawn glassware">
         <GlassVariants />
+      </Section>
+
+      <Section title="Drawn as you watch">
+        <AnimatedDrawings />
       </Section>
 
       <Section title="Glass over content">
