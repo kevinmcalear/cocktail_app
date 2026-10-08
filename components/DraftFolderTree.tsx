@@ -164,7 +164,7 @@ export function DraftFolderTree({
 }: DraftFolderTreeProps) {
     const theme = useTheme();
     const { data: userBars, isLoading: loadingBars } = useBars();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ menus: true });
 
     const bars = userBars || [];
     const isLoading = loadingBars || loadingDropdowns;
