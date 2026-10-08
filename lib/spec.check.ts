@@ -31,7 +31,7 @@ const pictured = specLines([
   { id: 'r', sort_order: 3, display_ingredient_id: 'salt', display_ingredient: { id: 'salt', name: 'Salt' } },
   { id: 's', sort_order: 4, display_ingredient_id: null, display_ingredient: { id: 'secret', name: 'Secret', image_url: 'https://x/secret.png' } },
 ]);
-assert.deepEqual(pictured.map((l) => l.imageUrl), ['https://x/photo.png', 'https://x/lime.png', null, null], 'photo first, image_url, none, and nothing from a masked line');
+assert.deepEqual(pictured.map((l) => l.ingredientId), ['gin', 'lime', 'salt', null], 'each line draws its own ingredient, and a masked line gives nothing away');
 
 const r = ratio(lines);
 assert.ok(r && r.length === 3, 'ratio uses the three measured lines');

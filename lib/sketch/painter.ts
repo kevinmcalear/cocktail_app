@@ -77,10 +77,17 @@ function deform(poly: PtV[], depth: number, variance: number, r: Rng): PtV[] {
 }
 const xy = (p: PtV[]): Pt[] => p.map(([x, y]) => [x, y]);
 
-export function makePainter(S: SketchStyle, layout: Rng, r: Rng, b: SceneBuilder, g: GlassShape): Painter {
+/** Moves and scales a drawing inside the frame (glass units), to set one thing behind another. */
+export interface Place {
+  dx: number;
+  dy: number;
+  s: number;
+}
+
+export function makePainter(S: SketchStyle, layout: Rng, r: Rng, b: SceneBuilder, g: GlassShape, place: Place = { dx: 0, dy: 0, s: 1 }): Painter {
   const W = SCENE_SIZE;
   const k = (W / 100) * 1.06;
-  const U = ([u, v]: Pt): Pt => [(u - 50) * k + W / 2, (v - 51) * k + W / 2];
+  const U = ([u, v]: Pt): Pt => [((u - 50) * place.s + place.dx) * k + W / 2, ((v - 51) * place.s + place.dy) * k + W / 2];
   const e = ecc(g);
   const Rr = hw(g, g.rim);
   const bot = bottomOf(g);
@@ -201,7 +208,7 @@ export function makePainter(S: SketchStyle, layout: Rng, r: Rng, b: SceneBuilder
 
   const soft = (cx: number, cy: number, rx: number, ry: number, rot: number, color: string, alpha: number) => {
     const [px, py] = U([cx, cy]);
-    b.soft(px, py, rx * k, ry * k, rot, color, alpha);
+    b.soft(px, py, rx * k * place.s, ry * k * place.s, rot, color, alpha);
   };
 
   const hatch = (regionU: Pt[], minX: number, angle: number, weight: number) => {
@@ -234,7 +241,7 @@ export function makePainter(S: SketchStyle, layout: Rng, r: Rng, b: SceneBuilder
   };
 
   const dots = (list: [number, number, number][], color: string, o: number) =>
-    b.dots(list.map(([u, v, rad]) => { const [x, y] = U([u, v]); return [x, y, rad * k] as [number, number, number]; }), color, o);
+    b.dots(list.map(([u, v, rad]) => { const [x, y] = U([u, v]); return [x, y, rad * k * place.s] as [number, number, number]; }), color, o);
 
   const clipAbove = (y: number) => {
     const yy = U([0, y])[1];

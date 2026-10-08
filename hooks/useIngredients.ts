@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounced } from '@/hooks/useDiscover';
-import { batchedDrinkName, nameKey, orderedPictures, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
+import { batchedDrinkName, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 
 /** A row of ingredient_used_in. */
 interface UsedInRow {
@@ -24,11 +24,11 @@ export interface IngredientBottle {
 
 /**
  * The photos of the drink a batch makes ("Aperol Fizz" for "Aperol Fizz Batch"),
- * from the same venue. Null when it isn't a batch, or already has a photo.
+ * from the same venue. Null when it isn't a batch.
  */
-async function batchDrinkImages(item: { name: string; bar_id: string | null; item_images?: ItemImageLink[] | null }) {
+async function batchDrinkImages(item: { name: string; bar_id: string | null }) {
     const drink = batchedDrinkName(item.name);
-    if (!drink || orderedPictures(item.item_images).some((p) => !p.isSketch)) return null;
+    if (!drink) return null;
     let query = supabase
         .from('app_item_presentation')
         .select('name, item_images ( angle, sort_order, is_generated, images ( url ) )')
@@ -128,8 +128,9 @@ export function useIngredient(id?: string | string[]) {
             return {
                 ingredient: { ...ingredient, generic, madeFrom },
                 bottles: (bottles ?? []) as IngredientBottle[],
-                // Shown in place of a batch's sketch; kept apart so the edit screen never saves them.
-                heroImages: withDrinkPhotos(ingredient.item_images, await batchDrinkImages(ingredient)),
+                // Ingredients are drawn, never photographed: only a batch shows the photos of
+                // the drink it makes. Kept apart so the edit screen never saves them.
+                heroImages: withDrinkPhotos([], await batchDrinkImages(ingredient)),
                 recipe: recipe || [],
                 usedIn
             };

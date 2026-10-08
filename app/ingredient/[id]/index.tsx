@@ -1,7 +1,7 @@
 import { ErrorState } from '@/components/ui/ErrorState';
+import { IngredientDrawing } from "@/components/ds";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
 
@@ -62,7 +62,6 @@ export default function IngredientDetailScreen() {
         !!ingredient,
         ingredient
             ? recentEntry('ingredient', ingredient.id, ingredient.name, {
-                imageUrl: heroPicture(data?.heroImages)?.url,
                 barId: ingredient.bar_id ?? null,
               })
             : null
@@ -107,6 +106,7 @@ export default function IngredientDetailScreen() {
             onToggleFavorite={toggleFavorite}
             onToggleStudyPile={FEATURES.study ? toggleStudyPile : undefined}
             onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
+            hero={<IngredientDrawing id={ingredient.id} name={ingredient.name} />}
         >
             <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
                 {/* Info Card */}

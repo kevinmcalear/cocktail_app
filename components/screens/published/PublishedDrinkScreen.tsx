@@ -86,7 +86,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
             <Caption tone="muted">{`As ${who} shares it: the ingredients, not the brands.`}</Caption>
             <View>
               {lines.map((l) => (
-                <SpecRow key={l.key} amount={l.amount ?? ''} alignAmount={measured} ingredient={l.ingredient ?? 'House ingredient'} picture={l.ingredient ? l.imageUrl : undefined} optional={l.optional} />
+                <SpecRow key={l.key} amount={l.amount ?? ''} alignAmount={measured} ingredient={l.ingredient ?? 'House ingredient'} ingredientId={l.ingredient ? l.ingredientId : undefined} optional={l.optional} />
               ))}
             </View>
           </>

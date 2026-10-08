@@ -1,3 +1,4 @@
+import { IngredientThumb } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { dragGripStyle, gripOnly } from '@/components/recipe/FormScrollContainer';
@@ -7,7 +8,6 @@ import { calculateDraftProgress } from '@/lib/draftProgress';
 import { isDefaultBatchName } from '@/lib/mergeRecipeItems';
 import { capitalize } from '@/lib/stringUtils';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
@@ -35,8 +35,6 @@ interface SortableRecipeListProps {
     onRenameIngredient?: (ingredientId: string, name: string) => void;
     drafts?: any[];
     dropdowns?: any;
-    allIngredients?: any[];
-    ingredientImageMap?: Record<string, string>;
     /** Hold over a row while dragging to combine into a complex ingredient. Return false to fall back to reorder. */
     onMerge?: (fromIndex: number, targetIndex: number) => boolean | void | Promise<boolean | void>;
 }
@@ -44,7 +42,6 @@ interface SortableRecipeListProps {
 interface DetailRecipeRowProps {
     item: SortableRecipeItem;
     index: number;
-    imageUrl?: string;
     drag: () => void;
     isActive: boolean;
     isMergeTarget?: boolean;
@@ -58,7 +55,6 @@ interface DetailRecipeRowProps {
 function DetailRecipeRow({
     item,
     index,
-    imageUrl,
     drag,
     isActive,
     isMergeTarget,
@@ -100,13 +96,7 @@ function DetailRecipeRow({
                     <IconSymbol name="line.3.horizontal" size={12} color={theme.color11?.get() as string} style={{ opacity: 0.55 }} />
                 </TouchableOpacity>
 
-                {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={styles.detailImage} contentFit="cover" />
-                ) : (
-                    <View style={[styles.detailImagePlaceholder, { borderColor: theme.color11?.get() as string }]}>
-                        <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
-                    </View>
-                )}
+                <IngredientThumb id={item.ingredient_id} name={item.name} size={64} />
             </View>
 
             <View style={{ flex: 1, gap: 2 }}>
@@ -261,8 +251,6 @@ export function SortableRecipeList({
     onRenameIngredient,
     drafts,
     dropdowns,
-    allIngredients,
-    ingredientImageMap,
     onMerge,
 }: SortableRecipeListProps) {
     const theme = useTheme();
@@ -340,13 +328,10 @@ export function SortableRecipeList({
         if (index === undefined) return null;
 
         if (variant === 'detail') {
-            const ing = allIngredients?.find((i: any) => i.id === item.ingredient_id);
-            const imageUrl = ingredientImageMap?.[item.ingredient_id] || ing?.item_images?.[0]?.images?.url;
             return (
                 <DetailRecipeRow
                     item={item}
                     index={index}
-                    imageUrl={imageUrl}
                     drag={drag}
                     isActive={isActive}
                     isMergeTarget={dwell.mergeTargetIndex === index}
@@ -593,22 +578,6 @@ const styles = StyleSheet.create({
     detailGrabOnImage: {
         width: 14,
         height: 64,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailImage: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-    },
-    detailImagePlaceholder: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderWidth: 1,
-        borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
     },

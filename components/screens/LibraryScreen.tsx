@@ -192,6 +192,7 @@ export function LibraryScreen() {
                 <DrinkImage
                   itemId={item.id}
                   source={heroPicture(item.item_images)?.url ?? null}
+                  ingredient={category === 'Ingredient' ? { id: item.id, name: item.name } : null}
                   glass={fallbackGlass(category)}
                   accessibilityLabel={item.name}
                   hideTag

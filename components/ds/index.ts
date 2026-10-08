@@ -15,3 +15,4 @@ export { Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
 export { Tag, type TagTone } from './Tag';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
+export { IngredientDrawing } from './IngredientDrawing';

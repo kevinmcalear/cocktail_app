@@ -19,7 +19,6 @@ test('spec rows read as amount + ingredient and only open when there is an ingre
     <CocktailIngredientList
       isEditing={false}
       viewRecipes={recipes}
-      ingredientImageMap={{}}
       onIngredientPress={onIngredientPress}
     />
   );
@@ -55,7 +54,6 @@ describe('edit mode', () => {
       <CocktailIngredientList
         isEditing
         editItems={editItems}
-        ingredientImageMap={{ gin: 'https://example.com/gin.png' }}
         {...props}
         onUpdateItem={(index, updates) => {
           props.onUpdateItem(index, updates);
@@ -66,7 +64,7 @@ describe('edit mode', () => {
   }
 
   const list = (items: SortableRecipeItem[], props: ReturnType<typeof handlers>) => (
-    <CocktailIngredientList isEditing editItems={items} ingredientImageMap={{}} {...props} />
+    <CocktailIngredientList isEditing editItems={items} {...props} />
   );
 
   beforeEach(() => useSettingsStore.setState({ defaultUnit: 'ml' }));
@@ -79,9 +77,11 @@ describe('edit mode', () => {
     // No unit saved yet: shows the default unit.
     expect(screen.getByText('ml')).toBeTruthy();
     expect(screen.getAllByLabelText('Drag to reorder')).toHaveLength(2);
-    expect(screen.getByLabelText('Open ingredient')).toBeTruthy();
+    // Every row's picture is its drawing, and opens it.
+    const opens = screen.getAllByLabelText('Open ingredient');
+    expect(opens).toHaveLength(2);
 
-    await fireEvent.press(screen.getByLabelText('Add ingredient photo'));
+    await fireEvent.press(opens[1]);
     expect(props.onIngredientPress).toHaveBeenCalledWith('lime');
     await fireEvent.press(screen.getAllByLabelText('Remove ingredient')[1]);
     expect(props.onRemove).toHaveBeenCalledWith(1);
