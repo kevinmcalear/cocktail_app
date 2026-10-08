@@ -9,6 +9,7 @@ import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
+import { BringInAnywhere } from '@/components/nav/BringInAnywhere';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
@@ -201,6 +202,7 @@ function RootLayoutNav() {
           </Stack>
         </View>
         {showWebSidebar ? <SearchPalette /> : null}
+        {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

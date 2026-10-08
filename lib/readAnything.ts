@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { ensureAiConsent } from '@/lib/aiConsent';
+import { isReadableFile } from '@/lib/bringInAnywhere';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { AI_DECLINED, pickMenuPhotos, type MenuPhoto } from '@/lib/readMenu';
@@ -13,8 +14,7 @@ export type ReadFile = MenuPhoto;
 
 export const MAX_READ_FILES = 4;
 
-/** Photos and PDFs read-anything takes. */
-export const isReadableFile = (mimeType: string) => mimeType.startsWith('image/') || mimeType === 'application/pdf';
+export { isReadableFile };
 
 /** On web (and the desktop shell) a file chooser for photos and PDFs; on native, the photo library. Empty when cancelled. */
 export function pickReadFiles(): Promise<ReadFile[]> {
