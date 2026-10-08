@@ -33,7 +33,7 @@
       "environment": "production",
       "env": {
         "APP_VARIANT": "production",
-        "SENTRY_ALLOW_FAILURE": "true"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
