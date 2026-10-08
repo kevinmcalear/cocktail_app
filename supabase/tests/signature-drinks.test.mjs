@@ -14,6 +14,8 @@ import { after, before, describe, test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 import pg from 'pg';
 
+import { notesBackOnRows } from './fixtures/credited-notes.mjs';
+
 const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
 );
@@ -107,6 +109,7 @@ describe('signature drinks', () => {
         // still so the counts only see this run.
         await db.query("SET LOCAL lock_timeout = '10s'");
         await db.query('LOCK TABLE public.profiles, public.profile_awards, public.items, public.recipes, public.item_methods IN SHARE MODE');
+        await notesBackOnRows(db);
         const before = await count();
         await db.query(readFileSync(MIGRATION, 'utf8'));
         assert.deepEqual(await count(), before);
