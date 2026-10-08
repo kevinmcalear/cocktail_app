@@ -1,10 +1,12 @@
+import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, Headline, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
+import { closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, PER_GROUP } from '@/lib/searchScope';
 
 const THUMB = 56;
@@ -15,31 +17,52 @@ interface ResultRowProps {
   /** An icon tile (ingredients, menus, recents), or a round avatar for bars and people. */
   icon?: IconName;
   avatar?: { uri: string | null };
+  /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
+  tag?: string;
   onPress: () => void;
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, avatar, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, avatar, tag, onPress }: ResultRowProps) {
   const ds = useDs();
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[title, caption].filter(Boolean).join('. ')}
+      accessibilityLabel={[title, caption, tag].filter(Boolean).join('. ')}
       onPress={onPress}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      <View style={[styles.thumb, !avatar && { backgroundColor: ds.c.surface }]}>
+      <View style={[styles.thumb, !avatar && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
         {avatar ? <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} /> : <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={ds.c.muted} />}
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{title}</Headline>
-        {caption ? (
-          <Caption tone="muted" numberOfLines={1}>
-            {caption}
-          </Caption>
-        ) : null}
+        <View style={styles.captionRow}>
+          {caption ? (
+            <Caption tone="muted" numberOfLines={1} style={styles.shrink}>
+              {caption}
+            </Caption>
+          ) : null}
+          {tag ? <Tag label={tag} /> : null}
+        </View>
       </View>
     </PressableScale>
+  );
+}
+
+const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
+
+/** A bar, opening its page. A closed one says when it shut, so nobody plans a night around it. */
+export function BarResultRow({ bar }: { bar: DiscoverBar }) {
+  const router = useRouter();
+  return (
+    <ResultRow
+      title={bar.name}
+      caption={place(bar) || undefined}
+      avatar={{ uri: bar.logo }}
+      tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
+      onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
+    />
   );
 }
 
@@ -69,6 +92,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0, gap: 2 },
+  captionRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  shrink: { flexShrink: 1 },
+  faded: { opacity: 0.5 },
   group: { gap: space.xs },
   more: { alignSelf: 'flex-start' },
 });

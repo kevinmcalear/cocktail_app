@@ -1,7 +1,7 @@
 // Checks for lib/discoverDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barInArea, distanceKm, drinkPins, filterDrinks, findBars, kindsTitle, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
+import { barInArea, closedBars, closedLabel, closedPins, distanceKm, drinkPins, filterDrinks, findBars, kindsTitle, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
 
 const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null): DiscoverBar => ({
   id,
@@ -13,6 +13,8 @@ const bar = (id: string, name: string, city: string | null, lat: number | null, 
   countryCode: 'US',
   latitude: lat,
   longitude: lng,
+  closed: false,
+  closedYear: null,
 });
 
 const dante = bar('dante', 'Dante', 'New York', 40.7309, -74.0021, 'West Village');
@@ -83,3 +85,13 @@ assert.deepEqual(pins.map((p) => [p.id, p.drinks]), [['dante', 2], ['attaboy', 1
 const odd = [drink('a', '&thesea', 'dante'), drink('b', '1986', 'dante'), drink('c', 'Zombie', 'dante')];
 assert.deepEqual(ids(filterDrinks(odd, bars, { kinds: [], search: '', area: anywhere })), ['c', 'a', 'b']);
 assert.deepEqual(ids(findBars([bar('o', 'Origin Bar', null, null, null), bar('g', 'Bar Orchard Ginza', null, null, null)], 'gin')), ['g'], 'a word must start with it');
+
+// --- closed bars: found by search after open ones, listed and pinned only when asked for ---
+const shut = { ...bar('shut', 'Dante Annex', 'New York', 40.731, -74.002), closed: true, closedYear: 2019 };
+const vague = { ...bar('vague', 'Attaboy Old', 'New York', null, null), closed: true, closedYear: null };
+assert.deepEqual(ids(findBars([shut, dante], 'dante')), ['dante', 'shut'], 'the open bar first');
+assert.equal(closedLabel(2019), 'Closed 2019');
+assert.equal(closedLabel(null), 'Closed');
+assert.deepEqual(ids(closedBars([dante, vague, shut], anywhere)), ['vague', 'shut'], 'only closed bars, by name');
+assert.deepEqual(ids(closedBars([dante, vague, shut], nearDante)), ['shut'], 'in the area');
+assert.deepEqual(closedPins([shut, vague]).map((p) => [p.id, p.closed]), [['shut', 'Closed 2019']], 'a pin needs coordinates');

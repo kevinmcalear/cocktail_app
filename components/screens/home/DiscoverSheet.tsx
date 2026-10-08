@@ -93,14 +93,24 @@ const GROUPS = [
   { title: 'Tastes', items: NOTES },
 ] as const;
 
-/** Styles, spirits and tastes, several at once. The list and map behind update as you tap. */
-export function FiltersSheet({ kinds, onChange, bars, onClose }: { kinds: readonly string[]; onChange: (kinds: string[]) => void; bars: number | null; onClose: () => void }) {
+interface FiltersSheetProps {
+  kinds: readonly string[];
+  onChange: (kinds: string[]) => void;
+  /** Bars with matching drinks, null while loading. */
+  bars: number | null;
+  /** Closed bars in the area, and whether they're shown. */
+  closed: { count: number; shown: boolean; onShow: (on: boolean) => void };
+  onClose: () => void;
+}
+
+/** Styles, spirits and tastes, several at once, and closed bars. The list and map behind update as you tap. */
+export function FiltersSheet({ kinds, onChange, bars, closed, onClose }: FiltersSheetProps) {
   const toggle = (id: string) => onChange(kinds.includes(id) ? kinds.filter((k) => k !== id) : [...kinds, id]);
   return (
     <DiscoverOverlay
       label="Filters"
       onClose={onClose}
-      action={<Button label="Clear" variant="ghost" onPress={() => onChange([])} />}
+      action={<Button label="Clear" variant="ghost" onPress={() => (onChange([]), closed.onShow(false))} />}
       footer={<Button label={bars === null ? 'Show bars' : `Show ${bars} ${bars === 1 ? 'bar' : 'bars'}`} onPress={onClose} />}
     >
       {GROUPS.map((g) => (
@@ -114,6 +124,13 @@ export function FiltersSheet({ kinds, onChange, bars, onClose }: { kinds: readon
         </View>
       ))}
       <Caption tone="muted">Drinks match any pick within a group and every group you pick from.</Caption>
+      <View style={styles.group}>
+        <Caption tone="muted">History</Caption>
+        <View style={styles.chips}>
+          <Chip multi quiet label={closed.count ? `Closed bars · ${closed.count}` : 'Closed bars'} selected={closed.shown} onPress={() => closed.onShow(!closed.shown)} />
+        </View>
+        <Caption tone="muted">Bars that have shut, kept for their history. Search finds them either way.</Caption>
+      </View>
     </DiscoverOverlay>
   );
 }

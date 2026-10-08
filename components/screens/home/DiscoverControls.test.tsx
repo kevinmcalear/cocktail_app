@@ -20,14 +20,18 @@ test('the search pill clears only once there is a query', async () => {
 
 test('filters pick several at once and clear together', async () => {
   const onChange = jest.fn();
-  await renderWithTamagui(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} onClose={() => {}} />);
+  const onShow = jest.fn();
+  await renderWithTamagui(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} closed={{ count: 4, shown: false, onShow }} onClose={() => {}} />);
   expect(screen.getByRole('checkbox', { name: 'Martinis', checked: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Gin' }));
   expect(onChange).toHaveBeenLastCalledWith(['martini', 'gin']);
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Martinis' }));
   expect(onChange).toHaveBeenLastCalledWith([]);
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Closed bars · 4', checked: false }));
+  expect(onShow).toHaveBeenLastCalledWith(true);
   await fireEvent.press(screen.getByRole('button', { name: 'Clear' }));
   expect(onChange).toHaveBeenLastCalledWith([]);
+  expect(onShow).toHaveBeenLastCalledWith(false);
   expect(screen.getByRole('button', { name: 'Show 3 bars' })).toBeTruthy();
 });

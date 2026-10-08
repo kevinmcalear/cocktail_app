@@ -39,6 +39,8 @@ const bar: DiscoverBar = {
   countryCode: 'AU',
   latitude: -37.81,
   longitude: 144.96,
+  closed: false,
+  closedYear: null,
 };
 
 function drink(id: string, name: string): DiscoverDrink {

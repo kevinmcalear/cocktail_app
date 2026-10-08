@@ -97,6 +97,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                     gap: look.gap,
                     borderColor: look.borderColor,
                     backgroundColor: look.backgroundColor,
+                    opacity: look.opacity,
                     zIndex: selected ? 2 : 1,
                   },
                 ]}

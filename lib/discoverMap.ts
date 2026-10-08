@@ -34,6 +34,8 @@ export interface MapPin {
   rankers: number;
   /** On the drinks layer: how many of the bar's drinks match. */
   drinks?: number;
+  /** A closed bar: "Closed 2019". */
+  closed?: string;
 }
 
 /** Pins for the rows that have coordinates: ranked first, then early. */
@@ -57,19 +59,22 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
 
 /** What's written on a pin: how many drinks match, the score, or nothing while early. */
 export function pinLabel(pin: MapPin): string {
+  if (pin.closed) return 'Closed';
   if (pin.drinks) return String(pin.drinks);
   return pin.score === null ? '' : formatScore(pin.score);
 }
 
 /** What a screen reader says for a pin. */
 export function pinDescription(pin: MapPin): string {
+  if (pin.closed) return `${pin.name}, ${pin.closed.toLowerCase()}`;
   if (pin.drinks) return `${pin.name}, ${pin.drinks} ${pin.drinks === 1 ? 'drink' : 'drinks'}`;
   return pin.score === null ? `${pin.name}, early` : `${pin.name}, score ${formatScore(pin.score)}`;
 }
 
 /**
  * How a pin looks on either map: the bar's logo (when it has one) and its
- * score in a pill, or a dot while early. Ink by default, the accent when selected.
+ * score in a pill, or a dot while early. Ink by default, the accent when
+ * selected. A closed bar is muted and faded, so it reads as history, not a plan.
  */
 export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
   const label = pinLabel(pin);
@@ -88,6 +93,7 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
     borderColor: selected ? accent.fill : backbar.dark.ink,
     backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
+    opacity: pin.closed && !selected ? 0.6 : 1,
   };
 }
 
