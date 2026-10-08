@@ -102,46 +102,51 @@ REVOKE EXECUTE ON FUNCTION "private"."open_drink_cores"() FROM PUBLIC, "anon", "
 -- The refresh
 -- ---------------------------------------------------------------------------
 
--- Rebuilds one era from (drink, core ingredient) rows.
-CREATE FUNCTION "private"."write_ingredient_pairs"("p_era" "text") RETURNS void
+-- Rebuilds one era from (drink, core ingredient) rows, given as two arrays of
+-- the same length.
+CREATE FUNCTION "private"."write_ingredient_pairs"("p_era" "text", "p_drinks" "uuid"[], "p_cores" "uuid"[]) RETURNS void
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
 DECLARE
     v_all numeric;
 BEGIN
-    SELECT count(DISTINCT drink_id) INTO v_all FROM pg_temp.pair_lines;
     DELETE FROM public.ingredient_pairs WHERE era = p_era;
     DELETE FROM public.ingredient_pair_totals WHERE era = p_era;
+    SELECT count(DISTINCT d) INTO v_all FROM unnest(p_drinks) AS d;
     IF v_all = 0 THEN RETURN; END IF;
 
     INSERT INTO public.ingredient_pair_totals (era, item_id, drinks)
-    SELECT p_era, core_id, count(*) FROM pg_temp.pair_lines GROUP BY core_id;
+    SELECT p_era, l.core_id, count(*)
+      FROM (SELECT DISTINCT d, c AS core_id FROM unnest(p_drinks, p_cores) AS u(d, c)) l
+     GROUP BY l.core_id;
 
     INSERT INTO public.ingredient_pairs (era, a_id, b_id, together, lift, score)
     SELECT p_era, x.a, x.b, x.n,
            ln(x.n * v_all / (ta.drinks::numeric * tb.drinks)),
            ln(x.n * v_all / (ta.drinks::numeric * tb.drinks)) * ln(1 + x.n)
       FROM (
-        SELECT a.core_id AS a, b.core_id AS b, count(*) AS n
-          FROM pg_temp.pair_lines a JOIN pg_temp.pair_lines b ON b.drink_id = a.drink_id AND b.core_id <> a.core_id
+        WITH l AS (SELECT DISTINCT d, c FROM unnest(p_drinks, p_cores) AS u(d, c))
+        SELECT a.c AS a, b.c AS b, count(*) AS n
+          FROM l a JOIN l b ON b.d = a.d AND b.c <> a.c
          GROUP BY 1, 2 HAVING count(*) >= 2
       ) x
       JOIN public.ingredient_pair_totals ta ON ta.era = p_era AND ta.item_id = x.a
       JOIN public.ingredient_pair_totals tb ON tb.era = p_era AND tb.item_id = x.b;
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION "private"."write_ingredient_pairs"("text") FROM PUBLIC, "anon", "authenticated";
+REVOKE EXECUTE ON FUNCTION "private"."write_ingredient_pairs"("text", "uuid"[], "uuid"[]) FROM PUBLIC, "anon", "authenticated";
 
 CREATE FUNCTION "private"."refresh_ingredient_pairs"() RETURNS void
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
+DECLARE
+    v_drinks uuid[];
+    v_cores uuid[];
 BEGIN
-    DROP TABLE IF EXISTS pg_temp.pair_lines;
-    CREATE TEMP TABLE pair_lines AS SELECT * FROM private.open_drink_cores();
-    PERFORM private.write_ingredient_pairs('now');
-    DROP TABLE pg_temp.pair_lines;
+    SELECT COALESCE(array_agg(drink_id), '{}'), COALESCE(array_agg(core_id), '{}') INTO v_drinks, v_cores FROM private.open_drink_cores();
+    PERFORM private.write_ingredient_pairs('now', v_drinks, v_cores);
 END;
 $$;
 REVOKE EXECUTE ON FUNCTION "private"."refresh_ingredient_pairs"() FROM PUBLIC, "anon", "authenticated";
