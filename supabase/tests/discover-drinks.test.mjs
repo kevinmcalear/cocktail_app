@@ -24,7 +24,7 @@ const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOpti
 const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 const db = new pg.Client({ connectionString: status.DB_URL });
 
-const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'herbal', 'fruity', 'smoky', 'spicy', 'creamy'];
+const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'botanical', 'herbal', 'fruity', 'spiced', 'spicy', 'smoky', 'savory', 'creamy'];
 // Somewhere in the South Atlantic, far from every seeded bar.
 const HERE = { lat: -41.2345, lng: -12.3456 };
 const ids = {};
@@ -52,7 +52,7 @@ async function profile(itemId, values, coverage = 1) {
   const cols = Object.fromEntries(DIMS.map((d) => [d, values[d] ?? 0]));
   await db.query(
     `INSERT INTO public.item_flavors (item_id, ${DIMS.join(', ')}, coverage, source, spec_fingerprint, rules_version)
-     VALUES ($1, ${DIMS.map((_, i) => `$${i + 2}`).join(', ')}, $11, 'rules', 'test', 1)`,
+     VALUES ($1, ${DIMS.map((_, i) => `$${i + 2}`).join(', ')}, $${DIMS.length + 2}, 'rules', 'test', 1)`,
     [itemId, ...DIMS.map((d) => cols[d]), coverage]
   );
 }
@@ -109,7 +109,7 @@ before(async () => {
   await serviceInsert('profile_menu_edition_drinks', { edition_id: edition.id, item_id: ids.gimlet, sort_order: 0 });
 
   // Two drinks with one odd profile, for For you; the ranker has ranked the first.
-  const odd = { sweet: 0.111, sour: 0.222, bitter: 0.333, strong: 0.444, herbal: 0.555, fruity: 0.666, smoky: 0.777, spicy: 0.888, creamy: 0.999 };
+  const odd = { sweet: 0.111, sour: 0.222, bitter: 0.333, strong: 0.444, botanical: 0.123, herbal: 0.555, fruity: 0.666, spiced: 0.234, spicy: 0.888, smoky: 0.777, savory: 0.345, creamy: 0.999 };
   ids.twinA = await item({ name: 'Twin A', item_type: 'cocktail' });
   ids.twinB = await item({ name: 'Twin B', item_type: 'cocktail' });
   ids.twinHidden = await item({ name: 'Twin Staff', item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 30 });

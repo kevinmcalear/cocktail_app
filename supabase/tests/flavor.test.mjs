@@ -26,7 +26,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 
 const WORKER_URL = `${status.API_URL}/functions/v1/flavor-worker`;
 const WORKER_SECRET = 'local-flavor-worker-secret';
-const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'herbal', 'fruity', 'smoky', 'spicy', 'creamy'];
+const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'botanical', 'herbal', 'fruity', 'spiced', 'spicy', 'smoky', 'savory', 'creamy'];
 const FLAVOR_COLUMNS = `item_id, ${DIMS.join(', ')}, coverage, source, spec_fingerprint, rules_version, updated_at`;
 
 const run = randomUUID().slice(0, 8);
@@ -313,9 +313,23 @@ describe('flavor worker', { skip: workerSkip }, () => {
     assert.equal(row.source, 'rules');
     assert.equal(row.coverage, 1);
     assert.ok(row.bitter > 0.8 && row.strong > 0.7, `bitter ${row.bitter}, strong ${row.strong}`);
+    assert.ok(row.botanical > 0.35 && row.herbal < 0.15, `gin is botanical, not herbal: ${row.botanical}, ${row.herbal}`);
+    assert.equal(row.rules_version, 2);
     const { rows } = await db.query('SELECT private.item_flavor_fingerprint($1) AS fp', [id]);
     assert.equal(row.spec_fingerprint, rows[0].fp);
     assert.equal(await jobFor(id), null);
+  });
+
+  test('a profile from the nine-dimension worker still saves, new dimensions as 0', async () => {
+    const id = await drink('Old Worker Sour', [[ids.gin, 50], [ids.lime, 20]]);
+    const old = { sweet: 0.1, sour: 0.9, bitter: 0, strong: 0.7, herbal: 0.5, fruity: 0.1, smoky: 0, spicy: 0, creamy: 0 };
+    const { error } = await service.rpc('save_item_flavor', {
+      p_item_id: id, p_profile: old, p_coverage: 1, p_source: 'rules', p_spec_fingerprint: 'old', p_rules_version: 1,
+    });
+    assert.ifError(error);
+    const row = await flavorRow(id);
+    assert.equal(row.sour, 0.9);
+    assert.deepEqual([row.botanical, row.spiced, row.savory], [0, 0, 0]);
   });
 
   test('recomputes when the spec changes', async () => {

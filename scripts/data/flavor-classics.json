@@ -1,0 +1,2918 @@
+[
+{
+"name": "Amaretto Sour",
+"lines": [
+{
+"name": "Amaretto",
+"amount": 2,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Liqueur",
+"Nut/Seed Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Aromatic Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Egg White",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Egg"
+}
+]
+},
+{
+"name": "Americano",
+"lines": [
+{
+"name": "Campari",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Bitter Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Soda Water",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "slice",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Aperol Spritz",
+"lines": [
+{
+"name": "Prosecco",
+"amount": 3,
+"unit": "oz",
+"genericName": "Sparkling Wine"
+},
+{
+"name": "Aperol",
+"amount": 2,
+"unit": "oz",
+"genericName": "Bittersweet Orange Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Soda Water",
+"amount": 1,
+"unit": "oz"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "slice",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Aviation",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Maraschino Liqueur",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Crème de Violette",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Maraschino Cherry",
+"amount": 1,
+"unit": "each",
+"genericName": "Cherry"
+}
+]
+},
+{
+"name": "Bamboo",
+"lines": [
+{
+"name": "Fino Sherry",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Sherry"
+},
+{
+"name": "Dry Vermouth",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Dry Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Orange Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Angostura Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Bee's Knees",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Honey Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Bellini",
+"lines": [
+{
+"name": "White Peach Purée",
+"amount": 2,
+"unit": "oz",
+"genericName": "Peach Purée"
+},
+{
+"name": "Prosecco",
+"amount": 4,
+"unit": "oz",
+"genericName": "Sparkling Wine"
+}
+]
+},
+{
+"name": "Black Russian",
+"lines": [
+{
+"name": "Vodka",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Coffee Liqueur",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Coffee Liqueur",
+"Liqueur",
+"Spirits"
+]
+}
+]
+},
+{
+"name": "Bloody Mary",
+"lines": [
+{
+"name": "Vodka",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Tomato Juice",
+"amount": 3,
+"unit": "oz",
+"genericName": "Tomato"
+},
+{
+"name": "Lemon Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Worcestershire Sauce",
+"amount": 2,
+"unit": "dash"
+},
+{
+"name": "Hot Sauce",
+"amount": 2,
+"unit": "dash"
+},
+{
+"name": "Celery Salt",
+"amount": 1,
+"unit": "pinch",
+"genericName": "Salt"
+},
+{
+"name": "Black Pepper",
+"amount": 1,
+"unit": "pinch",
+"genericName": "Pepper"
+},
+{
+"name": "Celery",
+"amount": 1,
+"unit": "each"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Boulevardier",
+"lines": [
+{
+"name": "Bourbon",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Bourbon",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Campari",
+"amount": 1,
+"unit": "oz",
+"genericName": "Bitter Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Bramble",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Crème de Mûre",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Blackberry",
+"amount": 2,
+"unit": "each",
+"genericName": "Berries"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "slice",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Brandy Alexander",
+"lines": [
+{
+"name": "Brandy",
+"amount": 1,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Brandy",
+"Spirits"
+]
+},
+{
+"name": "Crème de Cacao",
+"amount": 1,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Cream",
+"amount": 1,
+"unit": "oz",
+"genericName": "Dairy"
+},
+{
+"name": "Nutmeg",
+"amount": 1,
+"unit": "pinch",
+"genericName": "Spices"
+}
+]
+},
+{
+"name": "Caipirinha",
+"lines": [
+{
+"name": "Cachaça",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Cachaça",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Lime",
+"amount": null,
+"unit": null,
+"genericName": "Citrus"
+},
+{
+"name": "Sugar",
+"amount": 2,
+"unit": "tsp"
+}
+]
+},
+{
+"name": "Clover Club",
+"lines": [
+{
+"name": "Gin",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Dry Vermouth",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Dry Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Raspberry Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Egg White",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Egg"
+},
+{
+"name": "Raspberry",
+"amount": 2,
+"unit": "each",
+"genericName": "Berries"
+}
+]
+},
+{
+"name": "Corpse Reviver #2",
+"lines": [
+{
+"name": "Gin",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lillet Blanc",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Quinquina",
+"categories": [
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Cointreau",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Triple Sec",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Absinthe",
+"amount": 1,
+"unit": "dash",
+"genericName": "Spirit",
+"categories": [
+"Absinthe",
+"Spirits"
+]
+}
+]
+},
+{
+"name": "Cosmopolitan",
+"lines": [
+{
+"name": "Citron Vodka",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Flavoured Vodka",
+"categories": [
+"Flavored Vodka",
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Cointreau",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Triple Sec",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Cranberry Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Cranberry"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Cuba Libre",
+"lines": [
+{
+"name": "Rum",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "each",
+"genericName": "Citrus"
+},
+{
+"name": "Cola",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "slice",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Daiquiri",
+"lines": [
+{
+"name": "White Rum",
+"amount": 2,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Light / White Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "wheel",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Dirty Martini",
+"lines": [
+{
+"name": "Gin",
+"amount": 60,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Dry Vermouth",
+"amount": 22.5,
+"unit": "ml",
+"genericName": "Vermouth",
+"categories": [
+"Dry Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Olive Brine",
+"amount": 15,
+"unit": "ml",
+"genericName": "Brine"
+},
+{
+"name": "Ginseng Bitters",
+"amount": 8,
+"unit": "drop"
+},
+{
+"name": "Olive",
+"amount": 1,
+"unit": "each"
+}
+]
+},
+{
+"name": "Espresso Martini",
+"lines": [
+{
+"name": "Vodka",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Espresso",
+"amount": 1,
+"unit": "oz",
+"genericName": "Coffee"
+},
+{
+"name": "Coffee Liqueur",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Coffee Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Simple Syrup",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Coffee Beans",
+"amount": 3,
+"unit": "each",
+"genericName": "Coffee"
+}
+]
+},
+{
+"name": "French 75",
+"lines": [
+{
+"name": "Gin",
+"amount": 1,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Champagne",
+"amount": 3,
+"unit": "oz",
+"genericName": "Sparkling Wine"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Gibson",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Dry Vermouth",
+"amount": 1,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Dry Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Pickled Onion",
+"amount": 1,
+"unit": "each",
+"genericName": "Onion"
+}
+]
+},
+{
+"name": "Gimlet",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "wheel",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Gin and Tonic",
+"lines": [
+{
+"name": "London Dry Gin",
+"amount": 1.67,
+"unit": "oz",
+"genericName": "Gin",
+"categories": [
+"Gin",
+"London Dry Gin",
+"Spirits"
+]
+},
+{
+"name": "Tonic Water",
+"amount": 4,
+"unit": "oz"
+}
+]
+},
+{
+"name": "Gin Basil Smash",
+"lines": [
+{
+"name": "Gin",
+"amount": 60,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 22.5,
+"unit": "ml",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 22.5,
+"unit": "ml",
+"genericName": "Syrup"
+},
+{
+"name": "Basil",
+"amount": 10,
+"unit": "leaf",
+"genericName": "Herbs"
+}
+]
+},
+{
+"name": "Gin Fizz",
+"lines": [
+{
+"name": "London Dry Gin",
+"amount": 1.67,
+"unit": "oz",
+"genericName": "Gin",
+"categories": [
+"Gin",
+"London Dry Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Rich Simple Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Simple Syrup"
+},
+{
+"name": "Soda Water",
+"amount": 4,
+"unit": "oz"
+}
+]
+},
+{
+"name": "Grasshopper",
+"lines": [
+{
+"name": "Crème de Menthe",
+"amount": 30,
+"unit": "ml",
+"genericName": "Liqueur",
+"categories": [
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "White Crème de Cacao",
+"amount": 30,
+"unit": "ml",
+"genericName": "Crème de Cacao",
+"categories": [
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Cream",
+"amount": 30,
+"unit": "ml",
+"genericName": "Dairy"
+}
+]
+},
+{
+"name": "Hanky Panky",
+"lines": [
+{
+"name": "Gin",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Fernet-Branca",
+"amount": 2,
+"unit": "dash",
+"genericName": "Fernet",
+"categories": [
+"Amaro & Bitter",
+"Fernet",
+"Spirits"
+]
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Hurricane",
+"lines": [
+{
+"name": "Jamaican Rum",
+"amount": 4,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Passion Fruit Syrup",
+"amount": 2,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Lemon Juice",
+"amount": 2,
+"unit": "oz",
+"genericName": "Lemon"
+}
+]
+},
+{
+"name": "Irish Coffee",
+"lines": [
+{
+"name": "Sugar",
+"amount": 2,
+"unit": "each"
+},
+{
+"name": "Coffee",
+"amount": 4,
+"unit": "oz"
+},
+{
+"name": "Irish Whiskey",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Irish Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Heavy Cream",
+"amount": null,
+"unit": null,
+"genericName": "Cream"
+}
+]
+},
+{
+"name": "Jack Rose",
+"lines": [
+{
+"name": "Applejack",
+"amount": 2,
+"unit": "oz",
+"genericName": "Apple Brandy",
+"categories": [
+"Applejack",
+"Brandy",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Grenadine",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Jungle Bird",
+"lines": [
+{
+"name": "Dark Rum",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Campari",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Bitter Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Pineapple Juice",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Pineapple"
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Demerara Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Simple Syrup"
+},
+{
+"name": "Pineapple",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Fruit"
+}
+]
+},
+{
+"name": "Kir Royale",
+"lines": [
+{
+"name": "Crème de Cassis",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Champagne",
+"amount": null,
+"unit": "top",
+"genericName": "Sparkling Wine"
+}
+]
+},
+{
+"name": "Last Word",
+"lines": [
+{
+"name": "Gin",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Green Chartreuse",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Herbal Liqueur",
+"categories": [
+"Herbal / Monastic",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Maraschino Liqueur",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lime"
+}
+]
+},
+{
+"name": "Long Island Iced Tea",
+"lines": [
+{
+"name": "Tequila",
+"amount": 15,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Tequila",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Vodka",
+"amount": 15,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "White Rum",
+"amount": 15,
+"unit": "ml",
+"genericName": "Rum",
+"categories": [
+"Light / White Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Triple Sec",
+"amount": 15,
+"unit": "ml",
+"genericName": "Orange Liqueur",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Gin",
+"amount": 15,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 25,
+"unit": "ml",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 30,
+"unit": "ml",
+"genericName": "Syrup"
+},
+{
+"name": "Cola",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "slice",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Mai Tai",
+"lines": [
+{
+"name": "Jamaican Rum",
+"amount": 2,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Curaçao",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Orange Liqueur",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Orgeat",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Rich Simple Syrup",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Simple Syrup"
+},
+{
+"name": "Mint",
+"amount": 1,
+"unit": "sprig",
+"genericName": "Herbs"
+}
+]
+},
+{
+"name": "Manhattan",
+"lines": [
+{
+"name": "Rye Whiskey",
+"amount": 2,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Rye Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Maraschino Cherry",
+"amount": 1,
+"unit": "each",
+"genericName": "Cherry"
+}
+]
+},
+{
+"name": "Margarita",
+"lines": [
+{
+"name": "Blanco Tequila",
+"amount": 2,
+"unit": "oz",
+"genericName": "Tequila",
+"categories": [
+"Blanco",
+"Tequila",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Cointreau",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Triple Sec",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Salt",
+"amount": 1,
+"unit": "rim"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Martinez",
+"lines": [
+{
+"name": "Old Tom Gin",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Gin",
+"categories": [
+"Gin",
+"Old Tom Gin",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Maraschino Liqueur",
+"amount": 1,
+"unit": "bsp",
+"genericName": "Liqueur",
+"categories": [
+"Fruit Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Martini",
+"lines": [
+{
+"name": "London Dry Gin",
+"amount": 2.5,
+"unit": "oz",
+"genericName": "Gin",
+"categories": [
+"Gin",
+"London Dry Gin",
+"Spirits"
+]
+},
+{
+"name": "Dry Vermouth",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Dry Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Orange Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Mezcal Margarita",
+"lines": [
+{
+"name": "Mezcal",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Mezcal",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Triple Sec",
+"amount": 1,
+"unit": "oz",
+"genericName": "Orange Liqueur",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lime"
+}
+]
+},
+{
+"name": "Mimosa",
+"lines": [
+{
+"name": "Champagne",
+"amount": 75,
+"unit": "ml",
+"genericName": "Sparkling Wine"
+},
+{
+"name": "Orange Juice",
+"amount": 75,
+"unit": "ml",
+"genericName": "Orange"
+},
+{
+"name": "Orange Twist",
+"amount": 1,
+"unit": "peel",
+"genericName": "Orange"
+}
+]
+},
+{
+"name": "Mint Julep",
+"lines": [
+{
+"name": "Bourbon",
+"amount": 2.5,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Bourbon",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Simple Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Mint",
+"amount": null,
+"unit": null,
+"genericName": "Herbs"
+},
+{
+"name": "Mint",
+"amount": 1,
+"unit": "sprig",
+"genericName": "Herbs"
+}
+]
+},
+{
+"name": "Mojito",
+"lines": [
+{
+"name": "White Rum",
+"amount": 2,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Light / White Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Mint",
+"amount": null,
+"unit": null,
+"genericName": "Herbs"
+},
+{
+"name": "Soda Water",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Mint",
+"amount": 1,
+"unit": "sprig",
+"genericName": "Herbs"
+}
+]
+},
+{
+"name": "Moscow Mule",
+"lines": [
+{
+"name": "Vodka",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Ginger Beer",
+"amount": 4,
+"unit": "oz"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Naked and Famous",
+"lines": [
+{
+"name": "Mezcal",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Mezcal",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Yellow Chartreuse",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Herbal Liqueur",
+"categories": [
+"Herbal / Monastic",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Aperol",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Bittersweet Orange Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lime"
+}
+]
+},
+{
+"name": "Negroni",
+"lines": [
+{
+"name": "Gin",
+"amount": 1,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Campari",
+"amount": 1,
+"unit": "oz",
+"genericName": "Bitter Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Oaxaca Old Fashioned",
+"lines": [
+{
+"name": "Reposado Tequila",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Tequila",
+"categories": [
+"Reposado",
+"Tequila",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Mezcal",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Mezcal",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Agave Syrup",
+"amount": 1,
+"unit": "bsp",
+"genericName": "Syrup"
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Old Fashioned",
+"lines": [
+{
+"name": "Rye Whiskey",
+"amount": 2,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Rye Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Simple Syrup",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Paloma",
+"lines": [
+{
+"name": "Blanco Tequila",
+"amount": 2,
+"unit": "oz",
+"genericName": "Tequila",
+"categories": [
+"Blanco",
+"Tequila",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Salt",
+"amount": 1,
+"unit": "pinch"
+},
+{
+"name": "Grapefruit Soda",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Lime",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Paper Plane",
+"lines": [
+{
+"name": "Bourbon",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Bourbon",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Aperol",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Bittersweet Orange Aperitivo",
+"categories": [
+"Amaro & Bitter",
+"Aperitivo (Red Bitter)",
+"Spirits"
+]
+},
+{
+"name": "Amaro Nonino",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Amaro",
+"categories": [
+"Amaro & Bitter",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+}
+]
+},
+{
+"name": "Penicillin",
+"lines": [
+{
+"name": "Blended Scotch",
+"amount": 2,
+"unit": "oz",
+"genericName": "Scotch",
+"categories": [
+"Blended Scotch",
+"Whisk(e)y",
+"Scotch Whisky",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Honey-ginger Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Honey Syrup"
+},
+{
+"name": "Islay Scotch",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Scotch",
+"categories": [
+"Islay Scotch",
+"Whisk(e)y",
+"Scotch Whisky",
+"Spirits"
+]
+},
+{
+"name": "Candied Ginger",
+"amount": 1,
+"unit": "each",
+"genericName": "Ginger",
+"categories": [
+"Gin",
+"Spirits"
+]
+}
+]
+},
+{
+"name": "Piña Colada",
+"lines": [
+{
+"name": "White Rum",
+"amount": 2,
+"unit": "oz",
+"genericName": "Rum",
+"categories": [
+"Light / White Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Cream of Coconut",
+"amount": 1.5,
+"unit": "oz",
+"genericName": "Coconut"
+},
+{
+"name": "Pineapple Juice",
+"amount": 3,
+"unit": "oz",
+"genericName": "Pineapple"
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Pineapple",
+"amount": 1,
+"unit": "wedge",
+"genericName": "Fruit"
+}
+]
+},
+{
+"name": "Pisco Sour",
+"lines": [
+{
+"name": "Pisco",
+"amount": 2,
+"unit": "oz",
+"genericName": "Brandy",
+"categories": [
+"Brandy",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Egg White",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Egg"
+},
+{
+"name": "Angostura Bitters",
+"amount": 3,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+}
+]
+},
+{
+"name": "Ramos Gin Fizz",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Lime Juice",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 1,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Cream",
+"amount": 1,
+"unit": "oz",
+"genericName": "Dairy"
+},
+{
+"name": "Egg White",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Egg"
+},
+{
+"name": "Orange Blossom Water",
+"amount": 3,
+"unit": "dash",
+"genericName": "Orange Blossom",
+"ai": {
+"abv": 0,
+"taste": {
+"fruity": 0.4,
+"herbal": 0.6,
+"sweet": 0.2
+}
+}
+},
+{
+"name": "Soda Water",
+"amount": 1,
+"unit": "oz"
+}
+]
+},
+{
+"name": "Rob Roy",
+"lines": [
+{
+"name": "Blended Scotch",
+"amount": 2,
+"unit": "oz",
+"genericName": "Scotch",
+"categories": [
+"Blended Scotch",
+"Whisk(e)y",
+"Scotch Whisky",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 1,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Maraschino Cherry",
+"amount": 1,
+"unit": "each",
+"genericName": "Cherry"
+}
+]
+},
+{
+"name": "Sazerac",
+"lines": [
+{
+"name": "Rye Whiskey",
+"amount": 2,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Rye Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Simple Syrup",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Peychaud's Bitters",
+"amount": 3,
+"unit": "dash",
+"genericName": "Creole Bitters"
+},
+{
+"name": "Angostura Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Absinthe",
+"amount": 1,
+"unit": "dash",
+"genericName": "Spirit",
+"categories": [
+"Absinthe",
+"Spirits"
+]
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Sherry Cobbler",
+"lines": [
+{
+"name": "Amontillado Sherry",
+"amount": 3.5,
+"unit": "oz",
+"genericName": "Sherry"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Orange",
+"amount": 2,
+"unit": "slice",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Sidecar",
+"lines": [
+{
+"name": "Cognac",
+"amount": 2,
+"unit": "oz",
+"genericName": "Brandy",
+"categories": [
+"Brandy",
+"Spirits"
+]
+},
+{
+"name": "Cointreau",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Triple Sec",
+"categories": [
+"Orange Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Sugar",
+"amount": 1,
+"unit": "rim"
+},
+{
+"name": "Orange",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus",
+"ai": {
+"abv": 0,
+"taste": {
+"bitter": 0.1,
+"fruity": 0.8,
+"sour": 0.4,
+"sweet": 0.6
+}
+}
+}
+]
+},
+{
+"name": "Southside",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lime Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lime"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Mint",
+"amount": 6,
+"unit": "leaf",
+"genericName": "Herbs"
+},
+{
+"name": "Orange Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Mint Sprig",
+"amount": 1,
+"unit": "sprig",
+"genericName": "Mint"
+}
+]
+},
+{
+"name": "Tequila Sunrise",
+"lines": [
+{
+"name": "Tequila",
+"amount": 45,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Tequila",
+"Agave Spirits",
+"Spirits"
+]
+},
+{
+"name": "Orange Juice",
+"amount": 90,
+"unit": "ml",
+"genericName": "Orange"
+},
+{
+"name": "Grenadine",
+"amount": 15,
+"unit": "ml",
+"genericName": "Syrup"
+}
+]
+},
+{
+"name": "Tom Collins",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 1,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Soda Water",
+"amount": null,
+"unit": "top"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "wheel",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Toronto",
+"lines": [
+{
+"name": "Rye Whiskey",
+"amount": 2,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Rye Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Fernet",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Amaro",
+"categories": [
+"Amaro & Bitter",
+"Fernet",
+"Spirits"
+]
+},
+{
+"name": "Demerara Syrup",
+"amount": 0.25,
+"unit": "oz",
+"genericName": "Simple Syrup"
+},
+{
+"name": "Aromatic Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Orange Twist",
+"amount": 1,
+"unit": "peel",
+"genericName": "Orange"
+}
+]
+},
+{
+"name": "Tuxedo",
+"lines": [
+{
+"name": "Gin",
+"amount": 2,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Fino Sherry",
+"amount": 1,
+"unit": "oz",
+"genericName": "Sherry"
+},
+{
+"name": "Orange Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Vesper",
+"lines": [
+{
+"name": "Gin",
+"amount": 2.25,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Vodka",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Lillet Blanc",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Quinquina",
+"categories": [
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "peel",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Vieux Carré",
+"lines": [
+{
+"name": "Rye Whiskey",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Rye Whiskey",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Cognac",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Brandy",
+"categories": [
+"Brandy",
+"Spirits"
+]
+},
+{
+"name": "Sweet Vermouth",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Vermouth",
+"categories": [
+"Sweet / Rosso Vermouth",
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Bénédictine",
+"amount": 1,
+"unit": "bsp",
+"genericName": "Herbal Liqueur",
+"categories": [
+"Herbal / Monastic",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Peychaud's Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Creole Bitters"
+},
+{
+"name": "Angostura Bitters",
+"amount": 2,
+"unit": "dash",
+"genericName": "Aromatic Bitters"
+},
+{
+"name": "Lemon",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "Whiskey Sour",
+"lines": [
+{
+"name": "Bourbon",
+"amount": 2,
+"unit": "oz",
+"genericName": "Whiskey",
+"categories": [
+"Bourbon",
+"Whisk(e)y",
+"Spirits"
+]
+},
+{
+"name": "Lemon Juice",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Lemon"
+},
+{
+"name": "Simple Syrup",
+"amount": 0.75,
+"unit": "oz",
+"genericName": "Syrup"
+},
+{
+"name": "Egg White",
+"amount": 0.5,
+"unit": "oz",
+"genericName": "Egg"
+},
+{
+"name": "Maraschino Cherry",
+"amount": 1,
+"unit": "each",
+"genericName": "Cherry"
+}
+]
+},
+{
+"name": "White Negroni",
+"lines": [
+{
+"name": "Gin",
+"amount": 1,
+"unit": "oz",
+"genericName": "Spirit",
+"categories": [
+"Gin",
+"Spirits"
+]
+},
+{
+"name": "Lillet Blanc",
+"amount": 1,
+"unit": "oz",
+"genericName": "Quinquina",
+"categories": [
+"Vermouth",
+"Spirits"
+]
+},
+{
+"name": "Suze",
+"amount": 1,
+"unit": "oz",
+"genericName": "Gentian Aperitif",
+"categories": [
+"Amaro & Bitter",
+"Spirits"
+]
+},
+{
+"name": "Grapefruit",
+"amount": 1,
+"unit": "twist",
+"genericName": "Citrus"
+}
+]
+},
+{
+"name": "White Russian",
+"lines": [
+{
+"name": "Vodka",
+"amount": 50,
+"unit": "ml",
+"genericName": "Spirit",
+"categories": [
+"Vodka",
+"Spirits"
+]
+},
+{
+"name": "Coffee Liqueur",
+"amount": 20,
+"unit": "ml",
+"genericName": "Liqueur",
+"categories": [
+"Coffee Liqueur",
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Cream",
+"amount": 30,
+"unit": "ml",
+"genericName": "Dairy"
+}
+]
+},
+{
+"name": "Zombie",
+"lines": [
+{
+"name": "Lime Juice",
+"amount": 22.5,
+"unit": "ml",
+"genericName": "Lime"
+},
+{
+"name": "Falernum",
+"amount": 15,
+"unit": "ml",
+"genericName": "Liqueur",
+"categories": [
+"Liqueur",
+"Spirits"
+]
+},
+{
+"name": "Aged Rum",
+"amount": 45,
+"unit": "ml",
+"genericName": "Rum",
+"categories": [
+"Aged / Añejo Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Jamaican Rum",
+"amount": 45,
+"unit": "ml",
+"genericName": "Rum",
+"categories": [
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Overproof Rum",
+"amount": 30,
+"unit": "ml",
+"genericName": "Rum",
+"categories": [
+"Overproof Rum",
+"Rum / Sugarcane",
+"Spirits"
+]
+},
+{
+"name": "Grenadine",
+"amount": 1,
+"unit": "tsp",
+"genericName": "Syrup"
+},
+{
+"name": "Absinthe",
+"amount": 6,
+"unit": "drop",
+"genericName": "Spirit",
+"categories": [
+"Absinthe",
+"Spirits"
+]
+},
+{
+"name": "Aromatic Bitters",
+"amount": 1,
+"unit": "dash",
+"genericName": "Bitters"
+},
+{
+"name": "Don's Mix",
+"amount": 15,
+"unit": "ml",
+"genericName": "Cinnamon Syrup"
+},
+{
+"name": "Mint",
+"amount": 1,
+"unit": "sprig",
+"genericName": "Herbs"
+}
+]
+}
+]
