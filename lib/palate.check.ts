@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { DIMENSIONS, type Profile } from './flavor';
-import { changeBetween, FAMILY, meet, labelSpot, outlinePath, palateByMonth, palateLabel, petalPath, pull, RINGS, shapedBy, tasteFromRankings, WHEEL, type RankedFlavor } from './palate';
+import { changeBetween, FAMILY, meet, springStep, labelSpot, outlinePath, palateByMonth, palateLabel, petalPath, pull, RINGS, shapedBy, tasteFromRankings, WHEEL, type RankedFlavor } from './palate';
 
 const p = (values: Partial<Profile>): Profile => Object.fromEntries(DIMENSIONS.map((d) => [d, values[d] ?? 0])) as Profile;
 const near = (a: number, b: number, msg?: string) => assert.ok(Math.abs(a - b) < 1e-9, msg ?? `${a} vs ${b}`);
@@ -85,6 +85,21 @@ assert.equal(changeBetween(base, base), null);
 const smokyBitter = { ...p({}), bitter: 0.85, smoky: 0.7, strong: 0.8, sweet: 0.2, sour: 0.4 };
 assert.deepEqual(meet(smokyBitter, mezcalNegroni, base), { shared: ['bitter', 'smoky'], more: 'herbal', less: 'sour' });
 assert.deepEqual(meet({}, mezcalNegroni, base), { shared: [], more: null, less: null });
+
+// Petal motion: a spring that settles on its target without overshooting much, in well under a second.
+const glide = { damping: 30, stiffness: 180, mass: 1 };
+let spring = { x: 0.2, v: 0, resting: false };
+let frames = 0;
+let peak = 0;
+while (!spring.resting && frames < 600) {
+  spring = springStep(spring.x, spring.v, 0.8, glide, 1 / 60);
+  peak = Math.max(peak, spring.x);
+  frames++;
+}
+assert.equal(spring.x, 0.8, 'lands exactly on the target');
+assert.ok(frames < 60, `settles within a second (${frames} frames)`);
+assert.ok(peak < 0.82, 'barely overshoots');
+assert.deepEqual(springStep(0.5, 0, 0.5, glide, 1 / 60), { x: 0.5, v: 0, resting: true }, 'already there');
 
 // The wheel: every taste once, three to a family, families in quarters.
 assert.deepEqual([...WHEEL].sort(), [...DIMENSIONS].sort());

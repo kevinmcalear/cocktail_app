@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Headline, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, Headline, PalateFlower, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -57,6 +57,10 @@ export function MyBarScreen() {
   // Match percentages only once your taste comes from enough rankings, for the drinks loaded so far.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
   const profiles = useItemFlavors([...bar.canMake, ...others].map((d) => d.id), !!scored);
+  const glyph = (id: string) => {
+    const profile = profiles.data?.[id];
+    return profile ? <PalateFlower values={profile} size={28} rings={false} /> : null;
+  };
   const matchFor = (id: string) => {
     const profile = scored && profiles.data?.[id];
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
@@ -110,7 +114,7 @@ export function MyBarScreen() {
             <View>
               <Headline role="heading">You can make</Headline>
               {bar.canMake.map((d) => (
-                <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} />
+                <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} trailing={glyph(d.id)} />
               ))}
             </View>
           ) : null}
@@ -135,7 +139,7 @@ export function MyBarScreen() {
         ListHeaderComponent={header}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
         renderItem={({ item }) => (
-          <DrinkRow name={item.name} itemId={item.id} href={itemHref('Cocktail', item.id)} imageUrl={item.imageUrl} glass={item.glass} caption={matchFor(item.id)} />
+          <DrinkRow name={item.name} itemId={item.id} href={itemHref('Cocktail', item.id)} imageUrl={item.imageUrl} glass={item.glass} caption={matchFor(item.id)} trailing={glyph(item.id)} />
         )}
       />
       <AddBottlesSheet

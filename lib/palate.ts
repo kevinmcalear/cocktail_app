@@ -163,6 +163,26 @@ export function meet(taste: Taste, profile: Profile, baseline: Profile | null): 
   return { shared, more, less };
 }
 
+/** A spring: the springs tokens' shape. */
+export interface SpringConfig {
+  damping: number;
+  stiffness: number;
+  mass: number;
+}
+
+/**
+ * One step of a damped spring towards `target`: the petal motion. Returns the
+ * new position and velocity, and whether it has come to rest (snapped to the
+ * target). `dt` in seconds.
+ */
+export function springStep(x: number, v: number, target: number, cfg: SpringConfig, dt: number): { x: number; v: number; resting: boolean } {
+  const a = (-cfg.stiffness * (x - target) - cfg.damping * v) / cfg.mass;
+  const nv = v + a * dt;
+  const nx = x + nv * dt;
+  if (Math.abs(nx - target) < 0.001 && Math.abs(nv) < 0.01) return { x: target, v: 0, resting: true };
+  return { x: nx, v: nv, resting: false };
+}
+
 // --- The flower ---
 
 /** The wheel: sweet at twelve o'clock, then clockwise. Neighbours taste alike. */
