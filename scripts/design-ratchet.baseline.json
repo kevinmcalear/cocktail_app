@@ -85,7 +85,7 @@
     "components/CurrentMenuList.tsx": 517,
     "components/DraftFolderTree.tsx": 1324,
     "components/ItemDetailLayout.tsx": 725,
-    "components/SettingsScreen.tsx": 484,
+    "components/SettingsScreen.tsx": 438,
     "components/VenueContextPicker.tsx": 349,
     "components/bar/BarInlineEditor.tsx": 348,
     "components/cocktail/CocktailDetailContent.tsx": 550,

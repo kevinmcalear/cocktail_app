@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { setAnalyticsClient, track } from './analytics';
+import { analyticsOptedOut, setAnalyticsClient, setAnalyticsOptOut, track } from './analytics';
 
 // Node has no window; track() only runs where PostHog could.
 const g = globalThis as { window?: unknown };
@@ -35,6 +35,23 @@ setAnalyticsClient({
   },
 });
 assert.doesNotThrow(() => track('invite_sent'));
+
+// Opting out: nothing is sent or queued, PostHog is told, and opting back in resumes.
+const calls: string[] = [];
+seen.length = 0;
+setAnalyticsClient({ ...recorder, optOut: () => calls.push('optOut'), optIn: () => calls.push('optIn') });
+calls.length = 0;
+setAnalyticsOptOut(true);
+assert.equal(analyticsOptedOut(), true);
+track('sign_up');
+setAnalyticsClient(null);
+track('invite_sent');
+setAnalyticsOptOut(false);
+track('age_check_passed');
+assert.deepEqual(calls, ['optOut']);
+setAnalyticsClient({ ...recorder, optIn: () => calls.push('optIn') });
+assert.deepEqual(calls, ['optOut', 'optIn']);
+assert.deepEqual(seen, [['age_check_passed', undefined]]);
 
 // Static web rendering (no window) stays silent.
 setAnalyticsClient(recorder);
