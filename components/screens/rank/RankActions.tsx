@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
 import { GlassButton } from '@/components/ds';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { signatureBarOf, useBarProfile, useMyRankList, useRankTarget, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
 import { rankedAs as rankedAsOf } from '@/lib/ranking';
@@ -24,7 +24,7 @@ interface RankActionsProps {
 /** "Rank it" (the comparison sheet) and "Rankings" (/rankings/[itemId]) for a drink page. */
 export function RankActions({ item, picture }: RankActionsProps) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
   const { data: target } = useRankTarget(item.id);
   const rankedAs = target ? rankedAsOf(target) : null;

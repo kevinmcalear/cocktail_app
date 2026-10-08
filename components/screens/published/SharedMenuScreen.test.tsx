@@ -9,7 +9,7 @@ const mockPush = jest.fn();
 let mockMenu: SharedMenuPage | null = null;
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: null, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: null, loading: false })));
 jest.mock('@/hooks/useSharedMenu', () => ({ useSharedMenu: () => ({ data: mockMenu, isPending: false }) }));
 
 const drink = (id: string, name: string) => ({

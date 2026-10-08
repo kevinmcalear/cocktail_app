@@ -8,7 +8,7 @@ import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { FEATURES } from '@/constants/features';
 import { radius, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenu } from '@/hooks/useMenus';
@@ -60,7 +60,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const [more, setMore] = useState(false);
   const [night, setNight] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const caps = useCapabilities(menu?.barId);
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));

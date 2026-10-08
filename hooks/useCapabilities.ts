@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
  * storage, and a Set comes back from JSON as a plain object.
  */
 export function useCapabilities(barId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['capabilities', barId, userId],
     enabled: !!barId && !!userId,

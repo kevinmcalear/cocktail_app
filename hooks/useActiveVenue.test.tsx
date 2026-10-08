@@ -8,7 +8,7 @@ type Auth = { loading: boolean; user: { id: string } | null };
 let mockAuth: Auth = { loading: true, user: null };
 const mockFetches: string[] = [];
 
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => mockAuth));
 // The bars request never answers: like auth-js, it is still refreshing the token.
 jest.mock('@/lib/supabase', () => ({
   supabase: {

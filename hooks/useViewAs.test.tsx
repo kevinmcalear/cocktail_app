@@ -13,7 +13,7 @@ jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({}),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'user-1' } })));
 
 const bars = [
   { bar_id: 'admin-bar', role_level: 40 },

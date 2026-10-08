@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Button, Title, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useAuthIdentity } from '@/ctx/AuthContext';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { deviceStore } from '@/lib/deviceStore';
 
@@ -17,8 +17,8 @@ type Answer = 'yes' | 'no';
  * native apps always have an account, so they go straight through.
  */
 export function DrinkingAgeGate({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  const asks = Platform.OS === 'web' && !loading && !user;
+  const { userId, loading } = useAuthIdentity();
+  const asks = Platform.OS === 'web' && !loading && !userId;
   const hydrated = useIsHydrated();
   const [answer, setAnswer] = useState<Answer | null | undefined>(undefined);
 

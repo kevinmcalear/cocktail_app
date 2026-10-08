@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useDrafts } from '@/hooks/useDrafts';
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
@@ -47,7 +47,7 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
  */
 export function useCreateDrink() {
   const qc = useQueryClient();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const { drafts, saveDraft } = useDrafts();
 
   return useMutation({

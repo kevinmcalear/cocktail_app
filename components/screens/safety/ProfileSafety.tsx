@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, GlassButton, Headline } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import type { Profile } from '@/hooks/useProfiles';
 import { useMyBlocks, useProfileUserId, useSetBlocked } from '@/hooks/useSafety';
 import { parseProfileRef } from '@/lib/profiles';
@@ -20,12 +20,12 @@ export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or 
  * between people.
  */
 export function ProfileSafety({ profile }: { profile: Profile }) {
-  const { user } = useAuth();
+  const myId = useUserId();
   const { data: userId } = useProfileUserId(profile.kind === 'person' ? profile.id : null);
   const [sheet, setSheet] = useState<'menu' | 'report' | 'block' | null>(null);
   const setBlocked = useSetBlocked();
   // Not on my own profile, or on a private one (only its owners see those).
-  if (!user || userId === user.id || !profile.is_public) return null;
+  if (!myId || userId === myId || !profile.is_public) return null;
   const name = `@${profile.handle}`;
   const canBlock = profile.kind === 'person' && !!userId;
 

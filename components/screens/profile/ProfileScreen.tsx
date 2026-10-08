@@ -7,7 +7,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Segmented, 
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
@@ -71,7 +71,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
@@ -113,7 +113,7 @@ const KIND: Record<Profile['kind'], string> = { person: 'Bartender', bar: 'Bar' 
 function ProfileBody({ profile, columns }: { profile: Profile; columns: number }) {
   const router = useRouter();
   const person = profile.kind === 'person';
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const mine = useMyProfile().data?.id === profile.id;
   const shown = personTabs(profile, mine);
   const tabs = person ? PERSON_TABS.filter((t) => shown.includes(t.value)) : BAR_TABS;

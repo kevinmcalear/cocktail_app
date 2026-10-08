@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishMode } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
@@ -47,7 +47,7 @@ export interface Collection {
 const collectionKey = (userId: string | null) => ['collection', userId] as const;
 
 export function useCollection() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: collectionKey(userId),
     enabled: !!userId,

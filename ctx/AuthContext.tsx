@@ -3,7 +3,7 @@ import { getAuthRedirectTo } from '@/lib/authRedirect';
 import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
 import { isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
 import { onlineManager } from '@tanstack/react-query';
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type AuthContextType = {
   /** The confirmed session. Null until auth-js has settled (refreshed an expired token, if it had to). */
@@ -57,6 +57,24 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const useAuth = () => useContext(AuthContext);
+
+/**
+ * Who is signed in, by id, and whether auth has settled: the same values as
+ * `useAuth().user?.id` and `useAuth().loading`, in their own context. auth-js
+ * refreshes the token hourly, which gives `session` and `user` new objects and
+ * re-renders every useAuth() consumer; this value only changes when the id or
+ * `loading` does. Most screens and hooks only need this.
+ */
+type AuthIdentity = { userId: string | null; loading: boolean };
+
+const AuthIdentityContext = createContext<AuthIdentity>({ userId: null, loading: true });
+
+/** The signed-in user's id, or null: `useAuth().user?.id ?? null`, without the token-refresh re-renders. */
+export const useUserId = () => useContext(AuthIdentityContext).userId;
+/** Whether someone is signed in: `!!useAuth().user`, without the token-refresh re-renders. */
+export const useSignedIn = () => useContext(AuthIdentityContext).userId !== null;
+/** The id and `loading` together, for screens that wait on auth. */
+export const useAuthIdentity = () => useContext(AuthIdentityContext);
 
 function asError(error: { message: string } | null): Error | null {
   return error ? new Error(error.message) : null;
@@ -239,6 +257,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: asError(error) };
   };
 
+  const userId = user?.id ?? null;
+  const identity = useMemo(() => ({ userId, loading }), [userId, loading]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -255,7 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
       }}
     >
-      {children}
+      <AuthIdentityContext.Provider value={identity}>{children}</AuthIdentityContext.Provider>
     </AuthContext.Provider>
   );
 }

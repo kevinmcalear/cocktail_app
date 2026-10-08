@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { splitName } from '@/lib/onboarding';
 import { DEFAULT_SHARING } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
@@ -11,7 +11,7 @@ const SAVED = "Couldn't save that. Check your connection and try again.";
 
 /** Saves the account name and the person profile, and returns the profile id. */
 export function useSaveOnboardingName() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const { updateProfile } = useAuth();
   const save = useSaveMyProfile();
   return useMutation({
@@ -87,7 +87,7 @@ export function useSaveWorkedMenu() {
  */
 export function useSaveCareerDrink() {
   const qc = useQueryClient();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useMutation({
     mutationFn: async (input: { personId: string; barId: string | null; name: string }) => {
       if (!userId) throw new Error(SAVED);

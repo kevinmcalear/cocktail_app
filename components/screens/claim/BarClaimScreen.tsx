@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, GlassButton, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useMyClaims, useProfile } from '@/hooks/useProfiles';
 
 import { ClaimStart } from './ClaimStart';
@@ -30,16 +30,16 @@ function ClaimPage({ profileRef }: { profileRef: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const { user } = useAuth();
+  const userId = useUserId();
   const { data: profile, isLoading, error } = useProfile(profileRef);
   const { data: claims, isLoading: claimsLoading } = useMyClaims(profile?.id);
   const latest = claims?.[0];
 
   const body = (() => {
-    if (isLoading || (profile && user && claimsLoading)) return <Caption tone="muted">Loading…</Caption>;
+    if (isLoading || (profile && userId && claimsLoading)) return <Caption tone="muted">Loading…</Caption>;
     if (error) return <Body tone="muted">Couldn’t load this page. Check your connection and try again.</Body>;
     if (!profile || profile.kind !== 'bar') return <Body tone="muted">There’s no bar page here to claim.</Body>;
-    if (!user) {
+    if (!userId) {
       return (
         <View style={styles.gap}>
           <Body>{`Sign in to claim ${profile.display_name}. Use your work email if you have one at the bar’s own domain: that’s the quickest way.`}</Body>

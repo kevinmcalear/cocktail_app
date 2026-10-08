@@ -18,7 +18,7 @@ jest.mock('@/hooks/useActiveVenue', () => ({
   useActiveVenue: () => ({ active: { id: 'bar', name: 'Caretakers' }, isLoading: false }),
 }));
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' } }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
 jest.mock('@/hooks/useBarDetail', () => ({
   useBarMembers: () => ({

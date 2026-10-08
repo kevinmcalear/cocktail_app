@@ -6,7 +6,7 @@ import { Body, Button, Headline } from '@/components/ds';
 import { MenuListRow } from '@/components/screens/menus/MenuRows';
 import { NewMenuSheet } from '@/components/screens/menus/NewMenuSheet';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useVenueMenus } from '@/hooks/useMenus';
 
 const SHOWN = 3;
@@ -18,7 +18,7 @@ const SHOWN = 3;
  */
 export function CollectionMenus({ canMakeIds }: { canMakeIds: Set<string> }) {
   const router = useRouter();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const { data = [], isLoading } = useVenueMenus(null);
   const [now] = useState(() => Date.now());
   const [creating, setCreating] = useState(false);

@@ -17,7 +17,7 @@ let mockReports: unknown[] = [];
 const mockStore = new Map<string, string>();
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: mockUser, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: mockUser, loading: false })));
 jest.mock('@/hooks/useSafety', () => ({
   useFileReport: () => mockFile,
   useMyOpenReport: () => ({ data: mockExisting, isLoading: false }),

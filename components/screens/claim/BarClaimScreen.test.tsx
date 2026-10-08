@@ -25,7 +25,7 @@ const page = {
 };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', email: mockEmail, email_confirmed_at: '2026-10-01' } }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me', email: mockEmail, email_confirmed_at: '2026-10-01' } })));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: mockVenues }) }));
 jest.mock('@/hooks/useProfiles', () => ({
   useProfile: () => ({ data: page, isLoading: false, error: null }),

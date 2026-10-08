@@ -8,7 +8,7 @@ let mockBars: { data: unknown; isError: boolean } = { data: undefined, isError: 
 let mockAuth: { loading: boolean; user: { id: string } | null } = { loading: false, user: null };
 
 jest.mock('@/hooks/useBars', () => ({ useBars: () => mockBars }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => mockAuth));
 
 async function mode(auth: typeof mockAuth, bars: Partial<typeof mockBars>) {
   mockAuth = auth;

@@ -1,11 +1,11 @@
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 export function useBars() {
     // Follows sign-in and sign-out, so a screen that stays mounted across
     // them (the venue staff link) sees the new user's bars.
-    const userId = useAuth().user?.id ?? null;
+    const userId = useUserId();
 
     return useQuery({
         queryKey: ['bars', userId],

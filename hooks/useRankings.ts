@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
@@ -68,7 +68,7 @@ async function withPublishedItems<T extends { item_id: string; item: { name: str
  * didn't like, each in rank_key order. Empty when signed out.
  */
 export function useMyRankList(rankedAsItemId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['rank-list', userId, rankedAsItemId],
     enabled: !!userId && !!rankedAsItemId,
@@ -101,7 +101,7 @@ const HAD_COLUMNS = `
  * drinks, not thousands; page by created_at if someone gets there.
  */
 export function useMyHadDrinks() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['my-had', userId],
     enabled: !!userId,
@@ -119,7 +119,7 @@ export function useMyHadDrinks() {
  * in; the server leaves out anything that isn't public (get_profile_drinks).
  */
 export function useProfileDrinks(profileId: string | null | undefined, enabled: boolean) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['profile-drinks', profileId, userId],
     enabled: enabled && !!profileId && !!userId,
@@ -138,7 +138,7 @@ export function useProfileDrinks(profileId: string | null | undefined, enabled: 
  * (get_profile_bars).
  */
 export function useProfileBars(profileId: string | null | undefined, enabled: boolean) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['profile-bars', profileId, userId],
     enabled: enabled && !!profileId && !!userId,
@@ -338,7 +338,7 @@ export function useDrinkRankings(rankedAsItemId: string | null | undefined, area
  * hourly on the server like every shared score.
  */
 export function useBarTopDrinks(profileId: string | null | undefined, limit = 30) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['bar-top-drinks', profileId, limit, viewer.key],
     meta: viewer.meta,

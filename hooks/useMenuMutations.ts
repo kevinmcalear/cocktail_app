@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { uploadMenuCover } from '@/hooks/useMenuEditor';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
@@ -62,7 +62,7 @@ export interface HomeNight {
  */
 export function useCreateMenu() {
   const invalidate = useInvalidateMenus();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ barId, layout, night }: { barId: string | null; layout: MenuLayout; night?: HomeNight }): Promise<string> => {
       const { data, error } = await supabase
@@ -167,7 +167,7 @@ export function useDeleteMenu() {
 /** Keeps a menu's sections as a layout for next time (a menu template). */
 export function useSaveLayout() {
   const queryClient = useQueryClient();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ name, sections }: { name: string; sections: EditSection[] }) => {
       const { data, error } = await supabase.from('menu_templates').insert({ name: name.trim(), created_by: userId }).select('id').single();
@@ -203,7 +203,7 @@ export interface MenuLayoutTemplate {
  * the venue's menus use. Templates are shared app-wide, so not every one.
  */
 export function useMenuLayouts(barId: string | null) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['menu-layouts', barId, userId],
     enabled: !!userId,
@@ -242,7 +242,7 @@ export function useMenuLayouts(barId: string | null) {
  * shared classics), newest first.
  */
 export function useMenuLibrary(barId: string | null | undefined, enabled = true) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['menu-library', barId ?? null, userId],
     enabled: enabled && !!userId,

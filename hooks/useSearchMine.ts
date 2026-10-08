@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
@@ -13,7 +13,7 @@ import type { SearchScope } from '@/lib/searchScope';
  * guests open on Everywhere.
  */
 export function useSearchMine() {
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { mode } = useMode();
   const { active, isLoading } = useActiveVenue();
   const venue = mode === 'venue' ? active : null;

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Display, Headline, PressableScale, SpecRow, Surface, Tag, useBreakpoint } from '@/components/ds';
 import { DrinkFacts, type Fact } from '@/components/screens/drink/DrinkFacts';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
 import { usePublishedDrink, type BarCredit } from '@/hooks/usePublished';
 import { hadOnLine } from '@/lib/collection';
@@ -52,7 +52,7 @@ export function MemoryCard({ memory, onEdit }: { memory: CollectedDrink; onEdit:
  */
 export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?: string | null }) {
   const wide = useBreakpoint() !== 'phone';
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data, isPending } = usePublishedDrink(id);
   const { data: collection } = useCollection();
   const [editing, setEditing] = useState(false);

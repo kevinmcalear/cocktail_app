@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useAuthIdentity } from '@/ctx/AuthContext';
 import { useMyTaste, useSaveTasteAnswers } from '@/hooks/useFlavor';
 import { blendTaste, COLD_START_DRINKS, QUESTIONS, rankingsDrift, tasteHeadline, tasteSource, type Taste } from '@/lib/flavor';
 
@@ -33,7 +33,7 @@ function TastePage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const { user, loading } = useAuth();
+  const { userId, loading } = useAuthIdentity();
   const { data: me, error } = useMyTaste();
   const save = useSaveTasteAnswers();
   const [draft, setDraft] = useState<Taste | null>(null);
@@ -49,7 +49,7 @@ function TastePage() {
 
   const body = !me ? (
     <Body tone="muted">
-      {!user && !loading ? 'Sign in to see your taste.' : error ? 'Couldn’t load your taste. Check your connection and try again.' : 'Loading your taste…'}
+      {!userId && !loading ? 'Sign in to see your taste.' : error ? 'Couldn’t load your taste. Check your connection and try again.' : 'Loading your taste…'}
     </Body>
   ) : (
     <>

@@ -1,4 +1,4 @@
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
 import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
@@ -77,7 +77,7 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
 export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
-    const userId = useAuth().user?.id ?? null;
+    const userId = useUserId();
 
     return useQuery({
         queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel, userId],
