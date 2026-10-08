@@ -36,12 +36,28 @@ assert.ok(cuke.kind === 'produce' && cuke.inputs.cut);
 const fat = art(['Tapenade Fat-Wash', 'Olive']);
 assert.ok(fat.kind === 'produce' && fat.inputs.oil, 'a fat wash shows its oil');
 
+// Kitchen things that used to fall through to the syrup bottle.
+assert.equal(kind(art(['Shiitake', 'Mushroom'])), 'mushroom');
+const chanterelle = art(['Chanterelle Mushrooms', 'Mushroom']);
+assert.ok(chanterelle.kind === 'produce' && chanterelle.inputs.cap === 'funnel');
+const truffle = art(['Black Truffle', 'Truffle']);
+assert.ok(truffle.kind === 'produce' && truffle.inputs.kind === 'root' && truffle.inputs.rough);
+assert.equal(kind(art(['Ube'])), 'root');
+assert.equal(kind(art(['Kombu', 'Seaweed'])), 'seaweed');
+const garlic = art(['Black Garlic', 'Garlic']);
+assert.ok(garlic.kind === 'produce' && garlic.inputs.bulb === 'garlic');
+assert.equal(kind(art(['Parmesan', 'Dairy'])), 'wedge');
+assert.equal(kind(art(['Tabasco', 'Hot Sauce'], 'product')), 'sauce');
+assert.equal(kind(art(['Mushroom Caramel', 'Caramel'])), 'jar', 'what it is beats what it is made of');
+assert.equal(kind(art(['Macallan 12 Double Oak', 'Oak'], 'product')), 'tall', 'a whisky is not a pile of wood');
+assert.equal(kind(art(['Cranberry Sauce', 'Cranberry'])), 'berries', 'new rules only catch what nothing else knows');
+
 // Unknown things still get a drawing, and the same ingredient always the same one.
 assert.equal(kind(art(['Kleos'], null)), 'apothecary');
 assert.deepEqual(ingredientArt(['Brugal Extra Dry', 'White Rum'], 'product', 'x'), ingredientArt(['Brugal Extra Dry', 'White Rum'], 'product', 'x'));
 
 // Every drawing paints at both sizes.
-for (const names of [['Lime'], ['Raspberry', 'Berries'], ['Strawberry'], ['Cucumber'], ['Coffee'], ['Mint'], ['Hibiscus'], ['Egg White', 'Egg'], ['Honey'], ['Heavy Cream', 'Cream'], ['Tapenade Fat-Wash', 'Olive'], ['Cola'], ['Lager', 'Beer']]) {
+for (const names of [['Lime'], ['Raspberry', 'Berries'], ['Strawberry'], ['Cucumber'], ['Coffee'], ['Mint'], ['Hibiscus'], ['Egg White', 'Egg'], ['Honey'], ['Heavy Cream', 'Cream'], ['Tapenade Fat-Wash', 'Olive'], ['Cola'], ['Lager', 'Beer'], ['Porcini'], ['Chanterelle'], ['Black Truffle'], ['Potato'], ['Onion'], ['Garlic'], ['Spring Onion'], ['Kombu'], ['Parmesan'], ['Soy Sauce']]) {
   const a = art(names);
   for (const detail of ['full', 'thumb'] as const) {
     const scene = a.kind === 'bottle' ? paintBottle(a.inputs, { seed: names[0], detail }) : paintProduce(a.inputs, { seed: names[0], detail });

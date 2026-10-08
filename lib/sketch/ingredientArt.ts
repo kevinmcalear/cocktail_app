@@ -67,7 +67,7 @@ const RULES: [RegExp, (n: string) => IngredientArt][] = [
   [/tequila|mezcal|agave|sotol|raicilla|bacanora/, (n) => bottle('squat', aged(n) ?? CLEAR)],
   [/cacha[cç]a|agricole|clairin|\brum|rhum|ron\b/, (n) => bottle(/agricole|clairin|pot still|jamaica/.test(n) ? 'squat' : 'tall', aged(n) ?? (/white|blanc|silver|light|cacha|clairin/.test(n) ? CLEAR : AMBER))],
   [/pisco|grappa|eau de vie|kirsch|singani|arak|ouzo|aquavit|akvavit|pastis/, () => bottle('decanter', CLEAR)],
-  [/whisk|bourbon|\brye\b|scotch|single malt/, (n) => bottle(hashString(n) % 3 ? 'tall' : 'decanter', AMBER)],
+  [/whisk|bourbon|\brye\b|scotch|single malt|blended malt/, (n) => bottle(hashString(n) % 3 ? 'tall' : 'decanter', AMBER)],
   [/brandy|cognac|armagnac|calvados|applejack/, () => bottle('decanter', AMBER)],
   // things you'd find in the kitchen
   [/\begg|aquafaba/, () => produce({ kind: 'egg', color: PANTRY.egg })],
@@ -90,6 +90,23 @@ const RULES: [RegExp, (n: string) => IngredientArt][] = [
   [/spice|paprika|turmeric|cumin|saffron|powder|pepper/, (n) => heap(/paprika|chil|saffron/.test(n) ? PANTRY.paprika : /turmeric/.test(n) ? PANTRY.turmeric : PANTRY.spice, 'powder')],
   [/vinegar|verjus|\boil\b/, (n) => bottle('apothecary', /oil/.test(n) ? L(PANTRY.oliveOil, 0.7) : L(PANTRY.paleWine, 0.4), { cap: PANTRY.cork, label: PANTRY.kraft })],
   [/juice|fruit|apple|pear|peach|apricot|plum|mango|passion|melon|fig|coconut|lychee|guava|kiwi|tomato|pineapple|pomegranate|beet|quince|persimmon|papaya/, (n) => produce({ kind: 'fruit', color: colourOf(n) ?? PANTRY.fruit })],
+  // last, so they only catch names nothing above knows
+  [/hot sauce|salsa picante|tabasco|sriracha|cholula|valentina|buldak|soy sauce|\bsoy\b|tamari|teriyaki|tsuyu|worcestershire|fish sauce|garum|ponzu|oyster sauce|hoisin|marinade|\bsauce/, (n) => bottle('sauce', /hot|picante|tabasco|sriracha|cholula|valentina|buldak|chil/.test(n) ? L(PANTRY.hotSauce, 0.95) : /white soy/.test(n) ? GOLD : L(PANTRY.soySauce, 1), { label: PANTRY.vermouthLabel })],
+  [/seed|pollen/, (n) => /pollen/.test(n) ? heap(PANTRY.pollen, 'crystal') : heap(/black/.test(n) ? PANTRY.pepper : /mustard/.test(n) ? PANTRY.yuzu : PANTRY.grain, 'nut')],
+  [/caramel|toffee|dulce de leche|molasses|treacle|\bmole\b|mustard|chamoy|custard|kaya|marmite|vegemite|doenjang|gochujang|tahin/, (n) => bottle('jar', /molasses|treacle|\bmole\b|marmite|vegemite|doenjang/.test(n) ? DARK : /mustard|custard|kaya/.test(n) ? L(PANTRY.yuzu, 0.9) : /chamoy|gochujang/.test(n) ? L(PANTRY.chilli, 0.9) : L(PANTRY.caramel, 0.95), { cap: PANTRY.brassCap })],
+  [/chees|parmesan|parmigiano|grana padano|ricotta|fett?a|mascarpone|burrata|cheddar|queso|quesillo|pecorino|gruy[eè]re|comt[eé]/, (n) => produce({ kind: 'wedge', color: /ricotta|feta|fetta|mascarpone|burrata|fresco|blanco/.test(n) ? PANTRY.garlic : PANTRY.cheese, accent: PANTRY.cheeseRind })],
+  [/dairy|whey|cr[eè]me fra[iî]che|soymilk|oat milk/, () => bottle('milk', L(PANTRY.milk, 1), { cap: PANTRY.milkCap })],
+  [/mushroom|fung|shiitake|porcini|chanterelle|matsutake|candy cap|enoki|morel|maitake|lion'?s mane|chicken of the woods/, (n) => produce({ kind: 'mushroom', color: /chanterelle|candy cap|chicken of the woods/.test(n) ? PANTRY.chanterelle : /snow|enoki|white|lion/.test(n) ? PANTRY.paleMushroom : /shiitake|matsutake|black/.test(n) ? PANTRY.shiitake : PANTRY.porcini, cap: /chanterelle|candy cap/.test(n) ? 'funnel' : 'dome' })],
+  [/truffle/, (n) => produce({ kind: 'root', rough: true, color: /white/.test(n) ? PANTRY.whiteTruffle : PANTRY.truffle })],
+  [/potato|\bube\b|taro|\byam\b|mashua|\boca\b|parsnip|turnip|radish|horseradish|ginseng|cassava|yuca|jicama|\broot\b/, (n) => produce({ kind: 'root', color: /ube|purple/.test(n) ? PANTRY.ube : /sweet potato|radish/.test(n) ? PANTRY.sweetPotato : /taro/.test(n) ? PANTRY.taro : /parsnip|turnip|horseradish|ginseng|jicama/.test(n) ? PANTRY.paleMushroom : PANTRY.potato })],
+  [/green onion|spring onion|scallion|\bleek|chive|\bramp/, () => produce({ kind: 'bulb', bulb: 'scallion', color: PANTRY.mint })],
+  [/onion|shallot|garlic/, (n) => produce({ kind: 'bulb', bulb: /garlic/.test(n) ? 'garlic' : 'onion', color: /black garlic/.test(n) ? PANTRY.blackGarlic : /garlic/.test(n) ? PANTRY.garlic : /red|shallot/.test(n) ? PANTRY.redOnion : /cocktail|pearl|white/.test(n) ? PANTRY.garlic : PANTRY.onion })],
+  [/seaweed|kombu|kelp|wakame|\bnori\b|dulse|sea lettuce|hijiki|furikake|dashi|samphire/, () => produce({ kind: 'seaweed', color: PANTRY.kelp })],
+  [/pumpkin|squash|tomatillo|zucca|chayote/, (n) => produce({ kind: 'fruit', color: /tomatillo|chayote/.test(n) ? PANTRY.lime : PANTRY.carrot })],
+  [/tobacco|oak\b|barrel|mizunara|amburana|wood|bark/, (n) => /tobacco/.test(n) ? heap(PANTRY.tobacco, 'leaf') : heap(PANTRY.wood, 'stick')],
+  [/\bmalt\b|milo/, () => heap(PANTRY.ginger, 'nut')],
+  [/spirulina|chlorophyll|charcoal/, (n) => heap(/blue/.test(n) ? PANTRY.butterflyPea : /charcoal/.test(n) ? PANTRY.pepper : PANTRY.matcha, 'powder')],
+  [/\bwater\b|energy drink|red bull|club-mate/, (n) => bottle('mixer', /energy|red bull|mate/.test(n) ? GOLD : CLEAR)],
   [/spirit|liqueur/, (n) => bottle('tall', tinted(n, GOLD))],
 ];
 
