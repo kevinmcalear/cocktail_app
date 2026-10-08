@@ -16,35 +16,43 @@ import { pendingNote } from './JobRequests';
 export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'>) => p.is_current || p.is_shown;
 
 /**
- * "Works at" on a person, "People" on a bar. Each row opens the other
- * profile. With emptyText it fills a tab: no heading, and a line when empty.
+ * "Works at" and "Previously" on a person, "Current team" and "Previous" on a
+ * bar, so nobody reads a past job as a current one. Each row opens the other
+ * profile. With emptyText it fills a tab, with a line when nobody is listed.
  */
 export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' | 'kind'>; emptyText?: string }) {
-  const ds = useDs();
-  const router = useRouter();
   // Filtered here, not in the query, so a persisted cache from before can't show them either.
   const positions = (useProfilePositions(profile).data ?? []).filter(isShownPosition);
   if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   const onPerson = profile.kind === 'person';
   return (
+    <View style={styles.sections}>
+      <PositionList heading={onPerson ? 'Works at' : 'Current team'} positions={positions.filter((p) => p.is_current)} onPerson={onPerson} />
+      <PositionList heading={onPerson ? 'Previously' : 'Previous'} positions={positions.filter((p) => !p.is_current)} onPerson={onPerson} />
+    </View>
+  );
+}
+
+function PositionList({ heading, positions, onPerson }: { heading: string; positions: Position[]; onPerson: boolean }) {
+  const ds = useDs();
+  const router = useRouter();
+  if (!positions.length) return null;
+  return (
     <View style={styles.section}>
-      {emptyText ? null : (
-        <Caption tone="muted" style={styles.cap}>
-          {onPerson ? 'Works at' : 'People'}
-        </Caption>
-      )}
+      <Caption tone="muted" role="heading" style={styles.cap}>
+        {heading}
+      </Caption>
       <View role="list">
         {positions.map((p) => {
           const other = onPerson ? p.bar : p.person;
-          const job = p.is_current ? p.title : `Formerly ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`;
           // Only the two sides and moderators can read a job that isn't confirmed yet.
           const pending = pendingNote(p);
-          const title = pending ? `${job} · ${pending}` : job;
+          const title = pending ? `${p.title} · ${pending}` : p.title;
           return (
             <PressableScale
               key={p.id}
               role="link"
-              accessibilityLabel={`${other.display_name}, ${title}. Open their profile`}
+              accessibilityLabel={`${other.display_name}, ${p.is_current ? title : `formerly ${title}`}. Open their profile`}
               onPress={() => router.push(`/p/${other.handle}` as Href)}
               style={[styles.row, { borderBottomColor: ds.c.line }]}
             >
@@ -66,6 +74,7 @@ export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' 
 }
 
 const styles = StyleSheet.create({
+  sections: { gap: space.lg },
   section: { gap: space.xs },
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   flex: { flex: 1, minWidth: 0 },

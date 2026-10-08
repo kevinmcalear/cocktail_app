@@ -8,9 +8,9 @@ import { useProfilePositions, useShowPosition, type Position } from '@/hooks/use
 
 const NOTE = 'Drinks you created at past bars keep your credit either way. This only changes the jobs list.';
 
-/** On a claim: the claimant can't see the profile's past jobs until it's theirs. */
+/** On a claim: the claimant can't see the hidden past jobs until it's theirs. */
 export const CLAIM_PAST_JOBS =
-  'Past jobs on this profile stay hidden. Once it’s yours, you choose which to show. Drinks you created keep your credit either way.';
+  'Some past jobs here are public record and already show. Once this profile is yours, you choose which past jobs to show. Drinks you created keep your credit either way.';
 
 /**
  * Your own jobs, with a switch on each past one: where you work now always
