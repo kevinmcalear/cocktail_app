@@ -46,7 +46,7 @@ function toNamed(rows: unknown): NamedItem[] {
 
 /** Ingredients, methods and glassware the paste and the swap can match against. */
 export function useSpecCatalog() {
-  const { data, isLoading } = useDropdowns();
+  const { data, isLoading } = useDropdowns({ ingredients: true });
   const catalog = useMemo(() => toCatalog(data?.ingredients), [data?.ingredients]);
   const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
   const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);

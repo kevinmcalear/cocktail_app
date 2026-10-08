@@ -1,5 +1,3 @@
-import 'maplibre-gl/dist/maplibre-gl.css';
-
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { useEffect, useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,6 +10,26 @@ import type { DiscoverMapProps } from './DiscoverMap';
 export const mapAvailable = true;
 
 type MapLibre = typeof import('maplibre-gl');
+
+/**
+ * Maplibre's stylesheet, loaded with the map. A static CSS import made Expo
+ * link it, render-blocking, on every page. ponytail: public/maplibre-gl.css is
+ * a copy of the installed one; scripts/maplibreCss.check.ts keeps them equal.
+ */
+function loadMapStyles(): Promise<void> {
+  const id = 'maplibre-gl-css';
+  if (document.getElementById(id)) return Promise.resolve();
+  return new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = '/maplibre-gl.css';
+    // A failed load still shows the map, just unstyled; don't hold it back.
+    link.onload = () => resolve();
+    link.onerror = () => resolve();
+    document.head.appendChild(link);
+  });
+}
 
 /** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
 function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
@@ -106,7 +124,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   useEffect(() => {
     let cancelled = false;
     const all = markers.current;
-    void import('maplibre-gl').then((ml) => {
+    void Promise.all([import('maplibre-gl'), loadMapStyles()]).then(([ml]) => {
       const container = host.current as unknown as HTMLElement | null;
       if (cancelled || !container) return;
       lib.current = ml;

@@ -74,8 +74,8 @@
     "store/useCreatorNavStore.ts": 1
   },
   "longFiles": {
-    "app/add-ingredient.tsx": 756,
-    "app/edit-mode/index.tsx": 1072,
+    "app/add-ingredient.tsx": 755,
+    "app/edit-mode/index.tsx": 1071,
     "app/ingredient/[id]/edit.tsx": 706,
     "app/menus/create-template.tsx": 495,
     "app/menus/create/index.tsx": 905,

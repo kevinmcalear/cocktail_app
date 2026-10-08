@@ -25,7 +25,7 @@ import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList"
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: enabled });
     const { data: cocktail, isLoading: loadingCocktail } = useCocktail(enabled ? id : undefined);
 
     const isLoaded = useRef(false);

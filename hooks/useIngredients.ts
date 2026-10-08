@@ -1,13 +1,10 @@
 import { useViewAs } from '@/hooks/useViewAs';
-import { allRowsById } from '@/lib/allRows';
+import { INGREDIENTS_KEY } from '@/hooks/useDropdowns';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { applyBarContextFilter } from '@/lib/barContextFilter';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useDebounced } from '@/hooks/useDiscover';
 import { batchedDrinkName, nameKey, orderedPictures, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
-import { useAppStore } from '@/store/useAppStore';
-
-const byName = new Intl.Collator().compare;
 
 /** A row of ingredient_used_in. */
 interface UsedInRow {
@@ -15,49 +12,6 @@ interface UsedInRow {
     name: string;
     image_url: string | null;
     image_is_generated: boolean | null;
-}
-
-// Standard ingredient list query: paged by id (keyset), then A to Z on the device.
-export function useIngredients(options?: { allContexts?: boolean }) {
-    const selectedContextIds = useAppStore((state) => state.selectedContextIds);
-    const { viewAsRoleLevel } = useViewAs();
-
-    return useQuery({
-        queryKey: ['ingredients', selectedContextIds, options, viewAsRoleLevel],
-        // ~5,400 rows: too big to save between launches (storage caps at a few MB).
-        meta: { persist: false },
-        queryFn: async () =>
-            (await allRowsById((after, size) => {
-                // Only what search and the Creator Hub read: every column is ~6 MB.
-                let query = supabase
-                    .from('app_item_presentation')
-                    .select(`
-                        id,
-                        name,
-                        description,
-                        brand_maker,
-                        bar_id,
-                        hide_from_search,
-                        created_at,
-                        item_images (
-                            sort_order,
-                            is_generated,
-                            images ( url )
-                        ),
-                        item_categories (
-                            category_id
-                        )
-                    `)
-                    .eq('item_type', 'ingredient');
-
-                if (!options?.allContexts) {
-                    query = applyBarContextFilter(query, selectedContextIds);
-                }
-
-                if (after) query = query.gt('id', after);
-                return query.order('id').limit(size);
-            })).sort((a, b) => byName(a.name, b.name) || byName(a.id, b.id))
-    });
 }
 
 /**
@@ -191,13 +145,13 @@ export function useUpdateIngredient() {
         mutationKey: ['updateIngredient'],
         mutationFn: updateIngredientFn,
         onMutate: async (newVariables) => {
-            await queryClient.cancelQueries({ queryKey: ['ingredients'] });
+            await queryClient.cancelQueries({ queryKey: INGREDIENTS_KEY });
             await queryClient.cancelQueries({ queryKey: ['ingredient', newVariables.id] });
 
-            const previousIngredients = queryClient.getQueryData(['ingredients']);
+            const previousIngredients = queryClient.getQueryData(INGREDIENTS_KEY);
             const previousIngredient = queryClient.getQueryData(['ingredient', newVariables.id]);
 
-            queryClient.setQueryData(['ingredients'], (old: any) => 
+            queryClient.setQueryData(INGREDIENTS_KEY, (old: any) => 
                 old ? old.map((i: any) => i.id === newVariables.id ? { ...i, ...newVariables.updates } : i) : old
             );
             
@@ -214,18 +168,18 @@ export function useUpdateIngredient() {
         },
         onError: (err, newVariables, context) => {
             if (context?.previousIngredients) {
-                queryClient.setQueryData(['ingredients'], context.previousIngredients);
+                queryClient.setQueryData(INGREDIENTS_KEY, context.previousIngredients);
             }
             if (context?.previousIngredient) {
                 queryClient.setQueryData(['ingredient', context.id], context.previousIngredient);
             } else {
-                queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+                queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
                 queryClient.invalidateQueries({ queryKey: ['ingredient', newVariables.id] });
             }
         },
         onSettled: (data, error, variables) => {
             queryClient.invalidateQueries({ queryKey: ['ingredient', variables.id] });
-            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
         }
     });
 }
@@ -237,10 +191,10 @@ export function useAddIngredient() {
         mutationKey: ['addIngredient'],
         mutationFn: addIngredientFn,
         onMutate: async (newIngredient) => {
-            await queryClient.cancelQueries({ queryKey: ['ingredients'] });
-            const previousIngredients = queryClient.getQueryData(['ingredients']);
+            await queryClient.cancelQueries({ queryKey: INGREDIENTS_KEY });
+            const previousIngredients = queryClient.getQueryData(INGREDIENTS_KEY);
             
-            queryClient.setQueryData(['ingredients'], (old: any) => 
+            queryClient.setQueryData(INGREDIENTS_KEY, (old: any) => 
                 old ? [...old, { ...newIngredient, id: 'temp-id-' + Date.now() }] : old
             );
             
@@ -248,13 +202,39 @@ export function useAddIngredient() {
         },
         onError: (err, newVariables, context) => {
             if (context?.previousIngredients) {
-                queryClient.setQueryData(['ingredients'], context.previousIngredients);
+                queryClient.setQueryData(INGREDIENTS_KEY, context.previousIngredients);
             } else {
-                queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+                queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
             }
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
         }
+    });
+}
+
+/**
+ * Shared ingredients (no venue) whose name has the text in it, searched on
+ * the server once typing pauses, so search never downloads the whole list.
+ */
+export function usePublicIngredientSearch(search: string) {
+    const term = useDebounced(search.replace(/[%_\\]/g, '').trim(), 200);
+    return useQuery({
+        queryKey: ['ingredient-search', term],
+        enabled: term.length >= 2,
+        placeholderData: keepPreviousData,
+        queryFn: async (): Promise<{ id: string; name: string }[]> => {
+            const { data, error } = await supabase
+                .from('app_item_presentation')
+                .select('id, name')
+                .eq('item_type', 'ingredient')
+                .is('bar_id', null)
+                .ilike('name', `%${term}%`)
+                .order('name')
+                .order('id')
+                .limit(50);
+            if (error) throw error;
+            return (data ?? []).filter((i): i is { id: string; name: string } => !!i.id && !!i.name);
+        },
     });
 }
