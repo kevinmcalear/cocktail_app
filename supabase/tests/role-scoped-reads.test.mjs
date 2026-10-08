@@ -429,6 +429,19 @@ describe('get_bar_members', () => {
     });
   }
 
+  test('teammates see a Settings photo from the member\'s own avatars folder, never any other URL', async () => {
+    const own = `${status.API_URL}/storage/v1/object/public/avatars/${users.bartender.id}/me.jpg`;
+    const elsewhere = `https://example.com/storage/v1/object/public/avatars/${users.employee.id}.jpg`;
+    for (const [label, avatar_url] of [['bartender', own], ['employee', elsewhere]]) {
+      const { error } = await service.auth.admin.updateUserById(users[label].id, { user_metadata: { avatar_url } });
+      assert.ifError(error);
+    }
+    const { data, error } = await members('guest');
+    assert.ifError(error);
+    assert.equal(data.find((m) => m.user_id === users.bartender.id).avatar_url, own);
+    assert.equal(data.find((m) => m.user_id === users.employee.id).avatar_url, null);
+  });
+
   test('someone outside the bar gets an error', async () => {
     const { data, error } = await members('outsider');
     assert.ok(error);

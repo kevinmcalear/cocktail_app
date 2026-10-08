@@ -1,9 +1,10 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, Field, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field, PressableScale, TimeField, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
+import { toDay } from '@/lib/collection';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 
 interface MenuOption {
@@ -19,11 +20,9 @@ interface NewEventSheetProps {
   onCreated: (event: VenueEvent) => void;
 }
 
-function tomorrowAt7(): { date: string; time: string } {
+function tomorrowAt7(): { today: string; date: string; time: string } {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return { date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, time: '19:00' };
+  return { today: toDay(d), date: toDay(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)), time: '19:00' };
 }
 
 /**
@@ -33,7 +32,8 @@ function tomorrowAt7(): { date: string; time: string } {
 export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: NewEventSheetProps) {
   const ds = useDs();
   const create = useCreateEvent();
-  const defaults = tomorrowAt7();
+  const [defaults] = useState(tomorrowAt7);
+  const { today } = defaults;
   const [name, setName] = useState('');
   const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [date, setDate] = useState(defaults.date);
@@ -47,7 +47,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   const problem = !name.trim()
     ? 'Give the event a name.'
     : Number.isNaN(startsAt.getTime())
-      ? 'Use a date like 2026-10-03 and a time like 19:00.'
+      ? 'Pick a start time.'
       : coversNumber !== null && (!Number.isInteger(coversNumber) || coversNumber < 0)
         ? 'Guests should be a whole number.'
         : null;
@@ -73,14 +73,8 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <Title>New event</Title>
               <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
-              <View style={styles.pair}>
-                <View style={styles.flex}>
-                  <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-10-03" autoCapitalize="none" />
-                </View>
-                <View style={styles.flex}>
-                  <Field label="Starts" value={time} onChangeText={setTime} placeholder="19:00" autoCapitalize="none" />
-                </View>
-              </View>
+              <DateField label="Date" value={date} onChange={setDate} min={today} />
+              <TimeField label="Starts" value={time} onChange={setTime} />
               <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
               <Caption tone="muted">Menu</Caption>
               <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>
@@ -119,8 +113,6 @@ const styles = StyleSheet.create({
   avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
   sheet: { width: '100%', maxWidth: 560, maxHeight: '90%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
   body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
-  pair: { flexDirection: 'row', gap: space.md },
-  flex: { flex: 1 },
   menus: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   menu: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, justifyContent: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm, marginTop: space.sm },

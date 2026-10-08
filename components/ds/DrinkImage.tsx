@@ -34,6 +34,8 @@ export interface DrinkImageProps {
    * original, which can be 2-3 MB. Falls back to the original until the copy exists.
    */
   thumb?: boolean;
+  /** With no image: draw the sketch in front of you (AnimatedSketch). One per screen. */
+  animate?: boolean;
 }
 
 /**
@@ -41,7 +43,7 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
@@ -76,7 +78,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
           onError={small ? () => setNoThumb(uri as string) : undefined}
         />
       ) : itemId ? (
-        <DrawnSketch itemId={itemId} fallback={glassIcon} />
+        <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} />
       ) : (
         glassIcon
       )}
