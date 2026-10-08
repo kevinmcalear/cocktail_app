@@ -102,11 +102,12 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
   const selected = pins.find((p) => p.id === selectedId) ?? null;
 
   // Refit when what's shown changes, not when the person searched the view they're on.
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title]);
+  // While pins load, go to the area itself (near me at once), then fit the pins once they're in.
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, rows.isLoading]);
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   const [viewport, setViewport] = useState<Viewport | null>(null);
-  if (fitKey !== null && fit?.key !== fitKey && !rows.isLoading) {
-    setFit({ key: fitKey, camera: cameraFor(pins) ?? cameraForArea(area) });
+  if (fitKey !== null && fit?.key !== fitKey) {
+    setFit({ key: fitKey, camera: (rows.isLoading ? null : cameraFor(pins)) ?? cameraForArea(area) ?? fit?.camera ?? null });
     setViewport(null);
   }
   // The maps report only the person's own moves, so any settled move since
