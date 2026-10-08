@@ -117,37 +117,51 @@ describe("Kevin's bar lists", () => {
   });
 
   test("running it again adds nothing", async () => {
+    // Counted on the seeded bars only, without locking the tables: replaying a
+    // seed this size under a table lock held up other test files' fixture
+    // inserts past their statement timeout.
     const count = async () =>
       (
-        await db.query(`SELECT (SELECT count(*) FROM public.profiles)::int AS profiles,
-                               (SELECT count(*) FROM public.profile_positions)::int AS positions,
-                               (SELECT count(*) FROM public.profile_awards)::int AS awards,
-                               (SELECT count(*) FROM public.items)::int AS items,
-                               (SELECT count(*) FROM public.recipes)::int AS recipes,
-                               (SELECT count(*) FROM public.profile_menu_editions)::int AS menus,
-                               (SELECT count(*) FROM public.profile_menu_edition_drinks)::int AS menu_drinks`)
+        await admin.query(
+          `WITH bars AS (SELECT id FROM public.profiles WHERE kind = 'bar' AND handle = ANY($1)),
+                drinks AS (SELECT id FROM public.items WHERE origin_bar_profile_id IN (SELECT id FROM bars))
+           SELECT (SELECT count(*) FROM bars)::int AS bars,
+                  (SELECT count(*) FROM public.profile_positions WHERE bar_profile_id IN (SELECT id FROM bars))::int AS positions,
+                  (SELECT count(*) FROM public.profile_awards WHERE profile_id IN (SELECT id FROM bars))::int AS awards,
+                  (SELECT count(*) FROM drinks)::int AS drinks,
+                  (SELECT count(*) FROM public.recipes WHERE recipe_item_id IN (SELECT id FROM drinks))::int AS lines,
+                  (SELECT count(*) FROM public.profile_menu_editions WHERE profile_id IN (SELECT id FROM bars))::int AS menus,
+                  (SELECT count(*) FROM public.profile_menu_edition_drinks d
+                     JOIN public.profile_menu_editions e ON e.id = d.edition_id
+                    WHERE e.profile_id IN (SELECT id FROM bars))::int AS menu_drinks`,
+          [HANDLES],
+        )
       ).rows[0];
-    // Retried because holding these tables can deadlock with another test
-    // file's open transaction; Postgres then cancels one side.
-    for (let attempt = 1; ; attempt++) {
-      await db.query("BEGIN");
-      try {
-        // Other test files write to these tables at the same time; hold them
-        // still so the counts only see this run.
-        await db.query("SET LOCAL lock_timeout = '10s'");
-        await db.query(
-          `LOCK TABLE public.profiles, public.profile_positions, public.profile_awards, public.items, public.recipes,
-                      public.profile_menu_editions, public.profile_menu_edition_drinks IN SHARE MODE`,
-        );
-        const before = await count();
-        await db.query(SQL);
-        assert.deepEqual(await count(), before);
-        break;
-      } catch (e) {
-        if (attempt >= 3 || !["40P01", "55P03"].includes(e.code)) throw e;
-      } finally {
-        await db.query("ROLLBACK");
+    // Other seed tests lock these tables to replay their own seeds. A short
+    // deadlock_timeout makes this side the one Postgres cancels if the two
+    // cross, and then it simply tries again. Setting it takes the superuser.
+    const adminUrl = new URL(status.DB_URL);
+    adminUrl.username = "supabase_admin";
+    const admin = new pg.Client({ connectionString: adminUrl.href });
+    await admin.connect();
+    try {
+      for (let attempt = 1; ; attempt++) {
+        await admin.query("BEGIN");
+        try {
+          await admin.query("SET LOCAL deadlock_timeout = '100ms'");
+          await admin.query("SET LOCAL lock_timeout = '30s'");
+          const before = await count();
+          await admin.query(SQL);
+          assert.deepEqual(await count(), before);
+          break;
+        } catch (e) {
+          if (attempt >= 5 || !["40P01", "55P03"].includes(e.code)) throw e;
+        } finally {
+          await admin.query("ROLLBACK");
+        }
       }
+    } finally {
+      await admin.end();
     }
   });
 });
