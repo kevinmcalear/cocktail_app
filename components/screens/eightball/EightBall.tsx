@@ -15,6 +15,9 @@ import { BallArt } from './BallArt';
 
 /** How long the ball "thinks" before it answers. */
 const THINK_MS = 1100;
+/** After thinking, how long to wait on a slow shelf before answering from the rest of the pool. */
+const MAX_WAIT_MS = 1500;
+const POLL_MS = 250;
 const native = Platform.OS !== 'web';
 
 type Answer = { state: 'thinking'; fortune: string } | { state: 'shown'; drink: Candidate | null };
@@ -60,10 +63,11 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const bringUp = (value: SharedValue<number>) =>
     value.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withSpring(1, springs.pour)));
 
-  // Waits out the think time and the pool, then answers.
-  function reveal() {
-    if (latest.current.isLoading) {
-      timer.current = setTimeout(reveal, 250);
+  // Waits out the think time and the pool (a slow shelf only so long), then answers.
+  function reveal(waited = 0) {
+    const { pool, isLoading } = latest.current;
+    if (isLoading && (waited < MAX_WAIT_MS || !pool.length)) {
+      timer.current = setTimeout(() => reveal(waited + POLL_MS), POLL_MS);
       return;
     }
     const drink = pickDrink(latest.current.pool, recent.current);
@@ -83,7 +87,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // A jolt, then the pour spring rings it out like a ball settling in the hand.
     if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
     if (native) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    timer.current = setTimeout(reveal, reduceMotion ? 300 : THINK_MS);
+    timer.current = setTimeout(() => reveal(), reduceMotion ? 300 : THINK_MS);
   }
 
   function roll() {
