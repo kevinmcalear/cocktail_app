@@ -20,6 +20,7 @@ import {
 } from '@/lib/lineage';
 
 import { FromTheBooks } from './FromTheBooks';
+import { InTime } from './InTime';
 
 const profileHref = (id: string) => `/p/${id}` as Href;
 const drinkHref = (id: string) => `/cocktail/${id}` as Href;
@@ -192,6 +193,16 @@ export function FamilyTree({ itemId }: { itemId: string }) {
             ))}
           </View>
         </View>
+      ) : null}
+
+      {inTree ? (
+        <InTime
+          line={[
+            ...lineStyles.map((s) => ({ name: s.name, year: s.year, approx: s.year_approx })),
+            ...[...ancestors, drink!].map((d) => ({ name: d.name, year: d.origin_year, approx: d.origin_year_approx })),
+          ]}
+          focusId={drink!.is_catalog ? drink!.id : (ancestors.findLast((a) => a.is_catalog)?.id ?? drink!.id)}
+        />
       ) : null}
 
       {inTree ? (
