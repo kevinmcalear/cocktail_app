@@ -229,33 +229,25 @@ export function useUpdateCocktail() {
             await queryClient.cancelQueries({ queryKey: ['cocktails'] });
             await queryClient.cancelQueries({ queryKey: ['cocktail', newVariables.id] });
 
-            // Snapshot the previous value
-            const previousCocktails = queryClient.getQueryData(['cocktails']);
-            const previousCocktail = queryClient.getQueryData(['cocktail', newVariables.id]);
+            // The real keys carry context, role and user after these prefixes, so
+            // snapshot and update every matching entry, not one exact key.
+            const previousCocktails = queryClient.getQueriesData<DatabaseItem[]>({ queryKey: ['cocktails'] });
+            const previousCocktail = queryClient.getQueriesData<DatabaseItem | null>({ queryKey: ['cocktail', newVariables.id] });
 
-            // Optimistically update to the new value
-            queryClient.setQueryData(['cocktails'], (old: any) => 
-                old ? old.map((c: any) => c.id === newVariables.id ? { ...c, ...newVariables.updates } : c) : old
+            queryClient.setQueriesData<DatabaseItem[]>({ queryKey: ['cocktails'] }, (old) =>
+                old?.map((c) => c.id === newVariables.id ? { ...c, ...newVariables.updates } : c)
             );
-            queryClient.setQueryData(['cocktail', newVariables.id], (old: any) =>
+            queryClient.setQueriesData<DatabaseItem | null>({ queryKey: ['cocktail', newVariables.id] }, (old) =>
                 old ? { ...old, ...newVariables.updates } : old
             );
 
-            // Return a context object with the snapshotted value
-            return { previousCocktails, previousCocktail, id: newVariables.id };
+            return { snapshots: [...previousCocktails, ...previousCocktail] };
         },
         onError: (err, newVariables, context) => {
-            // If the mutation fails, use the context returned from onMutate to roll back
-            if (context?.previousCocktails) {
-                queryClient.setQueryData(['cocktails'], context.previousCocktails);
+            if (context) {
+                for (const [key, data] of context.snapshots) queryClient.setQueryData(key, data);
             }
-            if (context?.previousCocktail) {
-                queryClient.setQueryData(['cocktail', context.id], context.previousCocktail);
-            } else {
-                // If context is gone (e.g. app restarted), invalidate to get real server data
-                queryClient.invalidateQueries({ queryKey: ['cocktails'] });
-                queryClient.invalidateQueries({ queryKey: ['cocktail', newVariables.id] });
-            }
+            // onSettled refetches either way, which also covers a lost context (e.g. app restarted).
         },
         onSettled: (data, error, variables) => {
             // Always refetch after error or success to ensure sync
@@ -273,20 +265,19 @@ export function useDeleteCocktail() {
         mutationFn: deleteCocktailFn,
         onMutate: async (id) => {
             await queryClient.cancelQueries({ queryKey: ['cocktails'] });
-            const previousCocktails = queryClient.getQueryData(['cocktails']);
-            
-            queryClient.setQueryData(['cocktails'], (old: any) => 
-                old ? old.filter((c: any) => c.id !== id) : old
+            const previousCocktails = queryClient.getQueriesData<DatabaseItem[]>({ queryKey: ['cocktails'] });
+
+            queryClient.setQueriesData<DatabaseItem[]>({ queryKey: ['cocktails'] }, (old) =>
+                old?.filter((c) => c.id !== id)
             );
-            
-            return { previousCocktails, id };
+
+            return { previousCocktails };
         },
-        onError: (err, newVariables, context) => {
-            if (context?.previousCocktails) {
-                queryClient.setQueryData(['cocktails'], context.previousCocktails);
-            } else {
-                queryClient.invalidateQueries({ queryKey: ['cocktails'] });
+        onError: (err, id, context) => {
+            if (context) {
+                for (const [key, data] of context.previousCocktails) queryClient.setQueryData(key, data);
             }
+            // onSettled refetches either way, which also covers a lost context.
         },
         onSuccess: (_data, id) => {
              queryClient.removeQueries({ queryKey: ['cocktail', id] });
