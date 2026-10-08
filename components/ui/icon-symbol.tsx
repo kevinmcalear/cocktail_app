@@ -46,6 +46,7 @@ const MAPPING = {
   'globe': 'public',
   'note.text': 'notes',
   'checkmark': 'check',
+  'questionmark': 'question-mark',
   'checkmark.circle.fill': 'check-circle',
   'house': 'home',
   'safari': 'explore',

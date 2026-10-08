@@ -8,6 +8,7 @@ import { Chip } from '../Chip';
 import { DrinkImage } from '../DrinkImage';
 import { GlassButton } from '../Glass';
 import { LockedSection } from '../LockedSection';
+import { ReviewRow } from '../ReviewRow';
 import { Segmented } from '../Segmented';
 import { SpecRow } from '../SpecRow';
 import { Surface } from '../Surface';
@@ -52,6 +53,7 @@ const TYPE_SAMPLES: Record<TypeStyle, string> = {
 export function GallerySections() {
   const ds = useDs();
   const [tab, setTab] = useState<'spec' | 'service' | 'family'>('spec');
+  const [pick, setPick] = useState<string | null>(null);
   return (
     <View>
       <Section title="Colour">
@@ -116,6 +118,13 @@ export function GallerySections() {
         {PENICILLIN.map((row) => (
           <SpecRow key={row.ingredient} {...row} />
         ))}
+      </Section>
+
+      <Section title="Review rows">
+        <ReviewRow state="have" amount="30 ml" title="Campari" detail="In the library" />
+        <ReviewRow state="pick" amount="15 ml" title="Pear liqueur" detail="Which one?" choices={[{ id: 'a', label: 'Rothman & Winter' }, { id: 'b', label: 'Any pear liqueur' }]} chosen={pick} onChoose={setPick} />
+        <ReviewRow state="new" title="Rye & Fig Old Fashioned" detail="New · Rye, fig syrup, walnut bitters" action={{ label: 'Finish', onPress: () => {} }} />
+        <ReviewRow state="skip" title="Smoke Break" detail="Already on this menu" />
       </Section>
 
       <Section title="Images">

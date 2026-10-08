@@ -121,7 +121,8 @@ export function parseMenuPaste(text: string, intoSection: boolean): ParsedMenuSe
 }
 
 export type PasteRow =
-  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string }
+  /** `note`: what happens to the price, if anything. */
+  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string | null }
   | { key: string; section: string | null; status: 'pick'; name: string; options: MenuDrink[] }
   | { key: string; section: string | null; status: 'missing'; name: string; ingredients: string[] }
   | { key: string; section: string | null; status: 'skip'; name: string; note: string };
@@ -157,7 +158,7 @@ export function pasteRows(
         }
         seen.add(drink.id);
         const price = !drink.price && line.price ? line.price : null;
-        const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : 'In the library';
+        const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : null;
         out.push({ key, section: section.name, status: 'add', drink: price ? { ...drink, price } : drink, price, note });
       };
       if (match.kind === 'one') place(match.item);
