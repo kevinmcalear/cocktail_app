@@ -46,6 +46,15 @@ export async function readStoredUser(): Promise<User | null> {
   return storedSessionUser(await authStorage.getItem(authStorageKey));
 }
 
+/**
+ * Deletes the session saved on this device without asking the server, for
+ * signing out when auth-js can't (offline). auth-js reads it from storage on
+ * every call, so it's signed out from here on.
+ */
+export async function forgetStoredSession(): Promise<void> {
+  await authStorage.removeItem(authStorageKey);
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: authStorage,
