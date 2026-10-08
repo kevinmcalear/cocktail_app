@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { QueryClient, QueryObserver } from '@tanstack/react-query';
+import { MutationObserver, onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
 import { cacheActionOnAuth, isUserQuery, resetUserQueries, storedSessionUser, viewerScoped } from './authCache';
 
 // --- what happens when auth settles ---
@@ -57,6 +57,18 @@ async function main() {
 
   unsubscribe();
   client.clear();
+
+  // An edit made offline as someone else is dropped, not sent as the new user.
+  const sentAs: (string | null)[] = [];
+  client.setMutationDefaults(['edit'], { mutationFn: async () => { sentAs.push(token); } });
+  onlineManager.setOnline(false);
+  void new MutationObserver(client, { mutationKey: ['edit'] }).mutate(undefined);
+  token = 'b';
+  await resetUserQueries(client);
+  onlineManager.setOnline(true);
+  await client.resumePausedMutations();
+  assert.deepEqual(sentAs, [], 'unsent writes from before the switch never go out');
+
   console.log('authCache.check.ts: ok');
 }
 

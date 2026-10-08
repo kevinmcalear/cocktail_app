@@ -362,7 +362,7 @@ function Settings() {
   const logOut = async () => {
     const ok = await confirmAsync({
       title: 'Log out?',
-      message: 'Saved offline data on this device will be cleared.',
+      message: 'Saved offline data on this device, and any edits not yet sent, will be cleared.',
       confirmText: 'Log out',
       destructive: true,
     });
