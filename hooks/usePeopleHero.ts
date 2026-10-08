@@ -4,7 +4,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 // The photo someone posted that leads for a drink with no photo of its own
-// (get_people_heroes, supabase/migrations/20261008500100_drink_photos.sql),
+// (get_people_heroes, supabase/migrations/20261008850100_drink_photos.sql),
 // for cards and thumbnails. The drink page picks the same way (heroPictures).
 
 const CHUNK = 200;

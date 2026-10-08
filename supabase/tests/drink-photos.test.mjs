@@ -1,5 +1,5 @@
 // People's photos on a drink page
-// (supabase/migrations/20261008500100_drink_photos.sql).
+// (supabase/migrations/20261008850100_drink_photos.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
