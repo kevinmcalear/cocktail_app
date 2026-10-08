@@ -1,7 +1,7 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -55,6 +55,8 @@ export interface DrinkScreenProps {
   onToggleStudyPile: () => void;
   canEdit: boolean;
   onEdit: () => void;
+  /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
+  sheet?: boolean;
   /** /dev/drink only: a bundled hero image, a simulated role, and where Batch goes. */
   preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
 }
@@ -94,10 +96,11 @@ function LoadingGround() {
   return <View style={[styles.screen, { backgroundColor: ds.c.ground }]} accessibilityLabel="Loading drink" />;
 }
 
-function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, preview }: DrinkScreenProps) {
+function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const top = sheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
@@ -134,7 +137,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
-  const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
+  const heroHeight = wide ? height - top : Math.min(width, height * 0.42);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
@@ -230,7 +233,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       {wide ? (
         <View style={styles.row}>
           <View style={styles.heroColumn}>{hero}</View>
-          <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: space.xxxl }}>
+          <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: top + layout.minTapTarget + space.xl, paddingBottom: space.xxxl }}>
             <View style={styles.readable}>{body}</View>
           </ScrollView>
         </View>
@@ -242,15 +245,13 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       )}
       <DrinkControls
         media={pictures[0] && !pictures[0].isSketch ? 'photo' : 'paper'}
+        top={top}
         heroHeight={heroHeight}
         scrollY={scrollY}
         wide={wide}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
-        inStudyPile={inStudyPile}
-        onToggleStudyPile={onToggleStudyPile}
-        canEdit={canEdit}
-        onEdit={onEdit}
+        isFavorite={isFavorite} onToggleFavorite={toggleFavorite}
+        inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
+        canEdit={canEdit} onEdit={onEdit}
       />
       {ageGate.sheet}
       {glassOpen ? (

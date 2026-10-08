@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassButton, useDs, useGutter } from '@/components/ds';
 import { FEATURES } from '@/constants/features';
@@ -11,6 +10,8 @@ import { layout, space, type BackbarScheme } from '@/constants/tokens';
 interface DrinkControlsProps {
   /** What fills the hero: a photo, or the cream paper a sketch sits on. */
   media: 'photo' | 'paper';
+  /** Room above the buttons: the safe-area top, or less inside an iOS sheet. */
+  top: number;
   heroHeight: number;
   /** The page's scroll offset (phones). Wide screens leave it at 0. */
   scrollY: SharedValue<number>;
@@ -29,12 +30,11 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, heroHeight, scrollY, wide, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const barHeight = insets.top + space.sm * 2 + layout.minTapTarget;
+  const barHeight = top + space.sm * 2 + layout.minTapTarget;
   // The scroll offset where the hero's bottom edge meets the bar's.
   const tucked = heroHeight - barHeight;
   const [overHero, setOverHero] = useState(true);
@@ -55,7 +55,7 @@ export function DrinkControls({ media, heroHeight, scrollY, wide, isFavorite, on
   return (
     <>
       {wide ? null : <Animated.View style={[styles.bar, { height: barHeight, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, barStyle]} />}
-      <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
+      <View style={[styles.controls, { top: top + space.sm, left: gutter, right: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
           icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
