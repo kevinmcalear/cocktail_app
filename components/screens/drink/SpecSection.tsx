@@ -11,7 +11,7 @@ import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
-import { lineDetail } from '@/lib/drinkMath';
+import { lineAmount, lineDetail } from '@/lib/drinkMath';
 import { ratio, specAccess, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
 
@@ -56,7 +56,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
   const levels = preview?.levels ?? realLevels;
   const lines = specLines(recipes);
   const access = specAccess(role, levels ?? null, !!barId);
-  // Remembered per person: the unit each line is also read in, with its ethanol.
+  // Remembered per person: the unit the amounts read in.
   const specUnit = useSettingsStore((s) => s.specUnit);
   const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
   const unit: SpecUnit = specUnit;
@@ -99,13 +99,13 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
         {lines.map((l) => (
           <SpecRow
             key={l.key}
-            amount={access.amounts ? (l.amount ?? '') : ''}
+            amount={access.amounts ? (lineAmount(l, unit) ?? '') : ''}
             alignAmount={measured}
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             picture={l.ingredient ? l.imageUrl : undefined}
             optional={l.optional}
             note={l.note ?? undefined}
-            detail={access.amounts ? (lineDetail(l, unit) ?? undefined) : undefined}
+            detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             scale={scale}
             onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
