@@ -5,7 +5,8 @@ import { useDropdowns, DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
-import type { BringWrite, CatalogItem, NamedItem } from '@/lib/paste';
+import type { CatalogItem } from '@/lib/match';
+import type { BringWrite, NamedItem } from '@/lib/paste';
 import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -44,13 +45,14 @@ function toNamed(rows: unknown): NamedItem[] {
   });
 }
 
-/** Ingredients, methods and glassware the paste and the swap can match against. */
+/** Ingredients (with their other names), methods and glassware the paste, the bottle photo and the swap match against. */
 export function useSpecCatalog() {
   const { data, isLoading } = useDropdowns({ ingredients: true });
   const catalog = useMemo(() => toCatalog(data?.ingredients), [data?.ingredients]);
   const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
   const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);
-  return { catalog, methods, glasses, isLoading };
+  const aliases = useMemo(() => data?.ingredientAliases ?? [], [data?.ingredientAliases]);
+  return { catalog, aliases, methods, glasses, isLoading };
 }
 
 async function inChunks<T>(ids: string[], load: (chunk: string[]) => Promise<T[]>): Promise<T[]> {
