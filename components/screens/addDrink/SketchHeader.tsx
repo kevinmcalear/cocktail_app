@@ -99,8 +99,9 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
       {folded ? null : (
         <>
           <Animated.View style={[styles.drawing, { width: size, height: size }, bounce]} aria-label="Sketch of the drink so far">
-            {shown.before ? <Layer key={`out-${shown.n - 1}`} inputs={shown.before} from={1} to={0} /> : null}
-            <Layer key={`in-${shown.n}`} inputs={shown.now} from={0} to={1} />
+            {/* The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing. */}
+            {shown.before ? <Layer key={`out-${shown.n - 1}`} inputs={shown.before} seed={draft.id ?? SEED} from={1} to={0} /> : null}
+            <Layer key={`in-${shown.n}`} inputs={shown.now} seed={draft.id ?? SEED} from={0} to={1} />
           </Animated.View>
           <View style={styles.foot}>
             <Tag label="Sketch" tone="sketch" />
@@ -115,7 +116,7 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
 }
 
 /** One drawing, fading from `from` to `to` opacity once, when it mounts. */
-function Layer({ inputs, from, to }: { inputs: SketchInputs; from: number; to: number }) {
+function Layer({ inputs, seed, from, to }: { inputs: SketchInputs; seed: string; from: number; to: number }) {
   const opacity = useSharedValue(from);
   useEffect(() => {
     opacity.set(withTiming(to, { duration: 260 }));
@@ -123,7 +124,7 @@ function Layer({ inputs, from, to }: { inputs: SketchInputs; from: number; to: n
   const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return (
     <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-      <SketchDrawing inputs={inputs} seed={SEED} detail="full" />
+      <SketchDrawing inputs={inputs} seed={seed} detail="full" />
     </Animated.View>
   );
 }

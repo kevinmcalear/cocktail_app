@@ -71,7 +71,6 @@ export default function EditModeDashboard() {
 
     const { width } = useWindowDimensions();
     const isLargeScreen = width >= 768;
-    // ponytail: on web the explorer lives in WebSidebar; this screen is workspace-only
     const isWebShell = Platform.OS === 'web';
 
     const setStoreNode = useCreatorNavStore((s) => s.setSelectedNode);
@@ -192,7 +191,8 @@ export default function EditModeDashboard() {
 
     allItems.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
-    const itemsByBar = allItems.reduce((acc: any, item: any) => {
+    // The list is New > Drafts: unfinished work only. Published items open from their own pages.
+    const itemsByBar = drafts.map(d => ({ ...d, isPublished: false })).reduce((acc: any, item: any) => {
         const barId = item.bar_id || 'personal';
         if (!acc[barId]) acc[barId] = [];
         acc[barId].push(item);
@@ -569,25 +569,11 @@ export default function EditModeDashboard() {
         return (barsObj as any)?.name || 'Unknown Bar';
     };
 
-    const isSectionExpanded = (
-        barId: string,
-        sectionKey: string,
-        hasMenus: boolean,
-        hasItems: boolean
-    ) => {
-        if (expandedSections[barId]?.[sectionKey] !== undefined) {
-            return expandedSections[barId][sectionKey];
-        }
-        return false; // Collapse by default on first load
-    };
+    const isSectionExpanded = (barId: string, sectionKey: string) =>
+        expandedSections[barId]?.[sectionKey] ?? true;
 
-    const toggleSection = (
-        barId: string,
-        sectionKey: string,
-        hasMenus: boolean,
-        hasItems: boolean
-    ) => {
-        const currentVal = isSectionExpanded(barId, sectionKey, hasMenus, hasItems);
+    const toggleSection = (barId: string, sectionKey: string) => {
+        const currentVal = isSectionExpanded(barId, sectionKey);
         setExpandedSections((prev) => ({
             ...prev,
             [barId]: {
@@ -643,7 +629,8 @@ export default function EditModeDashboard() {
         }
     };
 
-    if (isLargeScreen) {
+    // Web: with nothing open, show the drafts list (the old web sidebar that held it went in step 9)
+    if (isLargeScreen && !(isWebShell && !activeFrame)) {
         const workspace = (
             <YStack flex={1} height="100%">
                 {activeFrame ? (
@@ -692,7 +679,7 @@ export default function EditModeDashboard() {
                             />
                         </React.Fragment>
                     </CreatorWorkspace>
-                ) : isWebShell ? null : (
+                ) : (
                     <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
                         <IconSymbol name="plus.circle" size={48} color={theme.color11?.get() as string} style={{ opacity: 0.3 }} />
                         <Text color="$color11" fontSize={16} fontWeight="500" marginTop="$4" textAlign="center">
@@ -703,7 +690,7 @@ export default function EditModeDashboard() {
             </YStack>
         );
 
-        // Web: explorer is in WebSidebar — workspace fills the content column
+        // Web: workspace fills the content column beside WebSideNav
         if (isWebShell) {
             return (
                 <YStack flex={1} backgroundColor="$background">
@@ -789,20 +776,20 @@ export default function EditModeDashboard() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
                     <IconSymbol name="chevron.left" size={24} color={theme.color?.get() as string} />
                 </TouchableOpacity>
-                <Text fontSize="$5" fontWeight="bold" marginLeft="$2">Creator Hub</Text>
+                <Text fontSize="$5" fontWeight="bold" marginLeft="$2">Drafts</Text>
             </XStack>
 
             <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
                 
-                {/* Workspace Items Section */}
+                {/* Drafts */}
                 <YStack gap="$4" marginBottom="$6">
                     <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
-                        Workspace Items
+                        Unfinished
                     </Text>
-                    {isLoading ? (
+                    {loadingDrafts ? (
                         <ListRowsSkeleton rows={6} />
-                    ) : allItems.length === 0 ? (
-                        <Text color="$color11">No items in workspace.</Text>
+                    ) : drafts.length === 0 ? (
+                        <Text color="$color11">Nothing unfinished. Drafts you save show up here.</Text>
                     ) : (
                         Object.keys(itemsByBar).map((barId) => {
                             const barItems = itemsByBar[barId] || [];
@@ -811,9 +798,6 @@ export default function EditModeDashboard() {
                             const wines = barItems.filter((d: any) => d.entity_type === 'wine');
                             const cocktails = barItems.filter((d: any) => d.entity_type === 'cocktail');
                             const ingredients = barItems.filter((d: any) => d.entity_type === 'ingredient');
-
-                            const hasMenus = menus.length > 0;
-                            const hasItems = beers.length + wines.length + cocktails.length + ingredients.length > 0;
 
                             const sections = [
                                 { key: 'menu', label: 'Menus', icon: 'TabMenus', items: menus },
@@ -830,11 +814,11 @@ export default function EditModeDashboard() {
                                     </Text>
                                     <YStack gap="$1" width="100%">
                                         {sections.map((section) => {
-                                            const expanded = isSectionExpanded(barId, section.key, hasMenus, hasItems);
+                                            const expanded = isSectionExpanded(barId, section.key);
                                             return (
                                                 <YStack key={section.key} width="100%" gap="$2.5">
                                                     <TouchableOpacity
-                                                        onPress={() => toggleSection(barId, section.key, hasMenus, hasItems)}
+                                                        onPress={() => toggleSection(barId, section.key)}
                                                         activeOpacity={0.7}
                                                     >
                                                         <XStack
