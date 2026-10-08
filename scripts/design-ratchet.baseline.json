@@ -53,7 +53,7 @@
     "components/ui/GlasswareIcon.tsx": 1,
     "components/ui/PictureTag.tsx": 4,
     "components/ui/UserAvatar.tsx": 9,
-    "hooks/useBarEditor.ts": 5,
+    "hooks/useBarEditor.ts": 4,
     "hooks/useCocktailDraftEditor.ts": 9,
     "hooks/useCocktailEditor.ts": 5,
     "hooks/useCocktails.ts": 1,

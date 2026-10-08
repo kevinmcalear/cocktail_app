@@ -1,8 +1,8 @@
 import * as Burnt from 'burnt';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 
-import { BarSection } from '@/components/bar/BarParts';
 import { Body, Button, useDs } from '@/components/ds';
+import { SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { showMessage } from '@/lib/dialogs';
@@ -32,27 +32,30 @@ export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: st
   };
 
   return (
-    <BarSection
+    <SettingsSection
       title="Staff link"
       note={`Send this to your team. They sign in and add ${venueName} to their home screen, with your name and logo.`}
     >
-      <View style={[styles.url, { backgroundColor: ds.c.raised }]}>
-        <IconSymbol name="link" size={16} color={ds.c.muted} />
-        <Body style={styles.fill} numberOfLines={1} selectable>
-          {url}
-        </Body>
+      <View style={styles.row}>
+        <View style={[styles.url, { backgroundColor: ds.c.raised }]}>
+          <IconSymbol name="link" size={16} color={ds.c.muted} />
+          <Body style={styles.fill} numberOfLines={1} selectable>
+            {url}
+          </Body>
+        </View>
+        <Button
+          variant="secondary"
+          icon={web ? 'doc.on.doc' : 'square.and.arrow.up'}
+          label={web ? 'Copy link' : 'Share'}
+          onPress={() => void share()}
+        />
       </View>
-      <Button
-        variant="secondary"
-        icon={web ? 'doc.on.doc' : 'square.and.arrow.up'}
-        label={web ? 'Copy link' : 'Share link'}
-        onPress={() => void share()}
-      />
-    </BarSection>
+    </SettingsSection>
   );
 }
 
 const styles = StyleSheet.create({
-  url: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, paddingVertical: space.md },
+  url: { flexGrow: 1, flexBasis: 220, flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
   fill: { flex: 1 },
 });
