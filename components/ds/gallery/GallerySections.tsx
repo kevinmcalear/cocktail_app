@@ -5,6 +5,7 @@ import { radius, space, type, type TypeStyle } from '@/constants/tokens';
 
 import { Button } from '../Button';
 import { Chip } from '../Chip';
+import { DateField } from '../DateField';
 import { DrinkImage } from '../DrinkImage';
 import { GlassButton } from '../Glass';
 import { LockedSection } from '../LockedSection';
@@ -52,6 +53,7 @@ const TYPE_SAMPLES: Record<TypeStyle, string> = {
 export function GallerySections() {
   const ds = useDs();
   const [tab, setTab] = useState<'spec' | 'service' | 'family'>('spec');
+  const [day, setDay] = useState('');
   return (
     <View>
       <Section title="Colour">
@@ -109,6 +111,10 @@ export function GallerySections() {
             { value: 'family', label: 'Family' },
           ]}
         />
+      </Section>
+
+      <Section title="Dates">
+        <DateField label="Date" value={day} onChange={setDay} clearable hint="Opens a month calendar; the same on web, iOS and Android." />
       </Section>
 
       <Section title="Spec">
