@@ -8,10 +8,11 @@ import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, typ
 import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import { BalanceCard, GoesWith } from './GoesWith';
 import { LineRow } from './LineRow';
 import { WizardChip } from './WizardChrome';
 
-type Ingredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null };
+type Ingredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null; generic_id?: string | null };
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
@@ -91,12 +92,19 @@ export function IngredientsStep({
           {exact ? null : <ResultRow label={`Add “${query.trim()}” as new`} onPress={() => add({ id: null, name: query.trim() })} />}
         </View>
       ) : (
-        <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
-          {quick.map((n) => (
-            <WizardChip key={n} label={n} add kind="button" onPress={() => add(pickByName(n, ingredients))} />
-          ))}
-        </View>
+        <GoesWith
+          lines={draft.lines}
+          onAdd={add}
+          fallback={
+            <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
+              {quick.map((n) => (
+                <WizardChip key={n} label={n} add kind="button" onPress={() => add(pickByName(n, ingredients))} />
+              ))}
+            </View>
+          }
+        />
       )}
+      <BalanceCard lines={draft.lines} ingredients={ingredients} />
     </View>
   );
 }
