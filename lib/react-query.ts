@@ -2,11 +2,10 @@ import { deleteCocktailFn, updateCocktailFn } from '@/hooks/useCocktails';
 import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
-import { guardStorage, serializeCache, shouldPersistQuery } from '@/lib/queryCachePersist';
+import { createCachePersister, guardStorage, shouldPersistQuery } from '@/lib/queryCachePersist';
 
 // Setup network listener for TanStack Query
 onlineManager.setEventListener((setOnline) => {
@@ -69,13 +68,9 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const asyncStoragePersister = createAsyncStoragePersister({
-  storage: guardStorage(AsyncStorage),
-  // The cache is one storage row; Android can't read one over about 2 MB back.
-  serialize: serializeCache,
-  // Each save serializes the whole cache, so save at most every 5 seconds.
-  throttleTime: 5000,
-});
+// The cache is one storage row, sized for Android by serializeCache. Each
+// save serializes the whole cache, so save at most every 5 seconds.
+export const asyncStoragePersister = createCachePersister(guardStorage(AsyncStorage), 5000);
 
 /** What's saved to storage between launches: see lib/queryCachePersist.ts. */
 export const persistOptions = {

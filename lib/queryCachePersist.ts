@@ -1,4 +1,5 @@
-import type { AsyncStorage, PersistedClient } from '@tanstack/query-persist-client-core';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import type { AsyncStorage, PersistedClient, Persister } from '@tanstack/query-persist-client-core';
 import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query';
 
 /**
@@ -90,5 +91,44 @@ export function guardStorage(storage: AsyncStorage<string>): AsyncStorage<string
     },
     setItem: (key, value) => storage.setItem(key, value),
     removeItem: (key) => storage.removeItem(key),
+  };
+}
+
+/**
+ * The library's throttled persister, except a snapshot of the cache taken
+ * before the saved cache was last removed is never written. A save
+ * serializes its snapshot, then writes it a tick later; when sign-out
+ * removes the saved cache in that gap, the write would put the previous
+ * user's data straight back until the next throttled save. Bar iPads are
+ * shared, and the app can be closed in between.
+ */
+export function createCachePersister(storage: AsyncStorage<string>, throttleTime: number): Persister {
+  let removals = 0;
+  const takenAfter = new WeakMap<PersistedClient, number>();
+  let saving: number | undefined;
+  const persister = createAsyncStoragePersister({
+    storage: {
+      getItem: (key) => storage.getItem(key),
+      // Saves run one at a time, so `saving` is this value's snapshot's.
+      setItem: async (key, value) => {
+        if (saving === removals) await storage.setItem(key, value);
+      },
+      removeItem: (key) => {
+        removals++;
+        return storage.removeItem(key);
+      },
+    },
+    serialize: (client) => {
+      saving = takenAfter.get(client);
+      return serializeCache(client);
+    },
+    throttleTime,
+  });
+  return {
+    ...persister,
+    persistClient: (client) => {
+      takenAfter.set(client, removals);
+      return persister.persistClient(client);
+    },
   };
 }

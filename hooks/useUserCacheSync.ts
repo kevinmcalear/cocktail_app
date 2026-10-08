@@ -1,3 +1,4 @@
+import { useIsRestoring } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
@@ -16,11 +17,16 @@ import { queryClient } from '@/lib/react-query';
  * settles (ctx/AuthContext.tsx). That user counts as the one the cache was
  * shown for, so settling on anyone else resets it and settling on nobody
  * clears it.
+ *
+ * Both wait for the saved cache to finish loading (PersistQueryClientProvider):
+ * cleared or reset before that, the load would put the previous user's data
+ * back in afterwards.
  */
 export function useUserCacheSync() {
   const { session, user, loading } = useAuth();
   const userId = session?.user.id ?? null;
   const provisionalId = loading ? (user?.id ?? null) : null;
+  const restoring = useIsRestoring();
   const shownUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
@@ -28,6 +34,7 @@ export function useUserCacheSync() {
       if (provisionalId) shownUserId.current = provisionalId;
       return;
     }
+    if (restoring) return;
     const action = cacheActionOnAuth(shownUserId.current, userId);
     shownUserId.current = userId;
     if (action === 'clear') {
@@ -35,5 +42,5 @@ export function useUserCacheSync() {
     } else if (action === 'reset') {
       resetUserQueries(queryClient).catch((e) => console.warn('Refetching after sign-in failed', e));
     }
-  }, [loading, userId, provisionalId]);
+  }, [loading, userId, provisionalId, restoring]);
 }
