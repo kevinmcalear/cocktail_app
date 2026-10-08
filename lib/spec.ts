@@ -6,6 +6,7 @@
  */
 
 import { density, toMl } from '@/lib/drinkMath';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 
 export interface PresentationRecipe {
@@ -22,7 +23,17 @@ export interface PresentationRecipe {
   /** In the batch (false) or added at the station (true); null when undecided or masked with the amounts. */
   at_service?: boolean | null;
   /** The ingredient this role may see (brand or generic), embedded by the query; masked to null otherwise. */
-  display_ingredient?: { id?: string; name?: string; abv?: number | null; density_g_ml?: number | null } | null;
+  display_ingredient?: PresentationIngredient | null;
+}
+
+/** The ingredient a line shows: its pictures as item_images, or a public view's image_url. */
+interface PresentationIngredient {
+  id?: string;
+  name?: string;
+  abv?: number | null;
+  density_g_ml?: number | null;
+  image_url?: string | null;
+  item_images?: ItemImageLink[] | null;
 }
 
 export interface SpecLine {
@@ -45,6 +56,8 @@ export interface SpecLine {
   abv: number | null;
   /** The ingredient's own density, when set. */
   density: number | null;
+  /** The ingredient's picture; null when it has none or its name is locked. */
+  imageUrl: string | null;
 }
 
 // Grams convert to ml through the ingredient's density (lib/drinkMath.ts).
@@ -52,7 +65,7 @@ export { density as gramsPerMl } from '@/lib/drinkMath';
 
 export function specLines(recipes: PresentationRecipe[] | null | undefined): SpecLine[] {
   return sortRecipesByOrder([...(recipes ?? [])]).map((r, i) => {
-    const resolved = resolvePresentationIngredient(r) as { id?: string; name?: string; abv?: number | null; density_g_ml?: number | null } | null;
+    const resolved = resolvePresentationIngredient(r) as PresentationIngredient | null;
     const n = r.amount === null || r.amount === undefined || r.amount === '' ? null : Number(r.amount);
     const amount = n === null || Number.isNaN(n) ? null : [String(r.amount), r.unit].filter(Boolean).join(' ');
     return {
@@ -68,6 +81,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       atService: typeof r.at_service === 'boolean' ? r.at_service : null,
       abv: typeof resolved?.abv === 'number' ? resolved.abv : null,
       density: typeof resolved?.density_g_ml === 'number' ? resolved.density_g_ml : null,
+      imageUrl: resolved?.image_url ?? heroPicture(resolved?.item_images)?.url ?? null,
     };
   });
 }

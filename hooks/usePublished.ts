@@ -206,7 +206,7 @@ export function usePublishedDrink(id: string | null | undefined) {
         drink.publishMode === 'spec'
           ? supabase
               .from('app_recipe_presentation')
-              .select('id, sort_order, created_at, amount, unit, is_optional, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv)')
+              .select('id, sort_order, created_at, amount, unit, is_optional, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
               .eq('recipe_item_id', drink.id)
           : Promise.resolve({ data: [], error: null }),
       ]);
@@ -222,7 +222,8 @@ export function usePublishedDrink(id: string | null | undefined) {
         family: ref(drink.familyId)?.name ?? null,
         // published_ingredient returns a set, so PostgREST embeds an array.
         recipes: (recipes.data ?? []).map((r) => {
-          const ing = r.display_ingredient as { id: string; name: string; abv: number | null }[] | { id: string; name: string; abv: number | null } | null;
+          type Ing = { id: string; name: string; abv: number | null; image_url: string | null };
+          const ing = r.display_ingredient as Ing[] | Ing | null;
           return { ...r, display_ingredient: Array.isArray(ing) ? (ing[0] ?? null) : ing } as PresentationRecipe;
         }),
       };
