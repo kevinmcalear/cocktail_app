@@ -1,6 +1,5 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
 import { heroPicture } from '@/lib/itemImages';
-import { itemHref } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/types/search';
 import { SpecPillButton } from '@/components/SpecPillButton';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
@@ -29,7 +28,8 @@ import { usePublicDrinks } from '@/hooks/usePublicDrinks';
 import { caretCanMove, chunk, gridColumns, timeAgo } from '@/lib/commandSearchGrid';
 import { compareSearchItems, matchesQuery, searchCardMeta, withPublicDrinks } from '@/lib/publicDrinks';
 import { useAppStore } from '@/store/useAppStore';
-import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
+import { openInCreator } from '@/store/useCreatorNavStore';
+import { openSearchItem } from '@/lib/openSearchItem';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -467,30 +467,7 @@ export function CommandSearch({
         onItemSelect(item);
         return;
       }
-      if (item.isDraft) {
-        const draftId = item.id.replace(/^(beer|wine|menu)-/, '');
-        const entityType =
-          item.category === 'Menu'
-            ? 'menu'
-            : item.category === 'Beer'
-              ? 'beer'
-              : item.category === 'Wine'
-                ? 'wine'
-                : item.category === 'Ingredient'
-                  ? 'ingredient'
-                  : 'cocktail';
-        openDraftInCreator(
-          { id: draftId, entity_type: entityType, draft_data: { name: item.name } },
-          (href) => router.push(href as any)
-        );
-        onSelect?.();
-        return;
-      }
-      if (item.category === 'Menu') {
-        router.push(`/menus/${encodeURIComponent(item.id.replace('menu-', ''))}` as any);
-      } else {
-        router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
-      }
+      openSearchItem(item, (href) => router.push(href as never));
       onSelect?.();
     },
     [onItemSelect, onSelect, router]

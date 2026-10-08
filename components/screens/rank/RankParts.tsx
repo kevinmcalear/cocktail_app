@@ -104,6 +104,8 @@ export interface VsSide {
   name: string;
   detail: string;
   picture: ItemPicture | null;
+  /** The drink's id: with no picture, its drawn sketch. */
+  itemId?: string | null;
 }
 
 /** One side of "Which was better?". The whole card is the answer. */
@@ -111,7 +113,7 @@ export function VsCard({ side, onPress, height }: { side: VsSide; onPress: () =>
   const ds = useDs();
   return (
     <PressableScale accessibilityLabel={`${side.title}, ${side.name}: ${side.detail}`} onPress={onPress} style={[styles.card, { height, borderColor: ds.c.lineStrong }]}>
-      <DrinkImage source={side.picture?.url} generated={side.picture?.isSketch} accessibilityLabel={side.name} radius={0} hideTag style={styles.fill} />
+      <DrinkImage source={side.picture?.url} generated={side.picture?.isSketch} itemId={side.itemId} accessibilityLabel={side.name} radius={0} hideTag style={styles.fill} />
       <View style={[styles.label, { backgroundColor: ds.c.surface }]}>
         <Body style={styles.strong} numberOfLines={1}>
           {side.title}

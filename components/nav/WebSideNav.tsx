@@ -8,6 +8,7 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useSearchPalette } from '@/store/useSearchPalette';
 import { currentProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
@@ -73,18 +74,21 @@ function SideNavBody() {
   const go = (name: string) => router.navigate(hrefFor(name));
   const [creating, setCreating] = useState(false);
 
-  // ponytail: ⌘K lives on the always-mounted sidebar, like the legacy one.
+  const searching = useSearchPalette((s) => s.open);
+  const setSearching = useSearchPalette((s) => s.setOpen);
+
+  // ponytail: ⌘K lives on the always-mounted sidebar. It opens the search over this page and toggles it shut.
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        router.navigate('/search');
+        setSearching(!useSearchPalette.getState().open);
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [router]);
+  }, [setSearching]);
 
   return (
     <View role="navigation" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
@@ -96,9 +100,10 @@ function SideNavBody() {
       <NavRow
         label="Search"
         icon="magnifyingglass"
+        role="button"
         hint={isApplePlatform() ? '⌘K' : 'Ctrl K'}
-        current={pathname === '/search'}
-        onPress={() => go('search')}
+        current={searching || pathname === '/search'}
+        onPress={() => setSearching(true)}
       />
       <View style={styles.tabs}>
         {(mode === 'home' ? HOME_TABS : VENUE_TABS).map((t) => (

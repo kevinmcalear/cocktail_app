@@ -7,6 +7,7 @@
 -- into the core row, else the most used one.
 
 SET "app.image_worker" = 'on';
+CREATE TEMP TABLE "flavor_jobs_before" AS SELECT * FROM "private"."item_flavor_jobs";
 
 DO $$
 DECLARE
@@ -35,6 +36,15 @@ BEGIN
 END;
 $$;
 
+-- No paid flavour jobs from these merges (see 20261008100100).
+DELETE FROM "private"."item_flavor_jobs" j
+WHERE NOT EXISTS (SELECT 1 FROM "flavor_jobs_before" o WHERE o.item_id = j.item_id);
+UPDATE "private"."item_flavor_jobs" j SET
+    "status" = o.status, "revision" = o.revision, "attempts" = o.attempts, "run_after" = o.run_after,
+    "lease_until" = o.lease_until, "last_error" = o.last_error, "updated_at" = o.updated_at
+FROM "flavor_jobs_before" o
+WHERE j.item_id = o.item_id AND j.revision <> o.revision;
+DROP TABLE "flavor_jobs_before";
 RESET "app.image_worker";
 
 CREATE UNIQUE INDEX "items_shared_ingredient_key" ON "public"."items" ("public"."ingredient_key"("name"))
