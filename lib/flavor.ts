@@ -176,11 +176,21 @@ export interface Pick extends FlavorDrink {
   reason: string;
 }
 
-/** "For you": the drinks that fit your taste best, leaving out ones you've ranked. */
-export function forYou(drinks: readonly FlavorDrink[], taste: Taste, basis: TasteBasis, ranked: readonly string[], limit = 10): Pick[] {
+/**
+ * "For you": the drinks that fit your taste best, leaving out ones you've
+ * ranked. `baseline` is the average drink (flavor_baseline); without one, the
+ * average of `drinks`.
+ */
+export function forYou(
+  drinks: readonly FlavorDrink[],
+  taste: Taste,
+  basis: TasteBasis,
+  ranked: readonly string[],
+  limit = 10,
+  baseline: Profile | null = meanProfile(drinks.map((d) => d.profile))
+): Pick[] {
   if (!dimsIn(taste).length) return [];
   const skip = new Set(ranked);
-  const baseline = meanProfile(drinks.map((d) => d.profile));
   return drinks
     .filter((d) => !skip.has(d.id))
     .map((d) => ({ d, gap: distance(taste, d.profile) }))

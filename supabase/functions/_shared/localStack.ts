@@ -1,3 +1,5 @@
+import { isLocalSupabaseUrl } from "./localUrl.ts";
+
 /**
  * Whether this function is running on a local Supabase stack. Local-only
  * behaviour (the mocked image model, the fixed worker secret) keys off this
@@ -5,8 +7,7 @@
  * `supabase secrets set` also uploads that section to production.
  */
 export function isLocalStack(): boolean {
-  const url = Deno.env.get("SUPABASE_URL") ?? "";
-  return /^http:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)[:/]/.test(url);
+  return isLocalSupabaseUrl(Deno.env.get("SUPABASE_URL") ?? "");
 }
 
 /** The image-worker secret on a local stack (Vault holds the same value in tests). */

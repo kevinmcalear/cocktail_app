@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 import { drinksBucketUrl } from "../_shared/drinksUrl.ts";
+import { decodableSize } from "../_shared/imageSize.ts";
 import { corsHeaders } from "../_shared/http.ts";
 
 /**
@@ -101,18 +102,19 @@ function manifest(branding: Branding, url: URL): Response {
 /**
  * The venue's home-screen icon (or its logo) centred on a square, padded with its own
  * background (its corner pixel) or white if the logo is transparent.
- * Opaque, as iOS fills transparency with black. Venues without a logo get
- * the network icon.
+ * Opaque, as iOS fills transparency with black. Venues without a logo, or
+ * with one too big to decode, get the network icon.
  */
 async function icon(branding: Branding, size: number): Promise<Response> {
   if (!ICON_SIZES.has(size)) return new Response("Unsupported size", { status: 400, headers: corsHeaders });
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const source = drinksBucketUrl(branding.icon_url ?? branding.logo_url ?? "", supabaseUrl);
-  if (!source) {
-    return Response.redirect(`${FALLBACK_SITE}/icon-${size === 180 ? 192 : size}.png`, 302);
-  }
+  const networkIcon = () => Response.redirect(`${FALLBACK_SITE}/icon-${size === 180 ? 192 : size}.png`, 302);
+  if (!source) return networkIcon();
 
   const bytes = await fetchLogo(source, supabaseUrl);
+  // A small file can still decode to an enormous bitmap: check the header first.
+  if (!decodableSize(bytes)) return networkIcon();
   const logo = await Image.decode(bytes);
 
   const corner = logo.getPixelAt(1, 1);

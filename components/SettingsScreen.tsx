@@ -1,6 +1,5 @@
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
-import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
@@ -15,7 +14,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Title, useDs, useGutter } from '@/components/ds';
@@ -24,6 +23,7 @@ import { ChoiceChips, ChoiceRows, RowDivider, SettingsRow, SettingsSection, Swit
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, radius, space } from '@/constants/tokens';
+const BarInlineEditor = lazy(() => import('@/components/bar/BarInlineEditor').then((m) => ({ default: m.BarInlineEditor }))); // loads on first expand
 
 /** Settings: profile, venues, preferences and the account. */
 export function SettingsScreen() {
@@ -261,7 +261,7 @@ function Settings() {
                 />
                 {open ? (
                   <View style={[styles.venueEditor, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]}>
-                    <BarInlineEditor barId={ub.bar_id} embedded onClose={() => setExpandedBarId(null)} />
+                    <Suspense fallback={null}><BarInlineEditor barId={ub.bar_id} embedded onClose={() => setExpandedBarId(null)} /></Suspense>
                   </View>
                 ) : null}
               </View>

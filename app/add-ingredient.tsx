@@ -97,7 +97,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
-    const { data: dropdowns } = useDropdowns();
+    const { data: dropdowns } = useDropdowns({ ingredients: true });
 
     const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
         setRecipeItems(items);
@@ -661,7 +661,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 ingredients={mergedIngredients}
                 excludeId={currentDraftId}
                 drafts={drafts}
-                dropdowns={dropdowns}
+                dropdowns={dropdowns} loading={!dropdowns?.ingredients}
                 onSelect={(item) => {
                     setRecipeItems([
                         ...recipeItems,

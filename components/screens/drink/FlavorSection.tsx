@@ -2,8 +2,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { useFlavorCatalog, useItemFlavor, useMyTaste } from '@/hooks/useFlavor';
-import { COLD_START_DRINKS, DIMENSIONS, LABEL, level, matchPercent, matchReasons, meanProfile } from '@/lib/flavor';
+import { useFlavorBaseline, useItemFlavor, useMyTaste } from '@/hooks/useFlavor';
+import { COLD_START_DRINKS, DIMENSIONS, LABEL, level, matchPercent, matchReasons } from '@/lib/flavor';
 
 // Dimensions below this are left off the bars: "barely" isn't worth a row.
 const SHOWN_FROM = 0.15;
@@ -19,9 +19,8 @@ export function FlavorSection({ itemId }: { itemId: string }) {
   const ds = useDs();
   const { data: flavor } = useItemFlavor(itemId);
   const { data: me } = useMyTaste();
-  const { data: catalog } = useFlavorCatalog();
+  const { data: baseline } = useFlavorBaseline();
   if (!flavor) return null;
-  const baseline = meanProfile((catalog ?? []).map((d) => d.profile));
 
   const shown = DIMENSIONS.filter((d) => flavor.profile[d] >= SHOWN_FROM).sort((a, b) => flavor.profile[b] - flavor.profile[a]);
   const toGo = me ? COLD_START_DRINKS - me.rankedDrinks : COLD_START_DRINKS;

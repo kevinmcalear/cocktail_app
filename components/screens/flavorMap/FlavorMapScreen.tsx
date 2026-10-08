@@ -34,7 +34,7 @@ function FlavorMapPage() {
   const [picked, setPicked] = useState<string[]>(() => (params.with ?? '').split(',').filter(Boolean).slice(0, 3));
   const [query, setQuery] = useState('');
   const [era, setEra] = useState<PairEra>('now');
-  const { data: dropdowns } = useDropdowns();
+  const { data: dropdowns } = useDropdowns({ ingredients: true });
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const nameOf = (id: string) => ingredients.find((i) => i.id === id)?.name ?? '…';

@@ -86,7 +86,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
     <View style={styles.section}>
       <View style={styles.head}>
         <Headline role="heading">Spec</Headline>
-        {access.amounts ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
+        {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
       </View>
       {shares ? <RatioBar shares={shares} /> : null}
       {!access.amounts ? (

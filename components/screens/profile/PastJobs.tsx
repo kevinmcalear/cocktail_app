@@ -19,7 +19,8 @@ export const CLAIM_PAST_JOBS =
  */
 export function PastJobs({ personId }: { personId: string }) {
   const ds = useDs();
-  const { data: positions = [] } = useProfilePositions({ id: personId, kind: 'person' });
+  // Jobs a bar listed them in wait in MyJobRequests until they accept.
+  const positions = (useProfilePositions({ id: personId, kind: 'person' }).data ?? []).filter((p) => p.person_accepted);
   const show = useShowPosition();
   const now = positions.filter((p) => p.is_current);
   const before = positions.filter((p) => !p.is_current);
@@ -31,7 +32,11 @@ export function PastJobs({ personId }: { personId: string }) {
       <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
-        {p.is_current ? <Caption tone="muted">Always shown</Caption> : null}
+        {!p.bar_accepted ? (
+          <Caption tone="muted">Pending: shows once the bar confirms it</Caption>
+        ) : p.is_current ? (
+          <Caption tone="muted">Always shown</Caption>
+        ) : null}
       </View>
       {end}
     </View>

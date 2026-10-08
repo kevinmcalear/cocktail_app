@@ -124,6 +124,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     openStrength: () => setStrengthOpen(true),
     openGlass: preview ? undefined : () => setGlassOpen(true),
     specLocked: !!lock,
+    measures: access.amounts && !lock,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   const itemPictures = orderedPictures(links);

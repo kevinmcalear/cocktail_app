@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { EditingState } from '@/lib/creatorWorkspaceUtils';
 import type { EditorChromeState } from '@/lib/editorChrome';
-import AddCocktailScreen from '@/app/add-cocktail';
-import EditCocktailScreen from '@/app/cocktail/[id]/edit';
-import AddBeerScreen from '@/app/add-beer';
-import EditBeerScreen from '@/app/beer/[id]/edit';
-import AddWineScreen from '@/app/add-wine';
-import EditWineScreen from '@/app/wine/[id]/edit';
-import AddIngredientScreen from '@/app/add-ingredient';
-import EditIngredientScreen from '@/app/ingredient/[id]/edit';
-import CreateMenuWizard from '@/app/menus/create/index';
-import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import type { SearchItem } from '@/types/search';
+
+// Each editor loads when it first opens. Importing the route files themselves
+// (not shared components) lets the web build reuse each route's own chunk;
+// static imports here put all nine editors in the chunk every page loads.
+const AddCocktailScreen = lazy(() => import('@/app/add-cocktail'));
+const EditCocktailScreen = lazy(() => import('@/app/cocktail/[id]/edit'));
+const AddBeerScreen = lazy(() => import('@/app/add-beer'));
+const EditBeerScreen = lazy(() => import('@/app/beer/[id]/edit'));
+const AddWineScreen = lazy(() => import('@/app/add-wine'));
+const EditWineScreen = lazy(() => import('@/app/wine/[id]/edit'));
+const AddIngredientScreen = lazy(() => import('@/app/add-ingredient'));
+const EditIngredientScreen = lazy(() => import('@/app/ingredient/[id]/edit'));
+const CreateMenuWizard = lazy(() => import('@/app/menus/create/index'));
+const BarInlineEditor = lazy(() => import('@/components/bar/BarInlineEditor').then((m) => ({ default: m.BarInlineEditor })));
 
 interface CreatorWorkspaceEditorProps {
     editing: EditingState;
@@ -29,7 +34,21 @@ interface CreatorWorkspaceEditorProps {
     onChromeState?: (state: EditorChromeState | null) => void;
 }
 
-export function CreatorWorkspaceEditor({
+export function CreatorWorkspaceEditor(props: CreatorWorkspaceEditorProps) {
+    return (
+        <Suspense
+            fallback={
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator />
+                </View>
+            }
+        >
+            <Editor {...props} />
+        </Suspense>
+    );
+}
+
+function Editor({
     editing,
     onClose,
     onSave,

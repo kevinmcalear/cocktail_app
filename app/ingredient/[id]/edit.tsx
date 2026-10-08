@@ -128,7 +128,7 @@ export default function EditIngredientScreen({
     });
 
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: true });
     const { data, isLoading: loadingIngredient } = useIngredient(id as string);
     const [rawLoaded, setRawLoaded] = useState(false);
     const loading = loadingDropdowns || loadingIngredient || (!!data?.ingredient && !rawLoaded);
@@ -664,7 +664,7 @@ export default function EditIngredientScreen({
                 ingredients={pickerIngredients}
                 excludeId={id}
                 drafts={drafts}
-                dropdowns={dropdowns}
+                dropdowns={dropdowns} loading={!dropdowns?.ingredients}
                 onSelect={(item) => {
                     setRecipeItems([
                         ...recipeItems,
