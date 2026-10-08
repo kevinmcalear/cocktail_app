@@ -18,7 +18,7 @@ export function useIsModerator() {
   }).data === true;
 }
 
-export type QueueKind = 'profile' | 'item' | 'release' | 'comment' | 'ranking';
+export type QueueKind = 'profile' | 'item' | 'release' | 'comment' | 'ranking' | 'photo';
 
 export interface QueuedReport {
   id: string;
@@ -38,6 +38,9 @@ export interface QueuedReport {
   target_detail: string | null;
   /** A moderator has hidden it (for a ranking, the bar's profile). */
   target_hidden: boolean;
+  /** A photo report: the photo, and its picture so it can be judged here. */
+  photo_id: string | null;
+  photo_url: string | null;
 }
 
 /** The moderator inbox: open reports oldest first, or closed ones newest first. */
@@ -57,7 +60,7 @@ export function useReportQueue(open: boolean) {
 }
 
 /** What hiding a report's target means: a ranking hides the bar's profile. */
-export function hideTarget(report: Pick<QueuedReport, 'target_kind' | 'profile_id' | 'item_id' | 'release_id'>) {
+export function hideTarget(report: Pick<QueuedReport, 'target_kind' | 'profile_id' | 'item_id' | 'release_id' | 'photo_id'>) {
   switch (report.target_kind) {
     case 'profile':
     case 'ranking':
@@ -66,6 +69,8 @@ export function hideTarget(report: Pick<QueuedReport, 'target_kind' | 'profile_i
       return report.item_id ? { kind: 'item' as const, id: report.item_id } : null;
     case 'release':
       return report.release_id ? { kind: 'release' as const, id: report.release_id } : null;
+    case 'photo':
+      return report.photo_id ? { kind: 'photo' as const, id: report.photo_id } : null;
     default:
       return null;
   }

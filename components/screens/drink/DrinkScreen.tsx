@@ -41,6 +41,7 @@ import { SpecSection } from './SpecSection';
 import { GlassSheet } from './GlassSheet';
 import { HistorySection } from './HistorySection';
 import { MenuRuns } from './MenuRuns';
+import { PeoplePhotos } from './PeoplePhotos';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkFacts } from './useDrinkFacts';
 
@@ -194,6 +195,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           <Body>{item.notes}</Body>
         </View>
       ) : null}
+      {preview ? null : <PeoplePhotos itemId={item.id} name={item.name} glass={glass?.icon_key || glass?.name || null} wide={wide} />}
       {FEATURES.service ? (
         <ServiceSection
           itemId={item.id}

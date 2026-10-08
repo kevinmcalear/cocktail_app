@@ -20,6 +20,7 @@ assert.deepEqual(reportRow({ kind: 'ranking', itemId: 'list', profileId: 'bar' }
   profile_id: 'bar',
 });
 assert.equal(reportRow({ kind: 'item', itemId: 'i' }, 'other', 'x'.repeat(2000)).details?.length, 1000);
+assert.deepEqual(reportRow({ kind: 'photo', photoId: 'ph', itemId: 'i' }, 'sexual', ''), { target_kind: 'photo', reason: 'sexual', details: null, photo_id: 'ph', item_id: 'i' });
 
 // The limits, in words.
 assert.match(reportErrorMessage({ code: '23505' }, 0), /already reported/);
@@ -63,4 +64,5 @@ const names = { profile: 'Night Owl', item: 'Martini', release: null };
 assert.equal(reportSubject('ranking', names), 'Night Owl’s Martini');
 assert.equal(reportSubject('item', names), 'Martini');
 assert.equal(reportSubject('release', names), null);
+assert.equal(reportSubject('photo', names), 'A photo of Martini');
 assert.equal(reportSubject('ranking', { ...names, item: null }), null);

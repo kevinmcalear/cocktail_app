@@ -15,7 +15,7 @@ export type ReportReason =
   | 'fake_rankings'
   | 'other';
 
-export type ReportKind = 'profile' | 'item' | 'release' | 'ranking' | 'comment';
+export type ReportKind = 'profile' | 'item' | 'release' | 'ranking' | 'comment' | 'photo';
 
 /** What a report is about: exactly the columns the reports table checks for its kind. */
 export type ReportTarget =
@@ -24,7 +24,9 @@ export type ReportTarget =
   | { kind: 'release'; releaseId: string }
   | { kind: 'comment'; commentId: string }
   /** A bar's place on a list: itemId is the list ("Martini"), profileId the bar. */
-  | { kind: 'ranking'; itemId: string; profileId: string };
+  | { kind: 'ranking'; itemId: string; profileId: string }
+  /** Someone's photo of a drink: photoId is the photo, itemId the drink it's on. */
+  | { kind: 'photo'; photoId: string; itemId: string };
 
 export const REPORT_REASONS: { value: ReportReason; label: string; detail: string }[] = [
   { value: 'spam', label: 'Spam or a scam', detail: 'Ads, junk, or trying to get money or details' },
@@ -50,6 +52,7 @@ export interface ReportRow {
   item_id?: string;
   release_id?: string;
   comment_id?: string;
+  photo_id?: string;
 }
 
 /** Insert columns for a report. */
@@ -67,6 +70,8 @@ export function reportRow(target: ReportTarget, reason: ReportReason, details: s
       return { ...base, item_id: target.itemId, profile_id: target.profileId };
     case 'comment':
       return { ...base, comment_id: target.commentId };
+    case 'photo':
+      return { ...base, photo_id: target.photoId, item_id: target.itemId };
   }
 }
 
@@ -90,6 +95,7 @@ export const REPORT_KIND_LABEL: Record<ReportKind | 'comment', string> = {
   release: 'Release',
   ranking: 'Ranking',
   comment: 'Comment',
+  photo: 'Photo',
 };
 
 /**
@@ -109,6 +115,8 @@ export function reportSubject(
       return names.release;
     case 'ranking':
       return names.profile && names.item ? `${names.profile}’s ${names.item}` : null;
+    case 'photo':
+      return names.item ? `A photo of ${names.item}` : null;
     default:
       return null;
   }

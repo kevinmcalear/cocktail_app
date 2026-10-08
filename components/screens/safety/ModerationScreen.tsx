@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, Segmented, Surface, Tag } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, Field, Headline, Segmented, Surface, Tag } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { hideTarget, useIsModerator, useReportQueue, useResolveReport, useSetContentHidden, type QueuedReport } from '@/hooks/useModeration';
 import { reasonLabel } from '@/lib/safety';
@@ -14,7 +14,7 @@ const LISTS = [
   { value: 'closed', label: 'Closed' },
 ] as const;
 
-const KIND: Record<QueuedReport['target_kind'], string> = { profile: 'Profile', item: 'Drink', release: 'Release', comment: 'Comment', ranking: 'Ranking' };
+const KIND: Record<QueuedReport['target_kind'], string> = { profile: 'Profile', item: 'Drink', release: 'Release', comment: 'Comment', ranking: 'Ranking', photo: 'Photo' };
 const WHEN = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /**
@@ -60,6 +60,7 @@ export function ModerationScreen() {
 function targetHref(r: QueuedReport): Href | null {
   if (r.target_kind === 'profile' && r.profile_id) return `/p/${r.profile_id}`;
   if (r.target_kind === 'ranking' && r.item_id) return `/rankings/${r.item_id}`;
+  if (r.target_kind === 'photo' && r.item_id) return `/cocktail/${r.item_id}`;
   return null;
 }
 
@@ -86,7 +87,8 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
           {open ? null : <Tag label={r.status === 'actioned' ? 'Actioned' : 'Dismissed'} />}
         </View>
         <Headline>{what}</Headline>
-        {r.target_detail ? <Caption tone="muted">{r.target_kind === 'profile' ? r.target_detail : `${r.target_kind === 'ranking' ? 'At' : 'From'} ${r.target_detail}`}</Caption> : null}
+        {r.photo_url ? <DrinkImage source={r.photo_url} accessibilityLabel={`The reported photo of ${what}`} aspectRatio={1} radius="control" style={styles.photo} hideTag /> : null}
+        {r.target_detail ? <Caption tone="muted">{r.target_kind === 'profile' || r.target_kind === 'photo' ? r.target_detail : `${r.target_kind === 'ranking' ? 'At' : 'From'} ${r.target_detail}`}</Caption> : null}
         <Caption tone="muted">{`Reported ${WHEN.format(new Date(r.created_at))}`}</Caption>
         {r.details ? <Body>{`“${r.details}”`}</Body> : <Caption tone="muted">No details given.</Caption>}
         {r.resolution ? <Body tone="muted">{`Note: ${r.resolution}`}</Body> : null}
@@ -117,7 +119,7 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
               onPress={() => setHidden.mutate({ report: r, hidden: !r.target_hidden })}
             />
           ) : null}
-          {href ? <Button label={r.target_kind === 'ranking' ? 'Open the list' : 'Open profile'} variant="ghost" onPress={() => router.push(href)} /> : null}
+          {href ? <Button label={r.target_kind === 'ranking' ? 'Open the list' : r.target_kind === 'photo' ? 'Open the drink' : 'Open profile'} variant="ghost" onPress={() => router.push(href)} /> : null}
         </View>
       </Surface>
     </View>
@@ -128,5 +130,6 @@ const styles = StyleSheet.create({
   list: { gap: space.md },
   card: { gap: space.sm },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  photo: { maxWidth: 240 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
 });
