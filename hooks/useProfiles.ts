@@ -37,11 +37,15 @@ export interface Profile {
   closed_year: number | null;
   /** A person who shows the drinks they've had, with their scores. */
   shares_rankings: boolean;
+  /** A person who shows the bars they've had drinks at, with their average at each. */
+  shares_bars: boolean;
+  /** Shows the drinks they've made. Always true for a bar. */
+  shares_made: boolean;
   /** A bar's: who outside it sees its page. Null for a person. */
   page_visibility: PageVisibility | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, page_visibility';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, shares_bars, shares_made, page_visibility';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 

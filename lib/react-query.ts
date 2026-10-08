@@ -90,7 +90,7 @@ export const persistOptions = {
 // Lists that change rarely (and are refreshed by the writes that change
 // them) stay fresh for an hour, so a restored cache doesn't refetch them all
 // at launch. A hook's own staleTime wins over these.
-for (const key of [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars'], ['my-taste'], ['my-ranked-ids']]) {
+for (const key of [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars'], ['my-ranked-ids']]) {
   queryClient.setQueryDefaults(key, { staleTime: HOUR });
 }
 

@@ -9,6 +9,7 @@ export { GlassButton, GlassSurface } from './Glass';
 export { IngredientThumb } from './IngredientThumb';
 export { GlassVariantPicker } from './GlassVariantPicker';
 export { LockedSection } from './LockedSection';
+export { PalateFlower } from './PalateFlower';
 export { PressableScale } from './PressableScale';
 export { ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';

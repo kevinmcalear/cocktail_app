@@ -1,5 +1,6 @@
-import { AddDrinkScreen, type AddDrinkProps } from '@/components/drink/AddDrinkScreen';
+import type { AddDrinkProps } from '@/components/drink/AddDrinkScreen';
+import { AddBeerWineRoute } from '@/components/screens/addBeerWine/AddBeerWineRoute';
 
 export default function AddWineScreen(props: AddDrinkProps = {}) {
-  return <AddDrinkScreen kind="wine" {...props} />;
+  return <AddBeerWineRoute kind="wine" {...props} />;
 }

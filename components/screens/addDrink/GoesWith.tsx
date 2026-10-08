@@ -5,7 +5,7 @@ import { Caption, DsText, Surface, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { usePairings } from '@/hooks/usePairings';
 import { balanceOf, fixesFor } from '@/lib/balance';
-import { type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { amountOf, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 
 import { PairChip } from '../pairings/PairChip';
 import { Eyebrow } from './WizardChrome';
@@ -64,8 +64,7 @@ export function BalanceCard({ lines, ingredients, onAdd }: { lines: readonly Wiz
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   const parts = lines.map((l) => {
     const generic = l.id ? byId.get(byId.get(l.id)?.generic_id ?? '') : null;
-    const n = parseFloat(l.amount.replace(',', '.'));
-    return { name: l.name, genericName: generic?.name ?? null, amount: Number.isFinite(n) ? n : null, unit: l.unit || null };
+    return { name: l.name, genericName: generic?.name ?? null, amount: amountOf(l.amount), unit: l.unit || null };
   });
   const balance = balanceOf(parts);
   if (!balance) return null;
