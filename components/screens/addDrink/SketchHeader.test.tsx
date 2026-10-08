@@ -1,7 +1,7 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
-import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
+import { EMPTY_DRAFT, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 
 import { SketchHeader } from './SketchHeader';
 
@@ -9,9 +9,13 @@ jest.mock('@/components/ds/SketchDrawing', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SketchDrawing: () => <View testID="drawing" /> };
 });
+jest.mock('@/components/ds/AnimatedSketch', () => {
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { AnimatedSketch: ({ play }: { play: number }) => <View testID={`animated-${play}`} /> };
+});
 
-const header = (draft: WizardDraft, folded = false) => (
-  <SketchHeader draft={draft} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} folded={folded} />
+const header = (draft: WizardDraft, folded = false, step: WizardStep = 'name') => (
+  <SketchHeader draft={draft} step={step} onBack={jest.fn()} top={0} side={0} rounded={false} folded={folded} />
 );
 
 describe('SketchHeader', () => {
@@ -31,5 +35,13 @@ describe('SketchHeader', () => {
     await view.rerender(header(glass('Highball'), true));
     await view.rerender(header(glass('Flute')));
     expect(screen.getAllByTestId('drawing')).toHaveLength(2);
+  });
+
+  test('the review step draws the drink again, and a tap draws it once more', async () => {
+    await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }, false, 'review'));
+    expect(screen.queryAllByTestId('drawing')).toHaveLength(0);
+    fireEvent.press(screen.getByTestId('animated-0'));
+    expect(await screen.findByTestId('animated-1')).toBeTruthy();
+    expect(screen.getByText('Tap to draw it again')).toBeTruthy();
   });
 });
