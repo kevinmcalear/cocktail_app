@@ -236,7 +236,7 @@ DECLARE
     v_from public.items;
     v_into public.items;
     v_fk record;
-    v_row record;
+    v_ctid tid;
 BEGIN
     SELECT * INTO v_from FROM public.items WHERE id = p_from;
     SELECT * INTO v_into FROM public.items WHERE id = p_into;
@@ -283,12 +283,12 @@ BEGIN
               USING p_into, p_from;
         EXCEPTION WHEN unique_violation OR check_violation THEN
             -- Row by row: what clashes stays with p_into.
-            FOR v_row IN EXECUTE format('SELECT ctid FROM %I.%I WHERE %I = $1', v_fk.schema_name, v_fk.table_name, v_fk.column_name) USING p_from LOOP
+            FOR v_ctid IN EXECUTE format('SELECT ctid FROM %I.%I WHERE %I = $1', v_fk.schema_name, v_fk.table_name, v_fk.column_name) USING p_from LOOP
                 BEGIN
                     EXECUTE format('UPDATE %I.%I SET %I = $1 WHERE ctid = $2', v_fk.schema_name, v_fk.table_name, v_fk.column_name)
-                      USING p_into, v_row.ctid;
+                      USING p_into, v_ctid;
                 EXCEPTION WHEN unique_violation OR check_violation THEN
-                    EXECUTE format('DELETE FROM %I.%I WHERE ctid = $1', v_fk.schema_name, v_fk.table_name) USING v_row.ctid;
+                    EXECUTE format('DELETE FROM %I.%I WHERE ctid = $1', v_fk.schema_name, v_fk.table_name) USING v_ctid;
                 END;
             END LOOP;
         END;
