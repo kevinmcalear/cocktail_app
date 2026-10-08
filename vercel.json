@@ -5,6 +5,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/book/:key",
+      "destination": "/book/[key]"
+    },
+    {
       "source": "/beer/:id",
       "destination": "/beer/[id]"
     },

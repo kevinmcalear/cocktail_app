@@ -71,3 +71,17 @@ export function usePairDrinks(a: string | null, b: string | null) {
     },
   });
 }
+
+/** "Why it works" for a pairing, when one's been written (20261008130000_pair_notes.sql). */
+export function usePairNote(a: string | null, b: string | null) {
+  return useQuery({
+    queryKey: ['pair-note', a, b],
+    enabled: !!a && !!b,
+    staleTime: 1000 * 60 * 60,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('get_pair_note', { p_a: a!, p_b: b! });
+      if (error) throw error;
+      return (data as string | null) ?? null;
+    },
+  });
+}
