@@ -138,24 +138,34 @@ async function publicOriginals(profileId: string): Promise<Original[]> {
   }));
 }
 
-/** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
-export function useProfileOriginals(profileId: string | null | undefined) {
+/**
+ * Drinks credited to a profile: made by the person (alone or with others), or
+ * first made at the bar. A Locked bar page's drinks are its team's alone in
+ * items, so everyone else gets their public cards (names and credits) as well.
+ */
+export function useProfileOriginals(profileId: string | null | undefined, { locked = false }: { locked?: boolean } = {}) {
   const userId = useAuth().user?.id;
   const viewer = viewerScoped(userId);
   return useQuery({
-    queryKey: ['profile-originals', profileId, viewer.key],
+    queryKey: ['profile-originals', profileId, viewer.key, locked],
     meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
       if (!userId) return publicOriginals(profileId!);
-      const { data, error } = await supabase
-        .from('items')
-        .select(ORIGINAL_COLUMNS)
-        .or((await creditedTo(profileId!)).join(','))
-        .order('name')
-        .limit(100);
+      const [{ data, error }, cards] = await Promise.all([
+        supabase
+          .from('items')
+          .select(ORIGINAL_COLUMNS)
+          .or((await creditedTo(profileId!)).join(','))
+          .order('name')
+          .limit(100),
+        locked ? publicOriginals(profileId!) : Promise.resolve([]),
+      ]);
       if (error) throw error;
-      return (data ?? []) as unknown as Original[];
+      const rows = (data ?? []) as unknown as Original[];
+      const seen = new Set(rows.map((r) => r.id));
+      const missing = cards.filter((c) => !seen.has(c.id));
+      return missing.length ? [...rows, ...missing].sort((a, b) => a.name.localeCompare(b.name)) : rows;
     },
   });
 }

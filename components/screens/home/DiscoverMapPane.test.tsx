@@ -31,12 +31,12 @@ jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTo
 const mockSnap = jest.fn();
 jest.mock('@gorhom/bottom-sheet', () => {
   const { forwardRef, useImperativeHandle } = jest.requireActual<typeof import('react')>('react');
-  const { ScrollView, View } = jest.requireActual<typeof import('react-native')>('react-native');
+  const { FlatList, ScrollView, View } = jest.requireActual<typeof import('react-native')>('react-native');
   const BottomSheet = forwardRef(function BottomSheet({ children }: { children: React.ReactNode }, ref) {
     useImperativeHandle(ref, () => ({ snapToIndex: mockSnap }));
     return <View>{children}</View>;
   });
-  return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView };
+  return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView, BottomSheetFlatList: FlatList };
 });
 jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');

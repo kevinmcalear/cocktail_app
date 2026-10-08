@@ -16,6 +16,7 @@ import { CategoryPickerModal } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { IngredientDrawing } from "@/components/ds";
+import { AddIngredientRoute } from "@/components/screens/addIngredient/AddIngredientRoute";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
@@ -51,7 +52,13 @@ interface AddIngredientProps {
     onChromeState?: (state: EditorChromeState | null) => void;
 }
 
-export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress, onChromeState }: AddIngredientProps = {}) {
+/** A new ingredient is added with the wizard; a draft saved by this older editor still opens in it. */
+export default function AddIngredientScreen(props: AddIngredientProps = {}) {
+    const { draftId } = useLocalSearchParams<{ draftId?: string }>();
+    return (props.draftIdProp ?? draftId) ? <IngredientDraftEditor {...props} /> : <AddIngredientRoute {...props} />;
+}
+
+function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSave, onNestedItemPress, onChromeState }: AddIngredientProps) {
     const router = useRouter();
     const { barId: initialBarId, draftId, name: initialNameParam, attachTo } = useLocalSearchParams<{
         barId?: string;
@@ -122,7 +129,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 id: d.id,
                 name: d.draft_data?.name || "Untitled Ingredient Draft"
             }));
-
         const combined = [...draftIngredients, ...published];
         const seen = new Set();
         return combined.filter((i: any) => {
@@ -178,7 +184,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     useEffect(() => {
         if (currentDraftId && drafts.length > 0 && draftLoadedRef.current !== currentDraftId) {
             if (isFetching) return;
-            
             const draft = drafts.find((d: any) => d.id === currentDraftId);
             if (draft && draft.draft_data) {
                 draftLoadedRef.current = currentDraftId;
@@ -211,7 +216,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             if (safeRecipeItems.length !== recipeItems.length) setRecipeItems(safeRecipeItems);
             const draftData = { name, description, brandMaker, generic, abv, selectedCategories, recipeItems: safeRecipeItems, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep, hideFromSearch };
             const result = await saveDraft({ id: currentDraftId || undefined, entityType: 'ingredient', draftData });
-            
             let updatedDraftId = currentDraftId;
             if (!currentDraftId && result && result.id) {
                 updatedDraftId = result.id;
@@ -331,11 +335,8 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 })
                 .select()
                 .single();
-
             if (ingredientError || !ingredient) throw ingredientError;
-
             const ingredientId = ingredient.id;
-
             // Categories
             for (const catId of selectedCategories) {
                 await supabase
@@ -355,11 +356,9 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     unit: item.unit || null,
                     sort_order: index,
                 }));
-
                 const { error: recipeError } = await supabase
                     .from('recipes')
                     .insert(recipeInserts);
-
                 if (recipeError) throw recipeError;
             }
 
@@ -402,7 +401,6 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                     }
                 } }
             ]);
-
         } catch (error: any) {
             console.error("Creation error:", error);
             Alert.alert("Error", error.message || "Failed to create ingredient.");

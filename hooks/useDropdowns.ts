@@ -69,10 +69,13 @@ const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_
   item_categories ( category_id )`;
 
 /**
- * Every ingredient anyone can pick (~5,400 rows, several requests), for the
+ * Every ingredient anyone can pick (~14,000 rows, several requests), for the
  * editors' pickers, the Library and the Creator Hub, which share this one
  * download. Only screens that need the whole list ask for it; searches go
  * to the server. Too big to save between launches.
+ * Paged by id (each page starts after the last), then sorted by name here:
+ * a name-ordered offset page made the server build and sort every
+ * ingredient again, so each page was as slow as the whole list.
  * ponytail: the legacy editors build trees from the whole list; move them to
  * a server search (like Search's ingredients) when the catalog passes ~20,000.
  */

@@ -78,10 +78,10 @@ function HomeIcon({ look }: { look: BrandLook }) {
 
 /**
  * The live preview on the brand screen: the draft brand in light and dark
- * side by side on wide screens (one at a time on phones), plus the
- * home-screen icon.
+ * (one at a time on phones), plus the home-screen icon. `stacked` puts the
+ * two schemes one above the other, for a narrow side column.
  */
-export function BrandPreview({ look }: { look: BrandLook }) {
+export function BrandPreview({ look, stacked = false }: { look: BrandLook; stacked?: boolean }) {
   const wide = useBreakpoint() !== 'phone';
   // Phones show one scheme at a time, so the controls stay close to the preview.
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
@@ -90,7 +90,7 @@ export function BrandPreview({ look }: { look: BrandLook }) {
   return (
     <View accessibilityLabel="Preview of your brand" style={styles.wrap}>
       {wide ? null : <Segmented options={SCHEMES} value={only} onChange={setOnly} accessibilityLabel="Preview scheme" />}
-      <View style={[styles.schemes, wide && styles.schemesWide]}>
+      <View style={[styles.schemes, wide && !stacked && styles.schemesWide]}>
         {schemes.map((scheme) => (
           <BackbarTheme key={scheme} scheme={scheme}>
             <BrandProvider {...brand}>
@@ -133,13 +133,10 @@ export function Swatches({
             onPress={() => onChange(o.hex)}
             style={styles.swatch}
           >
-            <View
-              style={[
-                styles.dot,
-                { backgroundColor: o.hex ?? ds.c.raised, borderColor: selected ? ds.c.ink : ds.c.line },
-                selected && styles.dotSelected,
-              ]}
-            />
+            {/* The ring sits outside the dot, with a gap, so it shows on dark swatches too. */}
+            <View style={[styles.ring, { borderColor: selected ? ds.c.ink : 'transparent' }]}>
+              <View style={[styles.dot, { backgroundColor: o.hex ?? ds.c.raised, borderColor: ds.c.line }]} />
+            </View>
             <DsText variant="caption" numberOfLines={1}>
               {o.label}
             </DsText>
@@ -162,6 +159,6 @@ const styles = StyleSheet.create({
   iconTile: { width: 60, height: 60, borderRadius: radius.control },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   swatch: { alignItems: 'center', gap: space.xs, minWidth: 56 },
-  dot: { width: 40, height: 40, borderRadius: radius.pill, borderWidth: 1 },
-  dotSelected: { borderWidth: 3 },
+  ring: { padding: 3, borderRadius: radius.pill, borderWidth: 2 },
+  dot: { width: 36, height: 36, borderRadius: radius.pill, borderWidth: 1 },
 });

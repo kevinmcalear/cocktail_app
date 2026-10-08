@@ -27,13 +27,26 @@ export function ReviewStep({ draft, onJump, atVenue, hasProfile }: { draft: Wiza
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : atVenue ? 'Same as the venue' : 'Private'],
   ];
   return (
+    <ReviewList
+      rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))}
+      onJump={(s) => onJump(s as WizardStep)}
+      after="You can change any of it on the drink’s page, and add photos there."
+    />
+  );
+}
+
+/** Every answer on one screen; tap a row to go back and change it. */
+export function ReviewList({ rows, onJump, after }: { rows: { key: string; label: string; value: string }[]; onJump: (key: string) => void; after?: string }) {
+  return (
     <View role="list">
-      {rows.map(([step, value]) => (
-        <Row key={step} label={STEP_COPY[step].short} value={value} onPress={() => onJump(step)} />
+      {rows.map((r) => (
+        <Row key={r.key} label={r.label} value={r.value} onPress={() => onJump(r.key)} />
       ))}
-      <Caption tone="muted" style={styles.after}>
-        You can change any of it on the drink’s page, and add photos there.
-      </Caption>
+      {after ? (
+        <Caption tone="muted" style={styles.after}>
+          {after}
+        </Caption>
+      ) : null}
     </View>
   );
 }

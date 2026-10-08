@@ -21,9 +21,10 @@ export async function drawItemSketch(admin: SupabaseClient, item: ItemForPrompt,
 
   const path = `${kind.folder}/${item.id}/${Date.now()}.${image.ext}`;
   const bucket = admin.storage.from("drinks");
+  // A new path each time, so it can be cached for a year.
   const { error } = await bucket.upload(path, image.bytes, {
     contentType: image.mimeType,
-    cacheControl: "3600",
+    cacheControl: "31536000",
     upsert: false,
   });
   if (error) throw error;

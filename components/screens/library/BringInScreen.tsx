@@ -9,6 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { isLink } from '@/lib/bringInAnywhere';
 import { takeBringIn } from '@/lib/bringInHandoff';
 import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
 import type { BottleReading } from '@/lib/readBottle';
@@ -132,7 +133,8 @@ function BringInBody() {
   const [message, setMessage] = useState<string | null>(null);
   const [lastRead, setLastRead] = useState<BringInReadResult | null>(null);
   const [bottles, setBottles] = useState<BottleReading[] | null>(null);
-  const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
+  // A lone link is read with "Read this link", never added as a drink called that link.
+  const blocks = useMemo(() => (isLink(text) ? [] : parseBringIn(text, mode)), [text, mode]);
   const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses, aliases), [blocks, catalog, barId, picks, kinds, methods, glasses, aliases]);
   const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
 
@@ -187,7 +189,12 @@ function BringInBody() {
             placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
           />
           <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
-          <BringInRead mode={mode} text={text} onRead={onRead} />
+          <BringInRead
+            mode={mode}
+            text={text}
+            onRead={onRead}
+            onPasteText={(pasted) => setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${pasted}` : pasted))}
+          />
           {lastRead?.unsure.length ? <Caption tone="accent">{`Hard to read, check these: ${lastRead.unsure.join(', ')}.`}</Caption> : null}
           {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} aliases={aliases} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}

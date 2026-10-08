@@ -3,6 +3,7 @@ import { useState, type ComponentProps } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Paragraph, Text, XStack, YStack, useTheme } from 'tamagui';
 
+import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { ItemDetailLayout } from '@/components/ItemDetailLayout';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -11,6 +12,7 @@ import { FEATURES } from '@/constants/features';
 import { useStudyPile } from '@/hooks/useStudyPile';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem } from '@/hooks/useViewAs';
+import { savedSketch } from '@/lib/beerWineWizard';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { heroPicture, orderedPictures, pictureTag } from '@/lib/itemImages';
 
@@ -96,6 +98,9 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
       title={item.name}
       images={pictures.map((p) => p.url)}
       imageTags={pictures.map(pictureTag)}
+      // No photo: drawn in its glass, as the add wizard drew it. ponytail: app_item_presentation has no
+      // sketch_variant yet, so this is the style's usual glass; add the column to the view to show the pick.
+      hero={<SketchDrawing inputs={savedSketch(kind.kind, tagNames, item.sketch_variant ?? null)} seed={kind.kind} detail="full" />}
       isFavorite={isFavorite(prefixedId)}
       isInStudyPile={isInStudyPile(prefixedId)}
       onToggleFavorite={toggleFavorite}

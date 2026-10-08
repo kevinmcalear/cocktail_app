@@ -1,10 +1,10 @@
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, GlassButton, GlassSurface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { DrinkAtBarList, type DrinkScores, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
+import { DrinkAtBarList, DrinkAtBarRow, type DrinkScores, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
@@ -41,6 +41,14 @@ interface DiscoverMapPaneProps {
   bottomInset?: number;
 }
 
+/** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
+const NO_DRINKS: DiscoverDrink[] = [];
+const NO_ROWS: never[] = [];
+const NO_SCORES: Readonly<Record<string, number>> = {};
+const drinkKey = (d: DiscoverDrink) => d.id;
+/** How long after the drinks land before the other layers load behind them. */
+const PREFETCH_AFTER_MS = 2000;
+
 /** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
 const SHEET_PEEK = layout.minTapTarget + space.sm;
 
@@ -59,24 +67,34 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
   const byDrinks = layer === 'drinks';
   const byDrink = layer === 'best' && !!drink;
-  const drinkRows = useDiscoverRankings(byDrink ? drink.id : null, area);
-  const barRows = useTopBars(area);
+  // The other layers load a moment after the drinks are in (not while the map is still drawing),
+  // so switching to one is instant.
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    if (results.isLoading || warm) return;
+    const t = setTimeout(() => setWarm(true), PREFETCH_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [results.isLoading, warm]);
+  const drinkRows = useDiscoverRankings(drink?.id, area, byDrink || warm);
+  const barRows = useTopBars(area, layer === 'bars' || warm);
   // Pins on the drinks layer: the area's bars with matching drinks first, then, once the person
   // moves the map, the bars in view a tile at a time (anywhere already has every bar).
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const settled = useDebounced(viewport, 350);
+  // The view last searched: it stays the view (its pins stay up), but isn't offered again.
+  const [searched, setSearched] = useState<Viewport | null>(null);
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : settled, filter, byDrinks);
   // "Best Martini": every martini here, scored where people have ranked it, best first.
-  const pickedList = useDiscoverList(byDrink ? pickFilter(filter, drink.name) : filter, { enabled: byDrink, pageSize: 300 });
-  const picked = byDrink ? pickedList.drinks : [];
+  const pickedList = useDiscoverList(drink ? pickFilter(filter, drink.name) : filter, { enabled: !!drink && (byDrink || warm), pageSize: 300 });
+  const picked = byDrink ? pickedList.drinks : NO_DRINKS;
   const rows = byDrinks
     ? { data: undefined, isLoading: results.isLoading || areaBars.isPending }
     : byDrink
       ? { data: undefined, isLoading: pickedList.isLoading }
       : barRows;
-  const drinkScores = useItemScores(picked.map((d) => d.id)).data ?? {};
-  const scores: DrinkScores | undefined = byDrink ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, drinkRows.data?.ranked ?? []) } : undefined;
+  const drinkScores = useItemScores(drink ? pickedList.drinks.map((d) => d.id) : NO_ROWS).data ?? NO_SCORES;
+  const scores: DrinkScores | undefined = byDrink ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, drinkRows.data?.ranked ?? NO_ROWS) } : undefined;
   const drinks = scores ? byScore(picked, scores.drinks) : results.drinks;
   const pins = [
     ...(byDrinks ? barPins([...(areaBars.data ?? []), ...tileBars.bars]) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
@@ -97,10 +115,10 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   }
   // The maps report only the person's own moves, so any settled move since
   // the last fit or search is worth offering.
-  const offer = viewport && settled === viewport ? viewport : null;
+  const offer = viewport && settled === viewport && viewport !== searched ? viewport : null;
   useEffect(() => onViewport?.(settled), [settled, onViewport]);
   const searchArea = (v: Viewport) => {
-    setViewport(null);
+    setSearched(v);
     setSelectedId(null);
     onArea(areaFromViewport(v));
   };
@@ -126,12 +144,14 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const barDrinks = selected ? (byDrinks ? atBar.drinks : drinks.filter((d) => d.barId === selected.id)) : drinks;
   const more: MoreDrinks | undefined = selected ? undefined : byDrinks ? results.more : undefined;
   const loadingBar = !!selected && byDrinks && atBar.isLoading;
+  // The phone sheet's rows; anything else (loading, a note, the ranked lists) shows as its empty state.
+  const sheetDrinks = drinkLayer && !rows.isLoading && !loadingBar ? barDrinks : NO_DRINKS;
   const list = rows.isLoading || loadingBar ? (
     <ListNote>Loading…</ListNote>
   ) : drinkLayer ? (
     // Wide screens list a selected bar's drinks in its card; phones preview them there and list them all here.
     selected && mode === 'side' ? null : barDrinks.length ? (
-      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} endless={mode === 'sheet' && !!more} />
+      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} />
     ) : (
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
     )
@@ -209,32 +229,49 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
           handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
           accessibilityLabel="Results"
         >
-          <BottomSheetScrollView
+          {/* A virtualized list: "anywhere" can load hundreds of drinks, and only the ones on screen are drawn. */}
+          <BottomSheetFlatList
+            data={sheetDrinks}
+            keyExtractor={drinkKey}
+            renderItem={({ item }: { item: DiscoverDrink }) => <DrinkAtBarRow drink={item} scores={scores} />}
+            extraData={scores}
             contentContainerStyle={styles.sheet}
+            ListHeaderComponent={
+              <View style={styles.sheetHead}>
+                {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
+                <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
+                  <Caption tone="muted" numberOfLines={1}>
+                    {rows.isLoading
+                      ? 'Loading…'
+                      : selected?.closed
+                        ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
+                        : selected && drinkLayer
+                          ? `${drinkCount(byDrinks ? (atBar.totals?.drinks ?? barDrinks.length) : barDrinks.length)} at ${selected.name} · tap or swipe up for them`
+                          : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
+                  </Caption>
+                </Pressable>
+                <Title role="heading" numberOfLines={1}>
+                  {title}
+                </Title>
+                {layers}
+              </View>
+            }
+            // In a View: the list measures its empty state, and some of these are fragments.
+            ListEmptyComponent={list ? <View style={styles.sheetEmpty}>{list}</View> : undefined}
+            ListFooterComponent={
+              <View style={styles.sheetFoot}>
+                {more?.loading && sheetDrinks.length ? <ListNote>Loading more…</ListNote> : null}
+                <MapCredit />
+              </View>
+            }
             // The next page as the list nears its end ("load more as you scroll").
-            onScroll={({ nativeEvent: { layoutMeasurement, contentOffset, contentSize } }) => {
-              if (more && layoutMeasurement.height + contentOffset.y > contentSize.height - 600) more.loadMore();
-            }}
-          >
-            {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
-            <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
-              <Caption tone="muted" numberOfLines={1}>
-                {rows.isLoading
-                  ? 'Loading…'
-                  : selected?.closed
-                    ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
-                    : selected && drinkLayer
-                      ? `${drinkCount(byDrinks ? (atBar.totals?.drinks ?? barDrinks.length) : barDrinks.length)} at ${selected.name} · tap or swipe up for them`
-                      : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
-              </Caption>
-            </Pressable>
-            <Title role="heading" numberOfLines={1}>
-              {title}
-            </Title>
-            {layers}
-            {list}
-            <MapCredit />
-          </BottomSheetScrollView>
+            onEndReached={more?.hasMore ? more.loadMore : undefined}
+            onEndReachedThreshold={1.5}
+            // The sheet shows three to six rows; draw a few more, then the rest as it scrolls.
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={7}
+          />
         </BottomSheet>
       </View>
     </View>
@@ -251,7 +288,10 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center' },
   chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   glassRow: { alignSelf: 'flex-start', padding: space.xs },
-  sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: space.md },
+  sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl },
+  sheetHead: { gap: space.md, paddingBottom: space.md },
+  sheetEmpty: { gap: space.md },
+  sheetFoot: { gap: space.md, paddingTop: space.md },
   // Floats above the tab bar, clear of the screen edges, like the tab bar itself.
   sheetBox: { position: 'absolute', top: 0, left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
 });
