@@ -39,7 +39,7 @@ test('an admin can change other members’ roles and invite people, but not thei
 
 test('a bartender sees the team read-only', async () => {
   await renderWithTamagui(<TeamMembers barId="bar" members={asBartender} myRole={30} />);
-  expect(screen.queryByRole('group')).toBeNull();
+  expect(screen.queryByRole('radiogroup')).toBeNull();
   expect(screen.queryByText('Invite')).toBeNull();
   expect(screen.queryByText('new@example.test')).toBeNull();
   expect(screen.getByText('Admin')).toBeTruthy();

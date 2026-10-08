@@ -84,6 +84,7 @@ const MAPPING = {
   'plus.square': 'add-box',
   'link': 'link',
   'doc.on.doc': 'content-copy',
+  'paintpalette.fill': 'palette',
   'map.fill': 'map',
   'lock.shield.fill': 'security',
   'lock.fill': 'lock',
