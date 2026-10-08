@@ -1,6 +1,6 @@
 // Ingredient indexes, search_bar_drinks checking the editor before the
 // ingredient match, and the job crons returning early on an empty queue
-// (supabase/migrations/20261008600000_db_indexes.sql).
+// (supabase/migrations/20261008800000_db_indexes.sql).
 // Fixtures go in directly (no write guards) and are removed afterwards; each
 // check runs in its own short transaction, so no lock is held across files.
 // Runs against the local stack only: `npm run test:security`.
