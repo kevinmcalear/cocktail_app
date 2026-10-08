@@ -150,11 +150,15 @@ describe('generic ingredients', () => {
 
   test('running the backfill again changes nothing', async () => {
     const backfill = readFileSync(MIGRATION, 'utf8').split('-- The shared bottles')[1].replace(/^-{10,}\n/, '');
+    // Other test files' fixtures are named with a run id and left out: one
+    // committed before the lock (a brand whose line names a parent, say in
+    // allergens or role-scoped-reads) is a fair first fill, not a second one.
     const count = async () =>
       (
-        await db.query(`SELECT (SELECT count(*) FROM public.items)::int AS items,
-                               (SELECT count(*) FROM public.items WHERE generic_id IS NOT NULL)::int AS generics,
-                               (SELECT count(*) FROM public.item_categories)::int AS categories`)
+        await db.query(`WITH i AS (SELECT * FROM public.items WHERE name !~ ' [0-9a-f]{8}$')
+                        SELECT (SELECT count(*) FROM i)::int AS items,
+                               (SELECT count(*) FROM i WHERE generic_id IS NOT NULL)::int AS generics,
+                               (SELECT count(*) FROM public.item_categories c JOIN i ON i.id = c.item_id)::int AS categories`)
       ).rows[0];
     for (let attempt = 1; ; attempt++) {
       await db.query('BEGIN');
