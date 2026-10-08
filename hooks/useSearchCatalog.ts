@@ -2,8 +2,7 @@ import type { SearchItem } from '@/types/search';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
-import { useDropdowns } from '@/hooks/useDropdowns';
-import { useIngredients } from '@/hooks/useIngredients';
+import { useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
@@ -80,8 +79,8 @@ export function useSearchCatalog(contextIds?: string[]) {
     allContexts: true,
   });
   const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
-    useIngredients({ allContexts: true });
-  const { data: dropdowns, isLoading: menusLoading } = useDropdowns();
+    useAllIngredients();
+  const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
   const { drafts, isLoading: draftsLoading } = useDrafts();
 
   const items = useMemo(() => {

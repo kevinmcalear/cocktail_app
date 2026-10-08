@@ -43,7 +43,7 @@ export function useCocktailDraftEditor({
     enabled = true,
 }: UseCocktailDraftEditorOptions = {}) {
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: true });
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(initialDraftId || null);

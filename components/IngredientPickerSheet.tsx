@@ -29,6 +29,8 @@ type IngredientPickerSheetProps = {
     dropdowns?: any;
     onCreate?: (searchQuery: string) => void | Promise<void>;
     title?: string;
+    /** The list is still downloading: say so, and don't offer to create what may already exist. */
+    loading?: boolean;
 };
 
 export function IngredientPickerSheet({
@@ -41,6 +43,7 @@ export function IngredientPickerSheet({
     dropdowns,
     onCreate,
     title = "Select Ingredient",
+    loading = false,
 }: IngredientPickerSheetProps) {
     const theme = useTheme();
     const [search, setSearch] = useState("");
@@ -131,9 +134,9 @@ export function IngredientPickerSheet({
                     <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
                         <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
                         <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">
-                            No results found
+                            {loading ? "Loading ingredients…" : "No results found"}
                         </Text>
-                        {onCreate ? (
+                        {onCreate && !loading ? (
                             <Button
                                 marginTop="$4"
                                 backgroundColor="$color5"
