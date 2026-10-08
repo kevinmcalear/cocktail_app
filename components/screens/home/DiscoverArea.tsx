@@ -21,9 +21,10 @@ export function ChipRow({ label, title, children }: { label: string; title?: str
   );
 }
 
-/** Why near me didn't stick, when it didn't. */
-export function areaStatus(near: NearMe): string | null {
+/** Why near me didn't stick, when it didn't. `usingLast`: no fresh position, so near me is near the last place. */
+export function areaStatus(near: NearMe, usingLast = false): string | null {
   if (near.status === 'locating') return 'Finding where you are…';
+  if (near.status === 'unavailable' && usingLast) return "Couldn't get a fresh position, so this is near where you were last.";
   if (near.status === 'denied') return "Location is off for Cocktail, so pick a city instead. You can turn it on in your device's settings.";
   if (near.status === 'unavailable') return "Couldn't find where you are. Pick a city instead, or try again.";
   return null;

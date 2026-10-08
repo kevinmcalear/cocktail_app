@@ -1,5 +1,5 @@
-import { usePathname, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -8,7 +8,6 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { ClosedBars } from '@/components/screens/home/ClosedBars';
-import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
@@ -22,14 +21,15 @@ import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
-import { useNearMe, type NearMe } from '@/hooks/useNearMe';
+import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import { areaFromViewport, type Viewport } from '@/lib/discoverMap';
 import { STYLES } from '@/lib/drinkStyles';
-import { areaLabel, NEAR_ME_KM, type Area } from '@/lib/nearMe';
+import { areaLabel, type Area } from '@/lib/nearMe';
 import type { SearchScope } from '@/lib/searchScope';
 import { useDiscoverView } from '@/store/useDiscoverView';
+import { useLastPlace } from '@/store/useLastPlace';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 
@@ -38,8 +38,10 @@ const ANYWHERE: Area = { kind: 'anywhere' };
  * bars pour, here or everywhere), then where and Filters (styles, spirits,
  * tasting notes) in one row. Below: the drinks that match, the top bars, and
  * drinks for your taste. Phones switch between this list and a full-screen
- * map (the map first once location is on; the last choice is remembered);
- * wide screens show both. Search, where and filters are shared by both.
+ * map (the map first once location has been on; the last choice is
+ * remembered); wide screens show both. Search, where and filters are shared
+ * by both. It opens near the last place this device was found
+ * (store/useLastPlace.ts) and moves when a fresh position lands elsewhere.
  */
 export function DiscoverScreen() {
   const ds = useDs();
@@ -48,8 +50,7 @@ export function DiscoverScreen() {
   const bottom = useTabBarInset();
   const signedIn = !!useAuth().user;
   const breakpoint = useBreakpoint();
-  const [area, setArea] = useState<Area>(ANYWHERE);
-  const [preferNear, setPreferNear] = useState(true);
+  const { area, onArea, preferNear, near, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   const [kinds, setKinds] = useState<string[]>([]);
   const [showClosed, setShowClosed] = useState(false);
   const [search, setSearch] = useState('');
@@ -60,71 +61,29 @@ export function DiscoverScreen() {
   const onViewport = useCallback((v: Viewport | null) => {
     viewport.current = v;
   }, []);
-  const touched = useRef(false);
-  const { state: near, locate } = useNearMe();
-  const place = useCallback((found: NearMe) => {
-    if (found.status !== 'ready') {
-      setPreferNear(false);
-      return;
-    }
-    setPreferNear(true);
-    setArea({ kind: 'point', latitude: found.latitude, longitude: found.longitude, radiusKm: NEAR_ME_KM, source: 'me' });
-  }, []);
-  const onArea = (next: Area) => {
-    touched.current = true;
-    setPreferNear(next.kind === 'point' && next.source === 'me');
-    setArea(next);
-  };
-  const onNearMe = () => {
-    touched.current = true;
-    setPreferNear(true);
-    void locate().then(place);
-  };
-  // Ask once Discover is on screen. The tab mounts on its first focus (MountOnFocus), and this
-  // guards anywhere else it's rendered off screen.
-  const onScreen = usePathname() === '/discover';
-  const asked = useRef(false);
-  useEffect(() => {
-    if (!onScreen || asked.current) return;
-    asked.current = true;
-    void locate().then((found) => {
-      if (!touched.current) place(found);
-    });
-  }, [onScreen, locate, place]);
-
-  // Phones: the map once location is on, unless this device last picked the list.
+  // Phones: the map when this device has been found before, unless it last picked the list.
+  // Decided as the screen opens, so a position landing later doesn't swap the whole screen.
   const saved = useDiscoverView((s) => s.view);
   const saveView = useDiscoverView((s) => s.setView);
+  const [firstView] = useState(() => (useLastPlace.getState().place ? 'map' : 'list'));
   const split = mapAvailable && breakpoint !== 'phone';
-  const phoneMap = mapAvailable && !split && (saved ?? (near.status === 'ready' ? 'map' : 'list')) === 'map';
+  const phoneMap = mapAvailable && !split && (saved ?? firstView) === 'map';
   const onMap = split || phoneMap;
-  const toggleView = async () => {
+  const toggleView = () => {
     if (phoneMap) return saveView('list');
     saveView('map');
-    if (area.kind !== 'anywhere') return;
-    touched.current = true;
-    place(await locate());
+    nearIfAnywhere();
   };
 
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
-  // Until location answers, Anywhere is only a stand-in: wait rather than load every bar drink,
-  // but not for long (a web location prompt can sit unanswered).
-  const [waited, setWaited] = useState(false);
-  useEffect(() => {
-    if (near.status !== 'locating') return;
-    const t = setTimeout(() => setWaited(true), 2500);
-    return () => clearTimeout(t);
-  }, [near.status]);
-  const locating = area.kind === 'anywhere' && (near.status === 'idle' || (near.status === 'locating' && !waited));
   const results = useDiscoverResults({ kinds, search, area: shownArea }, !locating || searching);
-  const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${areaLabel(shownArea)}`;
+  const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
   const hereLabel = onMap ? 'This area' : areaChipLabel(area, preferNear);
   const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed };
   const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
-  const note = areaStatus(near);
 
   const openSearch = () => {
     // On the map, "this area" is what the map shows: search it, as "Search this area" would.
@@ -165,7 +124,7 @@ export function DiscoverScreen() {
         filters={kinds.length + (showClosed ? 1 : 0)}
         onArea={() => setSheet('area')}
         onFilters={() => setSheet('filters')}
-        view={mapAvailable && !split ? { showing: phoneMap ? 'map' : 'list', onToggle: () => void toggleView() } : undefined}
+        view={mapAvailable && !split ? { showing: phoneMap ? 'map' : 'list', onToggle: toggleView } : undefined}
       />
     </View>
   );
