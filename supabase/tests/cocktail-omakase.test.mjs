@@ -1,4 +1,4 @@
-// Cocktail Omakase and Bar 7 (20261008400000_cocktail_omakase.sql): both bars,
+// Cocktail Omakase and Bar 7 (20261008000000_cocktail_omakase.sql): both bars,
 // Mathew Resler and his jobs, the drinks with their ingredients on the right
 // menus, no paid flavour jobs queued, signed-out visitors see the bar, and
 // running the seed again adds nothing.
@@ -21,7 +21,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Cocktail Omakase tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = new URL('../migrations/20261008400000_cocktail_omakase.sql', import.meta.url);
+const MIGRATION = new URL('../migrations/20261008000000_cocktail_omakase.sql', import.meta.url);
 const BARS = ['bar7.cocktailomakase', 'cocktail_omakase_nyc'];
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
