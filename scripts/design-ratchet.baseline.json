@@ -59,7 +59,7 @@
     "hooks/useCocktailEditor.ts": 5,
     "hooks/useCocktails.ts": 6,
     "hooks/useDrafts.ts": 1,
-    "hooks/useIngredients.ts": 9,
+    "hooks/useIngredients.ts": 7,
     "hooks/useMenuDetails.ts": 3,
     "hooks/useMenuEditor.ts": 4,
     "hooks/useRecipeMergeHandler.ts": 4,

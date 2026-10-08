@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { allRows } from '@/lib/allRows';
+import { chunk } from '@/lib/commandSearchGrid';
 import { blendTaste, DIMENSIONS, MIN_COVERAGE, type FlavorDrink, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
@@ -158,6 +159,30 @@ export function useItemScores(itemIds: readonly string[]) {
       const { data, error } = await supabase.rpc('get_item_scores', { p_item_ids: ids });
       if (error) throw error;
       return Object.fromEntries(((data ?? []) as { item_id: string; score: number }[]).map((r) => [r.item_id, Number(r.score)]));
+    },
+  });
+}
+
+/**
+ * Usable profiles for these drinks only ({ id: profile }), in URL-sized
+ * batches: My Bar's match percentages for the drinks it has loaded.
+ */
+export function useItemFlavors(itemIds: readonly string[], enabled = true) {
+  const ids = [...new Set(itemIds)].sort();
+  return useQuery({
+    queryKey: ['item-flavors', ids],
+    enabled: enabled && ids.length > 0,
+    placeholderData: keepPreviousData,
+    meta: { persist: false },
+    queryFn: async (): Promise<Record<string, Profile>> => {
+      const batches = await Promise.all(
+        chunk(ids, 150).map(async (batch) => {
+          const { data, error } = await supabase.from('item_flavors').select(`item_id, ${DIM_COLUMNS}`).in('item_id', batch).gte('coverage', MIN_COVERAGE);
+          if (error) throw error;
+          return (data ?? []) as unknown as (FlavorRow & { item_id: string })[];
+        })
+      );
+      return Object.fromEntries(batches.flat().map((r) => [r.item_id, profileOf(r)]));
     },
   });
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useTopBars } from '@/hooks/useDiscover';
+import { useDrinkLists, useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverDrinks } from '@/hooks/useDiscoverDrinks';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { getKnownDeviceLocation } from '@/lib/deviceLocation';
@@ -11,7 +11,8 @@ import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
 const LOCATION_WAIT_MS = 1500;
 
 /**
- * The eight ball's pool: every drink the person can see, weighted toward
+ * The eight ball's pool: the classics, every bar drink, and what the shelf
+ * makes or nearly makes (no longer every drink the person can see), weighted toward
  * what their shelf makes and what's well rated nearby (lib/eightBall.ts).
  * Mounted only while the ball is open, so nothing loads until someone
  * shakes. Location is used only if it's already allowed; a playful extra
@@ -36,16 +37,22 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
   }, []);
   const top = useTopBars(area ?? { kind: 'anywhere' });
 
+  const classics = useDrinkLists();
   const pool = useMemo(
     () =>
       buildPool({
-        drinks: bar.drinks,
+        // What the shelf makes or nearly makes, and the classics; bar drinks join below.
+        drinks: [
+          ...bar.canMake,
+          ...bar.oneAway.flatMap((a) => a.drinks),
+          ...(classics.data ?? []).map((d) => ({ id: d.id, name: d.name, imageUrl: d.imageUrl, glass: null })),
+        ],
         canMake: bar.canMakeIds,
         barDrinks: (barDrinks.data?.drinks ?? []).map((d) => ({ id: d.id, name: d.name, imageUrl: d.imageUrl, glass: null, barId: d.barId })),
         ratedBars: (top.data?.ranked ?? []).map((r) => ({ id: r.venue_profile_id, name: r.display_name, score: r.score })),
         near: area?.kind === 'point',
       }),
-    [bar.drinks, bar.canMakeIds, barDrinks.data, top.data, area]
+    [bar.canMake, bar.oneAway, bar.canMakeIds, classics.data, barDrinks.data, top.data, area]
   );
   // Wait for the shelf and location so the first pick is already weighted;
   // bar drinks and scores join when they arrive.

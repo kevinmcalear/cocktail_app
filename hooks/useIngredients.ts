@@ -1,5 +1,5 @@
 import { useViewAs } from '@/hooks/useViewAs';
-import { allRows } from '@/lib/allRows';
+import { allRowsById } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -7,7 +7,17 @@ import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { batchedDrinkName, nameKey, orderedPictures, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { useAppStore } from '@/store/useAppStore';
 
-// Standard ingredient list query
+const byName = new Intl.Collator().compare;
+
+/** A row of ingredient_used_in. */
+interface UsedInRow {
+    id: string;
+    name: string;
+    image_url: string | null;
+    image_is_generated: boolean | null;
+}
+
+// Standard ingredient list query: paged by id (keyset), then A to Z on the device.
 export function useIngredients(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
@@ -16,8 +26,8 @@ export function useIngredients(options?: { allContexts?: boolean }) {
         queryKey: ['ingredients', selectedContextIds, options, viewAsRoleLevel],
         // ~5,400 rows: too big to save between launches (storage caps at a few MB).
         meta: { persist: false },
-        queryFn: () =>
-            allRows((from, to) => {
+        queryFn: async () =>
+            (await allRowsById((after, size) => {
                 // Only what search and the Creator Hub read: every column is ~6 MB.
                 let query = supabase
                     .from('app_item_presentation')
@@ -44,8 +54,9 @@ export function useIngredients(options?: { allContexts?: boolean }) {
                     query = applyBarContextFilter(query, selectedContextIds);
                 }
 
-                return query.order('name').order('id').range(from, to);
-            })
+                if (after) query = query.gt('id', after);
+                return query.order('id').limit(size);
+            })).sort((a, b) => byName(a.name, b.name) || byName(a.id, b.id))
     });
 }
 
@@ -123,36 +134,19 @@ export function useIngredient(id?: string | string[]) {
                 ingredient: resolvePresentationIngredient(r),
             }));
 
-            // 3. Fetch cocktails that use this ingredient
-            const { data: usedInData, error: usedInError } = await supabase
-                .from('app_recipe_presentation')
-                .select(`
-                    id,
-                    cocktail:app_item_presentation!new_recipes_recipe_item_id_fkey(
-                        id, 
-                        name,
-                        item_type,
-                        item_images (
-                            sort_order,
-                            is_generated,
-                            images ( url )
-                        )
-                    )
-                `)
-                .eq('display_ingredient_id', ingredientId)
-                .not('cocktail', 'is', null);
-
-            let usedIn: any[] = [];
-            if (!usedInError && usedInData) {
-                const uniqueCocktails = new Map();
-                usedInData.forEach((item: any) => {
-                    // Preps this goes into are listed on the prep card, not here.
-                    if (item.cocktail?.item_type === 'cocktail' && !uniqueCocktails.has(item.cocktail.id)) {
-                        uniqueCocktails.set(item.cocktail.id, item);
-                    }
-                });
-                usedIn = Array.from(uniqueCocktails.values());
-            }
+            // 3. Cocktails that use this ingredient, as the caller's recipe view shows them
+            // (ingredient_used_in, supabase/migrations/20261008340000_my_bar_rpc.sql). A
+            // failed read leaves the section out rather than failing the page.
+            const { data: usedInData } = await supabase.rpc('ingredient_used_in', { p_ingredient_id: ingredientId, p_limit: 200 });
+            const usedIn = ((usedInData ?? []) as UsedInRow[]).map((d) => ({
+                id: d.id,
+                cocktail: {
+                    id: d.id,
+                    name: d.name,
+                    item_type: 'cocktail' as const,
+                    item_images: d.image_url ? [{ angle: 'hero' as const, is_generated: d.image_is_generated, images: { url: d.image_url } }] : [],
+                },
+            }));
 
             return {
                 ingredient: { ...ingredient, generic },

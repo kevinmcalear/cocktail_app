@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import type { RankVenue } from '@/hooks/useRankings';
-import { allRows } from '@/lib/allRows';
+import { allRowsById } from '@/lib/allRows';
 import { viewerScoped } from '@/lib/authCache';
 import { citiesFrom, findDrinks, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
@@ -66,17 +66,17 @@ export function useBarCities() {
     queryKey: ['bar-cities'],
     queryFn: async (): Promise<City[]> =>
       citiesFrom(
-        await allRows((from, to) =>
-          supabase
+        await allRowsById((after, size) => {
+          let query = supabase
             .from('profiles')
-            .select('city, country_code')
+            .select('id, city, country_code')
             .eq('kind', 'bar')
             .eq('is_public', true)
             .eq('is_closed', false)
-            .not('city', 'is', null)
-            .order('id')
-            .range(from, to)
-        )
+            .not('city', 'is', null);
+          if (after) query = query.gt('id', after);
+          return query.order('id').limit(size);
+        })
       ),
   });
 }
