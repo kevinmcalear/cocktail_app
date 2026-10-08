@@ -44,6 +44,36 @@ export const backbar = {
 export type BackbarScheme = keyof typeof backbar;
 export type BackbarColors = { [K in keyof (typeof backbar)['dark']]: string };
 
+/**
+ * One hue per drink family (lib/drinkTree.ts FAMILIES), for the history
+ * timeline's dots and lanes. Always shown beside the family's name, never as
+ * the only signal. "trunk" is Punch, the shared root.
+ */
+export const familyHues = {
+  dark: {
+    oldfashioned: '#E0A05A',
+    martini: '#9DB8D4',
+    negroni: '#F07A6A',
+    sour: '#B5CF6A',
+    sidecar: '#F2B04C',
+    highball: '#6CC6D8',
+    tiki: '#EE8FAE',
+    flip: '#C8A9DC',
+    trunk: '#A59C90',
+  },
+  light: {
+    oldfashioned: '#A8641E',
+    martini: '#4F6E8C',
+    negroni: '#B33A2E',
+    sour: '#6B8A2A',
+    sidecar: '#C47A12',
+    highball: '#2C8296',
+    tiki: '#B0506E',
+    flip: '#8A6A9E',
+    trunk: '#6B645B',
+  },
+} as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
