@@ -62,7 +62,7 @@ export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
           />
         )}
       />
-      <ResultGroup label="Ingredients" items={groups.ingredients} render={(i) => <ResultRow key={i.id} title={capitalize(i.name)} caption={i.isDraft ? 'Draft' : undefined} icon="drop.fill" onPress={() => open(i)} />} />
+      <ResultGroup label="Ingredients" items={groups.ingredients} render={(i) => <ResultRow key={i.id} title={capitalize(i.name)} caption={i.isDraft ? 'Draft' : undefined} ingredient={{ id: i.isDraft ? null : i.id }} onPress={() => open(i)} />} />
       <ResultGroup label="Menus" items={groups.menus} render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : undefined} icon="list.bullet" onPress={() => open(i)} />} />
       {everywhere}
     </View>

@@ -101,7 +101,7 @@ function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine;
           drink(r.kind) ? (
             <DrinkRow key={`${r.kind}-${r.id}`} name={capitalize(r.title)} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
           ) : (
-            <ResultRow key={`${r.kind}-${r.id}`} title={capitalize(r.title)} caption={caption(r)} icon={r.kind === 'menu' ? 'list.bullet' : 'drop.fill'} onPress={() => open(r)} />
+            <ResultRow key={`${r.kind}-${r.id}`} title={capitalize(r.title)} caption={caption(r)} icon={r.kind === 'menu' ? 'list.bullet' : 'drop.fill'} ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined} onPress={() => open(r)} />
           )
         }
       />

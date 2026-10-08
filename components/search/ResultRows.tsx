@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, Headline, IngredientThumb, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
@@ -17,13 +17,15 @@ interface ResultRowProps {
   /** An icon tile (ingredients, menus, recents), or a round avatar for bars and people. */
   icon?: IconName;
   avatar?: { uri: string | null };
+  /** An ingredient's drawing in place of the icon. A null id draws from the title (drafts). */
+  ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
   tag?: string;
   onPress: () => void;
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, avatar, tag, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, avatar, ingredient, tag, onPress }: ResultRowProps) {
   const ds = useDs();
   return (
     <PressableScale
@@ -32,8 +34,14 @@ export function ResultRow({ title, caption, icon, avatar, tag, onPress }: Result
       onPress={onPress}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      <View style={[styles.thumb, !avatar && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
-        {avatar ? <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} /> : <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={ds.c.muted} />}
+      <View style={[styles.thumb, !avatar && !ingredient && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
+        {ingredient ? (
+          <IngredientThumb id={ingredient.id} name={title} size={THUMB} />
+        ) : avatar ? (
+          <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} />
+        ) : (
+          <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={ds.c.muted} />
+        )}
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{title}</Headline>
