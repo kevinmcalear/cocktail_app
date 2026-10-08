@@ -56,6 +56,19 @@ const counts = { made: 0, had: 0, failed: 0 };
 let bytesBefore = 0;
 let bytesAfter = 0;
 
+/** Storage shares the database's small connection pool: back off when it's full, never push harder. */
+async function retrying<T>(work: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await work();
+    } catch (err) {
+      const busy = /too many connections/i.test(err instanceof Error ? err.message : String(err));
+      if (!busy || attempt >= 5) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+    }
+  }
+}
+
 async function one(path: string) {
   const head = await fetch(publicUrl(thumbPath(path)), { method: "HEAD" });
   if (head.ok) {
@@ -67,12 +80,15 @@ async function one(path: string) {
     return;
   }
   try {
-    const { data: blob, error } = await admin.storage.from("drinks").download(path);
-    if (error) throw error;
+    const blob = await retrying(async () => {
+      const { data, error } = await admin.storage.from("drinks").download(path);
+      if (error) throw error;
+      return data;
+    });
     if (blob.size > MAX_BYTES) throw new Error("too large");
     const pixels = await decodePixels(await blob.arrayBuffer());
     if (!pixels) throw new Error("could not decode");
-    await saveThumbnail(admin, path, pixels);
+    await retrying(() => saveThumbnail(admin, path, pixels));
     const made = await fetch(publicUrl(thumbPath(path)), { method: "HEAD" });
     bytesBefore += blob.size;
     bytesAfter += Number(made.headers.get("content-length") ?? 0);
@@ -83,8 +99,8 @@ async function one(path: string) {
   }
 }
 
-// A few at a time: downloads overlap, decoding is one CPU each.
-const workers = Number(args.concurrency ?? 4);
+// Two at a time by default: production's connection pool is small (six at once filled it).
+const workers = Number(args.concurrency ?? 2);
 let next = 0;
 await Promise.all(
   Array.from({ length: workers }, async () => {
