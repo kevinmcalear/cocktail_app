@@ -145,6 +145,8 @@ DECLARE
     v_drinks uuid[];
     v_cores uuid[];
 BEGIN
+    -- One rebuild at a time: two at once would both delete, then both insert.
+    PERFORM pg_advisory_xact_lock(hashtext('ingredient_pairs'));
     SELECT COALESCE(array_agg(drink_id), '{}'), COALESCE(array_agg(core_id), '{}') INTO v_drinks, v_cores FROM private.open_drink_cores();
     PERFORM private.write_ingredient_pairs('now', v_drinks, v_cores);
 END;
