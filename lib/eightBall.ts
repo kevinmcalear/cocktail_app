@@ -60,8 +60,16 @@ export interface EightBallDrink {
 
 export interface Candidate extends EightBallDrink {
   weight: number;
-  /** Why this drink, in a line: "You have all the bottles at home.", "Well rated near you, at Licorería Limantour." */
+  /** Why this drink, in a line: "You have all the bottles at home.", "A classic from 1919, by Pascal Olivier Count de Negroni." */
   reason: string;
+}
+
+/** A catalog classic from the family tree (hooks/useDrinkTree.ts). Every one has a spec. */
+export interface Classic extends EightBallDrink {
+  year: number | null;
+  approx: boolean;
+  creator: string | null;
+  bar: string | null;
 }
 
 export interface RatedBar {
@@ -72,11 +80,11 @@ export interface RatedBar {
 }
 
 export interface PoolInput {
-  /** Every drink the person can see (classics, their venue's, shared with them). */
-  drinks: EightBallDrink[];
-  /** Ids of the drinks their shelf covers. */
-  canMake: ReadonlySet<string>;
-  /** Drinks at public bars, with the bar they come from. */
+  /** The classics, from the drink history. */
+  classics: Classic[];
+  /** What the shelf makes (my_bar_drinks): specs the person can make tonight. */
+  canMake: EightBallDrink[];
+  /** Drinks at well-rated bars whose spec the person can see, with the bar they come from. */
   barDrinks: (EightBallDrink & { barId: string })[];
   /** Well-ranked bars, near the person when we know where they are. */
   ratedBars: RatedBar[];
@@ -84,10 +92,8 @@ export interface PoolInput {
   near: boolean;
 }
 
-/** Weights: what you can make tonight first, then what's well rated nearby, then anything. */
-export const WEIGHT = { canMake: 6, ratedBar: 2, any: 1 } as const;
-
-const ANY_REASON = 'Picked from every drink you can open.';
+/** Weights: what you can make tonight first, then what's well rated nearby, then the classics. */
+export const WEIGHT = { canMake: 6, ratedBar: 2, classic: 1 } as const;
 
 /** "Make a Negroni", "Make an Old Fashioned", "Make A Bird in the Hand". */
 export function makeA(name: string): string {
@@ -95,21 +101,32 @@ export function makeA(name: string): string {
   return `Make ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`;
 }
 
-export function buildPool({ drinks, canMake, barDrinks, ratedBars, near }: PoolInput): Candidate[] {
+/** "A classic from about 1880.", "A classic from 2005, by Sam Ross at Milk & Honey.", "A classic from the drink history." */
+export function classicReason({ year, approx, creator, bar }: Pick<Classic, 'year' | 'approx' | 'creator' | 'bar'>): string {
+  const when = year ? ` from ${approx ? 'about ' : ''}${year}` : '';
+  const who = [creator && `by ${creator}`, bar && `at ${bar}`].filter(Boolean).join(' ');
+  if (!when && !who) return 'A classic from the drink history.';
+  return `A classic${when}${who ? `, ${who}` : ''}.`;
+}
+
+/**
+ * Only drinks with a spec the person can follow: classics, what their
+ * shelf makes, and rated bars' drinks whose spec they can see.
+ */
+export function buildPool({ classics, canMake, barDrinks, ratedBars, near }: PoolInput): Candidate[] {
   const pool = new Map<string, Candidate>();
-  for (const d of drinks) {
-    const can = canMake.has(d.id);
-    pool.set(d.id, { ...d, weight: can ? WEIGHT.canMake : WEIGHT.any, reason: can ? 'You have all the bottles at home.' : ANY_REASON });
+  for (const c of classics) {
+    pool.set(c.id, { id: c.id, name: c.name, imageUrl: c.imageUrl, glass: c.glass, weight: WEIGHT.classic, reason: classicReason(c) });
   }
   const bars = new Map(ratedBars.map((b) => [b.id, b]));
   for (const d of barDrinks) {
     const bar = bars.get(d.barId);
-    const known = pool.get(d.id);
-    if (!bar || (known && known.weight > WEIGHT.any)) continue;
+    if (!bar) continue;
     // A 9.5 bar's drink comes up about twice as often as a 5's.
     const weight = WEIGHT.ratedBar * (1 + Math.max(0, Math.min(bar.score, 10)) / 10);
-    pool.set(d.id, { ...d, weight, reason: `${near ? 'Well rated near you' : 'Well rated'}, at ${bar.name}.` });
+    pool.set(d.id, { id: d.id, name: d.name, imageUrl: d.imageUrl, glass: d.glass, weight, reason: `${near ? 'Well rated near you' : 'Well rated'}, at ${bar.name}.` });
   }
+  for (const d of canMake) pool.set(d.id, { ...d, weight: WEIGHT.canMake, reason: 'You have all the bottles at home.' });
   return [...pool.values()];
 }
 
