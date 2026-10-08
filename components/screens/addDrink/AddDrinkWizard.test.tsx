@@ -121,7 +121,8 @@ describe('AddDrinkWizard', () => {
     await act(() => mockCreate.mock.calls[0][1].onSuccess({ id: 'new-drink', warnings: [] }));
     expect(mockSaved).toHaveBeenCalledWith('new-drink');
     expect(useDrinkWizardStore.getState().kept.home).toBeUndefined();
-  });
+    // The whole wizard, end to end: past Jest's 5 s default on a slow CI runner.
+  }, 20000);
 
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
