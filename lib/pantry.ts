@@ -36,7 +36,7 @@ export function arrangeShelf<T extends ShelfBottle>(bottles: T[], sort: ShelfSor
   const byName = (a: T, b: T) => a.name.localeCompare(b.name);
   if (sort === 'az') return [...found].sort(byName);
   // Styles A to Z, bottles without one last.
-  return [...found].sort((a, b) => (a.kind ?? '￿').localeCompare(b.kind ?? '￿') || byName(a, b));
+  return [...found].sort((a, b) => Number(!a.kind) - Number(!b.kind) || (a.kind ?? '').localeCompare(b.kind ?? '') || byName(a, b));
 }
 
 /** "Bourbon · 45.2%", "Fratelli Branca · 30%", or just the style. */
