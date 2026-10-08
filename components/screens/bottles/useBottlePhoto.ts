@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 
 import { useSpecCatalog, useVenueBottle } from '@/hooks/useBulk';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
-import { kindForCopy, matchIngredient, matchKey, type CatalogItem, type Match } from '@/lib/match';
+import { matchIngredient, matchKey, type CatalogItem, type Match } from '@/lib/match';
 import { readBottlePhoto, type BottlePhoto, type BottleReading } from '@/lib/readBottle';
 
 /** Where the bottles go: your own shelf, or a venue's ingredients. */
@@ -66,7 +66,9 @@ export function useBottlePhoto(target: BottleTarget) {
         return setState(at, i, { status: 'added', item, created: false });
       }
       const name = item?.name ?? reading.name;
-      const id = await venue.add.mutateAsync({ name, genericId: item ? kindForCopy(item) : kindId, brand: reading.brand, abv: reading.abv });
+      // A venue's copy keeps the shared bottle's name, so it has to say it's a version of that bottle
+      // (guard_ingredient_name, 20261008100000); specs that call for the shared one still find it.
+      const id = await venue.add.mutateAsync({ name, genericId: item ? item.id : kindId, brand: reading.brand, abv: reading.abv });
       setState(at, i, { status: 'added', item: { id, name, genericId: null, barId: venueId }, created: true });
     } catch (e) {
       setState(at, i, { status: 'failed', message: message(e, 'Couldn’t add that bottle.') });
