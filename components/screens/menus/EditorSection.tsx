@@ -65,7 +65,7 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onS
           <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
         </PressableScale>
         <View style={styles.thumb}>
-          <DrinkImage source={item.imageUrl} generated={item.isSketch} glass={item.glass} itemId={item.id} accessibilityLabel={item.name} radius="control" hideTag />
+          <DrinkImage thumb source={item.imageUrl} generated={item.isSketch} glass={item.glass} itemId={item.id} accessibilityLabel={item.name} radius="control" hideTag />
         </View>
         <View style={styles.flex}>
           <Headline numberOfLines={2}>{item.name}</Headline>

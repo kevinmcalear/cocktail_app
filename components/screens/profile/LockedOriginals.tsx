@@ -34,7 +34,7 @@ export function LockedOriginals({ originals, selfId, details, emptyText }: { ori
           >
             {details ? (
               <View style={styles.thumb}>
-                <DrinkImage source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} radius="control" hideTag />
+                <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} radius="control" hideTag />
               </View>
             ) : null}
             <View style={styles.text}>

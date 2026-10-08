@@ -1,8 +1,10 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii, space } from '@/constants/tokens';
+import { thumbUrl } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
 import { IngredientDrawing } from './IngredientDrawing';
@@ -27,6 +29,11 @@ export interface DrinkImageProps {
   style?: StyleProp<ViewStyle>;
   /** An ingredient instead of a drink: always its drawing (lib/sketch/ingredientArt.ts), never a photo. */
   ingredient?: { id: string | null; name: string } | null;
+  /**
+   * List or grid size: the 480 px copy (lib/thumbnails.ts) instead of the
+   * original, which can be 2-3 MB. Falls back to the original until the copy exists.
+   */
+  thumb?: boolean;
 }
 
 /**
@@ -34,10 +41,14 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
+  // The original whose thumbnail failed (not made yet, or a format the worker can't read).
+  const [noThumb, setNoThumb] = useState<string | null>(null);
+  const small = thumb && typeof uri === 'string' && noThumb !== uri ? thumbUrl(uri) : null;
+  const shown = small ?? uri;
   const glassIcon = (
     <View style={styles.empty}>
       <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
@@ -56,12 +67,13 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
         // Memory and disk: lists scroll the same pictures back into view. The
         // recycling key blanks a recycled list cell instead of flashing its last drink.
         <Image
-          source={typeof uri === 'string' ? { uri } : uri}
+          source={typeof shown === 'string' ? { uri: shown } : shown}
           style={styles.fill}
           contentFit="cover"
           transition={200}
           cachePolicy="memory-disk"
           recyclingKey={String(uri)}
+          onError={small ? () => setNoThumb(uri as string) : undefined}
         />
       ) : itemId ? (
         <DrawnSketch itemId={itemId} fallback={glassIcon} />
