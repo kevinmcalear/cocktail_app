@@ -12,9 +12,10 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, STEP_COPY, WIZARD_STEPS,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, sketchLook, STEP_COPY, WIZARD_STEPS,
   type WizardDraft, type WizardStep,
 } from '@/lib/drinkWizard';
+import { draftSketchInputs } from '@/lib/sketch/draft';
 import { toastDone } from '@/lib/toast';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -112,7 +113,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
 
   const save = () =>
     create.mutate(
-      { draft, barId, myProfileId: me?.id ?? null, menuDraftId, menuSectionId },
+      { draft, barId, myProfileId: me?.id ?? null, menuDraftId, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
       {
         onSuccess: ({ id, warnings }) => {
           clear(place);
