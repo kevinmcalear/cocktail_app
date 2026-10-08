@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { areaFromViewport, cameraFor, cameraForArea, pinLabel, pinLook, pinsFrom, viewportFrom } from './discoverMap';
+import { areaFromViewport, cameraFor, cameraForArea, dotsOf, pinLabel, pinLook, pinsFrom, viewportFrom } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -67,3 +67,8 @@ assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 0.0001
 assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 90, longitudeDelta: 180 }).radiusKm, 200);
 
 console.log('discoverMap: ok');
+
+// --- dots: the map's own layer for pins past the drawn ones, labelled like the pins, closed bars unlabelled ---
+const dots = dotsOf([{ ...pins[0], drinks: 12 }, pins[1], { ...pins[1], id: 'shut', closed: 'Closed 2019' }]);
+assert.deepEqual(dots.features.map((f) => f.properties), [{ id: 'a', label: '12' }, { id: 'b', label: '' }, { id: 'shut', label: '' }]);
+assert.deepEqual(dots.features[0].geometry.coordinates, [144.96, -37.8]);

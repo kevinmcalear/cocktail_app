@@ -1,15 +1,37 @@
-import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature, Marker } from 'maplibre-gl';
 import { useEffect, useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
-import { MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
+import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
 export const mapAvailable = true;
 
 type MapLibre = typeof import('maplibre-gl');
+
+/**
+ * Pins drawn as HTML (logo, score), best first. Past these (and the selected
+ * one) the rest are labelled dots the map draws itself, clustered when they
+ * crowd: hundreds of HTML markers, each moved every frame, made panning slow.
+ */
+const RICH_PINS = 40;
+const DOTS = 'discover-dots';
+const DOT_LAYERS = ['discover-clusters', 'discover-dots', 'discover-dot-labels'];
+
+/** The dots source and its layers (the same look as the native map's), added again after a style change wipes them. */
+function addDots(m: MapLibreMap, data: GeoJSON.FeatureCollection) {
+  if (m.getSource(DOTS)) return;
+  const ink = backbar.light.ink;
+  const ring = backbar.dark.ink;
+  const text = { 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true };
+  m.addSource(DOTS, { type: 'geojson', data, cluster: true, clusterRadius: 44 });
+  m.addLayer({ id: 'discover-clusters', type: 'circle', source: DOTS, filter: ['has', 'point_count'], paint: { 'circle-color': ring, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 17, 50, 21], 'circle-stroke-color': ink, 'circle-stroke-width': 2 } });
+  m.addLayer({ id: 'discover-cluster-counts', type: 'symbol', source: DOTS, filter: ['has', 'point_count'], layout: { ...text, 'text-field': ['get', 'point_count_abbreviated'], 'text-size': type.caption.fontSize }, paint: { 'text-color': ink } });
+  m.addLayer({ id: 'discover-dots', type: 'circle', source: DOTS, filter: ['!', ['has', 'point_count']], paint: { 'circle-color': ink, 'circle-radius': ['case', ['==', ['get', 'label'], ''], 6, 13], 'circle-stroke-color': ring, 'circle-stroke-width': 2 } });
+  m.addLayer({ id: 'discover-dot-labels', type: 'symbol', source: DOTS, filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'label'], '']], layout: { ...text, 'text-field': ['get', 'label'], 'text-size': type.caption.fontSize - 1 }, paint: { 'text-color': ring } });
+}
 
 /**
  * Maplibre's stylesheet, loaded with the map. A static CSS import made Expo
@@ -85,6 +107,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   const map = useRef<MapLibreMap | null>(null);
   const lib = useRef<MapLibre | null>(null);
   const markers = useRef(new Map<string, { marker: Marker; el: HTMLElement }>());
+  const dots = useRef<GeoJSON.FeatureCollection>(dotsOf([]));
   // Set while the map is moving because we moved it.
   const ours = useRef(false);
   const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera });
@@ -96,7 +119,10 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     const m = map.current;
     const ml = lib.current;
     if (!m || !ml) return;
-    const { pins: now, selectedId: sel, accent: acc } = latest.current;
+    const { pins: all, selectedId: sel, accent: acc } = latest.current;
+    const now = all.filter((p, i) => i < RICH_PINS || p.id === sel);
+    dots.current = dotsOf(all.filter((p, i) => i >= RICH_PINS && p.id !== sel));
+    (m.getSource(DOTS) as GeoJSONSource | undefined)?.setData(dots.current);
     const keep = new Set(now.map((p) => p.id));
     for (const [id, { marker }] of markers.current) {
       if (!keep.has(id)) {
@@ -153,7 +179,24 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         const b = m.getBounds();
         latest.current.onViewportChange(viewportFrom(m.getCenter(), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]));
       });
-      m.on('click', () => latest.current.onSelect(null));
+      // The style loads (and loads again on a scheme change) without our dots: add them each time.
+      m.on('style.load', () => addDots(m, dots.current));
+      // A dot opens its bar; a cluster zooms in until it comes apart; anywhere else clears the selection.
+      m.on('click', (e) => {
+        const f: MapGeoJSONFeature | undefined = m.getLayer(DOT_LAYERS[0]) ? m.queryRenderedFeatures(e.point, { layers: DOT_LAYERS })[0] : undefined;
+        const props = f?.properties ?? {};
+        if (props.cluster && f?.geometry.type === 'Point') {
+          const [lng, lat] = f.geometry.coordinates;
+          void (m.getSource(DOTS) as GeoJSONSource).getClusterExpansionZoom(props.cluster_id).then((zoom) => {
+            ours.current = true;
+            m.easeTo({ center: [lng, lat], zoom, duration: 400 });
+          });
+        } else latest.current.onSelect(typeof props.id === 'string' ? props.id : null);
+      });
+      for (const id of DOT_LAYERS) {
+        m.on('mouseenter', id, () => (m.getCanvas().style.cursor = 'pointer'));
+        m.on('mouseleave', id, () => (m.getCanvas().style.cursor = ''));
+      }
       map.current = m;
       syncPins();
     });
@@ -182,7 +225,8 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     m.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
   }, [camera]);
 
-  useEffect(syncPins);
+  // Only when what's pinned changes: moving every marker's styles on each render was most of the cost.
+  useEffect(syncPins, [pins, selectedId, accent.fill, accent.text]);
 
   return <View ref={host} style={[styles.fill, style]} />;
 }

@@ -45,15 +45,39 @@ export function scoreWords(drink?: number, bar?: number): string | null {
   return words.length ? words.join(', ') : null;
 }
 
+/** One drink at its bar: the bar and where it is under the name, the scores (when given) at the end. */
+export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scores?: DrinkScores }) {
+  const bar = d.bar;
+  const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
+  const drinkScore = scores?.drinks[d.id];
+  const barScore = scores?.bars[d.barId]?.score;
+  const said = scoreWords(drinkScore, barScore);
+  return (
+    <DrinkRow
+      name={d.name}
+      href={itemHref('Cocktail', d.id)}
+      itemId={d.id}
+      imageUrl={d.imageUrl}
+      glass={null}
+      caption={caption}
+      logo={{ uri: bar.logo, name: bar.name }}
+      tag={d.menu.past ?? undefined}
+      note={d.description ?? undefined}
+      trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
+      label={said ? [d.name, caption, d.menu.past, said, d.description].filter(Boolean).join('. ') : undefined}
+    />
+  );
+}
+
 /**
  * Drinks, each with the bar that makes it (and their scores, when given);
  * the first `limit`, then more a page at a time: from what's loaded, then
- * the server's next page (`more`). `endless`: every loaded drink, the
- * next page coming as the list around it scrolls to its end (no button).
+ * the server's next page (`more`). Phones' Discover sheet virtualizes its
+ * rows instead (DiscoverMapPane, with DrinkAtBarRow).
  */
-export function DrinkAtBarList({ drinks, limit = 8, scores, more, endless = false }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks; endless?: boolean }) {
+export function DrinkAtBarList({ drinks, limit = 8, scores, more }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks }) {
   const [count, setCount] = useState(limit);
-  const shown = endless ? drinks : drinks.slice(0, count);
+  const shown = drinks.slice(0, count);
   const total = Math.max(more?.total ?? drinks.length, drinks.length);
   const next = Math.min(MORE, total - shown.length);
   const showMore = () => {
@@ -63,32 +87,10 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more, endless = fals
   };
   return (
     <View role="list">
-      {shown.map((d) => {
-        const bar = d.bar;
-        const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
-        const drinkScore = scores?.drinks[d.id];
-        const barScore = scores?.bars[d.barId]?.score;
-        const said = scoreWords(drinkScore, barScore);
-        return (
-          <DrinkRow
-            key={d.id}
-            name={d.name}
-            href={itemHref('Cocktail', d.id)}
-            itemId={d.id}
-            imageUrl={d.imageUrl}
-            glass={null}
-            caption={caption}
-            logo={{ uri: bar.logo, name: bar.name }}
-            tag={d.menu.past ?? undefined}
-            note={d.description ?? undefined}
-            trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
-            label={said ? [d.name, caption, d.menu.past, said, d.description].filter(Boolean).join('. ') : undefined}
-          />
-        );
-      })}
-      {endless ? (
-        more?.loading ? <ListNote>Loading more…</ListNote> : null
-      ) : next > 0 ? (
+      {shown.map((d) => (
+        <DrinkAtBarRow key={d.id} drink={d} scores={scores} />
+      ))}
+      {next > 0 ? (
         <View style={styles.more}>
           <Button label={more?.loading && shown.length >= drinks.length ? 'Loading…' : `Show ${next} more of ${total}`} variant="ghost" onPress={showMore} />
         </View>
