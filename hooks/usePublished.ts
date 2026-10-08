@@ -42,6 +42,9 @@ export interface PublicBar {
   handle: string;
 }
 
+/** Enough of a bar to name it and link its page. */
+export type BarCredit = Pick<PublicBar, 'name' | 'handle'>;
+
 export interface LiveRelease {
   id: string;
   barId: string;
@@ -132,6 +135,14 @@ export async function fetchPublished(ids: string[]): Promise<PublishedDrink[]> {
   return ((data ?? []) as PublishedRow[]).map(toPublishedDrink);
 }
 
+/** The bar a shared drink is credited to (its profile may have no venue yet). */
+async function fetchCreditedBar(profileId: string | null): Promise<BarCredit | null> {
+  if (!profileId) return null;
+  const { data, error } = await supabase.from('profiles').select('display_name, handle').eq('id', profileId).eq('kind', 'bar').eq('is_public', true).maybeSingle();
+  if (error) throw error;
+  return data ? { name: data.display_name as string, handle: data.handle as string } : null;
+}
+
 /** Bars' public names and handles, by bar id. */
 export async function fetchPublicBars(barIds: (string | null)[]): Promise<PublicBar[]> {
   const ids = [...new Set(barIds.filter((id): id is string => !!id))];
@@ -165,6 +176,8 @@ export function useNewFromBars() {
           .from('published_items')
           .select(PUBLISHED_COLUMNS)
           .eq('is_reference', false)
+          // Not the catalog and seeded signatures, which are listed so their cards open signed out.
+          .eq('is_shared', false)
           .in('item_type', ['cocktail', 'beer', 'wine'])
           .order('published_at', { ascending: false, nullsFirst: false })
           .limit(NEW_DRINKS),
@@ -181,7 +194,8 @@ export function useNewFromBars() {
 
 export interface PublishedDrinkPage {
   drink: PublishedDrink;
-  bar: PublicBar | null;
+  /** Its venue's bar, or for a shared drink the bar it's credited to. */
+  bar: BarCredit | null;
   /** Glass, ice and family names, from the drink's reference rows. */
   glass: { name: string; iconKey: string | null } | null;
   ice: string | null;
@@ -200,9 +214,9 @@ export function usePublishedDrink(id: string | null | undefined) {
       const [drink] = await fetchPublished([id!]);
       if (!drink) return null;
       const refIds = [drink.glasswareId, drink.iceId, drink.familyId].filter((x): x is string => !!x);
-      const [refs, bars, recipes] = await Promise.all([
+      const [refs, bar, recipes] = await Promise.all([
         refIds.length ? supabase.from('published_items').select('id, name, icon_key').in('id', refIds) : Promise.resolve({ data: [], error: null }),
-        fetchPublicBars([drink.barId]),
+        drink.barId ? fetchPublicBars([drink.barId]).then((b) => b[0] ?? null) : fetchCreditedBar(drink.originBarProfileId),
         drink.publishMode === 'spec'
           ? supabase
               .from('app_recipe_presentation')
@@ -216,7 +230,7 @@ export function usePublishedDrink(id: string | null | undefined) {
       const glass = ref(drink.glasswareId);
       return {
         drink,
-        bar: bars[0] ?? null,
+        bar,
         glass: glass ? { name: glass.name, iconKey: glass.icon_key } : null,
         ice: ref(drink.iceId)?.name ?? null,
         family: ref(drink.familyId)?.name ?? null,

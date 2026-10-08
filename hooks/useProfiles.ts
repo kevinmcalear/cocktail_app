@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { LINEAGE_COLUMNS } from '@/hooks/useLineage';
+import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
-import type { LineageDrink } from '@/lib/lineage';
+import type { CreditProfile, CreditStatus, LineageDrink } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { groupMenuCredits, parseProfileRef, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
@@ -79,14 +79,65 @@ async function creditedTo(profileId: string): Promise<string[]> {
   return [`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])];
 }
 
+interface PublicOriginalRow {
+  id: string;
+  name: string;
+  item_type: string;
+  description: string | null;
+  origin: string | null;
+  origin_year: number | null;
+  riff_of_id: string | null;
+  credit_status: CreditStatus | null;
+  creator_profile_id: string | null;
+  origin_bar_profile_id: string | null;
+  image_url: string | null;
+  image_is_generated: boolean | null;
+}
+
+/**
+ * Signed out: the same drinks' public cards (published_items), with who made
+ * them. A Locked page's cards come back without description, maker or picture.
+ */
+async function publicOriginals(profileId: string): Promise<Original[]> {
+  const { data, error } = await supabase
+    .from('published_items')
+    .select('id, name, item_type, description, origin, origin_year, riff_of_id, credit_status, creator_profile_id, origin_bar_profile_id, image_url, image_is_generated')
+    .eq('is_reference', false)
+    .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
+    .order('name')
+    .limit(100);
+  if (error) throw error;
+  const rows = (data ?? []) as PublicOriginalRow[];
+  const makerIds = [...new Set(rows.flatMap((r) => [r.creator_profile_id, r.origin_bar_profile_id]).filter((x): x is string => !!x))];
+  const makers = makerIds.length ? await supabase.from('profiles').select(PROFILE_COLUMNS).in('id', makerIds) : { data: [], error: null };
+  if (makers.error) throw makers.error;
+  const byId = new Map(((makers.data ?? []) as CreditProfile[]).map((p) => [p.id, p]));
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    item_type: r.item_type,
+    description: r.description,
+    origin: r.origin,
+    origin_year: r.origin_year,
+    riff_of_id: r.riff_of_id,
+    credit_status: r.credit_status,
+    creator: (r.creator_profile_id && byId.get(r.creator_profile_id)) || null,
+    origin_bar: (r.origin_bar_profile_id && byId.get(r.origin_bar_profile_id)) || null,
+    glass: null,
+    item_images: r.image_url ? [{ angle: 'hero', is_generated: r.image_is_generated, images: { url: r.image_url } }] : [],
+  }));
+}
+
 /** Drinks credited to a profile: made by the person (alone or with others), or first made at the bar. */
 export function useProfileOriginals(profileId: string | null | undefined) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const userId = useAuth().user?.id;
+  const viewer = viewerScoped(userId);
   return useQuery({
     queryKey: ['profile-originals', profileId, viewer.key],
     meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<Original[]> => {
+      if (!userId) return publicOriginals(profileId!);
       const { data, error } = await supabase
         .from('items')
         .select(ORIGINAL_COLUMNS)

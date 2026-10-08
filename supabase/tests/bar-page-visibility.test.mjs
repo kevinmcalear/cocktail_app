@@ -1,7 +1,8 @@
 // Bar page visibility: an unclaimed bar's drinks show names, credits and
 // descriptions but not their specs, and a claimed bar's Admins choose Locked,
 // Names + descriptions or Open
-// (supabase/migrations/20261007130000_bar_page_visibility.sql).
+// (supabase/migrations/20261007130000_bar_page_visibility.sql). Signed out
+// sees the same card, never a spec (20261009300000_signed_out_drink_cards.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -64,6 +65,12 @@ const published = async (client, key) => {
     .eq('is_reference', false);
   assert.ifError(error);
   return data[0] ?? null;
+};
+
+const SKETCH = {
+  v: 1, glass: 'coupe', ice: 'none', method: 'stir', liquid: { hex: '#e8dcb0', alpha: 0.6 },
+  foam: null, float: null, bleed: null, fizz: false, garnish: null,
+  from: { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'data' }, coverage: 1,
 };
 
 const setPage = (barId, page) => db.query('UPDATE public.bars SET page_visibility = $2 WHERE id = $1', [barId, page]);
@@ -130,9 +137,22 @@ describe('an unclaimed bar', () => {
     assert.equal(locked.data, true);
   });
 
-  test('signed out gets no spec rows either', async () => {
+  test('signed out sees the same card (name, description, credit, drawing), but no spec rows', async () => {
     assert.deepEqual(await specRows(anon, 'mothMartini'), []);
-    assert.equal(await published(anon, 'mothMartini'), null);
+    const card = await published(anon, 'mothMartini');
+    assert.equal(card.name, `Moth Martini ${run}`);
+    assert.equal(card.description, 'Dry, floral, a little saline.');
+    assert.equal(card.creator_profile_id, ids.person);
+    assert.equal(card.publish_mode, 'description');
+    assert.ifError((await service.rpc('save_item_sketch', { p_item_id: ids.items.mothMartini, p_inputs: SKETCH, p_source: 'rules', p_spec_fingerprint: 'test', p_rules_version: 1 })).error);
+    const { data, error } = await anon.from('item_sketches').select('item_id').eq('item_id', ids.items.mothMartini);
+    assert.ifError(error);
+    assert.equal(data.length, 1);
+  });
+
+  test("signed out, a shared classic's card shows but not its spec", async () => {
+    assert.equal((await published(anon, 'classic')).publish_mode, 'description');
+    assert.deepEqual(await specRows(anon, 'classic'), []);
   });
 
   test('a classic credited to the bar keeps its spec', async () => {
@@ -213,6 +233,11 @@ describe('a claimed bar chooses who sees its page', () => {
     assert.equal(house.creator_profile_id, null);
     assert.equal(house.image_url, null);
     assert.deepEqual(await specRows(anon, 'house'), []);
+    // A credited drink of a locked page keeps its drawing from the public too.
+    assert.ifError((await service.rpc('save_item_sketch', { p_item_id: ids.items.ryeSour, p_inputs: SKETCH, p_source: 'rules', p_spec_fingerprint: 'test', p_rules_version: 1 })).error);
+    assert.equal((await published(anon, 'ryeSour')).description, null);
+    const sketch = await anon.from('item_sketches').select('item_id').eq('item_id', ids.items.ryeSour);
+    assert.ok(sketch.error || sketch.data.length === 0, 'anon reads no drawing');
     assert.deepEqual(await specRows(users.stranger.client, 'ryeSour'), []);
     await setPage(ids.bar, 'open');
   });

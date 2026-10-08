@@ -43,6 +43,7 @@ export function ReleaseScreen({ id }: { id: string }) {
                   href={`/d/${d.id}?release=${release.id}`}
                   imageUrl={d.imageUrl}
                   glass={null}
+                  itemId={d.id}
                   caption={d.publishMode === 'spec' ? 'With the spec' : (d.description ?? undefined)}
                 />
               </View>
