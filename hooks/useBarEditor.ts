@@ -159,6 +159,7 @@ export function useBarEditor(barId: string) {
         roleLevel,
         slug: bar?.slug ?? null,
         logoUrl: bar?.logo_url ?? null,
+        drinkCount: detailData?.drinkCount ?? 0,
         name: form?.name ?? '',
         setName: setter('name'),
         visibilityLevel: form?.visibilityLevel ?? '10',

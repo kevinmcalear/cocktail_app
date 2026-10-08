@@ -19,7 +19,7 @@ const bar = {
   default_prep_level: 40,
 };
 
-jest.mock('@/hooks/useBarDetail', () => ({ useBarDetail: () => ({ data: { bar, members: [], items: [] }, isLoading: false }) }));
+jest.mock('@/hooks/useBarDetail', () => ({ useBarDetail: () => ({ data: { bar, drinkCount: 12 }, isLoading: false }) }));
 jest.mock('@/hooks/useBars', () => ({ useBars: () => ({ data: [{ bar_id: 'b1', role_level: 40 }] }) }));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: (...args: unknown[]) => mockRpc(...args) } }));
 
@@ -29,7 +29,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 test('edits stay a draft until saved, Discard drops them, and a save keeps the Brand screen’s logo and colours', async () => {
   const { result } = await renderHook(() => useBarEditor('b1'), { wrapper });
-  expect(result.current).toMatchObject({ loading: false, isDirty: false, name: 'Little Rye', specificLevel: '30' });
+  expect(result.current).toMatchObject({ loading: false, isDirty: false, name: 'Little Rye', specificLevel: '30', drinkCount: 12 });
 
   await act(() => result.current.setName('Little Rye Bar'));
   expect(result.current.isDirty).toBe(true);
