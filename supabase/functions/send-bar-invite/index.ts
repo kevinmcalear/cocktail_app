@@ -2,21 +2,11 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { requireUser } from "../_shared/auth.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
+import { isLocalStack } from "../_shared/localStack.ts";
+import { DEFAULT_SITE, siteOrigin } from "../_shared/site.ts";
 
 // ponytail: copied from lib/roles.ts (functions can't import app code); keep in step.
 const ROLE_LABELS: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "Bartender", 35: "Drink Creator", 40: "Admin" };
-
-/** The app's own origin, which the email links back to. Auth also checks it against its redirect allowlist. */
-function siteOrigin(value: unknown): string {
-  try {
-    const url = new URL(String(value));
-    const local = url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1");
-    if (url.protocol === "https:" || local) return url.origin;
-  } catch {
-    // fall through
-  }
-  throw new HttpError(400, "site is required.");
-}
 
 /**
  * Emails someone their invite to a venue. The invite itself is made first by
@@ -33,7 +23,7 @@ serveJson("send-bar-invite", async (req) => {
   const body = await req.json().catch(() => ({}));
   const barId = requireUuid(body?.bar_id, "bar_id");
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
-  const site = siteOrigin(body?.site);
+  const site = siteOrigin(body?.site, Deno.env.get("SITE_URL") || DEFAULT_SITE, isLocalStack());
   if (!email) throw new HttpError(400, "email is required.");
 
   // bar_invites RLS shows a venue's invites to its Admins and an invite to
