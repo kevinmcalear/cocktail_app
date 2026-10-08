@@ -27,6 +27,17 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
     page(!o.enabled ? [] : f.kinds.includes('martini') ? mockDrinks.filter((d) => mockMartinis.has(d.id)) : o.barId ? mockDrinks.filter((d) => d.barId === o.barId) : mockDrinks),
 }));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
+// The phone sheet: its content shows, and snapping is recorded.
+const mockSnap = jest.fn();
+jest.mock('@gorhom/bottom-sheet', () => {
+  const { forwardRef, useImperativeHandle } = jest.requireActual<typeof import('react')>('react');
+  const { ScrollView, View } = jest.requireActual<typeof import('react-native')>('react-native');
+  const BottomSheet = forwardRef(function BottomSheet({ children }: { children: React.ReactNode }, ref) {
+    useImperativeHandle(ref, () => ({ snapToIndex: mockSnap }));
+    return <View>{children}</View>;
+  });
+  return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView };
+});
 jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');
   return {
@@ -73,12 +84,12 @@ function drink(id: string, name: string, styles: string[] = []): DiscoverDrink {
 
 const more = { total: null, hasMore: false, loadMore: () => {}, loading: false };
 
-function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null) {
+function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side') {
   mockDrinks = drinks;
   mockBars = [{ ...bar, drinks: drinks.length }];
   return renderWithTamagui(
     <DiscoverMapPane
-      mode="side"
+      mode={mode}
       area={area}
       onArea={() => {}}
       drink={pick}
@@ -106,6 +117,21 @@ test('a drinks pin lists those cocktails in the card', async () => {
 
   await fireEvent.press(screen.getByRole('button', { name: 'Show all 4' }));
   expect(screen.getByText('Martini No. 4')).toBeTruthy();
+});
+
+test("on phones the card previews the bar's drinks and Show all opens the sheet", async () => {
+  const drinks = [drink('d1', 'House Martini'), drink('d2', 'Bamboo'), drink('d3', 'Vesper'), drink('d4', 'Martini No. 4')];
+  await renderPane(drinks, null, 'sheet');
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
+
+  // The card and the sheet's list both show the first ones; only the sheet has the fourth.
+  expect(screen.getAllByText('House Martini')).toHaveLength(2);
+  expect(screen.getAllByText('Martini No. 4')).toHaveLength(1);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Show all 4' }));
+  expect(mockSnap).toHaveBeenLastCalledWith(2);
+  await fireEvent.press(screen.getByRole('button', { name: 'Show the list' }));
+  expect(mockSnap).toHaveBeenLastCalledWith(1);
 });
 
 test("the card shows the bar's top drinks once they have scores", async () => {

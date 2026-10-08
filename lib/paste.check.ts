@@ -7,6 +7,7 @@ import {
   appendReading,
   pasteRows,
   placedGroups,
+  readingText,
   parseAmount,
   parseBringIn,
   parseMenuPaste,
@@ -164,3 +165,31 @@ assert.equal(listed[1].lines.length, 0);
 const unmeasured = compileBringIn(listed, catalog, 'bar', {}, {}, [], []);
 assert.equal(unmeasured.error, null);
 assert.deepEqual(unmeasured.write?.items[0].lines.map((l) => [l.amount, l.unit]), [[null, null], [null, null]]);
+
+// A read-anything reading lands in Bring in as text it parses back the same way.
+const fromReader = readingText([
+  {
+    name: 'Orchard Fizz',
+    by: 'Little Rye',
+    lines: [
+      { amount: 1.5, unit: 'oz', ingredient: 'Calvados', unsure: false },
+      { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true },
+      { amount: null, unit: 'top', ingredient: 'Soda Water', unsure: false },
+    ],
+    method: 'Shaken',
+    glass: 'Collins',
+    ice: null,
+    garnish: 'Lemon twist',
+    notes: null,
+  },
+]);
+assert.deepEqual(fromReader.unsure, ['Orchard Fizz: Lemon Juice']);
+const back = parseBringIn(fromReader.text, 'drinks');
+assert.equal(back.length, 1);
+assert.equal(back[0].name, 'Orchard Fizz');
+assert.deepEqual(back[0].lines, [
+  { amount: 1.5, unit: 'oz', name: 'Calvados' },
+  { amount: 0.75, unit: 'oz', name: 'Lemon Juice' },
+  { amount: null, unit: null, name: 'Soda Water' },
+]);
+assert.deepEqual(back[0].notes, ['Shaken', 'Collins', 'Garnish: Lemon twist', 'By Little Rye']);

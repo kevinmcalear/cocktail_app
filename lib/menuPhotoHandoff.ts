@@ -1,5 +1,5 @@
 import type { HomeNight } from '@/hooks/useMenuMutations';
-import type { MenuPhoto } from '@/lib/readMenu';
+import type { MenuPhoto, MenuReading } from '@/lib/readMenu';
 
 /** What New menu hands the photo review (/menus/from-photo): the pages and the new menu's details. */
 export interface MenuPhotoStart {
@@ -8,6 +8,8 @@ export interface MenuPhotoStart {
   /** Empty: the name printed on the menu. */
   name: string;
   night?: HomeNight;
+  /** Already read (Bring in): shown as is, not read again. */
+  reading?: MenuReading;
 }
 
 // One pending start, kept until the review screen is done with it, so a

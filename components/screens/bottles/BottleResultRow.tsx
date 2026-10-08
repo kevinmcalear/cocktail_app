@@ -1,19 +1,12 @@
-import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
-
-import { Button, Caption, Headline, useDs } from '@/components/ds';
-import { TextLink } from '@/components/screens/menus/MenuPhotoRows';
-import { Choice } from '@/components/screens/menus/MenuSheet';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space } from '@/constants/tokens';
+import { Caption, ReviewRow } from '@/components/ds';
 import { matchKey, type CatalogItem } from '@/lib/match';
 
-import type { BottleRow, BottleTarget } from './useBottlePhoto';
+import type { BottleChoice, BottleRow, BottleTarget } from './useBottlePhoto';
 
 interface BottleResultRowProps {
   row: BottleRow;
   target: BottleTarget;
-  onPick: (item: CatalogItem | null, kindId?: string | null) => void;
+  onChoose: (chosen: BottleChoice | null) => void;
   onUndo: () => void;
 }
 
@@ -22,70 +15,68 @@ function details(row: BottleRow): string {
   return [row.reading.kind, row.reading.abv ? `${row.reading.abv}%` : null].filter(Boolean).join(' · ');
 }
 
-/** One bottle read from the photo: added (with Undo), already there, a pick, or not in the catalog. */
-export function BottleResultRow({ row, target, onPick, onUndo }: BottleResultRowProps) {
-  const ds = useDs();
+/**
+ * One bottle read from a photo: ticked to add, waiting for a pick, skipped,
+ * not in the catalog, or (after Add) added with Undo or already there.
+ */
+export function BottleResultRow({ row, target, onChoose, onUndo }: BottleResultRowProps) {
   const where = target.kind === 'home' ? 'your shelf' : `${target.name}’s ingredients`;
   const locked = target.kind === 'venue' && !target.canEdit;
-  const { state, match } = row;
-  const as = (item: CatalogItem) => (matchKey(item.name) === matchKey(row.reading.name) ? '' : ` as ${item.name}`);
-  const choices = match.kind === 'one' ? [match.item] : match.kind === 'pick' ? match.items : [];
+  const { state, match, chosen } = row;
+  const title = row.reading.name;
+  const as = (item: CatalogItem) => (matchKey(item.name) === matchKey(title) ? '' : ` as ${item.name}`);
+  const say = (status: string) => [status, details(row)].filter(Boolean).join(' · ');
+  const failed = state.status === 'failed' ? <Caption tone="accent">{state.message}</Caption> : null;
+  const kind = match.kind === 'none' ? match.kindItem : null;
+  const skip = { label: 'Skip', hint: `Leaves ${title} out`, onPress: () => onChoose(null) };
 
-  let body: ReactNode = null;
-  if (state.status === 'adding') body = <Caption tone="muted">Adding…</Caption>;
-  else if (state.status === 'added') {
-    body = (
-      <View style={styles.line}>
-        <IconSymbol name="checkmark.circle.fill" size={18} color={ds.accentText} />
-        <Caption style={styles.flex}>{`Added to ${where}${as(state.item)}`}</Caption>
-        <TextLink label="Undo" accessibilityHint={`Takes ${state.item.name} back off ${where}`} onPress={onUndo} />
-      </View>
-    );
-  } else if (state.status === 'already') {
-    body = <Caption tone="muted">{`Already in ${where}${as(state.item)}`}</Caption>;
-  } else if (locked) {
-    body = <Caption tone="muted">Adding to the venue opens at Drink Creator.</Caption>;
-  } else if (choices.length) {
-    body = (
-      <View style={styles.gap}>
-        <Caption tone="muted">{match.kind === 'one' ? 'Add it?' : 'Which one is it?'}</Caption>
-        <View style={styles.choices}>
-          {choices.map((item) => (
-            <Choice key={item.id} label={item.name} selected={false} onPress={() => onPick(item)} />
-          ))}
-        </View>
-      </View>
-    );
-  } else if (match.kind === 'none') {
-    const kind = match.kindItem;
-    body = (
-      <View style={styles.gap}>
-        <Caption tone="muted">Not in the catalog yet.</Caption>
-        {target.kind === 'venue' ? (
-          <Button label="Add as a new ingredient" icon="plus" variant="secondary" accessibilityHint={kind ? `Adds it as a kind of ${kind.name}` : undefined} onPress={() => onPick(null, kind?.id ?? null)} style={styles.start} />
-        ) : kind ? (
-          <Button label={`Add ${kind.name} instead`} icon="plus" variant="secondary" onPress={() => onPick(kind)} style={styles.start} />
-        ) : (
-          <Caption tone="muted">Search for it in Add bottles.</Caption>
-        )}
-      </View>
+  if (state.status === 'adding') return <ReviewRow state="new" title={title} detail={say('Adding…')} />;
+  if (state.status === 'added') {
+    return <ReviewRow state="have" title={title} detail={say(`Added to ${where}${as(state.item)}`)} action={{ label: 'Undo', hint: `Takes ${state.item.name} back off ${where}`, onPress: onUndo }} />;
+  }
+  if (state.status === 'already') return <ReviewRow state="have" title={title} detail={say(`Already in ${where}${as(state.item)}`)} />;
+  if (locked) return <ReviewRow state="skip" title={title} detail={say('Adding to the venue opens at Drink Creator')} />;
+
+  if (match.kind === 'pick') {
+    const picked = chosen?.item ? chosen.item.id : null;
+    return (
+      <ReviewRow
+        state={picked ? 'new' : 'pick'}
+        title={title}
+        detail={say(picked && chosen?.item ? `Will be added${as(chosen.item)}` : 'Which one is it?')}
+        choices={match.items.map((item) => ({ id: item.id, label: item.name }))}
+        chosen={picked}
+        onChoose={(id) => {
+          const item = match.items.find((each) => each.id === id);
+          if (item) onChoose({ item });
+        }}
+        action={picked ? skip : undefined}
+      >
+        {failed}
+      </ReviewRow>
     );
   }
+  if (chosen) {
+    const label = chosen.item ? `Will be added${as(chosen.item)}` : kind ? `New ingredient, a kind of ${kind.name}` : 'New ingredient';
+    return (
+      <ReviewRow state="new" title={title} detail={say(label)} action={skip}>
+        {failed}
+      </ReviewRow>
+    );
+  }
+  if (match.kind === 'one') {
+    return <ReviewRow state="skip" title={title} detail={say('Skipped')} action={{ label: 'Add', hint: `Adds ${title} back`, onPress: () => onChoose({ item: match.item }) }} />;
+  }
+  // Not in the catalog: a venue can make it; a home shelf can take its plain kind.
+  const add =
+    target.kind === 'venue'
+      ? { label: 'Add as new', hint: kind ? `Adds it as a kind of ${kind.name}` : 'Adds it as a new ingredient', onPress: () => onChoose({ item: null, kindId: kind?.id ?? null }) }
+      : kind
+        ? { label: `Add ${kind.name}`, hint: `Adds plain ${kind.name} instead`, onPress: () => onChoose({ item: kind }) }
+        : undefined;
   return (
-    <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <Headline numberOfLines={2}>{row.reading.name}</Headline>
-      {details(row) ? <Caption tone="muted">{details(row)}</Caption> : null}
-      {state.status === 'failed' ? <Caption tone="accent">{state.message}</Caption> : null}
-      {body}
-    </View>
+    <ReviewRow state="skip" title={title} detail={say(add ? 'Not in the catalog yet' : 'Not in the catalog yet. Search for it in Add bottles')} action={add}>
+      {failed}
+    </ReviewRow>
   );
 }
-
-const styles = StyleSheet.create({
-  row: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  line: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  flex: { flex: 1 },
-  gap: { gap: space.sm },
-  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  start: { alignSelf: 'flex-start' },
-});

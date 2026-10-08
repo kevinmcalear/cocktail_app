@@ -1,6 +1,6 @@
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, GlassButton, GlassSurface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
@@ -55,6 +55,7 @@ const SHEET_PEEK = layout.minTapTarget + space.sm;
  */
 export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
   const ds = useDs();
+  const sheetRef = useRef<BottomSheet>(null);
   const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
   const byDrinks = layer === 'drinks';
   const byDrink = layer === 'best' && !!drink;
@@ -128,7 +129,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const list = rows.isLoading || loadingBar ? (
     <ListNote>Loading…</ListNote>
   ) : drinkLayer ? (
-    // Wide screens list a selected bar's drinks in its card; phones keep the card small and list them here.
+    // Wide screens list a selected bar's drinks in its card; phones preview them there and list them all here.
     selected && mode === 'side' ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} endless={mode === 'sheet' && !!more} />
     ) : (
@@ -149,7 +150,11 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     <DiscoverMap
       pins={pins}
       selectedId={selectedId}
-      onSelect={setSelectedId}
+      // On phones a tapped bar lowers the sheet, so its card (and drinks) sit over the map, not behind the list.
+      onSelect={(id) => {
+        setSelectedId(id);
+        if (id && mode === 'sheet') sheetRef.current?.snapToIndex(0);
+      }}
       onViewportChange={setViewport}
       camera={fit?.camera ?? null}
       scheme={ds.scheme}
@@ -185,12 +190,20 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       {selected ? (
         // Floats over the map just above the peek, so the map and the card share the screen.
         <View pointerEvents="box-none" style={[styles.overlay, { bottom: bottomInset + SHEET_PEEK + space.sm }]}>
-          <SelectedBar key={selected.id} pin={selected} drinks={[]} onClose={() => setSelectedId(null)} />
+          <SelectedBar
+            key={selected.id}
+            pin={selected}
+            drinks={drinkLayer ? barDrinks : []}
+            scores={scores}
+            onClose={() => setSelectedId(null)}
+            onShowAll={() => sheetRef.current?.snapToIndex(2)}
+          />
         </View>
       ) : null}
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
       <View pointerEvents="box-none" style={[styles.sheetBox, { bottom: bottomInset }]}>
         <BottomSheet
+          ref={sheetRef}
           snapPoints={[SHEET_PEEK, '50%', '88%']}
           backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
           handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
@@ -203,15 +216,18 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
               if (more && layoutMeasurement.height + contentOffset.y > contentSize.height - 600) more.loadMore();
             }}
           >
-            <Caption tone="muted" numberOfLines={1}>
-              {rows.isLoading
-                ? 'Loading…'
-                : selected?.closed
-                  ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
-                  : selected && drinkLayer
-                    ? `${drinkCount(byDrinks ? (atBar.totals?.drinks ?? barDrinks.length) : barDrinks.length)} at ${selected.name} · swipe up for them`
-                  : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
-            </Caption>
+            {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
+            <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
+              <Caption tone="muted" numberOfLines={1}>
+                {rows.isLoading
+                  ? 'Loading…'
+                  : selected?.closed
+                    ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
+                    : selected && drinkLayer
+                      ? `${drinkCount(byDrinks ? (atBar.totals?.drinks ?? barDrinks.length) : barDrinks.length)} at ${selected.name} · tap or swipe up for them`
+                      : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
+              </Caption>
+            </Pressable>
             <Title role="heading" numberOfLines={1}>
               {title}
             </Title>

@@ -12,7 +12,7 @@ import { layout, space } from '@/constants/tokens';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks } from '@/hooks/useProfiles';
 import { useMyHadDrinks } from '@/hooks/useRankings';
-import { hadStats } from '@/lib/hadDrinks';
+import { hadStats, tallyBars } from '@/lib/hadDrinks';
 
 import { TasteCard } from '../taste/TasteCard';
 import { BarTallies, Favourites, HadList } from './HadDrinks';
@@ -127,13 +127,13 @@ function You({ inTabs }: { inTabs?: boolean }) {
             ) : tab === 'had' ? (
               <HadList drinks={drinks} />
             ) : (
-              <BarTallies drinks={drinks} whose="Your" />
+              <BarTallies bars={tallyBars(drinks)} whose="Your" />
             )}
             {drinks.length && tab !== 'made' ? (
               <Caption tone="muted">
-                {shown && profile?.sharesRankings
+                {shown && (tab === 'had' ? profile?.sharesRankings : profile?.sharesBars)
                   ? 'Shown on your public profile, apart from drinks a bar hasn’t published. Change it in Edit profile.'
-                  : 'Only you can see what you’ve had and your scores. You can show them on a public profile.'}
+                  : `Only you can see ${tab === 'had' ? 'what you’ve had and your scores' : 'your bars and your average at each'}. You can show them on a public profile.`}
               </Caption>
             ) : null}
           </View>

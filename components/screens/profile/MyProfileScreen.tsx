@@ -6,7 +6,7 @@ import { Body, Button, Caption, Chip, Field, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyProfile, useSaveMyProfile, type MyProfile } from '@/hooks/useMyProfile';
-import { handleFromName, normalizeHandle, profileDraftErrors, type ProfileDraft } from '@/lib/profiles';
+import { DEFAULT_SHARING, handleFromName, normalizeHandle, profileDraftErrors, sharingSummary, type ProfileDraft } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SafetyPage } from '../safety/SafetyPage';
@@ -15,8 +15,13 @@ import { PastJobs } from './PastJobs';
 
 const PUBLIC_MEANS =
   'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
-const SHARED_MEANS = 'People signed in to the app see every drink you’ve ranked on your profile: your score, where you had it and when. Drinks a bar hasn’t published stay out.';
-const UNSHARED_MEANS = 'Only you see the drinks you’ve had and your scores. They still count, without your name, towards each bar’s score.';
+
+/** The three things a public profile can show, each its own switch. */
+const SHARE_CHOICES = [
+  { key: 'sharesRankings', label: 'Drinks I’ve had' },
+  { key: 'sharesBars', label: 'Bars I’ve been to' },
+  { key: 'sharesMade', label: 'Drinks I’ve made' },
+] as const;
 const PRIVATE_MEANS = 'Only you see it. Drinks you’ve published and menus you’ve shared stop showing to anyone else while it’s private.';
 
 /** Settings › Public profile: make your profile, choose your handle, and say whether it's public. */
@@ -43,8 +48,8 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
   const suggestedName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
   const [draft, setDraft] = useState<ProfileDraft>(() =>
     profile
-      ? { name: profile.displayName, handle: profile.handle, bio: profile.bio ?? '', instagram: profile.instagram ?? '', isPublic: profile.isPublic, sharesRankings: profile.sharesRankings }
-      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, sharesRankings: false }
+      ? { name: profile.displayName, handle: profile.handle, bio: profile.bio ?? '', instagram: profile.instagram ?? '', isPublic: profile.isPublic, sharesRankings: profile.sharesRankings, sharesBars: profile.sharesBars, sharesMade: profile.sharesMade }
+      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING }
   );
   const [tried, setTried] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -106,12 +111,13 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
       </View>
       {draft.isPublic ? (
         <View style={styles.visibility}>
-          <Headline role="heading">The drinks you’ve had</Headline>
-          <View role="radiogroup" accessibilityLabel="Who can see the drinks you’ve had" style={styles.chips}>
-            <Chip label="Keep private" selected={!draft.sharesRankings} onPress={() => edit({ sharesRankings: false })} />
-            <Chip label="Show on my profile" selected={draft.sharesRankings} onPress={() => edit({ sharesRankings: true })} />
+          <Headline role="heading">What your profile shows</Headline>
+          <View role="group" accessibilityLabel="What your profile shows" style={styles.wrap}>
+            {SHARE_CHOICES.map((c) => (
+              <Chip key={c.key} multi label={c.label} selected={draft[c.key]} onPress={() => edit({ [c.key]: !draft[c.key] })} />
+            ))}
           </View>
-          <Caption tone="muted">{draft.sharesRankings ? SHARED_MEANS : UNSHARED_MEANS}</Caption>
+          <Caption tone="muted">{sharingSummary(draft)}</Caption>
         </View>
       ) : null}
       {save.error ? <Body tone="accent">{save.error.message}</Body> : null}
@@ -138,5 +144,6 @@ const styles = StyleSheet.create({
   form: { gap: space.lg, marginTop: space.lg },
   visibility: { gap: space.sm },
   chips: { flexDirection: 'row', gap: space.sm },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

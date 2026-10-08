@@ -2,6 +2,7 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { matchIngredient, matchKey, matchName, type CatalogItem } from '@/lib/match';
 import { addDrink, addSection, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { RECIPE_UNITS } from '@/lib/units';
+import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 import type { MenuDrink } from '@/types/menus';
 
 /** Collapse case and spacing so "Roku  Gin" and "roku gin" are the same name. */
@@ -121,7 +122,8 @@ export function parseMenuPaste(text: string, intoSection: boolean): ParsedMenuSe
 }
 
 export type PasteRow =
-  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string }
+  /** `note`: what happens to the price, if anything. */
+  | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string | null }
   | { key: string; section: string | null; status: 'pick'; name: string; options: MenuDrink[] }
   | { key: string; section: string | null; status: 'missing'; name: string; ingredients: string[] }
   | { key: string; section: string | null; status: 'skip'; name: string; note: string };
@@ -157,7 +159,7 @@ export function pasteRows(
         }
         seen.add(drink.id);
         const price = !drink.price && line.price ? line.price : null;
-        const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : 'In the library';
+        const note = drink.price && line.price ? `Price stays ${drink.price}` : price ? `Price ${price}` : null;
         out.push({ key, section: section.name, status: 'add', drink: price ? { ...drink, price } : drink, price, note });
       };
       if (match.kind === 'one') place(match.item);
@@ -202,6 +204,29 @@ export function appendReading(sections: ParsedMenuSection[], more: ParsedMenuSec
 export function bringInText(drinks: { name: string; ingredients: string[] }[]): string {
   if (!drinks.some((drink) => drink.ingredients.length)) return drinks.map((drink) => drink.name).join('\n');
   return drinks.map((drink) => [drink.name, ...drink.ingredients.map((name) => `- ${name}`)].join('\n')).join('\n\n');
+}
+
+/** 0.75 -> "0.75", 30 -> "30": what parseAmount reads back. */
+const amountText = (n: number) => String(Math.round(n * 100) / 100);
+
+/**
+ * Recipes read by read-anything as Bring in text, plus the lines that were
+ * hard to read ("Orchard Fizz: Lemon Juice") so the screen can ask for a look.
+ */
+export function readingText(recipes: RecipeReading[]): { text: string; unsure: string[] } {
+  const unsure: string[] = [];
+  const blocks = recipes.map((recipe) => {
+    const rows = [recipe.name];
+    for (const line of recipe.lines) {
+      if (line.unsure) unsure.push(`${recipe.name}: ${line.ingredient}`);
+      rows.push(line.amount !== null && line.unit ? `${amountText(line.amount)} ${line.unit} ${line.ingredient}` : `- ${line.ingredient}`);
+    }
+    for (const note of [recipe.method, recipe.glass, recipe.ice ? `Ice: ${recipe.ice}` : null, recipe.garnish ? `Garnish: ${recipe.garnish}` : null, recipe.by ? `By ${recipe.by}` : null, recipe.notes]) {
+      if (note) rows.push(note);
+    }
+    return rows.join('\n');
+  });
+  return { text: blocks.join('\n\n'), unsure };
 }
 
 export interface PlacedGroup {

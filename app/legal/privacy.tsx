@@ -36,9 +36,10 @@ export default function PrivacyPolicy() {
 
       <LegalSection heading="AI features">
         <P>
-          When you ask the app to draw a drink illustration or to identify glassware from a photo, we send that
-          drink&apos;s name and ingredients, or that photo, to Google&apos;s Gemini API to produce the result. Nothing
-          is sent until you use one of these features.
+          When you ask the app to read a menu, a recipe or bottle labels from a photo, a file or text, to identify
+          glassware from a photo, or to draw a drink illustration, we send that photo, file or text, or the
+          drink&apos;s name and ingredients, to Google&apos;s Gemini API to produce the result. Nothing is sent until
+          you use one of these features.
         </P>
       </LegalSection>
 
