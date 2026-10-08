@@ -106,7 +106,16 @@ export function DiscoverScreen() {
 
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
-  const results = useDiscoverResults({ kinds, search, area: shownArea });
+  // Until location answers, Anywhere is only a stand-in: wait rather than load every bar drink,
+  // but not for long (a web location prompt can sit unanswered).
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    if (near.status !== 'locating') return;
+    const t = setTimeout(() => setWaited(true), 2500);
+    return () => clearTimeout(t);
+  }, [near.status]);
+  const locating = area.kind === 'anywhere' && (near.status === 'idle' || (near.status === 'locating' && !waited));
+  const results = useDiscoverResults({ kinds, search, area: shownArea }, !locating || searching);
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;

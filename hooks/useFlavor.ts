@@ -97,19 +97,69 @@ export function useSaveTasteAnswers() {
   });
 }
 
+/**
+ * The average profile of the drinks you can see (flavor_baseline): what
+ * "usual" means in match reasons. Null until it loads, or when there are none.
+ */
+export function useFlavorBaseline() {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['flavor-baseline', userId],
+    enabled: !!userId,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<Profile | null> => {
+      const { data, error } = await supabase.rpc('flavor_baseline');
+      if (error) throw error;
+      const row = ((data ?? []) as (Partial<FlavorRow> & { drinks: number })[])[0];
+      return row?.drinks ? profileOf(row) : null;
+    },
+  });
+}
+
+interface ForYouRow extends Record<(typeof DIMENSIONS)[number], number> {
+  id: string;
+  name: string;
+  image_url: string | null;
+  is_classic: boolean;
+  riff_of_id: string | null;
+}
+
+/** The drinks nearest your taste, nearest first, leaving out ones you've ranked (flavor_for_you). */
+export function useForYouDrinks(taste: Taste | null | undefined, limit = 10) {
+  const userId = useAuth().user?.id ?? null;
+  return useQuery({
+    queryKey: ['flavor-for-you', userId, taste, limit],
+    enabled: !!userId && !!taste,
+    queryFn: async (): Promise<FlavorDrink[]> => {
+      const { data, error } = await supabase.rpc('flavor_for_you', { p_taste: taste, p_limit: limit });
+      if (error) throw error;
+      return ((data ?? []) as ForYouRow[]).map((r) => ({
+        id: r.id,
+        name: r.name,
+        imageUrl: r.image_url,
+        isClassic: r.is_classic,
+        riffOfId: r.riff_of_id,
+        profile: profileOf(r),
+      }));
+    },
+  });
+}
+
 interface CatalogRow extends FlavorRow {
   item: { id: string; name: string; bar_id: string | null; riff_of_id: string | null; item_images: ItemImageLink[] | null } | null;
 }
 
 /**
- * Every drink you can see that has a usable profile (~2,000 and growing, so
- * paged). ponytail: matched on the device; fine for a few thousand drinks. Upgrade path: rank by match in SQL and page it.
+ * Every drink you can see that has a usable profile (~7,000, so paged).
+ * Only My Bar's match percentages still read it, and only once your taste
+ * comes from rankings. ponytail: the upgrade is reading profiles for the
+ * drinks on screen once My Bar pages its list.
  */
-export function useFlavorCatalog() {
+export function useFlavorCatalog(enabled = true) {
   const userId = useAuth().user?.id ?? null;
   return useQuery({
     queryKey: ['flavor-catalog', userId],
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     queryFn: async (): Promise<FlavorDrink[]> => {
       const data = await allRows((from, to) =>
         supabase
@@ -129,21 +179,6 @@ export function useFlavorCatalog() {
           riffOfId: r.item!.riff_of_id,
           profile: profileOf(r),
         }));
-    },
-  });
-}
-
-/** Every drink you've ranked, as the drink and the list it's in: For you leaves these out. */
-export function useMyRankedIds() {
-  const userId = useAuth().user?.id ?? null;
-  return useQuery({
-    queryKey: ['my-ranked-ids', userId],
-    enabled: !!userId,
-    queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase.from('rank_entries').select('item_id, ranked_as_item_id');
-      if (error) throw error;
-      const rows = (data ?? []) as { item_id: string; ranked_as_item_id: string }[];
-      return [...new Set(rows.flatMap((r) => [r.item_id, r.ranked_as_item_id]))];
     },
   });
 }
