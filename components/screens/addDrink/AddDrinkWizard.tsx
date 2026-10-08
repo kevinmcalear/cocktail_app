@@ -136,7 +136,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
       case 'name':
         return <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />;
       case 'ingredients':
-        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} />;
+        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns} />;
       case 'method':
         return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
       case 'glass':

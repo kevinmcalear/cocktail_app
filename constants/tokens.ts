@@ -84,9 +84,13 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
-/** Six text styles. Nothing below 13. */
+/**
+ * Six text styles. Nothing below 13. Display and title leave room above the
+ * ascenders: iOS bottom-aligns a line set tighter than its font, so a
+ * lineHeight of 1 cuts the tops off. Checked by components/ds/displayClip.check.ts.
+ */
 export const type = {
-  display: { fontSize: 56, lineHeight: 56, letterSpacing: -1 },
+  display: { fontSize: 56, lineHeight: 64, letterSpacing: -1 },
   title: { fontSize: 34, lineHeight: 38, letterSpacing: -0.4 },
   headline: { fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
   body: { fontSize: 17, lineHeight: 24, letterSpacing: 0 },

@@ -21,8 +21,8 @@ import { SearchField } from './SearchField';
 
 /** Discover's part in the search: its area and filters. */
 export interface SearchArea {
-  /** "This area" on the map, else the area chip's words. */
-  label: string;
+  /** "This area" on the map, else the area chip's words. Null when the area is everywhere, so there's no area scope. */
+  label: string | null;
   area: Area;
   kinds: readonly string[];
   onKind: (kind: string) => void;

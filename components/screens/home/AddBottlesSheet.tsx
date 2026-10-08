@@ -1,107 +1,98 @@
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { FlatList, Modal, Platform, StyleSheet, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Headline, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Chip, Field, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
-import type { BarItem } from '@/hooks/useHomeBar';
+import { space } from '@/constants/tokens';
+import { useBottleSearch, type BarItem } from '@/hooks/useHomeBar';
+import { COMMON_INGREDIENTS } from '@/lib/drinkWizard';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 
 interface AddBottlesSheetProps {
   visible: boolean;
-  bottles: BarItem[];
   onShelf: Set<string>;
   onToggle: (item: BarItem, add: boolean) => void;
   onClose: () => void;
 }
 
 /** Search the ingredients you can see and put bottles on your shelf. */
-export function AddBottlesSheet({ visible, bottles, onShelf, onToggle, onClose }: AddBottlesSheetProps) {
-  const ds = useDs();
-  const gutter = useGutter();
-  const insets = useSafeAreaInsets();
+export function AddBottlesSheet({ visible, onShelf, onToggle, onClose }: AddBottlesSheetProps) {
   const [query, setQuery] = useState('');
   const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return q ? bottles.filter((b) => b.name.toLowerCase().includes(q)) : bottles;
-  }, [bottles, query]);
+  const found = useBottleSearch(query);
+  const typed = query.trim();
+  // Results for older text stay up while the new search runs, so only an empty list waits.
+  const rows = typed ? (found.data ?? []) : [];
 
   return (
-    <Modal
+    <MenuSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onClose={onClose}
+      title="Add bottles"
+      subtitle={onShelf.size ? `${onShelf.size} on your shelf` : undefined}
       onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef)}
     >
-      <View style={[styles.sheet, { backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
-        <View style={[styles.head, { paddingHorizontal: gutter }]}>
-          <Title>Add bottles</Title>
-          <Button label="Done" variant="secondary" onPress={onClose} />
-        </View>
-        <TextInput
-          ref={searchRef}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search gin, Campari, lemons…"
-          placeholderTextColor={ds.c.muted}
-          autoCorrect={false}
-          autoFocus={MODAL_AUTOFOCUS}
-          accessibilityLabel="Search ingredients"
-          style={[styles.search, { marginHorizontal: gutter, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: ds.c.line }]}
-        />
-        <FlatList
-          data={shown}
-          keyExtractor={(b) => b.id}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }}
-          ListEmptyComponent={<Body tone="muted">No ingredient called “{query}” yet.</Body>}
-          renderItem={({ item }) => {
-            const has = onShelf.has(item.id);
-            return (
-              <PressableScale
-                role="checkbox"
-                aria-checked={has}
-                accessibilityLabel={item.name}
-                accessibilityHint={has ? 'Takes it off your shelf' : 'Puts it on your shelf'}
-                onPress={() => onToggle(item, !has)}
-                style={[styles.row, { borderBottomColor: ds.c.line }]}
-              >
-                <Headline numberOfLines={1} style={styles.name}>
-                  {item.name}
-                </Headline>
-                <IconSymbol
-                  name={has ? 'checkmark.circle.fill' : 'plus.circle'}
-                  size={26}
-                  color={has ? ds.accentText : ds.c.muted}
-                />
-              </PressableScale>
-            );
-          }}
-        />
+      <Field
+        ref={searchRef}
+        label="Search ingredients"
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Gin, Campari, lemons…"
+        autoCorrect={false}
+        autoCapitalize="none"
+        autoFocus={MODAL_AUTOFOCUS}
+        returnKeyType="search"
+      />
+      <View style={styles.results}>
+        {!typed ? (
+          <View role="group" accessibilityLabel="Common bottles" style={styles.chips}>
+            {COMMON_INGREDIENTS.map((name) => (
+              <Chip key={name} label={name} selected={false} quiet onPress={() => setQuery(name)} />
+            ))}
+          </View>
+        ) : found.error && !rows.length ? (
+          <Body tone="muted">Couldn’t search right now. Check your connection and try again.</Body>
+        ) : !rows.length ? (
+          <Body tone="muted">{found.isFetching || found.isPending ? 'Looking…' : `No ingredient called “${typed}” yet.`}</Body>
+        ) : (
+          rows.map((item) => <BottleRow key={item.id} item={item} has={onShelf.has(item.id)} onToggle={onToggle} />)
+        )}
       </View>
-    </Modal>
+    </MenuSheet>
+  );
+}
+
+function BottleRow({ item, has, onToggle }: { item: BarItem; has: boolean; onToggle: AddBottlesSheetProps['onToggle'] }) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role="checkbox"
+      aria-checked={has}
+      accessibilityLabel={item.name}
+      accessibilityHint={has ? 'Takes it off your shelf' : 'Puts it on your shelf'}
+      onPress={() => onToggle(item, !has)}
+      style={[styles.row, { borderBottomColor: ds.c.line }]}
+    >
+      <IngredientThumb name={item.name} url={item.imageUrl} />
+      <Headline numberOfLines={1} style={styles.name}>
+        {item.name}
+      </Headline>
+      <IconSymbol name={has ? 'checkmark.circle.fill' : 'plus.circle'} size={26} color={has ? ds.accentText : ds.c.muted} />
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: { flex: 1, gap: space.md },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  search: {
-    ...type.body,
-    fontFamily: fontFamilies.body,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.control,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
+  // Holds the sheet's height steady while results come and go.
+  results: { minHeight: 320 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    minHeight: 52,
+    minHeight: 56,
+    paddingVertical: space.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   name: { flex: 1 },

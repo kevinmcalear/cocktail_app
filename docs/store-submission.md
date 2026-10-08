@@ -71,7 +71,7 @@ Both are off until their public keys are set, and both are in every 1.3.0 binary
 - **Age rating:** answer that alcohol references are *frequent*. The app is for adults working in hospitality.
 - **URLs:**
   - Privacy policy: `https://babyvom.it/legal/privacy`
-  - Support: `https://babyvom.it/legal/privacy`, which lists the contact email, until there is a support page
+  - Support: `https://babyvom.it/support` (`app/support.tsx`: the contact email and common questions). It moves with the domain if the app is renamed, so update it here and in both listings.
   - Account deletion is in the app: Settings → Account → Delete account.
 - **Sign-in for review:** App Review needs a working demo account.
   - Create `review@…` as a member of a demo bar with sample drinks and a menu.
@@ -94,6 +94,7 @@ Both are off until their public keys are set, and both are in every 1.3.0 binary
 
 ## 5. Google Play listing
 
+- **Store contact details:** website `https://babyvom.it/support` and the `supportEmail` from `constants/brand.json`. The website moves with the domain if the app is renamed.
 - **Data safety:** declare the same data types as above. Data is encrypted in transit, and users can request deletion.
   - App activity, app interactions: collected, not shared, required, for analytics.
   - App info and performance, crash logs and diagnostics: collected, not shared, required, for analytics and app functionality.

@@ -62,6 +62,7 @@ export function AccountSection() {
         <AnalyticsSwitch />
         {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
         {linkRow('Terms of use', () => router.push('/legal/terms'))}
+        {linkRow('Help and support', () => router.push('/support'))}
         <SafetyLinks row={linkRow} />
         <RowDivider />
         <SettingsRow

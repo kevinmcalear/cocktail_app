@@ -116,7 +116,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const mergedIngredients = useMemo(() => {
         const published = (dropdowns?.ingredients || []).map((i: any) => ({
             id: i.id,
-            name: i.name
+            name: i.name, item_images: i.item_images,
         }));
 
         const draftIngredients = drafts
