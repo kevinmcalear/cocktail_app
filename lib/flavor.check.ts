@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import {
+  answerShare,
   blendTaste,
   COLD_START_DRINKS,
   DIMENSIONS,
@@ -11,6 +12,11 @@ import {
   matchReasons,
   meanProfile,
   mostCreative,
+  QUESTIONS,
+  QUICK_QUESTIONS,
+  rankingsDrift,
+  tasteHeadline,
+  tasteSource,
   type FlavorDrink,
   type Profile,
 } from './flavor';
@@ -44,13 +50,37 @@ assert.equal(matchReasons(negroni, boulevardier, 'ranked', usual), 'Bitter and s
 assert.equal(matchReasons({ strong: 0.5, sour: 0.8 }, daiquiri, 'ranked', usual), 'Sour, like the drinks you rank highest.');
 assert.equal(meanProfile([]), null);
 
-// Cold start: answers stand in, rankings take over as they arrive.
-assert.deepEqual(blendTaste(negroni, COLD_START_DRINKS, { sour: 0.8 }), { taste: negroni, basis: 'ranked' });
+// Answers start your taste and count for less with every drink you rank, but never drop out.
 assert.deepEqual(blendTaste(null, 0, { sour: 0.8 }), { taste: { sour: 0.8 }, basis: 'answers' });
-const half = blendTaste(p({ sour: 0.2 }), 2, { sour: 0.8 });
-assert.equal(half.basis, 'answers');
-assert.ok(Math.abs(half.taste.sour! - (0.2 * 0.4 + 0.8 * 0.6)) < 1e-9);
 assert.deepEqual(blendTaste(null, 0, null), { taste: {}, basis: 'ranked' });
+assert.deepEqual(blendTaste(negroni, 7, null), { taste: negroni, basis: 'ranked' });
+assert.deepEqual(blendTaste(negroni, 7, {}), { taste: negroni, basis: 'ranked' }, 'cleared answers are no answers');
+const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+const two = blendTaste(p({ sour: 0.2 }), 2, { sour: 0.8 });
+assert.equal(two.basis, 'answers');
+assert.ok(near(two.taste.sour!, 0.8 * (5 / 7) + 0.2 * (2 / 7)));
+assert.equal(two.taste.bitter, 0, 'a dimension you did not answer comes from your rankings');
+const five = blendTaste(negroni, COLD_START_DRINKS, { bitter: 0.1 });
+assert.equal(five.basis, 'ranked', 'enough rankings for a match percentage');
+assert.ok(near(five.taste.bitter!, (0.95 + 0.1) / 2), 'at five rankings your answers are still half');
+assert.ok(near(answerShare(20), 0.2) && answerShare(100) < 0.05, 'and fade as you rank more');
+const changed = blendTaste(negroni, 40, { bitter: 0.1 });
+assert.ok(changed.taste.bitter! < negroni.bitter, 'changing an answer still moves a well-ranked taste');
+
+assert.equal(rankingsDrift(negroni, { bitter: 0.1, sour: 0.8, smoky: 0.1 }), 'Your rankings lean more bitter and less sour than you said.');
+assert.equal(rankingsDrift(p({ smoky: 0.9 }), { smoky: 0.1, bitter: 0.45 }), 'Your rankings lean more smoky and less bitter than you said.');
+assert.equal(rankingsDrift(negroni, { bitter: 0.8 }), null, 'close enough says nothing');
+assert.equal(rankingsDrift(null, { bitter: 0.8 }), null);
+
+assert.equal(QUESTIONS.length, DIMENSIONS.length);
+assert.deepEqual(new Set(QUESTIONS.map((q) => q.dim)), new Set(DIMENSIONS), 'one question per dimension');
+assert.equal(QUICK_QUESTIONS.length, 6);
+assert.equal(tasteHeadline(negroni), 'Bitter, herbal and sweet');
+assert.equal(tasteHeadline({ strong: 0.9 }), null, 'strong alone says nothing');
+assert.equal(tasteHeadline({ smoky: 0.2 }), null);
+assert.equal(tasteSource(0, true), 'From your answers. Every drink you rank moves it.');
+assert.equal(tasteSource(1, false), "From the 1 drink you've ranked, the ones you score highest counting most.");
+assert.equal(tasteSource(20, true), "From your answers and the 20 drinks you've ranked. Your rankings are 80% of it now, and count for more with every drink you rank.");
 
 const drink = (id: string, profile: Profile, extra: Partial<FlavorDrink> = {}): FlavorDrink => ({
   id,
