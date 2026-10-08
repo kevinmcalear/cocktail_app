@@ -1,21 +1,22 @@
-// Deep imports per weight: each package's index registers every weight it ships.
-import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
-import { Fraunces_400Regular } from '@expo-google-fonts/fraunces/400Regular';
-import { Fraunces_400Regular_Italic } from '@expo-google-fonts/fraunces/400Regular_Italic';
-import { Geist_400Regular } from '@expo-google-fonts/geist/400Regular';
-import { Geist_500Medium } from '@expo-google-fonts/geist/500Medium';
-import { Geist_600SemiBold } from '@expo-google-fonts/geist/600SemiBold';
-import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono/400Regular';
-import { GeistMono_500Medium } from '@expo-google-fonts/geist-mono/500Medium';
-import { IBMPlexSans_600SemiBold_Italic } from '@expo-google-fonts/ibm-plex-sans/600SemiBold_Italic';
-import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
-import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
-import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
-import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
-import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif/400Regular';
-import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif/400Regular_Italic';
 import { FontDisplay, type FontSource } from 'expo-font';
 
+import {
+  BricolageGrotesque_600SemiBold,
+  Fraunces_400Regular,
+  Fraunces_400Regular_Italic,
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  GeistMono_400Regular,
+  GeistMono_500Medium,
+  IBMPlexSans_600SemiBold_Italic,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  InstrumentSerif_400Regular,
+  InstrumentSerif_400Regular_Italic,
+} from './fontFiles';
 import { fontFamilies } from '@/constants/tokens';
 
 // On web, show fallback text at once and swap the face in when it arrives,
