@@ -48,7 +48,16 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: ds.c.paper }, style]}
     >
       {uri ? (
-        <Image source={typeof uri === 'string' ? { uri } : uri} style={styles.fill} contentFit="cover" transition={200} />
+        // Memory and disk: lists scroll the same pictures back into view. The
+        // recycling key blanks a recycled list cell instead of flashing its last drink.
+        <Image
+          source={typeof uri === 'string' ? { uri } : uri}
+          style={styles.fill}
+          contentFit="cover"
+          transition={200}
+          cachePolicy="memory-disk"
+          recyclingKey={String(uri)}
+        />
       ) : itemId ? (
         <DrawnSketch itemId={itemId} fallback={glassIcon} />
       ) : (

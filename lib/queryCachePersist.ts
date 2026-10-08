@@ -2,16 +2,44 @@ import type { AsyncStorage, PersistedClient } from '@tanstack/query-persist-clie
 import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query';
 
 /**
- * What's saved between launches: every successful query except those marked
- * `meta: { persist: false }`. That's ones keyed by where the person is
- * standing (hooks/useDiscover.ts), which must never be stored, and big lists
- * that are cheap to refetch: discover drinks, the Library ingredient list and
- * the spec dropdowns. The whole cache is one storage row, and Android can't
- * read a row over about 2 MB back (SQLite CursorWindow), so those three
- * (about 3.5 MB on the local stack) meant every Android launch started cold.
+ * Query keys (by prefix) saved between launches: small, and what the first
+ * screen paints from (who you are, your venues and mode, tonight's menus,
+ * Discover's lists), plus drink pages you opened, so a spec still reads with
+ * no signal behind the bar. A hook can opt in with `meta: { persist: true }`.
+ */
+export const PERSISTED_KEYS: readonly (readonly string[])[] = [
+  ['bars'],
+  ['viewAs'],
+  ['capabilities'],
+  ['venue-brand'],
+  ['venue-branding'],
+  ['age-check'],
+  ['am-i-moderator'],
+  ['profile', 'mine'],
+  ['menus-v2', 'venue-2'],
+  ['home-bar'],
+  ['collection'],
+  ['drink-lists'],
+  ['bar-cities'],
+  ['discover-top-bars'],
+  ['my-taste'],
+  ['my-ranked-ids'],
+  ['cocktail'],
+];
+
+const startsWith = (key: readonly unknown[], prefix: readonly string[]) => prefix.every((part, i) => key[i] === part);
+
+/**
+ * What's saved between launches: successful queries on the list above or
+ * marked `meta: { persist: true }`, never one marked `persist: false` (keyed
+ * by where the person is standing, hooks/useDiscover.ts). Everything else
+ * refetches when its screen opens. The whole cache is one storage row,
+ * Android can't read a row over about 2 MB back (SQLite CursorWindow), and a
+ * smaller row restores faster on every launch.
  */
 export function shouldPersistQuery(query: Query): boolean {
-  return defaultShouldDehydrateQuery(query) && query.meta?.persist !== false;
+  if (!defaultShouldDehydrateQuery(query) || query.meta?.persist === false) return false;
+  return query.meta?.persist === true || PERSISTED_KEYS.some((prefix) => startsWith(query.queryKey, prefix));
 }
 
 /**

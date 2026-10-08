@@ -73,20 +73,23 @@ export function useVenueMenus(barId: string | null | undefined) {
       const scope = barId ? `bar_id.eq.${barId},and(bar_id.is.null,created_by.eq.${userId})` : `and(bar_id.is.null,created_by.eq.${userId})`;
       const { data, error } = await supabase
         .from('menus')
-        // ponytail: every drink's hero links ride along for the visual of a
-        // menu with no cover. Fine at a handful of menus; select them only for
-        // cover-less menus if a venue's list gets long.
-        .select(`${MENU_COLUMNS}, menu_drinks(item_id, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at)`)
+        // Every drink's id (Library's "on a menu" filter), but pictures for
+        // only the first few: a cover-less menu's visual shows MENU_PICTURES.
+        .select(
+          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at)`
+        )
         .or(scope)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .order('sort_order', { referencedTable: 'pictured' })
+        .limit(MENU_PICTURES, { referencedTable: 'pictured' });
       if (error) throw error;
       return (data ?? []).map((row) => {
         const event = one(row.events as { id: string; name: string; starts_at: string }[] | null);
-        type Drink = { item_id: string | null; item: PictureItem | PictureItem[] | null };
-        const drinks = (row.menu_drinks ?? []) as unknown as Drink[];
+        type Drink = { item: PictureItem | PictureItem[] | null };
+        const drinks = (row.pictured ?? []) as unknown as Drink[];
         return {
           ...toSummaryBase(row as MenuRow),
-          itemIds: drinks.map((d) => d.item_id).filter((id): id is string => !!id),
+          itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),
           pictures: drinks.flatMap((d) => {
             const item = one(d.item);
             if (!item) return [];

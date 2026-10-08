@@ -60,7 +60,7 @@ export function PrepScreen() {
   const { data: prepOpensAt } = useCapabilityOpensAt(barId, 'prep');
   const canPrep = !!capabilities?.includes('prep');
   const { data: events = [] } = useEvents(canPrep ? barId : null);
-  const { data: dropdowns } = useDropdowns();
+  const { data: dropdowns } = useDropdowns({ menus: true });
   const venueMenus = ((dropdowns?.menus ?? []) as MenuRow[]).filter((m) => m.bar_id === barId);
 
   const [segment, setSegment] = useState<Segment>('make');

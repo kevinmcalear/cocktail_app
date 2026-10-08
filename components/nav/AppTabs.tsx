@@ -1,4 +1,5 @@
 import { NativeTabs } from 'expo-router/native-tabs';
+import { View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { FEATURES } from '@/constants/features';
@@ -27,7 +28,11 @@ export function AppTabs() {
 
 function Tabs() {
   const ds = useDs();
-  const home = useMode().mode === 'home';
+  const { mode, ready } = useMode();
+  const home = mode === 'home';
+  // Venue and home have different tabs, and switching remounts them all:
+  // wait for the mode (a moment, on a first launch) rather than open the wrong set.
+  if (!ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
   // Discover is in both modes. The rest swap, the way an account switch swaps
   // an app's tabs; home mode's index redirects to Discover. Android's Material
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.

@@ -467,7 +467,7 @@ export function CocktailDetailContent({
             <IngredientPickerSheet
                 visible={showIngredientPicker}
                 onClose={() => setShowIngredientPicker(false)}
-                ingredients={editor?.allIngredients ?? []}
+                ingredients={editor?.allIngredients ?? []} loading={!editor?.dropdowns?.ingredients}
                 drafts={drafts}
                 dropdowns={editor?.dropdowns}
                 onSelect={(item) => {

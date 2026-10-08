@@ -8,7 +8,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
-/** Columns for a drink list or search card (app_item_presentation). */
+/**
+ * Columns for a drink list or search card (app_item_presentation). The lines
+ * (with their notes) stay for Library's ingredient search and Study's card
+ * backs; photo colours (palette) are only for the drink page, which reads its own.
+ */
 export const COCKTAIL_LIST_COLUMNS = `
     id,
     name,
@@ -45,8 +49,7 @@ export const COCKTAIL_LIST_COLUMNS = `
         outdated_since,
         images (
             id,
-            url,
-            palette
+            url
         )
     ),
     item_categories (
