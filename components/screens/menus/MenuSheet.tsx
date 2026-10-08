@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caption, DsText, PressableScale, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 interface MenuSheetProps {
   visible: boolean;
@@ -18,12 +19,17 @@ interface MenuSheetProps {
   onShow?: () => void;
 }
 
-/** The Menus screens' sheet: slides over the screen, closes on the scrim. */
+/**
+ * The app's sheet: slides up over the screen, closes on the scrim. On desktop
+ * web it's a dialog in the middle of the window instead, since a panel rising
+ * from the bottom of a wide window reads as a phone screen.
+ */
 export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
+  const dialog = useIsWideWeb();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onShow={onShow}>
+    <Modal visible={visible} transparent animationType={dialog ? 'fade' : 'slide'} onRequestClose={onClose} onShow={onShow}>
       <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]}>
         <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose} />
         {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). The negative
@@ -31,10 +37,10 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: 'padding', android: 'height' })}
           keyboardVerticalOffset={footer ? -insets.bottom : 0}
-          style={styles.avoider}
+          style={[styles.avoider, dialog && styles.avoiderDialog]}
         >
-          <View role="dialog" aria-modal accessibilityLabel={title} style={[styles.sheet, { backgroundColor: ds.c.surface }]}>
-            <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />
+          <View role="dialog" aria-modal accessibilityLabel={title} style={[styles.sheet, dialog && styles.dialog, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
+            {dialog ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
             <View style={styles.header}>
               <View style={styles.flex}>
                 <Title>{title}</Title>
@@ -47,7 +53,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               {children}
             </ScrollView>
-            {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
+            {footer ? <View style={[styles.footer, { paddingBottom: dialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -114,6 +120,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     paddingTop: space.sm,
   },
+  avoiderDialog: { justifyContent: 'center', padding: space.xl },
+  dialog: { maxHeight: '86%', borderRadius: radius.card, paddingTop: space.md, borderWidth: StyleSheet.hairlineWidth },
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radius.pill },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
