@@ -120,6 +120,15 @@ function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine;
           </View>
         </View>
       ) : null}
+      <ResultRow
+        title="Cocktail history"
+        caption="Every classic's family tree, back to the punch bowl"
+        icon="book"
+        onPress={() => {
+          onJump?.();
+          router.push('/history');
+        }}
+      />
       <Body tone="muted">
         {scope === 'mine'
           ? `Type a drink, an ingredient or a menu. Switch to Everywhere for other bars, bartenders and classics.`

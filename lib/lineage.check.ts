@@ -10,8 +10,11 @@ import {
   MAX_ANCESTORS,
   shortNames,
   sortRiffs,
+  styleChain,
   walkAncestors,
+  yearLabel,
   type CreditProfile,
+  type DrinkStyle,
   type LineageDrink,
 } from './lineage';
 
@@ -98,6 +101,32 @@ async function main() {
   assert.equal(hasLineage(drink('x', null), [], []), false);
   assert.equal(hasLineage(drink('x', null, { creator: person }), [], []), true);
   assert.equal(hasLineage(drink('x', null), [], [drink('r', 'x')]), true);
+
+  // A bar's drink climbs to its classic by riff_of_id, then classic to classic by lineage_parent_id.
+  const tree = new Map([
+    ['goldrush', drink('goldrush', null, { is_catalog: true })],
+    ['penicillin', drink('penicillin', null, { is_catalog: true, lineage_parent_id: 'goldrush' })],
+    ['house', drink('house', 'penicillin')],
+  ]);
+  assert.deepEqual((await walkAncestors(tree.get('house')!, async (id) => tree.get(id) ?? null)).map((d) => d.id), ['goldrush', 'penicillin']);
+
+  // Styles come back oldest first and survive a loop.
+  const style = (id: string, parent: string | null): DrinkStyle => ({ id, key: id, name: id, family: 'sour', parent_style_id: parent, year: null, year_approx: false, summary: null });
+  const styles = [style('punch', null), style('sour', 'punch'), style('fizz', 'sour')];
+  assert.deepEqual(styleChain('fizz', styles).map((s) => s.id), ['punch', 'sour', 'fizz']);
+  assert.deepEqual(styleChain(null, styles), []);
+  assert.deepEqual(styleChain('a', [style('a', 'b'), style('b', 'a')]).map((s) => s.id), ['b', 'a']);
+  assert.equal(hasLineage(drink('x', null), [], [], styles), true);
+
+  // Approximate years and closed bars read naturally.
+  assert.equal(yearLabel(1880, true), 'c. 1880');
+  assert.equal(yearLabel(1888, false), '1888');
+  assert.equal(yearLabel(null, true), null);
+  const closed: CreditProfile = { ...bar, display_name: 'Pegu Club', is_closed: true, closed_year: 2020 };
+  assert.equal(
+    creditText(creditSentence(drink('x', null, { creator: person, origin_bar: closed, origin_year: 2005, origin_year_approx: true }), null)),
+    'By Sam Ross at Pegu Club (now closed), c. 2005'
+  );
 
   console.log('lineage: ok');
 }
