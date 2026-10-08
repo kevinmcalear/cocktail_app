@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
@@ -60,15 +61,18 @@ export function ShelfFoot({ found, sort, query, open, onOpen }: { found: number;
   );
 }
 
-/** One bottle on the shelf: drawing, name, maker and strength, and how many drinks it goes into. */
-export function BottleRow({ item, heading, onRemove }: { item: ShelfItem; heading: string | null; onRemove: (item: ShelfItem) => void }) {
+/**
+ * One bottle on the shelf: drawing, name, maker and strength, and how many
+ * drinks it goes into. Memoized: a list row, re-rendered by every change to the list.
+ */
+export const BottleRow = memo(function BottleRow({ item, heading, onRemove }: { item: ShelfItem; heading: string | null; onRemove: (id: string) => void }) {
   const ds = useDs();
   const router = useRouter();
   const line = bottleLine(item);
   const used = item.uses ? `In ${item.uses} ${item.uses === 1 ? 'drink' : 'drinks'}` : 'Not used yet';
   const remove = async () => {
     const ok = await confirmAsync({ title: `Take ${item.name} off your shelf?`, message: 'Drinks that need it leave What to make.', confirmText: 'Take off', destructive: true });
-    if (ok) onRemove(item);
+    if (ok) onRemove(item.id);
   };
   return (
     <View>
@@ -98,7 +102,7 @@ export function BottleRow({ item, heading, onRemove }: { item: ShelfItem; headin
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { memo } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
@@ -44,9 +45,10 @@ export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: Ma
   );
 }
 
-export function MakeDrink({ drink, matchFor }: { drink: BarItem; matchFor: MatchFor }) {
+/** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
+export const MakeDrink = memo(function MakeDrink({ drink, matchFor }: { drink: BarItem; matchFor: MatchFor }) {
   return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={matchFor(drink.id)} />;
-}
+});
 
 /** A tab with nothing in it, and where to look instead. */
 export function MakeEmpty({ tab, oneAway }: { tab: MakeTab; oneAway: number }) {
@@ -75,8 +77,8 @@ export function MakeFoot({ more, onMore }: { more: number; onMore: () => void })
   );
 }
 
-/** The bottles to buy, what they open (three, then all on a tap), and Add. */
-export function BottleGroup({ group, open, onOpen, matchFor, onAdd, style }: { group: AwayGroup; open: boolean; onOpen: () => void; matchFor: MatchFor; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
+/** The bottles to buy, what they open (three, then all on a tap), and Add. Memoized, as a list row. */
+export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, matchFor, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; matchFor: MatchFor; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
   const { bottles, drinks } = group;
   const names = bottles.map((b) => b.name).join(' + ');
   const rest = drinks.length - PER_BOTTLE;
@@ -106,10 +108,10 @@ export function BottleGroup({ group, open, onOpen, matchFor, onAdd, style }: { g
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
         <MakeDrink key={d.id} drink={d} matchFor={matchFor} />
       ))}
-      {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={onOpen} /> : null}
+      {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => onOpen(id)} /> : null}
     </Surface>
   );
-}
+});
 
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },

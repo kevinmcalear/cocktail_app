@@ -33,6 +33,9 @@ export function MyBarScreen() {
   const bar = useMyBar();
   const pantry = usePantryItems();
   const { add, remove } = useShelfEdit();
+  // mutate is stable where the mutation objects aren't, so the rows' props stay equal between renders.
+  const addIds = add.mutate;
+  const removeId = remove.mutate;
   const [adding, setAdding] = useState(false);
   const [snapping, setSnapping] = useState(false);
   const [sort, setSort] = useState<ShelfSort>('newest');
@@ -41,6 +44,7 @@ export function MyBarScreen() {
   const [picked, setPicked] = useState<MakeTab | null>(null);
   const [shown, setShown] = useState(MAKE_PAGE);
   const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
+  const openGroup = (key: string) => setOpenGroups((open) => new Set(open).add(key));
 
   // Staples live on the shelf too, but are listed under Fridge & pantry, not as bottles.
   const staples = new Set((pantry.data ?? []).map((p) => p.id));
@@ -101,11 +105,11 @@ export function MyBarScreen() {
           </View>
         );
       case 'bottle':
-        return <BottleRow item={item.bottle} heading={item.heading} onRemove={(b) => remove.mutate(b.id)} />;
+        return <BottleRow item={item.bottle} heading={item.heading} onRemove={removeId} />;
       case 'shelf-foot':
         return <ShelfFoot found={item.found} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
       case 'pantry':
-        return <PantrySection items={pantry.data ?? []} onShelf={bar.shelfIds} onAdd={(ids) => add.mutate(ids)} onRemove={(id) => remove.mutate(id)} style={styles.section} />;
+        return <PantrySection items={pantry.data ?? []} onShelf={bar.shelfIds} onAdd={addIds} onRemove={removeId} style={styles.section} />;
       case 'make-head':
         return (
           <View style={styles.section}>
@@ -117,11 +121,12 @@ export function MyBarScreen() {
       case 'group':
         return (
           <BottleGroup
+            id={item.key}
             group={item.group}
             open={openGroups.has(item.key)}
-            onOpen={() => setOpenGroups(new Set(openGroups).add(item.key))}
+            onOpen={openGroup}
             matchFor={matchFor}
-            onAdd={(ids) => add.mutate(ids)}
+            onAdd={addIds}
             style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null}
           />
         );
@@ -138,12 +143,14 @@ export function MyBarScreen() {
         data={rows}
         keyExtractor={(r) => r.key}
         renderItem={renderRow}
+        // Two screens either side: a sort or tab change re-renders every mounted row.
+        windowSize={5}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
       />
       <AddBottlesSheet
         visible={adding}
         onShelf={bar.shelfIds}
-        onToggle={(item, on) => (on ? add.mutate(item.id) : remove.mutate(item.id))}
+        onToggle={(item, on) => (on ? addIds(item.id) : removeId(item.id))}
         onClose={() => setAdding(false)}
       />
       <BottlePhotoSheet visible={snapping} target={{ kind: 'home' }} onClose={() => setSnapping(false)} />
