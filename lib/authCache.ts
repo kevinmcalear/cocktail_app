@@ -51,12 +51,24 @@ export function cacheActionOnAuth(
 }
 
 /**
+ * Drops writes still waiting for a connection (offline edits). The Supabase
+ * client attaches whoever is signed in when a write is sent, not when it was
+ * made, so one queued by the previous user would go out as the next. Writes
+ * already sent are left to finish.
+ */
+export function dropUnsentWrites(client: QueryClient): void {
+  const writes = client.getMutationCache();
+  for (const write of writes.getAll()) if (write.state.isPaused) writes.remove(write);
+}
+
+/**
  * Drops every user-scoped query's data and refetches the ones on screen.
  * Unlike invalidating, a reset also cancels fetches that started before the
  * session existed, so their anon result can't land and be cached for the
- * query's whole staleTime.
+ * query's whole staleTime. Unsent writes were made as someone else too.
  */
 export function resetUserQueries(client: QueryClient): Promise<void> {
+  dropUnsentWrites(client);
   return client.resetQueries({ predicate: isUserQuery });
 }
 
