@@ -78,8 +78,8 @@ export function DiscoverScreen() {
     setPreferNear(true);
     void locate().then(place);
   };
-  // Ask once Discover is on screen, not when it mounts: native tabs mount every tab up front, so in
-  // venue mode it sits behind Tonight (and their per-tab focus isn't reliable for this).
+  // Ask once Discover is on screen. The tab mounts on its first focus (MountOnFocus), and this
+  // guards anywhere else it's rendered off screen.
   const onScreen = usePathname() === '/discover';
   const asked = useRef(false);
   useEffect(() => {

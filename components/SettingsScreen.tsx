@@ -1,13 +1,10 @@
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { PasswordField } from '@/components/auth/PasswordField';
-import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
-import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
 import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
-import { invokeFunction } from '@/lib/invokeFunction';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
@@ -17,14 +14,16 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { AccountSection } from '@/components/screens/settings/AccountSection';
 import { ChoiceChips, ChoiceRows, RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, radius, space } from '@/constants/tokens';
+const BarInlineEditor = lazy(() => import('@/components/bar/BarInlineEditor').then((m) => ({ default: m.BarInlineEditor }))); // loads on first expand
 
 /** Settings: profile, venues, preferences and the account. */
 export function SettingsScreen() {
@@ -43,29 +42,6 @@ function Settings() {
   const { user, updateProfile, signOut } = useAuth();
   const router = useRouter();
   const tabBarInset = useTabBarInset();
-  const [deletingAccount, setDeletingAccount] = useState(false);
-
-  const deleteAccount = async () => {
-    const confirmed = await confirmAsync({
-      title: 'Delete your account?',
-      message:
-        'This permanently deletes your account, profile, drafts and venue memberships. Drinks and menus you made in a venue stay with that venue. This cannot be undone.',
-      confirmText: 'Delete account',
-      destructive: true,
-    });
-    if (!confirmed) return;
-    setDeletingAccount(true);
-    try {
-      await invokeFunction('delete-account', {});
-      // The account is gone; drop the local session. The root layout then
-      // clears this device's cached data and returns to sign-in.
-      await supabase.auth.signOut({ scope: 'local' });
-    } catch (e) {
-      showMessage('Could not delete your account', e instanceof Error ? e.message : 'Please try again.');
-    } finally {
-      setDeletingAccount(false);
-    }
-  };
   const { data: userBars, isLoading: barsLoading } = useBars();
   const {
     themeMode,
@@ -285,7 +261,7 @@ function Settings() {
                 />
                 {open ? (
                   <View style={[styles.venueEditor, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]}>
-                    <BarInlineEditor barId={ub.bar_id} embedded onClose={() => setExpandedBarId(null)} />
+                    <Suspense fallback={null}><BarInlineEditor barId={ub.bar_id} embedded onClose={() => setExpandedBarId(null)} /></Suspense>
                   </View>
                 ) : null}
               </View>
@@ -367,28 +343,6 @@ function Settings() {
     </SettingsSection>
   );
 
-  const linkRow = (label: string, onPress: () => void) => <SettingsRow label={label} onPress={onPress} />;
-
-  const accountPanel = (
-    <SettingsSection title="Account" minWidth={240}>
-      <View>
-        {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
-        {linkRow('Terms of use', () => router.push('/legal/terms'))}
-        <SafetyLinks row={linkRow} />
-        <RowDivider />
-        <SettingsRow
-          label="Delete account"
-          detail="Permanently remove your account and personal data"
-          tone="danger"
-          role="button"
-          busy={deletingAccount}
-          trailing={<View />}
-          onPress={() => void deleteAccount()}
-        />
-      </View>
-    </SettingsSection>
-  );
-
   const viewAsPanel =
     viewAsChoices.length === 0 ? null : (
       <SettingsSection title="View as" note="Preview menus and recipes as a lower permission level" minWidth={280}>
@@ -446,7 +400,7 @@ function Settings() {
             {servicePanel}
             {searchFilterPanel}
             {viewAsPanel}
-            {accountPanel}
+            <AccountSection />
           </View>
 
           <Button label="Log out" variant="secondary" size="lg" icon="rectangle.portrait.and.arrow.right" onPress={() => void logOut()} style={styles.logOut} />

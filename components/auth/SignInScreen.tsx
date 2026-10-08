@@ -51,7 +51,12 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
       title="Sign in"
       subtitle={subtitle ?? 'Access your bars, menus, and recipes.'}
       brand={brand}
-      footer={<AuthLink lead="No account?" label="Create one" href="/auth/sign-up" />}
+      footer={
+        <>
+          <AuthLink lead="No account?" label="Create one" href="/auth/sign-up" />
+          <AuthLink label="Help and support" href="/support" muted />
+        </>
+      }
     >
       <Field
         label="Email"

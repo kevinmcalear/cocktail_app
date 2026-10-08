@@ -2,16 +2,20 @@ import React, { useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, Text, useTheme, XStack, YStack, type TamaguiElement } from "tamagui";
 
+import { IngredientThumb } from "@/components/ds";
 import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
+import { heroPicture, type ItemImageLink } from "@/lib/itemImages";
 import { focusInModal, MODAL_AUTOFOCUS, type FocusableRef } from '@/lib/modalAutoFocus';
 import { capitalize } from "@/lib/stringUtils";
 
 export type IngredientPickerItem = {
     id: string;
     name: string;
+    /** For the row's picture. */
+    item_images?: ItemImageLink[] | null;
 };
 
 type IngredientPickerSheetProps = {
@@ -25,6 +29,8 @@ type IngredientPickerSheetProps = {
     dropdowns?: any;
     onCreate?: (searchQuery: string) => void | Promise<void>;
     title?: string;
+    /** The list is still downloading: say so, and don't offer to create what may already exist. */
+    loading?: boolean;
 };
 
 export function IngredientPickerSheet({
@@ -37,6 +43,7 @@ export function IngredientPickerSheet({
     dropdowns,
     onCreate,
     title = "Select Ingredient",
+    loading = false,
 }: IngredientPickerSheetProps) {
     const theme = useTheme();
     const [search, setSearch] = useState("");
@@ -99,7 +106,8 @@ export function IngredientPickerSheet({
                                 onClose();
                             }}
                         >
-                            <XStack gap="$2" alignItems="center" flexShrink={1}>
+                            <XStack gap="$3" alignItems="center" flexShrink={1}>
+                                <IngredientThumb name={item.name} url={heroPicture(item.item_images)?.url} size={36} />
                                 <Text color="$color" fontSize={16}>
                                     {capitalize(item.name)}
                                 </Text>
@@ -126,9 +134,9 @@ export function IngredientPickerSheet({
                     <YStack padding="$4" alignItems="center" gap="$4" marginTop="$8">
                         <IconSymbol name="magnifyingglass" size={48} color={theme.color11?.get() as string} />
                         <Text color="$color11" textAlign="center" fontSize={16} fontWeight="bold">
-                            No results found
+                            {loading ? "Loading ingredients…" : "No results found"}
                         </Text>
-                        {onCreate ? (
+                        {onCreate && !loading ? (
                             <Button
                                 marginTop="$4"
                                 backgroundColor="$color5"
@@ -154,7 +162,8 @@ export function IngredientPickerSheet({
 
 const styles = StyleSheet.create({
     option: {
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
         borderBottomWidth: 1,
         flexDirection: "row",
         justifyContent: "space-between",

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { track } from '@/lib/analytics';
 import type { AgeCheck } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
 
@@ -40,7 +41,10 @@ export function useConfirmAge() {
       }
       return data == null ? 'under_age' : 'confirmed';
     },
-    onSuccess: (outcome) => qc.setQueryData(key(user?.id), outcome),
+    onSuccess: (outcome) => {
+      qc.setQueryData(key(user?.id), outcome);
+      if (outcome === 'confirmed') track('age_check_passed');
+    },
     // Shown inline by the form.
     onError: () => {},
   });

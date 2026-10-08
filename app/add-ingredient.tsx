@@ -97,7 +97,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
-    const { data: dropdowns } = useDropdowns();
+    const { data: dropdowns } = useDropdowns({ ingredients: true });
 
     const setMergeRecipeItems = useCallback((items: SortableRecipeItem[]) => {
         setRecipeItems(items);
@@ -116,7 +116,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
     const mergedIngredients = useMemo(() => {
         const published = (dropdowns?.ingredients || []).map((i: any) => ({
             id: i.id,
-            name: i.name
+            name: i.name, item_images: i.item_images,
         }));
 
         const draftIngredients = drafts
@@ -291,9 +291,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             return;
         }
 
-        const proceed = () => {
-            performSave();
-        };
+        const proceed = () => void performSave();
 
         Alert.alert(
             "Publish Ingredient",
@@ -565,6 +563,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             onGeneric={setGeneric}
                             ingredients={mergedIngredients}
                             excludeId={currentDraftId}
+                            sameAs={{ name, barId, rows: dropdowns?.ingredients ?? [], aliases: dropdowns?.ingredientAliases }}
                         />
 
                         <YStack gap="$2">
@@ -662,7 +661,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                 ingredients={mergedIngredients}
                 excludeId={currentDraftId}
                 drafts={drafts}
-                dropdowns={dropdowns}
+                dropdowns={dropdowns} loading={!dropdowns?.ingredients}
                 onSelect={(item) => {
                     setRecipeItems([
                         ...recipeItems,

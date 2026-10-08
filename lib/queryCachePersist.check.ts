@@ -7,21 +7,32 @@ import { guardStorage, serializeCache, shouldPersistQuery } from './queryCachePe
 
 // --- which queries are saved ---
 const client = new QueryClient();
-const build = (queryKey: unknown[], persist?: false) =>
-  client.getQueryCache().build(client, { queryKey, meta: persist === false ? { persist } : undefined });
-build(['dropdowns_v5'], false).setData({});
+const build = (queryKey: unknown[], persist?: boolean) =>
+  client.getQueryCache().build(client, { queryKey, meta: persist === undefined ? undefined : { persist } });
+build(['dropdowns_v7', 'ingredients'], false).setData([]);
+build(['dropdowns_v7', 'specs'], true).setData({});
+build(['dropdowns_v7', 'current_menu_drinks', 'with-glass', ['m1']], true).setData([1]);
 build(['discover-rankings', 'near'], false).setData([1]);
-build(['dropdowns_v5', 'current_menu_drinks', 'with-pictures', 'v1']).setData([1]);
 build(['cocktail', 'c1', null]).setData({ id: 'c1' });
+build(['cocktails', [], null]).setData([1]);
 build(['bars', 'u1']).setData([1]);
+build(['profile', 'mine', 'u1']).setData({});
+build(['profile', 'someone', 'u1']).setData({});
+build(['menus-v2', 'venue-2', 'b1', 'u1']).setData([]);
+build(['menus-v2', 'detail', 'm1']).setData({});
+build(['item-sketch', 'c1']).setData({});
+build(['bars', 'denied'], false).setData([1]);
 build(['still-loading']);
 
 const saved = dehydrate(client, { shouldDehydrateQuery: shouldPersistQuery }).queries.map((q) => q.queryHash);
 assert.deepEqual(saved.sort(), [
   '["bars","u1"]',
   '["cocktail","c1",null]',
-  '["dropdowns_v5","current_menu_drinks","with-pictures","v1"]',
-]);
+  '["dropdowns_v7","current_menu_drinks","with-glass",["m1"]]',
+  '["dropdowns_v7","specs"]',
+  '["menus-v2","venue-2","b1","u1"]',
+  '["profile","mine","u1"]',
+], 'only the allowlist and meta.persist true; persist false always wins');
 
 // --- size guard drops the largest queries first ---
 const persisted = (sizes: Record<string, number>) => ({

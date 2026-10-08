@@ -39,7 +39,7 @@ export function UserAvatar({
 }) {
   const frame = { width: size, height: size, borderRadius: size / 2, borderWidth, borderColor };
   if (uri) {
-    return <Image source={{ uri }} style={frame} accessibilityIgnoresInvertColors />;
+    return <Image source={{ uri }} style={frame} cachePolicy="memory-disk" recyclingKey={uri} accessibilityIgnoresInvertColors />;
   }
   const seed = email || name || '?';
   return (

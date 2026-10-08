@@ -46,7 +46,7 @@ function toNamed(rows: unknown): NamedItem[] {
 
 /** Ingredients, methods and glassware the paste and the swap can match against. */
 export function useSpecCatalog() {
-  const { data, isLoading } = useDropdowns();
+  const { data, isLoading } = useDropdowns({ ingredients: true });
   const catalog = useMemo(() => toCatalog(data?.ingredients), [data?.ingredients]);
   const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
   const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);
@@ -215,6 +215,45 @@ export function useBringIn(barId: string | null) {
     },
     onSuccess: () => void refresh(),
   });
+}
+
+export interface VenueBottle {
+  name: string;
+  /** The kind it is (Gin), or the shared bottle it copies. */
+  genericId: string | null;
+  brand: string | null;
+  abv: number | null;
+}
+
+/**
+ * Puts a photographed bottle in the venue's own ingredients, or takes back
+ * one it just put there. Resolves the new item's id.
+ */
+export function useVenueBottle(barId: string | null) {
+  const refresh = useRefreshSpecs();
+  const add = useMutation({
+    mutationFn: async (bottle: VenueBottle): Promise<string> => {
+      if (!barId) throw new Error('Pick a venue first.');
+      const { data, error } = await supabase
+        .from('items')
+        .insert({ name: bottle.name, item_type: 'ingredient', bar_id: barId, generic_id: bottle.genericId, brand_maker: bottle.brand, abv: bottle.abv })
+        .select('id')
+        .single();
+      if (error) throw new Error(plainDbMessage(error) ?? 'Couldn’t add that bottle.');
+      return data.id;
+    },
+    onSuccess: () => void refresh(),
+    onError: () => {},
+  });
+  const remove = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.from('items').delete().eq('id', itemId).eq('bar_id', barId!);
+      if (error) throw new Error(plainDbMessage(error) ?? 'Couldn’t take that bottle back out.');
+    },
+    onSuccess: () => void refresh(),
+    onError: () => {},
+  });
+  return { add, remove };
 }
 
 /** Sets a price only where the drink doesn't have one yet. */

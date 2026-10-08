@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import React from 'react';
 import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated';
@@ -47,7 +47,7 @@ export function OfflineBanner() {
                 shadowRadius={8}
                 shadowOffset={{ width: 0, height: 2 }}
             >
-                <MaterialCommunityIcons name="wifi-off" size={16} color={theme.warningText?.get() as string} />
+                <MaterialIcons name="wifi-off" size={16} color={theme.warningText?.get() as string} />
                 <Text color="$color" fontSize={13} fontWeight="600">
                     Offline · showing saved data
                 </Text>

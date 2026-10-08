@@ -7,6 +7,7 @@ import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
+import { useMode } from '@/hooks/useMode';
 import { formatPar, locationLine } from '@/lib/backBar';
 import { roleLabel } from '@/lib/roles';
 
@@ -34,7 +35,9 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
   const ds = useDs();
   const router = useRouter();
   const { active } = useActiveVenue();
-  const barId = active?.id ?? null;
+  // Home mode has no venue, even for staff: useActiveVenue falls back to their first one.
+  const home = useMode().mode === 'home';
+  const barId = home ? null : (active?.id ?? null);
   const caps = useCapabilities(barId);
   const capabilities = Array.isArray(caps.data) ? caps.data : null;
   const canRead = !!capabilities?.includes('locations');
@@ -43,8 +46,8 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
   const { data: zones = [] } = useBarZones(canRead ? barId : null);
   const { data: locations = [] } = useItemLocations(canRead ? barId : null);
 
-  // No venue, or a venue without the back bar yet: nothing to say.
-  if (!active || caps.error || !capabilities) return null;
+  // Home mode, no venue, or a venue without the back bar yet: nothing to say.
+  if (home || !active || caps.error || !capabilities) return null;
   if (!canRead) {
     return (
       <LockedSection title="Where it lives" unlocked={false} opensAt={opensAt ? roleLabel(opensAt) : 'a higher role'}>

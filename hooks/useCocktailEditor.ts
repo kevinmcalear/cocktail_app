@@ -25,7 +25,7 @@ import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList"
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: enabled });
     const { data: cocktail, isLoading: loadingCocktail } = useCocktail(enabled ? id : undefined);
 
     const isLoaded = useRef(false);
@@ -299,7 +299,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     name: capitalize(name),
                     description,
                     origin: capitalize(origin) || null,
-                    notes: notes || null,
+                    // '' clears; null would keep a bar-credited drink's notes (credited_drink_notes).
+                    notes: notes.trim() ? notes : '',
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,

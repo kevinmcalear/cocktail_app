@@ -57,6 +57,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // Over-the-air JS updates from EAS Update. A new store binary is needed
     // whenever the app version (and so the runtime) changes.
     runtimeVersion: { policy: 'appVersion' },
+    // Store builds upload their JS source maps and iOS debug symbols to Sentry
+    // (org, project and SENTRY_AUTH_TOKEN come from the EAS production
+    // environment). Build-time only: the native SDK is already linked, so
+    // crash capture itself doesn't depend on this. Not in dev or preview
+    // builds, which have nothing to upload to.
+    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : [])],
     updates: { url: `https://u.expo.dev/${config.extra?.eas?.projectId}` },
     extra: {
       ...config.extra,
