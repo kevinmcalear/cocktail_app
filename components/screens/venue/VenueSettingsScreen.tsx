@@ -1,16 +1,13 @@
 import { useRouter } from 'expo-router';
-import { lazy, Suspense } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { BackbarTheme, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
-import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { roleLabel } from '@/lib/roles';
-
-const BarInlineEditor = lazy(() => import('@/components/bar/BarInlineEditor').then((m) => ({ default: m.BarInlineEditor })));
 
 /** A venue's settings on a page of their own: identity, brand, access, links, team. */
 export function VenueSettingsScreen({ barId }: { barId: string }) {
@@ -49,9 +46,7 @@ function VenuePage({ barId }: { barId: string }) {
               {venue ? <Caption tone="muted">{`Venue settings · You’re ${roleLabel(venue.roleLevel)}`}</Caption> : null}
             </View>
           </View>
-          <Suspense fallback={<ListRowsSkeleton rows={4} />}>
-            <BarInlineEditor barId={barId} embedded />
-          </Suspense>
+          <BarInlineEditor barId={barId} embedded />
         </View>
       </ScrollView>
     </View>
