@@ -7,8 +7,8 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useFlavorCatalog, useMyTaste } from '@/hooks/useFlavor';
-import { useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
+import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
+import { useAllDrinks, useMyBar, useShelfEdit, type BarItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 
@@ -50,14 +50,15 @@ export function MyBarScreen() {
   const [adding, setAdding] = useState(false);
   const [snapping, setSnapping] = useState(false);
   const empty = !bar.isLoading && bar.shelf.length === 0;
-  const others = bar.drinks.filter((d) => !bar.canMakeIds.has(d.id));
+  const all = useAllDrinks();
+  const others = all.drinks.filter((d) => !bar.canMakeIds.has(d.id));
 
   const { data: me } = useMyTaste();
-  const catalog = useFlavorCatalog();
-  // Match percentages only once your taste comes from enough rankings.
+  // Match percentages only once your taste comes from enough rankings, for the drinks loaded so far.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const profiles = useItemFlavors([...bar.canMake, ...others].map((d) => d.id), !!scored);
   const matchFor = (id: string) => {
-    const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
+    const profile = scored && profiles.data?.[id];
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
   };
 
@@ -129,6 +130,8 @@ export function MyBarScreen() {
       <FlatList
         data={others}
         keyExtractor={(d) => d.id}
+        onEndReached={all.loadMore}
+        onEndReachedThreshold={1}
         ListHeaderComponent={header}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
         renderItem={({ item }) => (

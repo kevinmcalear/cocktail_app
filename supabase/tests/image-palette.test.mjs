@@ -162,12 +162,12 @@ describe('who sets images.palette', () => {
   test('signed-in users can add pictures, but not with a palette', async () => {
     const user = await signedIn();
 
-    const { data, error } = await user.from('images').insert({ url: `https://example.test/${run}-user.png` }).select('id, palette').single();
+    const { data, error } = await user.from('images').insert({ url: `${status.API_URL}/storage/v1/object/public/drinks/cocktails/${run}-user.png` }).select('id, palette').single();
     assert.equal(error, null);
     imageIds.push(data.id);
     assert.equal(data.palette, null);
 
-    const forged = await user.from('images').insert({ url: `https://example.test/${run}-forged.png`, palette: ['#ff00ff'] });
+    const forged = await user.from('images').insert({ url: `${status.API_URL}/storage/v1/object/public/drinks/cocktails/${run}-forged.png`, palette: ['#ff00ff'] });
     assert.equal(forged.error?.code, '42501');
     assert.match(forged.error.message, /Only the server sets images\.palette/);
   });

@@ -1,7 +1,10 @@
+import { isLocalSupabaseUrl } from "./localUrl.ts";
+
 /**
  * A public object URL in this project's `drinks` bucket.
  * Venue icons are fetched by a public edge function, so anything else
  * (cloud metadata, another host, a redirect off-bucket) is rejected.
+ * Plain-http localhost URLs only count on a local stack.
  */
 export function drinksBucketUrl(raw: string, supabaseUrl: string): string | null {
   let url: URL;
@@ -14,7 +17,7 @@ export function drinksBucketUrl(raw: string, supabaseUrl: string): string | null
   }
   if (url.username || url.password) return null;
 
-  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  const local = isLocalSupabaseUrl(supabaseUrl) && (url.hostname === "localhost" || url.hostname === "127.0.0.1");
   const sameHost = url.hostname === project.hostname;
   const protocolOk =
     (url.protocol === "https:" && sameHost) ||

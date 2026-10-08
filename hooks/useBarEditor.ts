@@ -137,7 +137,7 @@ export function useBarEditor(barId: string) {
     const { data: userBars } = useBars();
 
     const roleLevel = userBars?.find((b) => b.bar_id === barId)?.role_level ?? 10;
-    const canEdit = roleLevel >= 35;
+    const canEdit = roleLevel >= 40;
 
     const [name, setName] = useState('');
     const [visibilityLevel, setVisibilityLevel] = useState('10');
@@ -281,7 +281,7 @@ export function useBarEditor(barId: string) {
 
     const handleSave = useCallback(async (): Promise<boolean> => {
         if (!canEdit) {
-            showAlert('Cannot save', 'You need Drink Creator access or higher to edit this venue.');
+            showAlert('Cannot save', "Only the venue's Admins can edit its settings.");
             return false;
         }
         if (!name.trim()) {
