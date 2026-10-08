@@ -10,6 +10,7 @@ import { handleFromName, normalizeHandle, profileDraftErrors, type ProfileDraft 
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SafetyPage } from '../safety/SafetyPage';
+import { MyJobRequests } from './JobRequests';
 import { PastJobs } from './PastJobs';
 
 const PUBLIC_MEANS =
@@ -125,6 +126,7 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         <View style={styles.visibility}>
           <Headline role="heading">Where you’ve worked</Headline>
           <Caption tone="muted">Where you work now always shows. Switch on a past job to show it too. Each switch saves straight away.</Caption>
+          <MyJobRequests personId={profile.id} />
           <PastJobs personId={profile.id} />
         </View>
       ) : null}
