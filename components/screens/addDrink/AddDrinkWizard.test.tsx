@@ -28,9 +28,12 @@ jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
+const mockStart = jest.fn();
+jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }) }));
 
 beforeEach(() => {
   mockCreate.mockReset();
+  mockStart.mockReset();
   mockSaved.mockReset();
   mockBarGlasses = [];
   useDrinkWizardStore.setState({ kept: {} });
@@ -50,24 +53,43 @@ describe('AddDrinkWizard', () => {
     await fireEvent.changeText(screen.getByLabelText('Name'), 'house negroni');
     await next();
 
-    // Ingredients: a quick add, one by search, and the stepper.
+    // Ingredients: a quick add starts at a likely pour; the stepper walks it, and it can be typed.
     await fireEvent.press(screen.getByRole('button', { name: 'Add Gin' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'More Gin' }));
+    expect(screen.getByLabelText('Amount of Gin').props.value).toBe('60');
     await fireEvent.press(screen.getByRole('button', { name: 'More Gin' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Less Gin' }));
-    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'camp');
+    await fireEvent.press(screen.getByRole('button', { name: 'Less Gin' }));
+    expect(screen.getByLabelText('Amount of Gin').props.value).toBe('50');
+    await fireEvent.changeText(screen.getByLabelText('Amount of Gin'), '1 1/2');
+    await fireEvent(screen.getByLabelText('Amount of Gin'), 'blur');
+    expect(screen.getByLabelText('Amount of Gin').props.value).toBe('1.5');
+    await fireEvent.changeText(screen.getByLabelText('Amount of Gin'), '30');
+    await fireEvent.changeText(screen.getByLabelText('Add another ingredient'), 'camp');
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
-    expect(screen.getByRole('button', { name: 'Amount: 30 ml' })).toBeTruthy();
+    expect(screen.getByLabelText('Amount of Campari').props.value).toBe('30');
+
+    // The unit is in sight, and a tap away from changing.
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Unit: ml' })[1]);
+    await fireEvent.press(screen.getByRole('radio', { name: 'oz' }));
+    expect(screen.getAllByRole('button', { name: 'Unit: oz' })).toHaveLength(1);
+    expect(screen.getByLabelText('Amount of Campari').props.value).toBe('1');
+
+    // Remove, then undo, puts it back where it was.
+    await fireEvent.press(screen.getByRole('button', { name: 'Remove Gin' }));
+    expect(screen.queryByLabelText('Amount of Gin')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo removing Gin' }));
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => l.name)).toEqual(['Gin', 'Campari']);
 
     // Back to the name and forward again: nothing is lost.
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByLabelText('Name').props.value).toBe('House Negroni');
     await next();
-    expect(screen.getByRole('button', { name: 'Amount: – ml' })).toBeTruthy();
+    expect(screen.getByLabelText('Amount of Campari').props.value).toBe('1');
+    await fireEvent.changeText(screen.getByLabelText('Amount of Campari'), '');
     await next();
 
     // Method: several, in order, and your own.
-    await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir' }));
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir, suggested' }));
     await fireEvent.changeText(screen.getByLabelText('Your own method'), 'Smoke rinse');
     await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
     expect(screen.getByText('Stir, then Smoke rinse')).toBeTruthy();
@@ -92,7 +114,7 @@ describe('AddDrinkWizard', () => {
     const input = mockCreate.mock.calls[0][0];
     expect(input.barId).toBeNull();
     expect(input.myProfileId).toBe('p-me');
-    expect(input.draft.lines.map((l: { id: string; amount: string }) => [l.id, l.amount])).toEqual([['gin', '30'], ['campari', '']]);
+    expect(input.draft.lines.map((l: { id: string; amount: string; unit: string }) => [l.id, l.amount, l.unit])).toEqual([['gin', '30', 'ml'], ['campari', '', 'oz']]);
     expect(input.draft.methods).toEqual([{ id: 'm-stir', name: 'Stir' }, { id: null, name: 'Smoke rinse' }]);
 
     // Saved: the kept draft goes and the caller hears the new id.
@@ -130,5 +152,42 @@ describe('AddDrinkWizard', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBeNull();
+  });
+
+  test('tapping a name swaps the ingredient and keeps its amount', async () => {
+    useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
+    useDrinkWizardStore.getState().setStep('home', 'ingredients');
+    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
+    await fireEvent.changeText(screen.getByLabelText('Swap Gin for…'), 'verm');
+    await fireEvent.press(screen.getByRole('button', { name: 'Sweet Vermouth' }));
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);
+  });
+
+  test('a name that is a classic offers its spec, and the method step offers the guess from it', async () => {
+    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Negroni');
+    await fireEvent.press(screen.getByRole('button', { name: 'Start from the Negroni' }));
+    expect(mockStart.mock.calls[0][0]).toBe('c-negroni');
+    await act(() =>
+      mockStart.mock.calls[0][1].onSuccess({
+        lines: [{ key: 'a', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' }, { key: 'b', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' }, { key: 'c', id: 'vermouth', name: 'Sweet Vermouth', amount: '30', unit: 'ml' }],
+        riffOf: { id: 'c-negroni', name: 'Negroni' },
+      })
+    );
+    expect(screen.getByText('What goes in?')).toBeTruthy();
+    expect(screen.getByLabelText('Amount of Sweet Vermouth').props.value).toBe('30');
+
+    // All spirit: stirred, offered first, and all three in one tap.
+    await next();
+    expect(screen.getByRole('checkbox', { name: 'Stir, suggested' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Use Stir, / }));
+    const d = useDrinkWizardStore.getState().kept.home;
+    expect(d.step).toBe('garnish');
+    expect(d.draft.methods).toEqual([{ id: 'm-stir', name: 'Stir' }]);
+    expect(d.draft.glass?.name).toBeTruthy();
+    expect(d.draft.ice?.name).toBeTruthy();
   });
 });

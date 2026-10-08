@@ -71,7 +71,7 @@ export function plural(n: number, one: string, many = `${one}s`): string {
 /** A home menu's night as the person is filling it in. */
 export interface NightDraft {
   when: 'none' | 'tonight' | 'tomorrow' | 'date';
-  /** Typed, for 'date': 2026-10-04. */
+  /** Picked, for 'date': 2026-10-04. */
   date: string;
   /** Typed: blank for not saying. */
   guests: string;
@@ -86,7 +86,7 @@ export function homeNight(draft: NightDraft, now: number): { menuDate: string | 
       : draft.when === 'date'
         ? parseDay(draft.date)
         : toDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() + (draft.when === 'tomorrow' ? 1 : 0)));
-  if (draft.when === 'date' && !menuDate) return { error: 'Use a date like 2026-10-04.' };
+  if (draft.when === 'date' && !menuDate) return { error: 'Pick a day.' };
   const typed = draft.guests.trim();
   const guestCount = typed ? Number(typed) : null;
   if (guestCount !== null && (!Number.isInteger(guestCount) || guestCount < 1 || guestCount > 500)) return { error: 'Guests: a number from 1 to 500.' };

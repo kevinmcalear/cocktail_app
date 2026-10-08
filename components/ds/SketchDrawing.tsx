@@ -12,12 +12,12 @@ export type SketchDetail = 'full' | 'thumb';
 // Painted once per drink and detail, then reused while the inputs object is
 // the same (TanStack Query keeps it stable until the row changes).
 const scenes = new WeakMap<SketchInputs, Map<string, Scene>>();
-function sceneFor(inputs: SketchInputs, seed: string, detail: SketchDetail): Scene {
+export function sceneFor(inputs: SketchInputs, seed: string, detail: SketchDetail, bands = false): Scene {
   let byKey = scenes.get(inputs);
   if (!byKey) scenes.set(inputs, (byKey = new Map()));
-  const key = `${seed}|${detail}`;
+  const key = `${seed}|${detail}|${bands}`;
   let scene = byKey.get(key);
-  if (!scene) byKey.set(key, (scene = paintSketch(inputs, { seed, detail })));
+  if (!scene) byKey.set(key, (scene = paintSketch(inputs, { seed, detail, bands })));
   return scene;
 }
 
@@ -32,7 +32,7 @@ function stops(color: string, fadeTo: number) {
 // Ids are prefixed per drawing (u): on web they share the page, and the same
 // drink drawn twice (a tile under its page) would borrow the other's gradients
 // and clips.
-function defsFor(els: SceneEl[], u: string, out: ReactNode[]) {
+export function defsFor(els: SceneEl[], u: string, out: ReactNode[]) {
   for (const el of els) {
     if (el.k === 'wash') {
       const [x1, y1, x2, y2] = el.grad;
@@ -51,12 +51,14 @@ function defsFor(els: SceneEl[], u: string, out: ReactNode[]) {
     } else if (el.k === 'group') {
       out.push(<ClipPath key={el.id} id={`${u}${el.id}`}><Path d={el.clip} /></ClipPath>);
       defsFor(el.children, u, out);
+    } else if (el.k === 'stage') {
+      defsFor(el.children, u, out);
     }
   }
   return out;
 }
 
-function draw(el: SceneEl, i: number, u: string): ReactNode {
+export function draw(el: SceneEl, i: number, u: string): ReactNode {
   switch (el.k) {
     case 'fill':
       return <Path key={i} d={el.d} fill={el.color} fillOpacity={el.o} />;
@@ -78,6 +80,9 @@ function draw(el: SceneEl, i: number, u: string): ReactNode {
       );
     case 'group':
       return <G key={i} clipPath={`url(#${u}${el.id})`}>{el.children.map((c, j) => draw(c, j, u))}</G>;
+    case 'stage':
+      // Still drawings ignore stages; AnimatedSketch moves each on its own.
+      return <G key={i}>{el.children.map((c, j) => draw(c, j, u))}</G>;
   }
 }
 

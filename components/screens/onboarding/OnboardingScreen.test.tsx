@@ -17,6 +17,7 @@ const mockSaveDrink = jest.fn();
 const mockAccept = jest.fn();
 const mockDecline = jest.fn();
 const mockUpdatePassword = jest.fn();
+const mockSaveTaste = jest.fn();
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
 let mockInvitedAt: string | undefined;
 type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_logo_url: null; bar_color: string | null; bar_display_face: null; bar_ground_tint: null; bar_profile_id: string | null; role_level: number; name: string | null; invited_by_name: string | null };
@@ -42,6 +43,9 @@ jest.mock('@/hooks/useOnboarding', () => ({
   useSaveWorkedMenu: () => ({ mutate: mockSaveMenu, isPending: false, error: null }),
   useSaveCareerDrink: () => ({ mutate: mockSaveDrink, isPending: false, error: null }),
   useFinishOnboarding: () => ({ mutate: mockFinish, isPending: false, error: null }),
+}));
+jest.mock('@/hooks/useFlavor', () => ({
+  useSaveTasteAnswers: () => ({ mutate: mockSaveTaste, isPending: false, error: null }),
 }));
 jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? mockPeople : [] }),
@@ -75,6 +79,8 @@ beforeEach(() => {
   mockClaim.mockReset();
   mockSaveMenu.mockReset();
   mockSaveDrink.mockReset();
+  mockSaveTaste.mockReset();
+  mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
   useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
 });
@@ -92,7 +98,7 @@ async function newCareer() {
 }
 
 describe('OnboardingScreen', () => {
-  test('a name is required, then home bartenders skip the workplace and set a unit', async () => {
+  test('a name is required, then home bartenders skip the workplace, say what they like and set a unit', async () => {
     await renderWithTamagui(<OnboardingScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Add the name people will see.')).toBeTruthy();
@@ -105,6 +111,17 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at home' }));
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
     expect(screen.queryByText('Where do you work?')).toBeNull();
+    expect(screen.getByText('What do you like to drink?')).toBeTruthy();
+
+    // Continue needs an answer; tapping one again clears it.
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    const loveBitter = screen.getAllByRole('radio', { name: 'Love it' })[0];
+    await fireEvent.press(loveBitter);
+    await fireEvent.press(screen.getAllByRole('radio', { name: 'Not for me' })[4]);
+    await fireEvent.press(screen.getAllByRole('radio', { name: 'Sometimes' })[1]);
+    await fireEvent.press(screen.getAllByRole('radio', { name: 'Sometimes' })[1]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockSaveTaste).toHaveBeenCalledWith({ bitter: 0.8, smoky: 0.1 }, expect.anything());
     expect(screen.getByText('How do you measure?')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'oz' }));
@@ -126,6 +143,9 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
     expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '', bar_id: null }, expect.anything());
     expect(mockSaveName).not.toHaveBeenCalled();
+    expect(screen.getByText('What do you like to drink?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+    expect(mockSaveTaste).not.toHaveBeenCalled();
     expect(screen.getByText('How do you measure?')).toBeTruthy();
   });
 
