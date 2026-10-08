@@ -1,17 +1,16 @@
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
 
 import { Body, Button, Caption, Field } from '@/components/ds';
 import { useSetMissingPrices } from '@/hooks/useBulk';
-import { space } from '@/constants/tokens';
 import { stageBringIn } from '@/lib/bringInHandoff';
 import { plainDbMessage } from '@/lib/dbError';
 import type { EditSection } from '@/lib/menuLayout';
 import { bringInText, parseMenuPaste, pasteRows, placedGroups, type PasteRow, type PlacedGroup } from '@/lib/paste';
 import type { MenuDrink } from '@/types/menus';
 
-import { Choice, MenuSheet } from './MenuSheet';
+import { PhotoRow } from './MenuPhotoRows';
+import { MenuSheet } from './MenuSheet';
 
 interface PasteMenuSheetProps {
   /** The section this paste fills. Null pastes a whole menu, headings and all. */
@@ -76,24 +75,9 @@ export function PasteMenuSheet({ into, library, already = [], onClose, onApply }
     >
       <Field label="The list" value={text} onChangeText={setText} placeholder={'Signatures:\nNegroni — 18\nMartini — 19'} minLines={4} />
       {!text.trim() ? <Body tone="muted">Drinks already in the library get attached. A price is kept only when the drink has none.</Body> : null}
-      {rows.map((row) => {
-        if (row.status === 'pick') {
-          return (
-            <View key={row.key} style={{ gap: space.sm }}>
-              <Caption>{row.name}. Which one?</Caption>
-              {row.options.map((option) => (
-                <Choice key={option.id} label={option.name} detail={option.line || option.kind} selected={false} onPress={() => setPicks((prev) => ({ ...prev, [row.key]: option.id }))} />
-              ))}
-            </View>
-          );
-        }
-        const label = row.status === 'add' ? `${row.drink.name}. ${row.note}` : row.status === 'missing' ? `${row.name}. Not in the library` : `${row.name}. ${row.note}`;
-        return (
-          <Caption key={row.key} tone={row.status === 'missing' ? 'accent' : 'muted'}>
-            {label}
-          </Caption>
-        );
-      })}
+      {rows.map((row) => (
+        <PhotoRow key={row.key} row={row} onPick={(id) => setPicks((prev) => ({ ...prev, [row.key]: id }))} />
+      ))}
       {error ? <Caption tone="accent">{error}</Caption> : null}
     </MenuSheet>
   );

@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 
+import { ensureAiConsent } from '@/lib/aiConsent';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import type { ParsedMenuSection } from '@/lib/paste';
@@ -17,6 +18,9 @@ export interface MenuReading {
 }
 
 export const MAX_MENU_PHOTOS = 4;
+
+/** Shown when someone says no to Google AI: nothing was sent. */
+export const AI_DECLINED = 'Nothing was sent. Reading a photo uses Google AI, so it needs your OK first.';
 
 // Small enough that four pages fit one request, sharp enough to read print.
 const QUALITY = 0.5;
@@ -41,6 +45,7 @@ export async function takeMenuPhoto(): Promise<MenuPhoto[]> {
 
 /** Reads the pages (read-menu): sections, drinks, their listed ingredients and prices. */
 export async function readMenuPhotos(photos: MenuPhoto[]): Promise<MenuReading> {
+  if (!(await ensureAiConsent())) throw new Error(AI_DECLINED);
   const encoded = await Promise.all(photos.map(async (photo) => ({ base64: await uriToBase64(photo.uri), mime_type: photo.mimeType })));
   const reading = await invokeFunction<MenuReading>('read-menu', { photos: encoded });
   if (!reading?.sections?.length) throw new Error('Couldn’t find any drinks in that photo. Try a closer, flatter shot of the menu.');

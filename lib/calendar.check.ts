@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { monthOf, monthWeeks, outside, shiftMonth, weekStart } from './calendar';
+import { monthOf, monthWeeks, outside, parseTime, shiftMonth, timeLabel, toTime, uses12Hour, weekStart } from './calendar';
 
 // --- October 2026 starts on a Thursday and has 31 days ---
 const oct = monthWeeks({ year: 2026, month: 9 }, 1);
@@ -33,3 +33,14 @@ assert.equal(outside('2026-10-05'), false);
 assert.equal(weekStart('en-US'), 0);
 assert.equal(weekStart('en-GB'), 1);
 assert.equal(weekStart('de-DE'), 1);
+
+// --- times: real ones only, written the locale's way ---
+assert.deepEqual(parseTime('19:05'), { hour: 19, minute: 5 });
+assert.deepEqual(parseTime(' 7:30 '), { hour: 7, minute: 30 });
+assert.equal(parseTime('24:00'), null);
+assert.equal(parseTime('7pm'), null);
+assert.equal(toTime(7, 5), '07:05');
+assert.equal(uses12Hour('en-US'), true);
+assert.equal(uses12Hour('en-GB'), false);
+assert.equal(timeLabel('19:00', 'en-GB'), '19:00');
+assert.match(timeLabel('19:00', 'en-US'), /^7:00\sPM$/);

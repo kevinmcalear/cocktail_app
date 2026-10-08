@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, GlassButton, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useSetMissingPrices } from '@/hooks/useBulk';
 import { useCreateMenu, useMenuLibrary, useReadMenu, useUploadMenuCover } from '@/hooks/useMenuMutations';
@@ -17,7 +17,7 @@ import { plural } from '@/lib/menus';
 import { appendReading, applyMenuPaste, bringInText, pasteRows, placedGroups, type ParsedMenuSection } from '@/lib/paste';
 import { MAX_MENU_PHOTOS, pickMenuPhotos, takeMenuPhoto, type MenuPhoto } from '@/lib/readMenu';
 
-import { PhotoRow, TextLink } from './MenuPhotoRows';
+import { PhotoRow } from './MenuPhotoRows';
 import { useMenuPhotoDrop } from './useMenuPhotoDrop';
 
 const message = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
@@ -34,9 +34,11 @@ export function MenuFromPhotoScreen() {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const [start] = useState(peekMenuPhotos);
-  const [pages, setPages] = useState<MenuPhoto[]>(start?.photos ?? []);
-  const [sections, setSections] = useState<ParsedMenuSection[]>([]);
-  const [title, setTitle] = useState<string | null>(null);
+  // PDFs and text can be read but not shown, so only photos are pages (and the cover).
+  const [pages, setPages] = useState<MenuPhoto[]>(() => (start?.photos ?? []).filter((p) => p.mimeType.startsWith('image/')));
+  // A reading handed over by Bring in is shown as is; otherwise the pages are read below.
+  const [sections, setSections] = useState<ParsedMenuSection[]>(() => start?.reading?.sections ?? []);
+  const [title, setTitle] = useState<string | null>(() => start?.reading?.title ?? null);
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const read = useReadMenu();
@@ -65,7 +67,7 @@ export function MenuFromPhotoScreen() {
   // Read the pages once (the ref keeps a dev double render from paying twice).
   const started = useRef(false);
   useEffect(() => {
-    if (started.current || !start) return;
+    if (started.current || !start || start.reading) return;
     started.current = true;
     void readPages(start.photos);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,7 +97,7 @@ export function MenuFromPhotoScreen() {
     try {
       const adding = rows.flatMap((row) => (row.status === 'add' && row.price ? [{ id: row.drink.id, price: row.price }] : []));
       if (adding.length) await setPrices.mutateAsync(adding);
-      const coverUrl = await cover.mutateAsync(pages[0].uri);
+      const coverUrl = pages[0] ? await cover.mutateAsync(pages[0].uri) : null;
       const layout = applyMenuPaste({ name, coverUrl, coverPosition: 50, sections: [blankSection()] }, null, placedGroups(rows, false));
       const id = await create.mutateAsync({ barId: start.barId, layout, night: start.night });
       clearMenuPhotos();
@@ -118,7 +120,7 @@ export function MenuFromPhotoScreen() {
   const drinks = sections.reduce((n, s) => n + s.lines.length, 0);
   const missing = rows.filter((row) => row.status === 'missing').length;
   const unresolved = rows.some((row) => row.status === 'pick');
-  const status = read.isPending ? 'Reading your menu…' : drinks ? `Read from your photo: ${plural(drinks, 'drink')} in ${plural(sections.length, 'section')}` : null;
+  const status = read.isPending ? 'Reading your menu…' : drinks ? `${pages.length ? 'Read from your photo' : 'Read'}: ${plural(drinks, 'drink')} in ${plural(sections.length, 'section')}` : null;
 
   return (
     <View ref={drop} style={[styles.screen, { backgroundColor: ds.c.ground }, dragging && { borderColor: ds.accentText }, dragging && styles.dragging]}>

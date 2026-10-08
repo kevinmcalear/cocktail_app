@@ -1,7 +1,7 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, DateField, Field, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field, PressableScale, TimeField, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
 import { toDay } from '@/lib/collection';
@@ -47,7 +47,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   const problem = !name.trim()
     ? 'Give the event a name.'
     : Number.isNaN(startsAt.getTime())
-      ? 'Use a time like 19:00.'
+      ? 'Pick a start time.'
       : coversNumber !== null && (!Number.isInteger(coversNumber) || coversNumber < 0)
         ? 'Guests should be a whole number.'
         : null;
@@ -74,7 +74,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
               <Title>New event</Title>
               <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
               <DateField label="Date" value={date} onChange={setDate} min={today} />
-              <Field label="Starts" value={time} onChangeText={setTime} placeholder="19:00" autoCapitalize="none" />
+              <TimeField label="Starts" value={time} onChange={setTime} />
               <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
               <Caption tone="muted">Menu</Caption>
               <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>

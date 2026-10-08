@@ -21,7 +21,13 @@ export interface WizardState<D, S extends string> {
  * app going to the background (or being closed) and is only cleared once
  * it's saved, or someone starts over. The draft must be plain JSON.
  */
-export function createWizardStore<D extends object, S extends string>(name: string, empty: D, firstStep: S) {
+export function createWizardStore<D extends object, S extends string>(
+  name: string,
+  empty: D,
+  firstStep: S,
+  /** Runs on every change: stamps what a draft must carry (the drink wizard's id). */
+  prepare: (draft: D) => D = (d) => d
+) {
   const current = (s: WizardState<D, S>, place: string): Kept<D, S> => s.kept[place] ?? { draft: empty, step: firstStep, updatedAt: 0 };
   return create<WizardState<D, S>>()(
     persist(
@@ -30,7 +36,7 @@ export function createWizardStore<D extends object, S extends string>(name: stri
         patch: (place, change) =>
           set((s) => {
             const k = current(s, place);
-            return { kept: { ...s.kept, [place]: { ...k, draft: { ...k.draft, ...change }, updatedAt: Date.now() } } };
+            return { kept: { ...s.kept, [place]: { ...k, draft: prepare({ ...k.draft, ...change }), updatedAt: Date.now() } } };
           }),
         setStep: (place, step) => set((s) => ({ kept: { ...s.kept, [place]: { ...current(s, place), step } } })),
         clear: (place) =>
