@@ -13,6 +13,7 @@ import { Segmented } from '../Segmented';
 import { SpecRow } from '../SpecRow';
 import { Surface } from '../Surface';
 import { Tag } from '../Tag';
+import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { GlassVariants } from './GlassVariants';
@@ -54,6 +55,7 @@ export function GallerySections() {
   const ds = useDs();
   const [tab, setTab] = useState<'spec' | 'service' | 'family'>('spec');
   const [day, setDay] = useState('');
+  const [time, setTime] = useState('19:00');
   return (
     <View>
       <Section title="Colour">
@@ -115,6 +117,7 @@ export function GallerySections() {
 
       <Section title="Dates">
         <DateField label="Date" value={day} onChange={setDay} clearable hint="Opens a month calendar; the same on web, iOS and Android." />
+        <TimeField label="Starts" value={time} onChange={setTime} />
       </Section>
 
       <Section title="Spec">
