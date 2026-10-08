@@ -14,10 +14,10 @@ export interface SpecRowProps {
   amount: string;
   ingredient: string;
   /**
-   * The ingredient's picture, beside its name. Null shows its initial on the
-   * house paper (no picture yet); leave it out for a line with no picture at all.
+   * The ingredient whose drawing sits beside its name. Null draws from the name
+   * alone (not in the catalog); leave it out for a line with no picture at all.
    */
-  picture?: string | null;
+  ingredientId?: string | null;
   /** Made in house from its own recipe (a syrup, a wash, a batch). */
   houseMade?: boolean;
   optional?: boolean;
@@ -43,7 +43,7 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, picture, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
@@ -64,10 +64,10 @@ export function SpecRow({ amount, ingredient, picture, houseMade, optional, note
       ) : null}
     </>
   );
-  const pictured = picture !== undefined;
+  const pictured = ingredientId !== undefined;
   const name = pictured ? (
     <>
-      <IngredientThumb name={ingredient} url={picture} size={36 * scale} />
+      <IngredientThumb id={ingredientId} name={ingredient} size={36 * scale} />
       <View style={styles.text}>{text}</View>
     </>
   ) : (

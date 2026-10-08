@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { buildIngredientImageMap, mapPresentationRecipeToEditItem, resolvePresentationIngredient } from "./recipeUtils";
+import { mapPresentationRecipeToEditItem, resolvePresentationIngredient } from "./recipeUtils";
 
 // app_recipe_presentation rows as selected with display_ingredient(...).
 const specific = {
@@ -42,21 +42,6 @@ assert.equal(resolvePresentationIngredient(specific)?.id, "ing-1");
 assert.equal(resolvePresentationIngredient(masked), null);
 assert.equal(resolvePresentationIngredient(genericOnly)?.name, "Gin");
 
-const map = buildIngredientImageMap(
-    [
-        { ...specific, ingredient: resolvePresentationIngredient(specific) },
-        { ...masked, ingredient: resolvePresentationIngredient(masked) },
-        { ...genericOnly, ingredient: resolvePresentationIngredient(genericOnly) },
-        editLine,
-    ],
-    [{ id: "ing-4", item_images: [{ images: { url: "https://example.com/lime.png" } }] }]
-);
-
-assert.equal(map["ing-1"], "https://example.com/bourbon.png");
-// A generic ingredient with no photo of its own gets none (never the brand's).
-assert.equal(map["gen-1"], undefined);
-assert.equal(map["ing-4"], "https://example.com/lime.png");
-assert.equal(Object.keys(map).length, 2);
 
 const edit = mapPresentationRecipeToEditItem(rawRow, { includeCocktailFields: true });
 assert.equal(edit.ingredient_id, "ing-5");

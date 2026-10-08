@@ -1,11 +1,11 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Accordion, Card, Paragraph, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { buildIngredientImageMap, CocktailIngredientList } from "@/components/cocktail/CocktailIngredientList";
+import { CocktailIngredientList } from "@/components/cocktail/CocktailIngredientList";
+import { IngredientThumb } from "@/components/ds";
 import { SpecBadgeRow } from "@/components/cocktail/SpecBadgeRow";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
@@ -103,11 +103,6 @@ export function CocktailDetailContent({
         parentName: editor?.name,
     });
 
-    const ingredientImageMap = useMemo(
-        () => buildIngredientImageMap(cocktail.recipes, editor?.allIngredients),
-        [cocktail.recipes, editor?.allIngredients]
-    );
-
     const navigateIngredient = (ingredientId: string) => {
         if (onNestedItemPress) {
             onNestedItemPress(ingredientId);
@@ -138,11 +133,6 @@ export function CocktailDetailContent({
         const ingredientsData =
             recipe.ingredient ||
             (isEditing ? { id: recipe.ingredient_id, name: recipe.name } : null);
-        const ingredientIdForImage =
-            ingredientsData?.id || recipe.display_ingredient_id || recipe.ingredient_id;
-        const imageUrl =
-            (ingredientIdForImage && ingredientImageMap[ingredientIdForImage]) ||
-            ingredientsData?.item_images?.[0]?.images?.url;
         const measurementParts = [];
         const amount = recipe.amount;
         const unit = recipe.unit;
@@ -170,16 +160,10 @@ export function CocktailDetailContent({
                         backgroundColor={isSelected ? "rgba(0,122,255,0.08)" : "$backgroundStrong"}
                         borderRadius={12}
                     >
-                        {imageUrl ? (
-                            <Image
-                                source={{ uri: imageUrl }}
-                                style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)" }}
-                                contentFit="cover"
-                            />
+                        {ingredientId ? (
+                            <IngredientThumb id={ingredientId} name={ingredientsData?.name ?? ""} size={44} />
                         ) : (
-                            <View style={styles.ingPlaceholder}>
-                                <IconSymbol name="camera.fill" size={14} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
-                            </View>
+                            <View style={styles.ingPlaceholder} />
                         )}
                         <YStack flex={1} gap="$0.5">
                             {measurement ? (
@@ -200,16 +184,10 @@ export function CocktailDetailContent({
         return (
             <XStack key={index} alignItems="center" gap="$4">
                 <TouchableOpacity onPress={() => ingredientId && navigateIngredient(ingredientId)} activeOpacity={0.7}>
-                    {imageUrl ? (
-                        <Image
-                            source={{ uri: imageUrl }}
-                            style={styles.ingImage}
-                            contentFit="cover"
-                        />
+                    {ingredientId ? (
+                        <IngredientThumb id={ingredientId} name={ingredientsData?.name ?? ""} size={64} />
                     ) : (
-                        <View style={styles.ingImagePlaceholder}>
-                            <IconSymbol name="camera.fill" size={18} color={theme.color11?.get() as string} style={{ opacity: 0.7 }} />
-                        </View>
+                        <View style={styles.ingPlaceholder} />
                     )}
                 </TouchableOpacity>
                 <YStack flex={1} gap="$0.5">
@@ -294,8 +272,6 @@ export function CocktailDetailContent({
                                     }
                                     onMerge={onMerge}
                                     variant="card"
-                                    allIngredients={editor.allIngredients}
-                                    ingredientImageMap={ingredientImageMap}
                                     onNestedItemPress={onNestedItemPress}
                                     onRenameIngredient={handleRenameIngredient}
                                     drafts={drafts}
@@ -312,7 +288,6 @@ export function CocktailDetailContent({
                                 <CocktailIngredientList
                                     isEditing
                                     editItems={editor.recipeItems}
-                                    ingredientImageMap={ingredientImageMap}
                                     onReorder={(items) => editor.setRecipeItems(items)}
                                     onUpdateItem={(index, updates) => {
                                         const next = [...editor.recipeItems];
@@ -337,7 +312,6 @@ export function CocktailDetailContent({
                         <CocktailIngredientList
                             isEditing={false}
                             viewRecipes={cocktail.recipes}
-                            ingredientImageMap={ingredientImageMap}
                             onIngredientPress={navigateIngredient}
                         />
                     ) : (
@@ -518,20 +492,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 999,
         borderWidth: 1,
-    },
-    ingImage: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: "rgba(255,255,255,0.05)",
-    },
-    ingImagePlaceholder: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        justifyContent: "center",
-        alignItems: "center",
     },
     ingPlaceholder: {
         width: 44,

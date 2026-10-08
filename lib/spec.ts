@@ -6,7 +6,7 @@
  */
 
 import { density, toMl } from '@/lib/drinkMath';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { type ItemImageLink } from '@/lib/itemImages';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 
 export interface PresentationRecipe {
@@ -56,8 +56,6 @@ export interface SpecLine {
   abv: number | null;
   /** The ingredient's own density, when set. */
   density: number | null;
-  /** The ingredient's picture; null when it has none or its name is locked. */
-  imageUrl: string | null;
 }
 
 // Grams convert to ml through the ingredient's density (lib/drinkMath.ts).
@@ -81,7 +79,6 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       atService: typeof r.at_service === 'boolean' ? r.at_service : null,
       abv: typeof resolved?.abv === 'number' ? resolved.abv : null,
       density: typeof resolved?.density_g_ml === 'number' ? resolved.density_g_ml : null,
-      imageUrl: resolved?.image_url ?? heroPicture(resolved?.item_images)?.url ?? null,
     };
   });
 }

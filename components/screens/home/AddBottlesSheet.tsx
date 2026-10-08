@@ -74,7 +74,7 @@ function BottleRow({ item, has, onToggle }: { item: BarItem; has: boolean; onTog
       onPress={() => onToggle(item, !has)}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      <IngredientThumb name={item.name} url={item.imageUrl} />
+      <IngredientThumb id={item.id} name={item.name} />
       <Headline numberOfLines={1} style={styles.name}>
         {item.name}
       </Headline>

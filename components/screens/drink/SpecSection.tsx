@@ -102,7 +102,7 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
             amount={access.amounts ? (lineAmount(l, unit) ?? '') : ''}
             alignAmount={measured}
             ingredient={l.ingredient ?? 'Hidden ingredient'}
-            picture={l.ingredient ? l.imageUrl : undefined}
+            ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
             note={l.note ?? undefined}
             detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}

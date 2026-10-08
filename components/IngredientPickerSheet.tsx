@@ -7,7 +7,6 @@ import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
-import { heroPicture, type ItemImageLink } from "@/lib/itemImages";
 import { focusInModal, MODAL_AUTOFOCUS, type FocusableRef } from '@/lib/modalAutoFocus';
 import { capitalize } from "@/lib/stringUtils";
 
@@ -15,7 +14,6 @@ export type IngredientPickerItem = {
     id: string;
     name: string;
     /** For the row's picture. */
-    item_images?: ItemImageLink[] | null;
 };
 
 type IngredientPickerSheetProps = {
@@ -107,7 +105,7 @@ export function IngredientPickerSheet({
                             }}
                         >
                             <XStack gap="$3" alignItems="center" flexShrink={1}>
-                                <IngredientThumb name={item.name} url={heroPicture(item.item_images)?.url} size={36} />
+                                <IngredientThumb id={item.id} name={item.name} size={36} />
                                 <Text color="$color" fontSize={16}>
                                     {capitalize(item.name)}
                                 </Text>

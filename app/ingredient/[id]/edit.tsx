@@ -4,24 +4,18 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
     ActivityIndicator,
     Alert,
-    Platform,
     Switch,
     TouchableOpacity,
-    View,
 } from "react-native";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal } from "@/components/CategoryPickerModal";
-import { SortableImageList } from "@/components/cocktail/SortableImageList";
-import { setItemImages } from "@/components/drink/drinkImages";
-import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
+import { IngredientDrawing } from "@/components/ds";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
-import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDrafts } from "@/hooks/useDrafts";
 import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
@@ -29,10 +23,8 @@ import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { renameIngredientEntity } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import type { EditorChromeState } from "@/lib/editorChrome";
-import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
 import {
-    buildIngredientImageMap,
     mapPresentationRecipeToEditItem,
 } from "@/lib/recipeUtils";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
@@ -40,8 +32,6 @@ import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 import { getPreferredUnit } from "@/store/useSettingsStore";
 import { useQueryClient } from "@tanstack/react-query";
-import { decode } from "base64-arraybuffer";
-import * as ImagePicker from "expo-image-picker";
 import { Input, Label, Text, TextArea, XStack, YStack, useTheme } from "tamagui";
 
 interface RecipeItem {
@@ -75,12 +65,10 @@ export default function EditIngredientScreen({
     const theme = useTheme();
 
     const [saving, setSaving] = useState(false);
-    const [showPhotoSheet, setShowPhotoSheet] = useState(false);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [localImages, setLocalImages] = useState<{ id?: string; url: string; isNew?: boolean }[]>([]);
     const [brandMaker, setBrandMaker] = useState("");
     const [generic, setGeneric] = useState<{ id: string; name: string } | null>(null);
     const [abv, setAbv] = useState("");
@@ -150,15 +138,11 @@ export default function EditIngredientScreen({
         overrideMeasurement,
         overridePrep,
         hideFromSearch,
-        localImages,
     });
     const isDirty = cleanStateRef.current !== null && currentStateStr !== cleanStateRef.current;
 
     const pickerIngredients = useMemo(() => {
-        const published = (dropdowns?.ingredients || []).map((i: any) => ({
-            id: i.id,
-            name: i.name, item_images: i.item_images,
-        }));
+        const published = (dropdowns?.ingredients || []).map((i: any) => ({ id: i.id, name: i.name }));
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === "ingredient")
             .map((d: any) => ({
@@ -173,11 +157,6 @@ export default function EditIngredientScreen({
             return true;
         });
     }, [dropdowns?.ingredients, drafts]);
-
-    const ingredientImageMap = useMemo(
-        () => buildIngredientImageMap(undefined, dropdowns?.ingredients),
-        [dropdowns?.ingredients]
-    );
 
     useEffect(() => {
         if (!data?.ingredient) return;
@@ -194,19 +173,6 @@ export default function EditIngredientScreen({
             setSelectedCategories(data.ingredient.item_categories.map((ic: any) => ic.category_id));
         }
 
-        if (data.ingredient.item_images) {
-            const sortedImages = [...data.ingredient.item_images].sort(
-                (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
-            );
-            const fetchedImages = sortedImages
-                .map((ii: any) => ({
-                    id: ii.images?.id,
-                    url: ii.images?.url,
-                    isNew: false,
-                }))
-                .filter((img: any) => img.url);
-            setLocalImages(fetchedImages);
-        }
 
         // Recipe rows and visibility overrides come from the raw tables: the
         // presentation views mask or omit them, and a save writes them all back.
@@ -248,63 +214,7 @@ export default function EditIngredientScreen({
         setNeedsCleanMark(false);
     }, [needsCleanMark, currentStateStr]);
 
-    const addImages = (uris: string[]) => {
-        if (!uris.length) return;
-        setLocalImages((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
-    };
-
-    const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert("Permission needed", "We need access to your photos.");
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 5],
-            quality: 0.8,
-        });
-
-        if (!result.canceled) {
-            addImages(result.assets.map((asset) => asset.uri));
-        }
-    };
-
-    const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
-        try {
-            const ext = imageExtFromUri(uri);
-            const fileName = `ingredients/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-
-            const base64 = await uriToBase64(uri);
-            const arrayBuffer = decode(base64);
-
-            const { error: uploadError } = await supabase.storage.from("drinks").upload(fileName, arrayBuffer, {
-                contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
-                upsert: false,
-            });
-
-            if (uploadError) return null;
-
-            const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
-
-            const { data: imgData, error: imgError } = await supabase
-                .from("images")
-                .insert({ url: publicUrlData.publicUrl })
-                .select()
-                .single();
-            if (imgError || !imgData) return null;
-
-            return imgData.id;
-        } catch (error) {
-            console.error("Image upload flow exception:", error);
-            return null;
-        }
-    };
-
     const handleClose = () => {
-        setShowPhotoSheet(false);
         if (onClose) onClose();
         else router.back();
     };
@@ -317,19 +227,6 @@ export default function EditIngredientScreen({
         }
         setSaving(true);
         try {
-            const finalImageIds: string[] = [];
-            for (const img of localImages) {
-                if (img.isNew) {
-                    const newId = await uploadAndLinkImage(img.url);
-                    if (!newId) throw new Error("Failed to upload image");
-                    finalImageIds.push(newId);
-                } else if (img.id) {
-                    finalImageIds.push(img.id);
-                }
-            }
-
-            await setItemImages(id, finalImageIds, { replace: true });
-
             const { error: updateError } = await supabase
                 .from("items")
                 .update({
@@ -401,7 +298,6 @@ export default function EditIngredientScreen({
             await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
 
             cleanStateRef.current = currentStateStr;
-            setShowPhotoSheet(false);
 
             if (isInline) {
                 if (onClose) onClose();
@@ -443,8 +339,6 @@ export default function EditIngredientScreen({
         );
     }
 
-    const images = localImages.map((img) => img.url);
-
     return (
         <BottomSheetModalProvider>
             {!isInline && <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />}
@@ -452,8 +346,9 @@ export default function EditIngredientScreen({
             <ItemDetailLayout
                 id={id as string}
                 title={name}
-                images={images}
-                emptyPhotoPlaceholder={images.length === 0}
+                // Ingredients are drawn, not photographed: the drawing follows the name and kind.
+                images={[]}
+                hero={<IngredientDrawing id={id} name={name} />}
                 isFavorite={false}
                 onToggleFavorite={() => {}}
                 embedded={!!isInline}
@@ -464,14 +359,6 @@ export default function EditIngredientScreen({
                     onBlur: () => setName(capitalize(name)),
                     placeholder: "Ingredient name",
                 }}
-                onManageImages={
-                    Platform.OS === "web" && images.length === 0
-                        ? () => {
-                              void pickImage();
-                          }
-                        : () => setShowPhotoSheet(true)
-                }
-                onDropImages={addImages}
                 onBack={isInline ? undefined : handleClose}
                 onCancelEdit={isInline ? undefined : handleClose}
                 onSave={
@@ -501,8 +388,6 @@ export default function EditIngredientScreen({
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
                             variant="detail"
-                            allIngredients={dropdowns?.ingredients}
-                            ingredientImageMap={ingredientImageMap}
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {
@@ -638,25 +523,6 @@ export default function EditIngredientScreen({
                     </YStack>
                 </YStack>
             </ItemDetailLayout>
-
-            <AdaptiveSheetModal
-                visible={showPhotoSheet}
-                onClose={() => setShowPhotoSheet(false)}
-                title="Photos"
-            >
-                <View style={{ paddingHorizontal: 24 }}>
-                    <SortableImageList
-                        images={localImages}
-                        onReorder={setLocalImages}
-                        onRemove={(index) => {
-                            setLocalImages(localImages.filter((_, i) => i !== index));
-                        }}
-                        onAdd={pickImage}
-                        onAddUris={addImages}
-                        generateComponent={<GenerateImageButton type="ingredient" id={id} name={name} variant="tile" />}
-                    />
-                </View>
-            </AdaptiveSheetModal>
 
             <IngredientPickerSheet
                 visible={showIngredientPicker}

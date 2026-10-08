@@ -45,7 +45,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Body, Button, Caption, Chip, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { isApplePlatform } from '@/lib/platformKeys';
 
@@ -587,10 +587,9 @@ export function CommandSearch({
       (cell.kind === 'recent' && !!cell.recent.isDraft);
     const title =
       cell.kind === 'recent' ? cell.recent.title : capitalize(cell.item.name);
-    const imageUrl =
-      cell.kind === 'recent'
-        ? cell.recent.imageUrl || null
-        : itemImageUrl(cell.item);
+    // Ingredients are always drawn, never photographed.
+    const ingredientId = cell.kind === 'recent' ? (cell.recent.kind === 'ingredient' ? cell.recent.id : null) : cell.item.category === 'Ingredient' ? cell.item.id : null;
+    const imageUrl = ingredientId ? null : cell.kind === 'recent' ? cell.recent.imageUrl || null : itemImageUrl(cell.item);
     const iconName =
       cell.kind === 'recent'
         ? categoryIcon(cell.recent.kind)
@@ -639,7 +638,7 @@ export function CommandSearch({
           },
         ]}
       >
-        {imageUrl ? (
+        {ingredientId ? <DrinkImage ingredient={{ id: ingredientId, name: title }} accessibilityLabel={title} radius={0} /> : imageUrl ? (
           <View>
             <Image
               source={{ uri: imageUrl }}
@@ -661,7 +660,7 @@ export function CommandSearch({
             {cell.kind === 'item' && metaLine}
           </View>
         )}
-        {!!imageUrl && (
+        {(!!imageUrl || !!ingredientId) && (
           <View style={styles.cardText}>
             <Caption numberOfLines={2}>{title}</Caption>
             {metaLine}
