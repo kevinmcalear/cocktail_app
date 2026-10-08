@@ -121,6 +121,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
       name: entry.item?.name ?? rankedAs.name,
       detail: `${name}${whereLabel(entry.venue)} · ${MONTH.format(dayOf(when))}`,
       picture,
+      itemId: entry.item_id,
     };
   };
 
@@ -149,7 +150,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
         <Title>Which was better?</Title>
         <View style={[styles.vs, wide && styles.vsRow]}>
           <View style={wide ? styles.flex : undefined}>
-            <VsCard side={{ title: 'This one', name: drink.name, detail: `${whereLabel(venue)} · today`, picture: drink.picture }} height={cardHeight} onPress={() => answer('new')} />
+            <VsCard side={{ title: 'This one', name: drink.name, detail: `${whereLabel(venue)} · today`, picture: drink.picture, itemId: drink.id }} height={cardHeight} onPress={() => answer('new')} />
           </View>
           <Body tone="muted" align="center">
             or

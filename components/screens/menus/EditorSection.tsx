@@ -2,7 +2,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, useBreakpoint, useDs } from '@/components/ds';
-import { supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -34,6 +34,7 @@ function status(drink: MenuDrink, home?: boolean): { text: string; warn: boolean
 }
 
 const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
+const GRIP = 28;
 
 /** One section being edited: its rule, its drinks in order (drag to reorder), and adding more. */
 export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onSettings, home, onRemove, onReorder, onMove }: EditorSectionProps) {
@@ -59,7 +60,7 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onS
           onLongPress={Platform.OS === 'web' ? undefined : drag}
           onPressIn={Platform.OS === 'web' ? drag : undefined}
           disabled={isActive}
-          style={styles.grip}
+          style={[styles.grip, dragGripStyle]}
         >
           <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
         </PressableScale>
@@ -116,6 +117,7 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onS
           onDragEnd={({ data }) => onReorder(data)}
           scrollEnabled={false}
           activationDistance={10}
+          dragHitSlop={gripOnly(GRIP)}
         />
       ) : null}
       <PressableScale accessibilityLabel={`Add a drink to ${section.name}`} onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
   section: { gap: space.xs, padding: space.sm, marginHorizontal: -space.sm, borderRadius: radius.card, borderWidth: 1, borderColor: 'transparent' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
-  grip: { width: 28, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   thumb: { width: 44 },
   flex: { flex: 1, gap: 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },

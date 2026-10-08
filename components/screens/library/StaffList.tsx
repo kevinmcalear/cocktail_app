@@ -141,6 +141,9 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
       ListHeaderComponent={top}
       ListFooterComponent={bottom}
       contentContainerStyle={contentContainerStyle}
+      // The list's wrapper must fill the screen, or on web it grows to its
+      // content and the screen clips it, so it never scrolls.
+      containerStyle={styles.fill}
       // Fifty rows at most: render them all, so a drag never lands on an unrendered row.
       initialNumToRender={STAFF_LIST_MAX}
       activationDistance={10}
@@ -163,6 +166,7 @@ function CutLine({ label, quiet }: { label: string; quiet?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   list: { gap: space.xs },
   top: { gap: space.md, paddingBottom: space.sm },
   cut: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginVertical: space.sm },

@@ -1,60 +1,57 @@
-import { CommandSearch } from '@/components/CommandSearch';
+import { BackbarTheme, useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { Stack, useIsFocused } from 'expo-router';
-import { Keyboard, Platform, Pressable } from 'react-native';
+import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
+import { space } from '@/constants/tokens';
+import { useSearchMine } from '@/hooks/useSearchMine';
+import type { SearchScope } from '@/lib/searchScope';
+import { Stack } from 'expo-router';
+import { useState } from 'react';
+import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, YStack } from 'tamagui';
 
 /**
- * Phone search tab: behind the bar the main job is finding a spec fast. On web
- * the field is focused as soon as the tab opens; on iOS and Android the keyboard
- * would cover the tab bar and half the results, so it waits for a tap. Tapping
- * outside the field or dragging the results puts the keyboard away. Wide web
- * uses ⌘K / the sidebar.
+ * The search circle beside the tabs: the one search, opened on the venue in
+ * venue mode and on Everywhere in home mode. On web the field is focused as
+ * soon as it opens; on iOS and Android the keyboard would cover half the
+ * results, so it waits for a tap. Dragging the results puts the keyboard away.
+ * Wide web opens the same search as a palette (⌘K) instead.
  */
 export default function SearchScreen() {
-  const insets = useSafeAreaInsets();
-  const tabBarInset = useTabBarInset();
-  const isFocused = useIsFocused();
-  const { items } = useSearchCatalog();
-
   return (
-    <>
+    <BackbarTheme>
       <Stack.Screen options={{ headerShown: false }} />
-      <Pressable
-        onPress={Keyboard.dismiss}
-        accessible={false}
-        tabIndex={-1}
-        style={{ flex: 1 }}
-      >
-        <YStack
-          flex={1}
-          backgroundColor="$background"
-          paddingTop={insets.top + 12}
-          paddingHorizontal={12}
-          gap={8}
-        >
-          <Text
-            fontSize={28}
-            fontWeight="700"
-            color="$color"
-            letterSpacing={-0.4}
-            paddingHorizontal={8}
-            role="heading"
-          >
-            Search
-          </Text>
-          {isFocused ? (
-            <CommandSearch
-              items={items}
-              autoFocus={Platform.OS === 'web'}
-              showFooter={false}
-              bottomInset={tabBarInset}
-            />
-          ) : null}
-        </YStack>
-      </Pressable>
-    </>
+      <Search />
+    </BackbarTheme>
   );
 }
+
+function Search() {
+  const ds = useDs();
+  const gutter = useGutter();
+  const insets = useSafeAreaInsets();
+  const bottom = useTabBarInset();
+  const mine = useSearchMine();
+  const [query, setQuery] = useState('');
+  const [picked, setScope] = useState<SearchScope | null>(null);
+  const scope = picked ?? mine.defaultScope;
+
+  return (
+    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.md }]}>
+      <View style={{ paddingHorizontal: gutter, paddingBottom: space.md }}>
+        <SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus={Platform.OS === 'web'} />
+      </View>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={Keyboard.dismiss}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg }}
+      >
+        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+});

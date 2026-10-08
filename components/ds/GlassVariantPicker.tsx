@@ -77,8 +77,9 @@ export function GlassVariantPicker({ glass, inputs, seed, value, onChange, notes
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: space.sm },
-  tile: { flex: 1, maxWidth: 140, gap: space.xs, alignItems: 'center' },
+  // Three to a row: wine has six shapes, and a phone row of six is too small to tell apart.
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tile: { width: '31%', maxWidth: 140, gap: space.xs, alignItems: 'center' },
   ring: { width: '100%', padding: 2, borderWidth: 2, borderRadius: radius.control + 4, borderCurve: 'continuous' },
   frame: { width: '100%', aspectRatio: 1, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
 });

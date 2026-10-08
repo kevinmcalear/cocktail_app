@@ -1,4 +1,5 @@
-import { AuthMessage, AuthShell } from '@/components/auth/AuthShell';
+import { AuthLink, AuthMessage, AuthShell, AuthSpinner } from '@/components/auth/AuthShell';
+import { Button } from '@/components/ds';
 import {
   clearAuthParamsFromUrl,
   getIncomingAuthUrl,
@@ -7,10 +8,9 @@ import {
 } from '@/lib/authLink';
 import { createSessionFromUrl } from '@/lib/createSessionFromUrl';
 import * as Linking from 'expo-linking';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable } from 'react-native';
-import { Button, Text, YStack, useTheme } from 'tamagui';
+import { Platform } from 'react-native';
 
 type Props = {
   /** Path to keep in the address bar after a successful exchange */
@@ -38,10 +38,10 @@ export function EmailLinkGate({
   retryHref,
   retryLabel,
   waitingTitle = 'Continue',
-  waitingSubtitle = 'Tap below to finish — this keeps email previews from burning the link.',
+  waitingSubtitle = 'Tap below to finish. This keeps email previews from burning the link.',
   noLink,
 }: Props) {
-  const theme = useTheme();
+  const router = useRouter();
   const [link, setLink] = useState<AuthLinkState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +65,7 @@ export function EmailLinkGate({
   if (!link) {
     return (
       <AuthShell title="One moment…" subtitle="Checking your link.">
-        <YStack alignItems="center" paddingVertical="$4">
-          <ActivityIndicator color={theme.color8?.get() as string} />
-        </YStack>
+        <AuthSpinner />
       </AuthShell>
     );
   }
@@ -79,23 +77,9 @@ export function EmailLinkGate({
       <AuthShell
         title="Link expired"
         subtitle={showError}
-        footer={
-          <Link href="/auth/login" asChild>
-            <Pressable>
-              <Text color="$color11" fontSize={14}>
-                Back to sign in
-              </Text>
-            </Pressable>
-          </Link>
-        }
+        footer={<AuthLink label="Back to sign in" href="/auth/login" />}
       >
-        <Link href={retryHref} asChild>
-          <Button backgroundColor="$color8" borderRadius={8} height={44}>
-            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-              {retryLabel}
-            </Text>
-          </Button>
-        </Link>
+        <Button label={retryLabel} size="lg" onPress={() => router.push(retryHref)} />
       </AuthShell>
     );
   }
@@ -107,23 +91,9 @@ export function EmailLinkGate({
       <AuthShell
         title="Link required"
         subtitle="Open the link from your email to continue."
-        footer={
-          <Link href="/auth/login" asChild>
-            <Pressable>
-              <Text color="$color11" fontSize={14}>
-                Back to sign in
-              </Text>
-            </Pressable>
-          </Link>
-        }
+        footer={<AuthLink label="Back to sign in" href="/auth/login" />}
       >
-        <Link href={retryHref} asChild>
-          <Button backgroundColor="$color8" borderRadius={8} height={44}>
-            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-              {retryLabel}
-            </Text>
-          </Button>
-        </Link>
+        <Button label={retryLabel} size="lg" onPress={() => router.push(retryHref)} />
       </AuthShell>
     );
   }
@@ -144,25 +114,8 @@ export function EmailLinkGate({
 
   return (
     <AuthShell title={waitingTitle} subtitle={waitingSubtitle}>
-      <YStack gap="$3">
-        {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
-        <Button
-          backgroundColor="$color8"
-          onPress={continueFromEmail}
-          disabled={busy}
-          borderRadius={8}
-          height={44}
-          opacity={busy ? 0.7 : 1}
-        >
-          {busy ? (
-            <ActivityIndicator color={theme.backgroundStrong?.get() as string} />
-          ) : (
-            <Text color="$backgroundStrong" fontWeight="700" fontSize={15}>
-              Continue
-            </Text>
-          )}
-        </Button>
-      </YStack>
+      {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+      <Button label={busy ? 'One moment…' : 'Continue'} size="lg" onPress={continueFromEmail} disabled={busy} />
     </AuthShell>
   );
 }

@@ -1,12 +1,12 @@
-import { AuthField } from '@/components/auth/AuthShell';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+
+import { Caption, useDs } from '@/components/ds';
 import { CustomIcon } from '@/components/ui/CustomIcons';
-import { useIsHydrated } from '@/hooks/useIsHydrated';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { GlasswareIconKey } from '@/lib/glasswareIcons';
 import { syncGlassMask } from '@/lib/syncGlassMask';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { XStack, useTheme } from 'tamagui';
 
 type Props = {
   label: string;
@@ -18,6 +18,10 @@ type Props = {
   onSubmitEditing?: () => void;
 };
 
+/**
+ * A labelled password input that hides what's typed behind a row of little
+ * glasses instead of bullets, with a show/hide toggle. Matches ds `Field`.
+ */
 export function PasswordField({
   label,
   value,
@@ -27,15 +31,9 @@ export function PasswordField({
   textContentType = 'password',
   onSubmitEditing,
 }: Props) {
-  const theme = useTheme();
+  const ds = useDs();
   const [visible, setVisible] = useState(false);
   const [mask, setMask] = useState<GlasswareIconKey[]>([]);
-  const isHydrated = useIsHydrated();
-
-  const color = theme.color?.get() as string;
-  const muted = theme.color11?.get() as string;
-  const border = theme.borderColor?.get() as string;
-  const bg = theme.background?.get() as string;
 
   const handleChange = (next: string) => {
     setMask((prev) => syncGlassMask(prev, next.length));
@@ -43,34 +41,16 @@ export function PasswordField({
   };
 
   return (
-    <AuthField label={label}>
-      <XStack
-        alignItems="center"
-        height={44}
-        borderWidth={1}
-        borderColor={border}
-        borderRadius={8}
-        backgroundColor={bg}
-        paddingRight={4}
-      >
-        <View style={{ flex: 1, height: 44, justifyContent: 'center' }}>
+    <View style={styles.field}>
+      <Caption tone="muted">{label}</Caption>
+      <View style={[styles.box, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+        <View style={styles.inputWrap}>
           {!visible && value.length > 0 ? (
-            <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                justifyContent: 'center',
-                paddingLeft: 12,
-              }}
-            >
+            <View pointerEvents="none" style={styles.mask}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 44 }}>
+                <View style={styles.maskRow}>
                   {mask.map((key, i) => (
-                    <CustomIcon key={`${i}-${key}`} name={key} size={16} color={muted} />
+                    <CustomIcon key={`${i}-${key}`} name={key} size={16} color={ds.c.muted} />
                   ))}
                 </View>
               </ScrollView>
@@ -81,7 +61,8 @@ export function PasswordField({
             value={value}
             onChangeText={handleChange}
             placeholder={placeholder}
-            placeholderTextColor={muted}
+            placeholderTextColor={ds.c.faint}
+            aria-label={label}
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete={autoComplete}
@@ -91,36 +72,36 @@ export function PasswordField({
             // glassware mask is drawn on top instead.
             secureTextEntry={!visible}
             onSubmitEditing={onSubmitEditing}
-            style={{
-              flex: 1,
-              height: 44,
-              paddingHorizontal: 12,
-              fontSize: 16,
-              color: visible ? color : 'transparent',
-            }}
+            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: visible ? ds.c.ink : 'transparent' }]}
           />
         </View>
 
         <Pressable
           onPress={() => setVisible((v) => !v)}
-          hitSlop={8}
           role="button"
           aria-label={visible ? 'Hide password' : 'Show password'}
-          style={{ padding: 8 }}
+          style={styles.toggle}
         >
-          {/* Same empty Text MaterialIcons renders on the server, where its font
-              is never loaded; see IconSymbol. */}
-          {isHydrated ? (
-            <MaterialIcons
-              name={visible ? 'visibility-off' : 'visibility'}
-              size={20}
-              color={muted}
-            />
-          ) : (
-            <Text />
-          )}
+          <IconSymbol name={visible ? 'eye.slash' : 'eye'} size={20} color={ds.c.muted} />
         </Pressable>
-      </XStack>
-    </AuthField>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  field: { gap: space.xs },
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: layout.minTapTarget,
+    borderWidth: 1,
+    borderRadius: radius.control,
+    borderCurve: 'continuous',
+  },
+  inputWrap: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
+  mask: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center', paddingLeft: space.md },
+  maskRow: { flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: layout.minTapTarget },
+  input: { flex: 1, minHeight: layout.minTapTarget, paddingHorizontal: space.md },
+  toggle: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+});

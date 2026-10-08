@@ -9,7 +9,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { allergenLabel, containsLine, viaLine } from '@/lib/allergens';
 import { roleLabel } from '@/lib/roles';
 
-interface FloorSectionProps {
+interface AllergensSectionProps {
   itemId: string;
   barId: string | null;
   /** /dev/drink only: no server to ask. */
@@ -17,21 +17,22 @@ interface FloorSectionProps {
 }
 
 /**
- * "For the floor": what a server needs to answer a guest, starting with
- * allergens rolled up from the recipe. Opens at Floor (the talking_points
- * capability) on venue drinks, so it's readable even when the spec is
- * locked. Unchecked ingredients are said out loud, never hidden.
+ * Allergens rolled up from the recipe, so a server can answer a guest. Opens
+ * at Floor (the talking_points capability) on venue drinks, so it's readable
+ * even when the spec is locked. Hidden when there's no spec to check.
+ * Unchecked ingredients are said out loud, never hidden.
  */
-export function FloorSection({ itemId, barId, preview }: FloorSectionProps) {
+export function AllergensSection({ itemId, barId, preview }: AllergensSectionProps) {
   const { data: capabilities } = useCapabilities(preview ? null : barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(preview ? null : barId, 'talking_points');
   const unlocked = !barId || !!capabilities?.includes('talking_points');
   const { data, isPending } = useDrinkAllergens(preview || !unlocked ? null : itemId);
   if (preview) return null;
+  if (unlocked && !isPending && !data?.lines) return null;
   const opensAt = opensAtLevel ? roleLabel(opensAtLevel) : 'Employee';
   return (
-    <LockedSection title="For the floor" unlocked={unlocked} opensAt={opensAt}>
-      {isPending ? <Body tone="muted">Checking the recipe.</Body> : data ? <Allergens data={data} /> : null}
+    <LockedSection title="Allergens" unlocked={unlocked} opensAt={opensAt}>
+      {data ? <Allergens data={data} /> : <Body tone="muted">Checking the recipe.</Body>}
     </LockedSection>
   );
 }

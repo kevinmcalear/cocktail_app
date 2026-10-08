@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { WebSideNav } from '@/components/nav/WebSideNav';
 import { renderWithTamagui } from '@/jest.setup';
+import { useSearchPalette } from '@/store/useSearchPalette';
 
 const mockNavigate = jest.fn();
 let mockPathname = '/';
@@ -34,7 +35,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Tonight', 'Library', 'Discover', 'Menus', 'Back bar', 'My team']);
+  expect(links()).toEqual(['Tonight', 'Library', 'Discover', 'Menus', 'Back bar', 'My team']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -69,15 +70,22 @@ test('home mode lists the home tabs and navigates to their routes', async () => 
   mockPathname = '/discover';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Search', 'Discover', 'My Bar', 'Collection', 'You']);
+  expect(links()).toEqual(['Discover', 'My Bar', 'Collection', 'You']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
   await fireEvent.press(screen.getByRole('link', { name: 'My Bar' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
-  await fireEvent.press(screen.getByRole('link', { name: 'Search' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/search');
+});
+
+test('Search opens the search over the current page instead of leaving it', async () => {
+  useSearchPalette.setState({ open: false });
+  await renderWithTamagui(<WebSideNav />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Search' }));
+  expect(useSearchPalette.getState().open).toBe(true);
+  expect(mockNavigate).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Search', selected: true })).toBeTruthy();
 });
 
 test('New opens the create sheet with the draft count, and each choice goes where it is made', async () => {

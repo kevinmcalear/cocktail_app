@@ -1,6 +1,5 @@
 import { CategoryTree, CategoryTreeNode } from '@/components/CategoryTree';
 import { heroPicture } from '@/lib/itemImages';
-import { itemHref } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/types/search';
 import { SpecPillButton } from '@/components/SpecPillButton';
 import { VenueContextPicker } from '@/components/VenueContextPicker';
@@ -29,7 +28,8 @@ import { usePublicDrinks } from '@/hooks/usePublicDrinks';
 import { caretCanMove, chunk, gridColumns, timeAgo } from '@/lib/commandSearchGrid';
 import { compareSearchItems, matchesQuery, searchCardMeta, withPublicDrinks } from '@/lib/publicDrinks';
 import { useAppStore } from '@/store/useAppStore';
-import { openDraftInCreator, openInCreator } from '@/store/useCreatorNavStore';
+import { openInCreator } from '@/store/useCreatorNavStore';
+import { openSearchItem } from '@/lib/openSearchItem';
 import { RecentActivity, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -45,9 +45,8 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Text, XStack, YStack, useTheme } from 'tamagui';
-import { STATUS } from '@/constants/palette';
-import { pressedProps } from '@/lib/a11yState';
+import { Body, Button, Caption, Chip, useDs } from '@/components/ds';
+import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { isApplePlatform } from '@/lib/platformKeys';
 
 type AttrOption = {
@@ -99,8 +98,6 @@ const SECTION_ORDER: SearchItem['category'][] = [
   'Wine',
   'Ingredient',
 ];
-
-const DRAFT_AMBER = STATUS.warning;
 
 const SECTION_LABEL: Record<string, string> = {
   Menu: 'Menu',
@@ -203,7 +200,7 @@ export function CommandSearch({
   onDismiss,
 }: CommandSearchProps) {
   const availableFilters = filtersProp?.length ? filtersProp : COMMAND_FILTERS;
-  const theme = useTheme();
+  const ds = useDs();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -232,12 +229,10 @@ export function CommandSearch({
   const showPublic = !onItemSelect && !lockedContextId && !!query.trim();
   const { data: publicDrinks } = usePublicDrinks(showPublic ? query : '');
 
-  const color = theme.color?.get() as string;
-  const muted = theme.color11?.get() as string;
-  const border = theme.borderColor?.get() as string;
-  const surface = theme.color4?.get() as string;
-  const searchSurface = theme.backgroundStrong?.get() as string;
-  const highlight = 'rgba(255,255,255,0.1)';
+  const color = ds.c.ink;
+  const muted = ds.c.muted;
+  const border = ds.c.line;
+  const highlight = ds.c.raised;
 
   const cols = gridColumns(panelWidth || windowWidth);
   const gap = 6;
@@ -472,30 +467,7 @@ export function CommandSearch({
         onItemSelect(item);
         return;
       }
-      if (item.isDraft) {
-        const draftId = item.id.replace(/^(beer|wine|menu)-/, '');
-        const entityType =
-          item.category === 'Menu'
-            ? 'menu'
-            : item.category === 'Beer'
-              ? 'beer'
-              : item.category === 'Wine'
-                ? 'wine'
-                : item.category === 'Ingredient'
-                  ? 'ingredient'
-                  : 'cocktail';
-        openDraftInCreator(
-          { id: draftId, entity_type: entityType, draft_data: { name: item.name } },
-          (href) => router.push(href as any)
-        );
-        onSelect?.();
-        return;
-      }
-      if (item.category === 'Menu') {
-        router.push(`/menus/${encodeURIComponent(item.id.replace('menu-', ''))}` as any);
-      } else {
-        router.push(itemHref(item.category === 'Category' ? undefined : item.category, item.id) as any);
-      }
+      openSearchItem(item, (href) => router.push(href as never));
       onSelect?.();
     },
     [onItemSelect, onSelect, router]
@@ -624,7 +596,11 @@ export function CommandSearch({
         ? categoryIcon(cell.recent.kind)
         : categoryIcon(cell.item.category);
     const meta = cell.kind === 'recent' ? timeAgo(cell.recent.at) : searchCardMeta(cell.item);
-    const metaLine = meta ? <Text fontSize={9} color="$color11" numberOfLines={1}>{meta}</Text> : null;
+    const metaLine = meta ? (
+      <Caption tone="muted" numberOfLines={1}>{meta}</Caption>
+    ) : isDraft ? (
+      <Caption tone="accent">Draft</Caption>
+    ) : null;
     const dragItem = onItemDragStart ? drinkFromCell(cell) : null;
 
     return (
@@ -658,8 +634,8 @@ export function CommandSearch({
           styles.card,
           {
             width: cellW,
-            borderColor: isDraft ? DRAFT_AMBER : isActive ? muted : border,
-            backgroundColor: isActive ? highlight : surface || 'rgba(255,255,255,0.04)',
+            borderColor: isDraft ? ds.accentText : isActive ? ds.c.lineStrong : border,
+            backgroundColor: isActive ? highlight : ds.c.surface,
           },
         ]}
       >
@@ -667,7 +643,7 @@ export function CommandSearch({
           <View>
             <Image
               source={{ uri: imageUrl }}
-              style={styles.cardImage}
+              style={[styles.cardImage, { backgroundColor: ds.c.raised }]}
               contentFit="cover"
               transition={200}
             />
@@ -677,72 +653,32 @@ export function CommandSearch({
             />
           </View>
         ) : (
-          <YStack
-            width="100%"
-            aspectRatio={1}
-            alignItems="center"
-            justifyContent="center"
-            backgroundColor="$color5"
-            gap={4}
-            padding={4}
-          >
-            <CustomIcon name={iconName} size={18} color={muted} />
-            <Text
-              fontSize={10}
-              fontWeight="600"
-              color="$color"
-              numberOfLines={2}
-              textAlign="center"
-            >
+          <View style={[styles.cardBlank, { backgroundColor: ds.c.raised }]}>
+            <CustomIcon name={iconName} size={20} color={muted} />
+            <Caption numberOfLines={2} align="center">
               {title}
-            </Text>
+            </Caption>
             {cell.kind === 'item' && metaLine}
-          </YStack>
+          </View>
         )}
         {!!imageUrl && (
-          <YStack paddingHorizontal={5} paddingVertical={5} gap={1}>
-            <Text fontSize={10} fontWeight="600" color="$color" numberOfLines={2}>
-              {title}
-            </Text>
+          <View style={styles.cardText}>
+            <Caption numberOfLines={2}>{title}</Caption>
             {metaLine}
-          </YStack>
+          </View>
         )}
       </Pressable>
     );
   };
 
   const filterChrome = (
-    <YStack gap={6}>
-      <XStack alignItems="center" gap={8}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
-          <XStack gap={8} paddingBottom={2} alignItems="center">
-            {availableFilters.map((f) => {
-              const selected = filter === f;
-              return (
-                <Pressable
-                  key={f}
-                  onPress={() => setFilter(f)}
-                  role="button"
-                  {...pressedProps(selected)}
-                  aria-label={f}
-                  style={[
-                    styles.pill,
-                    {
-                      backgroundColor: selected ? highlight : 'transparent',
-                      borderColor: selected ? 'transparent' : border,
-                    },
-                  ]}
-                >
-                  <Text
-                    fontSize={13}
-                    fontWeight="500"
-                    color={selected ? '$color' : '$color11'}
-                  >
-                    {f}
-                  </Text>
-                </Pressable>
-              );
-            })}
+    <View style={styles.chrome}>
+      <View style={styles.chromeRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.fill}>
+          <View style={styles.pills} role="radiogroup" aria-label="Show">
+            {availableFilters.map((f) => (
+              <Chip key={f} label={f} quiet selected={filter === f} onPress={() => setFilter(f)} />
+            ))}
 
             {attrRows.length > 0 && (
               <Pressable
@@ -751,73 +687,50 @@ export function CommandSearch({
                 aria-label="Additional filters"
                 style={[
                   styles.pill,
-                  {
-                    backgroundColor: appliedPills.length ? highlight : 'transparent',
-                    borderColor: appliedPills.length ? 'transparent' : border,
-                    flexDirection: 'row',
-                    gap: 6,
-                  },
+                  appliedPills.length
+                    ? { backgroundColor: color, borderColor: color }
+                    : { backgroundColor: 'transparent', borderColor: ds.c.lineStrong },
                 ]}
               >
-                <IconSymbol
-                  name="line.3.horizontal.decrease"
-                  size={14}
-                  color={appliedPills.length ? color : muted}
-                />
-                <Text
-                  fontSize={13}
-                  fontWeight="500"
-                  color={appliedPills.length ? '$color' : '$color11'}
-                >
+                <IconSymbol name="line.3.horizontal.decrease" size={14} color={appliedPills.length ? ds.c.ground : color} />
+                <Caption color={appliedPills.length ? ds.c.ground : color}>
                   Filters
                   {appliedPills.length > 0 ? ` · ${appliedPills.length}` : ''}
-                </Text>
+                </Caption>
               </Pressable>
             )}
-          </XStack>
+          </View>
         </ScrollView>
 
         <VenueContextPicker lockedContextId={lockedContextId} />
-      </XStack>
+      </View>
 
       {appliedPills.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <XStack gap={8} paddingBottom={2}>
+          <View style={styles.pills}>
             {appliedPills.map((p) => (
               <Pressable
                 key={`${p.key}-${p.id}`}
                 onPress={() => removeAttr(p.key, p.id)}
                 role="button"
                 aria-label={`Remove ${p.label} filter`}
-                style={[
-                  styles.pill,
-                  {
-                    backgroundColor: highlight,
-                    borderColor: 'transparent',
-                    flexDirection: 'row',
-                    gap: 6,
-                  },
-                ]}
+                style={[styles.pill, { backgroundColor: highlight, borderColor: 'transparent' }]}
               >
-                <Text fontSize={12} fontWeight="500" color="$color">
-                  {capitalize(p.label)}
-                </Text>
-                <IconSymbol name="xmark" size={11} color={muted} />
+                <Caption>{capitalize(p.label)}</Caption>
+                <IconSymbol name="xmark" size={12} color={muted} />
               </Pressable>
             ))}
-          </XStack>
+          </View>
         </ScrollView>
       )}
-    </YStack>
+    </View>
   );
 
   const chromeCentered = hideChrome && Platform.OS === 'web';
 
   return (
-    <YStack
-      flex={1}
-      minHeight={0}
-      backgroundColor="transparent"
+    <View
+      style={styles.root}
       onLayout={(e) => {
         const w = e.nativeEvent.layout.width;
         setPanelWidth((prev) => (prev === w ? prev : w));
@@ -845,14 +758,14 @@ export function CommandSearch({
           }}
         >
           {!hideChrome && (
-            <YStack
-              borderRadius={16}
-              borderWidth={1}
-              // Visible focus (WCAG 2.4.7): the input's own outline is off.
-              borderColor={inputFocused ? (theme.color8?.get() as string) : border}
-              backgroundColor={searchSurface}
-              overflow="hidden"
+            <View
+              style={[
+                styles.inputBox,
+                // Visible focus (WCAG 2.4.7): the input's own outline is off.
+                { borderColor: inputFocused ? ds.accentText : border, backgroundColor: ds.c.raised },
+              ]}
             >
+              <IconSymbol name="magnifyingglass" size={18} color={muted} />
               <TextInput
                 ref={inputRef}
                 value={query}
@@ -861,11 +774,16 @@ export function CommandSearch({
                 onBlur={() => setInputFocused(false)}
                 accessibilityLabel="Search"
                 placeholder={resolvedPlaceholder}
-                placeholderTextColor={muted}
+                placeholderTextColor={ds.c.faint}
                 autoFocus={autoFocus}
-                style={[styles.inputBoxed, { color }]}
+                style={[styles.input, type.body, { color, fontFamily: fontFamilies.body }, NO_OUTLINE]}
               />
-            </YStack>
+              {query ? (
+                <Pressable onPress={() => setQuery('')} role="button" aria-label="Clear search" hitSlop={space.sm} style={[styles.clear, { backgroundColor: ds.c.lineStrong }]}>
+                  <IconSymbol name="xmark" size={12} color={color} />
+                </Pressable>
+              ) : null}
+            </View>
           )}
           {filterChrome}
         </Pressable>
@@ -879,7 +797,7 @@ export function CommandSearch({
       >
         <ScrollView
           style={{ maxHeight: 420 }}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16, gap: 20 }}
+          contentContainerStyle={styles.sheetBody}
         >
           {attrRows.map((row) =>
             row.tree ? (
@@ -890,17 +808,11 @@ export function CommandSearch({
                 onToggle={(id) => toggleDraftAttr(row.key, id)}
               />
             ) : (
-              <YStack key={row.key} gap={8}>
-                <Text
-                  fontSize={11}
-                  fontWeight="600"
-                  color="$color11"
-                  letterSpacing={0.7}
-                  textTransform="uppercase"
-                >
+              <View key={row.key} style={styles.sheetGroup}>
+                <Caption tone="muted" style={styles.label}>
                   {row.label}
-                </Text>
-                <XStack flexWrap="wrap" gap={8}>
+                </Caption>
+                <View style={styles.wrap}>
                   {row.options.map((o) => (
                     <SpecPillButton
                       key={o.id}
@@ -911,34 +823,15 @@ export function CommandSearch({
                       onPress={() => toggleDraftAttr(row.key, o.id)}
                     />
                   ))}
-                </XStack>
-              </YStack>
+                </View>
+              </View>
             )
           )}
         </ScrollView>
-        <XStack paddingHorizontal={24} paddingTop={8} gap={10}>
-          <Pressable
-            onPress={() => setFiltersOpen(false)}
-            style={[styles.applyBtn, { borderColor: border, flex: 1 }]}
-          >
-            <Text fontSize={15} fontWeight="600" color="$color11" textAlign="center">
-              Cancel
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={applyFilters}
-            style={[styles.applyBtn, { backgroundColor: color, borderColor: color, flex: 2 }]}
-          >
-            <Text
-              fontSize={15}
-              fontWeight="600"
-              color="$backgroundStrong"
-              textAlign="center"
-            >
-              Apply
-            </Text>
-          </Pressable>
-        </XStack>
+        <View style={styles.sheetActions}>
+          <Button label="Cancel" variant="secondary" onPress={() => setFiltersOpen(false)} style={styles.fill} />
+          <Button label="Apply" onPress={applyFilters} style={styles.apply} />
+        </View>
       </AdaptiveSheetModal>
 
       <View style={[styles.divider, { backgroundColor: border }]} />
@@ -951,10 +844,8 @@ export function CommandSearch({
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: padH, paddingVertical: 8, paddingBottom: 16 + bottomInset, flexGrow: 1 }}
         ListEmptyComponent={
-          <YStack padding="$5" alignItems="center" gap="$3">
-            <Text color="$color11" fontSize={14}>
-              No results
-            </Text>
+          <View style={styles.empty}>
+            <Body tone="muted">No results</Body>
             {(() => {
               const name = query.trim();
               const type = onCreateNew ? createTypeFromFilter(filter, availableFilters) : null;
@@ -962,42 +853,22 @@ export function CommandSearch({
               const label =
                 type === 'cocktail' ? 'cocktail' : type === 'beer' ? 'beer' : 'wine';
               return (
-                <Pressable
+                <Button
+                  label={`Create ${label} “${name}”`}
+                  variant="secondary"
+                  icon="plus"
                   onPress={() => onCreateNew({ name, type })}
-                  role="button"
-                  aria-label={`Create ${label} ${name}`}
-                  style={[
-                    styles.pill,
-                    {
-                      backgroundColor: highlight,
-                      borderColor: 'transparent',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    },
-                  ]}
-                >
-                  <Text fontSize={14} fontWeight="600" color="$color">
-                    Create {label} “{name}”
-                  </Text>
-                </Pressable>
+                />
               );
             })()}
-          </YStack>
+          </View>
         }
         renderItem={({ item: row }) => {
           if (row.type === 'header') {
             return (
-              <Text
-                fontSize={10}
-                fontWeight="600"
-                color="$color11"
-                letterSpacing={0.8}
-                textTransform="uppercase"
-                paddingTop={10}
-                paddingBottom={6}
-              >
+              <Caption tone="muted" style={[styles.label, styles.header]}>
                 {row.label}
-              </Text>
+              </Caption>
             );
           }
 
@@ -1015,61 +886,67 @@ export function CommandSearch({
       {showFooter && (
         <>
           <View style={[styles.divider, { backgroundColor: border }]} />
-          <XStack
-            paddingHorizontal={14}
-            paddingVertical={10}
-            gap={16}
-            alignItems="center"
-            flexWrap="wrap"
-          >
-            <Hint label="Select" keys="↑↓←→" muted={muted} />
-            <Hint label="Open" keys="↵" muted={muted} />
-            <Hint label="Change Filter" keys={`${mod}[ or ${mod}]`} muted={muted} />
-          </XStack>
+          <View style={styles.footer}>
+            <Hint label="Select" keys="↑↓←→" />
+            <Hint label="Open" keys="↵" />
+            <Hint label="Change Filter" keys={`${mod}[ or ${mod}]`} />
+          </View>
         </>
       )}
-    </YStack>
+    </View>
   );
 }
 
-function Hint({ label, keys, muted }: { label: string; keys: string; muted: string }) {
+function Hint({ label, keys }: { label: string; keys: string }) {
   return (
-    <XStack alignItems="center" gap={6}>
-      <Text fontSize={11} color="$color11" opacity={0.85}>
-        {keys}
-      </Text>
-      <Text fontSize={11} color="$color11" opacity={0.65}>
-        {label}
-      </Text>
-    </XStack>
+    <View style={styles.hint}>
+      <Caption>{keys}</Caption>
+      <Caption tone="muted">{label}</Caption>
+    </View>
   );
 }
+
+// The field's own focus ring is off on web; the pill around it shows focus.
+// RN's style types don't know 'none'.
+const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 const styles = StyleSheet.create({
-  inputBoxed: {
-    fontSize: 17,
-    fontWeight: '400',
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    outlineWidth: 0,
-    outlineStyle: 'none',
-    boxShadow: 'none',
-  } as any,
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
+  root: { flex: 1, minHeight: 0 },
+  fill: { flex: 1 },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    minHeight: 48,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
     borderWidth: 1,
+  },
+  input: { flex: 1, paddingVertical: space.md, backgroundColor: 'transparent', borderWidth: 0 },
+  clear: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  chrome: { gap: space.sm },
+  chromeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  pills: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingBottom: 2 },
+  pill: {
+    flexDirection: 'row',
+    gap: space.sm,
+    minHeight: layout.minTapTarget,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  applyBtn: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
+  label: { textTransform: 'uppercase', letterSpacing: 0.8 },
+  header: { paddingTop: space.md, paddingBottom: space.sm },
+  sheetBody: { paddingHorizontal: space.xl, paddingBottom: space.lg, gap: space.xl },
+  sheetGroup: { gap: space.sm },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  sheetActions: { flexDirection: 'row', paddingHorizontal: space.xl, paddingTop: space.sm, gap: space.md },
+  apply: { flex: 2 },
+  empty: { padding: space.xl, alignItems: 'center', gap: space.md },
+  footer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.lg, paddingHorizontal: space.lg, paddingVertical: space.md },
+  hint: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   divider: {
     height: StyleSheet.hairlineWidth,
     width: '100%',
@@ -1077,16 +954,18 @@ const styles = StyleSheet.create({
   gridRow: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    marginBottom: 6,
+    marginBottom: space.sm,
   },
   card: {
-    borderRadius: 8,
+    borderRadius: radius.control,
+    borderCurve: 'continuous',
     borderWidth: 1,
     overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: 'rgba(127,127,127,0.15)',
   },
+  cardBlank: { width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, padding: space.sm },
+  cardText: { paddingHorizontal: space.sm, paddingVertical: space.sm, gap: 2 },
 });

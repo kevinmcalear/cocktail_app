@@ -11,21 +11,23 @@ import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
-import { DiscoverSearchResults } from '@/components/screens/home/DiscoverSearchResults';
-import { DiscoverSearchSheet, type SearchScope } from '@/components/screens/home/DiscoverSearchSheet';
+import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
 import { AreaSheet, FiltersSheet } from '@/components/screens/home/DiscoverSheet';
 import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
+import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useNearMe, type NearMe } from '@/hooks/useNearMe';
+import { useSearchMine } from '@/hooks/useSearchMine';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import { areaFromViewport, type Viewport } from '@/lib/discoverMap';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaLabel, NEAR_ME_KM, type Area } from '@/lib/nearMe';
+import type { SearchScope } from '@/lib/searchScope';
 import { useDiscoverView } from '@/store/useDiscoverView';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
@@ -49,7 +51,8 @@ export function DiscoverScreen() {
   const [preferNear, setPreferNear] = useState(true);
   const [kinds, setKinds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<SearchScope>('here');
+  const [scope, setScope] = useState<SearchScope>('area');
+  const mine = useSearchMine();
   const [sheet, setSheet] = useState<'search' | 'filters' | 'area' | 'add' | null>(null);
   const viewport = useRef<Viewport | null>(null);
   const onViewport = useCallback((v: Viewport | null) => {
@@ -113,21 +116,34 @@ export function DiscoverScreen() {
   const openSearch = () => {
     // On the map, "this area" is what the map shows: search it, as "Search this area" would.
     if (onMap && viewport.current) onArea(areaFromViewport(viewport.current));
-    if (!searching) setScope(onMap || area.kind !== 'anywhere' ? 'here' : 'everywhere');
+    if (!searching) setScope(onMap || area.kind !== 'anywhere' ? 'area' : 'everywhere');
     setSheet('search');
   };
   // "Search this area" on the map searches here, even after "Everywhere".
   const onMapArea = (next: Area) => {
-    setScope('here');
+    setScope('area');
     onArea(next);
   };
   const close = () => setSheet(null);
+  const addKind = (k: string) => {
+    setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
+    setSearch('');
+    close();
+  };
+  // Discover's part in the one search: its filters, and its area when it isn't everywhere.
+  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? hereLabel : null, area, kinds, onKind: addKind };
+  // "This area" with no area left (it went back to Anywhere) searches everywhere.
+  const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
+  const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
   const openBar = (ref: string) => {
     setSheet(null);
     router.push(`/p/${ref}`);
   };
 
-  const controls = (
+  // Wide screens search in the list pane itself, so the map beside it stays live.
+  const controls = split && sheet === 'search' ? (
+    <DiscoverSearchHead {...searchProps} />
+  ) : (
     <View style={styles.controls}>
       <SearchPill query={search} placeholder={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={openSearch} onClear={() => setSearch('')} />
       <FilterRow
@@ -142,27 +158,8 @@ export function DiscoverScreen() {
   );
 
   let overlay = null;
-  if (sheet === 'search') {
-    overlay = (
-      <DiscoverSearchSheet
-        query={search}
-        onQuery={setSearch}
-        scope={scope}
-        onScope={setScope}
-        hereLabel={onMap || area.kind !== 'anywhere' ? hereLabel : null}
-        area={shownArea}
-        kinds={kinds}
-        onClearKinds={() => setKinds([])}
-        results={results}
-        signedIn={signedIn}
-        onKind={(k) => {
-          setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
-          setSearch('');
-          close();
-        }}
-        onClose={close}
-      />
-    );
+  if (sheet === 'search' && !split) {
+    overlay = <DiscoverSearchSheet {...searchProps} />;
   } else if (sheet === 'filters') {
     overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && !results.isLoading ? new Set(results.drinks.map((d) => d.barId)).size : null} onClose={close} />;
   } else if (sheet === 'area') {
@@ -225,19 +222,7 @@ export function DiscoverScreen() {
           </Caption>
         ) : null}
         {searching ? (
-          <DiscoverSearchResults
-            search={search}
-            area={shownArea}
-            drinks={results.drinks}
-            bars={results.bars}
-            barsById={results.barsById}
-            isLoading={results.isLoading}
-            signedIn={signedIn}
-            onKind={(k) => {
-              setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
-              setSearch('');
-            }}
-          />
+          <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} />
         ) : (
           <DrinksHere
             title={title}

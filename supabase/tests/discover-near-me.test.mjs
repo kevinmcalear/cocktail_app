@@ -180,13 +180,14 @@ describe('adding a bar', () => {
   });
 
   test('the bar claims a venue someone added, and a moderator approves it', async () => {
-    const { data: claim, error } = await users.barAdmin.client
-      .from('profile_claims')
-      .insert({ profile_id: ids.farHarbour, bar_id: ids.bar, message: 'Our bar' })
-      .select('id')
-      .single();
+    const { data: claim, error } = await users.barAdmin.client.rpc('start_bar_claim', {
+      p_profile_id: ids.farHarbour,
+      p_method: 'phone',
+      p_bar_id: ids.bar,
+      p_note: 'Our bar',
+    });
     assert.ifError(error);
-    const { data: profile, error: approveError } = await users.catalogAdmin.client.rpc('approve_profile_claim', { p_claim_id: claim.id });
+    const { data: profile, error: approveError } = await users.catalogAdmin.client.rpc('approve_profile_claim', { p_claim_id: claim.id, p_code: claim.code });
     assert.ifError(approveError);
     assert.equal(profile.bar_id, ids.bar);
     // Now the bar edits it, and the person who added it still can't.
