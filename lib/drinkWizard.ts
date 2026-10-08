@@ -39,6 +39,12 @@ export interface WizardLine extends WizardPick {
 }
 
 export interface WizardDraft {
+  /**
+   * The drink's id, made when the draft starts (newDraftId): the sketch is
+   * drawn with it as its seed and the drink is saved under it, so the saved
+   * drink keeps the very drawing the wizard showed.
+   */
+  id?: string;
   name: string;
   lines: WizardLine[];
   /** In order: "Dry shake" then "Shake". */
@@ -75,6 +81,19 @@ export const EMPTY_DRAFT: WizardDraft = {
   notes: '',
   publish: null,
 };
+
+/** A v4 uuid for a new draft. Not a secret, only unique: the database rejects a clash and the save retries with its own. */
+export function newDraftId(): string {
+  const bytes = new Uint8Array(16);
+  const c = (globalThis as { crypto?: { getRandomValues?: (a: Uint8Array) => Uint8Array } }).crypto;
+  if (c?.getRandomValues) c.getRandomValues(bytes);
+  // ponytail: Hermes has no crypto without expo-crypto; Math.random is enough for an id the database checks.
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 /** Whether a step has anything in it (an empty optional step offers Skip). */
 export function stepFilled(step: WizardStep, d: WizardDraft): boolean {
@@ -282,4 +301,64 @@ export function guessUnit(name: string, usual: string): string {
   if (/soda|tonic|ginger (beer|ale)|champagne|prosecco|cava|sparkling|cola|lemonade/.test(n) && !/syrup|cordial/.test(n)) return 'top';
   if (/\begg\b|egg white|egg yolk/.test(n)) return 'each';
   return usual;
+}
+
+// --- starting from a classic ---
+
+/** A spec as a drink page loads it, cut down to what the wizard copies. */
+export interface SourceSpec {
+  id: string;
+  name: string;
+  recipes?: readonly { amount: number | null; unit: string | null; ingredient: { id: string; name: string } | null }[] | null;
+  item_methods?: readonly { method_item_id: string; sort_order: number | null; method: { name: string } | null }[] | null;
+  glassware?: { id: string; name: string } | null;
+  ice?: { id: string; name: string } | null;
+}
+
+const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rim|pinch)s?$/;
+const GARNISH_EACH = /cherr|olive|coffee bean|flower|petal|nutmeg|onion|mint|berry|berries/;
+const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
+const OZ_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+
+/** A pour in another of ml, cl and oz ("22.5" ml is "0.75" oz); other units stay as they are. */
+export function convertPour(amount: number | null, from: string, to: string): { amount: string; unit: string } {
+  if (amount === null) return { amount: '', unit: from };
+  if (from === to || !POUR_ML[from] || !POUR_ML[to]) return { amount: fmt(amount), unit: from };
+  const n = (amount * POUR_ML[from]) / POUR_ML[to];
+  const near = to === 'oz' ? OZ_STEPS.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a)) : n;
+  return { amount: fmt(near), unit: to };
+}
+
+/**
+ * A classic's spec as the start of a new drink: its lines (pours in your
+ * usual unit, garnishes apart), methods in order, glass and ice, credited
+ * as a version of it. The name and anything typed already are left alone.
+ */
+export function draftFromSpec(spec: SourceSpec, usual: string): Partial<WizardDraft> {
+  const lines: WizardLine[] = [];
+  const garnishes: WizardLine[] = [];
+  for (const r of spec.recipes ?? []) {
+    if (!r.ingredient) continue;
+    const unit = (r.unit ?? '').trim().toLowerCase();
+    const pick = { id: r.ingredient.id, name: r.ingredient.name };
+    const garnish = GARNISH_UNIT.test(unit) || (unit === 'each' && GARNISH_EACH.test(pick.name.toLowerCase()));
+    if (garnish) garnishes.push(newLine(pick, unit, r.amount === null ? '1' : fmt(r.amount)));
+    else {
+      const pour = convertPour(r.amount, unit || usual, usual);
+      lines.push(newLine(pick, pour.unit, pour.amount));
+    }
+  }
+  const methods = [...(spec.item_methods ?? [])]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .filter((m) => m.method?.name)
+    .map((m) => ({ id: m.method_item_id, name: m.method!.name }));
+  return {
+    lines,
+    garnishes,
+    methods,
+    glass: spec.glassware ? { id: spec.glassware.id, name: spec.glassware.name } : null,
+    glassVariant: null,
+    ice: spec.ice ? { id: spec.ice.id, name: spec.ice.name } : null,
+    riffOf: { id: spec.id, name: spec.name },
+  };
 }

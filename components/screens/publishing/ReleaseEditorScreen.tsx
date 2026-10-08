@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DateField, Field, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -142,13 +142,11 @@ function ReleaseForm({ barId, existing, drinks, hasProfile }: ReleaseFormProps) 
 
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} placeholder="Autumn release" />
       <Field label="Description (optional)" value={description} onChangeText={setDescription} maxLength={1000} multiline />
-      <Field
+      <DateField
         label="Release date"
         value={date}
-        onChangeText={setDate}
-        placeholder="2026-12-01"
-        autoCapitalize="none"
-        error={start ? undefined : 'Use a date like 2026-12-01.'}
+        onChange={setDate}
+        error={start ? undefined : 'Pick a release date.'}
         hint="The date it’s known by. Scheduling makes it public at the start of this day."
       />
 

@@ -4,8 +4,6 @@ import {
   applyMenuPaste,
   bringInText,
   compileBringIn,
-  matchByName,
-  matchIngredient,
   appendReading,
   pasteRows,
   placedGroups,
@@ -13,9 +11,9 @@ import {
   parseBringIn,
   parseMenuPaste,
   parseSpecLine,
-  type CatalogItem,
   type ParsedMenuSection,
 } from './paste';
+import type { CatalogItem } from './match';
 import { blankSection, type MenuLayout } from './menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -75,22 +73,12 @@ const catalog: CatalogItem[] = [
   { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
   { id: 'campari', name: 'Campari', genericId: null, barId: null },
 ];
-assert.equal(matchIngredient('gin', catalog, 'bar').kind === 'use' && (matchIngredient('gin', catalog, 'bar') as { id: string }).id, 'gin');
-assert.equal(matchIngredient('Beefeater', catalog, 'bar').kind === 'use' && (matchIngredient('Beefeater', catalog, 'bar') as { id: string }).id, 'beef');
-const roku = matchIngredient('Roku Gin', catalog, 'bar');
-assert.equal(roku.kind, 'new');
-if (roku.kind === 'new') assert.equal(roku.genericId, 'gin');
 
 const noGeneric: CatalogItem[] = [
   { id: 'beef', name: 'Beefeater', genericId: 'gin', barId: 'bar' },
   { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
   { id: 'gin', name: 'Gin', genericId: null, barId: 'other' },
 ];
-const picked = matchIngredient('Gin', noGeneric, 'bar');
-assert.equal(picked.kind, 'pick');
-if (picked.kind === 'pick') assert.equal(picked.options.length, 3);
-
-assert.equal(matchByName('Martini', [{ name: 'Martini' }, { name: 'Martini' }]).kind, 'many');
 
 const bottles = parseBringIn('Gin\nCampari\n', 'ingredients');
 assert.equal(bottles.length, 2);

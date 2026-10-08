@@ -1,8 +1,9 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Caption, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
@@ -31,7 +32,7 @@ function Row({ icon, label, hint, trailing, onPress }: { icon: React.ReactNode; 
   );
 }
 
-/** New: make a drink, ingredient, beer, wine or menu, or carry on with a draft. */
+/** New: make a drink, ingredient, beer, wine or menu, or carry on with a draft. A dialog on desktop, like every other sheet. */
 export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const ds = useDs();
   const router = useRouter();
@@ -41,24 +42,21 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
     router.push(href as Href);
   };
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <Pressable role="dialog" aria-label="New" style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-          <Title>New</Title>
-          {CREATE.map((c) => (
-            <Row key={c.label} label={c.label} hint={c.hint} icon={<CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(c.href)} />
-          ))}
-          <Row label="Bring in" hint="Paste drinks or bottles" icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />} onPress={() => go('/bring-in')} />
-          <Row
-            label="Drafts"
-            hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
-            icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />}
-            trailing={drafts.length ? <Caption tone="muted">{drafts.length}</Caption> : null}
-            onPress={() => go('/edit-mode')}
-          />
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <MenuSheet visible={visible} onClose={onClose} title="New">
+      <View>
+        {CREATE.map((c) => (
+          <Row key={c.label} label={c.label} hint={c.hint} icon={<CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(c.href)} />
+        ))}
+        <Row label="Bring in" hint="Paste drinks or bottles" icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />} onPress={() => go('/bring-in')} />
+        <Row
+          label="Drafts"
+          hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
+          icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />}
+          trailing={drafts.length ? <Caption tone="muted">{drafts.length}</Caption> : null}
+          onPress={() => go('/edit-mode')}
+        />
+      </View>
+    </MenuSheet>
   );
 }
 
@@ -74,16 +72,6 @@ export function CreateButton() {
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: {
-    width: '100%',
-    maxWidth: 520,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space.xl,
-    paddingBottom: space.xxxl,
-    gap: space.xs,
-  },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, borderBottomWidth: StyleSheet.hairlineWidth },
   icon: { width: 40, height: 40, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },

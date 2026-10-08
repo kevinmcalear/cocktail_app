@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { space } from '@/constants/tokens';
 
 import { SKETCH_SAMPLES } from '@/constants/sketch';
 import { GLASS_VARIANTS } from '@/lib/sketch/geometry';
 import type { SketchGlass, SketchInputs } from '@/lib/sketch/types';
 
+import { AnimatedSketch } from '../AnimatedSketch';
+import { Button } from '../Button';
 import { GlassVariantPicker } from '../GlassVariantPicker';
 import { Caption } from '../Text';
 
@@ -56,3 +60,33 @@ export function GlassVariants() {
     </>
   );
 }
+
+const ANIMATED = ['rocks', 'spritz', 'beer', 'coupe'] as const;
+
+/** A few drinks drawn in front of you, as on a drink page with no photo; tap one to draw it again. */
+export function AnimatedDrawings() {
+  const [play, setPlay] = useState<Record<string, number>>({});
+  const again = (key: string) => setPlay((p) => ({ ...p, [key]: (p[key] ?? 0) + 1 }));
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.row}>
+        {ANIMATED.map((key) => (
+          <Pressable key={key} style={styles.tile} onPress={() => again(key)} role="button" accessibilityLabel={`Draw the ${SAMPLES[key].name} again`}>
+            <View style={styles.square}>
+              <AnimatedSketch inputs={SAMPLES[key].inputs} seed={`gallery-anim-${key}`} play={play[key] ?? 0} />
+            </View>
+            <Caption tone="muted">{SAMPLES[key].name}</Caption>
+          </Pressable>
+        ))}
+      </View>
+      <Button label="Draw them all again" variant="secondary" onPress={() => ANIMATED.forEach(again)} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: { gap: space.md, alignItems: 'flex-start' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  tile: { width: 160, gap: space.xs },
+  square: { width: 160, height: 160 },
+});

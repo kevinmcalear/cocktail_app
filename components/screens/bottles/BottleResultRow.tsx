@@ -6,8 +6,7 @@ import { TextLink } from '@/components/screens/menus/MenuPhotoRows';
 import { Choice } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
-import { bottleKey } from '@/lib/bottleMatch';
-import type { CatalogItem } from '@/lib/paste';
+import { matchKey, type CatalogItem } from '@/lib/match';
 
 import type { BottleRow, BottleTarget } from './useBottlePhoto';
 
@@ -29,7 +28,7 @@ export function BottleResultRow({ row, target, onPick, onUndo }: BottleResultRow
   const where = target.kind === 'home' ? 'your shelf' : `${target.name}’s ingredients`;
   const locked = target.kind === 'venue' && !target.canEdit;
   const { state, match } = row;
-  const as = (item: CatalogItem) => (bottleKey(item.name) === bottleKey(row.reading.name) ? '' : ` as ${item.name}`);
+  const as = (item: CatalogItem) => (matchKey(item.name) === matchKey(row.reading.name) ? '' : ` as ${item.name}`);
   const choices = match.kind === 'one' ? [match.item] : match.kind === 'pick' ? match.items : [];
 
   let body: ReactNode = null;

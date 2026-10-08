@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { STEP_COPY, WIZARD_STEPS, type WizardStep } from '@/lib/drinkWizard';
 
@@ -10,23 +11,31 @@ interface ChipProps {
   /** A quick add: "+ Lemon". */
   add?: boolean;
   kind?: 'radio' | 'checkbox' | 'button';
+  /** Our guess from the spec: outlined in the accent, with a spark. */
+  suggested?: boolean;
   onPress: () => void;
 }
 
 /** The wizard's chip: a quiet outline, filled in the accent when chosen. */
-export function WizardChip({ label, selected = false, add, kind = 'radio', onPress }: ChipProps) {
+export function WizardChip({ label, selected = false, add, kind = 'radio', suggested, onPress }: ChipProps) {
   const ds = useDs();
   return (
     <PressableScale
       role={kind}
       aria-checked={kind === 'button' ? undefined : selected}
-      accessibilityLabel={add ? `Add ${label}` : label}
+      accessibilityLabel={add ? `Add ${label}` : suggested ? `${label}, suggested` : label}
       onPress={onPress}
       style={[
         styles.chip,
-        { borderColor: selected ? ds.accentFill.fill : ds.c.lineStrong, backgroundColor: selected ? ds.accentFill.fill : 'transparent' },
+        suggested && styles.suggested,
+        {
+          borderColor: selected || suggested ? ds.accentFill.fill : ds.c.lineStrong,
+          backgroundColor: selected ? ds.accentFill.fill : 'transparent',
+          borderWidth: suggested && !selected ? 2 : 1,
+        },
       ]}
     >
+      {suggested && !selected ? <IconSymbol name="sparkles" size={14} color={ds.c.ink} /> : null}
       <DsText variant="body" color={selected ? ds.accentFill.text : ds.c.ink} style={selected ? styles.on : null}>
         {add ? `+ ${label}` : label}
       </DsText>
@@ -67,6 +76,7 @@ export function WizardFooter({ step, canNext, saving, onSkip, onNext }: FooterPr
 
 const styles = StyleSheet.create({
   chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
+  suggested: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   on: { fontFamily: fontFamilies.bodySemiBold },
   eyebrow: { letterSpacing: 0.6 },
   footer: { flexDirection: 'row', gap: space.md, paddingTop: space.md },

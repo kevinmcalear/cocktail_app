@@ -39,7 +39,7 @@ export function dayStart(value: string): Date | null {
 export function releaseProblems(r: { name: string; releaseDate: string; drinks: { name: string; isPublic: boolean }[] }): string[] {
   const problems: string[] = [];
   if (!r.name.trim()) problems.push('Give it a name.');
-  if (!dayStart(r.releaseDate)) problems.push('Use a date like 2026-12-01.');
+  if (!dayStart(r.releaseDate)) problems.push('Pick a release date.');
   if (!r.drinks.length) problems.push('Add at least one drink.');
   const hidden = r.drinks.filter((d) => !d.isPublic).map((d) => d.name);
   if (hidden.length) problems.push(`Publish ${hidden.join(', ')} first, or take ${hidden.length === 1 ? 'it' : 'them'} out.`);

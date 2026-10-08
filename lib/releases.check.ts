@@ -15,7 +15,7 @@ assert.equal(dayStart('1 March'), null);
 assert.deepEqual(releaseProblems({ name: 'Autumn', releaseDate: '2026-12-01', drinks: [{ name: 'Bolo Tie', isPublic: true }] }), []);
 assert.deepEqual(releaseProblems({ name: ' ', releaseDate: 'soon', drinks: [] }), [
   'Give it a name.',
-  'Use a date like 2026-12-01.',
+  'Pick a release date.',
   'Add at least one drink.',
 ]);
 assert.deepEqual(releaseProblems({ name: 'Autumn', releaseDate: '2026-12-01', drinks: [{ name: 'Bolo Tie', isPublic: false }] }), [

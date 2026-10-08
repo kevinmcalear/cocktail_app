@@ -108,10 +108,7 @@ export function useSaveCareerDrink() {
   });
 }
 
-/**
- * A venue they run. Same level defaults as Settings → Create venue.
- * ponytail: copied numbers, share a constant if those defaults ever change.
- */
+/** A new venue they run, from onboarding or Settings › Venues. */
 export function useCreateOnboardingBar() {
   const qc = useQueryClient();
   return useMutation({

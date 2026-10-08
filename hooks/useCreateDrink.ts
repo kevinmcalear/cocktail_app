@@ -11,6 +11,7 @@ import { creatorProfileId, likeExactly, specLines, type WizardDraft, type Wizard
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { withDrinkInSection } from '@/lib/menuDrinkAttach';
 import { capitalize } from '@/lib/stringUtils';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 import { useCreatorNavStore } from '@/store/useCreatorNavStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -24,6 +25,8 @@ export interface CreateDrinkInput {
   /** Adding it from a menu section: it lands in that section. */
   menuDraftId?: string | null;
   menuSectionId?: string | null;
+  /** The drawing the wizard showed (draftSketchInputs): the new drink shows it at once, not its glass icon. */
+  sketch?: SketchInputs | null;
 }
 
 export interface CreateDrinkResult {
@@ -48,7 +51,7 @@ export function useCreateDrink() {
   const { drafts, saveDraft } = useDrafts();
 
   return useMutation({
-    mutationFn: async ({ draft, barId, myProfileId, menuDraftId, menuSectionId }: CreateDrinkInput): Promise<CreateDrinkResult> => {
+    mutationFn: async ({ draft, barId, myProfileId, menuDraftId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
       const warnings: string[] = [];
       let createdLookups = false;
@@ -135,25 +138,28 @@ export function useCreateDrink() {
       }
       const creatorId = creatorProfileId(draft, myProfileId);
 
-      const { data: item, error: itemError } = await supabase
-        .from('items')
-        .insert({
-          name: capitalize(draft.name),
-          item_type: 'cocktail',
-          bar_id: barId,
-          description: draft.description.trim() || null,
-          notes: draft.notes.trim() || null,
-          glassware_id: glassId,
-          sketch_variant: draft.glassVariant ?? null,
-          ice_id: iceId,
-          riff_of_id: draft.riffOf?.id ?? null,
-          creator_profile_id: creatorId,
-          origin_bar_profile_id: originBar,
-          // You can claim your own credit; anyone else's starts as suggested.
-          credit_status: creatorId && creatorId === myProfileId ? 'claimed' : null,
-        })
-        .select('id')
-        .single();
+      const row = {
+        id: undefined as string | undefined,
+        name: capitalize(draft.name),
+        item_type: 'cocktail',
+        bar_id: barId,
+        description: draft.description.trim() || null,
+        notes: draft.notes.trim() || null,
+        glassware_id: glassId,
+        sketch_variant: draft.glassVariant ?? null,
+        ice_id: iceId,
+        riff_of_id: draft.riffOf?.id ?? null,
+        creator_profile_id: creatorId,
+        origin_bar_profile_id: originBar,
+        // You can claim your own credit; anyone else's starts as suggested.
+        credit_status: creatorId && creatorId === myProfileId ? 'claimed' : null,
+      };
+      // Under the draft's id, so it's drawn with the wizard's seed. A clash
+      // (an earlier try that saved but never answered) gets an id of its own.
+      // (undefined is left out of the request, so the database makes one.)
+      const insert = (id: string | undefined) => supabase.from('items').insert({ ...row, id }).select('id').single();
+      let { data: item, error: itemError } = await insert(draft.id);
+      if (itemError?.code === '23505' && draft.id) ({ data: item, error: itemError } = await insert(undefined));
       if (itemError || !item) throw itemError ?? new Error('Couldn’t save the drink.');
       const id = item.id as string;
 
@@ -164,6 +170,11 @@ export function useCreateDrink() {
         await supabase.from('items').delete().eq('id', id);
         throw e;
       }
+
+      // The drawing the wizard showed stays the drink's: the worker won't
+      // repaint it until the drink changes (20261009750000_maker_drawings).
+      // Decorative, so a failure only means the worker draws it as usual.
+      if (sketch) await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: sketch });
 
       if (draft.publish) {
         const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
@@ -186,6 +197,9 @@ export function useCreateDrink() {
         useCreatorNavStore.getState().deliverMenuDrink(menuSectionId, id);
       }
 
+      // The worker writes its drawing inputs a little later; until then (and
+      // instead of a cached "none yet") it shows the drawing the wizard did.
+      if (sketch) qc.setQueryData(['item-sketch', id], sketch);
       useRecentActivityStore.getState().push(recentEntry('cocktail', id, capitalize(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: ['cocktails'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });

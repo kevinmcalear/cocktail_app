@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/useAppStore';
 
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
-import { NameStep, UnitsStep } from './ProfileSteps';
+import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
 
 const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   invite: { title: 'You’re invited' },
@@ -34,11 +34,15 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
     title: 'Cocktails you worked on',
     intro: 'A drink you made or helped make. It shows as a suggested credit. A closed bar can still be where it started.',
   },
+  taste: {
+    title: 'What do you like to drink?',
+    intro: 'A few quick answers start your taste, for drinks picked for you. Every drink you rank sharpens it. Change them any time on You.',
+  },
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
 };
 
 /**
- * After the age check, once, for a new account: name, work, and units. A
+ * After the age check, once, for a new account: name, work, taste and units. A
  * venue's invite comes first (InviteWelcome) and, once joined, shortens it to
  * name and units; their job at that venue is saved for them.
  */
@@ -185,7 +189,7 @@ export function OnboardingScreen() {
               else setStep('find');
             }}
           />
-          <Answer label="I make drinks at home" onPress={() => createProfile(() => setStep('units'))} />
+          <Answer label="I make drinks at home" onPress={() => createProfile(() => setStep('taste'))} />
           {saveProfile.error && !handleTaken ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
         </View>
       ) : null}
@@ -195,13 +199,14 @@ export function OnboardingScreen() {
           pending={saveProfile.isPending}
           onClaimed={() => go('find', 'claim')}
           onNew={() => createProfile(() => go('find', 'new'))}
-          onSkip={() => createProfile(() => setStep('units'))}
+          onSkip={() => createProfile(() => setStep('taste'))}
         />
       ) : null}
       {step === 'work' ? <PlaceStep personId={personId} isCurrent onDone={() => go('work')} /> : null}
       {step === 'past' ? <PlaceStep personId={personId} isCurrent={false} onDone={() => go('past')} /> : null}
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
+      {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
       {step === 'units' ? <UnitsStep onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
     </SafetyPage>

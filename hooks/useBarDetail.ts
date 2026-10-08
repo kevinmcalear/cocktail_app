@@ -10,6 +10,8 @@ export interface BarMember {
     /** The name they signed up with, or the part of their email before @. */
     display_name?: string | null;
     joined_at?: string | null;
+    /** Their Settings photo, else their profile picture. */
+    avatar_url?: string | null;
 }
 
 export function useBarDetail(barId: string) {
@@ -18,7 +20,7 @@ export function useBarDetail(barId: string) {
         queryFn: async () => {
             if (!barId) return null;
 
-            const [barResponse, membersResponse, itemsResponse] = await Promise.all([
+            const [barResponse, drinksResponse] = await Promise.all([
                 supabase
                     .from('bars')
                     .select(`
@@ -37,21 +39,20 @@ export function useBarDetail(barId: string) {
                     `)
                     .eq('id', barId)
                     .single(),
-                supabase
-                    .rpc('get_bar_members', { p_bar_id: barId }),
+                // Just the number, for "View in Library": the drinks Library's All shows.
                 supabase
                     .from('items')
-                    .select('id, name, item_type')
+                    .select('id', { count: 'exact', head: true })
                     .eq('bar_id', barId)
+                    .in('item_type', ['cocktail', 'beer', 'wine']),
             ]);
 
             if (barResponse.error) throw barResponse.error;
-            if (membersResponse.error) throw membersResponse.error;
-            
+            if (drinksResponse.error) throw drinksResponse.error;
+
             return {
                 bar: barResponse.data as DatabaseBar,
-                members: (membersResponse.data || []) as BarMember[],
-                items: itemsResponse.data || []
+                drinkCount: drinksResponse.count ?? 0,
             };
         },
         enabled: !!barId,

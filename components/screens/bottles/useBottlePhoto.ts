@@ -3,8 +3,7 @@ import { useRef, useState } from 'react';
 
 import { useSpecCatalog, useVenueBottle } from '@/hooks/useBulk';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
-import { bottleKey, kindForCopy, matchBottle, type BottleMatch } from '@/lib/bottleMatch';
-import type { CatalogItem } from '@/lib/paste';
+import { kindForCopy, matchIngredient, matchKey, type CatalogItem, type Match } from '@/lib/match';
 import { readBottlePhoto, type BottlePhoto, type BottleReading } from '@/lib/readBottle';
 
 /** Where the bottles go: your own shelf, or a venue's ingredients. */
@@ -20,7 +19,7 @@ export type BottleState =
 
 export interface BottleRow {
   reading: BottleReading;
-  match: BottleMatch;
+  match: Match;
   state: BottleState;
 }
 
@@ -32,7 +31,7 @@ const message = (e: unknown, fallback: string) => (e instanceof Error ? e.messag
  */
 export function useBottlePhoto(target: BottleTarget) {
   const venueId = target.kind === 'venue' ? target.barId : null;
-  const { catalog, isLoading } = useSpecCatalog();
+  const { catalog, aliases, isLoading } = useSpecCatalog();
   const { data: shelf } = useShelf();
   const home = useShelfEdit();
   const venue = useVenueBottle(venueId);
@@ -51,8 +50,8 @@ export function useBottlePhoto(target: BottleTarget) {
   const existing = (item: CatalogItem): CatalogItem | null => {
     if (target.kind === 'home') return shelf?.includes(item.id) ? item : null;
     if (item.barId === venueId) return item;
-    const key = bottleKey(item.name);
-    return catalog.find((c) => c.barId === venueId && (c.genericId === item.id || bottleKey(c.name) === key)) ?? null;
+    const key = matchKey(item.name);
+    return catalog.find((c) => c.barId === venueId && (c.genericId === item.id || matchKey(c.name) === key)) ?? null;
   };
 
   /** Adds the item (or, with null, the label as a new venue ingredient). */
@@ -97,7 +96,7 @@ export function useBottlePhoto(target: BottleTarget) {
     try {
       const bottles = await read.mutateAsync(next);
       if (run.current !== at) return;
-      const found = bottles.map((reading) => ({ reading, match: matchBottle(reading, catalog, venueId), state: { status: 'open' } as BottleState }));
+      const found = bottles.map((reading) => ({ reading, match: matchIngredient(reading, catalog, venueId, aliases), state: { status: 'open' } as BottleState }));
       setRows(found);
       // Sure matches go straight in; venues only when the person can edit there.
       if (target.kind === 'venue' && !target.canEdit) return;

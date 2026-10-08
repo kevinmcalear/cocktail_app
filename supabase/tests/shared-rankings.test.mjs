@@ -1,6 +1,6 @@
 // Showing the drinks you've had, and the bars you had them at, on your profile
 // (supabase/migrations/20261001220000_shared_rankings.sql,
-// 20261009900000_profile_sharing_choices.sql).
+// 20261009970000_profile_sharing_choices.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
