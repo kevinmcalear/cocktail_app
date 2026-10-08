@@ -1,6 +1,6 @@
 // A drink's strength is worked out once per statement that changes its spec
 // or method, and comes out the same as before
-// (supabase/migrations/20261008620000_strength_statement_triggers.sql).
+// (supabase/migrations/20261008820000_strength_statement_triggers.sql).
 // Each check compares the stored figures with the worked example of
 // drink-math.test.mjs and with a fresh refresh_drink_strength() of the final
 // spec, which is what the old row triggers stored after every line.
