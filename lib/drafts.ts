@@ -3,14 +3,28 @@ import { draftMethodIds } from '@/lib/drinkMethods';
 import { capitalize } from '@/lib/stringUtils';
 
 /**
+ * A published ingredient a draft line points at. Ingredients merged since the
+ * draft was saved are deleted (20261008100000), and the old name stays as an
+ * alias of the kept one, so a missing id goes by its line's name instead.
+ */
+async function liveIngredientId(id: string, name?: string): Promise<string> {
+    const { data, error } = await supabase.from('items').select('id').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (data) return id;
+    const resolved = name?.trim() ? await supabase.rpc('resolve_ingredient', { p_name: name }) : null;
+    if (resolved?.data) return resolved.data as string;
+    throw new Error(`${name?.trim() || 'An ingredient'} isn’t in the catalog any more. Pick it again.`);
+}
+
+/**
  * Recursively publishes a draft ingredient and all its draft sub-ingredients,
  * returning the new published items table ID.
  */
-export async function resolveIngredientId(id: string, drafts: any[]): Promise<string> {
+export async function resolveIngredientId(id: string, drafts: any[], name?: string): Promise<string> {
     const draft = drafts.find(d => d.id === id);
     if (!draft || draft.entity_type !== 'ingredient') {
-        // Not a draft or not an ingredient draft, return the original ID
-        return id;
+        // Not a draft or not an ingredient draft: a published id, if it still exists
+        return liveIngredientId(id, name);
     }
     
     const data = draft.draft_data;
@@ -19,7 +33,7 @@ export async function resolveIngredientId(id: string, drafts: any[]): Promise<st
     const resolvedRecipeItems = [];
     if (data.recipeItems && data.recipeItems.length > 0) {
         for (const subItem of data.recipeItems) {
-            const resolvedSubId = await resolveIngredientId(subItem.ingredient_id, drafts);
+            const resolvedSubId = await resolveIngredientId(subItem.ingredient_id, drafts, subItem.name);
             resolvedRecipeItems.push({
                 ...subItem,
                 ingredient_id: resolvedSubId
@@ -192,7 +206,7 @@ export async function resolveCocktailId(id: string, drafts: any[]): Promise<stri
     const resolvedRecipeItems = [];
     if (data.recipeItems && data.recipeItems.length > 0) {
         for (const item of data.recipeItems) {
-            const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+            const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
             resolvedRecipeItems.push({
                 ...item,
                 ingredient_id: resolvedId
