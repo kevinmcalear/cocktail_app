@@ -5,14 +5,22 @@ import { Button, Caption, Headline, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
-import { drinkCount, type BarScore, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatScore } from '@/lib/ranking';
 
-const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
+const place = (b: DiscoverDrink['bar']) => [b.locality, b.city].filter(Boolean).join(', ');
 
 /** How many more drinks each "Show more" adds: "anywhere" can be thousands, too many to lay out at once. */
-const MORE = 40;
+const MORE = 30;
+
+/** The server's side of a list: how many in all, and the next page. */
+export interface MoreDrinks {
+  total: number | null;
+  hasMore: boolean;
+  loadMore: () => void;
+  loading: boolean;
+}
 
 /** "Best Martini" scores: each drink's own, and each bar's for the drink. A drink or bar nobody has scored has none. */
 export interface DrinkScores {
@@ -37,16 +45,27 @@ export function scoreWords(drink?: number, bar?: number): string | null {
   return words.length ? words.join(', ') : null;
 }
 
-/** Drinks, each with the bar that makes it (and their scores, when given); the first `limit`, then more a page at a time. */
-export function DrinkAtBarList({ drinks, barsById, limit = 8, scores }: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; limit?: number; scores?: DrinkScores }) {
+/**
+ * Drinks, each with the bar that makes it (and their scores, when given);
+ * the first `limit`, then more a page at a time: from what's loaded, then
+ * the server's next page (`more`). `endless`: every loaded drink, the
+ * next page coming as the list around it scrolls to its end (no button).
+ */
+export function DrinkAtBarList({ drinks, limit = 8, scores, more, endless = false }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks; endless?: boolean }) {
   const [count, setCount] = useState(limit);
-  const shown = drinks.slice(0, count);
-  const next = Math.min(MORE, drinks.length - shown.length);
+  const shown = endless ? drinks : drinks.slice(0, count);
+  const total = Math.max(more?.total ?? drinks.length, drinks.length);
+  const next = Math.min(MORE, total - shown.length);
+  const showMore = () => {
+    setCount(shown.length + next);
+    // The next page before it's needed, so the rows after these are there too.
+    if (more?.hasMore && shown.length + next + MORE > drinks.length) more.loadMore();
+  };
   return (
     <View role="list">
       {shown.map((d) => {
-        const bar = barsById.get(d.barId);
-        const caption = bar ? [bar.name, place(bar), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined;
+        const bar = d.bar;
+        const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
         const drinkScore = scores?.drinks[d.id];
         const barScore = scores?.bars[d.barId]?.score;
         const said = scoreWords(drinkScore, barScore);
@@ -59,17 +78,19 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8, scores }: { drinks
             imageUrl={d.imageUrl}
             glass={null}
             caption={caption}
-            logo={bar ? { uri: bar.logo, name: bar.name } : undefined}
-            tag={d.menu?.past ?? undefined}
+            logo={{ uri: bar.logo, name: bar.name }}
+            tag={d.menu.past ?? undefined}
             note={d.description ?? undefined}
             trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
-            label={said ? [d.name, caption, d.menu?.past, said, d.description].filter(Boolean).join('. ') : undefined}
+            label={said ? [d.name, caption, d.menu.past, said, d.description].filter(Boolean).join('. ') : undefined}
           />
         );
       })}
-      {next > 0 ? (
+      {endless ? (
+        more?.loading ? <ListNote>Loading more…</ListNote> : null
+      ) : next > 0 ? (
         <View style={styles.more}>
-          <Button label={`Show ${next} more of ${drinks.length}`} variant="ghost" onPress={() => setCount(shown.length + next)} />
+          <Button label={more?.loading && shown.length >= drinks.length ? 'Loading…' : `Show ${next} more of ${total}`} variant="ghost" onPress={showMore} />
         </View>
       ) : null}
     </View>
@@ -79,7 +100,9 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8, scores }: { drinks
 interface DrinksHereProps {
   title: string;
   drinks: DiscoverDrink[];
-  barsById: ReadonlyMap<string, DiscoverBar>;
+  /** How many in all, at how many bars (the first page says). */
+  totals: { drinks: number; bars: number } | null;
+  more: MoreDrinks;
   isLoading: boolean;
   signedIn: boolean;
   /** What to say when nothing matches. */
@@ -87,16 +110,15 @@ interface DrinksHereProps {
 }
 
 /** "Martinis near you": the drinks at bars that match, with how many bars pour them. */
-export function DrinksHere({ title, drinks, barsById, isLoading, signedIn, empty }: DrinksHereProps) {
-  const barCount = new Set(drinks.map((d) => d.barId)).size;
+export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, empty }: DrinksHereProps) {
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
-  else body = <DrinkAtBarList drinks={drinks} barsById={barsById} />;
+  else body = <DrinkAtBarList drinks={drinks} more={more} />;
   return (
     <View style={styles.section}>
-      <Caption tone="muted">{drinks.length ? `${drinkCount(drinks.length)} at ${barCount} ${barCount === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
+      <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
       <Headline role="heading">{title}</Headline>
       {body}
     </View>

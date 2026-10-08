@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
-import type { DiscoverBar, DiscoverDrink } from '@/lib/discoverDrinks';
+import type { DiscoverBar, DiscoverDrink, DrinkFilter } from '@/lib/discoverDrinks';
 import type { Area } from '@/lib/nearMe';
 
 import { DiscoverMapPane } from './DiscoverMapPane';
@@ -15,6 +15,17 @@ jest.mock('@/hooks/useDiscover', () => ({
 let mockScores: Record<string, number> = {};
 jest.mock('@/hooks/useFlavor', () => ({ useItemScores: () => ({ data: mockScores }) }));
 let mockTopDrinks: unknown[] = [];
+// The server's side: every drink here, which of them are martinis, and the area's bars.
+let mockDrinks: DiscoverDrink[] = [];
+let mockMartinis = new Set<string>();
+let mockBars: DiscoverBar[] = [];
+const page = (drinks: DiscoverDrink[]) => ({ drinks, totals: { drinks: drinks.length, bars: 1 }, isLoading: false, hasMore: false, isLoadingMore: false, loadMore: () => {}, error: null });
+jest.mock('@/hooks/useDiscoverDrinks', () => ({
+  useDiscoverBars: () => ({ data: mockBars, isPending: false }),
+  useTileBars: () => ({ bars: [], isLoading: false }),
+  useDiscoverList: (f: DrinkFilter, o: { barId?: string | null; enabled?: boolean }) =>
+    page(!o.enabled ? [] : f.kinds.includes('martini') ? mockDrinks.filter((d) => mockMartinis.has(d.id)) : o.barId ? mockDrinks.filter((d) => d.barId === o.barId) : mockDrinks),
+}));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
 jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');
@@ -43,23 +54,43 @@ const bar: DiscoverBar = {
   longitude: 144.96,
   closed: false,
   closedYear: null,
+  drinks: 0,
 };
 
 function drink(id: string, name: string, styles: string[] = []): DiscoverDrink {
-  return { id, name, description: `${name} note`, imageUrl: null, barId: bar.id, ingredients: [], styles, spirits: [], haystack: '' };
+  if (styles.includes('martini')) mockMartinis.add(id);
+  return {
+    id,
+    name,
+    description: `${name} note`,
+    imageUrl: null,
+    barId: bar.id,
+    bar: { name: bar.name, handle: bar.handle, logo: null, locality: bar.locality, city: bar.city },
+    menu: { onNow: false, past: null, order: 1 },
+    rank: 6,
+  };
 }
 
+const more = { total: null, hasMore: false, loadMore: () => {}, loading: false };
+
 function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null) {
+  mockDrinks = drinks;
+  mockBars = [{ ...bar, drinks: drinks.length }];
   return renderWithTamagui(
     <DiscoverMapPane
       mode="side"
       area={area}
       onArea={() => {}}
       drink={pick}
-      results={{ drinks, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
+      filter={{ kinds: [], search: '', area }}
+      results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
     />
   );
 }
+
+beforeEach(() => {
+  mockMartinis = new Set();
+});
 
 test('a drinks pin lists those cocktails in the card', async () => {
   const drinks = [drink('d1', 'House Martini'), drink('d2', 'Bamboo'), drink('d3', 'Vesper'), drink('d4', 'Martini No. 4')];

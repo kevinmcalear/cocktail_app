@@ -77,7 +77,8 @@ export function DiscoverScreen() {
 
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
-  const results = useDiscoverResults({ kinds, search, area: shownArea }, !locating || searching);
+  const filter = { kinds, search, area: shownArea };
+  const results = useDiscoverResults(filter, !locating || searching);
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
@@ -133,7 +134,7 @@ export function DiscoverScreen() {
   if (sheet === 'search' && !split) {
     overlay = <DiscoverSearchSheet {...searchProps} />;
   } else if (sheet === 'filters') {
-    overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && !results.isLoading ? new Set(results.drinks.map((d) => d.barId)).size : null} closed={closed} onClose={close} />;
+    overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && results.totals ? results.totals.bars : null} closed={closed} onClose={close} />;
   } else if (sheet === 'area') {
     overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onClose={close} />;
   } else if (sheet === 'add') {
@@ -152,6 +153,7 @@ export function DiscoverScreen() {
           area={shownArea}
           onArea={onMapArea}
           drink={drink}
+          filter={filter}
           results={mapResults}
           onViewport={onViewport}
           bottomInset={bottom}
@@ -199,7 +201,8 @@ export function DiscoverScreen() {
           <DrinksHere
             title={title}
             drinks={results.drinks}
-            barsById={results.barsById}
+            totals={results.totals}
+            more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
@@ -223,7 +226,7 @@ export function DiscoverScreen() {
       {list}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} results={mapResults} onViewport={onViewport} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} />
         </View>
       ) : null}
       {overlay}

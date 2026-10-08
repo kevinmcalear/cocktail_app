@@ -67,6 +67,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
       longitude: null,
       closed: !!b.is_closed,
       closedYear: b.closed_year ?? null,
+      drinks: 0,
     }));
   }, [signedIn, area, results.bars, publicBars, q]);
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
@@ -88,7 +89,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
         label={`Drinks ${area ? where : 'at bars'}`}
         items={results.drinks}
         render={(d) => {
-          const bar = results.barsById.get(d.barId);
+          const bar = d.bar;
           return (
             <DrinkRow
               key={d.id}
@@ -97,9 +98,9 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
               itemId={d.id}
               imageUrl={d.imageUrl}
               glass={null}
-              caption={bar ? [bar.name, place([bar.locality, bar.city]), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined}
-              logo={bar ? { uri: bar.logo, name: bar.name } : undefined}
-              tag={d.menu?.past ?? undefined}
+              caption={[bar.name, place([bar.locality, bar.city]), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ')}
+              logo={{ uri: bar.logo, name: bar.name }}
+              tag={d.menu.past ?? undefined}
             />
           );
         }}

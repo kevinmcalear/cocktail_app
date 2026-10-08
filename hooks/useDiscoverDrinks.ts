@@ -1,171 +1,169 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQueries, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
-import { allRowsById } from '@/lib/allRows';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
-import { closedBars, filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
-import { menuOrder, runDates, searchMenuTag } from '@/lib/menuEditions';
+import { foldName } from '@/lib/discover';
+import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, type BarRow, type DiscoverBar, type DiscoverDrink, type DrinkFilter, type DrinkRow } from '@/lib/discoverDrinks';
+import type { Viewport } from '@/lib/discoverMap';
+import { inBox, parentTiles, tileBox, tilesFor, type Tile } from '@/lib/discoverTiles';
 import { areaParams, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
 
-/** PostgREST's row cap, and discover_drinks' largest page. */
-const PAGE = 1000;
-
 /**
- * "Anywhere" in eight id ranges loaded side by side, each about 900 drinks:
- * the whole set in about the time of one page. Bounds are exclusive.
+ * Discover's data, a page at a time (supabase/migrations/20261009700000_discover_index.sql):
+ * the matching drinks in an area best first (discover_list), the bars in an
+ * area (discover_bars), and the bars in the map's view a tile at a time. The
+ * server matches, ranks and counts; the phone gets what it shows. Small, so
+ * all of it is saved between launches: Discover opens on the last results
+ * and refreshes behind them. Signed-in only, like every shared drink.
  */
-const STARTS = ['0', '2', '4', '6', '8', 'a', 'c', 'e'];
-const RANGES = STARTS.map((hex, i): [string | null, string | null] => [
-  i === 0 ? null : `${(parseInt(hex, 16) - 1).toString(16)}fffffff-ffff-ffff-ffff-ffffffffffff`,
-  i === STARTS.length - 1 ? null : `${STARTS[i + 1]}0000000-0000-0000-0000-000000000000`,
-]);
 
-/** A row of discover_drinks (supabase/migrations/20261008330000_discover_drinks_rpc.sql). */
-interface DrinkRow {
-  id: string;
-  name: string;
-  description: string | null;
-  riff_of: string | null;
-  ingredients: string[];
-  image_url: string | null;
-  bar_profile_id: string;
-  /** [start year, start month, end year, end month, 1 if on now], or null when never on a menu. */
-  menu_run: [number, number | null, number | null, number | null, number] | null;
-  notes: string[];
+/** Drinks per page: the list shows 8, then more a page at a time. */
+const PAGE = 30;
+
+/** The search as the server folds it, so "Negroni" and "negroni " are one query. */
+const searchKey = (search: string) => foldName(search);
+
+interface ListOptions {
+  /** One bar's drinks instead of the area's. */
+  barId?: string | null;
+  enabled?: boolean;
+  /** Drinks per page (at most 500). */
+  pageSize?: number;
 }
 
-type Signal = AbortSignal | undefined;
-
-interface DiscoverData {
+interface ListPage {
   drinks: DiscoverDrink[];
-  bars: DiscoverBar[];
+  totals: { drinks: number; bars: number } | null;
 }
 
-const ANYWHERE: Area = { kind: 'anywhere' };
-
 /**
- * The bars in an area and the drinks they pour, with their styles and
- * spirits: what Discover searches, filters and pins on the map. Read through
- * discover_drinks, so the area (and, everywhere, a typed search) is applied
- * in SQL: near me is one request of a few hundred drinks. Anywhere with no
- * search is still every bar drink (the "anywhere" list needs them all), in compact rows loaded side by side. Signed-in only, like
- * every shared drink.
+ * The drinks that match, best first, a page at a time. `totals` (how many,
+ * at how many bars) come with the first page. A new search or filter in the
+ * same area keeps the last results up while it loads; a new area doesn't, so
+ * the map refits.
  */
-export function useDiscoverDrinks(area: Area = ANYWHERE, search = '', enabled = true) {
+export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE }: ListOptions = {}) {
   const signedIn = !!useAuth().user;
-  const where = areaParams(area);
-  return useQuery<DiscoverData>({
-    queryKey: ['discover-drinks', where, search],
-    // Anywhere is too big to save between launches (lib/queryCachePersist.ts), and areas change as the map moves.
-    meta: { persist: false },
+  const search = searchKey(useDebounced(filter.search, 250));
+  const where = barId ? {} : areaParams(filter.area);
+  const kinds = kindParams(filter.kinds);
+  const query = useInfiniteQuery({
+    queryKey: ['discover-list', where, barId, kinds, search, pageSize],
+    meta: { persist: true },
     enabled: signedIn && enabled,
-    staleTime: 30 * 60 * 1000,
-    // A new search in the same area keeps the last results up while it loads; a new area doesn't, so the map refits.
+    staleTime: 10 * 60 * 1000,
     placeholderData: (previous, previousQuery) =>
-      previousQuery && JSON.stringify(previousQuery.queryKey[1]) === JSON.stringify(where) ? previous : undefined,
-    queryFn: async ({ signal }): Promise<DiscoverData> => {
-      const ranges = area.kind === 'anywhere' && !search ? RANGES : [[null, null] as [null, null]];
-      const [bars, ...pages] = await Promise.all([readBars(area, signal), ...ranges.map(([after, before]) => readDrinks(where, search, after, before, signal))]);
-      const drinks = pages.flat().map((r) =>
-        toDiscoverDrink({
-          id: r.id,
-          name: r.name,
-          description: r.description,
-          riffOf: r.riff_of,
-          ingredients: r.ingredients,
-          imageUrl: r.image_url,
-          barId: r.bar_profile_id,
-          menu: menuOf(r),
-          notes: r.notes,
-        })
-      );
-      return { drinks, bars };
+      previousQuery && JSON.stringify(previousQuery.queryKey.slice(1, 3)) === JSON.stringify([where, barId]) ? previous : undefined,
+    initialPageParam: null as ReturnType<typeof cursorAfter> | null,
+    getNextPageParam: (last: ListPage) => (last.drinks.length < pageSize ? undefined : cursorAfter(last.drinks[last.drinks.length - 1])),
+    queryFn: async ({ pageParam, signal }): Promise<ListPage> => {
+      const { data, error } = await supabase
+        .rpc('discover_list', { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...pageParam, p_limit: pageSize })
+        .abortSignal(signal);
+      if (error) throw error;
+      const rows = (data ?? []) as DrinkRow[];
+      const first = rows[0];
+      return { drinks: rows.map(toDiscoverDrink), totals: first && first.total_drinks !== null ? { drinks: first.total_drinks, bars: first.total_bars ?? 0 } : pageParam ? null : { drinks: 0, bars: 0 } };
     },
   });
+  const pages = query.data?.pages;
+  const drinks = useMemo(() => (pages ?? []).flatMap((p) => p.drinks), [pages]);
+  return {
+    drinks,
+    totals: pages?.[0]?.totals ?? null,
+    // Held (not enabled) reads as loading: Discover waits for location rather than show nothing.
+    isLoading: signedIn && query.isPending,
+    hasMore: !!query.hasNextPage,
+    isLoadingMore: query.isFetchingNextPage,
+    loadMore: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+    },
+    error: query.error,
+  };
 }
 
-/** One id range of discover_drinks, a page at a time (keyset on id). */
-async function readDrinks(where: Record<string, string | number>, search: string, after: string | null, before: string | null, signal: Signal): Promise<DrinkRow[]> {
-  const rows: DrinkRow[] = [];
-  for (;;) {
-    const last = rows.length ? rows[rows.length - 1].id : after;
-    const { data, error } = await supabase
-      .rpc('discover_drinks', { ...where, p_query: search || null, p_after: last, p_before: before, p_limit: PAGE })
-      .abortSignal(signal as AbortSignal);
-    if (error) throw error;
-    rows.push(...((data ?? []) as DrinkRow[]));
-    if ((data ?? []).length < PAGE) return rows;
-  }
+async function readBars(params: Record<string, unknown>, signal: AbortSignal): Promise<DiscoverBar[]> {
+  const { data, error } = await supabase.rpc('discover_bars', params).abortSignal(signal);
+  if (error) throw error;
+  return ((data ?? []) as BarRow[]).map(toDiscoverBar);
 }
 
 /**
- * The public bars in the area, closed ones too: the map's pins and the bars
- * search finds, including ones with no drinks listed. A box around a point
- * (the exact distance is checked on the device, lib/discoverDrinks.ts
- * barInArea). Over a thousand everywhere, so a page at a time.
+ * The public bars in an area, closed ones too, each with how many of its
+ * drinks match the filters (none given: all its drinks): search finds bars
+ * here, Filters lists the closed ones, and the area's pins come first.
  */
-async function readBars(area: Area, signal: Signal): Promise<DiscoverBar[]> {
-  const rows = await allRowsById((after, size) => {
-    let query = supabase
-      .from('profiles')
-      .select('id, handle, display_name, avatar_url, locality, city, country_code, latitude, longitude, is_closed, closed_year')
-      .eq('kind', 'bar')
-      .eq('is_public', true);
-    if (area.kind === 'point') {
-      const dLat = area.radiusKm / 111.045;
-      const dLng = area.radiusKm / (111.045 * Math.max(Math.cos((area.latitude * Math.PI) / 180), 0.01));
-      query = query.gte('latitude', area.latitude - dLat).lte('latitude', area.latitude + dLat);
-      // ponytail: no longitude bound across the antimeridian; the device check still applies.
-      if (Math.abs(area.longitude) + dLng < 180) query = query.gte('longitude', area.longitude - dLng).lte('longitude', area.longitude + dLng);
-    } else if (area.kind === 'city') {
-      query = query.eq('country_code', area.country_code.toUpperCase()).ilike('city', area.city.replace(/[\\%_]/g, '\\$&'));
-    }
-    if (after) query = query.gt('id', after);
-    return query.order('id').limit(size).abortSignal(signal as AbortSignal);
+export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[]; search?: string } = {}, enabled = true) {
+  const signedIn = !!useAuth().user;
+  const where = areaParams(area);
+  const kinds = kindParams(filter.kinds ?? []);
+  const search = searchKey(useDebounced(filter.search ?? '', 250));
+  return useQuery({
+    queryKey: ['discover-bars', where, kinds, search],
+    meta: { persist: true },
+    enabled: signedIn && enabled,
+    staleTime: 60 * 60 * 1000,
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => readBars({ ...where, ...kinds, p_query: search || null }, signal),
   });
-  return rows.map((p) => ({
-    id: p.id,
-    handle: p.handle,
-    name: p.display_name,
-    logo: p.avatar_url,
-    locality: p.locality,
-    city: p.city,
-    countryCode: p.country_code,
-    latitude: p.latitude,
-    longitude: p.longitude,
-    closed: p.is_closed,
-    closedYear: p.closed_year,
-  }));
 }
 
-/** Plain JSON for the query cache: on now, or past with its dates, and where it sorts. */
-function menuOf({ menu_run: run }: DrinkRow): DiscoverDrink['menu'] {
-  const dates = run ? runDates({ start_year: run[0], start_month: run[1], end_year: run[2], end_month: run[3], is_current: run[4] === 1 }) : null;
-  const tag = searchMenuTag(dates);
-  return { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) };
-}
+const tileQueryKey = (t: Tile, kinds: ReturnType<typeof kindParams>, search: string) => ['discover-tile', t.z, t.x, t.y, kinds, search] as const;
 
-const ALL_KEY = ['discover-drinks', areaParams(ANYWHERE), ''];
+/** A coarser tile already loaded with the same filters answers for this one, so zooming in never asks again. */
+function fromParent(client: QueryClient, t: Tile, kinds: ReturnType<typeof kindParams>, search: string): DiscoverBar[] | undefined {
+  const box = tileBox(t);
+  for (const p of parentTiles(t)) {
+    const bars = client.getQueryData<DiscoverBar[]>(tileQueryKey(p, kinds, search));
+    if (bars) return bars.filter((b) => inBox(b, box));
+  }
+  return undefined;
+}
 
 /**
- * The drinks at bars that match Discover's filter, and the bars behind them.
- * Empty (not loading) when signed out: shared drinks need an account.
- * Searching everywhere asks the server, unless every drink is already here.
- * `enabled` false holds the load (Discover waits for location before
- * loading everything); it reads as loading. `closed` is the closed bars in
- * the area, which have no drinks here: Discover lists and pins them on ask.
+ * The bars in what the map shows, a tile at a time: the tile under the
+ * middle first, the rest once it's in. Tiles are kept and saved, so panning
+ * back or zooming in reuses them; zooming out loads coarser ones. Nothing
+ * while `viewport` is null (the map shows the area, which useDiscoverBars has).
+ */
+export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly string[]; search: string }, enabled = true) {
+  const signedIn = !!useAuth().user;
+  const client = useQueryClient();
+  const kinds = kindParams(filter.kinds);
+  const search = searchKey(useDebounced(filter.search, 250));
+  const tiles = useMemo(() => (viewport ? tilesFor(viewport) : []), [viewport]);
+  const results = useQueries({
+    queries: tiles.map((t, i) => ({
+      queryKey: tileQueryKey(t, kinds, search),
+      meta: { persist: true },
+      // The middle tile first: the rest wait for it, so what's under the person's eye lands soonest.
+      enabled: signedIn && enabled && (i === 0 || !!client.getQueryData(tileQueryKey(tiles[0], kinds, search))),
+      staleTime: 60 * 60 * 1000,
+      initialData: () => fromParent(client, t, kinds, search),
+      queryFn: ({ signal }: { signal: AbortSignal }) => {
+        const box = tileBox(t);
+        return readBars({ p_west: box.west, p_south: box.south, p_east: box.east, p_north: box.north, ...kinds, p_query: search || null }, signal);
+      },
+    })),
+  });
+  return { bars: results.flatMap((r) => r.data ?? []), isLoading: results.some((r) => r.isPending && r.fetchStatus !== 'idle') };
+}
+
+/**
+ * Discover's results for an area and filter: the first pages of drinks, the
+ * area's bars, and its closed ones. Empty (not loading) when signed out.
+ * `enabled` false holds the load (Discover waits for location); it reads as loading.
  */
 export function useDiscoverResults(filter: DrinkFilter, enabled = true) {
-  const signedIn = !!useAuth().user;
-  const haveAll = !!useQueryClient().getQueryData(ALL_KEY);
-  const typed = useDebounced(filter.search.trim(), 250);
-  const search = filter.area.kind === 'anywhere' && !haveAll ? typed : '';
-  const query = useDiscoverDrinks(filter.area, search, enabled);
   useTrackSearch(filter.search, 'discover');
-  const bars = query.data?.bars ?? [];
-  const barsById = new Map(bars.map((b) => [b.id, b]));
-  const drinks = query.data ? filterDrinks(query.data.drinks, barsById, filter) : [];
-  return { drinks, bars, barsById, closed: closedBars(bars, filter.area), isLoading: signedIn && query.isPending, error: query.error };
+  const list = useDiscoverList(filter, { enabled });
+  const barsQuery = useDiscoverBars(filter.area, {}, enabled);
+  const bars = barsQuery.data;
+  const barsById = useMemo(() => new Map((bars ?? []).map((b) => [b.id, b])), [bars]);
+  const closed = useMemo(() => closedBars(bars ?? [], filter.area), [bars, filter.area]);
+  const more = { total: list.totals?.drinks ?? null, hasMore: list.hasMore, loadMore: list.loadMore, loading: list.isLoadingMore };
+  return { ...list, more, bars: bars ?? [], barsById, closed };
 }
