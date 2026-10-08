@@ -1,37 +1,21 @@
-import { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import Svg, { Circle, G, Line, Text as SvgText } from "react-native-svg";
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
-import { PressableScale, useDs } from "@/components/ds";
-import { fontFamilies, layout, type } from "@/constants/tokens";
-import {
-  layoutLabels,
-  mapSizeFor,
-  placePairs,
-  RINGS,
-  type MapPair,
-} from "@/lib/flavorMap";
+import { PressableScale, useDs } from '@/components/ds';
+import { fontFamilies, layout, type } from '@/constants/tokens';
+import { layoutLabels, mapSizeFor, placePairs, RINGS, type MapPair } from '@/lib/flavorMap';
 
 /**
  * The rings. Drawn at the size it's given (so labels stay at caption size),
  * with what's picked in the middle. It's a picture of the list under it,
  * which carries the same results for screen readers.
  */
-export function RingMap({
-  pairs,
-  centre,
-  onPick,
-}: {
-  pairs: readonly MapPair[];
-  centre: string[];
-  onPick: (id: string) => void;
-}) {
+export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; centre: string[]; onPick: (id: string) => void }) {
   const ds = useDs();
   const [w, setW] = useState(0);
   const placed = placePairs(pairs.slice(0, mapSizeFor(w)));
-  const labels = new Map(
-    layoutLabels(placed, w, type.caption.fontSize).map((l) => [l.id, l]),
-  );
+  const labels = new Map(layoutLabels(placed, w, type.caption.fontSize).map((l) => [l.id, l]));
   const c = w / 2;
   const font = {
     fontFamily: fontFamilies.body,
@@ -40,51 +24,24 @@ export function RingMap({
   const centreR = Math.max(w * 0.11, 40);
 
   return (
-    <View
-      style={styles.box}
-      onLayout={(e) => setW(Math.min(e.nativeEvent.layout.width, 560))}
-    >
+    <View style={styles.box} onLayout={(e) => setW(Math.min(e.nativeEvent.layout.width, 560))}>
       <View style={[styles.canvas, { width: w, height: w }]}>
         <Svg width={w} height={w} viewBox={`0 0 ${w} ${w}`}>
           {RINGS.map((r) => (
-            <Circle
-              key={r.label}
-              cx={c}
-              cy={c}
-              r={(r.r * w) / 2}
-              stroke={ds.c.line}
-              strokeWidth={1}
-              fill="none"
-            />
+            <Circle key={r.label} cx={c} cy={c} r={(r.r * w) / 2} stroke={ds.c.line} strokeWidth={1} fill="none" />
           ))}
           {placed.map((p) => (
-            <Line
-              key={`l-${p.id}`}
-              x1={c}
-              y1={c}
-              x2={p.x * w}
-              y2={p.y * w}
-              stroke={ds.c.line}
-              strokeWidth={1}
-            />
+            <Line key={`l-${p.id}`} x1={c} y1={c} x2={p.x * w} y2={p.y * w} stroke={ds.c.line} strokeWidth={1} />
           ))}
           {placed.map((p) => {
             const r = p.dot * w;
-            const ink =
-              p.ring === 0 ? ds.c.ink : p.ring === 1 ? ds.c.muted : ds.c.faint;
+            const ink = p.ring === 0 ? ds.c.ink : p.ring === 1 ? ds.c.muted : ds.c.faint;
             const label = labels.get(p.id);
             return (
               <G key={p.id}>
                 <Circle cx={p.x * w} cy={p.y * w} r={r} fill={ink} />
                 {label && !label.hidden ? (
-                  <SvgText
-                    x={label.x}
-                    y={label.y}
-                    textAnchor={label.anchor}
-                    fill={ds.c.ink}
-                    fontWeight={p.ring === 0 ? "600" : "400"}
-                    {...font}
-                  >
+                  <SvgText x={label.x} y={label.y} textAnchor={label.anchor} fill={ds.c.ink} fontWeight={p.ring === 0 ? '600' : '400'} {...font}>
                     {p.name}
                   </SvgText>
                 ) : null}
@@ -96,11 +53,7 @@ export function RingMap({
             <SvgText
               key={`${name}-${i}`}
               x={c}
-              y={
-                c +
-                5 +
-                (i - (centre.length - 1) / 2) * (type.caption.fontSize + 3)
-              }
+              y={c + 5 + (i - (centre.length - 1) / 2) * (type.caption.fontSize + 3)}
               fill={ds.accentFill.text}
               textAnchor="middle"
               fontWeight="600"
@@ -132,10 +85,10 @@ export function RingMap({
 }
 
 const styles = StyleSheet.create({
-  box: { width: "100%" },
-  canvas: { alignSelf: "center" },
+  box: { width: '100%' },
+  canvas: { alignSelf: 'center' },
   target: {
-    position: "absolute",
+    position: 'absolute',
     width: layout.minTapTarget,
     height: layout.minTapTarget,
     borderRadius: layout.minTapTarget / 2,
