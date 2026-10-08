@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Chip, Field } from '@/components/ds';
+import { Button, Caption, Chip, Field, PalateFlower, Title } from '@/components/ds';
 import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
 import { space } from '@/constants/tokens';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
-import { QUICK_QUESTIONS, type Taste } from '@/lib/flavor';
+import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
 import { MEASURE_UNITS, handleError, nameError, passwordError, type MeasureUnit } from '@/lib/onboarding';
 import { handleFromName } from '@/lib/profiles';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -78,13 +78,23 @@ export function NameStep({
   );
 }
 
-/** A few quick taste questions. Skippable; a failed save doesn't hold up setup (Discover asks again). */
+/**
+ * A few quick taste questions, with the palate flower growing as they're
+ * answered. Skippable; a failed save doesn't hold up setup (Discover asks again).
+ */
 export function TasteStep({ onDone }: { onDone: () => void }) {
   const [answers, setAnswers] = useState<Taste>({});
   const save = useSaveTasteAnswers();
   const answered = Object.keys(answers).length > 0;
+  const headline = tasteHeadline(answers);
   return (
     <View style={styles.stack}>
+      <View style={styles.flower}>
+        <PalateFlower values={answers} size={188} />
+        <Title italic align="center">
+          {headline ? `${headline}.` : answered ? 'Nothing stands out yet.' : 'Tap an answer to start.'}
+        </Title>
+      </View>
       <TasteAnswers questions={QUICK_QUESTIONS} value={answers} onChange={setAnswers} />
       {save.error ? <Caption tone="accent">{"Couldn't save your answers. Try again, or skip and answer later on You."}</Caption> : null}
       <Button
@@ -125,4 +135,5 @@ export function UnitsStep({ onDone, pending, error }: { onDone: () => void; pend
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  flower: { alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
 });

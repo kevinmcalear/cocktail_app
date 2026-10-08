@@ -4,7 +4,7 @@
  * Checked by lib/onboarding.check.ts.
  */
 
-import { handleFromName, profileDraftErrors } from '@/lib/profiles';
+import { DEFAULT_SHARING, handleFromName, profileDraftErrors } from '@/lib/profiles';
 
 export type MeasureUnit = 'oz' | 'ml' | 'g';
 
@@ -118,7 +118,7 @@ export function nameError(name: string): string | null {
 
 /** The handle rule, once onboarding shows the field. */
 export function handleError(handle: string): string | undefined {
-  return profileDraftErrors({ name: 'Name', handle, bio: '', instagram: '', isPublic: true, sharesRankings: false }).handle;
+  return profileDraftErrors({ name: 'Name', handle, bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING }).handle;
 }
 
 /** A job title for profile_positions (1 to 60 characters). */

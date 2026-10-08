@@ -2,10 +2,11 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, DsText, PressableScale, Spec } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, DsText, PalateFlower, PressableScale, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
-import { favourites, sortHad, tallyBars, whereLine, type HadDrink, type HadSort } from '@/lib/hadDrinks';
+import { useItemFlavors } from '@/hooks/useFlavor';
+import { favourites, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 import { dayOf, formatScore } from '@/lib/ranking';
@@ -55,6 +56,7 @@ const SORTS: { value: HadSort; label: string }[] = [
 /** Every drink they've had, each with its score: best first, or latest first. */
 export function HadList({ drinks }: { drinks: HadDrink[] }) {
   const [sort, setSort] = useState<HadSort>('score');
+  const flavors = useItemFlavors(drinks.map((d) => d.itemId));
   return (
     <View style={styles.section}>
       <View role="radiogroup" accessibilityLabel="Order" style={styles.chips}>
@@ -75,7 +77,12 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
                 glass={null}
                 caption={caption}
                 label={`${d.name}. ${caption}. Score ${formatScore(d.score)}`}
-                trailing={<Spec>{formatScore(d.score)}</Spec>}
+                trailing={
+                  <View style={styles.trailing}>
+                    {flavors.data?.[d.itemId] ? <PalateFlower values={flavors.data[d.itemId]} size={28} rings={false} /> : null}
+                    <Spec>{formatScore(d.score)}</Spec>
+                  </View>
+                }
               />
             </View>
           );
@@ -86,20 +93,20 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
 }
 
 /** Each bar they've had drinks at, with the average of their scores there. Best first. */
-export function BarTallies({ drinks, whose }: { drinks: HadDrink[]; whose: string }) {
+export function BarTallies({ bars, whose }: { bars: BarTally[]; whose: string }) {
   const router = useRouter();
   return (
     <View style={styles.section}>
       <Caption tone="muted">{`${whose} average across the drinks had at each bar.`}</Caption>
       <View>
-        {tallyBars(drinks).map((b, i) => {
+        {bars.map((b, i) => {
           const venue = b.venue;
           return (
             <RankRow
               key={b.key}
               position={i + 1}
               title={venue?.name ?? 'At home'}
-              detail={`${plural(b.drinks, 'drink')} · best: ${b.best.name}`}
+              detail={b.best ? `${plural(b.drinks, 'drink')} · best: ${b.best.name}` : plural(b.drinks, 'drink')}
               score={b.average}
               scoreDetail={b.drinks > 1 ? 'average' : undefined}
               logo={venue?.avatarUrl ?? null}
@@ -116,20 +123,26 @@ interface SharedDrinksProps {
   /** Whose profile: "Jo". */
   name: string;
   tab: 'had' | 'bars';
-  /** They've chosen to show them. When they haven't, only they get these tabs. */
+  /** They've chosen to show this tab. When they haven't, only they get it. */
   shared: boolean;
   signedIn: boolean;
   drinks: HadDrink[] | undefined;
+  bars: BarTally[] | undefined;
   failed: boolean;
 }
 
-/** The Had and Bars tabs on a person's public profile: their drinks when they show them, or a line saying why not. */
-export function SharedDrinks({ name, tab, shared, signedIn, drinks, failed }: SharedDrinksProps) {
+const KEPT: Record<SharedDrinksProps['tab'], string> = {
+  had: 'Only you can see the drinks you’ve had. You can show them here, with your scores, from your profile settings.',
+  bars: 'Only you can see the bars you’ve had drinks at. You can show them here, with your average at each, from your profile settings.',
+};
+
+/** The Had and Bars tabs on a person's public profile: what they show, or (to them) a line saying why not. */
+export function SharedDrinks({ name, tab, shared, signedIn, drinks, bars, failed }: SharedDrinksProps) {
   const router = useRouter();
   if (!shared) {
     return (
       <View style={styles.section}>
-        <Body tone="muted">Only you can see the drinks you’ve had. You can show them here, with your scores, from your profile settings.</Body>
+        <Body tone="muted">{KEPT[tab]}</Body>
         <View style={styles.chips}>
           <Button label="See them on You" variant="secondary" onPress={() => router.push('/you')} />
           <Button label="Profile settings" variant="ghost" onPress={() => router.push('/settings/profile')} />
@@ -137,11 +150,16 @@ export function SharedDrinks({ name, tab, shared, signedIn, drinks, failed }: Sh
       </View>
     );
   }
-  if (!signedIn) return <Body tone="muted">{`Sign in to see the drinks ${name} has had.`}</Body>;
-  if (failed) return <Body tone="muted">Couldn’t load their drinks. Check your connection and try again.</Body>;
-  if (!drinks) return <Caption tone="muted">Loading drinks…</Caption>;
-  if (!drinks.length) return <Body tone="muted">{`${name} hasn’t ranked a drink yet.`}</Body>;
-  return tab === 'had' ? <HadList drinks={drinks} /> : <BarTallies drinks={drinks} whose="Their" />;
+  if (!signedIn) return <Body tone="muted">{`Sign in to see ${tab === 'had' ? 'the drinks' : 'the bars'} ${name} has had.`}</Body>;
+  if (failed) return <Body tone="muted">Couldn’t load them. Check your connection and try again.</Body>;
+  if (tab === 'had') {
+    if (!drinks) return <Caption tone="muted">Loading drinks…</Caption>;
+    if (!drinks.length) return <Body tone="muted">{`${name} hasn’t ranked a drink yet.`}</Body>;
+    return <HadList drinks={drinks} />;
+  }
+  if (!bars) return <Caption tone="muted">Loading bars…</Caption>;
+  if (!bars.length) return <Body tone="muted">{`${name} hasn’t ranked a drink at a bar yet.`}</Body>;
+  return <BarTallies bars={bars} whose="Their" />;
 }
 
 const styles = StyleSheet.create({
@@ -151,4 +169,5 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
   tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
   tileScore: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
