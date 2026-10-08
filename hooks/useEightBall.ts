@@ -1,26 +1,57 @@
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useDrinkLists, useTopBars } from '@/hooks/useDiscover';
-import { useDiscoverDrinks } from '@/hooks/useDiscoverDrinks';
-import { useMyBar } from '@/hooks/useHomeBar';
+import { useBarDrinks } from '@/hooks/useHomeBar';
 import { getKnownDeviceLocation } from '@/lib/deviceLocation';
 import { buildPool, type Candidate } from '@/lib/eightBall';
+import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
-
-/** A fix that takes longer than this isn't worth the wait: the ball answers for anywhere. */
-const LOCATION_WAIT_MS = 1500;
+import { supabase } from '@/lib/supabase';
 
 /**
- * The eight ball's pool: the classics, every bar drink, and what the shelf
- * makes or nearly makes (no longer every drink the person can see), weighted toward
- * what their shelf makes and what's well rated nearby (lib/eightBall.ts).
- * Mounted only while the ball is open, so nothing loads until someone
- * shakes. Location is used only if it's already allowed; a playful extra
- * never asks for it. Held in memory, like Discover's.
+ * A fix that takes longer than this isn't worth the wait: the ball answers
+ * for anywhere. Shorter than the ball's think time, so it never holds it up.
+ */
+const LOCATION_WAIT_MS = 1000;
+
+const NO_BARS: string[] = [];
+
+/**
+ * The drinks the well-rated bars pour: the only bar drinks the pool can
+ * use (buildPool skips the rest), so it reads those, not every bar drink.
+ * ponytail: one page of 1000, plenty for 50 bars. Upgrade path: page it if
+ * top bars ever list more.
+ */
+function useRatedBarDrinks(barIds: string[]) {
+  return useQuery({
+    queryKey: ['eight-ball-bar-drinks', barIds],
+    meta: { persist: false },
+    enabled: barIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('items')
+        .select('id, name, origin_bar_profile_id, item_images ( angle, sort_order, is_generated, images ( url ) )')
+        .eq('item_type', 'cocktail')
+        .is('bar_id', null)
+        .in('origin_bar_profile_id', barIds)
+        .limit(1000);
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as { id: string; name: string; origin_bar_profile_id: string; item_images: ItemImageLink[] | null }[];
+      return rows.map((r) => ({ id: r.id, name: r.name, imageUrl: heroPicture(r.item_images)?.url ?? null, glass: null, barId: r.origin_bar_profile_id }));
+    },
+  });
+}
+
+/**
+ * The eight ball's pool: the classics, the well-rated bars' drinks, and
+ * what the shelf makes or nearly makes, weighted toward what their shelf
+ * makes and what's well rated nearby (lib/eightBall.ts). Mounted only
+ * while the ball is open, so nothing loads until someone shakes. Location
+ * is used only if it's already allowed; a playful extra never asks for it.
  */
 export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
-  const bar = useMyBar();
-  const barDrinks = useDiscoverDrinks();
+  const bar = useBarDrinks();
   const [area, setArea] = useState<Area | null>(null);
   useEffect(() => {
     let live = true;
@@ -36,6 +67,9 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
     };
   }, []);
   const top = useTopBars(area ?? { kind: 'anywhere' });
+  const ranked = area ? top.data?.ranked : undefined;
+  const barIds = useMemo(() => ranked?.map((r) => r.venue_profile_id) ?? NO_BARS, [ranked]);
+  const barDrinks = useRatedBarDrinks(barIds);
 
   const classics = useDrinkLists();
   const pool = useMemo(
@@ -48,13 +82,13 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
           ...(classics.data ?? []).map((d) => ({ id: d.id, name: d.name, imageUrl: d.imageUrl, glass: null })),
         ],
         canMake: bar.canMakeIds,
-        barDrinks: (barDrinks.data?.drinks ?? []).map((d) => ({ id: d.id, name: d.name, imageUrl: d.imageUrl, glass: null, barId: d.barId })),
-        ratedBars: (top.data?.ranked ?? []).map((r) => ({ id: r.venue_profile_id, name: r.display_name, score: r.score })),
+        barDrinks: barDrinks.data ?? [],
+        ratedBars: (ranked ?? []).map((r) => ({ id: r.venue_profile_id, name: r.display_name, score: r.score })),
         near: area?.kind === 'point',
       }),
-    [bar.canMake, bar.oneAway, bar.canMakeIds, classics.data, barDrinks.data, top.data, area]
+    [bar.canMake, bar.oneAway, bar.canMakeIds, classics.data, barDrinks.data, ranked, area]
   );
-  // Wait for the shelf and location so the first pick is already weighted;
-  // bar drinks and scores join when they arrive.
+  // Wait for the shelf (EightBall gives up on it after a while) and location
+  // so the first pick is already weighted; bar drinks join when they arrive.
   return { pool, isLoading: bar.isLoading || area === null };
 }

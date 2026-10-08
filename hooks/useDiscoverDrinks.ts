@@ -49,8 +49,7 @@ const ANYWHERE: Area = { kind: 'anywhere' };
  * spirits: what Discover searches, filters and pins on the map. Read through
  * discover_drinks, so the area (and, everywhere, a typed search) is applied
  * in SQL: near me is one request of a few hundred drinks. Anywhere with no
- * search is still every bar drink (the eight ball and the "anywhere" list
- * need them all), in compact rows loaded side by side. Signed-in only, like
+ * search is still every bar drink (the "anywhere" list needs them all), in compact rows loaded side by side. Signed-in only, like
  * every shared drink.
  */
 export function useDiscoverDrinks(area: Area = ANYWHERE, search = '', enabled = true) {

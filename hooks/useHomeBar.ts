@@ -168,18 +168,13 @@ function useMatches() {
   });
 }
 
-/** My Bar: the shelf, what it makes, and what one more bottle would unlock. */
-export function useMyBar() {
-  const shelf = useShelf();
+/**
+ * What the shelf makes and what one more bottle would unlock, without the
+ * shelf's own names: all the eight ball needs, so it never waits on them.
+ */
+export function useBarDrinks() {
   const matches = useMatches();
   const glass = useGlassIcons();
-  const ids = shelf.data ?? NONE;
-  const names = useQuery({
-    queryKey: [...SHELF_KEY, 'items', ids],
-    enabled: ids.length > 0,
-    queryFn: () => readItems(ids),
-  });
-
   return useMemo(() => {
     const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id) });
     const rows = matches.data ?? [];
@@ -194,6 +189,29 @@ export function useMyBar() {
       group.drinks.push(drink(r));
       away.set(r.missing_id, group);
     }
+    return {
+      canMake,
+      // Most drinks unlocked first, as lib/canMake.ts sorted them.
+      oneAway: [...away.values()].sort((a, b) => b.drinks.length - a.drinks.length || a.ingredient.id.localeCompare(b.ingredient.id)),
+      canMakeIds: new Set(canMake.map((d) => d.id)),
+      isLoading: matches.isLoading,
+      error: matches.error,
+    };
+  }, [matches.data, matches.isLoading, matches.error, glass]);
+}
+
+/** My Bar: the shelf, what it makes, and what one more bottle would unlock. */
+export function useMyBar() {
+  const shelf = useShelf();
+  const drinks = useBarDrinks();
+  const ids = shelf.data ?? NONE;
+  const names = useQuery({
+    queryKey: [...SHELF_KEY, 'items', ids],
+    enabled: ids.length > 0,
+    queryFn: () => readItems(ids),
+  });
+
+  return useMemo(() => {
     const byId = new Map((names.data ?? []).map((r) => [r.id, r]));
     // The shelf in the order it was filled, as far as the person can still see it.
     const onShelf = ids.flatMap((id) => {
@@ -202,16 +220,15 @@ export function useMyBar() {
     });
     return {
       shelf: onShelf,
-      canMake,
-      // Most drinks unlocked first, as lib/canMake.ts sorted them.
-      oneAway: [...away.values()].sort((a, b) => b.drinks.length - a.drinks.length || a.ingredient.id.localeCompare(b.ingredient.id)),
-      canMakeIds: new Set(canMake.map((d) => d.id)),
+      canMake: drinks.canMake,
+      oneAway: drinks.oneAway,
+      canMakeIds: drinks.canMakeIds,
       /** Everything on the shelf, before names load. */
       shelfIds: new Set(ids),
-      isLoading: shelf.isLoading || matches.isLoading || (ids.length > 0 && names.isLoading),
-      error: shelf.error ?? matches.error ?? names.error,
+      isLoading: shelf.isLoading || drinks.isLoading || (ids.length > 0 && names.isLoading),
+      error: shelf.error ?? drinks.error ?? names.error,
     };
-  }, [ids, shelf.isLoading, shelf.error, matches.data, matches.isLoading, matches.error, names.data, names.isLoading, names.error, glass]);
+  }, [ids, shelf.isLoading, shelf.error, drinks, names.data, names.isLoading, names.error]);
 }
 
 /**
