@@ -187,7 +187,12 @@ function BringInBody() {
             placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
           />
           <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
-          <BringInRead mode={mode} text={text} onRead={onRead} />
+          <BringInRead
+            mode={mode}
+            text={text}
+            onRead={onRead}
+            onPasteText={(pasted) => setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${pasted}` : pasted))}
+          />
           {lastRead?.unsure.length ? <Caption tone="accent">{`Hard to read, check these: ${lastRead.unsure.join(', ')}.`}</Caption> : null}
           {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} aliases={aliases} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
