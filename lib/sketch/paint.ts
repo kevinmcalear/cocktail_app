@@ -145,10 +145,11 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const floor = g.stemmed ? bot : g.base!;
   if (g.opaque) {
     P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
-    stage('liquid', g.top + 3.2);
+    // Anchored mid-drink: AnimatedSketch spreads the liquid out from there.
+    stage('liquid', g.top + 1.6);
     P.wash(band(g, g.top, g.top + 3.2), tone, strength, { layers: 0.6, spill: 0.2, n: 12, blooms: 0 });
   } else {
-    stage('liquid', floor);
+    stage('liquid', (g.top + floor) / 2);
     P.wash(band(g, g.top, floor), tone, strength);
     P.wash(band(g, g.top + (floor - g.top) * 0.45, floor), mixHex(tone, SKETCH.pool, 0.15), strength * 0.3, { layers: 0.5, spill: 0.5, n: 12, fadeAngle: -Math.PI / 2, fadeTo: 0, blooms: 0.3, v1: 0.2 });
   }

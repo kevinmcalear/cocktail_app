@@ -34,9 +34,11 @@ describe('SketchHeader', () => {
 
   test('the review step draws the drink again, and a tap draws it once more', async () => {
     await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }, false, 'review'));
-    expect(screen.queryAllByTestId('drawing')).toHaveLength(0);
+    // The finished drawing, fading away over the animated one before it starts.
+    expect(screen.getAllByTestId('drawing')).toHaveLength(1);
     fireEvent.press(screen.getByTestId('animated-0'));
     expect(await screen.findByTestId('animated-1')).toBeTruthy();
+    expect(screen.getAllByTestId('drawing')).toHaveLength(1);
     expect(screen.getByText('Tap to draw it again')).toBeTruthy();
   });
 });

@@ -15,6 +15,8 @@ import type { SketchInputs } from '@/lib/sketch/types';
 
 /** The seed only moves the pencil's wobble; a fixed one keeps the drawing steady while the drink changes. */
 const SEED = 'new-drink';
+/** On review, how long the finished drawing takes to fade before it's drawn again. */
+const FADE_FIRST_MS = 450;
 
 // The last drawing's inputs, so a keystroke that doesn't change the drink
 // hands SketchDrawing the same object (it caches the painted scene by it).
@@ -108,7 +110,9 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
             {reviewing ? (
               // A toy, not a control: the band's label already names the drawing.
               <Pressable style={StyleSheet.absoluteFill} onPress={() => setPlay((n) => n + 1)} accessible={false}>
-                <AnimatedSketch inputs={inputs} seed={seed} play={play} />
+                <AnimatedSketch inputs={inputs} seed={seed} play={play} delay={FADE_FIRST_MS} />
+                {/* The finished drawing fades away first, then the pencil starts on blank paper. */}
+                <Layer key={`fade-${play}`} inputs={inputs} seed={seed} from={1} to={0} duration={FADE_FIRST_MS} />
               </Pressable>
             ) : (
               <>
@@ -130,14 +134,14 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
 }
 
 /** One drawing, fading from `from` to `to` opacity once, when it mounts. */
-function Layer({ inputs, seed, from, to }: { inputs: SketchInputs; seed: string; from: number; to: number }) {
+function Layer({ inputs, seed, from, to, duration = 260 }: { inputs: SketchInputs; seed: string; from: number; to: number; duration?: number }) {
   const opacity = useSharedValue(from);
   useEffect(() => {
-    opacity.set(withTiming(to, { duration: 260 }));
-  }, [opacity, to]);
+    opacity.set(withTiming(to, { duration }));
+  }, [opacity, to, duration]);
   const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, fade]}>
+    <Animated.View style={[StyleSheet.absoluteFill, styles.passThrough, fade]}>
       <SketchDrawing inputs={inputs} seed={seed} detail="full" />
     </Animated.View>
   );
@@ -152,5 +156,6 @@ const styles = StyleSheet.create({
   fill: { height: 4, borderRadius: radius.pill },
   mono: { fontFamily: fontFamilies.monoMedium },
   drawing: { marginTop: space.sm },
+  passThrough: { pointerEvents: 'none' },
   foot: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
