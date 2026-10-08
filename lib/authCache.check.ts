@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
-import { cacheActionOnAuth, isUserQuery, resetUserQueries, viewerScoped } from './authCache';
+import { cacheActionOnAuth, isUserQuery, resetUserQueries, storedSessionUser, viewerScoped } from './authCache';
 
 // --- what happens when auth settles ---
 assert.equal(cacheActionOnAuth(undefined, null), 'clear', 'opened signed out');
@@ -10,6 +10,23 @@ assert.equal(cacheActionOnAuth('a', null), 'clear', 'signed out');
 assert.equal(cacheActionOnAuth(null, null), null, 'still signed out');
 assert.equal(cacheActionOnAuth(null, 'a'), 'reset', 'signed in');
 assert.equal(cacheActionOnAuth('a', 'b'), 'reset', 'switched user');
+// The saved session's user painted the cache before auth settled (hooks/useUserCacheSync.ts).
+assert.equal(cacheActionOnAuth('saved', 'saved'), null, 'refresh confirmed the saved user');
+assert.equal(cacheActionOnAuth('saved', null), 'clear', 'refresh failed: forget what was painted');
+assert.equal(cacheActionOnAuth('saved', 'other'), 'reset', 'settled on someone else');
+
+// --- the saved session's user, read before auth-js refreshes it ---
+const saved = { access_token: 'x', refresh_token: 'y', expires_at: 1, expires_in: 3600, token_type: 'bearer', user: { id: 'a' } };
+assert.equal(storedSessionUser(JSON.stringify(saved))?.id, 'a', 'expired or not, a usable session names its user');
+assert.equal(storedSessionUser(null), null, 'nothing saved');
+assert.equal(storedSessionUser(''), null, 'empty');
+assert.equal(storedSessionUser('{not json'), null, 'corrupt');
+assert.equal(storedSessionUser('null'), null, 'JSON null');
+assert.equal(storedSessionUser(JSON.stringify({ ...saved, refresh_token: '' })), null, 'no way to refresh it');
+assert.equal(storedSessionUser(JSON.stringify({ ...saved, refresh_token: undefined })), null, 'no refresh token');
+assert.equal(storedSessionUser(JSON.stringify({ ...saved, expires_at: undefined })), null, 'auth-js discards a session with no expiry');
+assert.equal(storedSessionUser(JSON.stringify({ ...saved, user: null })), null, 'no user');
+assert.equal(storedSessionUser(JSON.stringify({ ...saved, user: { id: 7 } })), null, 'user without a string id');
 
 // --- a reset wins over anon fetches ---
 // Stands in for RLS: anon sees no rows, the signed-in user sees theirs.

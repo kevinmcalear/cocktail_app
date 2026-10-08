@@ -1,12 +1,21 @@
 import { track } from '@/lib/analytics';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
-import { supabase } from '@/lib/supabase';
+import { readStoredUser, supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type AuthContextType = {
+  /** The confirmed session. Null until auth-js has settled (refreshed an expired token, if it had to). */
   session: Session | null;
+  /**
+   * Who is signed in. While `loading`, it can be the user of the session saved
+   * on this device, read before auth-js has refreshed it, so the first screen
+   * paints their cached data instead of waiting on the network. Requests still
+   * wait: the Supabase client refreshes before reading its token. If the
+   * refresh fails, it becomes null as auth settles, as for any sign-out.
+   */
   user: User | null;
+  /** True until auth-js settles. `user` may be the saved one until then; `session` is null. */
   loading: boolean;
   passwordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -53,20 +62,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: next } }) => {
+    let settled = false;
+    const settle = (next: Session | null) => {
+      settled = true;
       setSession(next);
       setUser(next?.user ?? null);
       setLoading(false);
-    });
+    };
+
+    // getSession() waits on auth-js's initialization, which refreshes an
+    // expired access token (they last an hour) over the network first. Read
+    // the saved session's user meanwhile, in an effect so web hydration
+    // matches the static HTML, and only until auth settles.
+    readStoredUser()
+      .then((stored) => {
+        if (!settled && stored) setUser(stored);
+      })
+      .catch(() => {});
+
+    supabase.auth.getSession().then(({ data: { session: next } }) => settle(next));
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, next) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
       if (event === 'SIGNED_OUT') setPasswordRecovery(false);
-      setSession(next);
-      setUser(next?.user ?? null);
-      setLoading(false);
+      settle(next);
     });
 
     return () => subscription.unsubscribe();
