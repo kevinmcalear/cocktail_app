@@ -63,10 +63,24 @@ const backbarThemeFrom = (b: (typeof backbar)['light' | 'dark']) => ({
 const light = { ...config.themes.light, ...themeFrom(palette.light) }
 const dark = { ...config.themes.dark, ...themeFrom(palette.dark), color2: palette.dark.surface }
 
+// Only the themes the app renders. The v3 config's colour, alt and surface
+// themes (900 in all) went into an inline <style> on every web page (2.7 MB of
+// index.html). Button, Input, TextArea and Card still look themselves up by
+// component name, so their light and dark sub-themes stay. The v3 config
+// builds those at runtime but leaves them out of its types.
+type ComponentTheme = `${'light' | 'dark'}_${'Button' | 'Input' | 'TextArea' | 'Card'}`;
+const v3 = config.themes as unknown as Record<ComponentTheme, typeof config.themes.light>;
 const customThemes = {
-  ...config.themes,
   light,
   dark,
+  light_Button: v3.light_Button,
+  dark_Button: v3.dark_Button,
+  light_Input: v3.light_Input,
+  dark_Input: v3.dark_Input,
+  light_TextArea: v3.light_TextArea,
+  dark_TextArea: v3.dark_TextArea,
+  light_Card: v3.light_Card,
+  dark_Card: v3.dark_Card,
   light_backbar: { ...light, ...backbarThemeFrom(backbar.light) },
   dark_backbar: { ...dark, ...backbarThemeFrom(backbar.dark) },
 }

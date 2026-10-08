@@ -1,10 +1,3 @@
-import { IBMPlexSans_600SemiBold_Italic, useFonts } from '@expo-google-fonts/ibm-plex-sans';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
     DarkTheme,
@@ -14,6 +7,7 @@ import {
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Toaster } from 'burnt/web';
 import { Stack, useRouter, useSegments } from "expo-router";
+import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -24,6 +18,7 @@ import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
 import { DialogHost } from '@/components/DialogHost';
+import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
@@ -244,16 +239,13 @@ function useWebThemeChrome(scheme: 'light' | 'dark') {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   useWebThemeChrome(colorScheme);
-  const [fontsLoaded] = useFonts({
-    Inter: Inter_400Regular,
-    InterMedium: Inter_500Medium,
-    InterSemiBold: Inter_600SemiBold,
-    InterBold: Inter_700Bold,
-    // presentation accent for cocktail/menu titles — not system UI
-    IBMPlexSansItalic: IBMPlexSans_600SemiBold_Italic,
-  });
-  // Native waits for fonts to avoid a flash of fallback text. Web renders
-  // straight away (fonts arrive via CSS), so static export produces real HTML.
+  // Native waits once for every face, so text never flashes in a fallback.
+  // Web renders straight away, so the static export produces real HTML: the
+  // export preloads the first-paint faces and the rest load after.
+  const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
+  useEffect(() => {
+    if (Platform.OS === 'web') loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+  }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === "dark" ? "dark" : "light"}>
