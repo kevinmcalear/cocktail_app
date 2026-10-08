@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   bars: { gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  label: { width: 64 },
+  label: { width: 72 },
   track: { flex: 1, height: space.sm, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
   word: { width: 72 },

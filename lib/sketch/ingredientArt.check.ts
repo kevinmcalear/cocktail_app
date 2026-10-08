@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 
+import { PANTRY } from '@/constants/pantry';
+
 import { paintBottle } from './bottle';
 import { ingredientArt, type IngredientArt } from './ingredientArt';
 import { paintProduce } from './produce';
@@ -51,6 +53,15 @@ assert.equal(kind(art(['Tabasco', 'Hot Sauce'], 'product')), 'sauce');
 assert.equal(kind(art(['Mushroom Caramel', 'Caramel'])), 'jar', 'what it is beats what it is made of');
 assert.equal(kind(art(['Macallan 12 Double Oak', 'Oak'], 'product')), 'tall', 'a whisky is not a pile of wood');
 assert.equal(kind(art(['Cranberry Sauce', 'Cranberry'])), 'berries', 'new rules only catch what nothing else knows');
+
+// Roasted and black teas are brown, only green teas are green.
+const leaf = (names: string[]) => { const a = art(names); return a.kind === 'produce' ? a.inputs.color : null; };
+assert.equal(leaf(['Hojicha', 'Green Tea', 'Tea']), PANTRY.hojicha, 'hojicha is roasted, so brown');
+assert.equal(leaf(['Hoji Tea', 'Tea']), PANTRY.hojicha);
+assert.equal(leaf(['Earl Grey', 'Black Tea', 'Tea']), PANTRY.blackTea);
+assert.equal(leaf(['Sencha', 'Green Tea', 'Tea']), PANTRY.tea);
+const hojiSyrup = art(['Hojicha Syrup', 'Syrup']);
+assert.ok(hojiSyrup.kind === 'bottle' && hojiSyrup.inputs.liquid.hex === PANTRY.hojicha);
 
 // Unknown things still get a drawing, and the same ingredient always the same one.
 assert.equal(kind(art(['Kleos'], null)), 'apothecary');

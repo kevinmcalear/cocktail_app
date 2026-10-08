@@ -57,7 +57,7 @@
     "hooks/useBarEditor.ts": 5,
     "hooks/useCocktailDraftEditor.ts": 9,
     "hooks/useCocktailEditor.ts": 5,
-    "hooks/useCocktails.ts": 6,
+    "hooks/useCocktails.ts": 1,
     "hooks/useDrafts.ts": 1,
     "hooks/useIngredients.ts": 7,
     "hooks/useMenuDetails.ts": 3,

@@ -26,7 +26,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 
 const WORKER_URL = `${status.API_URL}/functions/v1/flavor-worker`;
 const WORKER_SECRET = 'local-flavor-worker-secret';
-const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'herbal', 'fruity', 'smoky', 'spicy', 'creamy'];
+const DIMS = ['sweet', 'sour', 'bitter', 'strong', 'botanical', 'herbal', 'fruity', 'spiced', 'spicy', 'smoky', 'savory', 'creamy'];
 const FLAVOR_COLUMNS = `item_id, ${DIMS.join(', ')}, coverage, source, spec_fingerprint, rules_version, updated_at`;
 
 const run = randomUUID().slice(0, 8);
@@ -313,9 +313,23 @@ describe('flavor worker', { skip: workerSkip }, () => {
     assert.equal(row.source, 'rules');
     assert.equal(row.coverage, 1);
     assert.ok(row.bitter > 0.8 && row.strong > 0.7, `bitter ${row.bitter}, strong ${row.strong}`);
+    assert.ok(row.botanical > 0.35 && row.herbal < 0.15, `gin is botanical, not herbal: ${row.botanical}, ${row.herbal}`);
+    assert.equal(row.rules_version, 2);
     const { rows } = await db.query('SELECT private.item_flavor_fingerprint($1) AS fp', [id]);
     assert.equal(row.spec_fingerprint, rows[0].fp);
     assert.equal(await jobFor(id), null);
+  });
+
+  test('a profile from the nine-dimension worker still saves, new dimensions as 0', async () => {
+    const id = await drink('Old Worker Sour', [[ids.gin, 50], [ids.lime, 20]]);
+    const old = { sweet: 0.1, sour: 0.9, bitter: 0, strong: 0.7, herbal: 0.5, fruity: 0.1, smoky: 0, spicy: 0, creamy: 0 };
+    const { error } = await service.rpc('save_item_flavor', {
+      p_item_id: id, p_profile: old, p_coverage: 1, p_source: 'rules', p_spec_fingerprint: 'old', p_rules_version: 1,
+    });
+    assert.ifError(error);
+    const row = await flavorRow(id);
+    assert.equal(row.sour, 0.9);
+    assert.deepEqual([row.botanical, row.spiced, row.savory], [0, 0, 0]);
   });
 
   test('recomputes when the spec changes', async () => {
@@ -341,13 +355,35 @@ describe('flavor worker', { skip: workerSkip }, () => {
     assert.equal(row.coverage, 1);
     assert.equal(await usage(bar), 1);
     const { rows } = await db.query('SELECT flavor FROM private.ingredient_flavors WHERE item_id = $1', [secret]);
-    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0, look: { color: '#c0392b', tint: 0.8, foam: null } });
+    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0, v: 2, look: { color: '#c0392b', tint: 0.8, foam: null } });
 
     const second = await drink('Tinctured Again', [[ids.rum, 45], [secret, 15]], { bar_id: bar, glassware_id: glass });
     await work(second);
     row = await flavorRow(second);
     assert.equal(row.source, 'ai');
     assert.equal(await usage(bar), 1, 'the cached answer is reused, not paid for again');
+  });
+
+  test('an answer cached before the twelve dimensions is asked again, without billing the venue', async () => {
+    const bar = (await serviceInsert('bars', { name: `Refresh Bar ${run}` })).id;
+    const old = await newItem({ name: 'House Shiitake Tincture', item_type: 'ingredient' });
+    const look = { color: '#aabbcc', tint: 0.4, foam: null };
+    // Cached under the ingredient's own name, as the worker saves it.
+    await db.query('INSERT INTO private.ingredient_flavors (item_id, name, flavor) SELECT id, name, $2 FROM public.items WHERE id = $1', [
+      old, { taste: { herbal: 0.9 }, abv: 0, look },
+    ]);
+    const glass = await newItem({ name: 'Coupe', item_type: 'glassware' });
+    const id = await drink('Refreshed', [[ids.gin, 45], [old, 15]], { bar_id: bar, glassware_id: glass });
+    await work(id);
+    const { rows } = await db.query('SELECT flavor FROM private.ingredient_flavors WHERE item_id = $1', [old]);
+    assert.equal(rows[0].flavor.v, 2, 'asked again under the current dimensions');
+    assert.equal(rows[0].flavor.taste.herbal, undefined, 'the old answer is replaced');
+    assert.equal(await usage(bar), 0, 'a refresh is not billed to the venue');
+    assert.equal((await flavorRow(id)).source, 'ai');
+
+    const again = await drink('Refreshed Again', [[ids.rum, 45], [old, 15]], { bar_id: bar, glassware_id: glass });
+    await work(again);
+    assert.equal(await usage(bar), 0, 'the refreshed answer is reused');
   });
 
   test('a failed AI call is refunded, keeps the rules profile, and retries later', async () => {
