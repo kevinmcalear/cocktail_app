@@ -53,15 +53,20 @@ function HistoryPage() {
   const meta = FAMILIES.find((f) => f.key === current)!;
   const foldable = rows.filter((r) => r.hasKids && r.depth > 0).map((r) => r.node.key);
 
-  // Bring the focused row into view after it has been laid out.
+  // Bring the focused row into view: when it's laid out (a fresh family), or
+  // straight away when it already was (a jump within the family).
+  const scrolledFor = useRef<string | null>(null);
+  const reveal = (key: string) => {
+    const y = rowY.current.get(key);
+    if (y == null || scrolledFor.current === `${current}:${key}`) return;
+    scrolledFor.current = `${current}:${key}`;
+    scroll.current?.scrollTo({ y: Math.max(0, listY.current + y - 160), animated: true });
+  };
   useEffect(() => {
     if (!focusKey) return;
-    const t = setTimeout(() => {
-      const y = rowY.current.get(focusKey);
-      if (y != null) scroll.current?.scrollTo({ y: Math.max(0, listY.current + y - 160), animated: true });
-    }, 80);
+    const t = setTimeout(() => reveal(focusKey), 80);
     return () => clearTimeout(t);
-  }, [focusKey, current]);
+  });
 
   const jump = (key: string) => {
     const target = nodes.find((n) => n.key === key);
@@ -69,6 +74,7 @@ function HistoryPage() {
     const path = new Set(pathTo(nodes, key));
     setFolded((f) => f.filter((k) => !path.has(k)));
     if (FAMILIES.some((f) => f.key === target.family)) setFamily(target.family as FamilyKey);
+    scrolledFor.current = null;
     setFocusKey(key);
     setQuery('');
   };
@@ -155,7 +161,13 @@ function HistoryPage() {
 
         <View role="list" aria-label={`${meta.name} family tree`} onLayout={(e) => (listY.current = e.nativeEvent.layout.y)}>
           {rows.map((r) => (
-            <View key={r.node.key} onLayout={(e) => rowY.current.set(r.node.key, e.nativeEvent.layout.y)}>
+            <View
+              key={r.node.key}
+              onLayout={(e) => {
+                rowY.current.set(r.node.key, e.nativeEvent.layout.y);
+                if (r.node.key === focusKey) reveal(r.node.key);
+              }}
+            >
               <TreeRowView
                 row={r}
                 folded={folded.includes(r.node.key)}
