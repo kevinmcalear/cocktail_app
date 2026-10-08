@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { usePairings } from '@/hooks/usePairings';
+import { usePairings, type PairEra } from '@/hooks/usePairings';
 import { guessUnit, newLine } from '@/lib/drinkWizard';
 import { addPick, groupByRing, MAP_SIZE } from '@/lib/flavorMap';
 import { searchIngredients } from '@/lib/ingredientNames';
@@ -33,11 +33,12 @@ function FlavorMapPage() {
   const params = useLocalSearchParams<{ with?: string }>();
   const [picked, setPicked] = useState<string[]>(() => (params.with ?? '').split(',').filter(Boolean).slice(0, 3));
   const [query, setQuery] = useState('');
+  const [era, setEra] = useState<PairEra>('now');
   const { data: dropdowns } = useDropdowns();
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const nameOf = (id: string) => ingredients.find((i) => i.id === id)?.name ?? '…';
-  const { data: pairs = [], isLoading } = usePairings(picked, { limit: MAP_SIZE });
+  const { data: pairs = [], isLoading } = usePairings(picked, { limit: MAP_SIZE, era });
   const results = searchIngredients(
     query,
     ingredients.filter((i) => coreIds.size === 0 || coreIds.has(i.id)),
@@ -66,8 +67,22 @@ function FlavorMapPage() {
       >
         <View style={styles.header}>
           <Title>Flavor map</Title>
-          <Body tone="muted">What bartenders put together, counted from drinks in the app. Tap anything to add it; the rings redraw to what goes with all of them.</Body>
+          <Body tone="muted">
+            {era === 'books'
+              ? "What the old cocktail books put together, from the recipes we've read so far. Tap anything to add it; the rings redraw to what goes with all of them."
+              : 'What bartenders put together, counted from drinks in the app. Tap anything to add it; the rings redraw to what goes with all of them.'}
+          </Body>
         </View>
+
+        <Segmented
+          accessibilityLabel="Whose drinks"
+          options={[
+            { value: 'now', label: 'Bars today' },
+            { value: 'books', label: 'The old books' },
+          ]}
+          value={era}
+          onChange={setEra}
+        />
 
         <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
           <TextInput
@@ -117,7 +132,13 @@ function FlavorMapPage() {
         {picked.length ? <RingMap pairs={pairs} centre={pickedNames} onPick={(id) => setPicked(addPick(picked, id))} /> : null}
 
         {picked.length && !isLoading && !pairs.length ? (
-          <Body tone="muted">{picked.length > 1 ? 'Nothing pairs with all of these yet. Drop one to see more.' : 'Not enough drinks use this yet to say what it pairs with.'}</Body>
+          <Body tone="muted">
+            {picked.length > 1
+              ? 'Nothing pairs with all of these yet. Drop one to see more.'
+              : era === 'books'
+                ? "The old books we've read so far don't use this enough to say."
+                : 'Not enough drinks use this yet to say what it pairs with.'}
+          </Body>
         ) : null}
 
         <View role="list" aria-label="What pairs">

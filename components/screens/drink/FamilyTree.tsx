@@ -18,6 +18,8 @@ import {
   type LineageDrink,
 } from '@/lib/lineage';
 
+import { FromTheBooks } from './FromTheBooks';
+
 const profileHref = (id: string) => `/p/${id}` as Href;
 const drinkHref = (id: string) => `/cocktail/${id}` as Href;
 
@@ -47,7 +49,10 @@ export function FamilyTree({ itemId }: { itemId: string }) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
-  if (!data || !hasLineage(data.drink, data.ancestors, data.riffs)) return null;
+  // Its own printed history, else its nearest classic's: this drink first, then up the tree.
+  const family = [data?.drink ?? { id: itemId, name: '' }, ...[...(data?.ancestors ?? [])].reverse()].map((d) => ({ id: d.id, name: d.name }));
+  const books = <FromTheBooks family={family} />;
+  if (!data || !hasLineage(data.drink, data.ancestors, data.riffs)) return books;
   const { drink, ancestors, riffs } = data;
   const parent = ancestors.at(-1) ?? null;
   const parts = creditSentence(drink!, parent);
@@ -153,6 +158,8 @@ export function FamilyTree({ itemId }: { itemId: string }) {
           </View>
         </View>
       ) : null}
+
+      {books}
     </View>
   );
 }
