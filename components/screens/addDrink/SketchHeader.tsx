@@ -37,6 +37,8 @@ interface SketchHeaderProps {
   folded?: boolean;
   /** The bar's glasses' drawings (bar_glassware), drawn when no shape is picked. */
   barVariants?: readonly string[];
+  /** The drawing's side; by default 200 in a column and 152 in a phone's band. */
+  size?: number;
 }
 
 /**
@@ -45,7 +47,7 @@ interface SketchHeaderProps {
  * with the rules the saved drink is drawn with; a new drawing fades in over
  * the old one and gives a small pour bounce, so each choice lands.
  */
-export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, barVariants }: SketchHeaderProps) {
+export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, barVariants, size: sizeProp }: SketchHeaderProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
@@ -66,7 +68,7 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
     scale.set(withSequence(withSpring(0.96, springs.snap), withSpring(1, springs.pour)));
   }, [drawKey, reduceMotion, scale]);
   const bounce = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
-  const size = rounded ? 200 : 152;
+  const size = sizeProp ?? (rounded ? 200 : 152);
 
   return (
     <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>

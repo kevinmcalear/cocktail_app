@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Field, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, DsText, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useScheduleMenu } from '@/hooks/useMenuMutations';
 import { menuReadiness, newDrinkCount, plural } from '@/lib/menus';
@@ -66,7 +66,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
   const toggle = (id: string) => setReplaceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   const submit = async () => {
-    if (badDate) return setError('Use a date like 2026-12-01.');
+    if (badDate) return setError('Pick a day.');
     setError(null);
     try {
       await schedule.mutateAsync({ menuId: menu.id, startsAt: start?.toISOString() ?? null, replaceIds });
@@ -96,7 +96,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
         <Choice label="Tomorrow" selected={when === 'tomorrow'} onPress={() => setWhen('tomorrow')} />
         <Choice label="Pick a date" selected={when === 'date'} onPress={() => setWhen('date')} />
       </View>
-      {when === 'date' ? <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-12-01" autoCapitalize="none" hint="It goes on at the start of that day." /> : null}
+      {when === 'date' ? <DateField label="Date" value={date} onChange={setDate} min={ymd(new Date(now))} hint="It goes on at the start of that day." /> : null}
 
       {others.length ? (
         <>

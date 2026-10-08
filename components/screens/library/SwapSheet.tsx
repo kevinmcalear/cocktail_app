@@ -8,7 +8,8 @@ import { useApplySwap, useSpecCatalog, useSwapSource, useUndoSwap } from '@/hook
 import { useVenueMenus } from '@/hooks/useMenus';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
-import { normName, type CatalogItem } from '@/lib/paste';
+import type { CatalogItem } from '@/lib/match';
+import { normName } from '@/lib/paste';
 import { groupMenus } from '@/lib/menus';
 import { planSwap, type SwapMode } from '@/lib/swapBottle';
 import { space } from '@/constants/tokens';

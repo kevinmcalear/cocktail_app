@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useUpdateMemory, type CollectedDrink } from '@/hooks/useCollection';
@@ -25,7 +25,7 @@ export function MemorySheet({ memory, onClose }: { memory: CollectedDrink; onClo
 
   const submit = async () => {
     const hadOn = date.trim() ? parseDay(date) : null;
-    if (date.trim() && !hadOn) return setError('Use a date like 2026-09-27.');
+    if (date.trim() && !hadOn) return setError('Pick a day.');
     if (hadOn && hadOn > today) return setError('That day hasn’t happened yet.');
     setError(null);
     try {
@@ -49,7 +49,7 @@ export function MemorySheet({ memory, onClose }: { memory: CollectedDrink; onClo
         <Choice label="Tonight" selected={date === today} onPress={() => setDate(today)} />
         <Choice label="Last night" selected={date === yesterday} onPress={() => setDate(yesterday)} />
       </View>
-      <Field label="Date" value={date} onChangeText={setDate} placeholder="2026-09-27" autoCapitalize="none" hint="Leave it blank if you don’t remember." />
+      <DateField label="Date" value={date} onChange={setDate} max={today} clearable placeholder="Don’t remember" hint="Leave it blank if you don’t remember." />
       <Field
         label="Note"
         value={note}
