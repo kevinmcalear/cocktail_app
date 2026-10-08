@@ -1,8 +1,8 @@
 // Daily limits on invites, invite emails, new venues and AI calls; venue
 // writes by current Admins only; memberships only through the app's own
 // functions; drinks bucket reads; image URLs; table privileges
-// (supabase/migrations/20261008700000_daily_limits_and_venue_roles.sql and
-// 20261008710000_storage_images_grants.sql).
+// (supabase/migrations/20261008740000_daily_limits_and_venue_roles.sql and
+// 20261008750000_storage_images_grants.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
