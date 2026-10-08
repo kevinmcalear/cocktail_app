@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
-import { groupCatalog, groupLabel, scopeOptions } from './searchScope';
+import { groupCatalog, groupLabel, moreLabel, scopeOptions } from './searchScope';
 import type { SearchItem } from '@/types/search';
+
+// "All 12" when one more page shows the rest, else a page at a time; nothing once all show.
+assert.equal(moreLabel(12, 4), 'All 12');
+assert.equal(moreLabel(100, 4), 'Show more (96)');
+assert.equal(moreLabel(100, 79), 'All 100');
+assert.equal(moreLabel(4, 4), null);
 
 // The area option only comes from Discover.
 assert.deepEqual(scopeOptions('Little Rye', null).map((o) => o.value), ['mine', 'everywhere']);

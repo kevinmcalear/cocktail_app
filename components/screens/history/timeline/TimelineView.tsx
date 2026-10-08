@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ScrollView, SectionList, StyleSheet, View } from 'react-native';
+import { ScrollView, SectionList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, Chip, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -20,6 +20,8 @@ const BAR_SPACE = 120;
 /** The phone's era bar and floating thread strip, for leaving room under the list. */
 const ERA_BAR_H = 92;
 const THREAD_H = 110;
+/** Screens of rows kept mounted around the view once every row has been laid out. */
+const SETTLED_WINDOW = 9;
 
 /**
  * History's Timeline view: every dated classic and historic style in one
@@ -60,14 +62,33 @@ export function TimelineView({
   const pending = useRef<Loc | null>(null);
   const arrived = useRef(false);
   const tries = useRef(0);
+  const laid = useRef({ key: '', cells: new Set<string>() });
+  const [settled, setSettled] = useState('');
+  const { width: screenWidth } = useWindowDimensions();
+  const [width, setWidth] = useState(screenWidth);
+  // A resize lays the rows out again (wrapping changes their heights), once it stops.
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(screenWidth), 300);
+    return () => clearTimeout(t);
+  }, [screenWidth]);
 
   const threadKey = threadChoice !== undefined ? threadChoice : threadFromFocus ? focusKey : null;
   const filter = { family, styles: styles_ };
   // The list starts under the floating back button, so a stuck era header never slides beneath it.
   const top = insets.top + layout.minTapTarget + space.sm;
-  const sections = timelineSections(nodes, filter);
+  // Every row (and era header) is laid out once, so a jump through time lands exactly:
+  // VirtualizedList keeps a cell's measured size after it unmounts. Then only a few
+  // screens stay mounted. The keys carry what the heights depend on, so a filter or a
+  // new width mounts and measures every row again.
+  const layoutKey = `${family}|${styles_}|${nodes.length}|${width}`;
+  const sections = timelineSections(nodes, filter).map((s) => ({ ...s, key: `${layoutKey}:${s.key}` }));
   const counts = decadeCounts(nodes, filter);
   const rowCount = sections.reduce((n, s) => n + s.data.length + 1, 0);
+  const cellLaidOut = (cell: string) => {
+    if (laid.current.key !== layoutKey) laid.current = { key: layoutKey, cells: new Set() };
+    laid.current.cells.add(cell);
+    if (laid.current.cells.size >= rowCount && settled !== layoutKey) setSettled(layoutKey);
+  };
   // The year at the top of the list; before the first scroll, the first row's.
   const year = seen ?? sections[0]?.data[0]?.node.year ?? null;
   const line = threadKey ? thread(nodes, threadKey) : [];
@@ -139,26 +160,33 @@ export function TimelineView({
           ref={list}
           style={[styles.flex, { marginTop: top }]}
           sections={sections}
-          keyExtractor={(r, i) => r?.node?.key ?? `row-${i}`}
+          keyExtractor={(r, i) => `${layoutKey}:${r?.node?.key ?? `row-${i}`}`}
           stickySectionHeadersEnabled
-          // ponytail: paints 40 rows, then lays out the rest (about 420) in batches and keeps them, so a
-          // jump through time lands exactly; with estimated heights it fell decades short. If it gets
-          // slow, give rows fixed heights and getItemLayout.
+          // ponytail: paints 40 rows, then lays out the rest (about 420) in batches, so a jump through
+          // time lands exactly (with estimated heights it fell decades short); once all are measured,
+          // only SETTLED_WINDOW screens stay mounted. If layout never reports (RNW in a hidden pane),
+          // they all stay, as before. Fixed heights and getItemLayout would skip the first pass.
           initialNumToRender={40}
           maxToRenderPerBatch={80}
           updateCellsBatchingPeriod={16}
-          windowSize={Math.max(21, rowCount)}
+          windowSize={settled === layoutKey ? SETTLED_WINDOW : Math.max(21, rowCount)}
           ListHeaderComponent={listHeader}
-          renderSectionHeader={({ section }) => <EraHeader section={section} />}
+          renderSectionHeader={({ section }) => (
+            <View onLayout={() => cellLaidOut(`era:${section.key}`)}>
+              <EraHeader section={section} />
+            </View>
+          )}
           renderItem={({ item }) => (
-            <TimelineRowView
-              row={item}
-              selected={item.node.key === focusKey}
-              inThread={lit.has(item.node.key)}
-              dimmed={!!threadKey && !lit.has(item.node.key)}
-              wide={wide}
-              onPress={() => press(item.node.key)}
-            />
+            <View onLayout={() => cellLaidOut(item.node.key)}>
+              <TimelineRowView
+                row={item}
+                selected={item.node.key === focusKey}
+                inThread={lit.has(item.node.key)}
+                dimmed={!!threadKey && !lit.has(item.node.key)}
+                wide={wide}
+                onPress={() => press(item.node.key)}
+              />
+            </View>
           )}
           ListFooterComponent={undated ? <Caption tone="muted" style={styles.footer}>{`${undated} more drink${undated === 1 ? ' has' : 's have'} no year yet. Find them in the Tree.`}</Caption> : undefined}
           onViewableItemsChanged={onViewable}

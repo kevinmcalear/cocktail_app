@@ -16,7 +16,7 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
 function DrinkThumb({ drink, opens }: { drink: MenuDrink; opens: boolean }) {
   return (
     <View style={styles.thumb} aria-hidden>
-      <DrinkImage thumb source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={opens ? drink.id : null} accessibilityLabel={drink.name} radius="control" hideTag />
+      <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={opens ? drink.id : null} accessibilityLabel={drink.name} radius="control" hideTag />
     </View>
   );
 }

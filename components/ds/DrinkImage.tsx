@@ -7,6 +7,7 @@ import { radius as radii, space } from '@/constants/tokens';
 import { thumbUrl } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
+import type { SketchDetail } from './SketchDrawing';
 import { IngredientDrawing } from './IngredientDrawing';
 import { Tag } from './Tag';
 import { useDs } from './theme';
@@ -36,6 +37,8 @@ export interface DrinkImageProps {
   thumb?: boolean;
   /** With no image: draw the sketch in front of you (AnimatedSketch). One per screen. */
   animate?: boolean;
+  /** With no image: 'thumb' draws a lighter sketch for list rows (under about 140 wide). */
+  sketchDetail?: SketchDetail;
 }
 
 /**
@@ -43,7 +46,7 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate, sketchDetail }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
@@ -78,7 +81,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
           onError={small ? () => setNoThumb(uri as string) : undefined}
         />
       ) : itemId ? (
-        <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} />
+        <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} detail={sketchDetail} />
       ) : (
         glassIcon
       )}
