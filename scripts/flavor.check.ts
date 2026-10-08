@@ -13,62 +13,116 @@ import {
 } from '../supabase/functions/_shared/flavor';
 
 // The flavor rules (supabase/functions/_shared/flavor.ts) must read the
-// classics the way a bartender would.
+// classics the way a bartender would. scripts/data/flavor-classics.json is
+// the catalog spec of 70 classics as the worker sees it; EXPECT says how each
+// should read, in the app's words: 0 barely, 1 a little, 2 fairly, 3 very,
+// 4 intensely. "botanical>=3" means at least very botanical. Agreed with
+// Kevin on 2026-10-08; change a line here when a bartender disagrees.
 
-type Line = [amount: number | null, unit: string | null, name: string, categories?: string[]];
+type Line = Omit<SpecPart, 'id'>;
+const classics = JSON.parse(readFileSync(new URL('./data/flavor-classics.json', import.meta.url), 'utf8')) as { name: string; lines: Line[] }[];
+const profiles = Object.fromEntries(classics.map((c) => [c.name, profileFromSpec(c.lines.map((l, i) => ({ id: `i${i}`, ...l })))]));
+const WORDS = [0.15, 0.35, 0.6, 0.8];
+const word = (v: number) => WORDS.filter((w) => v >= w).length;
 
-const spec = (lines: Line[]): SpecPart[] =>
-  lines.map(([amount, unit, name, categories], i) => ({ id: `i${i}`, name, amount, unit, categories }));
-
-const CLASSICS: Record<string, Line[]> = {
-  Negroni: [[30, 'ml', 'Gin'], [30, 'ml', 'Campari'], [30, 'ml', 'Sweet Vermouth'], [1, 'peel', 'Orange peel']],
-  Daiquiri: [[60, 'ml', 'White Rum'], [22.5, 'ml', 'Lime Juice'], [22.5, 'ml', 'Simple Syrup']],
-  'Espresso Martini': [[50, 'ml', 'Vodka'], [25, 'ml', 'Coffee Liqueur'], [30, 'ml', 'Espresso'], [10, 'ml', 'Simple Syrup']],
-  'Old Fashioned': [[60, 'ml', 'Bourbon'], [7.5, 'ml', 'Demerara Syrup'], [2, 'dash', 'Angostura Bitters'], [1, 'peel', 'Orange peel']],
-  Margarita: [[50, 'ml', 'Tequila Blanco'], [25, 'ml', 'Lime Juice'], [20, 'ml', 'Cointreau']],
-  Penicillin: [[60, 'ml', 'Blended Scotch'], [22.5, 'ml', 'Lemon Juice'], [22.5, 'ml', 'Honey Ginger Syrup'], [7.5, 'ml', 'Islay Scotch']],
-  Mojito: [[60, 'ml', 'White Rum'], [22.5, 'ml', 'Lime Juice'], [15, 'ml', 'Simple Syrup'], [8, 'leaf', 'Mint'], [null, 'top', 'Soda Water']],
-  'Last Word': [[22.5, 'ml', 'Gin'], [22.5, 'ml', 'Green Chartreuse'], [22.5, 'ml', 'Maraschino Liqueur'], [22.5, 'ml', 'Lime Juice']],
-  'Piña Colada': [[50, 'ml', 'White Rum'], [90, 'ml', 'Pineapple Juice'], [30, 'ml', 'Cream of Coconut'], [15, 'ml', 'Lime Juice']],
-  'Mezcal Negroni': [[30, 'ml', 'Mezcal'], [30, 'ml', 'Campari'], [30, 'ml', 'Sweet Vermouth']],
-  Martini: [[60, 'ml', 'Gin'], [15, 'ml', 'Dry Vermouth'], [1, 'twist', 'Lemon twist']],
+const EXPECT: Record<string, string> = {
+  'Amaretto Sour': 'sweet>=3 sour>=3 creamy>=2',
+  Americano: 'bitter>=3 strong<=1',
+  'Aperol Spritz': 'fruity>=3 sour<=1 bitter>=2',
+  Aviation: 'botanical>=2 herbal<=0 sour>=3',
+  Bamboo: 'bitter<=2 strong<=2',
+  "Bee's Knees": 'herbal<=0 botanical>=2 sour>=3',
+  Bellini: 'sour<=1 fruity>=4',
+  'Black Russian': 'strong>=4 sweet>=2',
+  'Bloody Mary': 'savory>=3 spicy>=1 sour<=2',
+  Boulevardier: 'bitter>=4 strong>=4',
+  Bramble: 'sour>=3 fruity>=2 herbal<=0',
+  'Brandy Alexander': 'creamy>=4 sweet>=4',
+  Caipirinha: 'sour>=3 sweet<=2',
+  'Clover Club': 'herbal<=0 fruity>=2',
+  'Corpse Reviver #2': 'sour>=4 fruity>=3',
+  Cosmopolitan: 'sour>=4 fruity>=3',
+  'Cuba Libre': 'sweet>=3',
+  Daiquiri: 'sour>=4 sweet>=3 herbal<=0',
+  'Dirty Martini': 'savory>=2 herbal<=0 botanical>=3',
+  'Espresso Martini': 'bitter>=3 sweet>=2',
+  'French 75': 'sour<=2',
+  Gibson: 'botanical>=4 herbal<=0',
+  Gimlet: 'herbal<=0 sour>=4',
+  'Gin and Tonic': 'bitter>=3 botanical>=2 sweet<=2',
+  'Gin Basil Smash': 'herbal>=4',
+  'Gin Fizz': 'sour>=3',
+  Grasshopper: 'creamy>=4 herbal>=3',
+  'Hanky Panky': 'bitter>=2 botanical>=3',
+  Hurricane: 'fruity>=4 sour>=4',
+  'Irish Coffee': 'bitter<=2 creamy>=2',
+  'Jack Rose': 'fruity>=3 sour>=4',
+  'Jungle Bird': 'bitter>=2 fruity>=4',
+  'Kir Royale': 'sour<=1',
+  'Last Word': 'herbal>=3 sour>=4',
+  'Long Island Iced Tea': 'sweet>=3',
+  'Mai Tai': 'sour>=4 sweet>=4',
+  Manhattan: 'strong>=4 spiced<=2 spicy<=0',
+  Margarita: 'sour>=4 savory>=1',
+  Martinez: 'sweet>=3 botanical>=2 herbal<=0',
+  Martini: 'botanical>=4 herbal<=0 sweet<=0 sour<=0 strong>=4',
+  'Mezcal Margarita': 'smoky>=4',
+  Mimosa: 'sour<=2 fruity>=4',
+  'Mint Julep': 'herbal>=4 strong>=4',
+  Mojito: 'herbal>=3 sour>=3',
+  'Moscow Mule': 'spicy>=4 spiced<=0',
+  'Naked and Famous': 'smoky>=3 herbal>=3',
+  Negroni: 'bitter>=4 sweet>=2 botanical>=2',
+  'Oaxaca Old Fashioned': 'smoky>=2 strong>=4 herbal<=1 spiced<=2',
+  'Old Fashioned': 'strong>=4 spiced>=3 spiced<=3 spicy<=0',
+  Paloma: 'sweet>=2 fruity>=2',
+  'Paper Plane': 'bitter>=3 sour>=4',
+  Penicillin: 'smoky>=1 spicy>=1 sour>=3',
+  'Piña Colada': 'fruity>=4 sweet>=4 creamy>=2 strong<=1',
+  'Pisco Sour': 'sour>=3 creamy>=2',
+  'Ramos Gin Fizz': 'creamy>=3',
+  'Rob Roy': 'smoky<=1 strong>=4',
+  Sazerac: 'strong>=4 spiced<=3 herbal>=1',
+  'Sherry Cobbler': 'savory<=1 strong<=2',
+  Sidecar: 'fruity>=4 sour>=3',
+  Southside: 'herbal>=4',
+  'Tequila Sunrise': 'fruity>=4 sweet>=4',
+  'Tom Collins': 'sour>=4 herbal<=0',
+  Toronto: 'bitter>=3 herbal>=3',
+  Tuxedo: 'botanical>=3 herbal<=0',
+  Vesper: 'botanical>=3 herbal<=0',
+  'Vieux Carré': 'strong>=4 bitter<=2',
+  'Whiskey Sour': 'sour>=3 sweet>=3 creamy>=1',
+  'White Negroni': 'bitter>=4 botanical>=3',
+  'White Russian': 'creamy>=4',
+  Zombie: 'strong>=4 spiced>=2',
 };
 
-const profiles = Object.fromEntries(Object.entries(CLASSICS).map(([name, lines]) => [name, profileFromSpec(spec(lines))]));
-const top = (name: string, n: number): Dimension[] =>
-  [...DIMENSIONS].sort((a, b) => profiles[name].profile[b] - profiles[name].profile[a]).slice(0, n);
-
 if (process.env.FLAVOR_PRINT) {
-  for (const [name, p] of Object.entries(profiles)) console.log(name.padEnd(18), top(name, 4).map((d) => `${d} ${p.profile[d]}`).join('  '));
+  for (const [name, p] of Object.entries(profiles)) {
+    console.log(name.padEnd(22), DIMENSIONS.filter((d) => p.profile[d] >= 0.15).map((d) => `${d} ${p.profile[d]}`).join('  '));
+  }
 }
 
-// Every classic is fully understood by the rules.
+assert.deepEqual(Object.keys(EXPECT).sort(), classics.map((c) => c.name).sort(), 'every classic has expectations');
 for (const [name, p] of Object.entries(profiles)) {
+  // Every classic is fully understood by the rules, with no AI help.
   assert.equal(p.coverage, 1, `${name}: unknown ${p.unknown.map((u) => u.name).join(', ')}`);
-  assert.equal(p.usedAi, false);
+  assert.equal(p.usedAi, false, `${name} needs no AI`);
   for (const d of DIMENSIONS) assert.ok(p.profile[d] >= 0 && p.profile[d] <= 1, `${name} ${d} in range`);
+  for (const want of EXPECT[name].split(' ')) {
+    const [, d, op, n] = want.match(/^(\w+)(>=|<=)(\d)$/)!;
+    const got = word(p.profile[d as Dimension]);
+    assert.ok(op === '>=' ? got >= Number(n) : got <= Number(n), `${name}: wanted ${want}, got ${d} ${p.profile[d as Dimension]}`);
+  }
 }
 
-const has = (dims: Dimension[], ...want: Dimension[]) => want.every((d) => dims.includes(d));
-
-assert.ok(has(top('Negroni', 2), 'bitter', 'strong'), `Negroni reads bitter and strong: ${top('Negroni', 4)}`);
-assert.ok(has(top('Daiquiri', 2), 'sour', 'sweet'), `Daiquiri reads sour and sweet: ${top('Daiquiri', 4)}`);
-assert.ok(has(top('Espresso Martini', 3), 'sweet', 'bitter'), `Espresso Martini reads sweet and bitter: ${top('Espresso Martini', 4)}`);
-assert.ok(profiles['Espresso Martini'].profile.creamy >= 0.25, 'Espresso Martini is creamy-ish');
-assert.ok(profiles['Espresso Martini'].profile.creamy > profiles.Negroni.profile.creamy);
-assert.equal(top('Old Fashioned', 1)[0], 'strong', `Old Fashioned reads strong: ${top('Old Fashioned', 4)}`);
-assert.ok(profiles['Old Fashioned'].profile.bitter >= 0.25, 'Old Fashioned has its bitters');
-assert.ok(has(top('Margarita', 3), 'sour'), `Margarita reads sour: ${top('Margarita', 4)}`);
-assert.ok(profiles.Penicillin.profile.smoky >= 0.2 && profiles.Penicillin.profile.spicy >= 0.2, 'Penicillin: smoke and ginger');
-assert.ok(profiles.Mojito.profile.herbal >= 0.4, 'Mojito: mint');
-assert.ok(profiles.Mojito.profile.strong < profiles.Daiquiri.profile.strong, 'soda makes a Mojito lighter than a Daiquiri');
-assert.ok(has(top('Last Word', 3), 'herbal', 'sour'), `Last Word reads herbal and sour: ${top('Last Word', 4)}`);
-assert.ok(has(top('Piña Colada', 2), 'fruity', 'sweet'), `Piña Colada reads fruity and sweet: ${top('Piña Colada', 4)}`);
-assert.ok(profiles['Piña Colada'].profile.creamy >= 0.4 && profiles.Daiquiri.profile.creamy === 0, 'Piña Colada is creamy');
-assert.ok(profiles['Piña Colada'].profile.strong < 0.5, 'Piña Colada is not strong');
-assert.ok(profiles['Mezcal Negroni'].profile.smoky >= 0.4 && profiles.Negroni.profile.smoky === 0, 'mezcal brings smoke');
-assert.equal(top('Martini', 1)[0], 'strong');
-assert.ok(profiles.Martini.profile.sweet < 0.2 && profiles.Martini.profile.sour < 0.2, 'a Martini is dry');
+const P = (name: string) => profiles[name].profile;
+assert.ok(P('Mojito').herbal > P('Martini').herbal && P('Last Word').herbal > P('Martini').herbal, 'mint and Chartreuse are herbal, gin is not');
+assert.ok(P('Martini').botanical > P('Mojito').botanical, 'gin is botanical');
+assert.ok(P('Moscow Mule').spicy > P('Old Fashioned').spicy, 'ginger is heat, bitters are spice');
+assert.ok(P('Mojito').strong < P('Daiquiri').strong, 'soda makes a Mojito lighter than a Daiquiri');
+assert.ok(P('Tom Collins').sour > P('Gin Fizz').sour && P('Gin Fizz').sour >= 0.6, 'measured soda lightens, it does not wash out');
 
 // Brand names and categories are understood; order matters.
 assert.equal(ruleFor({ name: 'Yellow Chartreuse' })?.taste.sweet, 0.6);
@@ -76,9 +130,14 @@ assert.equal(ruleFor({ name: 'Diplomatico Reserva', categories: ['Aged / Añejo 
 assert.ok(ruleFor({ name: 'Rosemary' })?.taste.herbal, 'rosemary is a herb, not rosé');
 assert.ok(ruleFor({ name: 'Tonic Water' })?.taste.bitter, 'tonic water is tonic, not water');
 assert.equal(ruleFor({ name: 'Sugar Syrup' })?.x, undefined, 'sugar syrup is a syrup, not a cube');
-assert.ok(ruleFor({ name: 'Rittenhouse', categories: ['Rye Whiskey', 'Whisk(e)y'] })?.taste.spicy, 'category fallback');
+assert.ok(ruleFor({ name: 'Rittenhouse', categories: ['Rye Whiskey', 'Whisk(e)y'] })?.taste.spiced, 'category fallback');
+assert.ok(ruleFor({ name: 'Lemon', unit: 'twist' })?.taste.fruity && !ruleFor({ name: 'Lemon', unit: 'twist' })?.taste.sour, 'a twist is peel, not juice');
+assert.equal(ruleFor({ name: 'Lemon' })?.taste.sour, 1, 'a lemon is juice');
 assert.ok(ruleFor({ name: 'Punt e Mes' })?.taste.bitter);
 assert.equal(ruleFor({ name: 'House Shiitake Tincture' }), null);
+
+const spec = (lines: [number | null, string | null, string][]): SpecPart[] =>
+  lines.map(([amount, unit, name], i) => ({ id: `i${i}`, name, amount, unit }));
 
 // Unknown house ingredients lower coverage and are what the AI fill is asked about.
 const house = profileFromSpec(spec([[45, 'ml', 'Gin'], [30, 'ml', 'House Shiitake Tincture No. 7']]).map((p) => ({ ...p, name: p.name })));
@@ -117,8 +176,9 @@ assert.equal(parseAiFlavors('not json', ['a']).size, 0);
 
 // The app, the worker and the database agree on the dimensions and the coverage floor.
 assert.deepEqual([...APP_DIMENSIONS], [...DIMENSIONS]);
-const migration = readFileSync(new URL('../supabase/migrations/20260928300000_flavor_profiles.sql', import.meta.url), 'utf8');
-for (const d of DIMENSIONS) assert.match(migration, new RegExp(`"${d}" real NOT NULL`), `item_flavors has ${d}`);
-assert.match(migration, new RegExp(`"coverage" >= ${MIN_COVERAGE}\\b`), 'get_my_taste uses the same coverage floor');
+const sql = (file: string) => readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), 'utf8');
+const migrations = sql('20260928300000_flavor_profiles.sql') + sql('20261009600000_flavor_dimensions.sql');
+for (const d of DIMENSIONS) assert.match(migrations, new RegExp(`"${d}" real NOT NULL`), `item_flavors has ${d}`);
+assert.match(sql('20261009600000_flavor_dimensions.sql'), new RegExp(`"coverage" >= ${MIN_COVERAGE}\\b`), 'get_my_taste uses the same coverage floor');
 
 console.log('flavor.check: ok');

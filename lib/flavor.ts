@@ -1,15 +1,28 @@
 /**
  * Your taste and how well a drink fits it (consumer discovery, "For you").
  *
- * Every drink with a spec gets a flavor profile on the server: nine
+ * Every drink with a spec gets a flavor profile on the server: twelve
  * dimensions, 0 to 1 (supabase/functions/_shared/flavor.ts has the rules).
- * Your taste is the same nine dimensions, averaged over the drinks you ranked
+ * Your taste is the same twelve dimensions, averaged over the drinks you ranked
  * and weighted by their score, so the drinks at the top of your lists count
  * most (get_my_taste). Until you've ranked enough drinks, a few quick
  * questions stand in for it, and we don't show a match percentage.
  */
 
-export const DIMENSIONS = ['sweet', 'sour', 'bitter', 'strong', 'herbal', 'fruity', 'smoky', 'spicy', 'creamy'] as const;
+export const DIMENSIONS = [
+  'sweet',
+  'sour',
+  'bitter',
+  'strong',
+  'botanical',
+  'herbal',
+  'fruity',
+  'spiced',
+  'spicy',
+  'smoky',
+  'savory',
+  'creamy',
+] as const;
 export type Dimension = (typeof DIMENSIONS)[number];
 export type Profile = Record<Dimension, number>;
 /** A taste can be partial: quick answers only cover some dimensions. */
@@ -20,10 +33,13 @@ export const LABEL: Record<Dimension, string> = {
   sour: 'sour',
   bitter: 'bitter',
   strong: 'strong',
+  botanical: 'botanical',
   herbal: 'herbal',
   fruity: 'fruity',
-  smoky: 'smoky',
+  spiced: 'spiced',
   spicy: 'spicy',
+  smoky: 'smoky',
+  savory: 'savory',
   creamy: 'creamy',
 };
 
