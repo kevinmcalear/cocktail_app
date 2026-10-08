@@ -638,7 +638,7 @@ export function CommandSearch({
           },
         ]}
       >
-        {ingredientId ? <DrinkImage ingredient={{ id: ingredientId, name: title }} accessibilityLabel={title} radius={0} /> : imageUrl ? (
+        {ingredientId ? <DrinkImage thumb ingredient={{ id: ingredientId, name: title }} accessibilityLabel={title} radius={0} /> : imageUrl ? (
           <View>
             <Image
               source={{ uri: imageUrl }}

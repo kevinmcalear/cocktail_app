@@ -189,7 +189,7 @@ export function LibraryScreen() {
                 onPress={() => router.push(itemHref(category, item.id) as never)}
                 style={[styles.tile, { maxWidth: `${100 / columns}%` }]}
               >
-                <DrinkImage
+                <DrinkImage thumb
                   itemId={item.id}
                   source={heroPicture(item.item_images)?.url ?? null}
                   ingredient={category === 'Ingredient' ? { id: item.id, name: item.name } : null}

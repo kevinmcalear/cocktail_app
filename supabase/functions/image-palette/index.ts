@@ -1,18 +1,20 @@
-// Computes the drink-field palette for one `images` row and saves it.
+// Computes the drink-field palette for one `images` row and saves it, and
+// saves the picture's list-sized thumbnail (_shared/thumbnail.ts) from the
+// same decoded pixels.
 //
 // Called by the database (a trigger on `images` insert, through pg_net) and by
 // scripts/backfill-palettes.mjs, never by the app. Both send the shared
 // IMAGE_PALETTE_SECRET instead of a user session; a local stack falls back to
 // a fixed local secret.
 //
-// POST { image_id, force? } -> { palette }  ([] when the picture has no colour)
-import { decode, GIF } from "jsr:@matmen/imagescript@1.3.1";
-import decodeWebp, { init as initWebp } from "npm:@jsquash/webp@1.5.0/decode.js";
+// POST { image_id, force? } -> { palette, thumbnail }  (palette [] when the picture has no colour)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+import { decodePixels } from "../_shared/decodeImage.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
 import { isLocalStack, LOCAL_IMAGE_PALETTE_SECRET } from "../_shared/localStack.ts";
 import { pickPalette } from "../_shared/palette.ts";
+import { saveThumbnail } from "../_shared/thumbnail.ts";
 
 /** Photos from the app are a few hundred KB; anything this big is not a drink photo. */
 const MAX_BYTES = 12 * 1024 * 1024;
@@ -60,51 +62,14 @@ serveJson("image-palette", async (req) => {
     .select("id");
   if (updateError) throw updateError;
   if (saved.length === 0) return { palette: null, stale: true };
-  return { palette };
+
+  // After the palette, and never failing it: without a thumbnail the app shows the original.
+  const thumbnail = await saveThumbnail(admin, decodeURIComponent(path), pixels).catch((err) => {
+    console.error("image-palette: thumbnail failed", imageId, err);
+    return null;
+  });
+  return { palette, thumbnail };
 });
-
-/**
- * RGBA pixels of a PNG, JPEG, GIF (first frame), TIFF or WebP, or null when
- * the bytes aren't one of those.
- * ponytail: HEIC and AVIF still fail and keep a null palette; the app uploads
- * JPEG and PNG, and WebP only arrives from elsewhere.
- */
-async function decodePixels(buffer: ArrayBuffer): Promise<{ rgba: ArrayLike<number>; width: number } | null> {
-  const bytes = new Uint8Array(buffer);
-  if (isWebp(bytes)) {
-    await loadWebpDecoder();
-    const image = await decodeWebp(buffer).catch(() => null);
-    return image && { rgba: image.data, width: image.width };
-  }
-  const decoded = await decode(bytes, true).catch(() => null);
-  if (!decoded) return null;
-  const frame = decoded instanceof GIF ? decoded[0] : decoded;
-  return { rgba: frame.bitmap, width: frame.width };
-}
-
-/** "RIFF" <size> "WEBP": the WebP container, lossy or lossless. */
-function isWebp(bytes: Uint8Array): boolean {
-  const tag = (from: number) => String.fromCharCode(...bytes.subarray(from, from + 4));
-  return bytes.length >= 12 && tag(0) === "RIFF" && tag(8) === "WEBP";
-}
-
-let webpDecoder: Promise<void> | null = null;
-
-/**
- * Loads libwebp (jSquash's WASM build) on the first WebP only, so PNG and JPEG
- * requests never pay for it. The .wasm is read from inside the npm package, as
- * Supabase's magick-wasm example does, so deploys bundle it with the function.
- */
-function loadWebpDecoder(): Promise<void> {
-  webpDecoder ??= Deno.readFile(new URL("codec/dec/webp_dec.wasm", import.meta.resolve("npm:@jsquash/webp@1.5.0")))
-    .then((wasm) => WebAssembly.compile(wasm))
-    .then((module) => initWebp(module))
-    .catch((err) => {
-      webpDecoder = null; // try again on the next request
-      throw err;
-    });
-  return webpDecoder;
-}
 
 function timingSafeEqual(a: string, b: string): boolean {
   const left = new TextEncoder().encode(a);

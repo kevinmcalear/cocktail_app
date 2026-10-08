@@ -134,7 +134,7 @@ function TopDrinkRow({ drink: d }: { drink: BarTopDrink }) {
         </Spec>
       ) : null}
       <View style={styles.thumb}>
-        <DrinkImage source={d.image_url} generated={!!d.image_is_generated} glass={null} itemId={d.item_id} accessibilityLabel={d.name} radius="control" hideTag />
+        <DrinkImage thumb source={d.image_url} generated={!!d.image_is_generated} glass={null} itemId={d.item_id} accessibilityLabel={d.name} radius="control" hideTag />
       </View>
       <View style={styles.text}>
         <Body numberOfLines={2}>{d.name}</Body>
