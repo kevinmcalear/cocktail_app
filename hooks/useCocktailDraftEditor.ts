@@ -20,7 +20,7 @@ import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import { capitalize } from "@/lib/stringUtils";
-import { supabase } from "@/lib/supabase";
+import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
 import { useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import type { SpecCategory } from "@/hooks/useCocktailEditor";
@@ -365,6 +365,7 @@ export function useCocktailDraftEditor({
                 .upload(fileName, arrayBuffer, {
                     contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
                     upsert: false,
+                    cacheControl: UPLOAD_CACHE_SECONDS,
                 });
             if (uploadError) return null;
 

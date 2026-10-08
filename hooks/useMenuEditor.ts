@@ -3,7 +3,7 @@ import { DROPDOWNS_QUERY_KEY, useDropdowns } from '@/hooks/useDropdowns';
 import { resolveBeerId, resolveCocktailId, resolveWineId, updateMenuDraftsWithPublishedId } from '@/lib/drafts';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { capitalize } from '@/lib/stringUtils';
-import { supabase } from '@/lib/supabase';
+import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,6 +20,7 @@ export async function uploadMenuCover(uri: string, menuId?: string | null): Prom
     const { error } = await supabase.storage.from('drinks').upload(path, decode(base64), {
         contentType: `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`,
         upsert: false,
+        cacheControl: UPLOAD_CACHE_SECONDS,
     });
     if (error) throw error;
     return supabase.storage.from('drinks').getPublicUrl(path).data.publicUrl;

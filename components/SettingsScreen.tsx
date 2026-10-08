@@ -6,7 +6,7 @@ import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
-import { supabase } from '@/lib/supabase';
+import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 import { DEFAULT_UNIT_OPTIONS, THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
 import { decode } from 'base64-arraybuffer';
@@ -116,7 +116,7 @@ function Settings() {
           .from('avatars')
           .upload(fileName, decode(localImageBase64), {
             contentType: `image/${ext}`,
-            upsert: false,
+            upsert: false, cacheControl: UPLOAD_CACHE_SECONDS,
           });
         if (uploadError) throw uploadError;
         const {

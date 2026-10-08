@@ -55,6 +55,13 @@ export async function forgetStoredSession(): Promise<void> {
   await authStorage.removeItem(authStorageKey);
 }
 
+/**
+ * Cache lifetime for files the app uploads: a year. Every upload gets a new
+ * path (a timestamp, never upserted), so a cached copy is never stale, and
+ * phones and browsers stop asking again for photos they already have.
+ */
+export const UPLOAD_CACHE_SECONDS = '31536000';
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: authStorage,
