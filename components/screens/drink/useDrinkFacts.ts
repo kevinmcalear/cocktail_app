@@ -30,6 +30,8 @@ interface Options {
   openGlass?: () => void;
   /** The bar keeps the spec back, so the figures worked out from it stay back too. */
   specLocked?: boolean;
+  /** This viewer may see the spec's amounts. Without them no ml or grams show (serve, ice, glass room). */
+  measures: boolean;
 }
 
 /**
@@ -38,7 +40,7 @@ interface Options {
  * dropdown items. Strength comes from the server's figures for every role;
  * the line-by-line sheet needs the amounts.
  */
-export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked }: Options) {
+export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked, measures }: Options) {
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -53,16 +55,16 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const abv = specLocked ? null : formatAbv(item.abv);
   const strengthPress = strength ? openStrength : undefined;
   const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
-  const fit = glass ? glassFit(item.serve_ml, glass, hasIce(ice?.name)) : null;
-  const glassHint = openGlass ? 'Opens the glass size and the ice per serve' : undefined;
+  const fit = glass && measures ? glassFit(item.serve_ml, glass, hasIce(ice?.name)) : null;
+  const glassHint = openGlass && measures ? 'Opens the glass size and the ice per serve' : undefined;
 
   const facts = (
     [
-      glass && { label: 'Glass', value: glass.name, sub: fit?.label, onPress: openGlass, accessibilityHint: glassHint },
-      ice && { label: 'Ice', value: ice.name, sub: item.ice_per_serve_g ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined, onPress: openGlass, accessibilityHint: glassHint },
+      glass && { label: 'Glass', value: glass.name, sub: fit?.label, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      ice && { label: 'Ice', value: ice.name, sub: item.ice_per_serve_g && measures ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       family && { label: 'Family', value: family.name },
       abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: strengthPress, accessibilityHint: strengthHint } : null,
-      item.serve_ml != null && !specLocked
+      item.serve_ml != null && measures
         ? { label: 'Serve', value: formatAmount(item.serve_ml, 'ml'), sub: strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', onPress: strengthPress, accessibilityHint: strengthHint }
         : null,
       item.serve_abv != null && !specLocked ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: strengthPress, accessibilityHint: strengthHint } : null,
