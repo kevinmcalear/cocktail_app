@@ -6,7 +6,6 @@ import { ShotList } from "@/components/screens/drink/ShotList";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
 import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
-import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { useCocktail } from "@/hooks/useCocktails";
@@ -143,7 +142,6 @@ export function CocktailInlineEditor({
                         }
                         onAdd={editor.pickImage}
                         onAddUris={editor.addImages}
-                        generateComponent={<GenerateImageButton type="cocktail" id={id} variant="tile" />}
                     />
                 </View>
             </AdaptiveSheetModal>

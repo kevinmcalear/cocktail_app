@@ -1,7 +1,7 @@
 import { Camera, Map, Marker, type CameraRef, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
@@ -31,6 +31,16 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     cameraRef.current?.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
   }, [camera, start]);
 
+  // Android hit-tests overlapping markers in the order they were added and
+  // takes the first, but draws later ones on top, so a tap on the pin you can
+  // see opened the one under it. So on Android, draw them in the order they're
+  // hit: the first pin (the best, as pins come best first) on top, and remount
+  // them whenever the set changes so they're added in this order.
+  // ponytail: works around MapLibre RN 11.4 MarkerViewManager.findMarkerAtPoint;
+  // drop this once it checks the topmost marker first (a native fix, so a new binary).
+  const android = Platform.OS === 'android';
+  const order = android ? pins.map((p) => p.id).join('|') : 'pins';
+
   // Only the person's own moves count for "search this area".
   const onMoved = (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
     const { userInteraction, center, bounds } = e.nativeEvent;
@@ -58,45 +68,48 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         ref={cameraRef}
         initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom } : { center: [0, 20], zoom: 1.5 }}
       />
-      {pins.map((pin) => {
-        const selected = pin.id === selectedId;
-        const look = pinLook(pin, selected, accent);
-        return (
-          <Marker
-            key={pin.id}
-            id={pin.id}
-            lngLat={[pin.longitude, pin.latitude]}
-            onPress={() => {
-              pinTappedAt.current = Date.now();
-              onSelect(pin.id);
-            }}
-          >
-            <View
-              role="button"
-              aria-label={pinDescription(pin)}
-              aria-selected={selected}
-              style={[
-                styles.pin,
-                {
-                  minWidth: look.minWidth,
-                  height: look.height,
-                  paddingLeft: look.paddingLeft,
-                  paddingRight: look.paddingRight,
-                  gap: look.gap,
-                  borderColor: look.borderColor,
-                  backgroundColor: look.backgroundColor,
-                  zIndex: selected ? 2 : 1,
-                },
-              ]}
+      <Fragment key={order}>
+        {pins.map((pin, i) => {
+          const selected = pin.id === selectedId;
+          const look = pinLook(pin, selected, accent);
+          return (
+            <Marker
+              key={pin.id}
+              id={pin.id}
+              lngLat={[pin.longitude, pin.latitude]}
+              style={android ? { zIndex: pins.length - i } : undefined}
+              onPress={() => {
+                pinTappedAt.current = Date.now();
+                onSelect(pin.id);
+              }}
             >
-              {look.logo ? (
-                <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
-              ) : null}
-              {look.label ? <Text style={[styles.label, { color: look.color }]}>{look.label}</Text> : null}
-            </View>
-          </Marker>
-        );
-      })}
+              <View
+                role="button"
+                aria-label={pinDescription(pin)}
+                aria-selected={selected}
+                style={[
+                  styles.pin,
+                  {
+                    minWidth: look.minWidth,
+                    height: look.height,
+                    paddingLeft: look.paddingLeft,
+                    paddingRight: look.paddingRight,
+                    gap: look.gap,
+                    borderColor: look.borderColor,
+                    backgroundColor: look.backgroundColor,
+                    zIndex: selected ? 2 : 1,
+                  },
+                ]}
+              >
+                {look.logo ? (
+                  <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
+                ) : null}
+                {look.label ? <Text style={[styles.label, { color: look.color }]}>{look.label}</Text> : null}
+              </View>
+            </Marker>
+          );
+        })}
+      </Fragment>
     </Map>
   );
 }

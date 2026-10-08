@@ -62,4 +62,11 @@ export const SKETCH_SAMPLES = {
   daiquiri: '#e6e4a6',
   manhattan: '#8a3a16',
   negroni: '#a8202e',
+  redWine: '#7a1022',
+  champagne: '#e8d27a',
+  spritz: '#f05a1a',
+  brandy: '#8a4a12',
+  lager: '#d9961c',
+  irishCoffee: '#3a2010',
+  cream: '#f4eedd',
 } as const;

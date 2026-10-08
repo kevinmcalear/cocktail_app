@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
   // On web the picker is also where photos can be dropped.
   zone: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.card, padding: space.md, borderCurve: 'continuous' },
   pages: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  page: { width: 88, aspectRatio: 3 / 4, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
+  // A fixed height, not aspectRatio: in this wrapping row Android laid the tile out at zero size.
+  page: { width: 88, height: 117, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   remove: { position: 'absolute', top: space.xs, right: space.xs },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

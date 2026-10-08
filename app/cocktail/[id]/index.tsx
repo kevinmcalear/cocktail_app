@@ -7,7 +7,6 @@ import { Text, YStack } from "tamagui";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
 import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
-import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { useCocktail, useDeleteCocktail } from "@/hooks/useCocktails";
@@ -191,9 +190,6 @@ export default function CocktailDetailsScreen() {
                         }
                         onAdd={editor.pickImage}
                         onAddUris={editor.addImages}
-                        generateComponent={
-                            <GenerateImageButton type="cocktail" id={id as string} variant="tile" />
-                        }
                     />
                 </View>
             </AdaptiveSheetModal>

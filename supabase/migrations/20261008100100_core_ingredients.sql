@@ -25,11 +25,17 @@
 -- skipped, and running it twice changes nothing more. Venue ingredients
 -- aren't touched: their names are private. Merging moves every reference
 -- (spec lines, categories, images, costs) with private.merge_ingredient().
--- Spec lines that move re-queue those drinks' flavor profiles; the image
--- worker flag keeps them from queueing new sketches.
+-- Moving spec lines would queue flavour jobs and sketches; the queue is put
+-- back as it was and the image worker flag stops new sketches.
 
 SET "app.image_worker" = 'on';
 SET "app.ingredient_merge" = 'on';
+
+-- No paid flavour jobs: merging a name into its synonym doesn't change how a
+-- drink tastes, and with CATALOG_AI_FILL=on each queued job is a paid AI fill
+-- (same rule as 20261008000000_cocktail_omakase). Note the queue now and put
+-- it back at the end.
+CREATE TEMP TABLE "flavor_jobs_before" AS SELECT * FROM "private"."item_flavor_jobs";
 
 CREATE TEMP TABLE "core_in" ("name" "text" PRIMARY KEY, "kind_of" "text", "family" boolean NOT NULL, "id" "uuid");
 CREATE TEMP TABLE "alias_in" ("alias" "text" NOT NULL, "core" "text" NOT NULL);
@@ -7160,6 +7166,16 @@ SELECT c.id, s.id, r.grams, 'g', r.position
   JOIN core_in c ON c.name = r.core
   JOIN shared_ing s ON s.key = public.ingredient_key(r.ingredient)
  WHERE NOT EXISTS (SELECT 1 FROM public.recipes x WHERE x.recipe_item_id = c.id);
+
+-- --- Put the flavour job queue back ---
+DELETE FROM "private"."item_flavor_jobs" j
+WHERE NOT EXISTS (SELECT 1 FROM "flavor_jobs_before" o WHERE o.item_id = j.item_id);
+UPDATE "private"."item_flavor_jobs" j SET
+    "status" = o.status, "revision" = o.revision, "attempts" = o.attempts, "run_after" = o.run_after,
+    "lease_until" = o.lease_until, "last_error" = o.last_error, "updated_at" = o.updated_at
+FROM "flavor_jobs_before" o
+WHERE j.item_id = o.item_id AND j.revision <> o.revision;
+DROP TABLE "flavor_jobs_before";
 
 DROP TABLE "core_in", "alias_in", "merge_in", "link_in", "plural_in", "recipe_in", "shared_ing";
 RESET "app.ingredient_merge";
