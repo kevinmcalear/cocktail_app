@@ -119,8 +119,11 @@ serve(async (req: Request) => {
       .eq("user_id", authData.user.id)
       .maybeSingle();
 
-    if (membershipError || !membership || membership.role_level < 35) {
-      return json({ error: "You must be a Drink Creator or Admin to update this venue." }, 403);
+    // The bars row is visible only while the role is current (an ended
+    // venue role drops it), the same rule update_bar_settings uses.
+    const { data: bar, error: barError } = await userClient.from("bars").select("id").eq("id", bar_id).maybeSingle();
+    if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
+      return json({ error: "Only the venue's Admins can change its logo." }, 403);
     }
 
     let binaryStr: string;

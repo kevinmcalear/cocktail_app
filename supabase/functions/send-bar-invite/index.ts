@@ -38,6 +38,18 @@ serveJson("send-bar-invite", async (req) => {
   if (inviteError) throw inviteError;
   if (!invite) throw new HttpError(404, "There's no invite for that email. Invite them first.");
 
+  // Each email takes one of today's: a few per invite, a few dozen per Admin.
+  // ponytail: a send that then fails still uses its slot; hand it back if
+  // mailer outages ever make that matter.
+  const { data: slot, error: slotError } = await caller.admin.rpc("take_invite_email_slot", {
+    p_sender: caller.user.id,
+    p_bar_id: barId,
+    p_email: email,
+  });
+  if (slotError) throw slotError;
+  if (slot === "invite") throw new HttpError(429, "That invite has been emailed enough today. Try again tomorrow.");
+  if (slot !== "ok") throw new HttpError(429, "You've sent enough invite emails today. Try again tomorrow.");
+
   const { data: bar, error: barError } = await caller.admin.from("bars").select("name, slug").eq("id", barId).single();
   if (barError) throw barError;
 
