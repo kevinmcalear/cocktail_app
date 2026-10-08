@@ -9,6 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { isLink } from '@/lib/bringInAnywhere';
 import { takeBringIn } from '@/lib/bringInHandoff';
 import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
 import type { BottleReading } from '@/lib/readBottle';
@@ -132,7 +133,8 @@ function BringInBody() {
   const [message, setMessage] = useState<string | null>(null);
   const [lastRead, setLastRead] = useState<BringInReadResult | null>(null);
   const [bottles, setBottles] = useState<BottleReading[] | null>(null);
-  const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
+  // A lone link is read with "Read this link", never added as a drink called that link.
+  const blocks = useMemo(() => (isLink(text) ? [] : parseBringIn(text, mode)), [text, mode]);
   const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses, aliases), [blocks, catalog, barId, picks, kinds, methods, glasses, aliases]);
   const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
 
