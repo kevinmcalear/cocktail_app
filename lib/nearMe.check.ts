@@ -6,6 +6,7 @@ import {
   areaParams,
   earlyNote,
   formatDistance,
+  nearMeArea,
   photonUrl,
   rankedCount,
   roundCoord,
@@ -26,6 +27,9 @@ assert.deepEqual(areaParams(me), { p_latitude: 40.713, p_longitude: -74.006, p_r
 assert.deepEqual(areaParams({ kind: 'city', city: 'Melbourne', country_code: 'AU', label: 'Melbourne' }), { p_city: 'Melbourne', p_country_code: 'AU' });
 assert.deepEqual(areaParams({ kind: 'anywhere' }), {});
 assert.equal(roundCoord(-0.0004), -0);
+// Near me snaps to ~1 km, so small steps keep the same area (and query).
+assert.deepEqual(nearMeArea({ latitude: 40.712776, longitude: -74.005974 }), { kind: 'point', latitude: 40.71, longitude: -74.01, radiusKm: 10, source: 'me' });
+assert.deepEqual(nearMeArea({ latitude: 40.7149, longitude: -74.0099 }), nearMeArea({ latitude: 40.7051, longitude: -74.0051 }));
 
 // --- distances ---
 assert.equal(formatDistance(0.012), '50 m');

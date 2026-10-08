@@ -28,6 +28,20 @@ export function roundCoord(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
+/**
+ * ~1.1 km. "Near me" snaps to this grid: a 10 km search barely moves, small
+ * steps keep the same query (and its cache), and it is what the device keeps
+ * as the last place (store/useLastPlace.ts).
+ */
+export function snapNearMe(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** The near-me area around a position, snapped (snapNearMe). */
+export function nearMeArea(at: { latitude: number; longitude: number }): Extract<Area, { kind: 'point' }> {
+  return { kind: 'point', latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude), radiusKm: NEAR_ME_KM, source: 'me' };
+}
+
 /** The area arguments for discover_drink_rankings and discover_top_bars. */
 export function areaParams(area: Area): Record<string, string | number> {
   if (area.kind === 'point') {

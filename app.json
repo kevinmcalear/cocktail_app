@@ -52,7 +52,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find the best drinks and bars near you. It isn't saved.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find the best drinks and bars near you. Your last spot, rounded to about a kilometre, stays on this device so Discover opens there next time.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "motionUsagePermission": "Allow $(PRODUCT_NAME) to read motion so the map can show which way you're facing."

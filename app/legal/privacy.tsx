@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
             'Usage events: which screens you open and a few actions (signing up, confirming your age, ranking, collecting or creating a drink, sending an invite, claiming a bar, searching). They record that something happened, not what you wrote or searched for.',
             'Crash reports and usage events are linked to your account ID when you are signed in, never to your name or email, and we do not keep the IP address they came from. We do not use them for advertising. You can turn usage events off in Settings → Account → Share usage analytics.',
             'On your device: your session, favourites, study list, recent activity and settings.',
-            'Location, only if you use nearby search: your device\'s position, rounded to about 110 metres before it is sent. It is used for that search and is not saved on your account.',
+            'Location, only if you use nearby search: your device\'s position, rounded to about 110 metres before it is sent. It is used for that search and is not saved on your account. Your last spot, rounded to about a kilometre, stays on your device so Discover opens there next time; signing out clears it.',
             'Age check: the country you give and whether you meet that country\'s drinking age. Your date of birth is used for the check and is not stored.',
             'What you choose to share publicly: a bar or bartender profile, drinks, and rankings.',
           ]}
