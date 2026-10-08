@@ -1,7 +1,7 @@
 // Checks for lib/hadDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { favourites, fromSharedRow, hadStats, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
+import { favourites, fromSharedBarRow, fromSharedRow, hadStats, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
 
 const bellamy = { id: 'v1', handle: 'bar.bellamy', display_name: 'Bar Bellamy', avatar_url: null, locality: 'Carlton', city: 'Melbourne' };
 const shapes = { id: 'v2', handle: null, display_name: 'Shapes', avatar_url: 'https://x/logo.png', locality: null, city: 'London' };
@@ -49,12 +49,22 @@ assert.equal(whereLine(toHadDrink(row({ id: 'e', venue: shapes }))), 'Shapes, Lo
 
 // Someone else's drinks (get_profile_drinks) come out the same shape.
 const shared = fromSharedRow({
-  id: 's1', item_id: 'i1', name: 'House Martini', list_name: 'Martini', image_url: 'https://x/photo.jpg', image_is_generated: null,
+  id: 's1', item_id: 'i1', name: 'House Martini', list_name: 'Martini', image_url: 'https://x/photo.jpg', image_is_generated: null, at_bar: true,
   venue_id: 'v1', venue_handle: 'bar.bellamy', venue_name: 'Bar Bellamy', venue_avatar_url: null, venue_locality: 'Carlton', venue_city: 'Melbourne',
   sentiment: 'loved', score: '8.4', had_on: '2026-08-14', created_at: '2026-09-01T10:00:00Z',
 });
 assert.deepEqual(shared, { ...martini, id: 's1', itemId: 'i1', createdAt: '2026-09-01T10:00:00Z' });
 assert.equal(fromSharedRow({ ...({} as Parameters<typeof fromSharedRow>[0]), id: 's2', item_id: 'i2', name: 'Negroni', venue_id: null, sentiment: 'fine', score: 5, created_at: '2026-09-01T10:00:00Z' }).venue, null);
+
+// They show drinks but not bars: a bar drink says so without naming it.
+const unplaced = fromSharedRow({ ...({} as Parameters<typeof fromSharedRow>[0]), id: 's3', item_id: 'i3', name: 'Martini', at_bar: true, venue_id: null, sentiment: 'loved', score: 9, created_at: '2026-09-01T10:00:00Z' });
+assert.equal(whereLine(unplaced), 'At a bar');
+assert.deepEqual(hadStats([unplaced]), { drinks: 1, bars: 0 });
+
+// Someone else's bars (get_profile_bars): the best drink only when they show drinks too.
+const tally = fromSharedBarRow({ venue_id: 'v1', venue_handle: 'bar.bellamy', venue_name: 'Bar Bellamy', venue_avatar_url: null, venue_locality: 'Carlton', venue_city: 'Melbourne', drinks: 3, average: '7.5', best_name: null, best_score: null });
+assert.deepEqual(tally, { key: 'v1', venue: { id: 'v1', handle: 'bar.bellamy', name: 'Bar Bellamy', avatarUrl: null, place: 'Carlton, Melbourne' }, drinks: 3, average: 7.5, best: null });
+assert.deepEqual(fromSharedBarRow({ ...{ venue_id: 'v1', venue_handle: null, venue_name: 'B', venue_avatar_url: null, venue_locality: null, venue_city: null, drinks: 1, average: 9 }, best_name: 'Gimlet', best_score: '9' }).best, { name: 'Gimlet', score: 9 });
 
 // --- Sorting, favourites, bars ---
 const drink = (id: string, score: number, over: Partial<HadRow> = {}): HadDrink =>
@@ -78,7 +88,7 @@ assert.deepEqual(favourites([drink('x', 5)]), []);
 
 const bars = tallyBars(had);
 assert.deepEqual(
-  bars.map((b) => [b.key, b.drinks, b.average, b.best.name]),
+  bars.map((b) => [b.key, b.drinks, b.average, b.best?.name]),
   [
     ['home', 1, 8.4, 'Drink 4'],
     ['v1', 2, 7.5, 'Drink 1'],

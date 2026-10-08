@@ -18,8 +18,12 @@ import { BarTopDrinks } from './BarTopDrinks';
 /** How many of a bar's drinks the pin card shows before "Show all". */
 const PREVIEW_DRINKS = 3;
 
-export /** The bar a pin stands for, the drinks there on the drinks layers (scored on "Best Martini"), and a way in. */
-function SelectedBar({ pin, drinks, scores, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; scores?: DrinkScores; onClose: () => void }) {
+export /**
+ * The bar a pin stands for, the drinks there on the drinks layers (scored on
+ * "Best Martini"), and a way in. `onShowAll`: "Show all" hands the full list
+ * to somewhere roomier (the phone sheet) instead of growing the card.
+ */
+function SelectedBar({ pin, drinks, scores, onClose, onShowAll }: { pin: MapPin; drinks: DiscoverDrink[]; scores?: DrinkScores; onClose: () => void; onShowAll?: () => void }) {
   const router = useRouter();
   const [all, setAll] = useState(false);
   const shown = all ? drinks : drinks.slice(0, PREVIEW_DRINKS);
@@ -63,7 +67,7 @@ function SelectedBar({ pin, drinks, scores, onClose }: { pin: MapPin; drinks: Di
           />
         );
       })}
-      {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} /> : null}
+      {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={onShowAll ?? (() => setAll(true))} /> : null}
       <View style={styles.cardActions}>
         <Button label="Close" variant="ghost" onPress={onClose} />
         <Button label="Open bar" onPress={() => router.push(`/p/${pin.handle || pin.id}`)} />

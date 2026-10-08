@@ -23,6 +23,8 @@ export interface IngredientSearchProps {
   onCancel?: () => void;
   /** Called with whether something is typed, so the step can hide its suggestions meanwhile. */
   onTyping?: (typing: boolean) => void;
+  /** Off: only existing ingredients can be picked (a kind of must exist). */
+  allowNew?: boolean;
 }
 
 /**
@@ -30,7 +32,7 @@ export interface IngredientSearchProps {
  * ingredient, by another spelling or alias, offers that one and not a copy;
  * a likely misspelling asks "Did you mean…?" first. Return takes the top hit.
  */
-export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping }: IngredientSearchProps) {
+export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true }: IngredientSearchProps) {
   const ds = useDs();
   const [query, setQueryState] = useState('');
   const setQuery = (q: string) => {
@@ -49,7 +51,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
   return (
     <View style={styles.stack}>
       <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-        <IconSymbol name={onCancel ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
+        <IconSymbol name={onCancel || !allowNew ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -62,7 +64,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
           maxLength={80}
           onSubmitEditing={() => {
             if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
-            else if (query.trim() && !loading) pick({ id: null, name: query.trim() });
+            else if (allowNew && query.trim() && !loading) pick({ id: null, name: query.trim() });
           }}
           style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
         />
@@ -85,7 +87,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
             <Body tone="muted" style={styles.loading}>
               Loading ingredients…
             </Body>
-          ) : exact ? null : (
+          ) : exact || !allowNew ? null : (
             <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => pick({ id: null, name: query.trim() })} />
           )}
         </View>

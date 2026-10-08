@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
@@ -26,6 +26,8 @@ interface WhatToMakeProps {
   twoAway: AwayGroup[];
   /** "92% match", once the person's taste is known. */
   matchFor: (id: string) => string | undefined;
+  /** A small palate flower at the end of the row, when the drink's flavor is known. */
+  glyphFor?: (id: string) => ReactNode;
   onAdd: (ingredientIds: string[]) => void;
 }
 
@@ -34,7 +36,7 @@ interface WhatToMakeProps {
  * grouped by what to buy. Only drinks the shelf gets close to: everything
  * else is in Search.
  */
-export function WhatToMake({ canMake, oneAway, twoAway, matchFor, onAdd }: WhatToMakeProps) {
+export function WhatToMake({ canMake, oneAway, twoAway, matchFor, glyphFor, onAdd }: WhatToMakeProps) {
   const router = useRouter();
   const [picked, setPicked] = useState<Tab | null>(null);
   const [shown, setShown] = useState(PAGE);
@@ -64,7 +66,7 @@ export function WhatToMake({ canMake, oneAway, twoAway, matchFor, onAdd }: WhatT
         canMake.length ? (
           <View>
             {canMake.slice(0, shown).map((d) => (
-              <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} />
+              <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} trailing={glyphFor?.(d.id)} />
             ))}
           </View>
         ) : (
@@ -73,7 +75,7 @@ export function WhatToMake({ canMake, oneAway, twoAway, matchFor, onAdd }: WhatT
       ) : groups.length ? (
         <View style={styles.groups}>
           {groups.slice(0, shown).map((g) => (
-            <BottleGroup key={g.bottles.map((b) => b.id).join('+')} group={g} matchFor={matchFor} onAdd={onAdd} />
+            <BottleGroup key={g.bottles.map((b) => b.id).join('+')} group={g} matchFor={matchFor} glyphFor={glyphFor} onAdd={onAdd} />
           ))}
         </View>
       ) : (
@@ -88,7 +90,7 @@ export function WhatToMake({ canMake, oneAway, twoAway, matchFor, onAdd }: WhatT
   );
 }
 
-function BottleGroup({ group, matchFor, onAdd }: { group: AwayGroup; matchFor: WhatToMakeProps['matchFor']; onAdd: WhatToMakeProps['onAdd'] }) {
+function BottleGroup({ group, matchFor, glyphFor, onAdd }: { group: AwayGroup; matchFor: WhatToMakeProps['matchFor']; glyphFor: WhatToMakeProps['glyphFor']; onAdd: WhatToMakeProps['onAdd'] }) {
   const [open, setOpen] = useState(false);
   const { bottles, drinks } = group;
   const names = bottles.map((b) => b.name).join(' + ');
@@ -117,7 +119,7 @@ function BottleGroup({ group, matchFor, onAdd }: { group: AwayGroup; matchFor: W
         </View>
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
-        <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} />
+        <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} trailing={glyphFor?.(d.id)} />
       ))}
       {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => setOpen(true)} /> : null}
     </Surface>
