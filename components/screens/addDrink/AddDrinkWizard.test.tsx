@@ -45,6 +45,7 @@ const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { per
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
 
 describe('AddDrinkWizard', () => {
+  // Walks every step to the save: close to Jest's 5 s default on CI runners, where it timed out on main.
   test('a name, then each step keeps what was added through Back, and saves once at the end', async () => {
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
@@ -121,7 +122,7 @@ describe('AddDrinkWizard', () => {
     await act(() => mockCreate.mock.calls[0][1].onSuccess({ id: 'new-drink', warnings: [] }));
     expect(mockSaved).toHaveBeenCalledWith('new-drink');
     expect(useDrinkWizardStore.getState().kept.home).toBeUndefined();
-  });
+  }, 20_000);
 
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
