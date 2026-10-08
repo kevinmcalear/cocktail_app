@@ -45,7 +45,7 @@ const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { per
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
 
 describe('AddDrinkWizard', () => {
-  // The first test also pays for the wizard's first render; busy CI runners took over 5 s (2026-10-08).
+  // Walks every step to the save: close to Jest's 5 s default on CI runners, where it timed out on main.
   test('a name, then each step keeps what was added through Back, and saves once at the end', async () => {
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
