@@ -1,6 +1,6 @@
 // Notes on a bar's credited drinks follow the bar's page, like the spec rows:
 // hidden from the public while the page isn't open, shown to catalog admins
-// and the bar's team (supabase/migrations/20261007235000_credited_drink_notes.sql).
+// and the bar's team (supabase/migrations/20261008050000_credited_drink_notes.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';

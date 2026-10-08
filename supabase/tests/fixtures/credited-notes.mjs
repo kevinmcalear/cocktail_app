@@ -1,4 +1,4 @@
-// Since 20261007235000 a bar-credited drink's notes live in
+// Since 20261008050000 a bar-credited drink's notes live in
 // credited_drink_notes, and a trigger keeps them off items. The older seed
 // migrations read items.notes (a "Spec adapted from ..." note means the spec
 // was left out on purpose), so a test that re-runs one calls this first,
