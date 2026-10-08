@@ -86,6 +86,7 @@ describe('bar drink ingredients', () => {
              count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM public.recipes r WHERE r.recipe_item_id = i.id))::int AS bare
       FROM public.items i
       WHERE i.item_type = 'cocktail' AND i.bar_id IS NULL AND i.origin_bar_profile_id IS NOT NULL
+        AND NOT i.is_catalog -- a classic first made at a bar is the catalog's, not a bar drink
         AND i.description IS NOT NULL
         AND i.name !~ ' [0-9a-f]{8}$' -- other test files' fixtures, named with a run id`);
     assert.ok(rows[0].n >= 500, `expected the seeded drinks, found ${rows[0].n}`);
