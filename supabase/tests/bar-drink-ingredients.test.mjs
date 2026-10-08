@@ -108,6 +108,8 @@ describe('bar drink ingredients', () => {
         `UPDATE public.items SET riff_of_id = (SELECT id FROM public.items WHERE is_catalog AND name = 'Boulevardier') WHERE id = $1`,
         [id]
       );
+      // Today's name guard (20261008100000) postdates this seed; a re-run is a cleanup.
+      await db.query("SELECT set_config('app.ingredient_merge', 'on', true)");
       await db.query(readFileSync(MIGRATION, 'utf8'));
       assert.deepEqual(await specOf(id), [{ name: 'Campari', generic: null, amount: '30', prep: null }]);
       assert.equal((await db.query(DRINK)).rows[0].classic, 'Boulevardier');
