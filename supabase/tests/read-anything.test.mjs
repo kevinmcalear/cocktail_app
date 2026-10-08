@@ -127,6 +127,19 @@ describe('read-anything function', { skip }, () => {
     assert.equal(await usage(user.id), 1);
   });
 
+  test('a link is never fetched from a private address, and a link that fails costs nothing', async () => {
+    const user = await signedIn();
+    for (const url of ['http://localhost:54321/rest/v1/', 'http://127.0.0.1/', 'http://169.254.169.254/latest/meta-data/', 'https://10.0.0.1/', 'file:///etc/passwd', 'https://localtest.me/']) {
+      const res = await read(user.token, { url });
+      assert.equal(res.status, 422, url);
+      assert.equal(typeof (await res.json()).error, 'string');
+    }
+    const mixed = await read(user.token, { url: 'https://example.com/', text: '2 oz gin' });
+    assert.equal(mixed.status, 400);
+    await mixed.body?.cancel();
+    assert.equal(await usage(user.id), 0);
+  });
+
   test('pasted text alone is enough, and the hint picks what the mock reads', async () => {
     const user = await signedIn();
     const menu = await read(user.token, { text: 'Spring menu\nNegroni 16', hint: 'menu' });

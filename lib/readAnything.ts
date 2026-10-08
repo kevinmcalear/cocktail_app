@@ -37,12 +37,12 @@ export function pickReadFiles(): Promise<ReadFile[]> {
 }
 
 /**
- * Reads photos, PDFs or text (read-anything): a menu, recipes or bottles,
+ * Reads photos, PDFs, text or a link (read-anything): a menu, recipes or bottles,
  * whichever it is. `hint` is the screen the person started from. Asks for the
  * Google AI OK first.
  */
-export async function readAnything({ files = [], text = '', hint }: { files?: ReadFile[]; text?: string; hint: ReadKind | null }): Promise<AnythingReading> {
+export async function readAnything({ files = [], text = '', url, hint }: { files?: ReadFile[]; text?: string; url?: string; hint: ReadKind | null }): Promise<AnythingReading> {
   if (!(await ensureAiConsent())) throw new Error(AI_DECLINED);
   const encoded = await Promise.all(files.slice(0, MAX_READ_FILES).map(async (file) => ({ base64: await uriToBase64(file.uri), mime_type: file.mimeType })));
-  return invokeFunction<AnythingReading>('read-anything', { files: encoded, text: text.trim() || undefined, hint });
+  return invokeFunction<AnythingReading>('read-anything', { files: encoded, text: text.trim() || undefined, url, hint });
 }
