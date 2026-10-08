@@ -136,6 +136,18 @@ export function flavorModel(): "mock" | "live" | "off" {
 }
 
 /**
+ * The pair-notes writer: like the flavor fill, mocked on a local stack unless
+ * PAIR_NOTES_MODEL=live, and off in production until that's set.
+ */
+export function pairNotesModel(): "mock" | "live" | "off" {
+  const model = Deno.env.get("PAIR_NOTES_MODEL");
+  if (model === "live") return "live";
+  if (isLocalStack()) return "mock";
+  if (model === "mock") throw new Error("PAIR_NOTES_MODEL=mock is only allowed on a local stack");
+  return "off";
+}
+
+/**
  * Asks Gemini Flash a text question and returns its JSON reply as text. With
  * a schema, the reply can only take that shape (enums included). Thinking is
  * off: these are lookups, and thinking made each call slow and billed it.

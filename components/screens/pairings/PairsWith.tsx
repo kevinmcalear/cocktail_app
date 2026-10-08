@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
-import { usePairDrinks, usePairings } from '@/hooks/usePairings';
+import { usePairDrinks, usePairings, usePairNote } from '@/hooks/usePairings';
 
 import { PairChip } from './PairChip';
 
@@ -54,9 +54,11 @@ function PairDrinks({ a, b, title }: { a: string; b: string; title: string }) {
   const ds = useDs();
   const router = useRouter();
   const { data: drinks = [], isLoading } = usePairDrinks(a, b);
+  const { data: note } = usePairNote(a, b);
   return (
     <View style={styles.drinks}>
       <Body>{title}</Body>
+      {note ? <Caption tone="muted">{note}</Caption> : null}
       {isLoading ? <Caption tone="muted">Finding the drinks…</Caption> : null}
       {drinks.map((d) => (
         <PressableScale
