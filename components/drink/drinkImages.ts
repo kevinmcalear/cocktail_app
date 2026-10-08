@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { isHeroLink } from '@/lib/itemImages';
-import { supabase } from '@/lib/supabase';
+import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 
 /** Asks for photo access and lets the user pick photos; returns their local URIs. */
 export async function pickDrinkPhotos(): Promise<string[]> {
@@ -42,6 +42,7 @@ export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ i
   const { error: uploadError } = await supabase.storage.from('drinks').upload(fileName, arrayBuffer, {
     contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
     upsert: false,
+    cacheControl: UPLOAD_CACHE_SECONDS,
   });
   if (uploadError) return null;
 

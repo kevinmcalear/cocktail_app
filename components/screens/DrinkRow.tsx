@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DrinkImage, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 export interface DrinkRowProps {
   name: string;
@@ -36,6 +37,9 @@ const LOGO = 18;
 export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, trailing, label }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
+  // A drink page starts loading on press, ahead of the tap.
+  const prefetch = usePrefetchCocktail();
+  const drinkId = !onPress && href?.startsWith('/cocktail/') ? href.slice('/cocktail/'.length) : null;
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo ? (
     <View style={styles.byline}>
@@ -52,6 +56,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   return (
     <PressableScale
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
+      onPressIn={drinkId ? () => prefetch(drinkId) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >

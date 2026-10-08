@@ -4,7 +4,8 @@ import { allRows } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useContext } from 'react';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -103,9 +104,9 @@ export function useCocktails(options?: { allContexts?: boolean }) {
     });
 }
 
-export function useCocktail(id?: string | string[]) {
-    const { viewAsRoleLevel } = useViewAs();
-    return useQuery({
+/** The drink page's query, shared by the page and a row's press-in prefetch (usePrefetchCocktail). */
+export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel: ReturnType<typeof useViewAs>['viewAsRoleLevel']) {
+    return queryOptions({
         queryKey: ['cocktail', id, viewAsRoleLevel],
         queryFn: async () => {
             if (!id) return null;
@@ -191,6 +192,27 @@ export function useCocktail(id?: string | string[]) {
         },
         enabled: !!id,
     });
+}
+
+export function useCocktail(id?: string | string[]) {
+    const { viewAsRoleLevel } = useViewAs();
+    return useQuery(cocktailQuery(id, viewAsRoleLevel));
+}
+
+/**
+ * Starts loading a drink page as its row is pressed, so the page has a head
+ * start on the tap (the press-to-release gap is often 100 ms or more). A
+ * page loaded in the last minute isn't asked for again.
+ */
+export function usePrefetchCocktail() {
+    // From context, not useQueryClient: a row rendered with no provider (a test) just doesn't prefetch.
+    const client = useContext(QueryClientContext);
+    return (id: string) => {
+        if (!client) return;
+        // The view-as level the page will key on (useViewAs), as it's cached.
+        const level = client.getQueriesData<number | null>({ queryKey: ['viewAs'] })[0]?.[1] ?? null;
+        void client.prefetchQuery({ ...cocktailQuery(id, level), staleTime: 60 * 1000 });
+    };
 }
 
 export const updateCocktailFn = async ({ id, updates }: { id: string, updates: Partial<DatabaseItem> }) => {

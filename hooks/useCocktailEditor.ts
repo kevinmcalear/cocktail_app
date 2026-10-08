@@ -14,7 +14,7 @@ import { findByName, orderedMethodIds, toggleId } from "@/lib/drinkMethods";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
-import { supabase } from "@/lib/supabase";
+import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { setItemImages } from "@/components/drink/drinkImages";
@@ -190,6 +190,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 .upload(fileName, arrayBuffer, {
                     contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
                     upsert: false,
+                    cacheControl: UPLOAD_CACHE_SECONDS,
                 });
             if (uploadError) return null;
 

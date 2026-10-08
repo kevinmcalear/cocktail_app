@@ -2,6 +2,7 @@ import { deleteCocktailFn, updateCocktailFn } from '@/hooks/useCocktails';
 import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import Constants from 'expo-constants';
 import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
@@ -25,6 +26,8 @@ if (Platform.OS !== 'web') {
 }
 
 const HOUR = 1000 * 60 * 60;
+/** How long a saved result is worth showing on launch (and kept in memory unused): a week. */
+const KEEP = HOUR * 24 * 7;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +38,8 @@ export const queryClient = new QueryClient({
       // available one.
       retry: (failures, error) => (error as { code?: string } | null)?.code !== 'PGRST116' && failures < 2,
       refetchOnWindowFocus: true,
-      gcTime: HOUR * 24,
+      // As long as the saved cache lasts, or the persister drops what it restored.
+      gcTime: KEEP,
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
@@ -75,6 +79,11 @@ export const asyncStoragePersister = createCachePersister(guardStorage(AsyncStor
 /** What's saved to storage between launches: see lib/queryCachePersist.ts. */
 export const persistOptions = {
   persister: asyncStoragePersister,
+  // A week, not the 24 h default: opening the app after a weekend paints the
+  // last results at once and refreshes behind them. A new app version starts
+  // clean, since its query shapes may differ (an OTA bumps a key instead).
+  maxAge: KEEP,
+  buster: Constants.expoConfig?.version ?? '',
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
