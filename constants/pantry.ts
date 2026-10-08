@@ -94,6 +94,7 @@ export const PANTRY = {
   redWine: '#5A1424',
   rosemary: '#4E6A4A',
   tea: '#4A5A2A',
+  blackTea: '#4A2C1C',
   coffee: '#4A2A1A',
   dark: '#4A2416',
   greenBand: '#3F6A4A',
@@ -130,5 +131,6 @@ export const PANTRY = {
   soySauce: '#2A1610',
   wood: '#A87A4A',
   tobacco: '#7A5228',
+  hojicha: '#7A4626',
   pollen: '#E6B030',
 } as const;

@@ -30,7 +30,7 @@ const COLOURS: [RegExp, string][] = [
   [/tomato/, PANTRY.tomato], [/cucumber|celery/, PANTRY.cucumber], [/chil+i|jalape|habanero|chipotle|pepper(?!corn)/, PANTRY.chilli], [/carrot/, PANTRY.carrot],
   [/ginger/, PANTRY.ginger], [/rhubarb/, PANTRY.rhubarb], [/beet/, PANTRY.beet], [/hibiscus/, PANTRY.hibiscus], [/rose(?!mary)/, PANTRY.rosePetal],
   [/lavender|violet/, PANTRY.lavender], [/butterfly pea/, PANTRY.butterflyPea], [/elderflower|chamomile|jasmine|blossom/, PANTRY.paleFlower],
-  [/\bmint|basil|shiso|herb/, PANTRY.mint], [/matcha/, PANTRY.matcha], [/coffee|espresso|cacao|chocolate|cocoa/, PANTRY.cocoa],
+  [/\bmint|basil|shiso|herb/, PANTRY.mint], [/matcha/, PANTRY.matcha], [/hojicha|houjicha|\bhoji\b|rooibos/, PANTRY.hojicha], [/coffee|espresso|cacao|chocolate|cocoa/, PANTRY.cocoa],
   [/vanilla/, PANTRY.vanilla], [/cinnamon/, PANTRY.cinnamon], [/honey/, PANTRY.honey], [/maple|caramel|molasses|brown sugar|demerara|muscovado/, PANTRY.caramel],
   [/almond|orgeat|horchata/, PANTRY.almond], [/pistachio/, PANTRY.pistachio], [/hazelnut|walnut|pecan|peanut|nut/, PANTRY.nut],
 ];
@@ -79,7 +79,9 @@ const RULES: [RegExp, (n: string) => IngredientArt][] = [
   [/rose(?!mary)|hibiscus|elderflower|lavender|violet|chamomile|jasmine|butterfly pea|marigold|blossom|flower|geranium|chrysanthemum|meadowsweet|yarrow/, (n) => produce({ kind: 'flower', color: colourOf(n) ?? PANTRY.pinkFlower })],
   [/cinnamon|vanilla|cassia/, (n) => heap(colourOf(n) ?? PANTRY.cinnamon, 'stick')],
   [/coffee|espresso|cacao nib/, () => heap(PANTRY.coffee, 'bean')],
-  [/\btea\b|matcha|hojicha|genmaicha|rooibos/, (n) => (/matcha/.test(n) ? heap(PANTRY.matcha, 'powder') : heap(PANTRY.tea, 'leaf'))],
+  // green leaves unless roasted (hojicha) or black
+  [/\btea\b|matcha|hojicha|houjicha|\bhoji\b|genmaicha|rooibos/, (n) => /matcha/.test(n) ? heap(PANTRY.matcha, 'powder')
+    : heap(/hojicha|houjicha|\bhoji\b|roast|rooibos/.test(n) ? PANTRY.hojicha : /black|earl grey|assam|darjeeling|lapsang|ceylon|breakfast|chai/.test(n) ? PANTRY.blackTea : PANTRY.tea, 'leaf')],
   [/chocolate|cacao|cocoa|carob/, (n) => produce({ kind: 'bar', color: /white/.test(n) ? PANTRY.whiteChocolate : PANTRY.chocolate })],
   [/butter/, () => produce({ kind: 'bar', color: PANTRY.butter })],
   [/salt|msg/, () => heap(PANTRY.salt, 'crystal')],
