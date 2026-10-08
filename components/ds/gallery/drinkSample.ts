@@ -9,10 +9,10 @@ export { IMAGES as SAMPLE_IMAGES } from './samples';
 export const SAMPLE_LEVELS: SpecLevels = { generic: 20, brand: 30, measurement: 30, prep: 40 };
 
 const ROWS = [
-  { id: 'r1', brand: 'Monkey Shoulder', generic: 'Blended Scotch', amount: 60, unit: 'ml', note: null },
-  { id: 'r2', brand: 'Lemon juice', generic: 'Lemon juice', amount: 22.5, unit: 'ml', note: 'Juiced this afternoon' },
-  { id: 'r3', brand: 'Honey-ginger syrup', generic: 'Honey-ginger syrup', amount: 22.5, unit: 'ml', note: '2:1 honey, fresh ginger juice' },
-  { id: 'r4', brand: 'Laphroaig 10', generic: 'Islay Scotch', amount: 7.5, unit: 'ml', note: 'Float off a bar spoon' },
+  { id: 'r1', brand: 'Monkey Shoulder', generic: 'Blended Scotch', amount: 60, unit: 'ml', abv: 40, note: null },
+  { id: 'r2', brand: 'Lemon juice', generic: 'Lemon juice', amount: 22.5, unit: 'ml', abv: null, note: 'Juiced this afternoon' },
+  { id: 'r3', brand: 'Honey-ginger syrup', generic: 'Honey-ginger syrup', amount: 22.5, unit: 'ml', abv: null, note: '2:1 honey, fresh ginger juice' },
+  { id: 'r4', brand: 'Laphroaig 10', generic: 'Islay Scotch', amount: 7.5, unit: 'ml', abv: 40, note: 'Float off a bar spoon' },
 ];
 
 function masked(role: number): PresentationRecipe[] {
@@ -20,7 +20,7 @@ function masked(role: number): PresentationRecipe[] {
     const brand = role >= SAMPLE_LEVELS.brand;
     const generic = role >= SAMPLE_LEVELS.generic;
     const amounts = role >= SAMPLE_LEVELS.measurement;
-    const display = brand ? { id: `b-${r.id}`, name: r.brand } : generic ? { id: `g-${r.id}`, name: r.generic } : null;
+    const display = brand ? { id: `b-${r.id}`, name: r.brand, abv: r.abv } : generic ? { id: `g-${r.id}`, name: r.generic, abv: r.abv } : null;
     return {
       id: r.id,
       sort_order: i,

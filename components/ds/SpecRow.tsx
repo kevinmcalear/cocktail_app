@@ -22,7 +22,7 @@ export interface SpecRowProps {
   houseMade?: boolean;
   optional?: boolean;
   note?: string;
-  /** A second reading of the amount: "52.6 ml · 21.1 ml ethanol". */
+  /** A small line under the name, e.g. the ingredient's "40% ABV". */
   detail?: string;
   /** Service mode reads bigger (1.25). */
   scale?: number;

@@ -3,7 +3,7 @@
 // supabase/tests/drink-math.test.mjs expects the server to store.
 import assert from 'node:assert/strict';
 
-import { convertLine, density, dilutionFor, drinkStrength, formatAbv, formatAmount, isWaterLine, lineDetail, toMl } from './drinkMath';
+import { convertLine, density, dilutionFor, drinkStrength, formatAbv, formatAmount, isWaterLine, lineAmount, lineDetail, toMl } from './drinkMath';
 import { specLines } from './spec';
 
 const near = (a: number | null | undefined, b: number, msg?: string) => assert.ok(a != null && Math.abs(a - b) < 0.06, `${msg ?? ''} expected ${b}, got ${a}`);
@@ -83,14 +83,29 @@ assert.equal(formatAmount(52.66, 'ml'), '52.7 ml');
 assert.equal(formatAmount(1250, 'ml'), '1.25 L');
 assert.equal(formatAmount(1250, 'g'), '1.25 kg');
 assert.equal(formatAmount(60, 'oz'), '2 oz');
-assert.equal(formatAmount(22.5, 'oz'), '0.76 oz');
+assert.equal(formatAmount(22.5, 'oz'), '0.75 oz', 'snaps to the jigger line');
+assert.equal(formatAmount(20, 'oz'), '0.68 oz', 'too far from a quarter to snap');
+assert.equal(formatAmount(45, 'oz'), '1.5 oz');
 const rumG = specLines([row('r', 'White rum', 50, 'g', 40)])[0];
 assert.equal(convertLine(rumG, 'g', density('White rum', 40)), null, 'already in grams');
 assert.equal(convertLine(rumG, 'ml', density('White rum', 40)), '52.7 ml');
 assert.equal(convertLine(rumG, 'oz', density('White rum', 40)), '1.8 oz');
-assert.equal(lineDetail(rumG, 'ml'), '52.7 ml · 21.1 ml ethanol');
-assert.equal(lineDetail(specLines([row('l', 'Lime juice', 25, 'ml')])[0], 'g'), '26 g');
-assert.equal(lineDetail(specLines([row('l', 'Lime juice', 25, 'ml')])[0], 'ml'), null);
-assert.equal(lineDetail(specLines([row('t', 'Lemon', 1, 'twist')])[0], 'g'), null);
+
+// The switch changes the main amount; dashes and counts stay as written.
+const ginOz = specLines([row('g', 'London Dry Gin', 1, 'oz', 42)])[0];
+assert.equal(lineAmount(ginOz, 'oz'), '1 oz');
+assert.equal(lineAmount(ginOz, 'ml'), '29.6 ml');
+assert.equal(lineAmount(ginOz, 'g'), '27.9 g');
+const lime = specLines([row('l', 'Lime juice', 22.5, 'ml')])[0];
+assert.equal(lineAmount(lime, 'ml'), '22.5 ml');
+assert.equal(lineAmount(lime, 'oz'), '0.75 oz');
+assert.equal(lineAmount(specLines([row('b', 'Angostura bitters', 2, 'dashes', 44.7)])[0], 'ml'), '2 dashes');
+assert.equal(lineAmount(specLines([row('t', 'Lemon', 1, 'twist')])[0], 'oz'), '1 twist');
+
+// The line under the name is the ingredient's own strength.
+assert.equal(lineDetail(ginOz), '42% ABV');
+assert.equal(lineDetail(rumG), '40% ABV');
+assert.equal(lineDetail(lime), null, 'no ABV on file');
+assert.equal(lineDetail(specLines([row('s', 'Simple syrup', 15, 'ml', 0)])[0]), null, 'non-alcoholic');
 
 console.log('drinkMath: ok');

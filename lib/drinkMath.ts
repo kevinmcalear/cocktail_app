@@ -138,30 +138,45 @@ export function formatAbv(abv: number | null | undefined): string | null {
   return abv == null ? null : `${trim(abv, 1)}%`;
 }
 
-/** "122 ml", "1.2 L", "4.1 oz", "52.6 g". */
+/** Within 3% of a quarter ounce, read it as the jigger line (22.5 ml is 0.75 oz, not 0.76). */
+function jiggerOz(oz: number): number {
+  const quarter = Math.round(oz * 4) / 4;
+  return quarter > 0 && Math.abs(oz - quarter) / quarter <= 0.03 ? quarter : oz;
+}
+
+/** "122 ml", "1.2 L", "4.1 oz", "0.75 oz", "52.6 g". */
 export function formatAmount(value: number, unit: MassUnit): string {
-  if (unit === 'oz') return `${trim(value / ML_PER_OZ, value / ML_PER_OZ < 1 ? 2 : 1)} oz`;
+  if (unit === 'oz') {
+    const oz = jiggerOz(value / ML_PER_OZ);
+    return `${trim(oz, oz < 1 ? 2 : 1)} oz`;
+  }
   if (value >= 1000) return `${trim(value / 1000, 2)} ${unit === 'g' ? 'kg' : 'L'}`;
   return `${trim(value, value < 10 ? 1 : value < 100 ? 1 : 0)} ${unit}`;
 }
 
+/** Units a spec line converts between; dashes, spoons and counts stay as written. */
+const MEASURES = new Set(['ml', 'cl', 'dl', 'l', 'oz', 'fl oz', 'g', 'kg']);
+
 /**
  * A spec line read in another unit: a weighed line in ml or oz, a poured
- * line in grams. Null when the line has no amount, the unit is a count, or
- * it's already in that unit.
+ * line in grams. Null when the line has no amount, it's a dash, spoon or
+ * count, or it's already in that unit.
  */
 export function convertLine(line: Pick<SpecLine, 'value' | 'unit' | 'ml' | 'ingredient' | 'abv'>, to: MassUnit, gPerMl: number): string | null {
   if (line.value === null || line.ml === null) return null;
   const u = (line.unit ?? '').toLowerCase();
-  if ((to === 'g' && u === 'g') || (to === 'ml' && u === 'ml') || (to === 'oz' && u === 'oz')) return null;
+  if (!MEASURES.has(u)) return null;
+  if ((to === 'g' && u === 'g') || (to === 'ml' && u === 'ml') || (to === 'oz' && (u === 'oz' || u === 'fl oz'))) return null;
   if (to === 'g') return formatAmount(line.ml * gPerMl, 'g');
   return formatAmount(line.ml, to);
 }
 
-/** "52.6 ml · 21.1 ml ethanol", for the small line under a spec row. */
-export function lineDetail(line: SpecLine, to: MassUnit): string | null {
-  const converted = convertLine(line, to, density(line.ingredient, line.abv, line.density));
-  const ethanol = line.ml !== null && line.abv ? `${trim(ethanolMl(line.ml, line.abv), 1)} ml ethanol` : null;
-  const parts = [converted, ethanol].filter(Boolean);
-  return parts.length ? parts.join(' · ') : null;
+/** A spec line's amount in the person's unit, or as written when it doesn't convert. */
+export function lineAmount(line: SpecLine, to: MassUnit): string | null {
+  return convertLine(line, to, density(line.ingredient, line.abv, line.density)) ?? line.amount;
+}
+
+/** "40% ABV", for the small line under a spec row; null for anything without alcohol. */
+export function lineDetail(line: Pick<SpecLine, 'abv'>): string | null {
+  return line.abv && line.abv > 0 ? `${formatAbv(line.abv)} ABV` : null;
 }
