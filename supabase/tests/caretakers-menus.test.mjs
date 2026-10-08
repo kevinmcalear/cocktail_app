@@ -109,7 +109,7 @@ describe("Caretaker's Cottage menus", () => {
     assert.deepEqual(bottles, [
       { name: 'Chamomile-Infused Mezcal', generic: 'Mezcal' },
       { name: 'Four Pillars Christmas Gin', generic: 'Gin' },
-      { name: 'Olive Oil-Washed Rye', generic: 'Rye' },
+      { name: 'Olive Oil-Washed Rye', generic: 'Rye Whiskey' },
       { name: 'Purple Carrot-Infused Tequila', generic: 'Tequila' },
     ]);
   });

@@ -7,6 +7,7 @@ import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
+import { existingIngredientId } from '@/lib/ingredientNames';
 import { withDrinkInSection } from '@/lib/menuDrinkAttach';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -58,15 +59,21 @@ export function useCreateDrink() {
         const key = `${type}:${pick.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
         const known = made.get(key);
         if (known) return known;
-        // The dropdown lists stop at 1,000 rows, so a name missing from them may
-        // still exist: look it up (any case) before making another "Freezer Pour".
-        const { data: found } = await supabase
-          .from('items')
-          .select('id')
-          .eq('item_type', type)
-          .ilike('name', likeExactly(pick.name))
-          .limit(1)
-          .maybeSingle();
+        // A name missing from the picker may still exist, under any spelling or
+        // another name ("1:1 sugar syrup" is Simple Syrup): use that, never a copy.
+        const resolved = type === 'ingredient' ? await supabase.rpc('resolve_ingredient', { p_name: pick.name }) : null;
+        const found =
+          resolved && !resolved.error && resolved.data
+            ? { id: resolved.data as string }
+            : (
+                await supabase
+                  .from('items')
+                  .select('id')
+                  .eq('item_type', type)
+                  .ilike('name', likeExactly(pick.name))
+                  .limit(1)
+                  .maybeSingle()
+              ).data;
         if (found) {
           made.set(key, found.id);
           return found.id;
@@ -76,6 +83,12 @@ export function useCreateDrink() {
           .insert({ name: capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })
           .select('id')
           .single();
+        // The database knows a name we didn't (an alias added since): it says which to use.
+        const existing = existingIngredientId(error);
+        if (existing) {
+          made.set(key, existing);
+          return existing;
+        }
         if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
         made.set(key, data.id);
         createdLookups = true;

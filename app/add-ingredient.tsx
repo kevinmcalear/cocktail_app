@@ -291,9 +291,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
             return;
         }
 
-        const proceed = () => {
-            performSave();
-        };
+        const proceed = () => void performSave();
 
         Alert.alert(
             "Publish Ingredient",
@@ -565,6 +563,7 @@ export default function AddIngredientScreen({ isInline, draftIdProp, barIdProp, 
                             onGeneric={setGeneric}
                             ingredients={mergedIngredients}
                             excludeId={currentDraftId}
+                            sameAs={{ name, barId, rows: dropdowns?.ingredients ?? [], aliases: dropdowns?.ingredientAliases }}
                         />
 
                         <YStack gap="$2">

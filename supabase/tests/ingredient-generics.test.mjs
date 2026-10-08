@@ -129,7 +129,8 @@ describe('generic ingredients', () => {
     assert.equal(byName['sweet vermouth']?.generic, 'Vermouth');
     assert.equal(byName['dry vermouth']?.generic, 'Vermouth');
     assert.equal(byName['angostura bitters']?.generic, 'Aromatic Bitters');
-    assert.equal(byName.gin?.generic, null, 'a generic has no generic');
+    // Gin is a core ingredient, under the Spirit family since 20261008100100.
+    assert.ok([null, 'Spirit'].includes(byName.gin?.generic ?? null), 'a generic sits at the top, or under its family');
     // The spirit categories are production data; the local seed has none.
     const { rows: cats } = await db.query(`SELECT count(*)::int AS n FROM public.categories WHERE domain = 'spirit'`);
     if (cats[0].n) {
@@ -148,7 +149,12 @@ describe('generic ingredients', () => {
     assert.ok(counts[0].n > 0 && counts[0].with_generic === counts[0].n, `expected every listed bottle filled in, got ${counts[0].with_generic} of ${counts[0].n}`);
   });
 
-  test('running the backfill again changes nothing', async () => {
+  test('running the backfill again changes nothing', async (t) => {
+    // Since 20261008100000 a shared ingredient can't be made again under another
+    // name, and the core cleanup folded the backfill's generics ("Rye") into
+    // their core rows, so the old backfill can no longer run as written.
+    const { rows: guard } = await db.query("SELECT to_regclass('public.ingredient_aliases') IS NOT NULL AS on");
+    if (guard[0].on) return t.skip('superseded by one of each ingredient (20261008100000)');
     const backfill = readFileSync(MIGRATION, 'utf8').split('-- The shared bottles')[1].replace(/^-{10,}\n/, '');
     const count = async () =>
       (

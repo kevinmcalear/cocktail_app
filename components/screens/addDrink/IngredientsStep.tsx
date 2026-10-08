@@ -4,27 +4,37 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, searchByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { LineRow } from './LineRow';
 import { WizardChip } from './WizardChrome';
 
-type Ingredient = { id: string; name: string | null };
+type Ingredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null };
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
 
 /**
  * The spec so far, each line with a stepper; a field to find an ingredient
- * (or add a new one); and quick adds for the common ones.
+ * (or add a new one); and quick adds for the common ones. A name that is
+ * already an ingredient, by another spelling or alias, offers that one and
+ * not a copy; a likely misspelling asks "Did you mean…?" first.
  */
-export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingredients: readonly Ingredient[] }) {
+export function IngredientsStep({
+  draft,
+  set,
+  ingredients,
+  aliases = [],
+  coreIds,
+}: StepProps & { ingredients: readonly Ingredient[]; aliases?: readonly IngredientAlias[]; coreIds?: ReadonlySet<string> }) {
   const ds = useDs();
   const [query, setQuery] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const results = searchByName(query, ingredients);
-  const exact = results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
+  const results = searchIngredients(query, ingredients, { aliases, coreIds });
+  const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
+  const near = exact ? null : nearIngredient(query, ingredients, aliases);
 
   const add = (pick: WizardPick) => {
     set({ lines: [...draft.lines, newLine(pick, guessUnit(pick.name, getPreferredUnit()))] });
@@ -72,6 +82,9 @@ export function IngredientsStep({ draft, set, ingredients }: StepProps & { ingre
 
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
+          {near && !results.includes(near) ? (
+            <ResultRow label={`Did you mean ${near.name}?`} onPress={() => add({ id: near.id, name: near.name ?? query })} />
+          ) : null}
           {results.map((r) => (
             <ResultRow key={r.id} label={r.name ?? ''} onPress={() => add({ id: r.id, name: r.name ?? query })} />
           ))}
