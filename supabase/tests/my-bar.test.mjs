@@ -1,5 +1,6 @@
 // My Bar's "can make" and an ingredient's "Used in" in SQL
-// (supabase/migrations/20261008340000_my_bar_rpc.sql). The can-make cases are
+// (supabase/migrations/20261008340000_my_bar_rpc.sql, and the kind-of tree,
+// two away and uses from 20261009950000_my_bar_kinds.sql). The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -72,15 +73,17 @@ async function shelve(user, keys) {
   }
 }
 
-/** This run's drinks in my_bar_drinks: { canMake: [keys], away: { drink key: missing key } }. */
-async function myBar(user) {
-  const { data, error } = await users[user].client.rpc('my_bar_drinks');
+/** This run's drinks in my_bar_drinks: { canMake: [keys], away: { drink key: missing key }, two: { drink key: [missing keys] } }. */
+async function myBar(user, args = {}) {
+  const { data, error } = await users[user].client.rpc('my_bar_drinks', args);
   assert.ifError(error);
   const key = Object.fromEntries(Object.entries(ids).map(([k, v]) => [v, k]));
   const mine = data.filter((r) => key[r.id]);
   return {
     canMake: mine.filter((r) => !r.missing_id).map((r) => key[r.id]).sort(),
-    away: Object.fromEntries(mine.filter((r) => r.missing_id).map((r) => [key[r.id], key[r.missing_id] ?? r.missing_id])),
+    away: Object.fromEntries(mine.filter((r) => r.missing_id && !r.missing2_id).map((r) => [key[r.id], key[r.missing_id] ?? r.missing_id])),
+    two: Object.fromEntries(mine.filter((r) => r.missing2_id).map((r) => [key[r.id], [key[r.missing_id], key[r.missing2_id]].sort()])),
+    uses: Object.fromEntries(mine.map((r) => [key[r.id], r.uses.map((u) => key[u]).sort()])),
     rows: mine,
   };
 }
@@ -93,6 +96,20 @@ before(async () => {
     await item(name, { name, item_type: 'ingredient' });
   }
   for (const name of ['negroni', 'martini', 'gold-rush', 'bees-knees', 'old-pal', 'empty', 'loop']) await item(name, { name, item_type: 'cocktail' });
+  // The kind-of tree: Woodford is a Bourbon, a Whiskey, a Spirit; Rye Whiskey is another Whiskey; Lime and Yuzu are Citrus.
+  for (const name of ['spirit', 'citrus']) await item(name, { name, item_type: 'ingredient', ingredient_role: 'generic' });
+  await item('whiskey', { name: 'whiskey', item_type: 'ingredient', ingredient_role: 'generic', generic_id: ids.spirit });
+  await item('bourbon-style', { name: 'bourbon style', item_type: 'ingredient', ingredient_role: 'generic', generic_id: ids.whiskey });
+  await item('rye-whiskey', { name: 'rye whiskey', item_type: 'ingredient', ingredient_role: 'generic', generic_id: ids.whiskey });
+  await item('woodford', { name: 'woodford', item_type: 'ingredient', ingredient_role: 'product', generic_id: ids['bourbon-style'] });
+  await item('buffalo', { name: 'buffalo', item_type: 'ingredient', ingredient_role: 'product', generic_id: ids['bourbon-style'] });
+  for (const name of ['lime', 'yuzu']) await item(name, { name, item_type: 'ingredient', ingredient_role: 'generic', generic_id: ids.citrus });
+  for (const name of ['whiskey-sour', 'rye-sour', 'buffalo-sour', 'any-spirit', 'yuzu-sour']) await item(name, { name, item_type: 'cocktail' });
+  await recipe('whiskey-sour', [['whiskey'], ['lemon']]);
+  await recipe('rye-sour', [['rye-whiskey'], ['lemon']]);
+  await recipe('buffalo-sour', [['buffalo'], ['lemon']]);
+  await recipe('any-spirit', [['spirit'], ['lime']]);
+  await recipe('yuzu-sour', [['yuzu'], ['lemon']]);
   await recipe('negroni', [['tanqueray', 'gin'], ['carpano', 'sweet-vermouth'], ['campari']]);
   await recipe('martini', [['gin'], ['dry-vermouth'], ['olive', null, true]]);
   await recipe('gold-rush', [['bourbon'], ['lemon'], ['honey-syrup']]);
@@ -178,6 +195,30 @@ describe('my_bar_drinks', () => {
     assert.equal(r.away.house, 'campari');
     await shelve('home', ['gin']);
     assert.ok(!('house' in (await myBar('home')).away), 'a non-member cannot read the bar drink');
+  });
+
+  test('a bottle covers lines for anything it is a kind of, however far up, and other bottles of its style', async () => {
+    await shelve('home', ['woodford', 'lemon', 'lime']);
+    const r = await myBar('home');
+    for (const drink of ['whiskey-sour', 'buffalo-sour', 'any-spirit']) assert.ok(r.canMake.includes(drink), drink);
+    assert.deepEqual(r.uses['whiskey-sour'], ['lemon', 'woodford'], 'uses names the shelf rows a drink needs');
+  });
+
+  test('but not a sibling style, and a plain ingredient covers no siblings', async () => {
+    await shelve('home', ['woodford', 'lemon', 'lime']);
+    const r = await myBar('home');
+    assert.equal(r.away['rye-sour'], 'rye-whiskey', 'bourbon is a whiskey, but a rye line wants rye, and says so');
+    assert.equal(r.away['yuzu-sour'], 'yuzu', 'a lime is citrus, but covers no yuzu');
+  });
+
+  test('two away only when asked, so older apps see the same rows', async () => {
+    await shelve('home', ['campari']);
+    const one = await myBar('home');
+    assert.ok(!('old-pal' in one.away) && !('old-pal' in one.two));
+    const two = await myBar('home', { p_two_away: true });
+    assert.deepEqual(two.two['old-pal'], ['dry-vermouth', 'rye']);
+    assert.equal(two.away.negroni, undefined, 'the negroni needs gin and vermouth: two');
+    assert.deepEqual(two.two.negroni, ['gin', 'sweet-vermouth']);
   });
 
   test('pages A to Z after a name and id', async () => {

@@ -12,6 +12,8 @@ import { arrangeShelf, bottleLine, type ShelfSort } from '@/lib/pantry';
 
 const SORTS: { value: ShelfSort; label: string }[] = [
   { value: 'newest', label: 'Newest' },
+  { value: 'used', label: 'Most used' },
+  { value: 'unused', label: 'Unused' },
   { value: 'az', label: 'A to Z' },
   { value: 'style', label: 'By style' },
 ];
@@ -62,7 +64,11 @@ export function ShelfSection({ bottles, onRemove }: ShelfSectionProps) {
             <BottleRow item={item} onRemove={onRemove} />
           </View>
         ))}
-        {query.trim() && !arranged.length ? <Body tone="muted">No bottle on your shelf matches “{query.trim()}”.</Body> : null}
+        {query.trim() && !arranged.length ? (
+          <Body tone="muted">No bottle on your shelf matches “{query.trim()}”.</Body>
+        ) : sort === 'unused' && !arranged.length ? (
+          <Body tone="muted">Every bottle goes into something you can make.</Body>
+        ) : null}
       </View>
       {!query.trim() && arranged.length > FOLDED ? (
         <Button label={open ? 'Show fewer' : `Show all ${arranged.length}`} variant="ghost" onPress={() => setOpen(!open)} />
@@ -75,13 +81,14 @@ function BottleRow({ item, onRemove }: { item: ShelfItem; onRemove: (item: Shelf
   const ds = useDs();
   const router = useRouter();
   const line = bottleLine(item);
+  const used = item.uses ? `In ${item.uses} ${item.uses === 1 ? 'drink' : 'drinks'}` : 'Not used yet';
   const remove = async () => {
     const ok = await confirmAsync({ title: `Take ${item.name} off your shelf?`, message: 'Drinks that need it leave What to make.', confirmText: 'Take off', destructive: true });
     if (ok) onRemove(item);
   };
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <PressableScale role="link" accessibilityLabel={line ? `${item.name}, ${line}` : item.name} onPress={() => router.push(itemHref('Ingredient', item.id) as never)} style={styles.open}>
+      <PressableScale role="link" accessibilityLabel={[item.name, line, used].filter(Boolean).join(', ')} onPress={() => router.push(itemHref('Ingredient', item.id) as never)} style={styles.open}>
         <IngredientThumb id={item.id} name={item.name} size={44} />
         <View style={styles.text}>
           <Body numberOfLines={1}>{item.name}</Body>
@@ -91,6 +98,9 @@ function BottleRow({ item, onRemove }: { item: ShelfItem; onRemove: (item: Shelf
             </Caption>
           ) : null}
         </View>
+        <Caption tone={item.uses ? 'accent' : 'muted'} aria-hidden>
+          {used}
+        </Caption>
       </PressableScale>
       <PressableScale accessibilityLabel={`Take ${item.name} off your shelf`} onPress={remove} style={styles.remove}>
         <IconSymbol name="xmark" size={16} color={ds.c.muted} />

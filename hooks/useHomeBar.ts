@@ -6,6 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { supabase } from '@/lib/supabase';
 
@@ -35,17 +36,8 @@ export interface ShelfItem extends BarItem {
   abv: number | null;
   /** What it's a kind of ("Bourbon"), when the person can see that. */
   kind: string | null;
-}
-
-/** A row of my_bar_drinks (supabase/migrations/20261008340000_my_bar_rpc.sql). */
-interface MatchRow {
-  id: string;
-  name: string;
-  image_url: string | null;
-  glassware_id: string | null;
-  /** The bottle that would make it, or null when the shelf already does. */
-  missing_id: string | null;
-  missing_name: string | null;
+  /** How many drinks you can make with it. */
+  uses: number;
 }
 
 const SHELF_KEY = ['home-bar'];
@@ -164,15 +156,22 @@ async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]
   return batches.flat();
 }
 
-/** What the shelf makes and what one more bottle would unlock, worked out on the server (my_bar_drinks). */
+/** What the shelf makes, and what one or two more bottles would unlock, worked out on the server (my_bar_drinks). */
 function useMatches() {
   return useQuery({
-    queryKey: [...SHELF_KEY, 'matches'],
+    queryKey: [...SHELF_KEY, 'matches', 2],
     queryFn: async (): Promise<MatchRow[]> => {
       const rows: MatchRow[] = [];
+      let twoAway = true;
       for (;;) {
         const last = rows[rows.length - 1];
-        const { data, error } = await supabase.rpc('my_bar_drinks', { p_after_name: last?.name ?? null, p_after_id: last?.id ?? null, p_limit: 1000 });
+        const args = { p_after_name: last?.name ?? null, p_after_id: last?.id ?? null, p_limit: 1000 };
+        let { data, error } = await supabase.rpc('my_bar_drinks', twoAway ? { ...args, p_two_away: true } : args);
+        // ponytail: a database without 20261009950000 doesn't know p_two_away; ask without it. Drop once it's in production.
+        if (error?.code === 'PGRST202' && twoAway) {
+          twoAway = false;
+          ({ data, error } = await supabase.rpc('my_bar_drinks', args));
+        }
         if (error) throw error;
         rows.push(...((data ?? []) as MatchRow[]));
         if ((data ?? []).length < 1000) return rows;
@@ -182,31 +181,23 @@ function useMatches() {
 }
 
 /**
- * What the shelf makes and what one more bottle would unlock, without the
- * shelf's own names: all the eight ball needs, so it never waits on them.
+ * What the shelf makes and what one or two more bottles would unlock,
+ * without the shelf's own names: all the eight ball needs, so it never waits on them.
  */
 export function useBarDrinks() {
   const matches = useMatches();
   const glass = useGlassIcons();
   return useMemo(() => {
     const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id) });
-    const rows = matches.data ?? [];
-    const canMake = rows.filter((r) => !r.missing_id).map(drink);
-    const away = new Map<string, { ingredient: BarItem; drinks: BarItem[] }>();
-    for (const r of rows) {
-      if (!r.missing_id) continue;
-      const group = away.get(r.missing_id) ?? {
-        ingredient: { id: r.missing_id, name: r.missing_name ?? '', type: 'ingredient' as const, imageUrl: null, glass: null },
-        drinks: [],
-      };
-      group.drinks.push(drink(r));
-      away.set(r.missing_id, group);
-    }
+    const sorted = sortMatches(matches.data ?? [], drink);
+    const bottle = (b: { id: string; name: string }): BarItem => ({ id: b.id, name: b.name, type: 'ingredient', imageUrl: null, glass: null });
     return {
-      canMake,
-      // Most drinks unlocked first, as lib/canMake.ts sorted them.
-      oneAway: [...away.values()].sort((a, b) => b.drinks.length - a.drinks.length || a.ingredient.id.localeCompare(b.ingredient.id)),
-      canMakeIds: new Set(canMake.map((d) => d.id)),
+      canMake: sorted.canMake,
+      oneAway: sorted.oneAway.map((g) => ({ bottles: g.buy.map(bottle), drinks: g.drinks })),
+      twoAway: sorted.twoAway.map((g) => ({ bottles: g.buy.map(bottle), drinks: g.drinks })),
+      /** Shelf row id to the number of drinks you can make with it. */
+      usedIn: sorted.usedIn,
+      canMakeIds: new Set(sorted.canMake.map((d) => d.id)),
       isLoading: matches.isLoading,
       error: matches.error,
     };
@@ -214,7 +205,7 @@ export function useBarDrinks() {
 }
 
 /** The shelf's bottles with what each is a kind of: the bottles, then the kinds' names. */
-async function readShelf(ids: string[]): Promise<ShelfItem[]> {
+async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses'>[]> {
   const rows = await readItems(ids, SHELF_SELECT);
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
   const kinds = new Map((kindIds.length ? await readItems(kindIds, 'id, name') : []).map((k) => [k.id, k.name]));
@@ -246,11 +237,16 @@ export function useMyBar() {
   return useMemo(() => {
     const byId = new Map((names.data ?? []).map((r) => [r.id, r]));
     // The shelf in the order it was filled, as far as the person can still see it.
-    const onShelf = ids.flatMap((id) => byId.get(id) ?? []);
+    const onShelf = ids.flatMap((id) => {
+      const r = byId.get(id);
+      return r ? [{ ...r, uses: drinks.usedIn[id] ?? 0 }] : [];
+    });
     return {
       shelf: onShelf,
       canMake: drinks.canMake,
       oneAway: drinks.oneAway,
+      twoAway: drinks.twoAway,
+      usedIn: drinks.usedIn,
       canMakeIds: drinks.canMakeIds,
       /** Everything on the shelf, before names load. */
       shelfIds: new Set(ids),
