@@ -62,7 +62,7 @@ export const EMPTY_INGREDIENT: IngredientDraft = { name: '', role: null, generic
 
 export const hasIngredientContent = (d: IngredientDraft) => !!(d.name.trim() || d.role || d.generic || d.maker.trim() || d.lines.length);
 
-const PREP = /syrup|infus|cordial|oleo|shrub|tincture|batch|house|fat[- ]?wash|cold brew|sherbet|foam|brine|solution|clarified|mix\b|blend|reduction|ferment/;
+const PREP = /syrup|orgeat|grenadine|falernum|gomme|sour mix|infus|cordial|oleo|shrub|tincture|batch|house|fat[- ]?wash|cold brew|sherbet|foam|brine|solution|clarified|mix\b|blend|reduction|ferment/;
 const PLAIN = /juice|peel|zest|leaves|leaf|sprig|wheel|wedge|\bmint\b|\begg\b|cream|milk|salt|sugar|water|ice\b|fruit|berr|cherr|olive|cucumber|ginger root/;
 
 /** A guess at what it is from its name and maker: "House Grenadine" is made in house, "Tanqueray" from a maker is a bottle. */
@@ -74,19 +74,28 @@ export function guessRole(name: string, maker: string): IngredientRole | null {
   return null;
 }
 
+const BROAD = /^(syrup|juice|liqueur|bitters|cordial|water|soda|cream|wine|spirit|sugar|tea|milk)$/;
+
 /**
  * The ingredients it's probably a kind of: core ones whose whole name is in
- * it, longest first ("Rich Demerara Syrup" → Demerara Syrup, then Syrup).
+ * it. Specific ones before broad ones ("House Grenadine Syrup" → Grenadine
+ * before Syrup), the one its name ends with first ("Pistachio Orgeat" is an
+ * orgeat), then longest first ("Rich Demerara Syrup" → Demerara Syrup).
  */
 export function kindGuesses<T extends { id: string; name: string | null }>(name: string, core: readonly T[], limit = 4): T[] {
   const words = ` ${ingredientKey(name)} `;
   if (!words.trim()) return [];
+  // A specific kind beats a broad one ("Grenadine" over "Syrup"); then the one the name ends with.
+  const rank = (c: T) => {
+    const k = ingredientKey(c.name);
+    return (BROAD.test(k) ? 0 : 2) + (words.endsWith(` ${k} `) ? 1 : 0);
+  };
   return core
     .filter((c) => {
       const k = ingredientKey(c.name);
       return !!k && ` ${k} ` !== words && words.includes(` ${k} `);
     })
-    .sort((a, b) => (b.name ?? '').length - (a.name ?? '').length)
+    .sort((a, b) => rank(b) - rank(a) || (b.name ?? '').length - (a.name ?? '').length)
     .slice(0, limit);
 }
 
