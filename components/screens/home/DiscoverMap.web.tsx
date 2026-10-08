@@ -72,7 +72,7 @@ function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: Disco
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    zIndex: selected ? '2' : pin.closed ? '0' : '1',
+    zIndex: String(look.zIndex),
   });
 }
 
