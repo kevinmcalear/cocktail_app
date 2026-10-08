@@ -8,7 +8,7 @@
     "ios": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --ios",
     "web": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --web",
     "lint": "expo lint",
-    "build:web": "APP_VARIANT=production TAMAGUI_DISABLE_SLIDER_INTERVAL=1 expo export -p web && node scripts/write-web-manifest.mjs && cp dist/+not-found.html dist/404.html",
+    "build:web": "APP_VARIANT=production TAMAGUI_DISABLE_SLIDER_INTERVAL=1 EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH=1 EXPO_UNSTABLE_TREE_SHAKING=1 expo export -p web && node scripts/write-web-manifest.mjs && cp dist/+not-found.html dist/404.html",
     "typecheck": "tsc --noEmit",
     "sentry:sourcemaps": "sentry-expo-upload-sourcemaps dist",
     "test:unit": "node scripts/run-checks.mjs && node --test \"scripts/__tests__/*.test.mjs\"",

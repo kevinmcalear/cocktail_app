@@ -1,15 +1,19 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, PressableScale, useDs } from '@/components/ds';
 import { BATCH_SAMPLES, batchSampleLines, type BatchSampleKey } from '@/components/ds/gallery/batchSamples';
 import { SAMPLE_IMAGES, SAMPLE_LEVELS, sampleDrink } from '@/components/ds/gallery/drinkSample';
-import { BatchScreen } from '@/components/screens/batch/BatchScreen';
-import { DrinkScreen } from '@/components/screens/drink/DrinkScreen';
 import { radius, space } from '@/constants/tokens';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
+
+// Through the drink page routes, not the components: a static import here made
+// the web build put the whole drink page in the chunk every page loads.
+const DrinkScreen = lazy(() => import('@/app/cocktail/[id]/index').then((m) => ({ default: m.DrinkScreen })));
+const BatchScreen = lazy(() => import('@/app/cocktail/[id]/batch').then((m) => ({ default: m.BatchScreen })));
 
 /**
  * The redesigned drink page with a sample Penicillin, masked as the server
@@ -18,6 +22,18 @@ import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
  * /dev/gallery.
  */
 export default function DrinkPreview() {
+  // The static export can't wait for the lazy drink page, and a suspended
+  // boundary there makes hydration fall back (React #419): render client-side.
+  const hydrated = useIsHydrated();
+  if (!hydrated) return null;
+  return (
+    <Suspense fallback={null}>
+      <Preview />
+    </Suspense>
+  );
+}
+
+function Preview() {
   const params = useLocalSearchParams<{ batch?: string }>();
   const [role, setRole] = useState(30);
   const [photo, setPhoto] = useState(true);
