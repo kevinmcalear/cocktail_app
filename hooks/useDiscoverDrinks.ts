@@ -2,8 +2,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
+import { allRowsById } from '@/lib/allRows';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
-import { filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { closedBars, filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { menuOrder, runDates, searchMenuTag } from '@/lib/menuEditions';
 import { areaParams, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
@@ -100,30 +101,31 @@ async function readDrinks(where: Record<string, string | number>, search: string
 }
 
 /**
- * The public, open bars in the area: the map's pins and the bars search
- * finds, including ones with no drinks listed. A box around a point (the
- * exact distance is checked on the device, lib/discoverDrinks.ts barInArea).
+ * The public bars in the area, closed ones too: the map's pins and the bars
+ * search finds, including ones with no drinks listed. A box around a point
+ * (the exact distance is checked on the device, lib/discoverDrinks.ts
+ * barInArea). Over a thousand everywhere, so a page at a time.
  */
 async function readBars(area: Area, signal: Signal): Promise<DiscoverBar[]> {
-  let query = supabase
-    .from('profiles')
-    .select('id, handle, display_name, avatar_url, locality, city, country_code, latitude, longitude')
-    .eq('kind', 'bar')
-    .eq('is_public', true)
-    .eq('is_closed', false);
-  if (area.kind === 'point') {
-    const dLat = area.radiusKm / 111.045;
-    const dLng = area.radiusKm / (111.045 * Math.max(Math.cos((area.latitude * Math.PI) / 180), 0.01));
-    query = query.gte('latitude', area.latitude - dLat).lte('latitude', area.latitude + dLat);
-    // ponytail: no longitude bound across the antimeridian; the device check still applies.
-    if (Math.abs(area.longitude) + dLng < 180) query = query.gte('longitude', area.longitude - dLng).lte('longitude', area.longitude + dLng);
-  } else if (area.kind === 'city') {
-    query = query.eq('country_code', area.country_code.toUpperCase()).ilike('city', area.city.replace(/[\\%_]/g, '\\$&'));
-  }
-  // About 500 public bars in all, under one page.
-  const { data, error } = await query.order('id').limit(PAGE).abortSignal(signal as AbortSignal);
-  if (error) throw error;
-  return (data ?? []).map((p) => ({
+  const rows = await allRowsById((after, size) => {
+    let query = supabase
+      .from('profiles')
+      .select('id, handle, display_name, avatar_url, locality, city, country_code, latitude, longitude, is_closed, closed_year')
+      .eq('kind', 'bar')
+      .eq('is_public', true);
+    if (area.kind === 'point') {
+      const dLat = area.radiusKm / 111.045;
+      const dLng = area.radiusKm / (111.045 * Math.max(Math.cos((area.latitude * Math.PI) / 180), 0.01));
+      query = query.gte('latitude', area.latitude - dLat).lte('latitude', area.latitude + dLat);
+      // ponytail: no longitude bound across the antimeridian; the device check still applies.
+      if (Math.abs(area.longitude) + dLng < 180) query = query.gte('longitude', area.longitude - dLng).lte('longitude', area.longitude + dLng);
+    } else if (area.kind === 'city') {
+      query = query.eq('country_code', area.country_code.toUpperCase()).ilike('city', area.city.replace(/[\\%_]/g, '\\$&'));
+    }
+    if (after) query = query.gt('id', after);
+    return query.order('id').limit(size).abortSignal(signal as AbortSignal);
+  });
+  return rows.map((p) => ({
     id: p.id,
     handle: p.handle,
     name: p.display_name,
@@ -133,6 +135,8 @@ async function readBars(area: Area, signal: Signal): Promise<DiscoverBar[]> {
     countryCode: p.country_code,
     latitude: p.latitude,
     longitude: p.longitude,
+    closed: p.is_closed,
+    closedYear: p.closed_year,
   }));
 }
 
@@ -150,7 +154,8 @@ const ALL_KEY = ['discover-drinks', areaParams(ANYWHERE), ''];
  * Empty (not loading) when signed out: shared drinks need an account.
  * Searching everywhere asks the server, unless every drink is already here.
  * `enabled` false holds the load (Discover waits for location before
- * loading everything); it reads as loading.
+ * loading everything); it reads as loading. `closed` is the closed bars in
+ * the area, which have no drinks here: Discover lists and pins them on ask.
  */
 export function useDiscoverResults(filter: DrinkFilter, enabled = true) {
   const signedIn = !!useAuth().user;
@@ -162,5 +167,5 @@ export function useDiscoverResults(filter: DrinkFilter, enabled = true) {
   const bars = query.data?.bars ?? [];
   const barsById = new Map(bars.map((b) => [b.id, b]));
   const drinks = query.data ? filterDrinks(query.data.drinks, barsById, filter) : [];
-  return { drinks, bars, barsById, isLoading: signedIn && query.isPending, error: query.error };
+  return { drinks, bars, barsById, closed: closedBars(bars, filter.area), isLoading: signedIn && query.isPending, error: query.error };
 }

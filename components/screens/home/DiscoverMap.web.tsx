@@ -66,12 +66,13 @@ function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: Disco
     border: `2px solid ${look.borderColor}`,
     background: look.backgroundColor,
     color: look.color,
+    opacity: String(look.opacity),
     font: `${type.caption.fontSize}px ${fontFamilies.monoMedium}, ui-monospace, monospace`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    zIndex: selected ? '2' : '1',
+    zIndex: selected ? '2' : pin.closed ? '0' : '1',
   });
 }
 

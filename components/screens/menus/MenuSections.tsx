@@ -1,13 +1,25 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Caption, DrinkImage, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
+
+/**
+ * The drink's picture beside its line on the page. Decorative: the line says
+ * what it is. Only a drink that opens has a real id to draw a sketch from.
+ */
+function DrinkThumb({ drink, opens }: { drink: MenuDrink; opens: boolean }) {
+  return (
+    <View style={styles.thumb} aria-hidden>
+      <DrinkImage source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={opens ? drink.id : null} accessibilityLabel={drink.name} radius="control" hideTag />
+    </View>
+  );
+}
 
 function DrinkLine({ drink, centered }: { drink: MenuDrink; centered: boolean }) {
   const price = formatPrice(drink.price);
@@ -34,8 +46,9 @@ interface MenuSectionsProps {
 }
 
 /**
- * A menu's sections, set like the printed menu. `page`: rows that open each
- * drink. `card`: centred and still, for the share card and print.
+ * A menu's sections, set like the printed menu. `page`: rows with each
+ * drink's picture that open it. `card`: centred, still and text only, for the
+ * share card and print.
  */
 export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) {
   const ds = useDs();
@@ -59,6 +72,7 @@ export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) 
               if (!to) {
                 return (
                   <View key={d.id} style={card ? styles.cardRow : [styles.row, { borderBottomColor: ds.c.line }]}>
+                    {card ? null : <DrinkThumb drink={d} opens={false} />}
                     <DrinkLine drink={d} centered={card} />
                   </View>
                 );
@@ -71,6 +85,7 @@ export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) 
                   onPress={() => router.push(to as never)}
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
+                  <DrinkThumb drink={d} opens />
                   <DrinkLine drink={d} centered={false} />
                 </PressableScale>
               );
@@ -87,7 +102,8 @@ const styles = StyleSheet.create({
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between' },
   sectionHeadCentered: { justifyContent: 'center' },
   sectionTitle: { letterSpacing: 1.5 },
-  row: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  thumb: { width: 56 },
   cardRow: { paddingVertical: space.xs },
   flex: { flex: 1, gap: 2 },
   centered: { alignItems: 'center', gap: 2 },

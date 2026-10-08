@@ -7,6 +7,7 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
+import { ClosedBars } from '@/components/screens/home/ClosedBars';
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
@@ -50,6 +51,7 @@ export function DiscoverScreen() {
   const [area, setArea] = useState<Area>(ANYWHERE);
   const [preferNear, setPreferNear] = useState(true);
   const [kinds, setKinds] = useState<string[]>([]);
+  const [showClosed, setShowClosed] = useState(false);
   const [search, setSearch] = useState('');
   const [scope, setScope] = useState<SearchScope>('area');
   const mine = useSearchMine();
@@ -120,6 +122,8 @@ export function DiscoverScreen() {
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
   const hereLabel = onMap ? 'This area' : areaChipLabel(area, preferNear);
+  const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed };
+  const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
   const note = areaStatus(near);
 
   const openSearch = () => {
@@ -158,7 +162,7 @@ export function DiscoverScreen() {
       <FilterRow
         area={area}
         preferNear={preferNear}
-        filters={kinds.length}
+        filters={kinds.length + (showClosed ? 1 : 0)}
         onArea={() => setSheet('area')}
         onFilters={() => setSheet('filters')}
         view={mapAvailable && !split ? { showing: phoneMap ? 'map' : 'list', onToggle: () => void toggleView() } : undefined}
@@ -170,7 +174,7 @@ export function DiscoverScreen() {
   if (sheet === 'search' && !split) {
     overlay = <DiscoverSearchSheet {...searchProps} />;
   } else if (sheet === 'filters') {
-    overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && !results.isLoading ? new Set(results.drinks.map((d) => d.barId)).size : null} onClose={close} />;
+    overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && !results.isLoading ? new Set(results.drinks.map((d) => d.barId)).size : null} closed={closed} onClose={close} />;
   } else if (sheet === 'area') {
     overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onClose={close} />;
   } else if (sheet === 'add') {
@@ -189,7 +193,7 @@ export function DiscoverScreen() {
           area={shownArea}
           onArea={onMapArea}
           drink={drink}
-          results={{ ...results, title }}
+          results={mapResults}
           onViewport={onViewport}
           bottomInset={bottom}
           top={
@@ -242,6 +246,7 @@ export function DiscoverScreen() {
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}
+        {searching ? null : <ClosedBars bars={results.closed} shown={showClosed} where={areaLabel(area)} onShow={setShowClosed} />}
         <TopBars area={area} />
         <ForYou />
         {signedIn ? (
@@ -259,7 +264,7 @@ export function DiscoverScreen() {
       {list}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} results={{ ...results, title }} onViewport={onViewport} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} results={mapResults} onViewport={onViewport} />
         </View>
       ) : null}
       {overlay}

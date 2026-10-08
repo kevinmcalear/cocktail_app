@@ -20,6 +20,19 @@ assert.equal(lines[2].ingredient, 'Islay Scotch', 'shows the generic name when t
 assert.equal(lines[3].ingredient, null, 'nothing shows when display_ingredient_id is masked');
 assert.equal(lines[3].amount, null);
 
+// Each line carries its ingredient's picture: the photo ahead of a sketch, or a public view's image_url.
+const pictured = specLines([
+  { id: 'p', sort_order: 1, display_ingredient_id: 'gin', display_ingredient: { id: 'gin', name: 'Gin', item_images: [
+    { angle: 'hero', is_generated: true, images: { url: 'https://x/sketch.png' } },
+    { angle: 'side', images: { url: 'https://x/side.png' } },
+    { angle: 'hero', is_generated: false, images: { url: 'https://x/photo.png' } },
+  ] } },
+  { id: 'q', sort_order: 2, display_ingredient_id: 'lime', display_ingredient: { id: 'lime', name: 'Lime', image_url: 'https://x/lime.png' } },
+  { id: 'r', sort_order: 3, display_ingredient_id: 'salt', display_ingredient: { id: 'salt', name: 'Salt' } },
+  { id: 's', sort_order: 4, display_ingredient_id: null, display_ingredient: { id: 'secret', name: 'Secret', image_url: 'https://x/secret.png' } },
+]);
+assert.deepEqual(pictured.map((l) => l.imageUrl), ['https://x/photo.png', 'https://x/lime.png', null, null], 'photo first, image_url, none, and nothing from a masked line');
+
 const r = ratio(lines);
 assert.ok(r && r.length === 3, 'ratio uses the three measured lines');
 assert.ok(Math.abs(r.reduce((s, x) => s + x.share, 0) - 1) < 1e-9);

@@ -1,11 +1,9 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, Headline } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { drinkCount, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
@@ -48,31 +46,6 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
   );
 }
 
-/** Bars, with their logo and where they are, opening the bar's page. */
-export function BarList({ bars }: { bars: DiscoverBar[] }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <View role="list">
-      {bars.map((b) => (
-        <PressableScale
-          key={b.id}
-          role="link"
-          accessibilityLabel={`${b.name}${place(b) ? `, ${place(b)}` : ''}`}
-          onPress={() => router.push(`/p/${b.handle || b.id}`)}
-          style={[styles.bar, { borderBottomColor: ds.c.line }]}
-        >
-          <UserAvatar uri={b.logo} name={b.name} size={40} />
-          <View style={styles.flex}>
-            <Headline numberOfLines={1}>{b.name}</Headline>
-            {place(b) ? <Caption tone="muted">{place(b)}</Caption> : null}
-          </View>
-        </PressableScale>
-      ))}
-    </View>
-  );
-}
-
 interface DrinksHereProps {
   title: string;
   drinks: DiscoverDrink[];
@@ -103,6 +76,4 @@ export function DrinksHere({ title, drinks, barsById, isLoading, signedIn, empty
 const styles = StyleSheet.create({
   section: { gap: space.xs },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
-  bar: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  flex: { flex: 1, minWidth: 0 },
 });
