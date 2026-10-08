@@ -32,7 +32,8 @@
       "channel": "production",
       "environment": "production",
       "env": {
-        "APP_VARIANT": "production"
+        "APP_VARIANT": "production",
+        "SENTRY_ALLOW_FAILURE": "true"
       }
     }
   },

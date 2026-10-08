@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { track } from '@/lib/analytics';
 import { getAuthSite } from '@/lib/authRedirect';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
@@ -105,6 +106,7 @@ export function useSendInviteEmail(barId: string) {
   return useMutation({
     mutationFn: (email: string) =>
       invokeFunction<{ sent: boolean }>('send-bar-invite', { bar_id: barId, email: email.trim().toLowerCase(), site: getAuthSite() }),
+    onSuccess: () => track('invite_sent'),
     onError: () => {},
   });
 }
