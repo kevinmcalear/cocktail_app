@@ -44,7 +44,9 @@ jest.mock('@/lib/supabase', () => ({
 jest.mock('@/lib/analytics', () => ({ track: () => {} }));
 jest.mock('@/lib/authRedirect', () => ({ getAuthRedirectTo: () => '' }));
 jest.mock('@/lib/clearUserData', () => ({ clearUserData: () => mockClear() }));
-jest.mock('@/lib/react-query', () => ({ queryClient: { resetQueries: () => Promise.resolve() } }));
+jest.mock('@/lib/react-query', () => ({
+  queryClient: { resetQueries: () => Promise.resolve(), getMutationCache: () => ({ getAll: () => [], remove: () => {} }) },
+}));
 
 beforeEach(() => {
   mockStoredReads = 0;
