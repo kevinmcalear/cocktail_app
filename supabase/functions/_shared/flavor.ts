@@ -58,10 +58,22 @@ export type Profile = Record<Dimension, number>;
 
 export const RULES_VERSION = 2;
 
+/**
+ * The dimensions a cached AI answer was asked about. Answers from before the
+ * twelve dimensions (no v) filed juniper under herbal and bitters under spicy,
+ * so the worker asks about those ingredients again.
+ */
+export const AI_FLAVOR_VERSION = 2;
+
+/** Whether a cached AI answer predates the current dimensions. */
+export const staleAiFlavor = (ai: IngredientFlavor | null | undefined): boolean => !!ai && ai.v !== AI_FLAVOR_VERSION;
+
 /** An ingredient's own taste, 0 to 1 per dimension, and its alcohol by volume (0.4 = 40%). */
 export interface IngredientFlavor {
   taste: Partial<Record<TasteDimension, number>>;
   abv: number;
+  /** On cached AI answers: the AI_FLAVOR_VERSION it was asked under. */
+  v?: number;
   /** What it looks like, from the same AI answer (see sketch.ts IngredientLook). */
   look?: { color: string; tint: number; foam?: string | null } | null;
 }
