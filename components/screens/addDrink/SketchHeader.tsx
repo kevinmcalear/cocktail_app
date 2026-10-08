@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
+import { AnimatedSketch } from '@/components/ds/AnimatedSketch';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
@@ -61,6 +62,10 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
   if (shown.now !== inputs) setShown({ now: inputs, before: shown.now, n: shown.n + 1 });
   const at = WIZARD_STEPS.indexOf(step);
   const counted = Math.min(at + 1, COUNTED_STEPS);
+  // The review step draws the finished drink again from a blank page; a tap replays it.
+  const reviewing = step === 'review';
+  const [play, setPlay] = useState(0);
+  const seed = draft.id ?? SEED;
 
   const scale = useSharedValue(1);
   useEffect(() => {
@@ -100,13 +105,22 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
         <>
           <Animated.View style={[styles.drawing, { width: size, height: size }, bounce]} aria-label="Sketch of the drink so far">
             {/* The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing. */}
-            {shown.before ? <Layer key={`out-${shown.n - 1}`} inputs={shown.before} seed={draft.id ?? SEED} from={1} to={0} /> : null}
-            <Layer key={`in-${shown.n}`} inputs={shown.now} seed={draft.id ?? SEED} from={0} to={1} />
+            {reviewing ? (
+              // A toy, not a control: the band's label already names the drawing.
+              <Pressable style={StyleSheet.absoluteFill} onPress={() => setPlay((n) => n + 1)} accessible={false}>
+                <AnimatedSketch inputs={inputs} seed={seed} play={play} />
+              </Pressable>
+            ) : (
+              <>
+                {shown.before ? <Layer key={`out-${shown.n - 1}`} inputs={shown.before} seed={seed} from={1} to={0} /> : null}
+                <Layer key={`in-${shown.n}`} inputs={shown.now} seed={seed} from={0} to={1} />
+              </>
+            )}
           </Animated.View>
           <View style={styles.foot}>
             <Tag label="Sketch" tone="sketch" />
             <Caption color={ink} style={styles.mono}>
-              Updates as you go
+              {reviewing ? 'Tap to draw it again' : 'Updates as you go'}
             </Caption>
           </View>
         </>
