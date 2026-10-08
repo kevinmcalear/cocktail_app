@@ -11,6 +11,7 @@ const mockNavigate = jest.fn();
 let mockProfile: MyProfile | null = null;
 let mockHad: HadDrink[] = [];
 
+jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
