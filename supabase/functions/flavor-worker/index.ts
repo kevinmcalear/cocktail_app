@@ -3,11 +3,14 @@ import { Buffer } from "node:buffer";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import {
+  AI_FLAVOR_VERSION,
   aiPrompt,
   parseAiFlavors,
   partWeight,
   profileFromSpec,
+  ruleFor,
   RULES_VERSION,
+  staleAiFlavor,
   TASTE_DIMENSIONS,
   type IngredientFlavor,
   type SpecPart,
@@ -225,8 +228,12 @@ Deno.serve(async (req) => {
       // How a drink looks only matters while it has no picture: only then is it worth an AI question.
       const askLooks = ctx.hasImage ? [] : looks.unknown.filter((l) => l.id).map((l) => l.id as string);
       const askDrink = !ctx.hasImage && looks.askDrink && !cachedDrink;
-      const askIds = new Set([...rules.unknown.map((p) => p.id).filter((id): id is string => !!id), ...askLooks]);
+      // Cached answers from before the current dimensions are asked again.
+      const stale = parts.filter((p) => p.id && staleAiFlavor(p.ai) && !ruleFor(p)).map((p) => p.id as string);
+      const askIds = new Set([...rules.unknown.map((p) => p.id).filter((id): id is string => !!id), ...askLooks, ...stale]);
       const ask = parts.filter((p): p is SpecPart & { id: string } => !!p.id && askIds.has(p.id));
+      // Only refreshing old answers: our change, so it isn't billed to the venue.
+      const refreshOnly = !askDrink && ask.every((p) => stale.includes(p.id));
 
       if ((!ask.length && !askDrink) || model === "off") {
         await saveSketch(job, looks);
@@ -242,12 +249,14 @@ Deno.serve(async (req) => {
       if (!ctx.hasSketch) await saveSketch(job, looks);
       await save(job, rules, false);
 
-      const { data: quota, error: quotaError } = await admin.rpc("consume_item_ai_quota", {
-        p_item_id: job.item_id,
-        p_fn: FN,
-        p_venue_daily_limit: venueLimit,
-        p_user_daily_limit: userLimit,
-      });
+      const { data: quota, error: quotaError } = refreshOnly
+        ? { data: "refresh", error: null }
+        : await admin.rpc("consume_item_ai_quota", {
+            p_item_id: job.item_id,
+            p_fn: FN,
+            p_venue_daily_limit: venueLimit,
+            p_user_daily_limit: userLimit,
+          });
       if (quotaError) throw quotaError;
       if (quota === "limit") {
         await release(job, "over_quota", "Daily AI allowance used up.");
@@ -262,7 +271,7 @@ Deno.serve(async (req) => {
         tally.sketches++;
         return true;
       }
-      charged = quota !== "no_payer";
+      charged = quota !== "no_payer" && quota !== "refresh";
 
       const drinkForPrompt = askDrink ? sketchDrink(ctx, parts, null) : null;
       const prompt = aiPrompt(ask, sketchPromptAddendum(drinkForPrompt));
@@ -275,7 +284,7 @@ Deno.serve(async (req) => {
       const filled = profileFromSpec(parts.map((p) => (p.id && answers.has(p.id) ? { ...p, ai: answers.get(p.id) } : p)));
       const ingredients = ask
         .filter((p) => answers.has(p.id))
-        .map((p) => ({ id: p.id, name: p.name, flavor: { ...answers.get(p.id)!, look: lookAnswers.get(p.id) ?? p.ai?.look ?? null } }));
+        .map((p) => ({ id: p.id, name: p.name, flavor: { ...answers.get(p.id)!, v: AI_FLAVOR_VERSION, look: lookAnswers.get(p.id) ?? p.ai?.look ?? null } }));
       const drawn = sketchFromDrink(sketchDrink(ctx, parts, drinkAnswer ?? cachedDrink, lookAnswers));
       await saveSketch(job, drawn, drinkAnswer ? { basis, answer: drinkAnswer } : undefined);
       await save(job, filled, true, ingredients);
