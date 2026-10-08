@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
@@ -7,7 +6,7 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useMyBar } from '@/hooks/useHomeBar';
+import { useDrinksById, useMyBar } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { CollectionCollected } from './CollectionCollected';
@@ -26,10 +25,7 @@ export function CollectionScreen() {
   const bottom = useTabBarInset();
   const { favorites } = useFavorites();
   const bar = useMyBar();
-  const hearted = useMemo(() => {
-    const ids = new Set(favorites);
-    return bar.drinks.filter((d) => ids.has(d.id));
-  }, [favorites, bar.drinks]);
+  const hearted = useDrinksById(favorites).drinks;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

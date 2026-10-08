@@ -43,7 +43,7 @@ export function useCocktailDraftEditor({
     enabled = true,
 }: UseCocktailDraftEditorOptions = {}) {
     const queryClient = useQueryClient();
-    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns();
+    const { data: dropdowns, isLoading: loadingDropdowns } = useDropdowns({ ingredients: true });
     const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
 
     const [currentDraftId, setCurrentDraftId] = useState<string | null>(initialDraftId || null);
@@ -451,7 +451,7 @@ export function useCocktailDraftEditor({
         try {
             const resolvedRecipeItems = [];
             for (const item of recipeItems) {
-                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
                 if (resolvedId !== item.ingredient_id) {
                     await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
                 }

@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MountOnFocus } from '@/components/nav/MountOnFocus';
 
 /**
  * The search circle beside the tabs: the one search, opened on the venue in
@@ -20,7 +21,9 @@ export default function SearchScreen() {
   return (
     <BackbarTheme>
       <Stack.Screen options={{ headerShown: false }} />
-      <Search />
+      <MountOnFocus>
+        <Search />
+      </MountOnFocus>
     </BackbarTheme>
   );
 }

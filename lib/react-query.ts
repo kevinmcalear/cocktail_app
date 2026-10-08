@@ -3,7 +3,8 @@ import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { AppState, Platform } from 'react-native';
 
 import { guardStorage, serializeCache, shouldPersistQuery } from '@/lib/queryCachePersist';
 
@@ -14,6 +15,18 @@ onlineManager.setEventListener((setOnline) => {
   });
 });
 
+// On iOS and Android "focus" is the app coming back to the foreground (the
+// browser's tab focus doesn't exist there), so stale queries on screen
+// refresh when someone returns to the app.
+if (Platform.OS !== 'web') {
+  focusManager.setEventListener((setFocused) => {
+    const sub = AppState.addEventListener('change', (state) => setFocused(state === 'active'));
+    return () => sub.remove();
+  });
+}
+
+const HOUR = 1000 * 60 * 60;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -23,7 +36,7 @@ export const queryClient = new QueryClient({
       // available one.
       retry: (failures, error) => (error as { code?: string } | null)?.code !== 'PGRST116' && failures < 2,
       refetchOnWindowFocus: true,
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      gcTime: HOUR * 24,
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
@@ -60,8 +73,8 @@ export const asyncStoragePersister = createAsyncStoragePersister({
   storage: guardStorage(AsyncStorage),
   // The cache is one storage row; Android can't read one over about 2 MB back.
   serialize: serializeCache,
-  // Throttling saves performance by not writing to local storage too frequently
-  throttleTime: 1000,
+  // Each save serializes the whole cache, so save at most every 5 seconds.
+  throttleTime: 5000,
 });
 
 /** What's saved to storage between launches: see lib/queryCachePersist.ts. */
@@ -69,6 +82,13 @@ export const persistOptions = {
   persister: asyncStoragePersister,
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
+
+// Lists that change rarely (and are refreshed by the writes that change
+// them) stay fresh for an hour, so a restored cache doesn't refetch them all
+// at launch. A hook's own staleTime wins over these.
+for (const key of [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars'], ['my-taste'], ['my-ranked-ids']]) {
+  queryClient.setQueryDefaults(key, { staleTime: HOUR });
+}
 
 // Register mutation defaults so they can resume offline
 queryClient.setMutationDefaults(['updateCocktail'], { mutationFn: updateCocktailFn });

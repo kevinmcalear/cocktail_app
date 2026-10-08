@@ -66,7 +66,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const step: WizardStep = kept?.step ?? 'name';
   const [resumed, setResumed] = useState(() => hasContent(draft));
   const [direction, setDirection] = useState<1 | -1>(1);
-  const dropdowns = useDropdowns().data;
+  const dropdowns = useDropdowns({ ingredients: true }).data;
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
   const barGlasses = useBarGlassware(barId).data;
@@ -137,7 +137,7 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
       case 'name':
         return <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />;
       case 'ingredients':
-        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
+        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'method':
         return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
       case 'glass':

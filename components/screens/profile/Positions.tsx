@@ -6,6 +6,8 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
 
+import { pendingNote } from './JobRequests';
+
 /**
  * Where someone works now, and each past job (many from public research on
  * unclaimed profiles) only once the person switches it on. RLS hides the rest
@@ -34,7 +36,10 @@ export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' 
       <View role="list">
         {positions.map((p) => {
           const other = onPerson ? p.bar : p.person;
-          const title = p.is_current ? p.title : `Formerly ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`;
+          const job = p.is_current ? p.title : `Formerly ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}`;
+          // Only the two sides and moderators can read a job that isn't confirmed yet.
+          const pending = pendingNote(p);
+          const title = pending ? `${job} · ${pending}` : job;
           return (
             <PressableScale
               key={p.id}
@@ -48,7 +53,7 @@ export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' 
                 <DsText variant="headline" numberOfLines={1}>
                   {other.display_name}
                 </DsText>
-                <Caption tone="muted" numberOfLines={1}>
+                <Caption tone="muted" numberOfLines={pending ? 2 : 1}>
                   {title}
                 </Caption>
               </View>

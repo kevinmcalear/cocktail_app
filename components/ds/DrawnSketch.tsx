@@ -23,9 +23,11 @@ function Loaded({ itemId, fallback }: DrawnSketchProps) {
   const [width, setWidth] = useState(0);
   if (person) return <Image source={{ uri: person }} style={styles.fill} contentFit="cover" transition={200} />;
   if (!sketch) return <>{fallback}</>;
+  // Draws straight away as a thumb and adds the full detail once it's measured
+  // wide, so a missing or slow layout event never leaves blank paper.
   return (
     <View style={styles.fill} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {width > 0 ? <SketchDrawing inputs={sketch} seed={itemId} detail={width < THUMB_WIDTH ? 'thumb' : 'full'} /> : null}
+      <SketchDrawing inputs={sketch} seed={itemId} detail={width < THUMB_WIDTH ? 'thumb' : 'full'} />
     </View>
   );
 }

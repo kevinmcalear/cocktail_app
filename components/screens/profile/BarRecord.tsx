@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
@@ -8,6 +9,8 @@ import { withAlpha } from '@/lib/color';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
 import { editionDates, editionDrinkLine, timelineDates, type MenuEdition } from '@/lib/menuEditions';
+
+import { AWARD_LOGOS } from './awardLogos';
 
 const FIRST_MENUS = 6;
 
@@ -35,9 +38,13 @@ export function Awards({ profileId }: { profileId: string }) {
           <View key={g.award} role="listitem" style={[styles.award, { borderBottomColor: ds.c.line }]}>
             <View style={styles.awardHead}>
               <View style={[styles.logo, { backgroundColor: ds.c.paper, borderColor: ds.c.line }]} aria-hidden>
-                <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
-                  {awardInitials(g.award)}
-                </DsText>
+                {AWARD_LOGOS[g.award] ? (
+                  <Image source={AWARD_LOGOS[g.award]} style={styles.logoImg} contentFit="contain" accessible={false} />
+                ) : (
+                  <DsText variant="caption" style={{ color: ds.c.sketchInk }}>
+                    {awardInitials(g.award)}
+                  </DsText>
+                )}
               </View>
               <DsText variant="headline" style={styles.flex}>
                 {g.award}
@@ -139,6 +146,7 @@ const styles = StyleSheet.create({
   award: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   awardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  logoImg: { width: '100%', height: '100%' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   edition: { flexDirection: 'row', gap: space.md },
   rail: { width: 14, alignItems: 'center' },

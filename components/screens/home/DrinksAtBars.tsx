@@ -12,10 +12,14 @@ import { itemHref } from '@/lib/itemRoutes';
 
 const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
 
-/** Drinks, each with the bar that makes it; the first `limit`, then "Show all". */
+/** How many more drinks each "Show more" adds: "anywhere" can be thousands, too many to lay out at once. */
+const MORE = 40;
+
+/** Drinks, each with the bar that makes it; the first `limit`, then more a page at a time. */
 export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; limit?: number }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? drinks : drinks.slice(0, limit);
+  const [count, setCount] = useState(limit);
+  const shown = drinks.slice(0, count);
+  const next = Math.min(MORE, drinks.length - shown.length);
   return (
     <View role="list">
       {shown.map((d) => {
@@ -35,9 +39,9 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
           />
         );
       })}
-      {drinks.length > shown.length ? (
+      {next > 0 ? (
         <View style={styles.more}>
-          <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} />
+          <Button label={`Show ${next} more of ${drinks.length}`} variant="ghost" onPress={() => setCount(shown.length + next)} />
         </View>
       ) : null}
     </View>

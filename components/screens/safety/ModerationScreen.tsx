@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DrinkImage, Field, Headline, Segmented, Surface, Tag } from '@/components/ds';
+import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { space } from '@/constants/tokens';
 import { hideTarget, useIsModerator, useReportQueue, useResolveReport, useSetContentHidden, type QueuedReport } from '@/hooks/useModeration';
 import { reasonLabel } from '@/lib/safety';
@@ -37,6 +38,7 @@ export function ModerationScreen() {
   }
   return (
     <SafetyPage title="Reports" intro="What people have reported. Hide it if it breaks the rules. Nobody is told who reported them.">
+      <JobRequests venueId={null} title="Jobs at bars not on Cocktail" />
       <Segmented accessibilityLabel="Which reports" options={LISTS} value={list} onChange={setList} />
       {error ? (
         <Body tone="muted">{`Couldn't load reports: ${error.message}`}</Body>

@@ -10,7 +10,7 @@ import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
-import { useDropdowns } from '@/hooks/useDropdowns';
+import { usePublicIngredientSearch } from '@/hooks/useIngredients';
 import { usePublicPeople } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
 import { findDrinks } from '@/lib/discover';
@@ -51,17 +51,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
   const { data: publicBars } = usePublicBars(everywhere && !signedIn ? q : '');
   const { data: people } = usePublicPeople(everywhere ? q : '');
   const { data: classicList } = useDrinkLists();
-  const { data: dropdowns } = useDropdowns();
+  const { data: ingredientHits } = usePublicIngredientSearch(everywhere ? q : '');
 
   const bars = useMemo((): DiscoverBar[] => {
     if (signedIn) return findBars(area ? results.bars.filter((b) => barInArea(b, area)) : results.bars, q);
     return (publicBars ?? []).map((b) => ({ id: b.id, handle: '', name: b.display_name, logo: null, locality: b.locality, city: b.city, countryCode: b.country_code, latitude: null, longitude: null }));
   }, [signedIn, area, results.bars, publicBars, q]);
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
-  const ingredients = useMemo(
-    () => (everywhere && dropdowns ? findDrinks((dropdowns.ingredients as { id: string; name: string; bar_id: string | null }[]).filter((i) => !i.bar_id), q) : []),
-    [everywhere, dropdowns, q]
-  );
+  const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   const found = results.drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length;
   const named = onKind ? findKinds(q) : [];
 

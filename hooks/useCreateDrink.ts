@@ -53,10 +53,25 @@ export function useCreateDrink() {
       const warnings: string[] = [];
       let createdLookups = false;
 
+      // A picked row can be gone by now (merged into another ingredient since
+      // the draft was made, 20261008100000): those go by name, like a typed one.
+      const pickedIds = [
+        ...specLines(draft).map(({ line }) => line.id),
+        ...draft.methods.map((m) => m.id),
+        draft.glass?.id,
+        draft.ice?.id,
+      ].filter((v): v is string => !!v);
+      const live = new Set<string>();
+      if (pickedIds.length) {
+        const { data, error } = await supabase.from('items').select('id').in('id', [...new Set(pickedIds)]);
+        if (error) throw error;
+        for (const r of data ?? []) live.add(r.id);
+      }
+
       // Typed-in names become rows once, even if two lines share one.
       const made = new Map<string, string>();
       const ensure = async (pick: WizardPick, type: ItemType): Promise<string> => {
-        if (pick.id) return pick.id;
+        if (pick.id && live.has(pick.id)) return pick.id;
         const key = `${type}:${pick.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
         const known = made.get(key);
         if (known) return known;
