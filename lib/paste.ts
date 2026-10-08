@@ -1,3 +1,5 @@
+import type { IngredientAlias } from '@/lib/ingredientNames';
+import { matchIngredient, matchKey, matchName, type CatalogItem } from '@/lib/match';
 import { addDrink, addSection, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { RECIPE_UNITS } from '@/lib/units';
 import type { MenuDrink } from '@/types/menus';
@@ -143,7 +145,7 @@ export function pasteRows(
   sections.forEach((section, si) => {
     section.lines.forEach((line, li) => {
       const key = `${si}:${li}`;
-      const match = matchByName(line.name, library);
+      const match = matchName(line.name, library);
       const place = (drink: MenuDrink) => {
         if (into && !into.allowedTypes.includes(drink.kind)) {
           out.push({ key, section: section.name, status: 'skip', name: drink.name, note: `${into.name} doesn’t take ${drink.kind}` });
@@ -159,7 +161,7 @@ export function pasteRows(
         out.push({ key, section: section.name, status: 'add', drink: price ? { ...drink, price } : drink, price, note });
       };
       if (match.kind === 'one') place(match.item);
-      else if (match.kind === 'many') {
+      else if (match.kind === 'pick') {
         const chosen = match.items.find((item) => item.id === picks[key]);
         if (chosen) place(chosen);
         else out.push({ key, section: section.name, status: 'pick', name: line.name, options: match.items });
@@ -232,76 +234,6 @@ export function applyMenuPaste(layout: MenuLayout, intoKey: string | null, group
   }
   intoLast(pending);
   return next;
-}
-
-export type NameMatch<T> = { kind: 'one'; item: T } | { kind: 'many'; items: T[] } | { kind: 'none' };
-
-export function matchByName<T extends { name: string }>(name: string, items: T[]): NameMatch<T> {
-  const want = normName(name);
-  const found = items.filter((item) => normName(item.name) === want);
-  if (found.length === 1) return { kind: 'one', item: found[0] };
-  if (found.length > 1) return { kind: 'many', items: found };
-  return { kind: 'none' };
-}
-
-export interface CatalogItem {
-  id: string;
-  name: string;
-  genericId: string | null;
-  barId: string | null;
-}
-
-export type IngredientMatch =
-  | { kind: 'use'; id: string }
-  | { kind: 'pick'; options: { id: string; name: string }[] }
-  | { kind: 'new'; name: string; genericId: string | null; genericName: string | null };
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** The longest known ingredient name that appears as a whole word in this one. */
-export function suggestGeneric(name: string, catalog: CatalogItem[]): { id: string; name: string } | null {
-  const want = normName(name);
-  const referenced = new Set(catalog.map((item) => item.genericId).filter((id): id is string => !!id));
-  const hits = catalog.filter((item) => {
-    const kind = normName(item.name);
-    if (kind.length < 3 || kind === want) return false;
-    return new RegExp(`(?:^|\\s)${escapeRegExp(kind)}(?:\\s|$)`).test(want);
-  });
-  hits.sort((a, b) => Number(referenced.has(b.id)) - Number(referenced.has(a.id)) || normName(b.name).length - normName(a.name).length);
-  return hits[0] ? { id: hits[0].id, name: hits[0].name } : null;
-}
-
-/**
- * Venue exact, then the shared catalog, then a kind with several bottles
- * (never an automatic pick). Otherwise a new ingredient, with a kind when the
- * name contains one.
- */
-export function matchIngredient(name: string, catalog: CatalogItem[], venueId: string | null): IngredientMatch {
-  const venue = catalog.filter((item) => item.barId === venueId);
-  const shared = catalog.filter((item) => item.barId === null);
-  const venueHit = matchByName(name, venue);
-  if (venueHit.kind === 'one') return { kind: 'use', id: venueHit.item.id };
-  if (venueHit.kind === 'many') return { kind: 'pick', options: venueHit.items.map(({ id, name: label }) => ({ id, name: label })) };
-  const sharedHit = matchByName(name, shared);
-  if (sharedHit.kind === 'one') return { kind: 'use', id: sharedHit.item.id };
-  if (sharedHit.kind === 'many') return { kind: 'pick', options: sharedHit.items.map(({ id, name: label }) => ({ id, name: label })) };
-
-  const want = normName(name);
-  const generics = catalog.filter((item) => normName(item.name) === want);
-  const genericIds = new Set(generics.map((item) => item.id));
-  const bottles = venue.filter((item) => item.genericId && genericIds.has(item.genericId) && normName(item.name) !== want);
-  if (bottles.length) {
-    const options = [...generics, ...bottles];
-    const seen = new Set<string>();
-    return {
-      kind: 'pick',
-      options: options.filter((item) => (seen.has(item.id) ? false : !!seen.add(item.id))).map((item) => ({ id: item.id, name: item.name })),
-    };
-  }
-  const generic = suggestGeneric(name, catalog);
-  return { kind: 'new', name: name.trim(), genericId: generic?.id ?? null, genericName: generic?.name ?? null };
 }
 
 export interface BringBlock {
@@ -377,7 +309,7 @@ export interface BringWrite {
 
 /**
  * picks: "block:line" -> ingredient id, for a line with several bottles.
- * kinds: create key -> kind name the person typed. Missing means the suggestion.
+ * kinds: create key (matchKey) -> kind name the person typed. Missing means the suggestion.
  */
 export function compileBringIn(
   blocks: BringBlock[],
@@ -387,28 +319,30 @@ export function compileBringIn(
   kinds: Record<string, string>,
   methods: NamedItem[],
   glasses: NamedItem[],
+  aliases: readonly IngredientAlias[] = [],
 ): { error: string | null; write: BringWrite | null } {
   if (blocks.some((block) => !block.name.trim())) return { error: 'Start each drink with its name, then the amounts.', write: null };
   const creates = new Map<string, { key: string; name: string; genericId: string | null }>();
   const items: BringWrite['items'] = [];
   const resolve = (name: string, pickKey: string): { error: string | null; ingredientKey: string | null } => {
-    const match = matchIngredient(name, catalog, venueId);
-    if (match.kind === 'use') return { error: null, ingredientKey: `id:${match.id}` };
+    const match = matchIngredient(name, catalog, venueId, aliases);
+    if (match.kind === 'one') return { error: null, ingredientKey: `id:${match.item.id}` };
     if (match.kind === 'pick') {
       const chosen = picks[pickKey];
-      if (!chosen || !match.options.some((option) => option.id === chosen)) return { error: `Pick which ${name.trim()} you mean.`, ingredientKey: null };
+      if (!chosen || !match.items.some((item) => item.id === chosen)) return { error: `Pick which ${name.trim()} you mean.`, ingredientKey: null };
       return { error: null, ingredientKey: `id:${chosen}` };
     }
-    const key = normName(match.name);
+    const label = name.trim();
+    const key = matchKey(label);
     if (!creates.has(key)) {
-      const typed = key in kinds ? kinds[key] : (match.genericName ?? '');
+      const typed = key in kinds ? kinds[key] : (match.kindItem?.name ?? '');
       let genericId: string | null = null;
       if (typed.trim()) {
-        const kind = matchByName(typed, catalog);
-        if (kind.kind !== 'one') return { error: `No single ingredient called “${typed.trim()}” to use as the kind of ${match.name}.`, ingredientKey: null };
+        const kind = matchName(typed, catalog);
+        if (kind.kind !== 'one') return { error: `No single ingredient called “${typed.trim()}” to use as the kind of ${label}.`, ingredientKey: null };
         genericId = kind.item.id;
       }
-      creates.set(key, { key, name: match.name, genericId });
+      creates.set(key, { key, name: label, genericId });
     }
     return { error: null, ingredientKey: `new:${key}` };
   };
