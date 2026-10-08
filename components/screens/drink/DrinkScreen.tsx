@@ -16,7 +16,7 @@ import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
-import { specLockNote } from '@/lib/pageVisibility';
+import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
@@ -100,7 +100,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
-  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why.
+  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
   const lock = useSpecLock(preview ? null : item).data;
   // Saving to your Collection (home mode) needs a confirmed age.
   const ageGate = useAgeGate();
@@ -155,7 +155,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
       <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
-      {item.description ? <Body tone="muted">{item.description}</Body> : null}
+      {item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null}
       {!preview && heroPic?.credit ? (
         <Caption
           tone="muted"

@@ -13,6 +13,8 @@ import { after, before, describe, test } from 'node:test';
 
 import pg from 'pg';
 
+import { notesBackOnRows } from './fixtures/credited-notes.mjs';
+
 const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
 );
@@ -121,6 +123,7 @@ describe('bar drink ingredients', () => {
                                (SELECT count(*) FROM public.items WHERE riff_of_id IS NOT NULL)::int AS riffs`)
       ).rows[0];
     await inRolledBackTransaction(async () => {
+      await notesBackOnRows(db);
       const before = await count();
       await db.query(readFileSync(MIGRATION, 'utf8'));
       assert.deepEqual(await count(), before);
