@@ -69,7 +69,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const picture = drink.imageUrl ? { url: drink.imageUrl, isSketch: drink.imageIsGenerated, isOutdated: false, credit: null, sourceUrl: null } : null;
 
   return (
-    <PublicShell title={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} glass={data.glass?.iconKey ?? data.glass?.name}>
+    <PublicShell title={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name}>
       <BarLink bar={bar} />
       <Display>{drink.name}</Display>
       {drink.description ? <Body tone="muted">{drink.description}</Body> : null}
