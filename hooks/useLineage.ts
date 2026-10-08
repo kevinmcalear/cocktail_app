@@ -49,24 +49,34 @@ export interface Lineage {
 export function useLineage(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['lineage', itemId],
-    // The id goes into an or() filter, so only a real uuid gets that far.
+    // Only a real uuid reaches the queries (dev ids like "dev" would 400).
     enabled: !!itemId && UUID.test(itemId),
     queryFn: async (): Promise<Lineage> => {
-      const [drink, children] = await Promise.all([
+      // Two queries so a classic's bar versions (the Negroni has hundreds)
+      // never crowd its child classics out of the row limit.
+      // ponytail: the 100 best-credited versions; page them if a list needs more.
+      const [drink, kids, versions] = await Promise.all([
         fetchDrink(itemId!),
-        supabase.from('items').select(LINEAGE_COLUMNS).or(`riff_of_id.eq.${itemId},lineage_parent_id.eq.${itemId}`).limit(100),
+        supabase.from('items').select(LINEAGE_COLUMNS).eq('lineage_parent_id', itemId!).limit(500),
+        supabase
+          .from('items')
+          .select(LINEAGE_COLUMNS)
+          .eq('riff_of_id', itemId!)
+          .order('credit_status', { ascending: false, nullsFirst: false })
+          .order('name')
+          .limit(100),
       ]);
-      if (children.error) throw children.error;
+      if (kids.error) throw kids.error;
+      if (versions.error) throw versions.error;
       const ancestors = drink ? await walkAncestors(drink, fetchDrink) : [];
       const oldest = ancestors[0] ?? drink;
       const styles = oldest && !parentId(oldest) && oldest.lineage_style_id ? styleChain(oldest.lineage_style_id, await fetchStyles()) : [];
-      const rows = (children.data ?? []) as unknown as LineageDrink[];
       return {
         drink,
         ancestors,
         styles,
-        classics: rows.filter((r) => r.lineage_parent_id === itemId).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
-        riffs: sortRiffs(rows.filter((r) => r.riff_of_id === itemId)),
+        classics: ((kids.data ?? []) as unknown as LineageDrink[]).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
+        riffs: sortRiffs((versions.data ?? []) as unknown as LineageDrink[]),
       };
     },
   });
