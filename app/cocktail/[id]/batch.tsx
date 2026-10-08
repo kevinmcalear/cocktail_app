@@ -15,6 +15,9 @@ import { drinkStrength } from '@/lib/drinkMath';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 
 /** Batch a drink for prep; opened from the drink page. With Prep switched off it opens the drink. */
+// For /dev/drink (see app/cocktail/[id]/index.tsx).
+export { BatchScreen };
+
 export default function BatchRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return FEATURES.prep ? <Batch id={id} /> : <Redirect href={`/cocktail/${id}`} />;
