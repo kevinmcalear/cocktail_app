@@ -2,6 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
+import { decodableSize } from "../_shared/imageSize.ts";
+
+/** A logo's largest decoded file size: 5 MB, the same as the avatars bucket. */
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -86,8 +91,12 @@ serve(async (req: Request) => {
     }
 
     const { bar_id, image_base64, extract_only = false } = await req.json();
-    if (!bar_id || !image_base64) {
+    if (typeof bar_id !== "string" || typeof image_base64 !== "string" || !bar_id || !image_base64) {
       return json({ error: "bar_id and image_base64 are required" }, 400);
+    }
+    // Base64 is 4 characters per 3 bytes; refuse before decoding anything.
+    if (image_base64.length > Math.ceil(MAX_LOGO_BYTES / 3) * 4 + 4) {
+      return json({ error: "That logo is too large. Use an image under 5 MB." }, 413);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -114,10 +123,21 @@ serve(async (req: Request) => {
       return json({ error: "You must be a Drink Creator or Admin to update this venue." }, 403);
     }
 
-    const binaryStr = atob(image_base64);
+    let binaryStr: string;
+    try {
+      binaryStr = atob(image_base64);
+    } catch {
+      return json({ error: "That logo isn't a readable image." }, 400);
+    }
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) {
       bytes[i] = binaryStr.charCodeAt(i);
+    }
+    if (bytes.length > MAX_LOGO_BYTES) {
+      return json({ error: "That logo is too large. Use an image under 5 MB." }, 413);
+    }
+    if (!decodableSize(bytes)) {
+      return json({ error: "Use a PNG, JPEG or GIF logo up to 4096 by 4096 pixels." }, 400);
     }
 
     const { primaryColor, secondaryColor } = await extractBrandColors(bytes);
