@@ -25,6 +25,7 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 
 const users = {};
 const ids = {};
+const uploads = [];
 
 async function makeUser(label) {
   const email = `${label}-${run}@security-test.local`;
@@ -45,9 +46,17 @@ async function serviceInsert(table, row) {
 const confirmAge = (userId) =>
   db.query("INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'GB', 18, now())", [userId]);
 
-/** An image row the way the app records an upload. */
+/** An upload and its image row, the way the app records a photo (uploadDrinkPhoto). */
 async function image(client, name) {
-  const url = `${status.API_URL}/storage/v1/object/public/drinks/cocktails/${run}/${name}.jpg`;
+  const path = `cocktails/${run}/${name}.jpg`;
+  const upload = await client.storage.from('drinks').upload(path, new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
+  assert.ifError(upload.error);
+  uploads.push(path);
+  return imageRow(client, client.storage.from('drinks').getPublicUrl(path).data.publicUrl);
+}
+
+/** Just an image row, with no upload of the caller's behind it. */
+async function imageRow(client, url) {
   const { data, error } = await client.from('images').insert({ url }).select('id').single();
   assert.ifError(error);
   return data.id;
@@ -86,6 +95,8 @@ after(async () => {
   await db.query('DELETE FROM public.reports WHERE item_id IN (SELECT id FROM public.items WHERE name LIKE $1)', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.images WHERE url LIKE $1', [like]);
+  // Storage refuses direct deletes from its tables; its API removes the files.
+  await service.storage.from('drinks').remove(uploads);
   await db.query('DELETE FROM public.profiles WHERE handle LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
@@ -117,6 +128,16 @@ describe('posting a photo', () => {
     assert.ok(theirs.error, "someone else's ranking is refused");
     const otherDrink = await post(users.poster.client, { item_id: ids.classic, image_id: await image(users.poster.client, 'wrong'), rank_entry_id: ids.posterOtherEntry });
     assert.ok(otherDrink.error, 'a ranking of another drink is refused');
+  });
+
+  test("only from your own upload: someone else's picture is refused", async () => {
+    const theirs = await image(users.poster.client, 'poster-own');
+    const reposted = await post(users.reader.client, { item_id: ids.classic, image_id: theirs });
+    assert.ok(reposted.error, "another person's upload can't be posted as yours");
+    const noFile = await imageRow(users.reader.client, `${status.API_URL}/storage/v1/object/public/drinks/cocktails/${run}/never-uploaded.jpg`);
+    assert.ok((await post(users.reader.client, { item_id: ids.classic, image_id: noFile })).error, 'an image row with no upload behind it is refused');
+    const venuePicture = await imageRow(service, `${status.API_URL}/storage/v1/object/public/drinks/bars/${run}/logo.jpg`);
+    assert.ok((await post(users.reader.client, { item_id: ids.classic, image_id: venuePicture })).error, "a venue's picture is refused");
   });
 
   test('as yourself, age-confirmed, on a drink you can see', async () => {

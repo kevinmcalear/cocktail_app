@@ -47,7 +47,8 @@ CREATE FUNCTION "private"."my_drink_photos_today"() RETURNS bigint
 $$;
 
 -- The poster's score for the rank entry they attached to a photo, and nothing
--- else from their list. NULL when no entry is attached.
+-- else from their list. NULL when no entry is attached, and for a hidden
+-- photo or one from someone on either side of a block, whoever asks.
 CREATE FUNCTION "private"."drink_photo_score"("p_photo_id" "uuid") RETURNS numeric
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
@@ -55,7 +56,27 @@ CREATE FUNCTION "private"."drink_photo_score"("p_photo_id" "uuid") RETURNS numer
   SELECT s.score
   FROM public.drink_photos dp
   JOIN public.rank_entry_scores s ON s.id = dp.rank_entry_id AND s.user_id = dp.user_id
-  WHERE dp.id = p_photo_id;
+  WHERE dp.id = p_photo_id
+    AND dp.moderated_at IS NULL
+    AND dp.user_id NOT IN (SELECT private.blocked_user_ids());
+$$;
+
+-- Whether an image row is a file the caller uploaded to the drinks bucket
+-- (storage sets owner_id on upload). A photo can only be posted from your own
+-- upload, so nobody can repost another person's or a venue's picture as
+-- theirs. Matched on the object's path in the public URL the app records.
+CREATE FUNCTION "private"."is_my_drinks_upload"("p_image_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.images im
+    JOIN storage.objects o
+      ON o.bucket_id = 'drinks'
+     AND o.name = substring(im.url FROM '/storage/v1/object/public/drinks/([^?#]+)$')
+    WHERE im.id = p_image_id AND o.owner_id = auth.uid()::text
+  );
 $$;
 
 -- Only moderators set moderated_at; the poster can't hide or restore their
@@ -88,13 +109,14 @@ CREATE POLICY "drink_photos_select" ON "public"."drink_photos" FOR SELECT TO "au
     );
 
 -- A photo of a drink you can see, posted as yourself once your age is
--- confirmed, at most 20 a day. A score can only come from your own ranking
--- of this drink.
+-- confirmed, from a file you uploaded, at most 20 a day. A score can only
+-- come from your own ranking of this drink.
 CREATE POLICY "drink_photos_insert" ON "public"."drink_photos" FOR INSERT TO "authenticated"
     WITH CHECK (
         "user_id" = (SELECT "auth"."uid"())
         AND "moderated_at" IS NULL
         AND "private"."is_age_confirmed"()
+        AND "private"."is_my_drinks_upload"("image_id")
         AND EXISTS (SELECT 1 FROM "public"."items" "i" WHERE "i"."id" = "drink_photos"."item_id")
         AND ("rank_entry_id" IS NULL OR EXISTS (
             SELECT 1 FROM "public"."rank_entries" "r"
@@ -343,6 +365,8 @@ REVOKE EXECUTE ON FUNCTION "private"."my_drink_photos_today"() FROM PUBLIC, "ano
 GRANT EXECUTE ON FUNCTION "private"."my_drink_photos_today"() TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."drink_photo_score"("uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."drink_photo_score"("uuid") TO "authenticated", "service_role";
+REVOKE EXECUTE ON FUNCTION "private"."is_my_drinks_upload"("uuid") FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."is_my_drinks_upload"("uuid") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."can_report_photo"("uuid", "uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."can_report_photo"("uuid", "uuid") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."guard_drink_photo"() FROM PUBLIC, "anon", "authenticated";
