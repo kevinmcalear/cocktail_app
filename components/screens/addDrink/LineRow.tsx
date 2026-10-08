@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -57,7 +57,8 @@ export function LineRow({ line, onChange, onRemove, onSwap }: LineRowProps) {
                     value={line.amount}
                     onChangeText={(amount) => onChange({ amount: amount.replace(/[^0-9.,/ ¼½¾⅓⅔⅛]/g, '') })}
                     onBlur={() => onChange({ amount: tidyAmount(line.amount) })}
-                    keyboardType="numbers-and-punctuation"
+                    // iOS's keyboard has "/" for 3/4; Android has no such type, so its number pad.
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'decimal-pad'}
                     returnKeyType="done"
                     selectTextOnFocus
                     placeholder="–"

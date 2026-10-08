@@ -6,6 +6,7 @@
  */
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
+import { tidyAmount } from '@/lib/specDefaults';
 
 export const WIZARD_STEPS = ['name', 'ingredients', 'method', 'glass', 'ice', 'garnish', 'credits', 'notes', 'publish', 'review'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
@@ -257,8 +258,9 @@ export function newLine(pick: WizardPick, unit: string, amount = ''): WizardLine
   return { ...pick, key: `${Date.now().toString(36)}-${counter}`, amount, unit };
 }
 
-const amountOf = (s: string): number | null => {
-  const n = parseFloat(s.replace(',', '.'));
+/** A line's amount as a number: "22,5", "3/4" and "1½" read as typed, before the field tidies them. */
+export const amountOf = (s: string): number | null => {
+  const n = parseFloat(tidyAmount(s));
   return Number.isFinite(n) ? n : null;
 };
 
@@ -284,7 +286,7 @@ export function specLines(d: WizardDraft): { line: WizardLine; amount: number | 
 /** "22.5 ml" or "Top" or "" */
 export function amountLabel(l: Pick<WizardLine, 'amount' | 'unit'>): string {
   if (l.unit === 'top') return 'Top';
-  const a = l.amount.trim();
+  const a = tidyAmount(l.amount);
   return a ? `${a} ${l.unit}`.trim() : '';
 }
 
@@ -325,7 +327,9 @@ export function convertPour(amount: number | null, from: string, to: string): { 
   if (amount === null) return { amount: '', unit: from };
   if (from === to || !POUR_ML[from] || !POUR_ML[to]) return { amount: fmt(amount), unit: from };
   const n = (amount * POUR_ML[from]) / POUR_ML[to];
-  const near = to === 'oz' ? OZ_STEPS.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a)) : n;
+  // Ounces snap to the pour they're within a hair of (22 ml is ¾ oz); anything else is kept as it is.
+  const step = to === 'oz' ? OZ_STEPS.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a)) : n;
+  const near = Math.abs(step - n) <= 0.05 ? step : n;
   return { amount: fmt(near), unit: to };
 }
 

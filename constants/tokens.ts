@@ -74,6 +74,16 @@ export const familyHues = {
   },
 } as const;
 
+/**
+ * The palate flower's four families (lib/palate.ts FAMILY), a quarter of the
+ * wheel each. Always beside the taste's name, never the only signal; light
+ * steps darker to hold 3:1 on paper.
+ */
+export const palateHues = {
+  dark: { bright: '#E9B65C', green: '#9DC28B', fire: '#EE8466', body: '#C3A6D6' },
+  light: { bright: '#A86E12', green: '#4E7A3E', fire: '#B4472E', body: '#7E5F96' },
+} as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 

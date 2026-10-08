@@ -23,7 +23,9 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   ['drink-lists'],
   ['bar-cities'],
   ['discover-top-bars'],
-  ['my-taste'],
+  // Your taste is built from these, so it's there offline.
+  ['my-had'],
+  ['flavor-baseline'],
   ['my-ranked-ids'],
   ['cocktail'],
 ];
