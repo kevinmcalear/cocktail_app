@@ -14,13 +14,14 @@ assert.equal(afterAgeCheck({}), '/(tabs)');
 
 assert.equal(nextStep('name'), 'hospitality');
 assert.equal(nextStep('hospitality', 'yes'), 'find');
-assert.equal(nextStep('hospitality', 'no'), 'units');
-assert.equal(nextStep('find', 'claim'), 'units');
+assert.equal(nextStep('hospitality', 'no'), 'taste');
+assert.equal(nextStep('find', 'claim'), 'taste');
 assert.equal(nextStep('find', 'new'), 'work');
 assert.equal(nextStep('work'), 'past');
 assert.equal(nextStep('past'), 'menus');
 assert.equal(nextStep('menus'), 'drinks');
-assert.equal(nextStep('drinks'), 'units');
+assert.equal(nextStep('drinks'), 'taste');
+assert.equal(nextStep('taste'), 'units');
 assert.equal(nextStep('units'), 'done');
 
 // Invited: accept, then name, units, done. Declining is the usual way.

@@ -45,13 +45,15 @@ export interface MyTaste {
   basis: TasteBasis;
   /** Ranked drinks that went into it. */
   rankedDrinks: number;
+  /** What your rankings alone say, before your answers are blended in. */
+  rankedTaste: Taste | null;
   /** The quick answers, if any. */
   answers: Taste | null;
 }
 
 /**
- * Your taste: from the drinks you ranked (get_my_taste, which only ever reads
- * your own), or your quick answers until there are enough. Signed out: null.
+ * Your taste: the drinks you ranked (get_my_taste, which only ever reads your
+ * own) blended with your answers (blendTaste). Signed out: null.
  */
 export function useMyTaste() {
   const userId = useAuth().user?.id ?? null;
@@ -75,22 +77,24 @@ export function useMyTaste() {
       return ((data as { taste_answers: Taste | null } | null)?.taste_answers ?? null);
     },
   });
-  if (!userId || !ranked.data || answers.isLoading) return { data: null, isLoading: !!userId && (ranked.isLoading || answers.isLoading) };
+  const error = ranked.error ?? answers.error ?? null;
+  if (!userId || !ranked.data || answers.isLoading) return { data: null, isLoading: !!userId && (ranked.isLoading || answers.isLoading), error };
   const { taste, basis } = blendTaste(ranked.data.taste, ranked.data.drinks, answers.data ?? null);
-  const data: MyTaste = { taste, basis, rankedDrinks: ranked.data.drinks, answers: answers.data ?? null };
-  return { data, isLoading: false };
+  const data: MyTaste = { taste, basis, rankedDrinks: ranked.data.drinks, rankedTaste: ranked.data.taste, answers: answers.data ?? null };
+  return { data, isLoading: false, error };
 }
 
-/** Save the quick answers (owner-only row in user_prefs). */
+/** Save your answers (owner-only row in user_prefs). Empty clears them. */
 export function useSaveTasteAnswers() {
   const userId = useAuth().user?.id ?? null;
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (answers: Taste) => {
+    mutationFn: async (answers: Taste): Promise<Taste | null> => {
       if (!userId) throw new Error('Sign in to save your taste.');
-      const { error } = await supabase.from('user_prefs').upsert({ user_id: userId, taste_answers: answers });
+      const saved = Object.keys(answers).length ? answers : null;
+      const { error } = await supabase.from('user_prefs').upsert({ user_id: userId, taste_answers: saved });
       if (error) throw error;
-      return answers;
+      return saved;
     },
     onSuccess: (answers) => qc.setQueryData(['taste-answers', userId], answers),
   });

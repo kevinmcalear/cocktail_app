@@ -18,18 +18,40 @@ function AnalyticsSwitch() {
   const optedOut = useSyncExternalStore(subscribeAnalytics, analyticsOptedOut, analyticsOptedOut);
   if (!analyticsAvailable() || optedOut === null) return null;
   return (
-    <SwitchRow
-      label="Share usage analytics"
-      detail="Which screens and features get used, never what you type or search for."
-      value={!optedOut}
-      onValueChange={(on) => void saveAnalyticsChoice(!on)}
-    />
+    <>
+      <RowDivider />
+      <SwitchRow
+        label="Share usage analytics"
+        detail="Which screens and features get used, never what you type or search for."
+        value={!optedOut}
+        onValueChange={(on) => void saveAnalyticsChoice(!on)}
+      />
+    </>
   );
 }
 
-/** Privacy, terms, safety, the analytics switch, and deleting the account. */
+/** Privacy, terms, help, safety, and the analytics switch. */
 export function AccountSection() {
   const router = useRouter();
+  const linkRow = (label: string, onPress: () => void) => (
+    <View key={label}>
+      <RowDivider />
+      <SettingsRow label={label} onPress={onPress} />
+    </View>
+  );
+  return (
+    <SettingsSection title="Privacy and support">
+      <SettingsRow label="Privacy policy" onPress={() => router.push('/legal/privacy')} />
+      {linkRow('Terms of use', () => router.push('/legal/terms'))}
+      {linkRow('Help and support', () => router.push('/support'))}
+      <SafetyLinks row={linkRow} />
+      <AnalyticsSwitch />
+    </SettingsSection>
+  );
+}
+
+/** Log out, and below it, deleting the account for good. */
+export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
   const [deleting, setDeleting] = useState(false);
 
   const deleteAccount = async () => {
@@ -54,27 +76,20 @@ export function AccountSection() {
     }
   };
 
-  const linkRow = (label: string, onPress: () => void) => <SettingsRow label={label} onPress={onPress} />;
-
   return (
-    <SettingsSection title="Account" minWidth={240}>
-      <View>
-        <AnalyticsSwitch />
-        {linkRow('Privacy policy', () => router.push('/legal/privacy'))}
-        {linkRow('Terms of use', () => router.push('/legal/terms'))}
-        {linkRow('Help and support', () => router.push('/support'))}
-        <SafetyLinks row={linkRow} />
-        <RowDivider />
-        <SettingsRow
-          label="Delete account"
-          detail="Permanently remove your account and personal data"
-          tone="danger"
-          role="button"
-          busy={deleting}
-          trailing={<View />}
-          onPress={() => void deleteAccount()}
-        />
-      </View>
+    <SettingsSection>
+      <SettingsRow label="Log out" icon="rectangle.portrait.and.arrow.right" role="button" trailing={<View />} onPress={onLogOut} />
+      <RowDivider />
+      <SettingsRow
+        label="Delete account"
+        detail="Permanently remove your account and personal data"
+        icon="trash"
+        tone="danger"
+        role="button"
+        busy={deleting}
+        trailing={<View />}
+        onPress={() => void deleteAccount()}
+      />
     </SettingsSection>
   );
 }

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Surface, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { usePairings } from '@/hooks/usePairings';
-import { balanceOf } from '@/lib/balance';
+import { balanceOf, fixesFor } from '@/lib/balance';
 import { type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 
 import { PairChip } from '../pairings/PairChip';
@@ -55,18 +55,21 @@ export function GoesWith({ lines, onAdd, fallback }: { lines: readonly WizardLin
   );
 }
 
-/** The drink so far on four meters, with one sentence when something's missing. */
-export function BalanceCard({ lines, ingredients }: { lines: readonly WizardLine[]; ingredients: readonly Ingredient[] }) {
+/**
+ * The drink so far on four meters, with one sentence when something's
+ * missing and the one-tap fixes for it ("+ Agave syrup" for a sour mezcal drink).
+ */
+export function BalanceCard({ lines, ingredients, onAdd }: { lines: readonly WizardLine[]; ingredients: readonly Ingredient[]; onAdd?: (name: string) => void }) {
   const ds = useDs();
   const byId = new Map(ingredients.map((i) => [i.id, i]));
-  const balance = balanceOf(
-    lines.map((l) => {
-      const generic = l.id ? byId.get(byId.get(l.id)?.generic_id ?? '') : null;
-      const n = parseFloat(l.amount.replace(',', '.'));
-      return { name: l.name, genericName: generic?.name ?? null, amount: Number.isFinite(n) ? n : null, unit: l.unit || null };
-    })
-  );
+  const parts = lines.map((l) => {
+    const generic = l.id ? byId.get(byId.get(l.id)?.generic_id ?? '') : null;
+    const n = parseFloat(l.amount.replace(',', '.'));
+    return { name: l.name, genericName: generic?.name ?? null, amount: Number.isFinite(n) ? n : null, unit: l.unit || null };
+  });
+  const balance = balanceOf(parts);
   if (!balance) return null;
+  const fixes = balance.need && onAdd ? fixesFor(balance.need, parts) : [];
   const meters: [string, number][] = [
     ['Strong', balance.strong],
     ['Sour', balance.sour],
@@ -88,6 +91,13 @@ export function BalanceCard({ lines, ingredients }: { lines: readonly WizardLine
         ))}
       </View>
       {balance.hint ? <Caption>{balance.hint}</Caption> : null}
+      {fixes.length ? (
+        <View role="group" aria-label="To balance it" style={styles.chips}>
+          {fixes.map((name) => (
+            <PairChip key={name} label={name} add onPress={() => onAdd?.(name)} accessibilityLabel={`Add ${name} to balance it`} />
+          ))}
+        </View>
+      ) : null}
     </Surface>
   );
 }

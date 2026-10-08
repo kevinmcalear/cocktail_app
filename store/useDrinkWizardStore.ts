@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { EMPTY_DRAFT, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { EMPTY_DRAFT, newDraftId, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 
 interface Kept {
   draft: WizardDraft;
@@ -32,7 +32,9 @@ export const useDrinkWizardStore = create<DrinkWizardState>()(
       patch: (place, change) =>
         set((s) => {
           const k = current(s, place);
-          return { kept: { ...s.kept, [place]: { ...k, draft: { ...k.draft, ...change }, updatedAt: Date.now() } } };
+          // The first change gives the draft its id (the drink's id once saved, and its drawing's seed).
+          const draft = { ...k.draft, ...change, id: k.draft.id ?? newDraftId() };
+          return { kept: { ...s.kept, [place]: { ...k, draft, updatedAt: Date.now() } } };
         }),
       setStep: (place, step) => set((s) => ({ kept: { ...s.kept, [place]: { ...current(s, place), step } } })),
       clear: (place) =>

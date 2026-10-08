@@ -46,7 +46,7 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
   return (
     <View style={{ height, backgroundColor: ds.c.paper }}>
       {total === 0 ? (
-        <DrinkImage source={null} glass={glass} itemId={itemId} accessibilityLabel={name} radius={0} style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
+        <DrinkImage source={null} glass={glass} itemId={itemId} accessibilityLabel={name} radius={0} animate style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
       ) : (
         <PicturePager
           count={total}
