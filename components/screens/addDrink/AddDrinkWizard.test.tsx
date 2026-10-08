@@ -25,6 +25,7 @@ jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
+jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 

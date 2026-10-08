@@ -65,7 +65,9 @@ before(async () => {
   ids.rum = (await insert('items', { name: `White rum ${run}`, item_type: 'ingredient', abv: 40 })).id;
   ids.lime = (await insert('items', { name: `Lime juice ${run}`, item_type: 'ingredient' })).id;
   ids.syrup = (await insert('items', { name: `Simple syrup ${run}`, item_type: 'ingredient', abv: 0 })).id;
-  ids.water = (await insert('items', { name: 'Filtered water', item_type: 'ingredient', bar_id: ids.bar })).id;
+  // A venue's own water is a kind of the shared Water (one of each ingredient, 20261008100000).
+  const { data: sharedWater } = await service.rpc('resolve_ingredient', { p_name: 'Filtered water' });
+  ids.water = (await insert('items', { name: 'Filtered water', item_type: 'ingredient', bar_id: ids.bar, generic_id: sharedWater ?? null })).id;
   ids.drink = (await insert('items', { name: `Daiquiri ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
   await insert('item_methods', { item_id: ids.drink, method_item_id: ids.shake, sort_order: 0 });
   await insert('recipes', { recipe_item_id: ids.drink, ingredient_item_id: ids.rum, amount: 60, unit: 'ml', sort_order: 1 });

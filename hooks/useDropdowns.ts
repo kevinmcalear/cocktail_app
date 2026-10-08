@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 /** Bump when menus shape / current filter changes so hour-long cache can't serve stale rows. */
-export const DROPDOWNS_QUERY_KEY = ['dropdowns_v6'] as const;
+export const DROPDOWNS_QUERY_KEY = ['dropdowns_v7'] as const;
 
 export function useDropdowns() {
     return useQuery({
@@ -51,7 +51,17 @@ export function useDropdowns() {
             // A request stops at 1,000 rows. Specs used to share one with 5,000+
             // ingredients sorted by name, so a new method like "Freezer pour" never
             // showed up, and the ingredient picker missed most ingredients.
-            const [specs, ingredients, menusData, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
+            // One of each ingredient (20261008100000): other names, and the core list pickers put first.
+            // Either may be missing on a database without that migration; pickers then work as before.
+            const aliasesQuery = async () => {
+                const res = await supabase.from('ingredient_aliases').select('key, item_id').range(0, 9999);
+                return res.error ? [] : (res.data ?? []);
+            };
+            const coreQuery = async () => {
+                const res = await supabase.from('items').select('id').eq('is_core', true).range(0, 9999);
+                return res.error ? [] : (res.data ?? []).map((r) => r.id as string);
+            };
+            const [specs, ingredients, menusData, templatesRes, sectionsRes, categoriesRes, ingredientAliases, coreIngredientIds] = await Promise.all([
                 allRows((from, to) =>
                     supabase
                         .from('app_item_presentation')
@@ -66,7 +76,7 @@ export function useDropdowns() {
                 allRows((from, to) =>
                     supabase
                         .from('app_item_presentation')
-                        .select('id, name, item_type, generic_id, bar_id, item_images(images(url))')
+                        .select('id, name, item_type, generic_id, bar_id, hide_from_search, item_images(images(url))')
                         .eq('item_type', 'ingredient')
                         .order('name')
                         .order('id')
@@ -75,7 +85,9 @@ export function useDropdowns() {
                 menusQuery(),
                 supabase.from('menu_templates').select('*').order('name'),
                 supabase.from('template_sections').select('*').order('sort_order'),
-                supabase.from('categories').select('*').order('name')
+                supabase.from('categories').select('*').order('name'),
+                aliasesQuery(),
+                coreQuery(),
             ]);
 
             return {
@@ -88,6 +100,8 @@ export function useDropdowns() {
                 menuTemplates: templatesRes.data || [],
                 templateSections: sectionsRes.data || [],
                 categories: categoriesRes.data || [],
+                ingredientAliases,
+                coreIngredientIds,
             };
         },
         // We can cache these for a long time since they change rarely
