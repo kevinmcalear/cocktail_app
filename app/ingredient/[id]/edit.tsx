@@ -294,7 +294,6 @@ export default function EditIngredientScreen({
                 .insert({ url: publicUrlData.publicUrl })
                 .select()
                 .single();
-
             if (imgError || !imgData) return null;
 
             return imgData.id;
@@ -548,6 +547,7 @@ export default function EditIngredientScreen({
                             onGeneric={setGeneric}
                             ingredients={pickerIngredients}
                             excludeId={id}
+                            sameAs={{ name, barId, rows: dropdowns?.ingredients ?? [], aliases: dropdowns?.ingredientAliases }}
                         />
 
                         <YStack gap="$2">

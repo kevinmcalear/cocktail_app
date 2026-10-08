@@ -130,13 +130,14 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   };
 
   const ingredients = dropdowns?.ingredients ?? [];
+  const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const copy = STEP_COPY[step];
   const body = (() => {
     switch (step) {
       case 'name':
         return <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />;
       case 'ingredients':
-        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns} />;
+        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'method':
         return <PickStep label="Method" ownLabel="Your own method" multi options={choiceList(COMMON_METHODS, dropdowns?.methods ?? [])} selected={draft.methods} onChange={(methods) => set({ methods })} />;
       case 'glass':
