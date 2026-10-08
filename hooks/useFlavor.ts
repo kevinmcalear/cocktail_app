@@ -144,16 +144,24 @@ export function useForYouDrinks(taste: Taste | null | undefined, limit = 10) {
   });
 }
 
-/** Public scores for these drinks, where enough people have ranked them ({ id: score }). */
+/** Public scores for these drinks, where enough people have ranked them ({ id: score }). get_item_scores takes 200 at a time. */
 export function useItemScores(itemIds: readonly string[]) {
-  const ids = [...itemIds].sort().slice(0, 200);
+  const ids = [...new Set(itemIds)].sort();
   return useQuery({
     queryKey: ['item-scores', ids],
     enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+    // A long list of ids is a big key: keep it in memory only.
+    meta: ids.length > 200 ? { persist: false } : undefined,
     queryFn: async (): Promise<Record<string, number>> => {
-      const { data, error } = await supabase.rpc('get_item_scores', { p_item_ids: ids });
-      if (error) throw error;
-      return Object.fromEntries(((data ?? []) as { item_id: string; score: number }[]).map((r) => [r.item_id, Number(r.score)]));
+      const batches = await Promise.all(
+        chunk(ids, 200).map(async (batch) => {
+          const { data, error } = await supabase.rpc('get_item_scores', { p_item_ids: batch });
+          if (error) throw error;
+          return (data ?? []) as { item_id: string; score: number }[];
+        })
+      );
+      return Object.fromEntries(batches.flat().map((r) => [r.item_id, Number(r.score)]));
     },
   });
 }

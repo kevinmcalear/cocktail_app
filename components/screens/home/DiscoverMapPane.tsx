@@ -6,15 +6,16 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Tag, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
+import { DrinkAtBarList, DrinkScore, scoreWords, type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, radius, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
-import { closedPins, drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { useItemScores } from '@/hooks/useFlavor';
+import { barScoresFor, byScore, closedPins, drinkCount, drinkPins, drinksOfPick, scorePins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
-import { formatScore, MIN_RANKERS } from '@/lib/ranking';
+import { formatScore, MIN_RANKERS, plural } from '@/lib/ranking';
 
 import { BarTopDrinks } from './BarTopDrinks';
 import { DiscoverMap } from './DiscoverMap';
@@ -43,14 +44,14 @@ const PREVIEW_DRINKS = 3;
 /** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
 const SHEET_PEEK = layout.minTapTarget + space.sm;
 
-/** The bar a pin stands for, the drinks there on the drinks layer, and a way in. */
-function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; onClose: () => void }) {
+/** The bar a pin stands for, the drinks there on the drinks layers (scored on "Best Martini"), and a way in. */
+function SelectedBar({ pin, drinks, scores, onClose }: { pin: MapPin; drinks: DiscoverDrink[]; scores?: DrinkScores; onClose: () => void }) {
   const router = useRouter();
   const [all, setAll] = useState(false);
   const shown = all ? drinks : drinks.slice(0, PREVIEW_DRINKS);
   return (
     <Surface raised style={styles.card}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.closed ? pin.closed : pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
+      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.closed ? pin.closed : pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
         <UserAvatar uri={pin.logo} name={pin.name} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
@@ -63,18 +64,31 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
         ) : pin.drinks ? (
           <Caption tone="muted">{drinkCount(pin.drinks)}</Caption>
         ) : pin.score === null ? (
-          <Caption tone="muted">{pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
+          <Caption tone="muted">{pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
         ) : (
           <View style={styles.score}>
             <Spec>{formatScore(pin.score)}</Spec>
-            <Caption tone="muted">{peopleCount(pin.rankers)}</Caption>
+            {pin.rankers ? <Caption tone="muted">{peopleCount(pin.rankers)}</Caption> : null}
           </View>
         )}
       </View>
       <BarTopDrinks barId={pin.id} />
-      {shown.map((d) => (
-        <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={null} note={d.description ?? undefined} />
-      ))}
+      {shown.map((d) => {
+        const said = scoreWords(scores?.drinks[d.id]);
+        return (
+          <DrinkRow
+            key={d.id}
+            name={d.name}
+            itemId={d.id}
+            href={itemHref('Cocktail', d.id)}
+            imageUrl={d.imageUrl}
+            glass={null}
+            note={d.description ?? undefined}
+            trailing={<DrinkScore drink={scores?.drinks[d.id]} />}
+            label={said ? [d.name, said, d.description].filter(Boolean).join('. ') : undefined}
+          />
+        );
+      })}
       {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={() => setAll(true)} /> : null}
       <View style={styles.cardActions}>
         <Button label="Close" variant="ghost" onPress={onClose} />
@@ -85,8 +99,10 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
 }
 
 /**
- * Discover on a map: pins for the ranked bars (the score on each; early bars
- * as plain dots), tap one to see it, and "Search this area" once the person
+ * Discover on a map: pins for the bars with matching drinks, for the drink's
+ * best ("Best Martini": every martini, with the scores people gave it and its
+ * bar, unscored ones plain), or the top bars (the score on each; early bars
+ * as plain dots). Tap one to see it, and "Search this area" once the person
  * has moved the map. The camera fits the results whenever the
  * area, drink or layer changes, but never after "Search this area", so the
  * view the person chose stays put.
@@ -98,8 +114,16 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
   const byDrink = layer === 'best' && !!drink;
   const drinkRows = useDiscoverRankings(byDrink ? drink.id : null, area);
   const barRows = useTopBars(area);
-  const rows = byDrinks ? { data: undefined, isLoading: results.isLoading } : byDrink ? drinkRows : barRows;
-  const pins = [...(byDrinks ? drinkPins(results.drinks, results.barsById) : pinsFrom(rows.data)), ...closedPins(results.closed ?? [])];
+  const rows = byDrinks || byDrink ? { data: undefined, isLoading: results.isLoading } : barRows;
+  // "Best Martini": every martini here, scored where people have ranked it, best first.
+  const picked = byDrink ? drinksOfPick(results.drinks, drink.name) : [];
+  const drinkScores = useItemScores(picked.map((d) => d.id)).data ?? {};
+  const scores: DrinkScores | undefined = byDrink ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, drinkRows.data?.ranked ?? []) } : undefined;
+  const drinks = scores ? byScore(picked, scores.drinks) : results.drinks;
+  const pins = [
+    ...(byDrinks ? drinkPins(drinks, results.barsById) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
+    ...closedPins(results.closed ?? []),
+  ];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = pins.find((p) => p.id === selectedId) ?? null;
 
@@ -139,26 +163,27 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
 
   const ranked = rows.data?.ranked ?? [];
   const early = rows.data?.early ?? [];
+  const drinkLayer = byDrinks || byDrink;
   // A tapped bar narrows the drinks to its own.
-  const barDrinks = selected ? results.drinks.filter((d) => d.barId === selected.id) : results.drinks;
+  const barDrinks = selected ? drinks.filter((d) => d.barId === selected.id) : drinks;
   const list = rows.isLoading ? (
     <ListNote>Loading…</ListNote>
-  ) : byDrinks ? (
+  ) : drinkLayer ? (
     // Wide screens list a selected bar's drinks in its card; phones keep the card small and list them here.
     selected && mode === 'side' ? null : barDrinks.length ? (
-      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} />
+      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} barsById={results.barsById} limit={20} scores={scores} />
     ) : (
-      <ListNote>{`No drinks ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
+      <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
     )
   ) : ranked.length ? (
-    <AreaRankList rows={ranked} scoreDetail={byDrink ? undefined : (r) => peopleCount(r.rankers)} />
+    <AreaRankList rows={ranked} scoreDetail={(r) => peopleCount(r.rankers)} />
   ) : early.length ? (
     <>
       <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
       <EarlyList rows={early} />
     </>
   ) : (
-    <ListNote>{`Nobody has ranked ${byDrink ? `a ${drink.name}` : 'a drink'} at a bar ${areaLabel(area)} yet. Move the map and search this area.`}</ListNote>
+    <ListNote>{`Nobody has ranked a drink at a bar ${areaLabel(area)} yet. Move the map and search this area.`}</ListNote>
   );
 
   const map = (
@@ -184,7 +209,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
         </View>
         {selected ? (
           <View pointerEvents="box-none" style={[styles.overlay, styles.overlayBottom]}>
-            <SelectedBar key={selected.id} pin={selected} drinks={byDrinks ? barDrinks : []} onClose={() => setSelectedId(null)} />
+            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} onClose={() => setSelectedId(null)} />
           </View>
         ) : null}
       </View>
@@ -218,7 +243,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
                 ? 'Loading…'
                 : selected?.closed
                   ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
-                  : selected && byDrinks
+                  : selected && drinkLayer
                     ? `${drinkCount(barDrinks.length)} at ${selected.name} · swipe up for them`
                   : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
             </Caption>

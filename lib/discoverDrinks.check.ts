@@ -1,7 +1,9 @@
 // Checks for lib/discoverDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barInArea, closedBars, closedLabel, closedPins, distanceKm, drinkPins, filterDrinks, findBars, kindsTitle, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
+import { barInArea, barScoresFor, byScore, closedBars, closedLabel, closedPins, distanceKm, drinkPins, drinksOfPick, filterDrinks, findBars, kindsTitle, scorePins, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
+import { pinDescription, pinLabel } from './discoverMap';
+import type { DiscoverRow } from './nearMe';
 
 const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null): DiscoverBar => ({
   id,
@@ -95,3 +97,26 @@ assert.equal(closedLabel(null), 'Closed');
 assert.deepEqual(ids(closedBars([dante, vague, shut], anywhere)), ['vague', 'shut'], 'only closed bars, by name');
 assert.deepEqual(ids(closedBars([dante, vague, shut], nearDante)), ['shut'], 'in the area');
 assert.deepEqual(closedPins([shut, vague]).map((p) => [p.id, p.closed]), [['shut', 'Closed 2019']], 'a pin needs coordinates');
+
+// --- "Best Martini": every martini, scored where it has been ---
+const martinis = [
+  drink('m1', 'Dante Martini', 'dante', ['Gin', 'Dry Vermouth'], '', 'Martini'),
+  drink('m2', 'Espresso Martini', 'dante', ['Vodka', 'Espresso']),
+  drink('m3', 'Gibson', 'attaboy', ['Gin', 'Dry Vermouth', 'Cocktail Onion']),
+  drink('m4', 'Nomad Martini', 'nomad', ['Gin', 'Dry Vermouth'], '', 'Martini'),
+  drink('m5', 'Paper Plane', 'nomad', ['Bourbon', 'Aperol', 'Amaro Nonino', 'Lemon Juice']),
+];
+assert.deepEqual(ids(drinksOfPick(martinis, 'Martini')), ['m1', 'm3', 'm4'], 'the Martinis style: no Espresso Martini');
+assert.deepEqual(ids(drinksOfPick(martinis, 'Paper Plane')), ['m5'], 'not a style lead: by name');
+const picked = drinksOfPick(martinis, 'Martini');
+const scored = { m3: 8.1, m4: 9.2 };
+const dantesOwn: DiscoverRow = { position: 1, venue_profile_id: 'dante', handle: 'dante', display_name: 'Dante', locality: null, city: null, latitude: null, longitude: null, distance_km: null, score: 7.4, rankers: 25, is_early: false };
+const barScores = barScoresFor(picked, scored, [dantesOwn]);
+assert.deepEqual(barScores, { attaboy: { score: 8.1, rankers: 0 }, nomad: { score: 9.2, rankers: 0 }, dante: { score: 7.4, rankers: 25 } }, "the bar's own score, else its best drink's");
+assert.deepEqual(ids(byScore(picked, scored)), ['m4', 'm3', 'm1'], 'scored first, best first, the rest kept');
+const best = scorePins([...picked, drink('m6', 'Vesper', 'attaboy')], bars, { attaboy: { score: 8.1, rankers: 0 } });
+assert.deepEqual(best.map((p) => [p.id, p.score, p.matches, p.drinks]), [['attaboy', 8.1, 2, undefined], ['dante', null, 1, undefined], ['nomad', null, 1, undefined]], 'every bar pinned, scored first');
+assert.equal(pinLabel(best[0]), '8.1');
+assert.equal(pinLabel(best[1]), '', 'an unscored bar is unmarked, not a count');
+assert.equal(pinDescription(best[1]), 'Dante, 1 drink');
+assert.equal(pinDescription(best[0]), 'Attaboy, score 8.1');
