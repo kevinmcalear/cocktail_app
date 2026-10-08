@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
+import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
 import { toTopDrink, type BarTopDrink } from '@/lib/barTopDrinks';
 import { fromSharedRow, toHadDrink, type HadDrink, type HadRow, type SharedHadRow } from '@/lib/hadDrinks';
@@ -245,6 +246,7 @@ export function useAddRankEntry() {
       return data as { id: string };
     },
     onSuccess: (_, entry) => {
+      track('drink_ranked', { rerank: !!entry.id, at_bar: !!entry.venue_profile_id });
       qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id });
       // Your taste and For you follow your rankings.
       qc.invalidateQueries({ queryKey: ['my-taste'] });

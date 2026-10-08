@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useFlavorCatalog } from '@/hooks/useFlavor';
+import { useTrackSearch } from '@/hooks/useTrackSearch';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { menuOrder, runDates, searchMenuTag, type MenuRunRow } from '@/lib/menuEditions';
 import { filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
@@ -139,6 +140,7 @@ function menuOf(run: MenuRunRow | undefined): DiscoverDrink['menu'] {
  */
 export function useDiscoverResults(filter: DrinkFilter) {
   const query = useDiscoverDrinks();
+  useTrackSearch(filter.search, 'discover');
   const catalog = useFlavorCatalog();
   const bars = query.data?.bars ?? [];
   const barsById = new Map(bars.map((b) => [b.id, b]));

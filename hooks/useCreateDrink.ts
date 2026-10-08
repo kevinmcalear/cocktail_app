@@ -5,6 +5,7 @@ import { useDrafts } from '@/hooks/useDrafts';
 import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
+import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { withDrinkInSection } from '@/lib/menuDrinkAttach';
@@ -164,6 +165,7 @@ export function useCreateDrink() {
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
       return { id, warnings };
     },
+    onSuccess: (_, { barId, menuDraftId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuDraftId }),
     // The wizard says what went wrong itself, and keeps the draft.
     onError: () => {},
   });

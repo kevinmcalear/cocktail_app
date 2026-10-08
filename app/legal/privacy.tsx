@@ -15,7 +15,9 @@ export default function PrivacyPolicy() {
             'Account details: your email address, your password (stored only as a secure hash by our sign-in provider), your first and last name, and a profile photo if you add one.',
             'Content you create: drinks, ingredients, recipes, menus, drafts, photos you upload, and venue names, logos and colours.',
             'Venue membership: which venues you belong to and your role in each.',
-            'Diagnostics and usage: crash reports and app usage events (such as which screens are opened), with your device type, operating system and app version. These are linked to your account ID, never your name or email.',
+            'Crash reports: what went wrong, the screen it happened on, and technical details such as your device model, operating system and app version. Email addresses and search terms are removed before a report is sent.',
+            'Usage events: which screens you open and a few actions (signing up, confirming your age, ranking, collecting or creating a drink, sending an invite, claiming a bar, searching). They record that something happened, not what you wrote or searched for.',
+            'Crash reports and usage events are linked to your account ID when you are signed in, never to your name or email, and we do not keep the IP address they came from. We do not use them for advertising.',
             'On your device: your session, favourites, study list, recent activity and settings.',
             'Location, only if you use nearby search: your device\'s position, rounded to about 110 metres before it is sent. It is used for that search and is not saved on your account.',
             'Age check: the country you give and whether you meet that country\'s drinking age. Your date of birth is used for the check and is not stored.',
@@ -48,8 +50,8 @@ export default function PrivacyPolicy() {
             'Vercel: website hosting.',
             'Expo: app builds and updates.',
             'Google: the AI features above.',
-            'Sentry: crash reports.',
-            'PostHog: product analytics.',
+            'Sentry: crash reports and diagnostics.',
+            'PostHog: usage events (product analytics).',
           ]}
         />
         <P>

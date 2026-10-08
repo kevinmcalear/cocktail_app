@@ -6,6 +6,7 @@
 // The SDK is about a tenth of the web bundle, so it's loaded as a separate
 // chunk, and only when a DSN is configured.
 import { appVariant } from '@/lib/appVariant';
+import { scrubBreadcrumb, scrubEvent } from '@/lib/monitoringScrub';
 
 type SentryModule = typeof import('@sentry/react');
 
@@ -27,6 +28,8 @@ export function initMonitoring(): void {
         dsn,
         environment: appVariant,
         sendDefaultPii: false,
+        beforeBreadcrumb: scrubBreadcrumb,
+        beforeSend: scrubEvent,
       });
       sentry = Sentry;
       if (pendingUserId !== undefined) Sentry.setUser(pendingUserId ? { id: pendingUserId } : null);
