@@ -17,9 +17,14 @@ const sketch = { url: 's.png', isSketch: true, isOutdated: false, credit: null, 
 const real = { url: 'r.jpg', isSketch: false, isOutdated: false, credit: 'Bar Bellamy', sourceUrl: null };
 const joPhoto = { imageUrl: 'jo.jpg', isMine: false, poster: jo, score: 9.2 };
 assert.deepEqual(heroPictures([real], [joPhoto]), { pictures: [real], credit: 'Photo: Bar Bellamy' }, "the drink's own photo stays the hero");
-const led = heroPictures([sketch], [joPhoto, { ...joPhoto, imageUrl: 'older.jpg' }]);
-assert.deepEqual(led.pictures.map((p) => p.url), ['jo.jpg', 's.png'], 'the newest person photo leads, the sketch stays behind it');
+const sam = { imageUrl: 'sam.jpg', isMine: false, poster: { name: 'Sam' }, score: 6 };
+const unscored = { imageUrl: 'plain.jpg', isMine: false, poster: { name: 'Ari' }, score: null };
+const led = heroPictures([sketch], [unscored, sam, joPhoto]);
+assert.deepEqual(led.pictures.map((p) => p.url), ['jo.jpg', 's.png'], 'the highest-ranked photo leads, the sketch stays behind it');
 assert.equal(led.credit, 'Photo by Jo · ranked it 9.2');
+assert.equal(heroPictures([], [sam, { ...joPhoto, score: 6, imageUrl: 'older.jpg' }]).pictures[0].url, 'sam.jpg', 'a tie goes to the newest');
+assert.equal(heroPictures([], [unscored, sam]).pictures[0].url, 'sam.jpg', 'a scored photo beats an unscored newer one');
+assert.equal(heroPictures([], [unscored]).credit, 'Photo by Ari', 'no scores at all: the newest');
 assert.equal(heroPictures([], [joPhoto]).pictures.length, 1, 'no pictures at all: theirs');
 assert.deepEqual(heroPictures([sketch], []), { pictures: [sketch], credit: null });
 assert.deepEqual(heroPictures([sketch], undefined), { pictures: [sketch], credit: null }, 'signed out: no person photos');
