@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
@@ -51,6 +51,12 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
   const reduceMotion = useReducedMotion();
   const inputs = inputsFor(sketchLook(draft, barVariants));
   const drawKey = JSON.stringify(inputs);
+  // The drawing before this one, faded out under the new one. Plain opacity, not
+  // Reanimated's exiting animations: an exiting view removed again mid-fade (each
+  // keystroke redraws, the keyboard folds the band) corrupted its view bookkeeping
+  // and crashed iOS release builds.
+  const [shown, setShown] = useState<{ now: SketchInputs; before: SketchInputs | null; n: number }>({ now: inputs, before: null, n: 0 });
+  if (shown.now !== inputs) setShown({ now: inputs, before: shown.now, n: shown.n + 1 });
   const at = WIZARD_STEPS.indexOf(step);
   const counted = Math.min(at + 1, COUNTED_STEPS);
 
@@ -91,9 +97,8 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
       {folded ? null : (
         <>
           <Animated.View style={[styles.drawing, { width: size, height: size }, bounce]} aria-label="Sketch of the drink so far">
-            <Animated.View key={drawKey} entering={FadeIn.duration(260)} exiting={FadeOut.duration(260)} style={StyleSheet.absoluteFill}>
-              <SketchDrawing inputs={inputs} seed={SEED} detail="full" />
-            </Animated.View>
+            {shown.before ? <Layer key={`out-${shown.n - 1}`} inputs={shown.before} from={1} to={0} /> : null}
+            <Layer key={`in-${shown.n}`} inputs={shown.now} from={0} to={1} />
           </Animated.View>
           <View style={styles.foot}>
             <Tag label="Sketch" tone="sketch" />
@@ -104,6 +109,20 @@ export function SketchHeader({ draft, step, onBack, top, side, rounded, folded, 
         </>
       )}
     </View>
+  );
+}
+
+/** One drawing, fading from `from` to `to` opacity once, when it mounts. */
+function Layer({ inputs, from, to }: { inputs: SketchInputs; from: number; to: number }) {
+  const opacity = useSharedValue(from);
+  useEffect(() => {
+    opacity.set(withTiming(to, { duration: 260 }));
+  }, [opacity, to]);
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, fade]}>
+      <SketchDrawing inputs={inputs} seed={SEED} detail="full" />
+    </Animated.View>
   );
 }
 
