@@ -1,5 +1,5 @@
 // Faster drink reads, same visibility
-// (supabase/migrations/20261008610000_presentation_rls_speed.sql).
+// (supabase/migrations/20261008810000_presentation_rls_speed.sql).
 //
 // Loads the definitions that migration replaced (fixtures/presentation-before.sql,
 // as temp views) and checks that every reader gets exactly the same rows from

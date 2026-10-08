@@ -1,4 +1,4 @@
--- The definitions 20261008610000_presentation_rls_speed.sql replaced, as they
+-- The definitions 20261008810000_presentation_rls_speed.sql replaced, as they
 -- were on main at ad14593 (pg_dump of the local stack), loaded as session temp
 -- views so presentation-speed.test.mjs can compare old and new answers for the
 -- same reader. old_visible_items is the old items_select policy as a filter.
