@@ -106,6 +106,7 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
       {sheet?.kind === 'add' ? (
         <AddDrinkSheet
           section={section}
+          barId={editor.menu.barId}
           onClose={() => editor.setSheet(null)}
           library={editor.library}
           elsewhere={editor.elsewhere}

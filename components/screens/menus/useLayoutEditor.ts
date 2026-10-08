@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -21,6 +21,7 @@ import {
 } from '@/lib/menuLayout';
 import { groupMenus, menuStatus } from '@/lib/menus';
 import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
+import { useCreatorNavStore } from '@/store/useCreatorNavStore';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | null;
@@ -39,8 +40,25 @@ export function useLayoutEditor(menu: MenuDetail) {
   const [now] = useState(() => Date.now());
   const save = useSaveMenu(menu.id);
   const cover = usePickMenuCover(menu.id);
-  const { data: library = [] } = useMenuLibrary(menu.barId);
+  const libraryQuery = useMenuLibrary(menu.barId);
+  const library = libraryQuery.data ?? [];
+  const refetchLibrary = libraryQuery.refetch;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+
+  // A drink made with "Create a new drink" in a section (AddDrinkSheet) goes
+  // in that section once it's saved. This screen stays mounted under the wizard.
+  useEffect(
+    () =>
+      useCreatorNavStore.subscribe(async (s) => {
+        if (!s.pendingMenuDrink) return;
+        const handoff = useCreatorNavStore.getState().consumeMenuDrink();
+        if (!handoff) return;
+        const { data } = await refetchLibrary();
+        const drink = data?.find((d) => d.id === handoff.drinkId);
+        if (drink) setLayout((l) => addDrink(l, handoff.sectionId, drink));
+      }),
+    [refetchLibrary]
+  );
 
   const status = menuStatus(menu, now);
   const changed = layoutChanged(layout, saved);
