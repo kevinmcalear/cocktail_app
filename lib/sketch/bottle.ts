@@ -41,6 +41,8 @@ export const BOTTLE_SHAPES = {
   // tonic, soda, ginger beer
   mixer: { prof: [[22, 2.9], [26, 2.9], [40, 3.6], [50, 7], [57, 8.8], [60, 9], [88, 9], [90, 8.6]], cap: 25, fill: 56, label: [64, 82] },
   beer: { prof: [[10, 2.9], [16, 2.9], [32, 4.2], [41, 8], [47, 10.2], [88, 10.2], [90, 9.8]], cap: 16, fill: 42, label: [58, 78] },
+  // hot sauce, soy sauce, Worcestershire: a small bottle with a long neck
+  sauce: { prof: [[18, 2.6], [27, 2.6], [42, 3.2], [52, 6.4], [59, 9.2], [63, 9.8], [88, 9.8], [90, 9.4]], cap: 27, fill: 50, label: [65, 82] },
   // honey, jam, marmalade, pickles
   jar: { prof: [[36, 13.5], [41, 13.5], [42, 15.6], [44, 16.6], [87, 16.6], [90, 16]], cap: 41, fill: 47, label: [55, 78] },
   // house syrups, cordials, shrubs, tinctures: corked, with a kraft label

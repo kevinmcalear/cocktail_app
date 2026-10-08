@@ -1,6 +1,7 @@
 // Ingredients that don't come in a bottle, drawn as small still lifes in the
 // same hand as the drinks and bottles: citrus with a cut half, fruit, berries,
-// a sprig of herbs, a dish of spice or beans, eggs, a flower, chocolate.
+// a sprig of herbs, a dish of spice or beans, eggs, a flower, chocolate,
+// mushrooms, roots and truffles, onions and garlic, seaweed, a wedge of cheese.
 
 import { PANTRY } from '@/constants/pantry';
 import { SKETCH } from '@/constants/sketch';
@@ -11,7 +12,7 @@ import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { SceneBuilder, type Scene } from './scene';
 import { LIFT } from './styles';
 
-export const PRODUCE_KINDS = ['citrus', 'fruit', 'berries', 'long', 'sprig', 'heap', 'egg', 'flower', 'bar'] as const;
+export const PRODUCE_KINDS = ['citrus', 'fruit', 'berries', 'long', 'sprig', 'heap', 'egg', 'flower', 'bar', 'mushroom', 'root', 'bulb', 'seaweed', 'wedge'] as const;
 export type ProduceKind = (typeof PRODUCE_KINDS)[number];
 export type Grain = 'crystal' | 'powder' | 'bean' | 'nut' | 'leaf' | 'stick';
 
@@ -30,6 +31,12 @@ export interface ProduceInputs {
   cut?: boolean;
   /** A little bottle of oil behind: a fat wash. */
   oil?: boolean;
+  /** Mushrooms: a domed cap (porcini, shiitake) or a frilled funnel (chanterelle). */
+  cap?: 'dome' | 'funnel';
+  /** Roots: smooth tubers, or a warty truffle with a shaved slice. */
+  rough?: boolean;
+  /** Bulbs: an onion with a cut half, a head of garlic with a loose clove, or spring onions. */
+  bulb?: 'onion' | 'garlic' | 'scallion';
 }
 
 const LEAF = PANTRY.leaf;
@@ -336,6 +343,225 @@ function bar(P: Painter, r: Rng, c: string, thumb: boolean) {
   shadow(P, r, 52, 30, 80);
 }
 
+function mushroom(P: Painter, r: Rng, c: string, funnel: boolean, thumb: boolean) {
+  const stemC = mixHex(c, SKETCH.white, 0.72);
+  const gillC = mixHex(stemC, c, 0.45);
+  // back to front: a small one standing behind, then the big one
+  for (const [cx, rim, R, h, lean] of [[68, 68, 12, 10, 0.1], [40, 57, 21, 17, -0.05]] as const) {
+    const foot = GROUND - (R < 15 ? 2 : 0);
+    if (funnel) {
+      // a chanterelle: a trumpet flaring from the stem into a wavy, open rim
+      const wav = (t: number) => Math.sin(t * 5 + cx) * 1.4 + Math.sin(t * 9 + cx) * 0.6;
+      const side = (s: number): Pt[] => Array.from({ length: 13 }, (_, i) => { const t = i / 12; const flare = R * (0.24 + 0.76 * Math.pow(1 - t, 2.6)); return [cx + lean * (foot - rim) * t + s * flare, rim + t * (foot - rim)] as Pt; });
+      const front = Array.from({ length: 25 }, (_, i): Pt => { const t = (i / 24) * Math.PI; return [cx + Math.cos(t) * R, rim + Math.sin(t) * R * 0.3 + wav(t)]; });
+      const back = Array.from({ length: 25 }, (_, i): Pt => { const t = Math.PI + (i / 24) * Math.PI; return [cx + Math.cos(t) * R, rim + Math.sin(t) * R * 0.3 + wav(t)]; });
+      P.wash([...side(1).slice().reverse(), ...front, ...side(-1)], c, 0.95, { n: 16 });
+      P.wash(side(1).slice(0, 9).concat(side(1).slice(0, 9).reverse().map(([x, y]): Pt => [x - R * 0.3, y])), shade(c), 0.35, { layers: 0.5, spill: 0, blooms: 0, fadeTo: 0 });
+      P.wash([...back, ...front.slice().reverse()], mixHex(c, SKETCH.pool, 0.12), 0.95, { n: 14, blooms: 0, spill: 0, layers: 0.7 });
+      // the ridges running down from the rim into the stem
+      if (!thumb) for (let k = 1; k < 8; k++) {
+        const t0 = (k / 8) * Math.PI;
+        const pts: Pt[] = [];
+        for (let i = 0; i <= 8; i++) { const t = i / 8; const flare = R * (0.24 + 0.76 * Math.pow(1 - t * 0.7, 2.6)); pts.push([cx + lean * (foot - rim) * t * 0.7 + Math.cos(t0) * flare, rim + R * 0.3 * Math.sin(t0) * (1 - t) + t * 0.7 * (foot - rim)]); }
+        P.line(pts, { weight: 0.4, alpha: 0.6, passes: 1, over: 0, gaps: 0.4 });
+      }
+      P.line(side(1), { weight: 1 });
+      P.line(side(-1), { weight: 1 });
+      P.line(front, { weight: 1.05 });
+      P.line(back, { weight: 0.8, alpha: 0.85 });
+      continue;
+    }
+    const sw = R * 0.3;
+    const stem: Pt[] = [];
+    for (let i = 0; i <= 10; i++) { const t = i / 10; stem.push([cx + lean * (foot - rim) * t + sw * (0.85 + 0.3 * t * t), rim + t * (foot - rim)]); }
+    for (let i = 10; i >= 0; i--) { const t = i / 10; stem.push([cx + lean * (foot - rim) * t - sw * (0.85 + 0.3 * t * t), rim + t * (foot - rim)]); }
+    P.wash(stem, stemC, 0.8, { n: 12, blooms: 0, spill: 0.4 });
+    P.wash(stem.slice(0, 11).concat(stem.slice(0, 11).reverse().map(([x, y]): Pt => [x - sw * 0.6, y])), shade(stemC), 0.35, { layers: 0.5, spill: 0, blooms: 0, fadeTo: 0 });
+    P.line(stem.slice(0, 11), { weight: 0.9 });
+    P.line(stem.slice(11), { weight: 0.9 });
+    // the gills, a dark crescent under the cap's edge
+    const under = [...ell(cx, rim, R * 0.97, R * 0.1, Math.PI, 0, 16), ...ell(cx, rim, R * 0.97, R * 0.24, 0, Math.PI, 16)];
+    P.wash(under, gillC, 0.85, { n: 12, blooms: 0, spill: 0 });
+    if (!thumb) for (let k = 1; k < 16; k++) {
+      const a = (k / 16) * Math.PI;
+      P.line([[cx + Math.cos(a) * R * 0.95, rim + Math.sin(a) * R * 0.1], [cx + Math.cos(a) * sw * 1.1, rim + Math.sin(a) * R * 0.22]], { weight: 0.4, alpha: 0.6, passes: 1, over: 0, gaps: 0.3 });
+    }
+    P.line(ell(cx, rim, R * 0.97, R * 0.24, 0.1, Math.PI - 0.1, 16), { weight: 0.6, alpha: 0.8 });
+    // the cap: a dome with its edge rolled under
+    const cap: Pt[] = [];
+    for (let i = 0; i <= 26; i++) {
+      const t = Math.PI + (i / 26) * Math.PI;
+      cap.push([cx + Math.cos(t) * R * (1 + 0.04 * Math.sin(t * 2)), rim - h * Math.abs(Math.sin(t)) ** 0.7]);
+    }
+    const capPts = [...cap, ...ell(cx, rim, R, R * 0.1, 0, Math.PI, 14)];
+    ball(P, capPts, c, cx, rim - h * 0.45, R, 0.95);
+    if (!thumb) P.dots(Array.from({ length: Math.round(R) }, () => { const a = Math.PI + r() * Math.PI; const d = Math.sqrt(r()) * 0.85; return [cx + Math.cos(a) * R * d, rim + Math.sin(a) * h * d, 0.3 + r() * 0.35] as [number, number, number]; }), shade(c), 0.35);
+    P.line(cap, { weight: 1.1 });
+    P.line(ell(cx, rim, R, R * 0.1, 0.05, Math.PI - 0.05, 18), { weight: 0.9 });
+  }
+  shadow(P, r, 52, 30);
+}
+
+/** A lumpy outline: an oval pushed in and out by a few slow bumps. */
+function lump(r: Rng, cx: number, cy: number, rx: number, ry: number, rot: number, bumps: number, n = 32): Pt[] {
+  const ph = Array.from({ length: 3 }, () => r() * Math.PI * 2);
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * Math.PI * 2;
+    const k = 1 + bumps * (0.5 * Math.sin(t * 3 + ph[0]) + 0.3 * Math.sin(t * 5 + ph[1]) + 0.2 * Math.sin(t * 2 + ph[2]));
+    const u = rx * Math.cos(t) * k;
+    const v = ry * Math.sin(t) * k;
+    return [cx + u * Math.cos(rot) - v * Math.sin(rot), cy + u * Math.sin(rot) + v * Math.cos(rot)] as Pt;
+  });
+}
+
+function root(P: Painter, r: Rng, c: string, rough: boolean, thumb: boolean) {
+  if (rough) {
+    // a truffle: a warty knob, and a shaved slice showing its marbling
+    const knob = lump(r, 42, 62, 19, 17, 0.2, 0.07, 40);
+    ball(P, knob, c, 42, 62, 18, 1.05);
+    if (!thumb) P.dots(Array.from({ length: 70 }, () => { const a = r() * Math.PI * 2; const d = Math.sqrt(r()) * 16; return [42 + Math.cos(a) * d, 62 + Math.sin(a) * d * 0.9, 0.35 + r() * 0.35] as [number, number, number]; }), mixHex(c, SKETCH.white, 0.3), 0.45);
+    P.line(closed(knob), { weight: 1.1 });
+    const [sx, sy] = [68, 77];
+    const slice = lump(r, sx, sy, 15, 7.5, -0.1, 0.05, 28);
+    P.wash(slice, mixHex(c, SKETCH.white, 0.45), 0.9, { n: 12, blooms: 0 });
+    if (!thumb) for (let k = 0; k < 6; k++) {
+      const pts: Pt[] = [];
+      let [x, y] = [sx - 11 + r() * 6, sy - 4 + r() * 8];
+      let a = gauss(r) * 0.8;
+      for (let i = 0; i < 6; i++) { pts.push([x, y]); a += gauss(r) * 0.7; x += Math.cos(a) * 2.6; y += Math.sin(a) * 1.3; }
+      P.line(pts.filter(([px, py]) => ((px - sx) / 13.5) ** 2 + ((py - sy) / 6.6) ** 2 < 1), { weight: 0.5, alpha: 0.7, passes: 1, over: 0, wob: 1.4 });
+    }
+    P.line(closed(slice), { weight: 0.9 });
+    P.line(lump(r, sx, sy + 1.2, 15, 7.5, -0.1, 0.05, 28).slice(1, 14), { weight: 0.6, alpha: 0.7, passes: 1 });
+    shadow(P, r, 52, 30);
+    return;
+  }
+  // tubers: a big one lying across and a smaller one in front, with eyes and a root tail
+  for (const [cx, cy, rx, ry, rot] of [[44, 63, 25, 13, -0.22], [68, 75, 14, 9, 0.35]] as const) {
+    const t = lump(r, cx, cy, rx, ry, rot, 0.06);
+    ball(P, t, mixHex(c, SKETCH.pool, r() * 0.12), cx, cy, ry * 1.4, 1);
+    if (!thumb) for (let k = 0; k < Math.round(rx / 5); k++) {
+      const a = r() * Math.PI * 2;
+      const d = 0.4 + r() * 0.45;
+      const [x, y] = [cx + Math.cos(a) * rx * d * Math.cos(rot) - Math.sin(a) * ry * d * Math.sin(rot), cy + Math.cos(a) * rx * d * Math.sin(rot) + Math.sin(a) * ry * d * Math.cos(rot)];
+      P.line(ell(x, y, 1.6, 0.7, 0.3, Math.PI - 0.3, 5, a), { weight: 0.5, passes: 1, over: 0 });
+    }
+    P.line(closed(t), { weight: 1.05 });
+    const tip: Pt = [cx + Math.cos(rot) * rx * 1.02, cy + Math.sin(rot) * rx * 1.02];
+    P.line([tip, [tip[0] + 4, tip[1] - 1 + gauss(r)], [tip[0] + 7, tip[1] + 1]], { weight: 0.5, passes: 1, wob: 1.2 });
+  }
+  shadow(P, r, 52, 32);
+}
+
+function scallions(P: Painter, r: Rng, c: string, thumb: boolean) {
+  // three lying across: white bulbs and roots at the left, green leaves splaying right
+  for (const [y0, tilt] of [[66, -0.16], [74, -0.1], [81, -0.04]] as const) {
+    const at = (t: number, dy = 0): Pt => [18 + t * 64, y0 + t * 64 * tilt + dy];
+    const white: Pt[] = [...[0, 0.1, 0.2, 0.3].map((t, i) => at(t, -[3.2, 3.6, 2.8, 2.2][i])), ...[0.3, 0.2, 0.1, 0].map((t, i) => at(t, [2.2, 2.8, 3.6, 3.2][i]))];
+    P.wash(white, SKETCH.white, 0.6, { n: 8, blooms: 0, spill: 0 });
+    P.line(closed(white), { weight: 0.8 });
+    for (let k = 0; k < (thumb ? 2 : 5); k++) { const [x, y] = at(0, gauss(r) * 1.4); P.line([[x, y], [x - 3 - r() * 2, y + gauss(r) * 1.6]], { weight: 0.4, passes: 1, over: 0, wob: 1.4 }); }
+    for (const fan of [-1, 1]) {
+      const leaf: Pt[] = [];
+      for (let i = 0; i <= 10; i++) { const t = 0.3 + (i / 10) * 0.7; const [x, y] = at(t, fan * (t - 0.3) * 6 * (1 + r() * 0.2)); leaf.push([x, y - 1.6 * (1 - i / 10)]); }
+      for (let i = 10; i >= 0; i--) { const t = 0.3 + (i / 10) * 0.7; const [x, y] = at(t, fan * (t - 0.3) * 6); leaf.push([x, y + 1.6 * (1 - i / 10)]); }
+      P.wash(leaf, mixHex(c, SKETCH.pool, r() * 0.2), 0.9, { n: 10, blooms: 0 });
+      P.line(leaf.slice(0, 11), { weight: 0.75 });
+    }
+  }
+  shadow(P, r, 50, 34);
+}
+
+function bulb(P: Painter, r: Rng, c: string, style: 'onion' | 'garlic' | 'scallion', thumb: boolean) {
+  if (style === 'scallion') return scallions(P, r, c, thumb);
+  const garlic = style === 'garlic';
+  const [cx, cy, R] = [42, 62, garlic ? 19 : 20];
+  // round at the bottom, drawn up to a papery point
+  const outline: Pt[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const t = (i / 40) * Math.PI * 2;
+    const up = Math.max(0, -Math.sin(t));
+    const w = R * (1 - 0.55 * up ** 3) * (garlic ? 1 + 0.05 * Math.abs(Math.sin(t * 3)) : 1);
+    outline.push([cx + Math.cos(t) * w, cy + Math.sin(t) * R * (garlic ? 0.85 : 0.95) - up ** 4 * R * 0.45]);
+  }
+  ball(P, outline, c, cx, cy, R, garlic ? 0.75 : 0.95);
+  const top = cy - R * 1.4;
+  const neck: Pt[] = [[cx - 3, top + 3], [cx - 1.5, top - 6], [cx + 0.5, top - 10], [cx + 2, top - 6], [cx + 3, top + 3]];
+  P.wash(neck, mixHex(c, SKETCH.pool, 0.15), 0.8, { n: 8, blooms: 0, spill: 0 });
+  P.line(neck, { weight: 0.8 });
+  // lines running from the neck to the root: skins, or the cloves of a head of garlic
+  for (const k of garlic ? [-0.72, -0.4, -0.12, 0.18, 0.46, 0.74] : [-0.6, -0.25, 0.1, 0.45]) {
+    const pts: Pt[] = [];
+    for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([cx + k * R * Math.sin(t * Math.PI) * (garlic ? 1.05 : 0.95) + k * 2 * (1 - t), top + 3 + t * (cy + R * 0.85 - top - 3)]); }
+    if (!thumb || garlic) P.line(pts, { weight: garlic ? 0.6 : 0.45, alpha: garlic ? 0.85 : 0.6, passes: 1, gaps: 0.4 });
+  }
+  P.line(closed(outline), { weight: 1.1 });
+  // the root whiskers
+  for (let k = 0; k < (thumb ? 3 : 7); k++) { const x = cx - 4 + k * 1.3; P.line([[x, cy + R * 0.86], [x + gauss(r) * 2, cy + R * 0.86 + 2.5 + r() * 2]], { weight: 0.45, passes: 1, over: 0, wob: 1.4 }); }
+  const [hx, hy] = [68, 76];
+  if (garlic) {
+    // a loose clove
+    const clove: Pt[] = [];
+    for (let i = 0; i <= 20; i++) { const t = (i / 20) * Math.PI * 2; clove.push([hx + Math.cos(t) * 9 * (1 - 0.45 * Math.max(0, Math.cos(t)) ** 2), hy + Math.sin(t) * 5.5 * (1 - 0.3 * Math.max(0, Math.cos(t)))]); }
+    const rot = clove.map(([x, y]): Pt => [hx + (x - hx) * Math.cos(-0.35) - (y - hy) * Math.sin(-0.35), hy + (x - hx) * Math.sin(-0.35) + (y - hy) * Math.cos(-0.35)]);
+    ball(P, rot, c, hx, hy, 7, 0.75);
+    P.line(closed(rot), { weight: 0.9 });
+  } else {
+    // the cut half: skin round the back, rings on the face
+    const face = oval(hx, hy, 15, 8.5, 0, 26);
+    P.wash([...ell(hx, hy, 15, 12, 0, Math.PI, 16), ...ell(hx, hy, 15, 8.5, Math.PI, Math.PI * 2, 16)], c, 0.95, { n: 12, blooms: 0 });
+    P.wash(face, mixHex(c, SKETCH.white, 0.7), 0.85, { n: 12, blooms: 0, spill: 0 });
+    for (const f of thumb ? [0.55] : [0.25, 0.45, 0.65, 0.84]) P.line(closed(oval(hx, hy + (1 - f) * 0.8, 15 * f, 8.5 * f, 0, 20)), { weight: 0.45, alpha: 0.65, passes: 1, gaps: 0.3 });
+    P.line(closed(face), { weight: 0.9 });
+    P.line(ell(hx, hy, 15, 12, 0, Math.PI, 16), { weight: 1.05 });
+  }
+  shadow(P, r, 52, 30);
+}
+
+function seaweed(P: Painter, r: Rng, c: string, thumb: boolean) {
+  // a dried sheet behind, and ruffled ribbons of kelp in front
+  const sheet: Pt[] = [[22, 46], [64, 38], [72, 66], [28, 74]];
+  P.wash(sheet, mixHex(c, SKETCH.pool, 0.45), 0.9, { n: 12, blooms: 0 });
+  if (!thumb) for (let k = 1; k < 6; k++) { const f = k / 6; P.line([[22 + 6 * f, 46 + 28 * f], [64 + 8 * f, 38 + 28 * f]], { weight: 0.35, alpha: 0.45, passes: 1, gaps: 0.6 }); }
+  P.line(closed(sheet), { weight: 0.9 });
+  for (const [y0, y1, amp, wid] of [[72, 64, 4, 5.5], [82, 76, 3, 4.5]] as const) {
+    const spine: Pt[] = [];
+    for (let i = 0; i <= 30; i++) { const t = i / 30; spine.push([14 + t * 74, y0 + t * (y1 - y0) + Math.sin(t * 7 + r() * 0.3) * amp]); }
+    const top = spine.map(([x, y], i): Pt => [x, y - wid * (0.6 + 0.4 * Math.sin((i / 30) * Math.PI)) - Math.sin(i * 1.7) * 0.9]);
+    const bot = spine.map(([x, y], i): Pt => [x, y + wid * (0.6 + 0.4 * Math.sin((i / 30) * Math.PI)) + Math.sin(i * 1.3) * 0.9]);
+    const body = [...top, ...[...bot].reverse()];
+    P.wash(body, mixHex(c, SKETCH.pool, r() * 0.15), 0.95, { n: 18 });
+    P.wash(bot, shade(c), 0.4, { layers: 0.5, spill: 0, blooms: 0, fadeTo: 0 });
+    if (!thumb) P.line(spine.slice(1, 29), { weight: 0.4, alpha: 0.55, passes: 1, gaps: 0.5 });
+    P.line(top, { weight: 0.9, wob: 1.3 });
+    P.line(bot, { weight: 0.9, wob: 1.3 });
+  }
+  shadow(P, r, 50, 34, 88);
+}
+
+function wedge(P: Painter, r: Rng, c: string, rind: string, thumb: boolean) {
+  // lying on its side: the point to the left, the rind at the back right
+  const [A, B, C] = [[16, 66], [74, 50], [80, 64]] as Pt[];
+  const d = 15;
+  const down = ([x, y]: Pt): Pt => [x, y + d];
+  P.wash([A, C, down(C), down(A)], shade(c), 0.9, { n: 12, blooms: 0 });
+  P.wash([C, B, down(B), down(C)], rind, 0.95, { n: 10, blooms: 0, spill: 0 });
+  P.wash([A, B, C], c, 0.9, { n: 12 });
+  if (!thumb) {
+    // a few holes and crumbly marks
+    for (let k = 0; k < 5; k++) {
+      const [u, v] = [r(), r()];
+      const [x, y] = [A[0] + (C[0] - A[0]) * (0.2 + u * 0.7), A[1] + (C[1] - A[1]) * (0.2 + u * 0.7) + 3 + v * (d - 6)];
+      P.line(closed(oval(x, y, 1.6 + r(), 1.1 + r() * 0.6, 0, 8)), { weight: 0.5, passes: 1, over: 0 });
+    }
+    P.dots(Array.from({ length: 22 }, () => { const u = r(); const v = r() * (1 - u); return [A[0] + (B[0] - A[0]) * u + (C[0] - A[0]) * v, A[1] + (B[1] - A[1]) * u + (C[1] - A[1]) * v, 0.3 + r() * 0.3] as [number, number, number]; }), shade(c), 0.4);
+  }
+  P.line([A, B, C, A], { weight: 1 });
+  P.line([A, down(A), down(C), down(B), B], { weight: 1 });
+  P.line([C, down(C)], { weight: 0.8 });
+  shadow(P, r, 50, 32, 82);
+}
+
 export function paintProduce(inputs: ProduceInputs, { seed, detail = 'full' }: { seed: string; detail?: 'full' | 'thumb' }): Scene {
   const S = handFor(detail);
   const thumb = detail === 'thumb';
@@ -355,6 +581,11 @@ export function paintProduce(inputs: ProduceInputs, { seed, detail = 'full' }: {
     case 'egg': egg(P, r, c); break;
     case 'flower': flower(P, r, c, accent ?? PANTRY.flowerCentre, thumb); break;
     case 'bar': bar(P, r, c, thumb); break;
+    case 'mushroom': mushroom(P, r, c, inputs.cap === 'funnel', thumb); break;
+    case 'root': root(P, r, c, !!inputs.rough, thumb); break;
+    case 'bulb': bulb(P, r, c, inputs.bulb ?? 'onion', thumb); break;
+    case 'seaweed': seaweed(P, r, c, thumb); break;
+    case 'wedge': wedge(P, r, c, accent ?? shade(c), thumb); break;
   }
   return b.done();
 }
