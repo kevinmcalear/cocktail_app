@@ -24,6 +24,7 @@ jest.mock('@/hooks/useVersions', () => ({ saveDrinkSpec: (...args: unknown[]) =>
 const LIVE = ['lime', 'shake'];
 // Every drink insert's row, and ids the database already has.
 const mockInserts: Record<string, unknown>[] = [];
+const mockRpcs: [string, Record<string, unknown>][] = [];
 const mockTaken = new Set<string>();
 jest.mock('@/lib/supabase', () => {
   const chain = (result: () => unknown) => {
@@ -37,7 +38,10 @@ jest.mock('@/lib/supabase', () => {
   };
   return {
     supabase: {
-      rpc: async (_: string, { p_name }: { p_name: string }) => ({ data: p_name === 'Cupuacu' ? 'cupuacu-kept' : null, error: null }),
+      rpc: async (fn: string, args: Record<string, unknown>) => {
+        mockRpcs.push([fn, args]);
+        return { data: args.p_name === 'Cupuacu' ? 'cupuacu-kept' : null, error: null };
+      },
       from: (table: string) => ({
         ...chain(() => ({ data: null, error: null })),
         insert: (row: Record<string, unknown>) => {
@@ -76,6 +80,7 @@ test('the drink is saved under its draft id and shows the wizard\'s drawing at o
   expect(id).toBe('draft-1');
   expect(mockInserts.map((r) => r.id)).toEqual(['draft-1']);
   expect(mockSetQueryData).toHaveBeenCalledWith(['item-sketch', 'draft-1'], sketch);
+  expect(mockRpcs).toContainEqual(['save_maker_sketch', { p_item_id: 'draft-1', p_inputs: sketch }]);
 });
 
 test('an id the database already has saves under one of its own', async () => {

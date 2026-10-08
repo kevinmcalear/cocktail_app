@@ -171,6 +171,11 @@ export function useCreateDrink() {
         throw e;
       }
 
+      // The drawing the wizard showed stays the drink's: the worker won't
+      // repaint it until the drink changes (20261009950000_maker_drawings).
+      // Decorative, so a failure only means the worker draws it as usual.
+      if (sketch) await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: sketch });
+
       if (draft.publish) {
         const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
         if (error) warnings.push(plainDbMessage(error) ?? 'It’s saved as private: who can see it didn’t change.');
