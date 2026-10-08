@@ -45,8 +45,8 @@ const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { per
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
 
 describe('AddDrinkWizard', () => {
-  // Walks every step to the save: close to Jest's 5 s default on CI runners, where it timed out on main.
-  test('a name, then each step keeps what was added through Back, and saves once at the end', async () => {
+  // One walk through the wizard, in three parts so none runs near Jest's 5 s limit on a busy CI runner.
+  test('a name, then ingredients by quick add, stepper, typing and search', async () => {
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('What’s it called?')).toBeTruthy();
@@ -68,6 +68,20 @@ describe('AddDrinkWizard', () => {
     await fireEvent.changeText(screen.getByLabelText('Add another ingredient'), 'camp');
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
     expect(screen.getByLabelText('Amount of Campari').props.value).toBe('30');
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => [l.name, l.amount, l.unit])).toEqual([['Gin', '30', 'ml'], ['Campari', '30', 'ml']]);
+  });
+
+  test('ingredients: the unit switch, remove and undo, and Back keep what was added', async () => {
+    useDrinkWizardStore.getState().patch('home', {
+      name: 'House Negroni',
+      lines: [
+        { key: 'k1', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' },
+        { key: 'k2', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' },
+      ],
+    });
+    useDrinkWizardStore.getState().setStep('home', 'ingredients');
+    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
 
     // The unit is in sight, and a tap away from changing.
     await fireEvent.press(screen.getAllByRole('button', { name: 'Unit: ml' })[1]);
@@ -89,6 +103,25 @@ describe('AddDrinkWizard', () => {
     await fireEvent.changeText(screen.getByLabelText('Amount of Campari'), '');
     await next();
 
+    // The kept draft is on the device already, before any save.
+    const kept = useDrinkWizardStore.getState().kept.home;
+    expect(kept.step).toBe('method');
+    expect(kept.draft.name).toBe('House Negroni');
+    expect(kept.draft.lines.map((l) => [l.id, l.amount, l.unit])).toEqual([['gin', '30', 'ml'], ['campari', '', 'oz']]);
+  });
+
+  test('method, skipped steps, then the review saves once', async () => {
+    useDrinkWizardStore.getState().patch('home', {
+      name: 'House Negroni',
+      lines: [
+        { key: 'k1', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' },
+        { key: 'k2', id: 'campari', name: 'Campari', amount: '', unit: 'oz' },
+      ],
+    });
+    useDrinkWizardStore.getState().setStep('home', 'method');
+    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+
     // Method: several, in order, and your own.
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir, suggested' }));
     await fireEvent.changeText(screen.getByLabelText('Your own method'), 'Smoke rinse');
@@ -101,10 +134,7 @@ describe('AddDrinkWizard', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('What ice?')).toBeTruthy();
 
-    // The kept draft is on the device already, before any save.
-    const kept = useDrinkWizardStore.getState().kept.home;
-    expect(kept.draft.name).toBe('House Negroni');
-    expect(kept.step).toBe('ice');
+    expect(useDrinkWizardStore.getState().kept.home.step).toBe('ice');
 
     // On to the review and save.
     for (let i = 0; i < 5; i++) await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
@@ -122,7 +152,7 @@ describe('AddDrinkWizard', () => {
     await act(() => mockCreate.mock.calls[0][1].onSuccess({ id: 'new-drink', warnings: [] }));
     expect(mockSaved).toHaveBeenCalledWith('new-drink');
     expect(useDrinkWizardStore.getState().kept.home).toBeUndefined();
-  }, 20_000);
+  });
 
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
