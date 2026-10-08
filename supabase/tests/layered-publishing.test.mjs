@@ -192,15 +192,17 @@ describe('layered publishing', () => {
 });
 
 describe('personal drinks are private until published', () => {
-  test('only the creator reads their drink and its spec; their ingredients stay shared', async () => {
+  test('only the creator reads their drink and its spec, and their own ingredients (20261008730000)', async () => {
     const byStranger = await users.stranger.client.from('items').select('id').eq('id', ids.items.homeDrink);
     assert.deepEqual(byStranger.data, []);
     assert.deepEqual(await specRows(users.stranger.client, 'homeDrink'), []);
     const byOwner = await users.homeUser.client.from('items').select('id').eq('id', ids.items.homeDrink);
     assert.equal(byOwner.data.length, 1);
     assert.equal((await specRows(users.homeUser.client, 'homeDrink')).length, 1);
-    const shared = await users.stranger.client.from('items').select('id').eq('id', ids.items.homeIngredient);
-    assert.equal(shared.data.length, 1);
+    const theirs = await users.stranger.client.from('items').select('id').eq('id', ids.items.homeIngredient);
+    assert.deepEqual(theirs.data, []);
+    const mine = await users.homeUser.client.from('items').select('id').eq('id', ids.items.homeIngredient);
+    assert.equal(mine.data.length, 1);
   });
 
   test('once published with its spec, everyone can read it', async () => {
