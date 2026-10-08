@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { bringInChoice, isEditable } from './bringInAnywhere';
+import { bringInChoice, isEditable, isLink } from './bringInAnywhere';
 
 const f = (type: string) => ({ type });
 
@@ -13,9 +13,13 @@ assert.equal(bringInChoice([f('text/plain')], null), null);
 assert.deepEqual(bringInChoice([], '  Negroni\n30 ml Gin  '), { text: 'Negroni\n30 ml Gin' });
 assert.deepEqual(bringInChoice([], 'Orchard Fizz: calvados, pear and lemon'), { text: 'Orchard Fizz: calvados, pear and lemon' });
 assert.equal(bringInChoice([], 'Negroni'), null);
-assert.equal(bringInChoice([], 'https://example.com/a-very-long-recipe-link'), null);
+assert.deepEqual(bringInChoice([], ' https://punchdrink.com/recipes/negroni/ '), { text: 'https://punchdrink.com/recipes/negroni/' });
 assert.equal(bringInChoice([], '   '), null);
 assert.equal(bringInChoice([], null), null);
+
+assert.equal(isLink('https://x.co/a'), true);
+assert.equal(isLink('see https://x.co/a'), false);
+assert.equal(isLink('ftp://x.co/a'), false);
 
 assert.equal(isEditable({ tagName: 'TEXTAREA' }), true);
 assert.equal(isEditable({ tagName: 'INPUT' }), true);
