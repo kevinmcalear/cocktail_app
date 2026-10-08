@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
+  newDraftId,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -102,6 +103,11 @@ assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'rocks_hea
 
 // The kept draft is plain JSON (it lives in storage until the drink is saved).
 assert.deepEqual(JSON.parse(JSON.stringify(negroni)), negroni);
+
+// A draft's id is a v4 uuid (the drink's id once saved), new every time.
+const ids = new Set(Array.from({ length: 200 }, newDraftId));
+assert.equal(ids.size, 200);
+for (const id of ids) assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 
 console.log('drink wizard: ok');
 

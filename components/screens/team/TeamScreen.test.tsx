@@ -49,22 +49,26 @@ beforeEach(() => {
   mockSendAsync.mockReset();
 });
 
-test('an admin can look someone up, invite, change a role, and remove', async () => {
+test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
   await renderWithTamagui(<TeamScreen />);
   expect(screen.getByText('Caretakers')).toBeTruthy();
   expect(screen.getByText('jo@example.test')).toBeTruthy();
-  expect(screen.getByText('Joined 4 Mar 2026')).toBeTruthy();
-  expect(screen.getByText('Nia, new@example.test · invited as Bartender')).toBeTruthy();
+  expect(screen.getByText('Nia')).toBeTruthy();
+  expect(screen.getByText('new@example.test · Invited as Bartender')).toBeTruthy();
+  // Your own row has no sheet: nobody demotes or removes themselves here.
+  expect(screen.queryByRole('button', { name: /^Ada, Admin/ })).toBeNull();
 
   await fireEvent.changeText(screen.getByLabelText('Look up'), 'jo');
   expect(screen.queryByText('Ada (you)')).toBeNull();
-  expect(screen.getByText('Jo')).toBeTruthy();
 
-  await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Bartender' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Jo, Employee. Manage' }));
+  expect(screen.getByText('Joined 4 Mar 2026')).toBeTruthy();
+  expect(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
+  await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));
   expect(mockMutate).toHaveBeenCalledWith({ email: 'jo@example.test', roleLevel: 30 });
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Remove' }));
-  expect(mockRemove).toHaveBeenCalledWith('jo');
+  await fireEvent.press(screen.getByRole('button', { name: 'Remove from Caretakers' }));
+  expect(mockRemove).toHaveBeenCalledWith('jo', expect.anything());
 });
 
 test('an admin invites by name, email and role from the sheet, and the invite is emailed', async () => {
@@ -84,7 +88,7 @@ test('an admin invites by name, email and role from the sheet, and the invite is
   expect(mockSendAsync).toHaveBeenCalledWith('sam@example.test');
   expect(await screen.findByText('Invite emailed to Sam Okafor.')).toBeTruthy();
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Email again' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Email the invite to new@example.test again' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
 });
 
@@ -104,10 +108,10 @@ test('an employee sees the team and cannot manage it', async () => {
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
   expect(screen.getByText('Employee')).toBeTruthy();
-  expect(screen.getByText('Opens at Admin')).toBeTruthy();
+  expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
   expect(screen.queryByLabelText('Look up')).toBeNull();
   expect(screen.queryByText('Invite someone')).toBeNull();
   expect(screen.queryByText('jo@example.test')).toBeNull();
-  expect(screen.queryByText('Nia, new@example.test · invited as Bartender')).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
+  expect(screen.queryByText('new@example.test · Invited as Bartender')).toBeNull();
 });

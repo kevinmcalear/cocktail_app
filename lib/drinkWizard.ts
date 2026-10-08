@@ -40,6 +40,12 @@ export interface WizardLine extends WizardPick {
 }
 
 export interface WizardDraft {
+  /**
+   * The drink's id, made when the draft starts (newDraftId): the sketch is
+   * drawn with it as its seed and the drink is saved under it, so the saved
+   * drink keeps the very drawing the wizard showed.
+   */
+  id?: string;
   name: string;
   lines: WizardLine[];
   /** In order: "Dry shake" then "Shake". */
@@ -76,6 +82,19 @@ export const EMPTY_DRAFT: WizardDraft = {
   notes: '',
   publish: null,
 };
+
+/** A v4 uuid for a new draft. Not a secret, only unique: the database rejects a clash and the save retries with its own. */
+export function newDraftId(): string {
+  const bytes = new Uint8Array(16);
+  const c = (globalThis as { crypto?: { getRandomValues?: (a: Uint8Array) => Uint8Array } }).crypto;
+  if (c?.getRandomValues) c.getRandomValues(bytes);
+  // ponytail: Hermes has no crypto without expo-crypto; Math.random is enough for an id the database checks.
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 /** Whether a step has anything in it (an empty optional step offers Skip). */
 export function stepFilled(step: WizardStep, d: WizardDraft): boolean {

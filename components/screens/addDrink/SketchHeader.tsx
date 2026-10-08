@@ -48,7 +48,8 @@ export function SketchHeader({ draft, step, barVariants, ...band }: SketchHeader
       {...band}
       first={at === 0}
       progress={{ now: counted, of: COUNTED_STEPS, label: step === 'review' ? 'Review' : `${counted} of ${COUNTED_STEPS}` }}
-      art={<SketchDrawing inputs={inputs} seed={SEED} detail="full" />}
+      // The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing.
+      art={<SketchDrawing inputs={inputs} seed={draft.id ?? SEED} detail="full" />}
       artKey={JSON.stringify(inputs)}
       artLabel="Sketch of the drink so far"
     />

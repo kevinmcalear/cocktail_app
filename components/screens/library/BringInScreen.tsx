@@ -1,18 +1,23 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, ReviewRow, Segmented, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { takeBringIn } from '@/lib/bringInHandoff';
-import { compileBringIn, matchIngredient, normName, parseBringIn, type BringBlock } from '@/lib/paste';
+import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
+import type { BottleReading } from '@/lib/readBottle';
+import type { IngredientAlias } from '@/lib/ingredientNames';
+import { matchIngredient, matchKey, type CatalogItem } from '@/lib/match';
+import { compileBringIn, parseBringIn, type BringBlock } from '@/lib/paste';
 
-import { Choice } from '../menus/MenuSheet';
+import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
+import { BringInRead, type BringInReadResult } from './BringInRead';
 
 type Mode = 'drinks' | 'ingredients';
 
@@ -24,6 +29,7 @@ function lineKey(block: number, line: number): string {
 function Review({
   blocks,
   catalog,
+  aliases,
   venueId,
   picks,
   kinds,
@@ -31,7 +37,8 @@ function Review({
   onKind,
 }: {
   blocks: BringBlock[];
-  catalog: Parameters<typeof matchIngredient>[1];
+  catalog: CatalogItem[];
+  aliases: readonly IngredientAlias[];
   venueId: string | null;
   picks: Record<string, string>;
   kinds: Record<string, string>;
@@ -43,10 +50,10 @@ function Review({
     <View style={{ gap: space.md }}>
       {blocks.map((block, i) => (
         <View key={`${block.name}-${i}`} style={{ gap: space.sm }}>
-          <Headline>{block.name || 'Needs a name'}</Headline>
-          {block.kind === 'bottle' ? <Bottle name={block.name} catalog={catalog} venueId={venueId} pickKey={lineKey(i, 0)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} /> : null}
+          {block.kind === 'bottle' ? null : <Headline>{block.name || 'Needs a name'}</Headline>}
+          {block.kind === 'bottle' ? <Bottle name={block.name} catalog={catalog} aliases={aliases} venueId={venueId} pickKey={lineKey(i, 0)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} /> : null}
           {block.lines.map((line, j) => (
-            <Line key={lineKey(i, j)} name={line.name} amount={line.amount === null ? '' : `${line.amount} ${line.unit}`} catalog={catalog} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
+            <Line key={lineKey(i, j)} name={line.name} amount={line.amount === null ? '' : `${line.amount} ${line.unit}`} catalog={catalog} aliases={aliases} venueId={venueId} pickKey={lineKey(i, j)} picks={picks} kinds={kinds} shown={shown} onPick={onPick} onKind={onKind} />
           ))}
           {block.notes.map((note) => (
             <Caption key={note} tone="muted">
@@ -66,7 +73,8 @@ function Bottle(props: Omit<LineProps, 'amount'>) {
 interface LineProps {
   name: string;
   amount: string;
-  catalog: Parameters<typeof matchIngredient>[1];
+  catalog: CatalogItem[];
+  aliases: readonly IngredientAlias[];
   venueId: string | null;
   pickKey: string;
   picks: Record<string, string>;
@@ -76,30 +84,33 @@ interface LineProps {
   onKind: (key: string, value: string) => void;
 }
 
-function Line({ name, amount, catalog, venueId, pickKey, picks, kinds, shown, onPick, onKind }: LineProps) {
-  const match = matchIngredient(name, catalog, venueId);
-  const prefix = amount ? `${amount} ` : '';
-  if (match.kind === 'use') return <Caption>{`${prefix}${name}. In the library`}</Caption>;
+function Line({ name, amount, catalog, aliases, venueId, pickKey, picks, kinds, shown, onPick, onKind }: LineProps) {
+  const match = matchIngredient(name, catalog, venueId, aliases);
+  const label = name.trim();
+  if (match.kind === 'one') return <ReviewRow state="have" amount={amount} title={label} detail="In the library" />;
   if (match.kind === 'pick') {
+    const chosen = match.items.some((item) => item.id === picks[pickKey]) ? picks[pickKey] : null;
     return (
-      <View style={{ gap: space.sm }}>
-        <Caption>{`${prefix}${name}. Which one?`}</Caption>
-        {match.options.map((option) => (
-          <Choice key={option.id} label={option.name} selected={picks[pickKey] === option.id} onPress={() => onPick(pickKey, option.id)} />
-        ))}
-      </View>
+      <ReviewRow
+        state={chosen ? 'have' : 'pick'}
+        amount={amount}
+        title={label}
+        detail={chosen ? 'In the library' : 'Which one?'}
+        choices={match.items.map((item) => ({ id: item.id, label: item.name }))}
+        chosen={chosen}
+        onChoose={(id) => onPick(pickKey, id)}
+      />
     );
   }
-  const key = normName(match.name);
+  const key = matchKey(label);
   const kindField = !shown.has(key);
   if (kindField) shown.add(key);
   return (
-    <View style={{ gap: space.sm }}>
-      <Caption>{`${prefix}${match.name}. New`}</Caption>
+    <ReviewRow state="new" amount={amount} title={label} detail="New">
       {kindField ? (
-        <Field label={`Kind of ${match.name}`} value={key in kinds ? kinds[key] : (match.genericName ?? '')} onChangeText={(value) => onKind(key, value)} placeholder="Gin" autoCapitalize="words" />
+        <Field label={`Kind of ${label}`} value={key in kinds ? kinds[key] : (match.kindItem?.name ?? '')} onChangeText={(value) => onKind(key, value)} placeholder="Gin" autoCapitalize="words" />
       ) : null}
-    </View>
+    </ReviewRow>
   );
 }
 
@@ -112,15 +123,17 @@ function BringInBody() {
   const barId = active?.id ?? null;
   const caps = useCapabilities(barId);
   const canEdit = !barId || !!caps.data?.includes('edit_drinks');
-  const { catalog, methods, glasses, isLoading } = useSpecCatalog();
+  const { catalog, aliases, methods, glasses, isLoading } = useSpecCatalog();
   const bring = useBringIn(barId);
   const [mode, setMode] = useState<Mode>('drinks');
   const [text, setText] = useState(() => takeBringIn() ?? '');
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [kinds, setKinds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [lastRead, setLastRead] = useState<BringInReadResult | null>(null);
+  const [bottles, setBottles] = useState<BottleReading[] | null>(null);
   const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
-  const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses), [blocks, catalog, barId, picks, kinds, methods, glasses]);
+  const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses, aliases), [blocks, catalog, barId, picks, kinds, methods, glasses, aliases]);
   const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
 
   const save = async () => {
@@ -129,6 +142,27 @@ function BringInBody() {
     const result = await bring.mutateAsync(compiled.write);
     if (result.error) setMessage(result.error);
     else router.back();
+  };
+
+  const onRead = (result: BringInReadResult, replace: boolean) => {
+    // A menu goes to the menu check, bottles to the shelf check; recipes stay here.
+    if (result.reading.kind === 'menu' && result.reading.menu) {
+      stageMenuPhotos({ photos: result.files, barId, name: '', reading: result.reading.menu });
+      router.push('/menus/from-photo' as Href);
+      return;
+    }
+    if (result.reading.kind === 'bottles') {
+      setBottles(result.reading.bottles);
+      return;
+    }
+    const fresh = replace || mode !== 'drinks' || !text.trim();
+    setMode('drinks');
+    setText(fresh ? result.text : `${text.trim()}\n\n${result.text}`);
+    if (fresh) {
+      setPicks({});
+      setKinds({});
+    }
+    setLastRead(result);
   };
 
   return (
@@ -153,12 +187,22 @@ function BringInBody() {
             placeholder={mode === 'drinks' ? 'Negroni\n30 ml Gin\n30 ml Campari\n\nMartini\n60 ml Gin' : 'Gin\nCampari\n\nGin syrup\n200 g sugar\n200 ml water'}
           />
           <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
-          {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
+          <BringInRead mode={mode} text={text} onRead={onRead} />
+          {lastRead?.unsure.length ? <Caption tone="accent">{`Hard to read, check these: ${lastRead.unsure.join(', ')}.`}</Caption> : null}
+          {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} aliases={aliases} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
           {message ? <Caption tone="accent">{message}</Caption> : null}
           <Button label={bring.isPending ? 'Bringing in…' : `Add ${count}`} onPress={save} disabled={!count || !!compiled.error || bring.isPending} />
         </LockedSection>
       </ScrollView>
+      {bottles ? (
+        <BottlePhotoSheet
+          visible
+          readings={bottles}
+          target={barId ? { kind: 'venue', barId, name: active?.name ?? 'The venue', canEdit } : { kind: 'home' }}
+          onClose={() => setBottles(null)}
+        />
+      ) : null}
     </View>
   );
 }

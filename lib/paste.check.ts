@@ -4,18 +4,17 @@ import {
   applyMenuPaste,
   bringInText,
   compileBringIn,
-  matchByName,
-  matchIngredient,
   appendReading,
   pasteRows,
   placedGroups,
+  readingText,
   parseAmount,
   parseBringIn,
   parseMenuPaste,
   parseSpecLine,
-  type CatalogItem,
   type ParsedMenuSection,
 } from './paste';
+import type { CatalogItem } from './match';
 import { blankSection, type MenuLayout } from './menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -75,22 +74,12 @@ const catalog: CatalogItem[] = [
   { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
   { id: 'campari', name: 'Campari', genericId: null, barId: null },
 ];
-assert.equal(matchIngredient('gin', catalog, 'bar').kind === 'use' && (matchIngredient('gin', catalog, 'bar') as { id: string }).id, 'gin');
-assert.equal(matchIngredient('Beefeater', catalog, 'bar').kind === 'use' && (matchIngredient('Beefeater', catalog, 'bar') as { id: string }).id, 'beef');
-const roku = matchIngredient('Roku Gin', catalog, 'bar');
-assert.equal(roku.kind, 'new');
-if (roku.kind === 'new') assert.equal(roku.genericId, 'gin');
 
 const noGeneric: CatalogItem[] = [
   { id: 'beef', name: 'Beefeater', genericId: 'gin', barId: 'bar' },
   { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
   { id: 'gin', name: 'Gin', genericId: null, barId: 'other' },
 ];
-const picked = matchIngredient('Gin', noGeneric, 'bar');
-assert.equal(picked.kind, 'pick');
-if (picked.kind === 'pick') assert.equal(picked.options.length, 3);
-
-assert.equal(matchByName('Martini', [{ name: 'Martini' }, { name: 'Martini' }]).kind, 'many');
 
 const bottles = parseBringIn('Gin\nCampari\n', 'ingredients');
 assert.equal(bottles.length, 2);
@@ -176,3 +165,31 @@ assert.equal(listed[1].lines.length, 0);
 const unmeasured = compileBringIn(listed, catalog, 'bar', {}, {}, [], []);
 assert.equal(unmeasured.error, null);
 assert.deepEqual(unmeasured.write?.items[0].lines.map((l) => [l.amount, l.unit]), [[null, null], [null, null]]);
+
+// A read-anything reading lands in Bring in as text it parses back the same way.
+const fromReader = readingText([
+  {
+    name: 'Orchard Fizz',
+    by: 'Little Rye',
+    lines: [
+      { amount: 1.5, unit: 'oz', ingredient: 'Calvados', unsure: false },
+      { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true },
+      { amount: null, unit: 'top', ingredient: 'Soda Water', unsure: false },
+    ],
+    method: 'Shaken',
+    glass: 'Collins',
+    ice: null,
+    garnish: 'Lemon twist',
+    notes: null,
+  },
+]);
+assert.deepEqual(fromReader.unsure, ['Orchard Fizz: Lemon Juice']);
+const back = parseBringIn(fromReader.text, 'drinks');
+assert.equal(back.length, 1);
+assert.equal(back[0].name, 'Orchard Fizz');
+assert.deepEqual(back[0].lines, [
+  { amount: 1.5, unit: 'oz', name: 'Calvados' },
+  { amount: 0.75, unit: 'oz', name: 'Lemon Juice' },
+  { amount: null, unit: null, name: 'Soda Water' },
+]);
+assert.deepEqual(back[0].notes, ['Shaken', 'Collins', 'Garnish: Lemon twist', 'By Little Rye']);

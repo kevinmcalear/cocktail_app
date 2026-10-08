@@ -47,7 +47,7 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
         {CREATE.map((c) => (
           <Row key={c.label} label={c.label} hint={c.hint} icon={<CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(c.href)} />
         ))}
-        <Row label="Bring in" hint="Paste drinks or bottles" icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />} onPress={() => go('/bring-in')} />
+        <Row label="Bring in" hint="Snap, drop or paste a menu, recipes or bottles" icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />} onPress={() => go('/bring-in')} />
         <Row
           label="Drafts"
           hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
@@ -65,7 +65,7 @@ export function CreateButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <GlassButton accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring in a list, or a draft" icon="plus" onPress={() => setOpen(true)} />
+      <GlassButton accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" icon="plus" onPress={() => setOpen(true)} />
       {open ? <CreateSheet visible onClose={() => setOpen(false)} /> : null}
     </>
   );

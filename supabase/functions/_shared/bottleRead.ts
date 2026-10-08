@@ -1,7 +1,7 @@
 // Reading the label on a photographed bottle. Plain TypeScript (no Deno APIs)
 // so scripts/bottleRead.check.ts can run it under Node too.
 
-/** One bottle as its label reads. lib/bottleMatch.ts finds it in the catalog. */
+/** One bottle as its label reads. lib/match.ts finds it in the catalog. */
 export interface BottleReading {
   /** The maker or brand ("Tanqueray", "Carpano"), or null when no brand is printed. */
   brand: string | null;

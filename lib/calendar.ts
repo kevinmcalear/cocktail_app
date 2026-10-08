@@ -60,3 +60,28 @@ export function weekStart(locale?: string): number {
 export function outside(day: string, min?: string, max?: string): boolean {
   return Boolean((min && day < min) || (max && day > max));
 }
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** A time as stored and sent: 19:05. */
+export const toTime = (hour: number, minute: number) => `${pad(hour)}:${pad(minute)}`;
+
+/** "19:00" as hours and minutes, or null when it isn't a real time. */
+export function parseTime(text: string): { hour: number; minute: number } | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(text.trim());
+  if (!m) return null;
+  const hour = Number(m[1]);
+  const minute = Number(m[2]);
+  return hour < 24 && minute < 60 ? { hour, minute } : null;
+}
+
+/** True where clocks read 1 PM rather than 13:00. Formats a time rather than asking Intl, which Hermes answers poorly. */
+export function uses12Hour(locale?: string): boolean {
+  return !new Date(2026, 0, 1, 13).toLocaleTimeString(locale, { hour: 'numeric' }).includes('13');
+}
+
+/** "7:00 PM" or "19:00", as this locale writes it. */
+export function timeLabel(time: string, locale?: string): string {
+  const t = parseTime(time);
+  return t ? new Date(2026, 0, 1, t.hour, t.minute).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }) : time;
+}

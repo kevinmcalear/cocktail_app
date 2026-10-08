@@ -14,7 +14,7 @@ export async function ensureAiConsent(): Promise<boolean> {
   if ((await deviceStore.getItem(AI_CONSENT_KEY)) === 'granted') return true;
   const agreed = await confirmAsync({
     title: 'Use Google AI?',
-    message: `${BRAND.productName} sends the drink's name and ingredients, or your glassware photo, to Google's Gemini AI to create the result. Nothing else is shared. More in the privacy policy.`,
+    message: `${BRAND.productName} sends what you ask it to read (a photo, a file or text), or a drink's name and ingredients, to Google's Gemini AI to create the result. Nothing else is shared. More in the privacy policy.`,
     confirmText: 'Continue',
   });
   if (agreed) await deviceStore.setItem(AI_CONSENT_KEY, 'granted');

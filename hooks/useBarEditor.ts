@@ -1,31 +1,11 @@
 import { useBarDetail } from '@/hooks/useBarDetail';
 import { useBars } from '@/hooks/useBars';
 import { extractBrandColorsFromUri } from '@/lib/extractBrandColors';
-import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
-import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
-
-const ROLE_OPTIONS = [
-    { name: 'Guest (10)', value: '10' },
-    { name: 'Employee (20)', value: '20' },
-    { name: 'Bartender (30)', value: '30' },
-    { name: 'Drink Creator (35)', value: '35' },
-    { name: 'Admin (40)', value: '40' },
-];
-
-function normalizeHex(value: string): string {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    return trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
-}
-
-function isValidHex(value: string): boolean {
-    return /^#[0-9A-Fa-f]{6}$/.test(value);
-}
 
 // Alert.alert shows the in-app dialog on web (lib/dialogs installWebAlert).
 function showAlert(title: string, message: string) {
@@ -57,39 +37,24 @@ export async function uploadLogo(barId: string, base64: string) {
     });
 }
 
-function hydrateFormFromBar(
-    bar: {
-        name: string;
-        default_visibility_level: number;
-        default_generic_ingredient_level: number;
-        default_specific_brand_level: number;
-        default_measurement_level: number;
-        default_prep_level: number;
-        logo_url?: string | null;
-        primary_color?: string | null;
-        secondary_color?: string | null;
-    },
-    setters: {
-        setName: (value: string) => void;
-        setVisibilityLevel: (value: string) => void;
-        setGenericLevel: (value: string) => void;
-        setSpecificLevel: (value: string) => void;
-        setMeasurementLevel: (value: string) => void;
-        setPrepLevel: (value: string) => void;
-        setLogoUrl: (value: string | null) => void;
-        setPrimaryColor: (value: string) => void;
-        setSecondaryColor: (value: string) => void;
-    },
-) {
-    setters.setName(bar.name);
-    setters.setVisibilityLevel(bar.default_visibility_level.toString());
-    setters.setGenericLevel(bar.default_generic_ingredient_level.toString());
-    setters.setSpecificLevel(bar.default_specific_brand_level.toString());
-    setters.setMeasurementLevel(bar.default_measurement_level.toString());
-    setters.setPrepLevel(bar.default_prep_level.toString());
-    setters.setLogoUrl(bar.logo_url ?? null);
-    setters.setPrimaryColor(bar.primary_color ?? '');
-    setters.setSecondaryColor(bar.secondary_color ?? '');
+type Form = Record<'name' | 'visibilityLevel' | 'genericLevel' | 'specificLevel' | 'measurementLevel' | 'prepLevel', string>;
+
+function formFromBar(bar: {
+    name: string;
+    default_visibility_level: number;
+    default_generic_ingredient_level: number;
+    default_specific_brand_level: number;
+    default_measurement_level: number;
+    default_prep_level: number;
+}): Form {
+    return {
+        name: bar.name,
+        visibilityLevel: String(bar.default_visibility_level),
+        genericLevel: String(bar.default_generic_ingredient_level),
+        specificLevel: String(bar.default_specific_brand_level),
+        measurementLevel: String(bar.default_measurement_level),
+        prepLevel: String(bar.default_prep_level),
+    };
 }
 
 function patchBarCaches(
@@ -97,9 +62,6 @@ function patchBarCaches(
     barId: string,
     patch: {
         name: string;
-        logo_url: string | null;
-        primary_color: string | null;
-        secondary_color: string | null;
         default_visibility_level: number;
         default_generic_ingredient_level: number;
         default_specific_brand_level: number;
@@ -117,20 +79,17 @@ function patchBarCaches(
         return current.map((row: any) => {
             if (row.bar_id !== barId) return row;
             const bars = row.bars;
-            const branding = {
-                name: patch.name,
-                logo_url: patch.logo_url,
-                primary_color: patch.primary_color,
-                secondary_color: patch.secondary_color,
-            };
-            if (Array.isArray(bars)) {
-                return { ...row, bars: [{ ...bars[0], ...branding }] };
-            }
-            return { ...row, bars: { ...bars, ...branding } };
+            if (Array.isArray(bars)) return { ...row, bars: [{ ...bars[0], name: patch.name }] };
+            return { ...row, bars: { ...bars, name: patch.name } };
         });
     });
 }
 
+/**
+ * A venue's name and who-sees-what defaults, for its settings page. Changes
+ * stay a draft until handleSave. The logo and colours belong to the Brand
+ * screen, so a save here sends back whatever the venue has now.
+ */
 export function useBarEditor(barId: string) {
     const queryClient = useQueryClient();
     const { data: detailData, isLoading } = useBarDetail(barId);
@@ -138,213 +97,52 @@ export function useBarEditor(barId: string) {
 
     const roleLevel = userBars?.find((b) => b.bar_id === barId)?.role_level ?? 10;
     const canEdit = roleLevel >= 40;
-
-    const [name, setName] = useState('');
-    const [visibilityLevel, setVisibilityLevel] = useState('10');
-    const [genericLevel, setGenericLevel] = useState('20');
-    const [specificLevel, setSpecificLevel] = useState('30');
-    const [measurementLevel, setMeasurementLevel] = useState('30');
-    const [prepLevel, setPrepLevel] = useState('40');
-    const [logoUrl, setLogoUrl] = useState<string | null>(null);
-    const [primaryColor, setPrimaryColor] = useState('');
-    const [secondaryColor, setSecondaryColor] = useState('');
-    const [localLogoUri, setLocalLogoUri] = useState<string | null>(null);
-    const [pendingLogoBase64, setPendingLogoBase64] = useState<string | null>(null);
-    const [initialized, setInitialized] = useState(false);
+    const bar = detailData?.bar ?? null;
+    // Only what's been changed; everything else follows the saved venue.
+    const [draft, setDraft] = useState<Partial<Form>>({});
     const [saving, setSaving] = useState(false);
-    const [extractingColors, setExtractingColors] = useState(false);
 
-    useEffect(() => {
-        setInitialized(false);
-        setLocalLogoUri(null);
-        setPendingLogoBase64(null);
-    }, [barId]);
+    const saved = bar ? formFromBar(bar) : null;
+    const form: Form | null = saved ? { ...saved, ...draft } : null;
+    const isDirty = !!saved && (Object.keys(draft) as (keyof Form)[]).some((k) => draft[k] !== saved[k]);
+    const setter = (key: keyof Form) => (value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
-    useEffect(() => {
-        if (!detailData?.bar || initialized) return;
-        hydrateFormFromBar(detailData.bar, {
-            setName,
-            setVisibilityLevel,
-            setGenericLevel,
-            setSpecificLevel,
-            setMeasurementLevel,
-            setPrepLevel,
-            setLogoUrl,
-            setPrimaryColor,
-            setSecondaryColor,
-        });
-        setInitialized(true);
-    }, [detailData?.bar, initialized]);
+    const discardChanges = useCallback(() => setDraft({}), []);
 
-    const initialSnapshot = useMemo(() => {
-        if (!detailData?.bar) return null;
-        const bar = detailData.bar;
-        return {
-            name: bar.name,
-            visibilityLevel: bar.default_visibility_level.toString(),
-            genericLevel: bar.default_generic_ingredient_level.toString(),
-            specificLevel: bar.default_specific_brand_level.toString(),
-            measurementLevel: bar.default_measurement_level.toString(),
-            prepLevel: bar.default_prep_level.toString(),
-            logoUrl: bar.logo_url ?? null,
-            primaryColor: bar.primary_color ?? '',
-            secondaryColor: bar.secondary_color ?? '',
-        };
-    }, [detailData?.bar]);
-
-    const isDirty = useMemo(() => {
-        if (!initialSnapshot) return false;
-        return (
-            name !== initialSnapshot.name ||
-            visibilityLevel !== initialSnapshot.visibilityLevel ||
-            genericLevel !== initialSnapshot.genericLevel ||
-            specificLevel !== initialSnapshot.specificLevel ||
-            measurementLevel !== initialSnapshot.measurementLevel ||
-            prepLevel !== initialSnapshot.prepLevel ||
-            primaryColor !== initialSnapshot.primaryColor ||
-            secondaryColor !== initialSnapshot.secondaryColor ||
-            logoUrl !== initialSnapshot.logoUrl ||
-            !!localLogoUri
-        );
-    }, [
-        initialSnapshot,
-        name,
-        visibilityLevel,
-        genericLevel,
-        specificLevel,
-        measurementLevel,
-        prepLevel,
-        primaryColor,
-        secondaryColor,
-        logoUrl,
-        localLogoUri,
-    ]);
-
-    useEffect(() => {
-        if (!detailData?.bar || isDirty || localLogoUri) return;
-        hydrateFormFromBar(detailData.bar, {
-            setName,
-            setVisibilityLevel,
-            setGenericLevel,
-            setSpecificLevel,
-            setMeasurementLevel,
-            setPrepLevel,
-            setLogoUrl,
-            setPrimaryColor,
-            setSecondaryColor,
-        });
-    }, [detailData?.bar, isDirty, localLogoUri]);
-
-    const pickLogo = useCallback(async () => {
-        if (!canEdit) return;
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-        if (result.canceled || !result.assets?.length) return;
-
-        const uri = result.assets[0].uri;
-        setLocalLogoUri(uri);
-        setExtractingColors(true);
-
-        try {
-            const base64 = await uriToBase64(uri);
-            setPendingLogoBase64(base64);
-
-            const colors = await extractColors(barId, uri, base64);
-            if (colors.primaryColor) setPrimaryColor(colors.primaryColor);
-            if (colors.secondaryColor) setSecondaryColor(colors.secondaryColor);
-        } catch (err: any) {
-            showAlert('Logo preview', err.message || 'Could not analyze logo colors.');
-        } finally {
-            setExtractingColors(false);
-        }
-    }, [barId, canEdit]);
-
-    const discardChanges = useCallback(() => {
-        if (!initialSnapshot) return;
-        setName(initialSnapshot.name);
-        setVisibilityLevel(initialSnapshot.visibilityLevel);
-        setGenericLevel(initialSnapshot.genericLevel);
-        setSpecificLevel(initialSnapshot.specificLevel);
-        setMeasurementLevel(initialSnapshot.measurementLevel);
-        setPrepLevel(initialSnapshot.prepLevel);
-        setLogoUrl(initialSnapshot.logoUrl);
-        setPrimaryColor(initialSnapshot.primaryColor);
-        setSecondaryColor(initialSnapshot.secondaryColor);
-        setLocalLogoUri(null);
-        setPendingLogoBase64(null);
-    }, [initialSnapshot]);
-
-    const handleSave = useCallback(async (): Promise<boolean> => {
+    const handleSave = async (): Promise<boolean> => {
+        if (!bar || !form) return false;
         if (!canEdit) {
             showAlert('Cannot save', "Only the venue's Admins can edit its settings.");
             return false;
         }
-        if (!name.trim()) {
+        if (!form.name.trim()) {
             showAlert('Cannot save', 'Venue name is required.');
             return false;
         }
-
-        let normalizedPrimary = normalizeHex(primaryColor);
-        let normalizedSecondary = normalizeHex(secondaryColor);
-        if (normalizedPrimary && !isValidHex(normalizedPrimary)) {
-            showAlert('Invalid color', 'Primary color must be a hex value like #AABBCC.');
-            return false;
-        }
-        if (normalizedSecondary && !isValidHex(normalizedSecondary)) {
-            showAlert('Invalid color', 'Secondary color must be a hex value like #AABBCC.');
-            return false;
-        }
-
+        const levels = {
+            default_visibility_level: parseInt(form.visibilityLevel, 10),
+            default_generic_ingredient_level: parseInt(form.genericLevel, 10),
+            default_specific_brand_level: parseInt(form.specificLevel, 10),
+            default_measurement_level: parseInt(form.measurementLevel, 10),
+            default_prep_level: parseInt(form.prepLevel, 10),
+        };
         setSaving(true);
         try {
-            let nextLogoUrl = logoUrl;
-
-            if (localLogoUri) {
-                const base64 = pendingLogoBase64 ?? await uriToBase64(localLogoUri);
-                const uploaded = await uploadLogo(barId, base64);
-                if (!uploaded.imageUrl) throw new Error('Logo upload did not return a URL.');
-                nextLogoUrl = uploaded.imageUrl;
-                if (uploaded.primaryColor) normalizedPrimary = uploaded.primaryColor;
-                if (uploaded.secondaryColor) normalizedSecondary = uploaded.secondaryColor;
-            }
-
             const { error } = await supabase.rpc('update_bar_settings', {
                 p_bar_id: barId,
-                p_name: name.trim(),
-                p_visibility: parseInt(visibilityLevel, 10),
-                p_generic: parseInt(genericLevel, 10),
-                p_specific: parseInt(specificLevel, 10),
-                p_measurement: parseInt(measurementLevel, 10),
-                p_prep: parseInt(prepLevel, 10),
-                p_logo_url: nextLogoUrl,
-                p_primary_color: normalizedPrimary || null,
-                p_secondary_color: normalizedSecondary || null,
+                p_name: form.name.trim(),
+                p_visibility: levels.default_visibility_level,
+                p_generic: levels.default_generic_ingredient_level,
+                p_specific: levels.default_specific_brand_level,
+                p_measurement: levels.default_measurement_level,
+                p_prep: levels.default_prep_level,
+                p_logo_url: bar.logo_url ?? null,
+                p_primary_color: bar.primary_color ?? null,
+                p_secondary_color: bar.secondary_color ?? null,
             });
             if (error) throw error;
-
-            const savedPatch = {
-                name: name.trim(),
-                logo_url: nextLogoUrl,
-                primary_color: normalizedPrimary || null,
-                secondary_color: normalizedSecondary || null,
-                default_visibility_level: parseInt(visibilityLevel, 10),
-                default_generic_ingredient_level: parseInt(genericLevel, 10),
-                default_specific_brand_level: parseInt(specificLevel, 10),
-                default_measurement_level: parseInt(measurementLevel, 10),
-                default_prep_level: parseInt(prepLevel, 10),
-            };
-
-            patchBarCaches(queryClient, barId, savedPatch);
-            setLogoUrl(nextLogoUrl);
-            setPrimaryColor(normalizedPrimary);
-            setSecondaryColor(normalizedSecondary);
-            setLocalLogoUri(null);
-            setPendingLogoBase64(null);
+            patchBarCaches(queryClient, barId, { name: form.name.trim(), ...levels });
+            setDraft({});
             return true;
         } catch (err: any) {
             showAlert('Error', err.message || 'Failed to save venue.');
@@ -352,52 +150,28 @@ export function useBarEditor(barId: string) {
         } finally {
             setSaving(false);
         }
-    }, [
-        barId,
-        canEdit,
-        genericLevel,
-        localLogoUri,
-        logoUrl,
-        measurementLevel,
-        name,
-        pendingLogoBase64,
-        prepLevel,
-        primaryColor,
-        queryClient,
-        secondaryColor,
-        specificLevel,
-        visibilityLevel,
-    ]);
+    };
 
     return {
-        loading: isLoading || !initialized,
+        loading: isLoading || !form,
         saving,
-        extractingColors,
         canEdit,
         roleLevel,
-        roleOptions: ROLE_OPTIONS,
-        slug: detailData?.bar?.slug ?? null,
-        members: detailData?.members ?? [],
-        items: detailData?.items ?? [],
-        name,
-        setName,
-        visibilityLevel,
-        setVisibilityLevel,
-        genericLevel,
-        setGenericLevel,
-        specificLevel,
-        setSpecificLevel,
-        measurementLevel,
-        setMeasurementLevel,
-        prepLevel,
-        setPrepLevel,
-        logoUrl,
-        localLogoUri,
-        primaryColor,
-        setPrimaryColor,
-        secondaryColor,
-        setSecondaryColor,
-        pickLogo,
+        slug: bar?.slug ?? null,
+        logoUrl: bar?.logo_url ?? null,
+        drinkCount: detailData?.drinkCount ?? 0,
+        name: form?.name ?? '',
+        setName: setter('name'),
+        visibilityLevel: form?.visibilityLevel ?? '10',
+        setVisibilityLevel: setter('visibilityLevel'),
+        genericLevel: form?.genericLevel ?? '20',
+        setGenericLevel: setter('genericLevel'),
+        specificLevel: form?.specificLevel ?? '30',
+        setSpecificLevel: setter('specificLevel'),
+        measurementLevel: form?.measurementLevel ?? '30',
+        setMeasurementLevel: setter('measurementLevel'),
+        prepLevel: form?.prepLevel ?? '40',
+        setPrepLevel: setter('prepLevel'),
         isDirty,
         handleSave,
         discardChanges,
