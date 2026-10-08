@@ -11,6 +11,8 @@
 --   get_drink_photos(item)    the photos on a drink page, newest first, with
 --                             the poster's public name and their score when
 --                             they chose to show it.
+--   get_people_heroes(items)  for cards and thumbnails of drinks with no photo
+--                             of their own: each drink's highest-ranked photo.
 --
 -- Safety follows the public layer's rules: photos from people on either side
 -- of a block are left out, a moderator can hide one (moderated_at, which the
@@ -128,6 +130,23 @@ CREATE FUNCTION "public"."get_drink_photos"("p_item_id" "uuid", "p_limit" intege
   WHERE dp.item_id = p_item_id AND dp.moderated_at IS NULL
   ORDER BY dp.created_at DESC
   LIMIT least(greatest(coalesce(p_limit, 30), 1), 100);
+$$;
+
+-- For cards and thumbnails: the photo that leads for each drink, the one its
+-- poster ranked highest (newest first among ties and unscored photos), as the
+-- drink page picks it. Runs as the caller, so blocks, hidden photos and drinks
+-- the caller can't see are left out. The app asks only for drinks with no
+-- photo of their own, at most 200 at a time.
+CREATE FUNCTION "public"."get_people_heroes"("p_item_ids" "uuid"[])
+    RETURNS TABLE("item_id" "uuid", "image_url" "text")
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO ''
+    AS $$
+  SELECT DISTINCT ON (dp.item_id) dp.item_id, im.url
+  FROM public.drink_photos dp
+  JOIN public.images im ON im.id = dp.image_id
+  WHERE dp.item_id = ANY (p_item_ids[1:200]) AND dp.moderated_at IS NULL
+  ORDER BY dp.item_id, private.drink_photo_score(dp.id) DESC NULLS LAST, dp.created_at DESC;
 $$;
 
 -- --- Reports ---
@@ -329,5 +348,7 @@ GRANT EXECUTE ON FUNCTION "private"."can_report_photo"("uuid", "uuid") TO "authe
 REVOKE EXECUTE ON FUNCTION "private"."guard_drink_photo"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "public"."get_drink_photos"("uuid", integer) FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "public"."get_drink_photos"("uuid", integer) TO "authenticated", "service_role";
+REVOKE EXECUTE ON FUNCTION "public"."get_people_heroes"("uuid"[]) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "public"."get_people_heroes"("uuid"[]) TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "public"."get_report_queue"(boolean, integer) FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "public"."get_report_queue"(boolean, integer) TO "authenticated", "service_role";

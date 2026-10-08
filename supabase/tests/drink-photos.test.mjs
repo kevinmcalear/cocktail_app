@@ -144,6 +144,30 @@ describe('posting a photo', () => {
   });
 });
 
+describe('cards and thumbnails', () => {
+  test("each drink's highest-ranked photo, for the caller only", async () => {
+    // A third person's unscored photo, newer than the poster's scored one: the scored one still leads.
+    const later = await post(users.reader.client, { item_id: ids.classic, image_id: await image(users.reader.client, 'later') });
+    assert.ifError(later.error);
+    const heroes = async (client, itemIds = [ids.classic, ids.other, ids.venueDrink]) => {
+      const { data, error } = await client.rpc('get_people_heroes', { p_item_ids: itemIds });
+      assert.ifError(error);
+      return Object.fromEntries(data.map((r) => [r.item_id, r.image_url]));
+    };
+    const seen = await heroes(users.reader.client);
+    assert.match(seen[ids.classic], /scored\.jpg$/, 'the scored photo beats a newer unscored one');
+    assert.equal(seen[ids.other], undefined, 'no photos, no row');
+    assert.equal(seen[ids.venueDrink], undefined, "a bar's private drink stays private");
+    assert.match((await heroes(users.staff.client))[ids.venueDrink], /staff\.jpg$/);
+    assert.ok((await anon.rpc('get_people_heroes', { p_item_ids: [ids.classic] })).error, 'signed out: refused');
+
+    assert.ifError((await users.reader.client.from('user_blocks').insert({ blocked_id: users.poster.id })).error);
+    assert.match((await heroes(users.reader.client))[ids.classic], /later\.jpg$/, "a blocked poster's photo never leads");
+    assert.ifError((await users.reader.client.from('user_blocks').delete().eq('blocked_id', users.poster.id)).error);
+    assert.ifError((await users.reader.client.from('drink_photos').delete().eq('id', later.data.id)).error);
+  });
+});
+
 describe('owning and moderating a photo', () => {
   test("only the poster or a moderator deletes it, and the poster can't hide or restore it", async () => {
     const byReader = await users.reader.client.from('drink_photos').delete().eq('id', ids.plain).select('id');

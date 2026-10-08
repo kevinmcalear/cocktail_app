@@ -69,7 +69,11 @@ export function useAddDrinkPhoto(itemId: string) {
         );
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['drink-photos', itemId] }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['drink-photos', itemId] });
+      // Cards and thumbnails may lead with it now, or no longer.
+      void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'people-hero' && q.queryKey[2] === itemId });
+    },
   });
 }
 
@@ -81,6 +85,10 @@ export function useDeleteDrinkPhoto(itemId: string) {
       const { error } = await supabase.from('drink_photos').delete().eq('id', photoId);
       if (error) throw new Error("Couldn't delete the photo. Try again.");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['drink-photos', itemId] }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['drink-photos', itemId] });
+      // Cards and thumbnails may lead with it now, or no longer.
+      void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'people-hero' && q.queryKey[2] === itemId });
+    },
   });
 }
