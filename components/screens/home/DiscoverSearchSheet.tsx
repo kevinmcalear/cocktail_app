@@ -15,15 +15,15 @@ interface DiscoverSearchProps {
   scope: SearchScope;
   onScope: (scope: SearchScope) => void;
   mine: SearchMine;
-  /** This area (the map, or the area chip). Null when here is everywhere. */
-  area: SearchArea | null;
+  /** This area (the map, or the area chip) and Discover's filters. */
+  area: SearchArea;
   onClearKinds: () => void;
   onClose: () => void;
 }
 
 /** The field and scope, plus a line for Discover's filters, which narrow the search too. */
 export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area, onClearKinds, onClose }: DiscoverSearchProps) {
-  const kinds = area?.kinds ?? [];
+  const kinds = area.kinds;
   return (
     <View style={styles.head}>
       <SearchHead query={query} onQuery={onQuery} scope={scope} onScope={onScope} mine={mine} area={area} autoFocus onDone={onClose} />
