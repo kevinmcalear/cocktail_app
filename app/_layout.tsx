@@ -28,6 +28,7 @@ import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { WebSideNav } from '@/components/nav/WebSideNav';
+import { SearchPalette } from '@/components/search/SearchPalette';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -214,6 +215,7 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>
+        {showWebSidebar ? <SearchPalette /> : null}
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
