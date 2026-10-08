@@ -3,14 +3,14 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
+import { Button, Caption, Chip, GlassButton, GlassSurface, Headline, Spec, Surface, Tag, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { DrinkAtBarList } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { layout, radius, space } from '@/constants/tokens';
 import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
-import { drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { closedPins, drinkCount, drinkPins, type DiscoverBar, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
@@ -25,8 +25,8 @@ interface DiscoverMapPaneProps {
   onArea: (area: Area) => void;
   /** The drink picked on Discover, for "Best Martini" pins. */
   drink: { id: string; name: string } | null;
-  /** Drinks at bars matching Discover's search and filters, in the area: the default layer. */
-  results: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string };
+  /** Drinks at bars matching Discover's search and filters, in the area: the default layer. Closed bars pin on every layer when given. */
+  results: { drinks: DiscoverDrink[]; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string; closed?: DiscoverBar[] };
   /** What the map shows once the person has moved it (null after a refit), so search can stay in view. */
   onViewport?: (viewport: Viewport | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
@@ -50,7 +50,7 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
   const shown = all ? drinks : drinks.slice(0, PREVIEW_DRINKS);
   return (
     <Surface raised style={styles.card}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
+      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.closed ? pin.closed : pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
         <UserAvatar uri={pin.logo} name={pin.name} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
@@ -58,7 +58,9 @@ function SelectedBar({ pin, drinks, onClose }: { pin: MapPin; drinks: DiscoverDr
             {pin.place || 'Bar'}
           </Caption>
         </View>
-        {pin.drinks ? (
+        {pin.closed ? (
+          <Tag label={pin.closed} />
+        ) : pin.drinks ? (
           <Caption tone="muted">{drinkCount(pin.drinks)}</Caption>
         ) : pin.score === null ? (
           <Caption tone="muted">{pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
@@ -97,7 +99,7 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
   const drinkRows = useDiscoverRankings(byDrink ? drink.id : null, area);
   const barRows = useTopBars(area);
   const rows = byDrinks ? { data: undefined, isLoading: results.isLoading } : byDrink ? drinkRows : barRows;
-  const pins = byDrinks ? drinkPins(results.drinks, results.barsById) : pinsFrom(rows.data);
+  const pins = [...(byDrinks ? drinkPins(results.drinks, results.barsById) : pinsFrom(rows.data)), ...closedPins(results.closed ?? [])];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = pins.find((p) => p.id === selectedId) ?? null;
 
@@ -214,8 +216,10 @@ export function DiscoverMapPane({ area, onArea, drink, results, onViewport, mode
             <Caption tone="muted" numberOfLines={1}>
               {rows.isLoading
                 ? 'Loading…'
-                : selected && byDrinks
-                  ? `${drinkCount(barDrinks.length)} at ${selected.name} · swipe up for them`
+                : selected?.closed
+                  ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
+                  : selected && byDrinks
+                    ? `${drinkCount(barDrinks.length)} at ${selected.name} · swipe up for them`
                   : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · swipe up for the list`}
             </Caption>
             <Title role="heading" numberOfLines={1}>

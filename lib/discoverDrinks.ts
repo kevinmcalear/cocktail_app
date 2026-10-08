@@ -20,6 +20,9 @@ export interface DiscoverBar {
   countryCode: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Shut for good: kept for its history, off Discover's drinks and map unless asked for, still found by search. */
+  closed: boolean;
+  closedYear: number | null;
 }
 
 export interface DiscoverDrink {
@@ -84,6 +87,16 @@ export function distanceKm(a: { latitude: number; longitude: number }, b: { lati
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+/** "Closed 2019", or "Closed" when the year isn't known. */
+export function closedLabel(year: number | null): string {
+  return year ? `Closed ${year}` : 'Closed';
+}
+
+/** The closed bars in the area, by name: what "Closed bars" in Filters shows. */
+export function closedBars(bars: readonly DiscoverBar[], area: Area): DiscoverBar[] {
+  return bars.filter((b) => b.closed && barInArea(b, area)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** Whether a bar is in the area. A bar with no coordinates is only "anywhere" (or in its city). */
 export function barInArea(bar: DiscoverBar, area: Area): boolean {
   if (area.kind === 'anywhere') return true;
@@ -138,7 +151,8 @@ export function findBars(bars: readonly DiscoverBar[], search: string): Discover
   return bars
     .map((b) => ({ b, s: score(b) }))
     .filter((x) => x.s < 3)
-    .sort((x, y) => x.s - y.s || x.b.name.localeCompare(y.b.name))
+    // Open bars before closed ones that match as well.
+    .sort((x, y) => x.s - y.s || Number(x.b.closed) - Number(y.b.closed) || x.b.name.localeCompare(y.b.name))
     .map((x) => x.b);
 }
 
@@ -165,6 +179,15 @@ export function drinkPins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<st
     });
   }
   return pins.sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
+}
+
+/** Pins for closed bars, faded and labelled Closed. */
+export function closedPins(bars: readonly DiscoverBar[]): MapPin[] {
+  return bars.flatMap((b) =>
+    b.latitude === null || b.longitude === null
+      ? []
+      : [{ id: b.id, handle: b.handle, name: b.name, logo: b.logo, place: [b.locality, b.city].filter(Boolean).join(', '), latitude: b.latitude, longitude: b.longitude, score: null, position: null, rankers: 0, closed: closedLabel(b.closedYear) }]
+  );
 }
 
 /** "3 drinks", "1 drink". */

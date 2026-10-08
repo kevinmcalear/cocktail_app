@@ -19,7 +19,7 @@ import { findKinds } from '@/lib/drinkStyles';
 import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, type Area } from '@/lib/nearMe';
 
-import { ResultGroup, ResultRow } from './ResultRows';
+import { BarResultRow, ResultGroup, ResultRow } from './ResultRows';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 const place = (parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ');
@@ -55,7 +55,19 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
 
   const bars = useMemo((): DiscoverBar[] => {
     if (signedIn) return findBars(area ? results.bars.filter((b) => barInArea(b, area)) : results.bars, q);
-    return (publicBars ?? []).map((b) => ({ id: b.id, handle: '', name: b.display_name, logo: null, locality: b.locality, city: b.city, countryCode: b.country_code, latitude: null, longitude: null }));
+    return (publicBars ?? []).map((b) => ({
+      id: b.id,
+      handle: '',
+      name: b.display_name,
+      logo: null,
+      locality: b.locality,
+      city: b.city,
+      countryCode: b.country_code,
+      latitude: null,
+      longitude: null,
+      closed: !!b.is_closed,
+      closedYear: b.closed_year ?? null,
+    }));
   }, [signedIn, area, results.bars, publicBars, q]);
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
@@ -95,7 +107,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
       <ResultGroup
         label={`Bars ${area ? where : ''}`.trim()}
         items={bars}
-        render={(b) => <ResultRow key={b.id} title={b.name} caption={place([b.locality, b.city])} avatar={{ uri: b.logo }} onPress={() => router.push(`/p/${b.handle || b.id}`)} />}
+        render={(b) => <BarResultRow key={b.id} bar={b} />}
       />
       <ResultGroup
         label="People"
