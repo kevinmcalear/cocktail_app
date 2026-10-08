@@ -128,7 +128,28 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(useSettingsStore.getState().specUnit).toBe('oz');
     expect(useSettingsStore.getState().defaultUnit).toBe('oz');
+
+    // Last, the chance to bring something in; home cooks are asked about their shelf.
+    expect(screen.getByText('What’s on your shelf?')).toBeTruthy();
+    expect(mockFinish).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
     expect(mockFinish).toHaveBeenCalled();
+  });
+
+  test('bringing something in finishes setup and lands on Bring in', async () => {
+    mockFinish.mockImplementation(() => {
+      mockMeta = { onboarded: true };
+    });
+    await renderWithTamagui(<OnboardingScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at home' }));
+    for (const [i, name] of ['Love it', 'Love it', 'Love it', 'Love it', 'Love it'].entries()) await fireEvent.press(screen.getAllByRole('radio', { name })[i]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Paste or type it' }));
+    expect(mockFinish).toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/bring-in');
   });
 
   test('hospitality claims an existing profile instead of making one', async () => {

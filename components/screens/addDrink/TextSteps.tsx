@@ -7,16 +7,21 @@ import { capitalizeAsYouType } from '@/lib/stringUtils';
 
 /** The drink's name, big, in the venue's display face. Return moves on. */
 export function NameStep({ draft, set, onDone, resumed, onStartOver }: StepProps & { onDone: () => void; resumed: boolean; onStartOver: () => void }) {
+  return <BigName value={draft.name} onChange={(name) => set({ name })} onDone={onDone} resumed={resumed} onStartOver={onStartOver} />;
+}
+
+/** A wizard's first step: the name, big, in the venue's display face, with "Start over" for a kept draft. */
+export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name' }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string }) {
   const ds = useDs();
   return (
     <View style={styles.stack}>
       <TextInput
-        value={draft.name}
-        onChangeText={(name) => set({ name: capitalizeAsYouType(name) })}
+        value={value}
+        onChangeText={(name) => onChange(capitalizeAsYouType(name))}
         onSubmitEditing={onDone}
         returnKeyType="next"
-        autoFocus={!draft.name}
-        placeholder="Name"
+        autoFocus={!value}
+        placeholder={placeholder}
         placeholderTextColor={ds.c.faint}
         aria-label="Name"
         maxLength={80}
