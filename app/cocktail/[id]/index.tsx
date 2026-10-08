@@ -95,6 +95,7 @@ export default function CocktailDetailsScreen() {
                 onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
                 canEdit={canEdit}
                 onEdit={() => setIsEditing(true)}
+                sheet
             />
         ) : (
             <DrinkLoading />
