@@ -66,6 +66,17 @@ export function pinLabel(pin: MapPin): string {
   return pin.score === null ? '' : formatScore(pin.score);
 }
 
+/**
+ * Pins past the ones a map draws as views, as GeoJSON for its own dots
+ * layer: each with its label (drink count or score; none on a closed bar).
+ */
+export function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection<GeoJSON.Point, { id: string; label: string }> {
+  return {
+    type: 'FeatureCollection',
+    features: pins.map((p) => ({ type: 'Feature', properties: { id: p.id, label: p.closed ? '' : pinLabel(p) }, geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] } })),
+  };
+}
+
 /** What a screen reader says for a pin. */
 export function pinDescription(pin: MapPin): string {
   if (pin.closed) return `${pin.name}, ${pin.closed.toLowerCase()}`;
