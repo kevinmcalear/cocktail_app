@@ -57,6 +57,10 @@
       "destination": "/p/[id]/menus/[edition]"
     },
     {
+      "source": "/settings/bar/:id",
+      "destination": "/settings/bar/[id]"
+    },
+    {
       "source": "/settings/bar/:id/publishing",
       "destination": "/settings/bar/[id]/publishing"
     },

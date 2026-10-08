@@ -10,6 +10,8 @@ export interface BarMember {
     /** The name they signed up with, or the part of their email before @. */
     display_name?: string | null;
     joined_at?: string | null;
+    /** Their Settings photo, else their profile picture. */
+    avatar_url?: string | null;
 }
 
 export function useBarDetail(barId: string) {
