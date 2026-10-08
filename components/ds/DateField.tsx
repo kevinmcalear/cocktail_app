@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -44,7 +44,11 @@ export function DateField({ label, value, onChange, min, max, hint, error, place
   const [shown, setShown] = useState<Month>(start);
 
   const toggle = () => {
-    if (!open) setShown(start());
+    if (!open) {
+      // A keyboard left up from a field above would cover the calendar.
+      Keyboard.dismiss();
+      setShown(start());
+    }
     setOpen(!open);
   };
   const pick = (day: string) => {
