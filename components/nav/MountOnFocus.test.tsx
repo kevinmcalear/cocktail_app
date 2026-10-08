@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react-native';
 import { createContext, useContext } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
 
@@ -28,7 +28,8 @@ test('a tab mounts on its first focus and stays mounted after', async () => {
   expect(screen.getByText('Library')).toBeTruthy();
 });
 
-test('a tab you leave stops re-rendering until you come back', async () => {
+test('on web, a tab you leave stops re-rendering until you come back', async () => {
+  jest.replaceProperty(Platform, 'OS', 'web');
   const Shelf = createContext('Gin');
   let renders = 0;
   function Bottle() {

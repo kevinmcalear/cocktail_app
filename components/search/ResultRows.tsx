@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
-import { groupLabel, moreLabel, PER_GROUP, RESULT_PAGE } from '@/lib/searchScope';
+import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 const THUMB = 56;
 
@@ -92,7 +92,7 @@ export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
         {groupLabel(label, items.length)}
       </Caption>
       <View role="list">{shown.map(render)}</View>
-      {more ? <Button label={more} variant="ghost" onPress={() => setCount(shown.length + RESULT_PAGE)} style={styles.more} /> : null}
+      {more ? <Button label={more} variant="ghost" onPress={() => setCount(moreCount(items.length, shown.length))} style={styles.more} /> : null}
     </View>
   );
 }

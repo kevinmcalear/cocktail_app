@@ -12,16 +12,20 @@ export type SearchScope = 'mine' | 'area' | 'everywhere';
 /** How many rows each group shows before "All 12". */
 export const PER_GROUP = 4;
 /**
- * Rows each tap on "All 120" or "Show more" adds. Results sit in scroll views
- * (and Discover's sheet) that don't virtualize, so a group grows a page at a time.
+ * Rows each tap on "Show more" adds. Results sit in scroll views (and
+ * Discover's sheet) that don't virtualize, so a long group grows a page at a time.
  */
 export const RESULT_PAGE = 25;
 
-/** The group's button: "All 12" when one more page shows the rest, else "Show more (96)". */
+/** How many rows a group shows after a tap: all of them when under two pages are left, else a page more. */
+export function moreCount(total: number, shown: number): number {
+  return total - shown < 2 * RESULT_PAGE ? total : shown + RESULT_PAGE;
+}
+
+/** The group's button: "All 12" when a tap shows the rest, "Show more (96)" while it doesn't, null once all show. */
 export function moreLabel(total: number, shown: number): string | null {
-  const rest = total - shown;
-  if (rest <= 0) return null;
-  return rest <= RESULT_PAGE ? `All ${total}` : `Show more (${rest})`;
+  if (shown >= total) return null;
+  return moreCount(total, shown) === total ? `All ${total}` : `Show more (${total - shown})`;
 }
 
 /** The scope switch's options, in order. `area` only when an area label is given. */
