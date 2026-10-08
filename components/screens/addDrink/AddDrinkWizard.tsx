@@ -1,11 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert } from 'react-native';
 
-import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { WebHead } from '@/components/WebHead';
-import { space, springs } from '@/constants/tokens';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -32,7 +27,8 @@ import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
-import { Eyebrow, WizardFooter } from './WizardChrome';
+import { WizardFooter } from './WizardChrome';
+import { WizardFrame } from './WizardFrame';
 
 export interface AddDrinkWizardProps {
   /** The venue it's added at; null or missing for a drink at home. */
@@ -57,11 +53,6 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
 }
 
 function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedded, onClose, onSaved }: AddDrinkWizardProps) {
-  const ds = useDs();
-  const insets = useSafeAreaInsets();
-  const gutter = useGutter();
-  const breakpoint = useBreakpoint();
-  const wide = breakpoint !== 'phone';
   const place = wizardPlace(barId);
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
@@ -78,8 +69,6 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
   const barGlasses = useBarGlassware(barId).data;
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
 
-  const windowHeight = useWindowDimensions().height;
-  const [height, setHeight] = useState(0);
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
   const go = (to: WizardStep) => {
@@ -93,28 +82,6 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
     if (initialName?.trim() && !(kept && hasContent(kept))) patch(place, { name: initialName.trim() });
   }, [initialName, place, patch]);
-
-  // Android's back button steps back through the wizard before leaving it.
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (at === 0) return false;
-      back();
-      return true;
-    });
-    return () => sub.remove();
-  });
-
-  // While typing on a phone the sketch folds away, so the field and the keyboard both fit.
-  const [typing, setTyping] = useState(false);
-  useEffect(() => {
-    const ios = Platform.OS === 'ios';
-    const show = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', () => setTyping(true));
-    const hide = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setTyping(false));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
 
   const save = () =>
     create.mutate(
@@ -188,86 +155,36 @@ function Wizard({ barId = null, menuDraftId, menuSectionId, initialName, embedde
     }
   })();
 
-  const entering = (direction > 0 ? FadeInRight : FadeInLeft).springify().damping(springs.glide.damping).stiffness(springs.glide.stiffness);
-  // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
-  const column = wide || !!embedded;
-  const sideBySide = breakpoint === 'desktop' && !embedded;
-  // On iOS the screen is a page sheet that starts below the status bar. Its gap
-  // to the window's top is both the inset it doesn't need and what
-  // KeyboardAvoidingView (which assumes it starts at the top) must add.
-  const sheetGap = Platform.OS === 'ios' && !embedded && height ? Math.max(0, windowHeight - height) : 0;
-  const statusBar = sheetGap > 0 ? 0 : insets.top;
-  const side = column ? 0 : gutter;
-  const bottom = embedded ? space.lg : Math.max(insets.bottom, space.lg);
-
+  const following = WIZARD_STEPS[at + 1];
   return (
-    <KeyboardAvoidingView
-      // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={sheetGap}
+    <WizardFrame
       testID="add-drink"
-      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
-      style={[styles.screen, { backgroundColor: ds.c.ground }]}
+      pageTitle="Add a drink"
+      embedded={embedded}
+      band={(place) => <SketchHeader draft={draft} step={step} onBack={back} barVariants={barVariants} {...place} />}
+      stepKey={step}
+      direction={direction}
+      eyebrow={draft.name.trim() || 'New drink'}
+      title={copy.title}
+      intro={copy.intro}
+      // Android's back button steps back through the wizard before leaving it.
+      onHardwareBack={() => {
+        if (at === 0) return false;
+        back();
+        return true;
+      }}
+      footer={
+        <WizardFooter
+          nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
+          optional={copy.optional}
+          canNext={step === 'name' || step === 'review' ? canSave(draft) : true}
+          saving={create.isPending}
+          onSkip={next}
+          onNext={next}
+        />
+      }
     >
-      <WebHead>
-        <title>Add a drink</title>
-      </WebHead>
-      {/* iOS: after the first layout, so the name field's autofocus meets the right keyboard offset. */}
-      {Platform.OS === 'ios' && !height ? null : (
-        <View
-          style={[
-            styles.column,
-            sideBySide && styles.wideColumn,
-            column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter },
-            { paddingBottom: bottom },
-          ]}
-        >
-          {/* A desktop browser keeps the drawing beside the step, big; elsewhere it's a band on top. */}
-          <View style={sideBySide ? styles.row : styles.flex}>
-            <View style={sideBySide && styles.aside}>
-              <SketchHeader
-                draft={draft}
-                step={step}
-                onBack={back}
-                top={column ? space.lg : statusBar + space.sm}
-                side={column ? space.lg : gutter}
-                rounded={column}
-                folded={typing && !column}
-                barVariants={barVariants}
-                size={sideBySide ? 300 : undefined}
-              />
-            </View>
-            <View style={styles.flex}>
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }, sideBySide && styles.sideScroll]}>
-                <Animated.View key={step} entering={entering} style={styles.body}>
-                  <View style={styles.heading}>
-                    <Eyebrow>{draft.name.trim() || 'New drink'}</Eyebrow>
-                    <Title role="heading">{copy.title}</Title>
-                    {copy.intro ? <Body tone="muted">{copy.intro}</Body> : null}
-                  </View>
-                  {body}
-                </Animated.View>
-              </ScrollView>
-              <View style={{ paddingHorizontal: side }}>
-                <WizardFooter step={step} canNext={step === 'name' || step === 'review' ? canSave(draft) : true} saving={create.isPending} onSkip={next} onNext={next} />
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-    </KeyboardAvoidingView>
+      {body}
+    </WizardFrame>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  column: { flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' },
-  wideColumn: { maxWidth: 1080 },
-  row: { flex: 1, flexDirection: 'row', gap: space.xxl },
-  aside: { width: 380 },
-  sideScroll: { paddingTop: 0 },
-  flex: { flex: 1 },
-  scroll: { paddingTop: space.lg, paddingBottom: space.xl },
-  body: { gap: space.lg },
-  heading: { gap: space.xs },
-});

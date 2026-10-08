@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { STEP_COPY, WIZARD_STEPS, type WizardStep } from '@/lib/drinkWizard';
 
 interface ChipProps {
   label: string;
@@ -53,23 +52,23 @@ export function Eyebrow({ children }: { children: string }) {
 }
 
 interface FooterProps {
-  step: WizardStep;
+  /** "Next: method", or the save on the last step. */
+  nextLabel: string;
+  /** An optional step offers Skip beside Next. */
+  optional: boolean;
   canNext: boolean;
   saving: boolean;
   onSkip: () => void;
   onNext: () => void;
 }
 
-/** Pinned at the bottom: Skip on optional steps, and "Next: method" (Save on the review). */
-export function WizardFooter({ step, canNext, saving, onSkip, onNext }: FooterProps) {
+/** Pinned at the bottom of a wizard: Skip on optional steps, and Next (Save on the review). */
+export function WizardFooter({ nextLabel, optional, canNext, saving, onSkip, onNext }: FooterProps) {
   const ds = useDs();
-  const at = WIZARD_STEPS.indexOf(step);
-  const following = WIZARD_STEPS[at + 1];
-  const label = step === 'review' ? (saving ? 'Saving…' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`;
   return (
     <View style={[styles.footer, { backgroundColor: ds.c.ground }]}>
-      {STEP_COPY[step].optional ? <Button label="Skip" variant="secondary" size="lg" onPress={onSkip} /> : null}
-      <Button label={label} size="lg" disabled={!canNext || saving} onPress={onNext} style={styles.flex} />
+      {optional ? <Button label="Skip" variant="secondary" size="lg" onPress={onSkip} /> : null}
+      <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={styles.flex} />
     </View>
   );
 }
