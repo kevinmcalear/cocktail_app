@@ -108,11 +108,11 @@ async function withLogos(rows: DiscoverRow[]): Promise<DiscoverRow[]> {
  * "Best Martini near you / in New York / anywhere": ranked bars, then early
  * ones (below the ranker minimum, no score). Works signed out.
  */
-export function useDiscoverRankings(rankedAsItemId: string | null | undefined, area: Area) {
+export function useDiscoverRankings(rankedAsItemId: string | null | undefined, area: Area, enabled = true) {
   const params = areaParams(area);
   return useQuery({
     queryKey: ['discover-rankings', rankedAsItemId, params],
-    enabled: !!rankedAsItemId,
+    enabled: enabled && !!rankedAsItemId,
     meta: pointMeta(area),
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...params, p_limit: 20 });
@@ -127,10 +127,11 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
  * bars nobody has ranked yet). Up to 50, so a seeded list like The World's
  * 50 Best Bars fits whole. Works signed out.
  */
-export function useTopBars(area: Area) {
+export function useTopBars(area: Area, enabled = true) {
   const params = areaParams(area);
   return useQuery({
     queryKey: ['discover-top-bars', params],
+    enabled,
     meta: pointMeta(area),
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 50 });

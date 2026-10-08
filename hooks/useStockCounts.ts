@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuth } from '@/ctx/AuthContext';
 import type { OnHandRow } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
@@ -26,12 +27,13 @@ export interface CountLineInput {
 /** Save one zone's count: the count row, then its lines. */
 export function useSaveZoneCount(barId: string) {
   const queryClient = useQueryClient();
+  // The signed-in user the app already has; auth.getUser() would be a network call per save.
+  const userId = useAuth().user?.id;
   return useMutation({
     mutationFn: async ({ zoneId, lines, note }: { zoneId: string | null; lines: CountLineInput[]; note?: string | null }) => {
-      const { data: userData } = await supabase.auth.getUser();
       const { data: count, error } = await supabase
         .from('stock_counts')
-        .insert({ bar_id: barId, zone_id: zoneId, note: note ?? null, counted_by: userData.user?.id })
+        .insert({ bar_id: barId, zone_id: zoneId, note: note ?? null, counted_by: userId })
         .select('id')
         .single();
       if (error) throw error;

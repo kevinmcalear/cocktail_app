@@ -50,13 +50,18 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
   const search = searchKey(useDebounced(filter.search, 250));
   const where = barId ? {} : areaParams(filter.area);
   const kinds = kindParams(filter.kinds);
+  // "Search this area" keeps the last results up while the new ones load, so the list doesn't blank.
+  const searchedHere = !barId && filter.area.kind === 'point' && filter.area.source === 'map';
   const query = useInfiniteQuery({
     queryKey: ['discover-list', where, barId, kinds, search, pageSize],
-    meta: { persist: true },
+    // Saved: the first screen of an area people come back to. Not a searched patch of map, a bar's own, or a big page.
+    meta: { persist: !barId && !searchedHere && pageSize === PAGE },
     enabled: signedIn && enabled,
     staleTime: 10 * 60 * 1000,
     placeholderData: (previous, previousQuery) =>
-      previousQuery && JSON.stringify(previousQuery.queryKey.slice(1, 3)) === JSON.stringify([where, barId]) ? previous : undefined,
+      previousQuery && (JSON.stringify(previousQuery.queryKey.slice(1, 3)) === JSON.stringify([where, barId]) || (searchedHere && previousQuery.queryKey[2] === null))
+        ? previous
+        : undefined,
     initialPageParam: null as ReturnType<typeof cursorAfter> | null,
     getNextPageParam: (last: ListPage) => (last.drinks.length < pageSize ? undefined : cursorAfter(last.drinks[last.drinks.length - 1])),
     queryFn: async ({ pageParam, signal }): Promise<ListPage> => {
@@ -103,7 +108,8 @@ export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[];
   const search = searchKey(useDebounced(filter.search ?? '', 250));
   return useQuery({
     queryKey: ['discover-bars', where, kinds, search],
-    meta: { persist: true },
+    // A searched patch of map isn't worth saving between launches; near me, a city and anywhere are.
+    meta: { persist: !(area.kind === 'point' && area.source === 'map') },
     enabled: signedIn && enabled,
     staleTime: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
@@ -123,11 +129,18 @@ function fromParent(client: QueryClient, t: Tile, kinds: ReturnType<typeof kindP
   return undefined;
 }
 
+/** One list of bars from a view's tiles. Module-level, so useQueries only reruns it when a tile changes. */
+function combineTiles(rs: { data?: DiscoverBar[]; isPending: boolean; fetchStatus: string }[]) {
+  return { bars: rs.flatMap((r) => r.data ?? []), isLoading: rs.some((r) => r.isPending && r.fetchStatus !== 'idle') };
+}
+
 /**
- * The bars in what the map shows, a tile at a time: the tile under the
- * middle first, the rest once it's in. Tiles are kept and saved, so panning
- * back or zooming in reuses them; zooming out loads coarser ones. Nothing
- * while `viewport` is null (the map shows the area, which useDiscoverBars has).
+ * The bars in what the map shows, a tile at a time, all of a view's tiles at
+ * once. Tiles are kept for the session (not saved: panning would fill the
+ * saved cache), so panning back or zooming in reuses them; zooming out loads
+ * coarser ones. Nothing while `viewport` is null (the map shows the area,
+ * which useDiscoverBars has). `bars` only changes when a tile does, so the
+ * map isn't handed new pins on every render.
  */
 export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly string[]; search: string }, enabled = true) {
   const signedIn = !!useAuth().user;
@@ -136,11 +149,10 @@ export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly
   const search = searchKey(useDebounced(filter.search, 250));
   const tiles = useMemo(() => (viewport ? tilesFor(viewport) : []), [viewport]);
   const results = useQueries({
-    queries: tiles.map((t, i) => ({
+    queries: tiles.map((t) => ({
       queryKey: tileQueryKey(t, kinds, search),
-      meta: { persist: true },
-      // The middle tile first: the rest wait for it, so what's under the person's eye lands soonest.
-      enabled: signedIn && enabled && (i === 0 || !!client.getQueryData(tileQueryKey(tiles[0], kinds, search))),
+      meta: { persist: false },
+      enabled: signedIn && enabled,
       staleTime: 60 * 60 * 1000,
       initialData: () => fromParent(client, t, kinds, search),
       queryFn: ({ signal }: { signal: AbortSignal }) => {
@@ -148,8 +160,9 @@ export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly
         return readBars({ p_west: box.west, p_south: box.south, p_east: box.east, p_north: box.north, ...kinds, p_query: search || null }, signal);
       },
     })),
+    combine: combineTiles,
   });
-  return { bars: results.flatMap((r) => r.data ?? []), isLoading: results.some((r) => r.isPending && r.fetchStatus !== 'idle') };
+  return results;
 }
 
 /**

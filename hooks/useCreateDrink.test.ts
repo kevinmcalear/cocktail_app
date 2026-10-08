@@ -12,7 +12,8 @@ jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: jest.fn(), setQueryData: (...args: unknown[]) => mockSetQueryData(...args) }),
 }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' } }) }));
-jest.mock('@/hooks/useDropdowns', () => ({ DROPDOWNS_QUERY_KEY: ['dropdowns'] }));
+jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [], saveDraft: jest.fn() }) }));
+jest.mock('@/hooks/useDropdowns', () => ({ dropdownKeys: { specs: ['dropdowns', 'specs'] }, refreshIngredients: jest.fn() }));
 jest.mock('@/hooks/useTrackRecent', () => ({ recentEntry: () => ({}) }));
 jest.mock('@/lib/analytics', () => ({ track: jest.fn() }));
 

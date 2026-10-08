@@ -10,8 +10,11 @@ import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { stageBringInFiles } from '@/lib/bringInHandoff';
+import type { ReadFile } from '@/lib/readAnything';
 import { useAppStore } from '@/store/useAppStore';
 
+import { BringStep } from './BringStep';
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
@@ -39,6 +42,15 @@ const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
     intro: 'A few quick answers start your taste, for drinks picked for you. Every drink you rank sharpens it. Change them any time on You.',
   },
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
+  bring: {
+    title: 'Bring your bar in',
+    intro: 'Got a spec book, a menu or a back bar? Snap it, choose photos or a PDF, or paste it, and we’ll read it in as soon as you’re set up. You check everything before it’s saved.',
+  },
+};
+
+const HOME_BRING = {
+  title: 'What’s on your shelf?',
+  intro: 'Snap your bottles, or bring in recipes you’ve saved elsewhere. We’ll read them in as soon as you’re set up, and you check them before they’re saved.',
 };
 
 /**
@@ -65,12 +77,15 @@ export function OnboardingScreen() {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ name: string; handle: string } | null>(null);
   const [handleTaken, setHandleTaken] = useState(false);
+  const [home, setHome] = useState(false);
+  // Where setup ends: the app, or Bring in with what they handed over.
+  const [landing, setLanding] = useState<'/(tabs)' | '/bring-in'>('/(tabs)');
   const personId = createdId ?? profile.data?.id ?? null;
 
   useEffect(() => {
     if (loading || !user) return;
-    if (!needsOnboarding(user.user_metadata)) router.replace('/(tabs)');
-  }, [loading, user, router]);
+    if (!needsOnboarding(user.user_metadata)) router.replace(landing);
+  }, [loading, user, router, landing]);
 
   const go = (from: OnboardingStep, choice: StepChoice = 'no') => {
     const next = nextStep(from, choice, !!joined);
@@ -130,7 +145,13 @@ export function OnboardingScreen() {
     }, { name, handle });
   };
 
-  const copy = COPY[step];
+  const bring = (files: ReadFile[]) => {
+    if (files.length) stageBringInFiles(files);
+    setLanding('/bring-in');
+    finish.mutate();
+  };
+
+  const copy = step === 'bring' && home ? HOME_BRING : COPY[step];
   if (profile.isPending || (invites.isLoading && !chosen)) {
     return (
       <SafetyPage title="Welcome" noBack>
@@ -189,7 +210,13 @@ export function OnboardingScreen() {
               else setStep('find');
             }}
           />
-          <Answer label="I make drinks at home" onPress={() => createProfile(() => setStep('taste'))} />
+          <Answer
+            label="I make drinks at home"
+            onPress={() => {
+              setHome(true);
+              createProfile(() => setStep('taste'));
+            }}
+          />
           {saveProfile.error && !handleTaken ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
         </View>
       ) : null}
@@ -208,6 +235,7 @@ export function OnboardingScreen() {
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
       {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
       {step === 'units' ? <UnitsStep onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
+      {step === 'bring' ? <BringStep onBring={bring} onSkip={() => go('bring')} pending={finish.isPending} error={finish.error?.message} /> : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
     </SafetyPage>
   );

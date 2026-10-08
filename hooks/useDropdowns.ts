@@ -1,17 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { allRows } from '@/lib/allRows';
+import { allRows, allRowsById, byName, withRow } from '@/lib/allRows';
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 
-/**
- * The prefix of every lookup list below (and useCurrentMenuDrinks), so one
- * invalidate after a write refreshes whichever of them are on screen. Bump it
- * when a shape changes so a saved older list isn't read back.
- */
-export const DROPDOWNS_QUERY_KEY = ['dropdowns_v7'] as const;
+/** The prefix of every lookup list below (and useCurrentMenuDrinks): lib/queryDefaults.ts. */
+export { DROPDOWNS_QUERY_KEY };
 
-const HOUR = 60 * 60 * 1000;
+/**
+ * Each list's own key. A write invalidates only the one it changed: the
+ * whole prefix also refetches the ingredient list (~14,000 rows).
+ */
+export const dropdownKeys = {
+  /** Methods, glassware, families, ice, categories and menu templates. */
+  specs: [...DROPDOWNS_QUERY_KEY, 'specs'],
+  menus: [...DROPDOWNS_QUERY_KEY, 'menus'],
+  ingredientExtras: [...DROPDOWNS_QUERY_KEY, 'ingredient-extras'],
+  /** useCurrentMenuDrinks: drinks on current menus, whatever the menu ids. */
+  currentMenuDrinks: [...DROPDOWNS_QUERY_KEY, 'current_menu_drinks'],
+} as const;
 
 /** What the spec pickers, badges and drink facts read from a method, glass, family or ice row. */
 const SPEC_COLUMNS = 'id, name, item_type, bar_id, icon_key, icon_url, capacity_ml, iced_capacity_ml';
@@ -19,10 +27,10 @@ const SPEC_COLUMNS = 'id, name, item_type, bar_id, icon_key, icon_url, capacity_
 /** Methods, glassware, families, ice and categories: small, and on most screens. */
 function useSpecLists() {
   return useQuery({
-    queryKey: [...DROPDOWNS_QUERY_KEY, 'specs'],
-    // Small (a few hundred rows) and read on a drink's first paint: saved between launches.
+    queryKey: dropdownKeys.specs,
+    // Small (a few hundred rows) and read on a drink's first paint: saved between
+    // launches. Fresh for a day (lib/queryTiers.ts); a write here refreshes it.
     meta: { persist: true },
-    staleTime: HOUR,
     queryFn: async () => {
       // A request stops at 1,000 rows, so page (a new "Freezer pour" method once sorted past it).
       const [specs, categoriesRes] = await Promise.all([
@@ -57,10 +65,13 @@ const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_
   item_categories ( category_id )`;
 
 /**
- * Every ingredient anyone can pick (~5,400 rows, several requests), for the
+ * Every ingredient anyone can pick (~14,000 rows, several requests), for the
  * editors' pickers, the Library and the Creator Hub, which share this one
  * download. Only screens that need the whole list ask for it; searches go
  * to the server. Too big to save between launches.
+ * Paged by id (each page starts after the last), then sorted by name here:
+ * a name-ordered offset page made the server build and sort every
+ * ingredient again, so each page was as slow as the whole list.
  * ponytail: the legacy editors build trees from the whole list; move them to
  * a server search (like Search's ingredients) when the catalog passes ~20,000.
  */
@@ -69,24 +80,41 @@ export function useAllIngredients({ enabled = true }: { enabled?: boolean } = {}
     queryKey: INGREDIENTS_KEY,
     enabled,
     meta: { persist: false },
-    staleTime: HOUR,
-    queryFn: () =>
-      allRows((from, to) =>
-        supabase
-          .from('app_item_presentation')
-          .select(INGREDIENT_COLUMNS)
-          .eq('item_type', 'ingredient')
-          .order('name')
-          .order('id')
-          .range(from, to)
-      ),
+    // By id, a page after the last id (an offset page re-sorts every row
+    // before it), then into name order here.
+    queryFn: async () =>
+      (
+        await allRowsById((after, size) => {
+          let page = supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).eq('item_type', 'ingredient');
+          if (after) page = page.gt('id', after);
+          return page.order('id').limit(size);
+        })
+      ).sort(byName),
   });
+}
+
+/**
+ * After ingredients are saved, created or deleted: re-reads just those rows
+ * into the loaded ingredient list (dropping any that are gone) in one
+ * request, instead of downloading the whole list again.
+ */
+export async function refreshIngredients(client: QueryClient, ids: string[]) {
+  if (!ids.length || !client.getQueryData(INGREDIENTS_KEY)) return;
+  const { data, error } = await supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).in('id', ids);
+  if (error) {
+    await client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
+    return;
+  }
+  type Row = NonNullable<typeof data>[number];
+  client.setQueryData<Row[]>(INGREDIENTS_KEY, (old) =>
+    old && ids.reduce((rows, id) => withRow(rows, id, data.find((r) => r.id === id) ?? null), old)
+  );
 }
 
 /** Every menu the person can read, for search and Prep. Tonight uses useVenueMenus. */
 function useAllMenus(enabled: boolean) {
   return useQuery({
-    queryKey: [...DROPDOWNS_QUERY_KEY, 'menus'],
+    queryKey: dropdownKeys.menus,
     enabled,
     queryFn: async () => {
       // ponytail: every menu; Prep filters is_active
@@ -107,10 +135,9 @@ function useAllMenus(enabled: boolean) {
  */
 function useIngredientExtras(enabled: boolean) {
   return useQuery({
-    queryKey: [...DROPDOWNS_QUERY_KEY, 'ingredient-extras'],
+    queryKey: dropdownKeys.ingredientExtras,
     enabled,
     meta: { persist: false },
-    staleTime: HOUR,
     queryFn: async () => {
       const [aliases, core] = await Promise.all([
         supabase.from('ingredient_aliases').select('key, item_id').range(0, 9999),

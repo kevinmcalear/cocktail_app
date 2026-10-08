@@ -1,12 +1,14 @@
 import { useAuth } from '@/ctx/AuthContext';
+import { dropdownKeys } from '@/hooks/useDropdowns';
 import { useViewAs } from '@/hooks/useViewAs';
-import { allRows } from '@/lib/allRows';
+import { allRowsById, byName } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
 import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 import { applyBarContextFilter } from '@/lib/barContextFilter';
+import { drinkSeed, seedDrink, type DrinkSeed } from '@/lib/drinkSeeds';
 import { useAppStore } from '@/store/useAppStore';
 
 /**
@@ -78,11 +80,14 @@ export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
     const userId = useAuth().user?.id ?? null;
+    // Every venue's list ignores the picked venues, so switching venue doesn't download it again.
+    const contexts = options?.allContexts ? null : selectedContextIds;
 
     return useQuery({
-        queryKey: ['cocktails', selectedContextIds, options, viewAsRoleLevel, userId],
+        queryKey: ['cocktails', contexts, options, viewAsRoleLevel, userId],
         queryFn: async () => {
-            const data = await allRows((from, to) => {
+            // By id, a page after the last id (an offset page re-sorts every row before it), then into name order here.
+            const data = await allRowsById((after, size) => {
                 let query = supabase
                     .from('app_item_presentation')
                     .select(COCKTAIL_LIST_COLUMNS)
@@ -92,14 +97,13 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     // out of the Library. Search lists them apart, under "From bars".
                     .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
-                if (!options?.allContexts) {
-                    query = applyBarContextFilter(query, selectedContextIds);
-                }
+                if (contexts) query = applyBarContextFilter(query, contexts);
+                if (after) query = query.gt('id', after);
 
-                return query.order('name', { ascending: true }).order('id').range(from, to);
+                return query.order('id').limit(size);
             });
 
-            return withListRecipes(data);
+            return withListRecipes(data.sort(byName));
         }
     });
 }
@@ -108,7 +112,7 @@ export function useCocktails(options?: { allContexts?: boolean }) {
 export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel: ReturnType<typeof useViewAs>['viewAsRoleLevel']) {
     return queryOptions({
         queryKey: ['cocktail', id, viewAsRoleLevel],
-        queryFn: async () => {
+        queryFn: async ({ client }) => {
             if (!id) return null;
             
             const cocktailId = Array.isArray(id) ? id[0] : id;
@@ -176,16 +180,18 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                     }))
                 );
 
-                // Fetch glassware, family, and ice manually to bypass PostgREST ambiguous relation errors on views
-                const idsToFetch = [data.glassware_id, data.family_id, data.ice_id].filter(Boolean);
-                if (idsToFetch.length > 0) {
-                    const { data: relatedItems } = await supabase.from('items').select('id, name').in('id', idsToFetch);
-                    if (relatedItems) {
-                        if (data.glassware_id) data.glassware = relatedItems.find(i => i.id === data.glassware_id);
-                        if (data.family_id) data.family = relatedItems.find(i => i.id === data.family_id);
-                        if (data.ice_id) data.ice = relatedItems.find(i => i.id === data.ice_id);
-                    }
-                }
+                // Glass, family and ice by name for the legacy editor and Start from a classic,
+                // from the spec lists already loaded (no second request). The drink page reads
+                // the ids against those lists itself (useDrinkFacts).
+                type Named = { id: string; name: string };
+                const specs = client.getQueryData<Record<'glassware' | 'families' | 'iceTypes', Named[]>>(dropdownKeys.specs);
+                const named = (list: Named[] | undefined, itemId: string | null) => {
+                    const row = itemId ? list?.find((i) => i.id === itemId) : undefined;
+                    return row ? { id: row.id, name: row.name } : undefined;
+                };
+                data.glassware = named(specs?.glassware, data.glassware_id);
+                data.family = named(specs?.families, data.family_id);
+                data.ice = named(specs?.iceTypes, data.ice_id);
             }
 
             return data as DatabaseItem;
@@ -194,20 +200,29 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
     });
 }
 
-export function useCocktail(id?: string | string[]) {
+/**
+ * A drink. `seeded`: the drink page only, whose first paint can come from the
+ * row that was tapped (usePrefetchCocktail) as placeholder data, which is
+ * never cached, so the editor and Start from a classic never read it.
+ */
+export function useCocktail(id?: string | string[], { seeded = false }: { seeded?: boolean } = {}) {
     const { viewAsRoleLevel } = useViewAs();
-    return useQuery(cocktailQuery(id, viewAsRoleLevel));
+    const seed = seeded ? drinkSeed(Array.isArray(id) ? id[0] : id) : undefined;
+    return useQuery({ ...cocktailQuery(id, viewAsRoleLevel), placeholderData: seed as DatabaseItem | undefined });
 }
 
 /**
  * Starts loading a drink page as its row is pressed, so the page has a head
  * start on the tap (the press-to-release gap is often 100 ms or more). A
- * page loaded in the last minute isn't asked for again.
+ * page loaded in the last minute isn't asked for again. With the row's name
+ * and picture, the page paints those while the rest loads. Every list that
+ * opens a drink calls this from onPressIn.
  */
 export function usePrefetchCocktail() {
     // From context, not useQueryClient: a row rendered with no provider (a test) just doesn't prefetch.
     const client = useContext(QueryClientContext);
-    return (id: string) => {
+    return (id: string, row?: Omit<DrinkSeed, 'id'>) => {
+        if (row) seedDrink({ ...row, id });
         if (!client) return;
         // The view-as level the page will key on (useViewAs), as it's cached.
         const level = client.getQueriesData<number | null>({ queryKey: ['viewAs'] })[0]?.[1] ?? null;

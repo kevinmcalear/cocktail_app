@@ -20,7 +20,7 @@ import { AddIngredientRoute } from "@/components/screens/addIngredient/AddIngred
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
@@ -363,7 +363,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
             }
 
             queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await refreshIngredients(queryClient, [ingredientId]);
             if (currentDraftId) {
                 await updateParentDraftsWithPublishedId(
                     currentDraftId,

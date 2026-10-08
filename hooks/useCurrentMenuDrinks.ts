@@ -1,4 +1,4 @@
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { dropdownKeys } from '@/hooks/useDropdowns';
 import { inRunningOrder } from '@/lib/currentFromMenus';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 export function useCurrentMenuDrinks(menuIds: string[]) {
   const key = [...menuIds].sort();
   return useQuery({
-    queryKey: [...DROPDOWNS_QUERY_KEY, 'current_menu_drinks', 'with-glass', key],
+    queryKey: [...dropdownKeys.currentMenuDrinks, 'with-glass', key],
     enabled: key.length > 0,
     // Tonight's first paint: saved between launches.
     meta: { persist: true },

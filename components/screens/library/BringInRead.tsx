@@ -1,10 +1,12 @@
 import * as Device from 'expo-device';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useReadAnything } from '@/hooks/useBulk';
+import { listenBringIn, type BringInDelivery } from '@/lib/bringInHandoff';
+import { isLink } from '@/lib/bringInAnywhere';
 import { parseBringIn, readingText } from '@/lib/paste';
 import { isReadableFile, MAX_READ_FILES, pickReadFiles, type AnythingReading, type ReadFile } from '@/lib/readAnything';
 import { takeMenuPhoto } from '@/lib/readMenu';
@@ -19,6 +21,8 @@ interface BringInReadProps {
   text: string;
   /** `replace`: the text box itself was read, so its reading takes its place. */
   onRead: (result: BringInReadResult, replace: boolean) => void;
+  /** Text pasted somewhere else on the screen (web), to add to the box. */
+  onPasteText: (text: string) => void;
 }
 
 /**
@@ -26,7 +30,7 @@ interface BringInReadProps {
  * here on web, or have messy pasted text read. What comes back lands in the
  * text box, to check like anything pasted.
  */
-export function BringInRead({ mode, text, onRead }: BringInReadProps) {
+export function BringInRead({ mode, text, onRead, onPasteText }: BringInReadProps) {
   const ds = useDs();
   const read = useReadAnything();
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +39,10 @@ export function BringInRead({ mode, text, onRead }: BringInReadProps) {
   // The simulator has no camera, and launching it there crashes the app.
   const camera = !web && Device.isDevice;
 
-  const go = async (input: { files?: ReadFile[]; text?: string }, replace: boolean) => {
-    setError(null);
+  const go = async (input: { files?: ReadFile[]; text?: string; url?: string }, replace: boolean) => {
     try {
       const reading = await read.mutateAsync({ ...input, hint: mode === 'drinks' ? 'recipes' : 'bottles' });
+      setError(null);
       onRead({ ...readingText(reading.recipes), reading, files: input.files ?? [] }, replace);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t read that. Try again.');
@@ -52,9 +56,13 @@ export function BringInRead({ mode, text, onRead }: BringInReadProps) {
       setError(e instanceof Error ? e.message : 'Couldn’t open your photos.');
     }
   };
+  // Files dropped or pasted elsewhere in the app (before this opened, or while it's open) are read here.
+  const arrived = useEffectEvent((delivery: BringInDelivery) => ('files' in delivery ? void go({ files: delivery.files }, false) : onPasteText(delivery.text)));
+  useEffect(() => listenBringIn((delivery) => arrived(delivery)), []);
   const dragging = useMenuPhotoDrop(zone, (files) => void go({ files: files.slice(0, MAX_READ_FILES) }, false), isReadableFile);
   // Pasted drinks with no spec lines it could read: a caption, a social post, a recipe written out in sentences.
-  const messy = mode === 'drinks' && !!text.trim() && parseBringIn(text, 'drinks').every((block) => !block.lines.length);
+  const link = isLink(text);
+  const messy = !link && mode === 'drinks' && !!text.trim() && parseBringIn(text, 'drinks').every((block) => !block.lines.length);
 
   return (
     <View ref={zone} style={[styles.wrap, web && [styles.zone, { borderColor: dragging ? ds.accentText : ds.c.lineStrong }]]}>
@@ -63,13 +71,14 @@ export function BringInRead({ mode, text, onRead }: BringInReadProps) {
         {camera ? <Button label="Snap" icon="camera.fill" variant="secondary" onPress={() => void fromFiles(takeMenuPhoto)} disabled={read.isPending} /> : null}
         <Button label={web ? 'Photos or a PDF' : 'Photos'} icon="photo" variant="secondary" onPress={() => void fromFiles(pickReadFiles)} disabled={read.isPending} />
       </View>
+      {link && !read.isPending ? <TextLink label="Read this link" accessibilityHint="Opens the page and sends what it says to Google AI to find the recipes in it" onPress={() => void go({ url: text.trim() }, true)} /> : null}
       {messy && !read.isPending ? <TextLink label="Read this text with AI" accessibilityHint="Sends the text above to Google AI to find the recipes in it" onPress={() => void go({ text }, true)} /> : null}
       {read.isPending ? (
         <Caption tone="muted" role="status">
           Reading…
         </Caption>
       ) : null}
-      {error ? <Caption tone="accent">{error}</Caption> : null}
+      {error && !read.isPending ? <Caption tone="accent">{error}</Caption> : null}
     </View>
   );
 }

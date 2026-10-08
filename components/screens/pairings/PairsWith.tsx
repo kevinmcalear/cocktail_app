@@ -7,6 +7,7 @@ import { layout, space } from '@/constants/tokens';
 import { usePairDrinks, usePairings, usePairNote } from '@/hooks/usePairings';
 
 import { PairChip } from './PairChip';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /**
  * On an ingredient's page: what bartenders put it with, each with the number
@@ -53,6 +54,7 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
 function PairDrinks({ a, b, title }: { a: string; b: string; title: string }) {
   const ds = useDs();
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   const { data: drinks = [], isLoading } = usePairDrinks(a, b);
   const { data: note } = usePairNote(a, b);
   return (
@@ -65,6 +67,7 @@ function PairDrinks({ a, b, title }: { a: string; b: string; title: string }) {
           key={d.id}
           role="link"
           accessibilityLabel={`Open ${d.name}`}
+          onPressIn={() => prefetch(d.id, { name: d.name })}
           onPress={() => router.push(`/cocktail/${d.id}`)}
           style={[styles.row, { borderTopColor: ds.c.line }]}
         >

@@ -3,7 +3,7 @@ import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
@@ -47,7 +47,8 @@ function useInvalidateMenus() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: menuKeys.all }),
       // Tonight, Prep, Study and the legacy screens still read menus from here.
-      queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: dropdownKeys.menus }),
+      queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks }),
     ]);
 }
 

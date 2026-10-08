@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { dropdownKeys } from '@/hooks/useDropdowns';
 import { supabase } from '@/lib/supabase';
 
 /** A glass's capacity and iced capacity (items.capacity_ml, items.iced_capacity_ml), for whoever can edit the glass. */
@@ -11,7 +11,7 @@ export function useSetGlassSize(glassId: string) {
       const { error } = await supabase.from('items').update(size).eq('id', glassId);
       if (error) throw error;
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: dropdownKeys.specs }),
   });
 }
 

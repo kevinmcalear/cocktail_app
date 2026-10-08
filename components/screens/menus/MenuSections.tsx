@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
@@ -53,6 +54,7 @@ interface MenuSectionsProps {
 export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) {
   const ds = useDs();
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   const card = variant === 'card';
   const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : itemHref(CATEGORY[d.kind], d.id));
   return (
@@ -82,6 +84,10 @@ export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) 
                   key={d.id}
                   role="link"
                   accessibilityLabel={[d.name, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
+                  onPressIn={() => {
+                    const id = drinkIdFromHref(to);
+                    if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });
+                  }}
                   onPress={() => router.push(to as never)}
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
