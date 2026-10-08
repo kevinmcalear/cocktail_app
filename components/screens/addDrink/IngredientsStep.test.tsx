@@ -5,6 +5,9 @@ import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
 
+// Pairings come from the database; these tests are about the field.
+jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
+
 const CAMPARI = { id: 'campari', name: 'Campari', item_images: [{ images: { url: 'https://example.test/campari.jpg' } }] };
 
 describe('IngredientsStep', () => {

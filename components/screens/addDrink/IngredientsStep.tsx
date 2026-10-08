@@ -5,29 +5,42 @@ import { Body, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
-import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, searchByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import { BalanceCard, GoesWith } from './GoesWith';
 import { LineRow } from './LineRow';
 import { WizardChip } from './WizardChrome';
 
 // The generated view types call `images` a list; it's one row per link.
-type Ingredient = { id: string; name: string | null; item_images?: unknown };
+type Ingredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null; generic_id?: string | null; item_images?: unknown };
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
 
 /**
  * The spec so far, each line with a stepper; a field to find an ingredient
- * (or add a new one); and quick adds for the common ones. `loading` holds off
- * offering a new one until the list is in, so a known bottle isn't added twice.
+ * (or add a new one); and quick adds for the common ones. A name that is
+ * already an ingredient, by another spelling or alias, offers that one and
+ * not a copy; a likely misspelling asks "Did you mean…?" first. `loading`
+ * holds off offering a new one until the list is in, so a known bottle isn't
+ * added twice.
  */
-export function IngredientsStep({ draft, set, ingredients, loading }: StepProps & { ingredients: readonly Ingredient[]; loading?: boolean }) {
+export function IngredientsStep({
+  draft,
+  set,
+  ingredients,
+  loading,
+  aliases = [],
+  coreIds,
+}: StepProps & { ingredients: readonly Ingredient[]; loading?: boolean; aliases?: readonly IngredientAlias[]; coreIds?: ReadonlySet<string> }) {
   const ds = useDs();
   const [query, setQuery] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const results = searchByName(query, ingredients);
-  const exact = results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
+  const results = searchIngredients(query, ingredients, { aliases, coreIds });
+  const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
+  const near = exact ? null : nearIngredient(query, ingredients, aliases);
 
   const add = (pick: WizardPick) => {
     set({ lines: [...draft.lines, newLine(pick, guessUnit(pick.name, getPreferredUnit()))] });
@@ -75,6 +88,9 @@ export function IngredientsStep({ draft, set, ingredients, loading }: StepProps 
 
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
+          {near && !results.includes(near) ? (
+            <ResultRow label={`Did you mean ${near.name}?`} onPress={() => add({ id: near.id, name: near.name ?? query })} />
+          ) : null}
           {results.map((r) => (
             <ResultRow key={r.id} label={r.name ?? ''} imageUrl={heroPicture(r.item_images as ItemImageLink[] | null)?.url ?? null} onPress={() => add({ id: r.id, name: r.name ?? query })} />
           ))}
@@ -85,12 +101,19 @@ export function IngredientsStep({ draft, set, ingredients, loading }: StepProps 
           )}
         </View>
       ) : (
-        <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
-          {quick.map((n) => (
-            <WizardChip key={n} label={n} add kind="button" onPress={() => add(pickByName(n, ingredients))} />
-          ))}
-        </View>
+        <GoesWith
+          lines={draft.lines}
+          onAdd={add}
+          fallback={
+            <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
+              {quick.map((n) => (
+                <WizardChip key={n} label={n} add kind="button" onPress={() => add(pickByName(n, ingredients))} />
+              ))}
+            </View>
+          }
+        />
       )}
+      <BalanceCard lines={draft.lines} ingredients={ingredients} />
     </View>
   );
 }
