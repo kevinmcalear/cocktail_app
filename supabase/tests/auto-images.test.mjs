@@ -240,7 +240,7 @@ describe('refunds for failed AI calls', () => {
     await db.query(
       `INSERT INTO private.ai_usage (bar_id, user_id, fn)
        VALUES ($1, NULL, 'image-worker'), ($1, NULL, 'image-worker'), ($2, NULL, 'image-worker'),
-              (NULL, $3, 'image-worker'), (NULL, $3, 'generate-cocktail-image')`,
+              (NULL, $3, 'image-worker'), (NULL, $3, 'generate-beer-image')`,
       [bar, otherBar, users.homeUser.id]
     );
 
@@ -251,7 +251,7 @@ describe('refunds for failed AI calls', () => {
     assert.equal(await usage('bar_id', bar), 1, 'one of the venue\'s two units handed back');
     assert.equal(await usage('bar_id', otherBar), 1, 'other venue untouched');
     const { rows } = await db.query('SELECT fn FROM private.ai_usage WHERE user_id = $1', [users.homeUser.id]);
-    assert.deepEqual(rows.map((r) => r.fn), ['generate-cocktail-image'], 'only the matching function is refunded');
+    assert.deepEqual(rows.map((r) => r.fn), ['generate-beer-image'], 'only the matching function is refunded');
 
     // Nothing left to refund: a no-op, not an error.
     const { error } = await service.rpc('refund_ai_quota', { p_user_id: users.homeUser.id, p_bar_id: null, p_fn: 'image-worker' });
@@ -296,11 +296,17 @@ describe('queue', () => {
 });
 
 describe('settling in SQL', () => {
-  test('a drink with no picture is ready for a sketch', async () => {
+  test('a drink with no picture is drawn in the app, never sent to the AI', async () => {
     const drink = await newItem({ name: 'Bare', item_type: 'cocktail', bar_id: ids.bar, glassware_id: ids.coupe });
     await settle(drink);
-    assert.equal((await jobFor(drink)).status, 'ready');
-    await db.query('DELETE FROM private.item_image_jobs WHERE item_id = $1', [drink]);
+    assert.equal(await jobFor(drink), null);
+  });
+
+  test('an ingredient with no picture is ready for a sketch', async () => {
+    const ingredient = await newItem({ name: 'Bare syrup', item_type: 'ingredient', bar_id: ids.bar });
+    await settle(ingredient);
+    assert.equal((await jobFor(ingredient)).status, 'ready');
+    await db.query('DELETE FROM private.item_image_jobs WHERE item_id = $1', [ingredient]);
   });
 
   test('amounts and a drink\'s name don\'t change its fingerprint; glass and garnish do', async () => {
@@ -376,11 +382,10 @@ describe('image worker', { skip: workerSkip }, () => {
     }
   });
 
-  test('draws a hero sketch for a new drink, billed to its venue', async () => {
+  test('draws a hero sketch for a new ingredient, billed to its venue', async () => {
     const bar = await newBar('Billed Bar');
-    ids.sketched = await newItem({ name: 'Sketched', item_type: 'cocktail', bar_id: bar, glassware_id: ids.coupe });
-    await addRecipe(ids.sketched, ids.gin, 'ml', 0);
-    await addRecipe(ids.sketched, ids.lemon, 'twist', 1);
+    ids.sketched = await newItem({ name: 'Sketched cordial', item_type: 'ingredient', bar_id: bar });
+    await addRecipe(ids.sketched, ids.lemon, 'ml', 0);
     await settle(ids.sketched);
     await work(ids.sketched);
 
@@ -389,14 +394,14 @@ describe('image worker', { skip: workerSkip }, () => {
     assert.equal(rows[0].angle, 'hero');
     assert.equal(rows[0].is_generated, true);
     assert.equal(rows[0].spec_fingerprint, await fingerprint(ids.sketched));
-    assert.match(rows[0].url, new RegExp(`/drinks/cocktails/${ids.sketched}/\\d+\\.png$`));
+    assert.match(rows[0].url, new RegExp(`/drinks/ingredients/${ids.sketched}/\\d+\\.png$`));
     assert.equal(await usage('bar_id', bar), 1);
     assert.equal(await jobFor(ids.sketched), null);
   });
 
   test('redraws when the spec changes, replacing only the old sketch', async () => {
     const [before] = await links(ids.sketched);
-    await db.query('UPDATE public.items SET glassware_id = $2 WHERE id = $1', [ids.sketched, ids.rocks]);
+    await db.query('UPDATE public.items SET name = $2 WHERE id = $1', [ids.sketched, `Resketched cordial ${run}`]);
     await settle(ids.sketched);
     await work(ids.sketched);
 
@@ -409,7 +414,7 @@ describe('image worker', { skip: workerSkip }, () => {
   test('a photo added later is kept, and nothing more is drawn', async () => {
     const photo = await addPhoto(ids.sketched);
     await settle(ids.sketched);
-    await db.query('UPDATE public.items SET glassware_id = $2 WHERE id = $1', [ids.sketched, ids.coupe]);
+    await db.query('UPDATE public.items SET name = $2 WHERE id = $1', [ids.sketched, `Sketched cordial ${run}`]);
     await settle(ids.sketched);
     assert.equal(await jobFor(ids.sketched), null);
     await work(ids.sketched);
@@ -426,7 +431,7 @@ describe('image worker', { skip: workerSkip }, () => {
       "INSERT INTO private.ai_usage (bar_id, fn) SELECT $1, 'image-worker' FROM generate_series(1, 1000)",
       [bar]
     );
-    const drink = await newItem({ name: 'Waiting', item_type: 'cocktail', bar_id: bar, glassware_id: ids.coupe });
+    const drink = await newItem({ name: 'Waiting syrup', item_type: 'ingredient', bar_id: bar });
     await settle(drink);
     await work(drink);
 
@@ -451,9 +456,9 @@ describe('image worker', { skip: workerSkip }, () => {
   });
 
   test('the Generate button still works, spends the caller\'s quota and tags its sketch', async () => {
-    const drink = await newItem({ name: 'Buttoned', item_type: 'cocktail', bar_id: ids.bar, glassware_id: ids.coupe });
-    const { data, error } = await users.creator.client.functions.invoke('generate-cocktail-image', {
-      body: { cocktail_id: drink },
+    const drink = await newItem({ name: 'Buttoned syrup', item_type: 'ingredient', bar_id: ids.bar });
+    const { data, error } = await users.creator.client.functions.invoke('generate-ingredient-image', {
+      body: { ingredient_id: drink, ingredient_name: 'Buttoned syrup' },
     });
     assert.ifError(error);
     assert.equal(data.success, true);
