@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSetHomeNight } from '@/hooks/useMenuMutations';
 import { homeNight, type NightDraft } from '@/lib/menus';
@@ -29,7 +29,7 @@ export function HomeNightFields({ value, onChange }: { value: NightDraft; onChan
         <Choice label="No date" selected={value.when === 'none'} onPress={() => set({ when: 'none' })} />
       </View>
       {value.when === 'date' ? (
-        <Field label="Date" value={value.date} onChangeText={(date) => set({ date })} placeholder="2026-10-04" autoCapitalize="none" />
+        <DateField label="Date" value={value.date} onChange={(date) => set({ date })} />
       ) : null}
       <Field
         label="Guests"
