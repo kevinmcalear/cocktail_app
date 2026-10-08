@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, Field } from '@/components/ds';
+import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
 import { space } from '@/constants/tokens';
+import { useSaveTasteAnswers } from '@/hooks/useFlavor';
+import { QUICK_QUESTIONS, type Taste } from '@/lib/flavor';
 import { MEASURE_UNITS, handleError, nameError, passwordError, type MeasureUnit } from '@/lib/onboarding';
 import { handleFromName } from '@/lib/profiles';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -71,6 +74,25 @@ export function NameStep({
       ) : null}
       <Button label="Continue" onPress={submit} disabled={pendingFinish} />
       <Button label="Not now" variant="ghost" onPress={onSkip} disabled={pendingFinish} />
+    </View>
+  );
+}
+
+/** A few quick taste questions. Skippable; a failed save doesn't hold up setup (Discover asks again). */
+export function TasteStep({ onDone }: { onDone: () => void }) {
+  const [answers, setAnswers] = useState<Taste>({});
+  const save = useSaveTasteAnswers();
+  const answered = Object.keys(answers).length > 0;
+  return (
+    <View style={styles.stack}>
+      <TasteAnswers questions={QUICK_QUESTIONS} value={answers} onChange={setAnswers} />
+      {save.error ? <Caption tone="accent">{"Couldn't save your answers. Try again, or skip and answer later on You."}</Caption> : null}
+      <Button
+        label={save.isPending ? 'Saving…' : 'Continue'}
+        disabled={!answered || save.isPending}
+        onPress={() => save.mutate(answers, { onSuccess: onDone, onError: () => {} })}
+      />
+      <Button label="Not now" variant="ghost" onPress={onDone} disabled={save.isPending} />
     </View>
   );
 }

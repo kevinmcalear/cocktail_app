@@ -19,17 +19,23 @@ interface PickStepProps {
   onChange: (next: WizardPick[]) => void;
   /** "Your own method" */
   ownLabel: string;
+  /** Our guess from the spec ("Shake"), offered first while nothing is picked. */
+  suggested?: string | null;
+  /** Why we guess it: "It has citrus, so it's shaken". */
+  why?: string | null;
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
-  const list = [...extra, ...options];
+  // The guess leads the list, so it's the first chip and never a second copy.
+  const guess = suggested && !selected.length ? options.find((o) => samePick(o, { id: null, name: suggested })) ?? { id: null, name: suggested } : null;
+  const list = [...(guess ? [guess] : []), ...extra, ...options.filter((o) => !guess || !samePick(o, guess))];
   const shown = all ? list : list.slice(0, Math.max(FIRST, extra.length + selected.length));
   const order = (p: WizardPick) => selected.findIndex((s) => samePick(s, p));
 
@@ -50,12 +56,14 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel }
               kind={multi ? 'checkbox' : 'radio'}
               label={p.name}
               selected={order(p) >= 0}
+              suggested={!!guess && samePick(p, guess)}
               onPress={() => toggle(p)}
             />
           );
         })}
         {!all && list.length > shown.length ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null}
       </View>
+      {guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
       {multi && selected.length > 1 ? <Caption tone="muted">{selected.map((s) => s.name).join(', then ')}</Caption> : null}
       <OwnField
         label={ownLabel}
