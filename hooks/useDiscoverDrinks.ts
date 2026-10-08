@@ -12,7 +12,7 @@ import { areaParams, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Discover's data, a page at a time (supabase/migrations/20261009500000_discover_index.sql):
+ * Discover's data, a page at a time (supabase/migrations/20261009700000_discover_index.sql):
  * the matching drinks in an area best first (discover_list), the bars in an
  * area (discover_bars), and the bars in the map's view a tile at a time. The
  * server matches, ranks and counts; the phone gets what it shows. Small, so

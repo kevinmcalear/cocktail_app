@@ -1,4 +1,4 @@
-// Discover a page at a time (supabase/migrations/20261009500000_discover_index.sql):
+// Discover a page at a time (supabase/migrations/20261009700000_discover_index.sql):
 // discover_drink_facts, discover_list and discover_bars. The facts' styles
 // and spirits must match lib/drinkStyles.ts on every local bar drink, the
 // reads must return nothing the caller couldn't select, and pages must add up

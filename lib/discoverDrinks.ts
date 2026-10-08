@@ -1,7 +1,7 @@
 /**
  * Discover's drinks at bars and the bars: the filters as the discover RPCs
  * take them, rows from them, finding bars by name, and map pins. Matching,
- * ranking and paging happen in SQL (supabase/migrations/20261009500000_discover_index.sql).
+ * ranking and paging happen in SQL (supabase/migrations/20261009700000_discover_index.sql).
  * Pure; checked by lib/discoverDrinks.check.ts. The data comes from
  * hooks/useDiscoverDrinks.ts.
  */

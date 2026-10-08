@@ -106,7 +106,7 @@ CREATE TABLE "public"."discover_drink_facts" (
     "name" "text" NOT NULL,
     "styles" "text"[] NOT NULL DEFAULT '{}',
     "spirits" "text"[] NOT NULL DEFAULT '{}',
-    -- Tasting notes at 0.4 or more, from a profile covering at least half the spec, as discover_drinks.
+    -- Tasting notes at 0.4 or more (the twelve dimensions of 20261009600000, less strong), from a profile covering at least half the spec, as discover_drinks.
     "notes" "text"[] NOT NULL DEFAULT '{}',
     -- Folded name, the classic it's a version of, description and the lines an ordinary reader sees: what search matches.
     "haystack" "text" NOT NULL,
@@ -244,10 +244,13 @@ BEGIN
             CASE WHEN f.sweet >= 0.4 THEN 'sweet' END,
             CASE WHEN f.sour >= 0.4 THEN 'sour' END,
             CASE WHEN f.bitter >= 0.4 THEN 'bitter' END,
+            CASE WHEN f.botanical >= 0.4 THEN 'botanical' END,
             CASE WHEN f.herbal >= 0.4 THEN 'herbal' END,
             CASE WHEN f.fruity >= 0.4 THEN 'fruity' END,
-            CASE WHEN f.smoky >= 0.4 THEN 'smoky' END,
+            CASE WHEN f.spiced >= 0.4 THEN 'spiced' END,
             CASE WHEN f.spicy >= 0.4 THEN 'spicy' END,
+            CASE WHEN f.smoky >= 0.4 THEN 'smoky' END,
+            CASE WHEN f.savory >= 0.4 THEN 'savory' END,
             CASE WHEN f.creamy >= 0.4 THEN 'creamy' END
         ], NULL) AS notes
         FROM public.item_flavors f
