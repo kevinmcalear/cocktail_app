@@ -76,12 +76,12 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    // Privacy, terms and account-deletion pages must open without signing in,
+    // Privacy, terms, account-deletion and support pages must open without signing in,
     // and venue staff links (/v/<slug>) have their own branded sign-in. The
     // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>),
     // releases (/r/<id>), public profiles (/p/<handle>) and shared home menus
     // (/m/<id>) are public.
-    if (segments[0] === 'legal' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm') return;
+    if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm') return;
     const authScreen = segments.at(1);
     // stay on recovery / email-link routes while session is established
     const stayInAuth =
@@ -198,6 +198,7 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="you" options={{ headerShown: false }} />
+            <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
