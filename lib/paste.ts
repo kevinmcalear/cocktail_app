@@ -2,7 +2,7 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { matchIngredient, matchKey, matchName, type CatalogItem } from '@/lib/match';
 import { addDrink, addSection, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { RECIPE_UNITS } from '@/lib/units';
-import type { AnythingReading } from '@/supabase/functions/_shared/anythingRead';
+import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 import type { MenuDrink } from '@/types/menus';
 
 /** Collapse case and spacing so "Roku  Gin" and "roku gin" are the same name. */
@@ -210,19 +210,12 @@ export function bringInText(drinks: { name: string; ingredients: string[] }[]): 
 const amountText = (n: number) => String(Math.round(n * 100) / 100);
 
 /**
- * A read-anything reading as Bring in text, in the mode it belongs in, plus
- * the lines that were hard to read ("Orchard Fizz: Lemon Juice") so the
- * screen can ask for a look. A menu's drinks come in as names with their
- * listed ingredients; bottles as one name a line.
+ * Recipes read by read-anything as Bring in text, plus the lines that were
+ * hard to read ("Orchard Fizz: Lemon Juice") so the screen can ask for a look.
  */
-export function readingText(reading: AnythingReading): { mode: 'drinks' | 'ingredients'; text: string; unsure: string[] } {
-  if (reading.kind === 'bottles') return { mode: 'ingredients', text: reading.bottles.map((b) => b.name).join('\n'), unsure: [] };
-  if (reading.kind === 'menu') {
-    const drinks = (reading.menu?.sections ?? []).flatMap((section) => section.lines.map((line) => ({ name: line.name, ingredients: line.ingredients })));
-    return { mode: 'drinks', text: bringInText(drinks), unsure: [] };
-  }
+export function readingText(recipes: RecipeReading[]): { text: string; unsure: string[] } {
   const unsure: string[] = [];
-  const blocks = reading.recipes.map((recipe) => {
+  const blocks = recipes.map((recipe) => {
     const rows = [recipe.name];
     for (const line of recipe.lines) {
       if (line.unsure) unsure.push(`${recipe.name}: ${line.ingredient}`);
@@ -233,7 +226,7 @@ export function readingText(reading: AnythingReading): { mode: 'drinks' | 'ingre
     }
     return rows.join('\n');
   });
-  return { mode: 'drinks', text: blocks.join('\n\n'), unsure };
+  return { text: blocks.join('\n\n'), unsure };
 }
 
 export interface PlacedGroup {

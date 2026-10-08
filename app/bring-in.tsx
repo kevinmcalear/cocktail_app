@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { BringInScreen } from '@/components/screens/library/BringInScreen';
 import { WebHead } from '@/components/WebHead';
 
-/** Paste drinks or bottles into the venue’s library. */
+/** Bring in: paste, snap or drop drinks, a menu or bottles into the library. */
 export default function BringInRoute() {
   return (
     <>

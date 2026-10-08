@@ -57,6 +57,16 @@ describe('MenuFromPhotoScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/bring-in');
   });
 
+  test('a reading handed over by Bring in is shown as is, not read again, and makes a menu without a cover', async () => {
+    stageMenuPhotos({ photos: [{ uri: 'blob:specs', mimeType: 'application/pdf' }], barId: 'bar-1', name: '', reading: { title: 'From Bring in', sections: [{ name: null, lines: [{ name: 'Negroni', price: null, ingredients: [] }] }] } });
+    await renderWithTamagui(<MenuFromPhotoScreen />);
+    expect(await screen.findByText('Read: 1 drink in 1 section')).toBeTruthy();
+    expect(mockRead).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Make the menu' }));
+    expect(mockCover).not.toHaveBeenCalled();
+    expect(mockCreate.mock.calls[0][0].layout.coverUrl).toBeNull();
+  });
+
   test('Make the menu saves the matched drinks under their sections, with the photo as cover', async () => {
     await renderWithTamagui(<MenuFromPhotoScreen />);
     await screen.findByText('Read from your photo: 2 drinks in 2 sections');
