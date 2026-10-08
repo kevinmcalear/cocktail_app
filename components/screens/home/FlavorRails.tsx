@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, Headline, PressableScale, Title } from '@/components/ds';
@@ -58,23 +58,23 @@ export function Rail({ title, note, children }: { title: string; note: string; c
 
 /**
  * "For you": drinks that fit your taste, best first, leaving out ones you've
- * ranked. With fewer than COLD_START_DRINKS ranked, it asks a few quick
- * questions first and shows picks without a match percentage.
+ * ranked. With no taste yet, it asks a few quick questions first; with fewer
+ * than COLD_START_DRINKS ranked, picks show without a match percentage.
  */
 export function ForYou() {
+  const router = useRouter();
   const { data: me, isLoading } = useMyTaste();
   // The nearest drinks come from the server, which leaves out what you've ranked.
   const nearest = useForYouDrinks(me?.taste);
   const baseline = useFlavorBaseline();
-  const [asking, setAsking] = useState(false);
   if (isLoading || !me || !nearest.data) return null;
 
   const cold = me.rankedDrinks < COLD_START_DRINKS;
-  if (cold && (asking || !me.answers)) {
+  if (cold && !me.answers) {
     return (
       <View style={styles.section}>
         <Title role="heading">For you</Title>
-        <TasteQuestions initial={me.answers} rankedDrinks={me.rankedDrinks} onDone={() => setAsking(false)} />
+        <TasteQuestions rankedDrinks={me.rankedDrinks} />
       </View>
     );
   }
@@ -84,7 +84,7 @@ export function ForYou() {
   const toGo = COLD_START_DRINKS - me.rankedDrinks;
   const note = cold
     ? `From your answers. Rank ${toGo} more drink${toGo === 1 ? '' : 's'} you've had to see match scores.`
-    : `Matched to the ${me.rankedDrinks} drinks you've ranked.`;
+    : `Matched to your taste, from the ${me.rankedDrinks} drinks you've ranked${me.answers ? ' and your answers' : ''}.`;
   return (
     <View style={styles.section}>
       <Rail title="For you" note={note}>
@@ -94,7 +94,7 @@ export function ForYou() {
           </View>
         ))}
       </Rail>
-      {cold ? <Button label="Change my answers" variant="ghost" onPress={() => setAsking(true)} /> : null}
+      <Button label="Your taste" variant="ghost" onPress={() => router.push('/taste')} />
     </View>
   );
 }
