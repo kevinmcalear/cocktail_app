@@ -14,6 +14,14 @@ interface UsedInRow {
     image_is_generated: boolean | null;
 }
 
+/** A bottle you can buy that's a kind of the ingredient on the page. */
+export interface IngredientBottle {
+    id: string;
+    name: string;
+    brand_maker: string | null;
+    abv: number | null;
+}
+
 /**
  * The photos of the drink a batch makes ("Aperol Fizz" for "Aperol Fizz Batch"),
  * from the same venue. Null when it isn't a batch, or already has a photo.
@@ -59,11 +67,26 @@ export function useIngredient(id?: string | string[]) {
 
             if (ingError) throw ingError;
 
-            // What it's a kind of. A second read: the self-referencing key is
-            // ambiguous to embed through the view.
-            const generic = ingredient.generic_id
-                ? (await supabase.from('app_item_presentation').select('id, name').eq('id', ingredient.generic_id).maybeSingle()).data
-                : null;
+            // What it's a kind of, and the bottle a prep is made from. A second
+            // read: the self-referencing keys are ambiguous to embed through the view.
+            const linkIds = [ingredient.generic_id, ingredient.made_from_id].filter((x): x is string => !!x);
+            const links = linkIds.length
+                ? (await supabase.from('app_item_presentation').select('id, name').in('id', linkIds)).data ?? []
+                : [];
+            const generic = links.find((l) => l.id === ingredient.generic_id) ?? null;
+            const madeFrom = links.find((l) => l.id === ingredient.made_from_id) ?? null;
+
+            // The bottles that are a kind of it (Sweet Vermouth: Carpano Antica, Cocchi...).
+            // Only styles have them; a failed read leaves the list out.
+            const { data: bottles } = ingredient.ingredient_role === 'product'
+                ? { data: [] }
+                : await supabase
+                    .from('app_item_presentation')
+                    .select('id, name, brand_maker, abv')
+                    .eq('generic_id', ingredientId)
+                    .eq('ingredient_role', 'product')
+                    .order('name')
+                    .limit(500);
 
             // 2. Fetch Recipe (sub-ingredients)
             const { data: rawRecipe, error: recipeError } = await supabase
@@ -103,7 +126,8 @@ export function useIngredient(id?: string | string[]) {
             }));
 
             return {
-                ingredient: { ...ingredient, generic },
+                ingredient: { ...ingredient, generic, madeFrom },
+                bottles: (bottles ?? []) as IngredientBottle[],
                 // Shown in place of a batch's sketch; kept apart so the edit screen never saves them.
                 heroImages: withDrinkPhotos(ingredient.item_images, await batchDrinkImages(ingredient)),
                 recipe: recipe || [],
