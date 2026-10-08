@@ -151,20 +151,24 @@ CREATE OR REPLACE FUNCTION "private"."refresh_ingredient_pairs"() RETURNS void
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
+DECLARE
+    v_drinks uuid[];
+    v_cores uuid[];
 BEGIN
-    DROP TABLE IF EXISTS pg_temp.pair_lines;
-    CREATE TEMP TABLE pair_lines AS SELECT * FROM private.open_drink_cores();
-    PERFORM private.write_ingredient_pairs('now');
-    DROP TABLE pg_temp.pair_lines;
+    -- One rebuild at a time: two at once would both delete, then both insert.
+    PERFORM pg_advisory_xact_lock(hashtext('ingredient_pairs'));
+    SELECT COALESCE(array_agg(drink_id), '{}'), COALESCE(array_agg(core_id), '{}') INTO v_drinks, v_cores FROM private.open_drink_cores();
+    PERFORM private.write_ingredient_pairs('now', v_drinks, v_cores);
 
-    CREATE TEMP TABLE pair_lines AS
-    SELECT DISTINCT r.id AS drink_id, m.core_id
-      FROM public.source_recipes r
-      JOIN public.sources s ON s.id = r.source_id AND s.kind = 'book'
-      JOIN public.source_recipe_lines l ON l.source_recipe_id = r.id
-      JOIN private.core_ingredient_map() m ON m.id = l.ingredient_item_id;
-    PERFORM private.write_ingredient_pairs('books');
-    DROP TABLE pg_temp.pair_lines;
+    SELECT COALESCE(array_agg(x.drink_id), '{}'), COALESCE(array_agg(x.core_id), '{}') INTO v_drinks, v_cores
+      FROM (
+        SELECT DISTINCT r.id AS drink_id, m.core_id
+          FROM public.source_recipes r
+          JOIN public.sources s ON s.id = r.source_id AND s.kind = 'book'
+          JOIN public.source_recipe_lines l ON l.source_recipe_id = r.id
+          JOIN private.core_ingredient_map() m ON m.id = l.ingredient_item_id
+      ) x;
+    PERFORM private.write_ingredient_pairs('books', v_drinks, v_cores);
 END;
 $$;
 REVOKE EXECUTE ON FUNCTION "private"."refresh_ingredient_pairs"() FROM PUBLIC, "anon", "authenticated";
