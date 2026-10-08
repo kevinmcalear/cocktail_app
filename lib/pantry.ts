@@ -19,22 +19,30 @@ export const PANTRY = [
 /** Every house syrup is sugar or honey and water: added with any staple, never shown. */
 export const PANTRY_WATER = 'Water';
 
-export type ShelfSort = 'newest' | 'az' | 'style';
+export type ShelfSort = 'newest' | 'used' | 'unused' | 'az' | 'style';
 
 export interface ShelfBottle {
   id: string;
   name: string;
   /** What it's a kind of ("Bourbon"), for sorting by style. */
   kind: string | null;
+  /** How many drinks you can make with it. */
+  uses: number;
 }
 
-/** The shelf narrowed to names (or styles) containing the text, in the chosen order. Newest is the order given. */
+/**
+ * The shelf narrowed to names (or styles) containing the text, in the chosen
+ * order. Newest is the order given; Unused is only the bottles no drink you
+ * can make needs, newest first.
+ */
 export function arrangeShelf<T extends ShelfBottle>(bottles: T[], sort: ShelfSort, text: string): T[] {
   const q = text.trim().toLowerCase();
   const found = q ? bottles.filter((b) => b.name.toLowerCase().includes(q) || !!b.kind?.toLowerCase().includes(q)) : bottles;
   if (sort === 'newest') return found;
+  if (sort === 'unused') return found.filter((b) => b.uses === 0);
   const byName = (a: T, b: T) => a.name.localeCompare(b.name);
   if (sort === 'az') return [...found].sort(byName);
+  if (sort === 'used') return [...found].sort((a, b) => b.uses - a.uses || byName(a, b));
   // Styles A to Z, bottles without one last.
   return [...found].sort((a, b) => Number(!a.kind) - Number(!b.kind) || (a.kind ?? '').localeCompare(b.kind ?? '') || byName(a, b));
 }

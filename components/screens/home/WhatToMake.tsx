@@ -8,31 +8,40 @@ import { space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 
-type Tab = 'ready' | 'one';
+type Tab = 'ready' | 'one' | 'two';
 /** Drinks and bottles listed before "Show more"; a big shelf can make hundreds. */
 const PAGE = 25;
 /** Drinks under each bottle before "and N more". */
 const PER_BOTTLE = 3;
 
+/** Drinks one or two bottles away, under what to buy. */
+interface AwayGroup {
+  bottles: BarItem[];
+  drinks: BarItem[];
+}
+
 interface WhatToMakeProps {
   canMake: BarItem[];
-  oneAway: { ingredient: BarItem; drinks: BarItem[] }[];
+  oneAway: AwayGroup[];
+  twoAway: AwayGroup[];
   /** "92% match", once the person's taste is known. */
   matchFor: (id: string) => string | undefined;
-  onAdd: (ingredientId: string) => void;
+  onAdd: (ingredientIds: string[]) => void;
 }
 
 /**
- * What the shelf makes now, and what one more bottle would open, grouped by
- * the bottle. Only drinks the shelf gets close to: everything else is in Search.
+ * What the shelf makes now, and what one or two more bottles would open,
+ * grouped by what to buy. Only drinks the shelf gets close to: everything
+ * else is in Search.
  */
-export function WhatToMake({ canMake, oneAway, matchFor, onAdd }: WhatToMakeProps) {
+export function WhatToMake({ canMake, oneAway, twoAway, matchFor, onAdd }: WhatToMakeProps) {
   const router = useRouter();
   const [picked, setPicked] = useState<Tab | null>(null);
   const [shown, setShown] = useState(PAGE);
-  // Until the person picks, open on what they can make, or on what's close when that's nothing.
-  const tab = picked ?? (canMake.length || !oneAway.length ? 'ready' : 'one');
-  const total = tab === 'ready' ? canMake.length : oneAway.length;
+  // Until the person picks, open on what they can make, or on what's closest when that's nothing.
+  const tab = picked ?? (canMake.length ? 'ready' : oneAway.length ? 'one' : twoAway.length ? 'two' : 'ready');
+  const groups = tab === 'one' ? oneAway : twoAway;
+  const total = tab === 'ready' ? canMake.length : groups.length;
   const pick = (t: Tab) => {
     setPicked(t);
     setShown(PAGE);
@@ -47,7 +56,8 @@ export function WhatToMake({ canMake, oneAway, matchFor, onAdd }: WhatToMakeProp
         onChange={pick}
         options={[
           { value: 'ready', label: `Ready · ${canMake.length}` },
-          { value: 'one', label: `One bottle away · ${oneAway.length}` },
+          { value: 'one', label: `One away · ${oneAway.length}` },
+          { value: 'two', label: `Two away · ${twoAway.length}` },
         ]}
       />
       {tab === 'ready' ? (
@@ -60,14 +70,14 @@ export function WhatToMake({ canMake, oneAway, matchFor, onAdd }: WhatToMakeProp
         ) : (
           <Body tone="muted">Nothing yet. {oneAway.length ? 'See what one more bottle would open.' : 'Add a few bottles and what’s in your kitchen.'}</Body>
         )
-      ) : oneAway.length ? (
+      ) : groups.length ? (
         <View style={styles.groups}>
-          {oneAway.slice(0, shown).map((g) => (
-            <BottleGroup key={g.ingredient.id} group={g} matchFor={matchFor} onAdd={onAdd} />
+          {groups.slice(0, shown).map((g) => (
+            <BottleGroup key={g.bottles.map((b) => b.id).join('+')} group={g} matchFor={matchFor} onAdd={onAdd} />
           ))}
         </View>
       ) : (
-        <Body tone="muted">No drink is one bottle away yet.</Body>
+        <Body tone="muted">{tab === 'one' ? 'No drink is one bottle away yet.' : 'No drink is two bottles away yet.'}</Body>
       )}
       {total > shown ? <Button label={`Show more (${total - shown})`} variant="ghost" onPress={() => setShown(shown + PAGE)} /> : null}
       <View style={styles.more}>
@@ -78,21 +88,33 @@ export function WhatToMake({ canMake, oneAway, matchFor, onAdd }: WhatToMakeProp
   );
 }
 
-function BottleGroup({ group, matchFor, onAdd }: { group: WhatToMakeProps['oneAway'][number]; matchFor: WhatToMakeProps['matchFor']; onAdd: (id: string) => void }) {
+function BottleGroup({ group, matchFor, onAdd }: { group: AwayGroup; matchFor: WhatToMakeProps['matchFor']; onAdd: WhatToMakeProps['onAdd'] }) {
   const [open, setOpen] = useState(false);
-  const { ingredient, drinks } = group;
+  const { bottles, drinks } = group;
+  const names = bottles.map((b) => b.name).join(' + ');
   const rest = drinks.length - PER_BOTTLE;
   return (
     <Surface style={styles.group}>
       <View style={styles.groupHead}>
-        <IngredientThumb id={ingredient.id} name={ingredient.name} size={44} />
-        <View style={styles.groupText}>
-          <Headline numberOfLines={1}>{ingredient.name}</Headline>
-          <Caption tone="muted">
-            Opens {drinks.length} {drinks.length === 1 ? 'drink' : 'drinks'}
-          </Caption>
+        <View style={styles.thumbs}>
+          {bottles.map((b) => (
+            <IngredientThumb key={b.id} id={b.id} name={b.name} size={bottles.length > 1 ? 36 : 44} />
+          ))}
         </View>
-        <Button label="Add" variant="secondary" accessibilityLabel={`Add ${ingredient.name} to your shelf`} onPress={() => onAdd(ingredient.id)} />
+        <View style={styles.groupText}>
+          <Headline>{names}</Headline>
+          <View style={styles.opens}>
+            <Caption tone="muted" style={styles.grow}>
+              Opens {drinks.length} {drinks.length === 1 ? 'drink' : 'drinks'}
+            </Caption>
+            <Button
+              label={bottles.length > 1 ? 'Add both' : 'Add'}
+              variant="secondary"
+              accessibilityLabel={`Add ${names} to your shelf`}
+              onPress={() => onAdd(bottles.map((b) => b.id))}
+            />
+          </View>
+        </View>
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
         <DrinkRow key={d.id} name={d.name} itemId={d.id} href={itemHref('Cocktail', d.id)} imageUrl={d.imageUrl} glass={d.glass} caption={matchFor(d.id)} />
@@ -106,7 +128,10 @@ const styles = StyleSheet.create({
   section: { gap: space.md },
   groups: { gap: space.md },
   group: { gap: space.xs },
-  groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  groupHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  thumbs: { flexDirection: 'row', gap: space.xs },
   groupText: { flex: 1, gap: 2 },
+  opens: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  grow: { flex: 1 },
   more: { gap: space.sm, alignItems: 'flex-start', paddingTop: space.md },
 });

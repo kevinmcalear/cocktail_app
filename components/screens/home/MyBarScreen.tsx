@@ -38,7 +38,7 @@ export function MyBarScreen() {
   const { data: me } = useMyTaste();
   // Match percentages only once your taste comes from enough rankings.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
-  const profiles = useItemFlavors([...bar.canMake, ...bar.oneAway.flatMap((g) => g.drinks)].map((d) => d.id), !!scored);
+  const profiles = useItemFlavors([...bar.canMake, ...[...bar.oneAway, ...bar.twoAway].flatMap((g) => g.drinks)].map((d) => d.id), !!scored);
   const matchFor = (id: string) => {
     const profile = scored && profiles.data?.[id];
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
@@ -70,7 +70,7 @@ export function MyBarScreen() {
 
           <PantrySection items={pantry.data ?? []} onShelf={bar.shelfIds} onAdd={(ids) => add.mutate(ids)} onRemove={(id) => remove.mutate(id)} />
 
-          {bar.shelfIds.size ? <WhatToMake canMake={bar.canMake} oneAway={bar.oneAway} matchFor={matchFor} onAdd={(id) => add.mutate(id)} /> : null}
+          {bar.shelfIds.size ? <WhatToMake canMake={bar.canMake} oneAway={bar.oneAway} twoAway={bar.twoAway} matchFor={matchFor} onAdd={(ids) => add.mutate(ids)} /> : null}
         </View>
       </ScrollView>
       <AddBottlesSheet
