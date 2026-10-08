@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { allRows } from '@/lib/allRows';
+import { allRows, allRowsById } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -61,10 +61,13 @@ const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_
   item_categories ( category_id )`;
 
 /**
- * Every ingredient anyone can pick (~5,400 rows, several requests), for the
+ * Every ingredient anyone can pick (~14,000 rows, several requests), for the
  * editors' pickers, the Library and the Creator Hub, which share this one
  * download. Only screens that need the whole list ask for it; searches go
  * to the server. Too big to save between launches.
+ * Paged by id (each page starts after the last), then sorted by name here:
+ * a name-ordered offset page made the server build and sort every
+ * ingredient again, so each page was as slow as the whole list.
  * ponytail: the legacy editors build trees from the whole list; move them to
  * a server search (like Search's ingredients) when the catalog passes ~20,000.
  */
@@ -74,16 +77,15 @@ export function useAllIngredients({ enabled = true }: { enabled?: boolean } = {}
     enabled,
     meta: { persist: false },
     staleTime: HOUR,
-    queryFn: () =>
-      allRows((from, to) =>
-        supabase
-          .from('app_item_presentation')
-          .select(INGREDIENT_COLUMNS)
-          .eq('item_type', 'ingredient')
-          .order('name')
-          .order('id')
-          .range(from, to)
-      ),
+    queryFn: async () => {
+      const rows = await allRowsById((after, size) => {
+        let query = supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).eq('item_type', 'ingredient');
+        if (after) query = query.gt('id', after);
+        return query.order('id').limit(size);
+      });
+      // The database's order (ICU, as localeCompare), name then id.
+      return rows.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '') || (a.id < b.id ? -1 : 1));
+    },
   });
 }
 
