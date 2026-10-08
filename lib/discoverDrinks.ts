@@ -1,13 +1,15 @@
 /**
- * Discover's drinks at bars: searching them (and the bars) by name, style,
- * spirit or ingredient, keeping those in an area, and turning them into map
- * pins. Pure; checked by lib/discoverDrinks.check.ts. The data comes from
+ * Discover's drinks at bars and the bars: the filters as the discover RPCs
+ * take them, rows from them, finding bars by name, and map pins. Matching,
+ * ranking and paging happen in SQL (supabase/migrations/20261009500000_discover_index.sql).
+ * Pure; checked by lib/discoverDrinks.check.ts. The data comes from
  * hooks/useDiscoverDrinks.ts.
  */
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
-import { kindLabel, spiritsOf, STYLES, stylesOf } from './drinkStyles';
+import { kindLabel, SPIRITS, STYLES } from './drinkStyles';
 import { noteDimension } from './flavor';
+import { menuOrder, runDates, searchMenuTag } from './menuEditions';
 import type { Area, DiscoverRow } from './nearMe';
 
 export interface DiscoverBar {
@@ -23,6 +25,41 @@ export interface DiscoverBar {
   /** Shut for good: kept for its history, off Discover's drinks and map unless asked for, still found by search. */
   closed: boolean;
   closedYear: number | null;
+  /** How many of its drinks match Discover's filters (0 when closed). */
+  drinks: number;
+}
+
+/** A discover_bars row. */
+export interface BarRow {
+  id: string;
+  handle: string;
+  display_name: string;
+  avatar_url: string | null;
+  locality: string | null;
+  city: string | null;
+  country_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_closed: boolean;
+  closed_year: number | null;
+  drinks: number;
+}
+
+export function toDiscoverBar(r: BarRow): DiscoverBar {
+  return {
+    id: r.id,
+    handle: r.handle,
+    name: r.display_name,
+    logo: r.avatar_url,
+    locality: r.locality,
+    city: r.city,
+    countryCode: r.country_code,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    closed: r.is_closed,
+    closedYear: r.closed_year,
+    drinks: r.drinks,
+  };
 }
 
 export interface DiscoverDrink {
@@ -31,44 +68,75 @@ export interface DiscoverDrink {
   description: string | null;
   imageUrl: string | null;
   barId: string;
-  ingredients: string[];
-  styles: string[];
-  spirits: string[];
-  /** Folded name, description and ingredients, for search. */
-  haystack: string;
+  /** What a row says about its bar. */
+  bar: { name: string; handle: string; logo: string | null; locality: string | null; city: string | null };
   /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past. */
-  menu?: { onNow: boolean; past: string | null; order: number };
-  /** Tasting notes it fairly tastes of (flavor dimensions at NOTE_MIN or more), worked out by discover_drinks. */
-  notes?: string[];
+  menu: { onNow: boolean; past: string | null; order: number };
+  /** Where it sorts (discover_list's rank): with the name and id, the cursor for the next page. */
+  rank: number;
 }
 
-export function toDiscoverDrink(d: Omit<DiscoverDrink, 'styles' | 'spirits' | 'haystack'> & { riffOf: string | null }): DiscoverDrink {
-  const { riffOf, ...drink } = d;
-  const facts = { name: d.name, description: d.description, riffOf, ingredients: d.ingredients };
+/** A discover_list row. */
+export interface DrinkRow {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  bar_profile_id: string;
+  bar_handle: string;
+  bar_name: string;
+  bar_logo: string | null;
+  bar_locality: string | null;
+  bar_city: string | null;
+  /** [start year, start month, end year, end month, 1 if on now], or null when never on a menu. */
+  menu_run: [number, number | null, number | null, number | null, number] | null;
+  rank: number;
+  /** On the first page only. */
+  total_drinks: number | null;
+  total_bars: number | null;
+}
+
+/** Plain JSON for the query cache. */
+export function toDiscoverDrink(r: DrinkRow): DiscoverDrink {
+  const run = r.menu_run;
+  const dates = run ? runDates({ start_year: run[0], start_month: run[1], end_year: run[2], end_month: run[3], is_current: run[4] === 1 }) : null;
+  const tag = searchMenuTag(dates);
   return {
-    ...drink,
-    styles: stylesOf(facts),
-    spirits: spiritsOf(facts),
-    haystack: foldName([d.name, riffOf, d.description, ...d.ingredients].filter(Boolean).join(' | ')),
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    imageUrl: r.image_url,
+    barId: r.bar_profile_id,
+    bar: { name: r.bar_name, handle: r.bar_handle, logo: r.bar_logo, locality: r.bar_locality, city: r.bar_city },
+    menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) },
+    rank: r.rank,
   };
+}
+
+/** discover_list's cursor after a drink. */
+export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank'>) {
+  return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id };
 }
 
 const KM_PER_DEG = 111.045;
 
 const STYLE_IDS = new Set(STYLES.map((s) => s.id));
-const kindGroup = (kind: string) => (noteDimension(kind) ? 'note' : STYLE_IDS.has(kind) ? 'style' : 'spirit');
+const SPIRIT_IDS = new Set(SPIRITS.map((s) => s.id));
 
-function matchesKind(d: DiscoverDrink, kind: string): boolean {
-  const note = noteDimension(kind);
-  if (note) return !!d.notes?.includes(note);
-  return d.styles.includes(kind) || d.spirits.includes(kind);
-}
-
-/** Any pick within a group (Martinis or Negronis), every group picked (and Gin, and Bitter). */
-function matchesKinds(d: DiscoverDrink, f: DrinkFilter): boolean {
-  const groups = new Map<string, string[]>();
-  for (const k of f.kinds) groups.set(kindGroup(k), [...(groups.get(kindGroup(k)) ?? []), k]);
-  return [...groups.values()].every((ks) => ks.some((k) => matchesKind(d, k)));
+/**
+ * Picked styles, spirits and tasting notes as the RPCs take them: any pick
+ * within a group (Martinis or Negronis), every group picked (and Gin, and
+ * Bitter). A group with no picks is null, so it doesn't narrow. Sorted, so
+ * the same picks are the same query.
+ */
+export function kindParams(kinds: readonly string[]): { p_styles: string[] | null; p_spirits: string[] | null; p_notes: string[] | null } {
+  const sorted = [...new Set(kinds)].sort();
+  const of = (xs: string[]) => (xs.length ? xs : null);
+  return {
+    p_styles: of(sorted.filter((k) => STYLE_IDS.has(k))),
+    p_spirits: of(sorted.filter((k) => SPIRIT_IDS.has(k))),
+    p_notes: of(sorted.flatMap((k) => noteDimension(k) ?? [])),
+  };
 }
 
 /** What the picked filters are called in a heading: "Drinks", "Martinis", "Martinis & Gin", "Drinks, 3 filters". */
@@ -115,28 +183,6 @@ export interface DrinkFilter {
   area: Area;
 }
 
-/**
- * The drinks that match, best first: name matches before description ones,
- * then drinks with a picture, then A to Z with letters before symbols.
- */
-export function filterDrinks(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>, f: DrinkFilter): DiscoverDrink[] {
-  const words = foldName(f.search).split(' ').filter(Boolean);
-  const hits = drinks.filter((d) => {
-    const bar = bars.get(d.barId);
-    if (!bar || !barInArea(bar, f.area)) return false;
-    if (f.kinds.length && !matchesKinds(d, f)) return false;
-    if (!words.length) return true;
-    const text = `${d.haystack} | ${foldName(bar.name)}`;
-    return words.every((w) => text.includes(w));
-  });
-  const q = words.join(' ');
-  // Name matches, then drinks on a menu now before past ones, then pictures,
-  // then names that start with a letter ("&thesea" and "1986" last).
-  const rank = (d: DiscoverDrink) =>
-    (q && foldName(d.name).includes(q) ? 0 : 12) + (d.menu?.order ?? 1) * 4 + (d.imageUrl ? 0 : 2) + (/^\p{L}/u.test(d.name) ? 0 : 1);
-  return hits.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
-}
-
 /** Bars whose name (or a word in it), neighbourhood or city starts with the search, name matches first. */
 export function findBars(bars: readonly DiscoverBar[], search: string): DiscoverBar[] {
   const q = foldName(search);
@@ -156,42 +202,61 @@ export function findBars(bars: readonly DiscoverBar[], search: string): Discover
     .map((x) => x.b);
 }
 
-/** One pin per bar that has matching drinks, labelled with how many. */
-export function drinkPins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>): MapPin[] {
-  const counts = new Map<string, number>();
-  for (const d of drinks) counts.set(d.barId, (counts.get(d.barId) ?? 0) + 1);
+function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
+  if (b.latitude === null || b.longitude === null) return null;
+  return {
+    id: b.id,
+    handle: b.handle,
+    name: b.name,
+    logo: b.logo,
+    place: [b.locality, b.city].filter(Boolean).join(', '),
+    latitude: b.latitude,
+    longitude: b.longitude,
+    score: null,
+    position: null,
+    rankers: 0,
+    drinks,
+  };
+}
+
+/** One pin per open bar with matching drinks (its `drinks`), labelled with how many, most first; each bar once. */
+export function barPins(bars: readonly DiscoverBar[]): MapPin[] {
+  const seen = new Set<string>();
   const pins: MapPin[] = [];
-  for (const [id, count] of counts) {
-    const b = bars.get(id);
-    if (!b || b.latitude === null || b.longitude === null) continue;
-    pins.push({
-      id: b.id,
-      handle: b.handle,
-      name: b.name,
-      logo: b.logo,
-      place: [b.locality, b.city].filter(Boolean).join(', '),
-      latitude: b.latitude,
-      longitude: b.longitude,
-      score: null,
-      position: null,
-      rankers: 0,
-      drinks: count,
-    });
+  for (const b of bars) {
+    if (b.closed || !b.drinks || seen.has(b.id)) continue;
+    seen.add(b.id);
+    const pin = pinOf(b, b.drinks);
+    if (pin) pins.push(pin);
   }
   return pins.sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
+}
+
+/** One pin per bar among these drinks, labelled with how many of them it pours. */
+function drinkPins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>): MapPin[] {
+  const counts = new Map<string, number>();
+  for (const d of drinks) counts.set(d.barId, (counts.get(d.barId) ?? 0) + 1);
+  return [...counts]
+    .flatMap(([id, count]) => {
+      const b = bars.get(id);
+      const pin = b ? pinOf(b, count) : null;
+      return pin ? [pin] : [];
+    })
+    .sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
 }
 
 // --- "Best Martini": every martini, scored where people have ranked it ---
 
 /**
- * The drinks a "Best Martini" list is about: the ones of that style when it
- * leads a style (Martini: the Martinis style, so no Espresso Martinis), else
- * the ones that mention it.
+ * The filter a "Best Martini" list is about, on top of Discover's: the ones
+ * of that style when it leads a style (Martini: the Martinis style, so no
+ * Espresso Martinis), else the ones that mention it.
  */
-export function drinksOfPick(drinks: readonly DiscoverDrink[], pickName: string): DiscoverDrink[] {
+export function pickFilter(f: DrinkFilter, pickName: string): DrinkFilter {
   const style = STYLES.find((s) => s.classics[0] === pickName);
-  const q = foldName(pickName);
-  return drinks.filter((d) => (style ? d.styles.includes(style.id) : d.haystack.includes(q)));
+  // Just that style among the styles: "Martinis or Negronis" narrowed to the Martini's best.
+  if (style) return { ...f, kinds: [...f.kinds.filter((k) => !STYLE_IDS.has(k)), style.id] };
+  return { ...f, search: `${f.search} ${pickName}`.trim() };
 }
 
 export interface BarScore {

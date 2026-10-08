@@ -1,15 +1,30 @@
-import { Camera, Map, Marker, type CameraRef, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import { Camera, GeoJSONSource, Layer, Map, Marker, type CameraRef, type GeoJSONSourceRef, type PressEventWithFeatures, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
-import { MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
+import { MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
 /** MapLibre Native needs no API key, so every native build has a map. */
 export const mapAvailable = true;
+
+/**
+ * Pins drawn as views (logo, score), best first: a view per pin is costly
+ * on a phone, so past these (and the selected one) the rest are dots the map
+ * draws itself, gathered into counted clusters when they crowd.
+ */
+const RICH_PINS = 40;
+
+/** The pins past RICH_PINS as GeoJSON for the dots layer. */
+function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: pins.map((p) => ({ type: 'Feature', properties: { id: p.id }, geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] } })),
+  };
+}
 
 /**
  * The native map: MapLibre Native with the same OpenFreeMap style and the
@@ -18,6 +33,10 @@ export const mapAvailable = true;
  */
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
   const cameraRef = useRef<CameraRef>(null);
+  const dotsRef = useRef<GeoJSONSourceRef>(null);
+  const rich = pins.filter((p, i) => i < RICH_PINS || p.id === selectedId);
+  const rest = pins.filter((p, i) => i >= RICH_PINS && p.id !== selectedId);
+  const dots = useMemo(() => dotsOf(rest), [rest]);
   // Where the map starts; later cameras move it (below).
   const [start] = useState(camera);
   // On iOS a pin tap also reaches the map's own tap handler just after, which
@@ -39,7 +58,24 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   // ponytail: works around MapLibre RN 11.4 MarkerViewManager.findMarkerAtPoint;
   // drop this once it checks the topmost marker first (a native fix, so a new binary).
   const android = Platform.OS === 'android';
-  const order = android ? pins.map((p) => p.id).join('|') : 'pins';
+  const order = android ? rich.map((p) => p.id).join('|') : 'pins';
+
+  // A dot opens its bar; a cluster zooms in until it comes apart.
+  const onDot = async (e: NativeSyntheticEvent<PressEventWithFeatures>) => {
+    const f = e.nativeEvent.features[0];
+    if (!f) return;
+    pinTappedAt.current = Date.now();
+    const props = f.properties ?? {};
+    if (props.cluster && f.geometry.type === 'Point') {
+      const zoom = await dotsRef.current?.getClusterExpansionZoom(props.cluster_id);
+      const [lng, lat] = f.geometry.coordinates;
+      if (zoom !== undefined) cameraRef.current?.easeTo({ center: [lng, lat], zoom, duration: 400 });
+    } else if (typeof props.id === 'string') {
+      onSelect(props.id);
+    }
+  };
+  const ink = backbar.light.ink;
+  const ring = backbar.dark.ink;
 
   // Only the person's own moves count for "search this area".
   const onMoved = (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
@@ -68,8 +104,29 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         ref={cameraRef}
         initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom } : { center: [0, 20], zoom: 1.5 }}
       />
+      <GeoJSONSource id="discover-dots" ref={dotsRef} data={dots} cluster clusterRadius={44} onPress={(e) => void onDot(e)}>
+        <Layer
+          id="discover-clusters"
+          type="circle"
+          filter={['has', 'point_count']}
+          paint={{ 'circle-color': ink, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 17, 50, 21], 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
+        />
+        <Layer
+          id="discover-cluster-counts"
+          type="symbol"
+          filter={['has', 'point_count']}
+          layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': type.caption.fontSize, 'text-allow-overlap': true }}
+          paint={{ 'text-color': ring }}
+        />
+        <Layer
+          id="discover-dots"
+          type="circle"
+          filter={['!', ['has', 'point_count']]}
+          paint={{ 'circle-color': ink, 'circle-radius': 6, 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
+        />
+      </GeoJSONSource>
       <Fragment key={order}>
-        {pins.map((pin, i) => {
+        {rich.map((pin, i) => {
           const selected = pin.id === selectedId;
           const look = pinLook(pin, selected, accent);
           return (
@@ -77,7 +134,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
               key={pin.id}
               id={pin.id}
               lngLat={[pin.longitude, pin.latitude]}
-              style={android ? { zIndex: pins.length - i } : undefined}
+              style={android ? { zIndex: rich.length - i } : undefined}
               onPress={() => {
                 pinTappedAt.current = Date.now();
                 onSelect(pin.id);

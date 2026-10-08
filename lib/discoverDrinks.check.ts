@@ -1,11 +1,30 @@
 // Checks for lib/discoverDrinks.ts. Run: npm run test:unit
+// Matching, ranking and paging are SQL now: supabase/tests/discover-index.test.mjs.
 import assert from 'node:assert/strict';
 
-import { barInArea, barScoresFor, byScore, closedBars, closedLabel, closedPins, distanceKm, drinkPins, drinksOfPick, filterDrinks, findBars, kindsTitle, scorePins, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
+import {
+  barInArea,
+  barPins,
+  barScoresFor,
+  byScore,
+  closedBars,
+  closedLabel,
+  closedPins,
+  cursorAfter,
+  distanceKm,
+  findBars,
+  kindParams,
+  kindsTitle,
+  pickFilter,
+  scorePins,
+  toDiscoverDrink,
+  type DiscoverBar,
+  type DrinkRow,
+} from './discoverDrinks';
 import { pinDescription, pinLabel } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
-const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null): DiscoverBar => ({
+const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null, drinks = 0): DiscoverBar => ({
   id,
   handle: id,
   name,
@@ -17,76 +36,72 @@ const bar = (id: string, name: string, city: string | null, lat: number | null, 
   longitude: lng,
   closed: false,
   closedYear: null,
+  drinks,
 });
 
-const dante = bar('dante', 'Dante', 'New York', 40.7309, -74.0021, 'West Village');
-const attaboy = bar('attaboy', 'Attaboy', 'New York', 40.7196, -73.9899);
-const nomad = bar('nomad', 'Nomad', 'Los Angeles', 34.0452, -118.2519);
-const nowhere = bar('nowhere', 'No Address', 'New York', null, null);
+const dante = bar('dante', 'Dante', 'New York', 40.7309, -74.0021, 'West Village', 2);
+const attaboy = bar('attaboy', 'Attaboy', 'New York', 40.7196, -73.9899, null, 1);
+const nomad = bar('nomad', 'Nomad', 'Los Angeles', 34.0452, -118.2519, null, 1);
+const nowhere = bar('nowhere', 'No Address', 'New York', null, null, null, 1);
 const bars = new Map([dante, attaboy, nomad, nowhere].map((b) => [b.id, b]));
 
-const drink = (id: string, name: string, barId: string, ingredients: string[] = [], description = '', riffOf: string | null = null, imageUrl: string | null = null) =>
-  toDiscoverDrink({ id, name, description, ingredients, riffOf, imageUrl, barId });
-
-const drinks = [
-  drink('1', 'Garibaldi', 'dante', ['Campari', 'Orange Juice']),
-  drink('2', 'Negroni Sbagliato', 'dante', ['Campari', 'Sweet Vermouth', 'Prosecco'], '', 'Sbagliato', 'x.jpg'),
-  drink('3', 'Penicillin', 'attaboy', ['Blended Scotch', 'Lemon Juice', 'Honey', 'Ginger'], '', 'Penicillin'),
-  drink('4', 'Gimlet', 'nomad', ['Gin', 'Lime Cordial']),
-  drink('5', 'Mystery', 'nowhere', [], 'A gin drink from the menu'),
-];
+const row = (id: string, name: string, barId: string, extra: Partial<DrinkRow> = {}): DrinkRow => ({
+  id,
+  name,
+  description: null,
+  image_url: null,
+  bar_profile_id: barId,
+  bar_handle: barId,
+  bar_name: bars.get(barId)?.name ?? barId,
+  bar_logo: null,
+  bar_locality: null,
+  bar_city: 'New York',
+  menu_run: null,
+  rank: 6,
+  total_drinks: null,
+  total_bars: null,
+  ...extra,
+});
+const drink = (id: string, name: string, barId: string) => toDiscoverDrink(row(id, name, barId));
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
+const anywhere = { kind: 'anywhere' } as const;
+const nearDante = { kind: 'point', latitude: 40.7309, longitude: -74.0021, radiusKm: 1, source: 'me' } as const;
 
 // --- distance and areas ---
 assert.ok(Math.abs(distanceKm({ latitude: 40.7309, longitude: -74.0021 }, { latitude: 40.7196, longitude: -73.9899 }) - 1.6) < 0.2, 'Dante to Attaboy is about 1.6 km');
-const nearDante = { kind: 'point' as const, latitude: 40.73, longitude: -74.0, radiusKm: 1, source: 'me' as const };
 assert.ok(barInArea(dante, nearDante));
 assert.ok(!barInArea(attaboy, nearDante));
 assert.ok(!barInArea(nowhere, nearDante), 'a bar with no coordinates is never near');
 assert.ok(barInArea(nowhere, { kind: 'city', city: 'new york', country_code: 'US', label: 'New York' }), 'but it is in its city');
 assert.ok(!barInArea(nomad, { kind: 'city', city: 'New York', country_code: 'US', label: 'New York' }));
 
-// --- filtering: style, spirit, search words (bar names too), area ---
-const anywhere = { kind: 'anywhere' as const };
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['negroni'], search: '', area: anywhere })), ['2']);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['gin'], search: '', area: anywhere })).sort(), ['4', '5']);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'campari dante', area: anywhere })), ['2', '1'], 'every word matches, pictures first');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'attaboy', area: anywhere })), ['3'], 'a bar name finds its drinks');
-// A drink on a menu now comes before a past one, even one with a picture; past drinks are still found.
-const past = { ...drink('6', 'Plum Negroni', 'dante', ['Campari'], '', null, 'p.jpg'), menu: { onNow: false, past: 'Past · Mar 2024 to Jan 2025', order: 2 } };
-const onNow = { ...drink('7', 'Negroni', 'dante', ['Campari']), menu: { onNow: true, past: null, order: 0 } };
-assert.deepEqual(ids(filterDrinks([past, onNow], bars, { kinds: [], search: 'negroni', area: anywhere })), ['7', '6']);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour'], search: '', area: nearDante })), [], 'the Penicillin is too far');
-assert.deepEqual(
-  ids(filterDrinks(drinks.map((d) => (d.id === '1' ? { ...d, notes: ['bitter', 'fruity'] } : d)), bars, { kinds: ['note:bitter'], search: '', area: anywhere })),
-  ['1'],
-  'a tasting note keeps drinks that fairly taste of it',
-);
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: [], search: 'penicillin', area: anywhere })), ['3']);
-
-// --- several filters: any within a group, every group ---
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['negroni', 'sour'], search: '', area: anywhere })).sort(), ['2', '3', '4'], 'Negronis or sours');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['gin', 'whiskey'], search: '', area: anywhere })).sort(), ['3', '4', '5'], 'gin or whiskey');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour', 'gin'], search: '', area: anywhere })), ['4'], 'a sour made with gin: the Gimlet');
-assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour', 'whiskey'], search: '', area: anywhere })), ['3'], 'the Penicillin is both');
+// --- filters as the RPCs take them: any within a group, every group, notes as dimensions, sorted ---
+assert.deepEqual(kindParams([]), { p_styles: null, p_spirits: null, p_notes: null });
+assert.deepEqual(kindParams(['sour', 'gin', 'negroni', 'note:smoky', 'gin']), { p_styles: ['negroni', 'sour'], p_spirits: ['gin'], p_notes: ['smoky'] });
 assert.equal(kindsTitle([]), 'Drinks');
 assert.equal(kindsTitle(['martini', 'gin']), 'Martinis & Gin');
 assert.equal(kindsTitle(['martini', 'gin', 'note:smoky']), 'Drinks, 3 filters');
+
+// --- rows: menu tags, the bar, and the next page's cursor ---
+const onNow = toDiscoverDrink(row('6', 'Negroni', 'dante', { menu_run: [2026, null, null, null, 1], rank: 0 }));
+assert.deepEqual(onNow.menu, { onNow: true, past: null, order: 0 });
+const past = toDiscoverDrink(row('7', 'Old Negroni', 'dante', { menu_run: [2023, 3, 2024, 1, 0] }));
+assert.equal(past.menu.order, 2);
+assert.match(past.menu.past ?? '', /^Past · Mar 2023 to Jan 2024$/);
+assert.equal(past.bar.name, 'Dante');
+assert.deepEqual(cursorAfter(onNow), { p_after_rank: 0, p_after_name: 'Negroni', p_after_id: '6' });
 
 // --- bars: name first, then place ---
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'da')), ['dante']);
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'west vil')), ['dante'], 'by neighbourhood');
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'new york')), ['attaboy', 'dante'], 'by city, A to Z');
 assert.deepEqual(findBars([dante], 'd'), [], 'one letter finds nothing');
-
-// --- pins: one per bar with coordinates, most drinks first ---
-const pins = drinkPins(drinks, bars);
-assert.deepEqual(pins.map((p) => [p.id, p.drinks]), [['dante', 2], ['attaboy', 1], ['nomad', 1]]);
-
-// --- names that start with a symbol or number sort after letters ---
-const odd = [drink('a', '&thesea', 'dante'), drink('b', '1986', 'dante'), drink('c', 'Zombie', 'dante')];
-assert.deepEqual(ids(filterDrinks(odd, bars, { kinds: [], search: '', area: anywhere })), ['c', 'a', 'b']);
 assert.deepEqual(ids(findBars([bar('o', 'Origin Bar', null, null, null), bar('g', 'Bar Orchard Ginza', null, null, null)], 'gin')), ['g'], 'a word must start with it');
+
+// --- pins: one per open bar with matching drinks and coordinates, most first, each once ---
+const none = bar('none', 'Dry Bar', 'New York', 40.7, -74, null, 0);
+const pins = barPins([nomad, dante, attaboy, nowhere, none, dante]);
+assert.deepEqual(pins.map((p) => [p.id, p.drinks]), [['dante', 2], ['nomad', 1], ['attaboy', 1]]);
 
 // --- closed bars: found by search after open ones, listed and pinned only when asked for ---
 const shut = { ...bar('shut', 'Dante Annex', 'New York', 40.731, -74.002), closed: true, closedYear: 2019 };
@@ -97,18 +112,16 @@ assert.equal(closedLabel(null), 'Closed');
 assert.deepEqual(ids(closedBars([dante, vague, shut], anywhere)), ['vague', 'shut'], 'only closed bars, by name');
 assert.deepEqual(ids(closedBars([dante, vague, shut], nearDante)), ['shut'], 'in the area');
 assert.deepEqual(closedPins([shut, vague]).map((p) => [p.id, p.closed]), [['shut', 'Closed 2019']], 'a pin needs coordinates');
+assert.deepEqual(barPins([shut]), [], 'a closed bar is never a drinks pin');
 
-// --- "Best Martini": every martini, scored where it has been ---
-const martinis = [
-  drink('m1', 'Dante Martini', 'dante', ['Gin', 'Dry Vermouth'], '', 'Martini'),
-  drink('m2', 'Espresso Martini', 'dante', ['Vodka', 'Espresso']),
-  drink('m3', 'Gibson', 'attaboy', ['Gin', 'Dry Vermouth', 'Cocktail Onion']),
-  drink('m4', 'Nomad Martini', 'nomad', ['Gin', 'Dry Vermouth'], '', 'Martini'),
-  drink('m5', 'Paper Plane', 'nomad', ['Bourbon', 'Aperol', 'Amaro Nonino', 'Lemon Juice']),
-];
-assert.deepEqual(ids(drinksOfPick(martinis, 'Martini')), ['m1', 'm3', 'm4'], 'the Martinis style: no Espresso Martini');
-assert.deepEqual(ids(drinksOfPick(martinis, 'Paper Plane')), ['m5'], 'not a style lead: by name');
-const picked = drinksOfPick(martinis, 'Martini');
+// --- "Best Martini": the style alone among the styles, or the name searched ---
+const f = { kinds: ['negroni', 'martini', 'gin'], search: '', area: anywhere };
+assert.deepEqual(pickFilter(f, 'Martini').kinds, ['gin', 'martini']);
+assert.deepEqual(pickFilter({ ...f, kinds: [] }, 'Martini').kinds, ['martini']);
+assert.deepEqual(pickFilter({ ...f, search: 'smoky' }, 'Paper Plane'), { ...f, search: 'smoky Paper Plane' }, 'not a style lead: by name');
+
+// --- scores, best first, every bar pinned ---
+const picked = [drink('m1', 'Dante Martini', 'dante'), drink('m3', 'Gibson', 'attaboy'), drink('m4', 'Nomad Martini', 'nomad')];
 const scored = { m3: 8.1, m4: 9.2 };
 const dantesOwn: DiscoverRow = { position: 1, venue_profile_id: 'dante', handle: 'dante', display_name: 'Dante', locality: null, city: null, latitude: null, longitude: null, distance_km: null, score: 7.4, rankers: 25, is_early: false };
 const barScores = barScoresFor(picked, scored, [dantesOwn]);
@@ -120,3 +133,5 @@ assert.equal(pinLabel(best[0]), '8.1');
 assert.equal(pinLabel(best[1]), '', 'an unscored bar is unmarked, not a count');
 assert.equal(pinDescription(best[1]), 'Dante, 1 drink');
 assert.equal(pinDescription(best[0]), 'Attaboy, score 8.1');
+
+console.log('discoverDrinks: ok');
