@@ -1,4 +1,4 @@
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useDebounced } from '@/hooks/useDiscover';
@@ -6,6 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -23,6 +24,17 @@ interface ItemRow {
   item_type: 'cocktail' | 'ingredient';
   glassware_id?: string | null;
   item_images: ItemImageLink[] | null;
+  brand_maker?: string | null;
+  abv?: number | null;
+  generic_id?: string | null;
+}
+
+/** A bottle on the shelf, with what the shelf list says about it. */
+export interface ShelfItem extends BarItem {
+  maker: string | null;
+  abv: number | null;
+  /** What it's a kind of ("Bourbon"), when the person can see that. */
+  kind: string | null;
 }
 
 /** A row of my_bar_drinks (supabase/migrations/20261008340000_my_bar_rpc.sql). */
@@ -39,8 +51,7 @@ interface MatchRow {
 const SHELF_KEY = ['home-bar'];
 const NONE: string[] = [];
 const ITEM_SELECT = 'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url))';
-/** "Make it yourself" loads this many drinks at a time as the list scrolls. */
-const OTHERS_PAGE = 50;
+const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id`;
 
 /** The bottles on the signed-in person's shelf (item ids, newest first). */
 export function useShelf() {
@@ -108,12 +119,14 @@ export function useShelfEdit() {
     client.setQueryData<string[]>(SHELF_KEY, (ids) => change(ids ?? []));
     return { before };
   };
+  // One bottle or several (the pantry's "I have all of these"); ones already on the shelf are left as they are.
   const add = useMutation({
-    mutationFn: async (itemId: string) => {
-      const { error } = await supabase.from('home_bar_items').insert({ item_id: itemId });
+    mutationFn: async (itemIds: string | string[]) => {
+      const rows = [itemIds].flat().map((item_id) => ({ item_id }));
+      const { error } = await supabase.from('home_bar_items').upsert(rows, { onConflict: 'user_id,item_id', ignoreDuplicates: true });
       if (error) throw error;
     },
-    onMutate: (itemId) => onMutateWith((ids) => [itemId, ...ids.filter((i) => i !== itemId)])(),
+    onMutate: (itemIds) => onMutateWith((ids) => [...[itemIds].flat(), ...ids.filter((i) => ![itemIds].flat().includes(i))])(),
     onError: (_e, _id, ctx) => client.setQueryData(SHELF_KEY, ctx?.before),
     onSettled,
   });
@@ -140,10 +153,10 @@ function useGlassIcons(): (id: string | null | undefined) => string | null {
 }
 
 /** Items the person can see, by id, in URL-sized batches (shelf names, hearted drinks). */
-async function readItems(ids: string[]): Promise<ItemRow[]> {
+async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]> {
   const batches = await Promise.all(
     chunk(ids, 150).map(async (batch) => {
-      const { data, error } = await supabase.from('app_item_presentation').select(ITEM_SELECT).in('id', batch);
+      const { data, error } = await supabase.from('app_item_presentation').select(select).in('id', batch);
       if (error) throw error;
       return (data ?? []) as unknown as ItemRow[];
     })
@@ -200,6 +213,23 @@ export function useBarDrinks() {
   }, [matches.data, matches.isLoading, matches.error, glass]);
 }
 
+/** The shelf's bottles with what each is a kind of: the bottles, then the kinds' names. */
+async function readShelf(ids: string[]): Promise<ShelfItem[]> {
+  const rows = await readItems(ids, SHELF_SELECT);
+  const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
+  const kinds = new Map((kindIds.length ? await readItems(kindIds, 'id, name') : []).map((k) => [k.id, k.name]));
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    type: r.item_type,
+    imageUrl: heroPicture(r.item_images)?.url ?? null,
+    glass: null,
+    maker: r.brand_maker ?? null,
+    abv: r.abv ?? null,
+    kind: (r.generic_id && kinds.get(r.generic_id)) || null,
+  }));
+}
+
 /** My Bar: the shelf, what it makes, and what one more bottle would unlock. */
 export function useMyBar() {
   const shelf = useShelf();
@@ -208,16 +238,15 @@ export function useMyBar() {
   const names = useQuery({
     queryKey: [...SHELF_KEY, 'items', ids],
     enabled: ids.length > 0,
-    queryFn: () => readItems(ids),
+    // The last shelf stays up while a changed one loads, so the list doesn't blank and jump on every tap.
+    placeholderData: keepPreviousData,
+    queryFn: () => readShelf(ids),
   });
 
   return useMemo(() => {
     const byId = new Map((names.data ?? []).map((r) => [r.id, r]));
     // The shelf in the order it was filled, as far as the person can still see it.
-    const onShelf = ids.flatMap((id) => {
-      const r = byId.get(id);
-      return r ? [{ id: r.id, name: r.name, type: r.item_type, imageUrl: heroPicture(r.item_images)?.url ?? null, glass: null }] : [];
-    });
+    const onShelf = ids.flatMap((id) => byId.get(id) ?? []);
     return {
       shelf: onShelf,
       canMake: drinks.canMake,
@@ -232,36 +261,32 @@ export function useMyBar() {
 }
 
 /**
- * Every drink the person can see, A to Z, a page at a time as the list
- * scrolls: My Bar's "Make it yourself". Kept in memory only.
+ * The pantry staples (lib/pantry.ts) as shared ingredients, by name. A staple
+ * the catalog doesn't have is left out.
  */
-export function useAllDrinks() {
-  const glass = useGlassIcons();
-  const query = useInfiniteQuery({
-    queryKey: ['home-bar-drinks'],
-    meta: { persist: false },
-    initialPageParam: 0,
-    getNextPageParam: (last: ItemRow[], pages) => (last.length < OTHERS_PAGE ? undefined : pages.length * OTHERS_PAGE),
-    queryFn: async ({ pageParam }): Promise<ItemRow[]> => {
+export function usePantryItems() {
+  return useQuery({
+    queryKey: ['pantry-items'],
+    staleTime: 24 * 60 * 60 * 1000,
+    queryFn: async (): Promise<{ name: string; id: string }[]> => {
+      const names = [...PANTRY.map((p) => p.name), PANTRY_WATER];
       const { data, error } = await supabase
         .from('app_item_presentation')
-        .select(ITEM_SELECT)
-        .eq('item_type', 'cocktail')
-        .order('name')
-        .order('id')
-        .range(pageParam, pageParam + OTHERS_PAGE - 1);
+        .select('id, name')
+        .eq('item_type', 'ingredient')
+        .is('bar_id', null)
+        .in('name', names)
+        .order('id');
       if (error) throw error;
-      return (data ?? []) as unknown as ItemRow[];
+      // One row per name (the shared list has one of each since 20261008100200).
+      const byName = new Map<string, string>();
+      for (const r of (data ?? []) as { id: string; name: string }[]) if (!byName.has(r.name)) byName.set(r.name, r.id);
+      return names.flatMap((name) => {
+        const id = byName.get(name);
+        return id ? [{ name, id }] : [];
+      });
     },
   });
-  const drinks = useMemo(
-    () =>
-      (query.data?.pages ?? []).flat().map(
-        (r): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: heroPicture(r.item_images)?.url ?? null, glass: glass(r.glassware_id) })
-      ),
-    [query.data, glass]
-  );
-  return { drinks, loadMore: () => (query.hasNextPage && !query.isFetchingNextPage ? query.fetchNextPage() : undefined), isLoading: query.isLoading };
 }
 
 /** These drinks, by id, as the person can see them (hearted drinks on Collection). */
