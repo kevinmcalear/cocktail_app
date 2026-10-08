@@ -192,7 +192,7 @@ describe('layered publishing', () => {
 });
 
 describe('personal drinks are private until published', () => {
-  test('only the creator reads their drink and its spec, and their own ingredients (20261008730000)', async () => {
+  test('only the creator reads their drink and its spec, and their own ingredients (20261008830000)', async () => {
     const byStranger = await users.stranger.client.from('items').select('id').eq('id', ids.items.homeDrink);
     assert.deepEqual(byStranger.data, []);
     assert.deepEqual(await specRows(users.stranger.client, 'homeDrink'), []);

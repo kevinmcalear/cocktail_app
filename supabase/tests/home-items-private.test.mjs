@@ -1,4 +1,4 @@
-// Home items stay with their creator (20261008730000_home_items_private.sql):
+// Home items stay with their creator (20261008830000_home_items_private.sql):
 // a home prep, syrup, ingredient or glass, its recipe and its steps are read by
 // the creator, and by others only when it's published or used by something
 // they can see. The shared catalog is unchanged.
