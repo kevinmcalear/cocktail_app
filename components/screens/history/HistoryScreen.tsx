@@ -3,12 +3,19 @@ import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, Chip, Field, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Chip, Field, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useDrinkTree } from '@/hooks/useDrinkTree';
 import { FAMILIES, familyFor, familyRows, pathTo, rowMeta, searchTree, type FamilyKey } from '@/lib/drinkTree';
 
+import { TimelineView } from './timeline/TimelineView';
 import { TreeRowView } from './TreeRowView';
+
+type HistoryView = 'tree' | 'timeline';
+const VIEWS = [
+  { value: 'tree', label: 'Tree' },
+  { value: 'timeline', label: 'Timeline' },
+] as const;
 
 const drinkHref = (id: string) => `/cocktail/${id}` as Href;
 
@@ -26,7 +33,8 @@ function HistoryPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const params = useLocalSearchParams<{ focus?: string }>();
+  const params = useLocalSearchParams<{ focus?: string; view?: string }>();
+  const [view, setView] = useState<HistoryView>(params.view === 'timeline' ? 'timeline' : 'tree');
   const { data: nodes = [], isLoading, isError } = useDrinkTree();
   const [family, setFamily] = useState<FamilyKey | null>(null);
   const [folded, setFolded] = useState<string[]>([]);
@@ -64,10 +72,28 @@ function HistoryPage() {
     setFocusKey(key);
     setQuery('');
   };
+  const intro = (
+    <View style={styles.header}>
+      <Title>Cocktail history</Title>
+      <Body tone="muted">
+        {view === 'timeline'
+          ? 'Every classic in the year it was first made or printed, from the punch bowl to now. Tap one for who made it and where, or follow its thread.'
+          : drinks
+            ? `${drinks} classics and modern classics, each traced back through the drink it came from to the punch bowl. Tap a drink to open it, fold a line with the arrow, or follow "from" into another family.`
+            : 'Every classic, traced back through the drink it came from to the punch bowl.'}
+      </Body>
+      <Segmented accessibilityLabel="History view" options={VIEWS} value={view} onChange={setView} />
+      {view === 'timeline' && isLoading ? <Caption tone="muted">Loading the timeline…</Caption> : null}
+      {view === 'timeline' && isError ? <Caption tone="muted">{"The timeline didn't load. Go back and try again."}</Caption> : null}
+    </View>
+  );
   const toggle = (key: string) => setFolded((f) => (f.includes(key) ? f.filter((k) => k !== key) : [...f, key]));
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      {view === 'timeline' ? (
+        <TimelineView nodes={nodes} header={intro} focusKey={focusKey} onSelect={jump} arriveAt={params.focus ?? null} threadFromFocus={params.view === 'timeline' && !!params.focus} />
+      ) : (
       <ScrollView
         ref={scroll}
         keyboardShouldPersistTaps="handled"
@@ -76,14 +102,7 @@ function HistoryPage() {
           { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter },
         ]}
       >
-        <View style={styles.header}>
-          <Title>Cocktail history</Title>
-          <Body tone="muted">
-            {drinks
-              ? `${drinks} classics and modern classics, each traced back through the drink it came from to the punch bowl. Tap a drink to open it, fold a line with the arrow, or follow "from" into another family.`
-              : 'Every classic, traced back through the drink it came from to the punch bowl.'}
-          </Body>
-        </View>
+        {intro}
 
         <Field label="Find a drink, bartender or bar" value={query} onChangeText={setQuery} placeholder="Penicillin, Ada Coleman, Pegu Club" autoCorrect={false} autoCapitalize="none" />
         {query.trim() ? (
@@ -149,6 +168,7 @@ function HistoryPage() {
           ))}
         </View>
       </ScrollView>
+      )}
       <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
