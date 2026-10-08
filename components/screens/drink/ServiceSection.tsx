@@ -11,7 +11,7 @@ import { isServiceStyle } from '@/lib/service';
 import { SERVICE_OPENS_AT, serviceShots, shotCaption, type ServiceShot } from '@/lib/servicePhotos';
 import type { SpecLine } from '@/lib/spec';
 
-import { PhotoViewer } from './PhotoViewer';
+import { PhotoViewer, type ViewedPhoto } from './PhotoViewer';
 import { ServiceSpec } from './ServiceSpec';
 
 interface ServiceSectionProps {
@@ -72,9 +72,15 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wid
           </View>
         </>
       ) : null}
-      <PhotoViewer shot={open} name={name} onClose={() => setOpen(null)} />
+      <PhotoViewer photo={open?.picture ? viewed(open) : null} name={name} onClose={() => setOpen(null)} />
     </LockedSection>
   );
+}
+
+/** A service photo as the viewer shows it: its angle, tagged when it's a sketch or out of date. */
+function viewed(shot: ServiceShot): ViewedPhoto {
+  const tag = pictureTag(shot.picture);
+  return { url: shot.picture!.url, title: shot.label, tag: tag ? { label: tag, tone: shot.picture!.isSketch ? 'sketch' : 'warning' } : null };
 }
 
 function ShotTile({ shot, name, glass, basis, onOpen }: { shot: ServiceShot; name: string; glass: string | null; basis: `${number}%`; onOpen: () => void }) {

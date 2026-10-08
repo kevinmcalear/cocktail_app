@@ -1,8 +1,10 @@
 import { QueryClientContext } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { useContext, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useItemSketch } from '@/hooks/useItemSketch';
+import { usePeopleHero } from '@/hooks/usePeopleHero';
 
 import { SketchDrawing } from './SketchDrawing';
 
@@ -16,8 +18,10 @@ interface DrawnSketchProps {
 }
 
 function Loaded({ itemId, fallback }: DrawnSketchProps) {
-  const sketch = useItemSketch(itemId).data ?? null;
+  const person = usePeopleHero(itemId).data ?? null;
+  const sketch = useItemSketch(person ? null : itemId).data ?? null;
   const [width, setWidth] = useState(0);
+  if (person) return <Image source={{ uri: person }} style={styles.fill} contentFit="cover" transition={200} />;
   if (!sketch) return <>{fallback}</>;
   // Draws straight away as a thumb and adds the full detail once it's measured
   // wide, so a missing or slow layout event never leaves blank paper.
@@ -29,8 +33,9 @@ function Loaded({ itemId, fallback }: DrawnSketchProps) {
 }
 
 /**
- * A drink with no photo, drawn from its drawing inputs (item_sketches). Outside
- * a query client (the gallery, isolated tests) it shows the fallback.
+ * A drink with no photo of its own: the photo someone posted that leads for it
+ * (highest ranked), or else a drawing from its drawing inputs (item_sketches).
+ * Outside a query client (the gallery, isolated tests) it shows the fallback.
  */
 export function DrawnSketch(props: DrawnSketchProps) {
   const client = useContext(QueryClientContext);
