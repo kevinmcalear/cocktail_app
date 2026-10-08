@@ -1,6 +1,8 @@
 /**
  * A drink's family tree: what it's a riff of (up to the root) and who made it
- * where. Pure helpers, so the ordering and wording can be checked without a
+ * where. A bar's drink points at its classic (riff_of_id); a classic points at
+ * the classic it came from (lineage_parent_id) or at a historic style
+ * (lineage_style_id), and styles point at older styles, back to Punch. Pure helpers, so the ordering and wording can be checked without a
  * database (lib/lineage.check.ts). The queries are in hooks/useLineage.ts.
  */
 
@@ -13,6 +15,9 @@ export interface CreditProfile {
   display_name: string;
   avatar_url: string | null;
   locality: string | null;
+  /** Bars only: it has closed, and when. */
+  is_closed?: boolean | null;
+  closed_year?: number | null;
 }
 
 export interface LineageDrink {
@@ -27,6 +32,48 @@ export interface LineageDrink {
   origin_bar: CreditProfile | null;
   /** Everyone else who made it (item_co_creators), after the first-named creator. */
   co_creators?: { profile: CreditProfile | null }[] | null;
+  /** Catalog classics: the classic it came from, or the style. */
+  lineage_parent_id?: string | null;
+  lineage_style_id?: string | null;
+  /** What changed from its parent, in a line. */
+  lineage_note?: string | null;
+  /** The year is approximate ("c. 1880"). */
+  origin_year_approx?: boolean | null;
+  is_catalog?: boolean | null;
+}
+
+/** A historic style a classic descends from (Sour, Daisy, Punch). Not a drink. */
+export interface DrinkStyle {
+  id: string;
+  key: string;
+  name: string;
+  family: string;
+  parent_style_id: string | null;
+  year: number | null;
+  year_approx: boolean;
+  summary: string | null;
+}
+
+/** The next drink up: a bar's drink to its classic, a classic to the classic it came from. */
+export function parentId(drink: Pick<LineageDrink, 'riff_of_id' | 'lineage_parent_id'>): string | null {
+  return drink.riff_of_id ?? drink.lineage_parent_id ?? null;
+}
+
+/** "1888", "c. 1880", or null. */
+export function yearLabel(year: number | null | undefined, approx?: boolean | null): string | null {
+  return year ? `${approx ? 'c. ' : ''}${year}` : null;
+}
+
+/** A style and the styles above it, oldest first (Punch, Sour, Fizz). Stops on a loop. */
+export function styleChain(styleId: string | null | undefined, styles: readonly DrinkStyle[]): DrinkStyle[] {
+  const byId = new Map(styles.map((s) => [s.id, s]));
+  const chain: DrinkStyle[] = [];
+  let next = styleId ? byId.get(styleId) : undefined;
+  while (next && !chain.includes(next) && chain.length < MAX_ANCESTORS) {
+    chain.push(next);
+    next = next.parent_style_id ? byId.get(next.parent_style_id) : undefined;
+  }
+  return chain.reverse();
 }
 
 /** Everyone credited with making the drink, first-named first. */
@@ -46,26 +93,26 @@ export function shortNames(names: string[]): string {
 }
 
 /** Deep enough for any real family (Whisky Sour > Gold Rush > Penicillin > a riff). */
-export const MAX_ANCESTORS = 8;
+export const MAX_ANCESTORS = 12;
 
 /**
- * Follows riff_of_id upwards and returns the ancestors root first, not
+ * Follows parentId upwards and returns the ancestors root first, not
  * including the drink itself. Stops at the root, at a drink the reader can't
  * see (fetch returns null), on a loop, or after MAX_ANCESTORS.
  */
 export async function walkAncestors(
-  start: Pick<LineageDrink, 'id' | 'riff_of_id'>,
+  start: Pick<LineageDrink, 'id' | 'riff_of_id' | 'lineage_parent_id'>,
   fetchDrink: (id: string) => Promise<LineageDrink | null>
 ): Promise<LineageDrink[]> {
   const seen = new Set([start.id]);
   const chain: LineageDrink[] = [];
-  let next = start.riff_of_id;
+  let next = parentId(start);
   while (next && !seen.has(next) && chain.length < MAX_ANCESTORS) {
     seen.add(next);
     const parent = await fetchDrink(next);
     if (!parent) break;
     chain.push(parent);
-    next = parent.riff_of_id;
+    next = parentId(parent);
   }
   return chain.reverse();
 }
@@ -114,8 +161,10 @@ export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, '
   });
   if (drink.origin_bar) {
     parts.push({ text: parts.length ? ' at ' : 'At ' }, { text: drink.origin_bar.display_name, profileId: drink.origin_bar.id });
+    if (drink.origin_bar.is_closed) parts.push({ text: ' (now closed)' });
   }
-  if (drink.origin_year && parts.length) parts.push({ text: `, ${drink.origin_year}` });
+  const year = yearLabel(drink.origin_year, drink.origin_year_approx);
+  if (year && parts.length) parts.push({ text: `, ${year}` });
   return parts;
 }
 
@@ -125,6 +174,6 @@ export function creditText(parts: CreditPart[]): string {
 }
 
 /** Whether a drink has anything for the family tree to show. */
-export function hasLineage(drink: LineageDrink | null, ancestors: LineageDrink[], riffs: LineageDrink[]): boolean {
-  return !!drink && (ancestors.length > 0 || riffs.length > 0 || !!drink.creator || !!drink.origin_bar);
+export function hasLineage(drink: LineageDrink | null, ancestors: LineageDrink[], riffs: LineageDrink[], styles: DrinkStyle[] = []): boolean {
+  return !!drink && (ancestors.length > 0 || riffs.length > 0 || styles.length > 0 || !!drink.creator || !!drink.origin_bar);
 }
