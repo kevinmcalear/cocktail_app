@@ -117,7 +117,8 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const ice = inputs.ice;
   if (ice === 'crushed' || ice === 'shaved') g.top = g.rim + 3;
   if (ice === 'pebble') g.top = g.rim + 5;
-  if (inputs.glass === 'mug' && ice !== 'cubes') g.opaque = SKETCH.homeMug;
+  // A hot drink in the copper mug's place is a home mug; the glass mugs stay glass.
+  if (inputs.glass === 'mug' && g.opaque && ice !== 'cubes') g.opaque = SKETCH.homeMug;
 
   const b = new SceneBuilder(`k${hashString(seed).toString(36)}`);
   const P = makePainter(S, r, rng(hashString(`${key}|hand`)), b, g);

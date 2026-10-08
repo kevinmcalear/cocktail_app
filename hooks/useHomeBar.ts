@@ -1,9 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useDebounced } from '@/hooks/useDiscover';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { allRows } from '@/lib/allRows';
 import { canMake, type RecipeRow } from '@/lib/canMake';
+import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
 
@@ -38,6 +40,48 @@ export function useShelf() {
         .order('added_at', { ascending: false });
       if (error) throw error;
       return (data ?? []).map((r: { item_id: string }) => r.item_id);
+    },
+  });
+}
+
+/**
+ * Bottles whose name has the text in it, best first, searched on the server
+ * so the add sheet never waits on the whole catalog (useCatalog below takes a
+ * dozen reads and isn't saved between launches). House-made preps are left
+ * out: the shelf works those out from their recipes.
+ */
+export function useBottleSearch(text: string) {
+  const query = useDebounced(text.trim(), 200);
+  return useQuery({
+    queryKey: ['bottle-search', query],
+    enabled: query.length > 0,
+    placeholderData: keepPreviousData,
+    meta: { persist: false },
+    queryFn: async (): Promise<BarItem[]> => {
+      // Names that start with it, and any that have it: "Gin" can't sort out of reach behind "Aged gin…".
+      const read = (pattern: string, limit: number) =>
+        supabase
+          .from('app_item_presentation')
+          .select('id, name, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+          .eq('item_type', 'ingredient')
+          .is('recipes', null)
+          .ilike('name', pattern)
+          .order('name')
+          .order('id')
+          .limit(limit);
+      const like = likeExactly(query);
+      const [starts, has] = await Promise.all([read(`${like}%`, 50), read(`%${like}%`, 150)]);
+      if (starts.error) throw starts.error;
+      if (has.error) throw has.error;
+      const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
+      const rows = [...byId.values()] as unknown as Pick<CatalogRow, 'id' | 'name' | 'item_images'>[];
+      return searchByName(query, rows, 40).map((r) => ({
+        id: r.id,
+        name: r.name,
+        type: 'ingredient' as const,
+        imageUrl: heroPicture(r.item_images)?.url ?? null,
+        glass: null,
+      }));
     },
   });
 }
@@ -147,9 +191,8 @@ export function useMyBar() {
       /** Every drink the person can see, by name. */
       drinks: [...items.values()].filter((i) => i.type === 'cocktail'),
       canMakeIds: new Set(result.canMake),
-      /** Ingredients that can go on a shelf, for the add sheet. */
-      bottles: [...items.values()].filter((i) => i.type === 'ingredient' && !houseMade[i.id]),
-      shelfIds: new Set(shelfIds),
+      /** Everything on the shelf, before the catalog has loaded too. */
+      shelfIds: new Set(shelf.data ?? []),
       isLoading: shelf.isLoading || catalog.isLoading,
       error: shelf.error ?? catalog.error,
     };

@@ -1,18 +1,20 @@
-import { CommandSearch } from '@/components/CommandSearch';
-import { BackbarTheme, Title, useDs } from '@/components/ds';
+import { BackbarTheme, useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { space } from '@/constants/tokens';
-import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { Stack, useIsFocused } from 'expo-router';
-import { Keyboard, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSearchMine } from '@/hooks/useSearchMine';
+import type { SearchScope } from '@/lib/searchScope';
+import { Stack } from 'expo-router';
+import { useState } from 'react';
+import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
- * Phone search tab: behind the bar the main job is finding a spec fast. On web
- * the field is focused as soon as the tab opens; on iOS and Android the keyboard
- * would cover the tab bar and half the results, so it waits for a tap. Tapping
- * outside the field or dragging the results puts the keyboard away. Wide web
- * uses ⌘K / the sidebar.
+ * The search circle beside the tabs: the one search, opened on the venue in
+ * venue mode and on Everywhere in home mode. On web the field is focused as
+ * soon as it opens; on iOS and Android the keyboard would cover half the
+ * results, so it waits for a tap. Dragging the results puts the keyboard away.
+ * Wide web opens the same search as a palette (⌘K) instead.
  */
 export default function SearchScreen() {
   return (
@@ -25,30 +27,31 @@ export default function SearchScreen() {
 
 function Search() {
   const ds = useDs();
+  const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  const tabBarInset = useTabBarInset();
-  const isFocused = useIsFocused();
-  const { items } = useSearchCatalog();
+  const bottom = useTabBarInset();
+  const mine = useSearchMine();
+  const [query, setQuery] = useState('');
+  const [picked, setScope] = useState<SearchScope | null>(null);
+  const scope = picked ?? mine.defaultScope;
 
   return (
-    <Pressable onPress={Keyboard.dismiss} accessible={false} tabIndex={-1} style={styles.fill}>
-      <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.md }]}>
-        <Title style={styles.title}>Search</Title>
-        {isFocused ? (
-          <CommandSearch
-            items={items}
-            autoFocus={Platform.OS === 'web'}
-            showFooter={false}
-            bottomInset={tabBarInset}
-          />
-        ) : null}
+    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.md }]}>
+      <View style={{ paddingHorizontal: gutter, paddingBottom: space.md }}>
+        <SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus={Platform.OS === 'web'} />
       </View>
-    </Pressable>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={Keyboard.dismiss}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg }}
+      >
+        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: space.md, gap: space.sm },
-  title: { paddingHorizontal: space.xs },
+  screen: { flex: 1 },
 });

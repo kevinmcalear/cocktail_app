@@ -29,6 +29,7 @@ export function DrinkAtBarList({ drinks, barsById, limit = 8 }: { drinks: Discov
             imageUrl={d.imageUrl}
             glass={null}
             caption={bar ? [bar.name, place(bar), d.menu?.onNow ? 'on now' : null].filter(Boolean).join(' · ') : undefined}
+            logo={bar ? { uri: bar.logo, name: bar.name } : undefined}
             tag={d.menu?.past ?? undefined}
             note={d.description ?? undefined}
           />

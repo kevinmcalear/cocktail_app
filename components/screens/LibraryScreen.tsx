@@ -7,7 +7,10 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
+import { SearchPill } from '@/components/screens/home/DiscoverControls';
+import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { StaffList } from '@/components/screens/library/StaffList';
+import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -15,10 +18,12 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
+import { useSearchMine } from '@/hooks/useSearchMine';
 import { useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import type { SearchScope } from '@/lib/searchScope';
 import { DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
@@ -82,6 +87,11 @@ export function LibraryScreen() {
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
+  // Library browses; finding by name is the one search, opened on this venue.
+  const mine = useSearchMine();
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<SearchScope>('mine');
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
@@ -127,6 +137,7 @@ export function LibraryScreen() {
         <ScreenHeader />
       </View>
       <Display>Library</Display>
+      <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow label="Show" gutter={gutter}>
         {filters.map((f) => (
@@ -194,6 +205,16 @@ export function LibraryScreen() {
       )}
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
+      {searching ? (
+        <DiscoverOverlay
+          label="Search"
+          full
+          onClose={() => setSearching(false)}
+          head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={() => setSearching(false)} />}
+        >
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={() => setSearching(false)} />
+        </DiscoverOverlay>
+      ) : null}
     </View>
   );
 }
