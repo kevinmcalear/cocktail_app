@@ -119,7 +119,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
         items={classics}
         render={(d) => <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} itemId={d.id} imageUrl={d.imageUrl} glass={null} caption="Classic" />}
       />
-      <ResultGroup label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} icon="drop.fill" onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
+      <ResultGroup label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
       {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>
