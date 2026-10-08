@@ -157,7 +157,7 @@ export default function EditIngredientScreen({
     const pickerIngredients = useMemo(() => {
         const published = (dropdowns?.ingredients || []).map((i: any) => ({
             id: i.id,
-            name: i.name,
+            name: i.name, item_images: i.item_images,
         }));
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === "ingredient")
