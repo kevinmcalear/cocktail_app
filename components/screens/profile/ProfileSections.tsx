@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
@@ -152,16 +152,6 @@ export function Stat({ value, label }: { value: number | string; label: string }
   );
 }
 
-/** Rankings and the shelf arrive with their own steps (7c, and the home bar). */
-export function ComingSoon({ text }: { text: string }) {
-  const ds = useDs();
-  return (
-    <View style={[styles.soon, { borderColor: ds.c.lineStrong }]}>
-      <Body tone="muted">{text}</Body>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
@@ -172,5 +162,4 @@ const styles = StyleSheet.create({
   barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
-  soon: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous', padding: space.lg },
 });

@@ -27,19 +27,23 @@ import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
 import { WorkedMenus } from './WorkedMenus';
-import { BarHeader, BarStats, ComingSoon, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
+import { BarHeader, BarStats, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
-type Tab = 'menus' | 'originals' | 'rankings' | 'people' | 'shelf' | 'had' | 'bars';
-/** A person's page has the drinks they've had and how each bar did. */
+type Tab = 'menus' | 'originals' | 'rankings' | 'people' | 'had' | 'bars';
+/**
+ * A person's page has the drinks they've had and how each bar did.
+ * ponytail: no Shelf tab, since shelves aren't public yet and an empty one
+ * (worst on a bartender who has died) reads wrong. When shelves can be shown,
+ * add the tab only for a profile whose shelf has bottles.
+ */
 const PERSON_TABS = [
   { value: 'had', label: 'Had' },
   { value: 'bars', label: 'Bars' },
   { value: 'originals', label: 'Originals' },
-  { value: 'shelf', label: 'Shelf' },
 ] as const;
 /** Someone who keeps their drinks to themselves, or a profile nobody has claimed (a historic bartender). */
 const QUIET_TABS = PERSON_TABS.filter((t) => t.value !== 'had' && t.value !== 'bars');
-/** A bar's page leads with its menus. Shelf comes back once it has something to show. */
+/** A bar's page leads with its menus. */
 const BAR_TABS = [
   { value: 'menus', label: 'Menus' },
   { value: 'originals', label: 'Originals' },
@@ -51,7 +55,7 @@ const BAR_TABS = [
  * A public profile: a person or a bar, the same kind of page. Who they are,
  * the drinks credited to them, and the bars that put those drinks on a menu
  * (the credit that matters most). A person who chooses to can show the
- * drinks they've had, with their scores. The shelf comes later.
+ * drinks they've had, with their scores.
  */
 export function ProfileScreen({ profileRef }: { profileRef: string | string[] | undefined }) {
   return (
@@ -201,10 +205,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         )
       ) : tab === 'rankings' ? (
         <BarRankings bar={profile} />
-      ) : tab === 'people' ? (
-        <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
       ) : (
-        <ComingSoon text="What's on their shelf will show here." />
+        <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
       )}
       {specsLocked ? (
         <SpecLockPanel
