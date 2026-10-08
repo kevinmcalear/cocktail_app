@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,10 +10,13 @@ import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { takeBringIn } from '@/lib/bringInHandoff';
+import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
+import type { BottleReading } from '@/lib/readBottle';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { matchIngredient, matchKey, type CatalogItem } from '@/lib/match';
 import { compileBringIn, parseBringIn, type BringBlock } from '@/lib/paste';
 
+import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { BringInRead, type BringInReadResult } from './BringInRead';
 
 type Mode = 'drinks' | 'ingredients';
@@ -128,6 +131,7 @@ function BringInBody() {
   const [kinds, setKinds] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [lastRead, setLastRead] = useState<BringInReadResult | null>(null);
+  const [bottles, setBottles] = useState<BottleReading[] | null>(null);
   const blocks = useMemo(() => parseBringIn(text, mode), [text, mode]);
   const compiled = useMemo(() => compileBringIn(blocks, catalog, barId, picks, kinds, methods, glasses, aliases), [blocks, catalog, barId, picks, kinds, methods, glasses, aliases]);
   const count = (compiled.write?.creates.length ?? 0) + (compiled.write?.items.length ?? 0);
@@ -141,8 +145,18 @@ function BringInBody() {
   };
 
   const onRead = (result: BringInReadResult, replace: boolean) => {
-    const fresh = replace || result.mode !== mode || !text.trim();
-    setMode(result.mode);
+    // A menu goes to the menu check, bottles to the shelf check; recipes stay here.
+    if (result.reading.kind === 'menu' && result.reading.menu) {
+      stageMenuPhotos({ photos: result.files, barId, name: '', reading: result.reading.menu });
+      router.push('/menus/from-photo' as Href);
+      return;
+    }
+    if (result.reading.kind === 'bottles') {
+      setBottles(result.reading.bottles);
+      return;
+    }
+    const fresh = replace || mode !== 'drinks' || !text.trim();
+    setMode('drinks');
     setText(fresh ? result.text : `${text.trim()}\n\n${result.text}`);
     if (fresh) {
       setPicks({});
@@ -174,7 +188,6 @@ function BringInBody() {
           />
           <Caption tone="muted">{mode === 'drinks' ? 'A blank line starts the next drink. A line with an amount, or starting with a dash, is a spec line.' : 'One bottle a line. A block with amounts is something you make in house.'}</Caption>
           <BringInRead mode={mode} text={text} onRead={onRead} />
-          {lastRead?.kind === 'menu' ? <Caption tone="muted">Read as a menu: its drinks and the ingredients it lists. Add the amounts when you have them.</Caption> : null}
           {lastRead?.unsure.length ? <Caption tone="accent">{`Hard to read, check these: ${lastRead.unsure.join(', ')}.`}</Caption> : null}
           {isLoading ? <Body tone="muted">Loading the library…</Body> : <Review blocks={blocks} catalog={catalog} aliases={aliases} venueId={barId} picks={picks} kinds={kinds} onPick={(key, id) => setPicks((prev) => ({ ...prev, [key]: id }))} onKind={(key, value) => setKinds((prev) => ({ ...prev, [key]: value }))} />}
           {compiled.error && text.trim() ? <Caption tone="accent">{compiled.error}</Caption> : null}
@@ -182,6 +195,14 @@ function BringInBody() {
           <Button label={bring.isPending ? 'Bringing in…' : `Add ${count}`} onPress={save} disabled={!count || !!compiled.error || bring.isPending} />
         </LockedSection>
       </ScrollView>
+      {bottles ? (
+        <BottlePhotoSheet
+          visible
+          readings={bottles}
+          target={barId ? { kind: 'venue', barId, name: active?.name ?? 'The venue', canEdit } : { kind: 'home' }}
+          onClose={() => setBottles(null)}
+        />
+      ) : null}
     </View>
   );
 }

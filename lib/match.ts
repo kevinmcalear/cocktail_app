@@ -135,12 +135,3 @@ function matchKind(text: string | null | undefined, pool: CatalogItem[], venueId
   if (!inside.length) return null;
   return collapse(inside.filter((c) => c.own.length === inside[0].own.length).map((c) => c.item), venueId, kinds)[0];
 }
-
-/**
- * The kind a venue's own copy of a shared bottle points at: the bottle's kind,
- * or the bottle itself when it is a kind (Campari), so specs that call for the
- * shared one still find it on the shelf.
- */
-export function kindForCopy(item: CatalogItem): string {
-  return item.genericId ?? item.id;
-}
