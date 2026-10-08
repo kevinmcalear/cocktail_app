@@ -22,7 +22,8 @@ assert.equal(nextStep('past'), 'menus');
 assert.equal(nextStep('menus'), 'drinks');
 assert.equal(nextStep('drinks'), 'taste');
 assert.equal(nextStep('taste'), 'units');
-assert.equal(nextStep('units'), 'done');
+assert.equal(nextStep('units'), 'bring');
+assert.equal(nextStep('bring'), 'done');
 
 // Invited: accept, then name, units, done. Declining is the usual way.
 assert.equal(nextStep('name', 'no', true), 'units');

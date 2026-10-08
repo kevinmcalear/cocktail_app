@@ -15,7 +15,7 @@ export const MEASURE_UNITS: { id: MeasureUnit; label: string }[] = [
   { id: 'g', label: 'g' },
 ];
 
-export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units';
+export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
 
 /** What the person picked on a step that branches. */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new';
@@ -38,7 +38,8 @@ export function afterAgeCheck(metadata: unknown): '/onboarding' | '/(tabs)' {
  * The next screen. Hospitality looks for an existing profile first. A claim
  * skips the career steps (they don't own that profile until it's approved).
  * Otherwise: current job, earlier jobs, menus, drinks. Everyone then says what
- * they like to drink (their taste, see lib/flavor.ts) and picks units.
+ * they like to drink (their taste, see lib/flavor.ts) and picks units. Last,
+ * the chance to bring a menu, specs or a shelf in (Bring in reads it after).
  * Someone who joined a venue from an invite takes the short way: name, units,
  * then the app (INVITE_STEPS). Their job at that venue is saved for them.
  */
@@ -56,6 +57,7 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined
   if (step === 'menus') return 'drinks';
   if (step === 'drinks') return 'taste';
   if (step === 'taste') return 'units';
+  if (step === 'units') return 'bring';
   return 'done';
 }
 
