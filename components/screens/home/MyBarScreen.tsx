@@ -53,9 +53,9 @@ export function MyBarScreen() {
   const others = bar.drinks.filter((d) => !bar.canMakeIds.has(d.id));
 
   const { data: me } = useMyTaste();
-  const catalog = useFlavorCatalog();
-  // Match percentages only once your taste comes from enough rankings.
+  // Match percentages only once your taste comes from enough rankings; the profiles load only then.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
+  const catalog = useFlavorCatalog(!!scored);
   const matchFor = (id: string) => {
     const profile = scored && catalog.data?.find((d) => d.id === id)?.profile;
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;

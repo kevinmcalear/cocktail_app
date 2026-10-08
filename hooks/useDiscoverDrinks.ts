@@ -1,176 +1,167 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { useFlavorCatalog } from '@/hooks/useFlavor';
-import { chunk } from '@/lib/commandSearchGrid';
+import { useDebounced } from '@/hooks/useDiscover';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
-import { menuOrder, runDates, searchMenuTag, type MenuRunRow } from '@/lib/menuEditions';
 import { filterDrinks, toDiscoverDrink, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
-import { noteDimension } from '@/lib/flavor';
+import { menuOrder, runDates, searchMenuTag } from '@/lib/menuEditions';
+import { areaParams, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
 
+/** PostgREST's row cap, and discover_drinks' largest page. */
 const PAGE = 1000;
 
+/**
+ * "Anywhere" in eight id ranges loaded side by side, each about 900 drinks:
+ * the whole set in about the time of one page. Bounds are exclusive.
+ */
+const STARTS = ['0', '2', '4', '6', '8', 'a', 'c', 'e'];
+const RANGES = STARTS.map((hex, i): [string | null, string | null] => [
+  i === 0 ? null : `${(parseInt(hex, 16) - 1).toString(16)}fffffff-ffff-ffff-ffff-ffffffffffff`,
+  i === STARTS.length - 1 ? null : `${STARTS[i + 1]}0000000-0000-0000-0000-000000000000`,
+]);
+
+/** A row of discover_drinks (supabase/migrations/20261008330000_discover_drinks_rpc.sql). */
 interface DrinkRow {
   id: string;
   name: string;
   description: string | null;
-  origin_bar_profile_id: string;
-  riff_of: { name: string } | null;
-  recipes: { display_ingredient_id: string | null }[] | null;
-  item_images: ItemImageLink[] | null;
+  riff_of: string | null;
+  ingredients: string[];
+  image_url: string | null;
+  bar_profile_id: string;
+  /** [start year, start month, end year, end month, 1 if on now], or null when never on a menu. */
+  menu_run: [number, number | null, number | null, number | null, number] | null;
+  notes: string[];
 }
 
+type Signal = AbortSignal | undefined;
+
+interface DiscoverData {
+  drinks: DiscoverDrink[];
+  bars: DiscoverBar[];
+}
+
+const ANYWHERE: Area = { kind: 'anywhere' };
+
 /**
- * Every public bar's drinks, with their bar, styles and spirits: what
- * Discover searches, filters by area and pins on the map. Signed-in only,
- * like every shared drink.
- * ponytail: loads the whole set (about 7,000 drinks, a few MB) once and
- * filters on the device. Upgrade path: a discover_drinks RPC that filters by
- * area and style in SQL; at 7,000 drinks it's due.
+ * The bars in an area and the drinks they pour, with their styles and
+ * spirits: what Discover searches, filters and pins on the map. Read through
+ * discover_drinks, so the area (and, everywhere, a typed search) is applied
+ * in SQL: near me is one request of a few hundred drinks. Anywhere with no
+ * search is still every bar drink (the eight ball and the "anywhere" list
+ * need them all), in compact rows loaded side by side. Signed-in only, like
+ * every shared drink.
  */
-export function useDiscoverDrinks() {
+export function useDiscoverDrinks(area: Area = ANYWHERE, search = '', enabled = true) {
   const signedIn = !!useAuth().user;
-  return useQuery({
-    queryKey: ['discover-drinks'],
-    // Too big to save between launches (lib/queryCachePersist.ts).
+  const where = areaParams(area);
+  return useQuery<DiscoverData>({
+    queryKey: ['discover-drinks', where, search],
+    // Anywhere is too big to save between launches (lib/queryCachePersist.ts), and areas change as the map moves.
     meta: { persist: false },
-    enabled: signedIn,
+    enabled: signedIn && enabled,
     staleTime: 30 * 60 * 1000,
-    queryFn: async (): Promise<{ drinks: DiscoverDrink[]; bars: DiscoverBar[] }> => {
-      const [bars, runs, rows] = await Promise.all([readBars(), readMenuRuns(), readBarDrinks()]);
-      const names = await readNames([...new Set(rows.flatMap((r) => (r.recipes ?? []).map((x) => x.display_ingredient_id)))].filter((id): id is string => !!id));
-      const byId = new Map(bars.map((b) => [b.id, b]));
-      const drinks: DiscoverDrink[] = [];
-      for (const r of rows) {
-        const bar = byId.get(r.origin_bar_profile_id);
-        if (!bar) continue; // A closed or hidden bar's drinks stay off Discover.
-        drinks.push(
-          toDiscoverDrink({
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            riffOf: r.riff_of?.name ?? null,
-            ingredients: (r.recipes ?? []).map((x) => (x.display_ingredient_id ? names.get(x.display_ingredient_id) : undefined)).filter((n): n is string => !!n),
-            imageUrl: heroPicture(r.item_images)?.url ?? null,
-            barId: bar.id,
-            menu: menuOf(runs.get(r.id)),
-          })
-        );
-      }
+    // A new search in the same area keeps the last results up while it loads; a new area doesn't, so the map refits.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery && JSON.stringify(previousQuery.queryKey[1]) === JSON.stringify(where) ? previous : undefined,
+    queryFn: async ({ signal }): Promise<DiscoverData> => {
+      const ranges = area.kind === 'anywhere' && !search ? RANGES : [[null, null] as [null, null]];
+      const [bars, ...pages] = await Promise.all([readBars(area, signal), ...ranges.map(([after, before]) => readDrinks(where, search, after, before, signal))]);
+      const drinks = pages.flat().map((r) =>
+        toDiscoverDrink({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          riffOf: r.riff_of,
+          ingredients: r.ingredients,
+          imageUrl: r.image_url,
+          barId: r.bar_profile_id,
+          menu: menuOf(r),
+          notes: r.notes,
+        })
+      );
       return { drinks, bars };
     },
   });
 }
 
-/**
- * Every bar drink, a page at a time. Pages start after the last id rather than
- * at an offset, so each costs the same (an offset page redoes every row
- * before it, and the last ones neared the 8 s statement timeout when prod was
- * busy). Ingredient ids only: the display_ingredient embed runs a function per
- * recipe line; readNames fetches the names by id instead.
- */
-async function readBarDrinks(): Promise<DrinkRow[]> {
+/** One id range of discover_drinks, a page at a time (keyset on id). */
+async function readDrinks(where: Record<string, string | number>, search: string, after: string | null, before: string | null, signal: Signal): Promise<DrinkRow[]> {
   const rows: DrinkRow[] = [];
   for (;;) {
-    let page = supabase
-      .from('items')
-      .select(
-        'id, name, description, origin_bar_profile_id, riff_of:riff_of_id ( name ), recipes:app_recipe_presentation!recipe_item_id ( display_ingredient_id ), item_images ( angle, sort_order, is_generated, images ( url ) )'
-      )
-      .eq('item_type', 'cocktail')
-      .is('bar_id', null)
-      .not('origin_bar_profile_id', 'is', null);
-    if (rows.length) page = page.gt('id', rows[rows.length - 1].id);
-    const { data, error } = await page.order('id').limit(PAGE);
+    const last = rows.length ? rows[rows.length - 1].id : after;
+    const { data, error } = await supabase
+      .rpc('discover_drinks', { ...where, p_query: search || null, p_after: last, p_before: before, p_limit: PAGE })
+      .abortSignal(signal as AbortSignal);
     if (error) throw error;
-    rows.push(...((data ?? []) as unknown as DrinkRow[]));
+    rows.push(...((data ?? []) as DrinkRow[]));
     if ((data ?? []).length < PAGE) return rows;
   }
 }
 
-/** Ingredient names by id, in URL-sized batches loaded together. */
-async function readNames(ids: string[]): Promise<Map<string, string>> {
-  const batches = await Promise.all(
-    chunk(ids, 150).map(async (batch) => {
-      const { data, error } = await supabase.from('items').select('id, name').in('id', batch);
-      if (error) throw error;
-      return data ?? [];
-    })
-  );
-  return new Map(batches.flat().map((i) => [i.id, i.name]));
-}
-
-async function readBars(): Promise<DiscoverBar[]> {
-  const bars: DiscoverBar[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, handle, display_name, avatar_url, locality, city, country_code, latitude, longitude')
-      .eq('kind', 'bar')
-      .eq('is_public', true)
-      .eq('is_closed', false)
-      .order('id')
-      .range(from, from + PAGE - 1);
-    if (error) throw error;
-    for (const p of data ?? []) {
-      bars.push({
-        id: p.id,
-        handle: p.handle,
-        name: p.display_name,
-        logo: p.avatar_url,
-        locality: p.locality,
-        city: p.city,
-        countryCode: p.country_code,
-        latitude: p.latitude,
-        longitude: p.longitude,
-      });
-    }
-    if ((data ?? []).length < PAGE) break;
-  }
-  return bars;
-}
-
 /**
- * When each bar drink was on its bar's menus (menu_drink_runs), by drink.
- * ponytail: a few thousand short rows read with the drinks; fold them into a
- * discover_drinks RPC with the rest when that lands.
+ * The public, open bars in the area: the map's pins and the bars search
+ * finds, including ones with no drinks listed. A box around a point (the
+ * exact distance is checked on the device, lib/discoverDrinks.ts barInArea).
  */
-async function readMenuRuns(): Promise<Map<string, MenuRunRow>> {
-  const runs = new Map<string, MenuRunRow>();
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from('menu_drink_runs')
-      .select('item_id, start_year, start_month, end_year, end_month, is_current')
-      .order('item_id')
-      .range(from, from + PAGE - 1);
-    if (error) throw error;
-    for (const r of (data ?? []) as (MenuRunRow & { item_id: string })[]) runs.set(r.item_id, r);
-    if ((data ?? []).length < PAGE) break;
+async function readBars(area: Area, signal: Signal): Promise<DiscoverBar[]> {
+  let query = supabase
+    .from('profiles')
+    .select('id, handle, display_name, avatar_url, locality, city, country_code, latitude, longitude')
+    .eq('kind', 'bar')
+    .eq('is_public', true)
+    .eq('is_closed', false);
+  if (area.kind === 'point') {
+    const dLat = area.radiusKm / 111.045;
+    const dLng = area.radiusKm / (111.045 * Math.max(Math.cos((area.latitude * Math.PI) / 180), 0.01));
+    query = query.gte('latitude', area.latitude - dLat).lte('latitude', area.latitude + dLat);
+    // ponytail: no longitude bound across the antimeridian; the device check still applies.
+    if (Math.abs(area.longitude) + dLng < 180) query = query.gte('longitude', area.longitude - dLng).lte('longitude', area.longitude + dLng);
+  } else if (area.kind === 'city') {
+    query = query.eq('country_code', area.country_code.toUpperCase()).ilike('city', area.city.replace(/[\\%_]/g, '\\$&'));
   }
-  return runs;
+  // About 500 public bars in all, under one page.
+  const { data, error } = await query.order('id').limit(PAGE).abortSignal(signal as AbortSignal);
+  if (error) throw error;
+  return (data ?? []).map((p) => ({
+    id: p.id,
+    handle: p.handle,
+    name: p.display_name,
+    logo: p.avatar_url,
+    locality: p.locality,
+    city: p.city,
+    countryCode: p.country_code,
+    latitude: p.latitude,
+    longitude: p.longitude,
+  }));
 }
 
-/** Plain JSON for the persisted cache: on now, or past with its dates, and where it sorts. */
-function menuOf(run: MenuRunRow | undefined): DiscoverDrink['menu'] {
-  const dates = run ? runDates(run) : null;
+/** Plain JSON for the query cache: on now, or past with its dates, and where it sorts. */
+function menuOf({ menu_run: run }: DrinkRow): DiscoverDrink['menu'] {
+  const dates = run ? runDates({ start_year: run[0], start_month: run[1], end_year: run[2], end_month: run[3], is_current: run[4] === 1 }) : null;
   const tag = searchMenuTag(dates);
   return { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) };
 }
 
+const ALL_KEY = ['discover-drinks', areaParams(ANYWHERE), ''];
+
 /**
  * The drinks at bars that match Discover's filter, and the bars behind them.
  * Empty (not loading) when signed out: shared drinks need an account.
+ * Searching everywhere asks the server, unless every drink is already here.
+ * `enabled` false holds the load (Discover waits for location before
+ * loading everything); it reads as loading.
  */
-export function useDiscoverResults(filter: DrinkFilter) {
-  const query = useDiscoverDrinks();
+export function useDiscoverResults(filter: DrinkFilter, enabled = true) {
+  const signedIn = !!useAuth().user;
+  const haveAll = !!useQueryClient().getQueryData(ALL_KEY);
+  const typed = useDebounced(filter.search.trim(), 250);
+  const search = filter.area.kind === 'anywhere' && !haveAll ? typed : '';
+  const query = useDiscoverDrinks(filter.area, search, enabled);
   useTrackSearch(filter.search, 'discover');
-  const catalog = useFlavorCatalog();
   const bars = query.data?.bars ?? [];
   const barsById = new Map(bars.map((b) => [b.id, b]));
-  const note = filter.kinds.some((k) => !!noteDimension(k));
-  const profiles = note ? new Map((catalog.data ?? []).map((d) => [d.id, d.profile])) : undefined;
-  const drinks = query.data ? filterDrinks(query.data.drinks, barsById, profiles ? { ...filter, profiles } : filter) : [];
-  return { drinks, bars, barsById, isLoading: query.isLoading || (note && catalog.isLoading), error: query.error };
+  const drinks = query.data ? filterDrinks(query.data.drinks, barsById, filter) : [];
+  return { drinks, bars, barsById, isLoading: signedIn && query.isPending, error: query.error };
 }

@@ -2,7 +2,6 @@
 import assert from 'node:assert/strict';
 
 import { barInArea, distanceKm, drinkPins, filterDrinks, findBars, kindsTitle, toDiscoverDrink, type DiscoverBar } from './discoverDrinks';
-import { DIMENSIONS, type Profile } from './flavor';
 
 const bar = (id: string, name: string, city: string | null, lat: number | null, lng: number | null, locality: string | null = null): DiscoverBar => ({
   id,
@@ -54,9 +53,8 @@ const past = { ...drink('6', 'Plum Negroni', 'dante', ['Campari'], '', null, 'p.
 const onNow = { ...drink('7', 'Negroni', 'dante', ['Campari']), menu: { onNow: true, past: null, order: 0 } };
 assert.deepEqual(ids(filterDrinks([past, onNow], bars, { kinds: [], search: 'negroni', area: anywhere })), ['7', '6']);
 assert.deepEqual(ids(filterDrinks(drinks, bars, { kinds: ['sour'], search: '', area: nearDante })), [], 'the Penicillin is too far');
-const bitter = Object.fromEntries(DIMENSIONS.map((d) => [d, d === 'bitter' ? 0.8 : 0])) as Profile;
 assert.deepEqual(
-  ids(filterDrinks(drinks, bars, { kinds: ['note:bitter'], search: '', area: anywhere, profiles: new Map([['1', bitter]]) })),
+  ids(filterDrinks(drinks.map((d) => (d.id === '1' ? { ...d, notes: ['bitter', 'fruity'] } : d)), bars, { kinds: ['note:bitter'], search: '', area: anywhere })),
   ['1'],
   'a tasting note keeps drinks that fairly taste of it',
 );
