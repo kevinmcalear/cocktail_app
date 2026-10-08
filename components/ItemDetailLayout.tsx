@@ -498,9 +498,9 @@ export function ItemDetailLayout({
                         <View style={{ flex: 1 }}>
                             <Swipeable
                                 renderRightActions={(_progress, _translation, swipeable) => renderRightActions(id, swipeable)}
-                                friction={2}
-                                rightThreshold={40}
-                                overshootRight={false}
+                                friction={2} rightThreshold={40}
+                                // RNGH 3 no longer hides closed actions; an opaque row covers them.
+                                overshootRight={false} childrenContainerStyle={{ backgroundColor: theme.background?.get() as string }}
                             >
                                 {renderTitle(32, 36)}
                             </Swipeable>
