@@ -268,8 +268,7 @@ export function useAddRankEntry() {
     onSuccess: (_, entry) => {
       track('drink_ranked', { rerank: !!entry.id, at_bar: !!entry.venue_profile_id });
       qc.invalidateQueries({ queryKey: ['rank-list'], predicate: (q) => q.queryKey[2] === entry.ranked_as_item_id });
-      // Your taste and For you follow your rankings.
-      qc.invalidateQueries({ queryKey: ['my-taste'] });
+      // Your taste (built from my-had) and For you follow your rankings.
       qc.invalidateQueries({ queryKey: ['flavor-for-you'] });
       qc.invalidateQueries({ queryKey: ['my-had'] });
     },

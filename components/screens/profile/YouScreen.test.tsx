@@ -10,7 +10,7 @@ const mockPush = jest.fn();
 const mockNavigate = jest.fn();
 let mockProfile: MyProfile | null = null;
 let mockHad: HadDrink[] = [];
-let mockTaste: { taste: Record<string, number> } | null = null;
+let mockTaste: { taste: Record<string, number>; entries: []; baseline: null; answers: null; rankedDrinks: number } | null = null;
 
 jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
@@ -18,7 +18,7 @@ jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: mockProfile }) }));
 jest.mock('@/hooks/useProfiles', () => ({ useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet' }], isLoading: false }) }));
-jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }) }));
+jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }), useItemFlavors: () => ({ data: {} }) }));
 jest.mock('@/hooks/useRankings', () => ({ useMyHadDrinks: () => ({ data: mockHad, isLoading: false, error: null }) }));
 
 const rye = { id: 'v1', handle: 'little.rye', name: 'Little Rye', avatarUrl: null, place: 'Fitzroy, Melbourne' };
@@ -47,15 +47,15 @@ beforeEach(() => {
 
 describe('YouScreen', () => {
   test('your taste in a line, with the way to change it', async () => {
-    mockTaste = { taste: {} };
+    mockTaste = { taste: {}, entries: [], baseline: null, answers: null, rankedDrinks: 0 };
     await renderWithTamagui(<YouScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Tell us what you like' }));
+    await fireEvent.press(screen.getByRole('link', { name: /^Your taste\. Not set yet\. Tell us what you like/ }));
     expect(mockPush).toHaveBeenCalledWith('/taste');
 
-    mockTaste = { taste: { bitter: 0.9, strong: 0.95, smoky: 0.7, sour: 0.2 } };
+    mockTaste = { taste: { bitter: 0.9, strong: 0.95, smoky: 0.7, sour: 0.2 }, entries: [], baseline: null, answers: null, rankedDrinks: 3 };
     await renderWithTamagui(<YouScreen />);
-    expect(screen.getByText('Bitter and smoky')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'See and change it' })).toBeTruthy();
+    expect(screen.getByText('Bitter and smoky.')).toBeTruthy();
+    expect(screen.getByText("From the 3 drinks you've ranked.")).toBeTruthy();
   });
 
   test('nothing ranked yet: says how to start, and offers a public profile', async () => {

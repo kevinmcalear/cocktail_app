@@ -2,9 +2,10 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, DsText, PressableScale, Spec } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, DsText, PalateFlower, PressableScale, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
+import { useItemFlavors } from '@/hooks/useFlavor';
 import { favourites, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
@@ -55,6 +56,7 @@ const SORTS: { value: HadSort; label: string }[] = [
 /** Every drink they've had, each with its score: best first, or latest first. */
 export function HadList({ drinks }: { drinks: HadDrink[] }) {
   const [sort, setSort] = useState<HadSort>('score');
+  const flavors = useItemFlavors(drinks.map((d) => d.itemId));
   return (
     <View style={styles.section}>
       <View role="radiogroup" accessibilityLabel="Order" style={styles.chips}>
@@ -75,7 +77,12 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
                 glass={null}
                 caption={caption}
                 label={`${d.name}. ${caption}. Score ${formatScore(d.score)}`}
-                trailing={<Spec>{formatScore(d.score)}</Spec>}
+                trailing={
+                  <View style={styles.trailing}>
+                    {flavors.data?.[d.itemId] ? <PalateFlower values={flavors.data[d.itemId]} size={28} rings={false} /> : null}
+                    <Spec>{formatScore(d.score)}</Spec>
+                  </View>
+                }
               />
             </View>
           );
@@ -162,4 +169,5 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
   tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
   tileScore: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
