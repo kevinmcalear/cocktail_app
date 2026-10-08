@@ -4,9 +4,9 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { BrandColors, VenueIdentity } from '@/components/bar/BarBrandFields';
 import { BarSection, ChipGroup, RowDivider } from '@/components/bar/BarParts';
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
-import { TeamMembers } from '@/components/bar/TeamMembers';
 import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
+import { TeamRoster } from '@/components/screens/team/TeamRoster';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarEditor } from '@/hooks/useBarEditor';
@@ -82,16 +82,21 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
 
             {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
 
-            <Surface raised style={styles.access}>
-                <IconSymbol name="person.circle.fill" size={24} color={ds.c.muted} />
-                <View style={styles.fill}>
-                    <Caption tone="muted">Your access level</Caption>
-                    <Body>{roleLabel(editor.roleLevel)}</Body>
-                    {!editor.canEdit ? (
-                        <Caption tone="muted">Admin role required to edit venue settings.</Caption>
-                    ) : null}
-                </View>
-            </Surface>
+            {/* On a page of its own (embedded), the header already says the role. */}
+            {embedded ? (
+                editor.canEdit ? null : <Caption tone="muted">Only Admins can change venue settings.</Caption>
+            ) : (
+                <Surface raised style={styles.access}>
+                    <IconSymbol name="person.circle.fill" size={24} color={ds.c.muted} />
+                    <View style={styles.fill}>
+                        <Caption tone="muted">Your access level</Caption>
+                        <Body>{roleLabel(editor.roleLevel)}</Body>
+                        {!editor.canEdit ? (
+                            <Caption tone="muted">Admin role required to edit venue settings.</Caption>
+                        ) : null}
+                    </View>
+                </Surface>
+            )}
 
             <BarSection title="Progressive disclosure defaults" note="The lowest role that sees each part of a drink, unless the drink sets its own.">
                 {disclosure.map(([label, value, setValue], i) => (
@@ -104,7 +109,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
             </BarSection>
 
             <VenueSettingsLinks barId={barId} />
-            <TeamMembers barId={barId} members={editor.members} myRole={editor.roleLevel} />
+            <TeamRoster barId={barId} barName={editor.name || 'this venue'} role={editor.roleLevel} />
 
             <BarSection title={`Assigned items (${editor.items.length})`}>
                 {editor.items.length > 0 ? (
@@ -122,7 +127,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
         </View>
     );
 
-    if (embedded) return <View style={styles.embedded}>{body}</View>;
+    if (embedded) return body;
 
     return (
         <ScrollView style={styles.fill} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -135,7 +140,6 @@ const styles = StyleSheet.create({
     fill: { flex: 1 },
     loading: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: space.xl },
     body: { gap: space.xl },
-    embedded: { padding: space.sm },
     scroll: { padding: space.xl },
     access: { flexDirection: 'row', alignItems: 'center', gap: space.md },
     group: { gap: space.sm },
