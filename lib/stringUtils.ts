@@ -107,3 +107,8 @@ export function handleCapitalizedChange(
 }
 
 
+
+/** Each word's first letter up, the rest as written: "brewDog punk IPA" is "BrewDog Punk IPA". For names from a catalog or a label. */
+export function capitalizeFirsts(str: string | null | undefined): string {
+    return (str ?? '').trim().replace(/(^|[\s-])(\p{Ll})/gu, (_, before: string, letter: string) => before + letter.toUpperCase());
+}

@@ -22,13 +22,18 @@ describe('SketchHeader', () => {
   // Reanimated's exiting animations crashed iOS release builds here: each
   // keystroke swapped the drawing while the keyboard folded the band.
   test('a new drawing fades in over the last one, which stays under it as a layer', async () => {
-    const view = await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'N' }));
+    const glass = (name: string) => ({ ...EMPTY_DRAFT, name: 'N', glass: { id: null, name } });
+    const view = await renderWithTamagui(header(glass('Rocks')));
     expect(screen.getAllByTestId('drawing')).toHaveLength(1);
 
-    await view.rerender(header({ ...EMPTY_DRAFT, name: 'Ne' }));
+    // A keystroke that doesn't change the drawing doesn't redraw it.
+    await view.rerender(header({ ...glass('Rocks'), name: 'Ne' }));
+    expect(screen.getAllByTestId('drawing')).toHaveLength(1);
+
+    await view.rerender(header(glass('Coupe')));
     expect(screen.getAllByTestId('drawing')).toHaveLength(2);
-    await view.rerender(header({ ...EMPTY_DRAFT, name: 'Neg' }, true));
-    await view.rerender(header({ ...EMPTY_DRAFT, name: 'Negr' }));
+    await view.rerender(header(glass('Highball'), true));
+    await view.rerender(header(glass('Flute')));
     expect(screen.getAllByTestId('drawing')).toHaveLength(2);
   });
 
