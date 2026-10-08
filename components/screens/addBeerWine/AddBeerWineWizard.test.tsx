@@ -12,9 +12,9 @@ const PUNK = { id: 'b-punk', name: 'BrewDog Punk IPA', brand_maker: 'BrewDog', a
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/useCreateBeerWine', () => ({
   useCreateBeerWine: () => ({ mutate: mockCreate, isPending: false }),
-  useReadLabel: () => ({ mutate: jest.fn(), isPending: false }),
   useCatalogBottles: (_kind: string, name: string) => ({ data: name.toLowerCase().includes('punk') ? [PUNK] : [] }),
 }));
+jest.mock('@/hooks/useReadLabel', () => ({ useReadLabel: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/components/ds/SketchDrawing', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SketchDrawing: () => <View testID="drawing" /> };

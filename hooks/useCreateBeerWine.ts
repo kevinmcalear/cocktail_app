@@ -7,7 +7,6 @@ import { beerWineSketch, fullDescription, type BeerWineDraft, type CatalogBottle
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { likeExactly } from '@/lib/drinkWizard';
-import { readBottlePhoto } from '@/lib/readBottle';
 import { capitalizeFirsts } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -111,6 +110,3 @@ export function useCatalogBottles(kind: DrinkKind, name: string) {
     },
   });
 }
-
-/** Reads a label photo (read-bottle): its name, maker, kind and strength. */
-export const useReadLabel = () => useMutation({ mutationFn: readBottlePhoto });
