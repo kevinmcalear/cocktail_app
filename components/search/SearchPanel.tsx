@@ -76,7 +76,7 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump }: BodyPr
   );
 }
 
-const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', quiz: 'Quiz' };
+const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu' };
 const JUMPS = [
   { label: 'On menu now', show: 'on-menu' },
   { label: 'Staff list', show: 'staff' },

@@ -10,6 +10,7 @@
  * - built drinks never batch the bubbles.
  */
 
+import { VOLUME_ML } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
 export type BatchMethod = 'stirred' | 'shaken' | 'built' | 'unknown';
@@ -53,13 +54,6 @@ export const MAX_SERVES = 60;
 const DASH_LIMIT = 12;
 const ML_PER_OZ = 29.5735;
 
-// ponytail: the volume table from lib/quantity.ts (step4a/prep), copied rather
-// than shared until that branch lands. Bar units only; dashes are approximate.
-const VOLUME_ML: Record<string, number> = {
-  ml: 1, cl: 10, dl: 100, l: 1000, oz: 29.57, 'fl oz': 29.57,
-  dash: 0.8, dashes: 0.8, drop: 0.05, drops: 0.05,
-  bsp: 5, barspoon: 5, tsp: 5, tbsp: 15,
-};
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'wheel', 'slice', 'cube', 'wedge', 'rim']);

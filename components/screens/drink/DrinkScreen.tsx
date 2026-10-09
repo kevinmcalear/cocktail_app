@@ -1,4 +1,3 @@
-import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -21,7 +20,6 @@ import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
 import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
-import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DatabaseItem } from '@/types/types';
 
 import { PublishSection } from '../publishing/PublishSection';
@@ -61,11 +59,6 @@ export interface DrinkScreenProps {
   preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
 }
 
-function KeepAwake() {
-  useKeepAwake();
-  return null;
-}
-
 /**
  * The redesigned drink page (read view). Editing still uses the existing
  * editor: onEdit hands over to it. The drink's own venue brands the page.
@@ -92,8 +85,6 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
-  const serviceMode = useSettingsStore((s) => s.serviceMode);
-  const toggleServiceMode = useSettingsStore((s) => s.toggleServiceMode);
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
@@ -147,14 +138,6 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       ) : null}
       <MenuRuns runs={menuRuns} />
       <View style={styles.actions}>
-        {FEATURES.service ? (
-          <GlassButton
-            accessibilityLabel={serviceMode ? 'Service mode on. Turn off' : 'Service mode: keep the screen on and make the spec bigger'}
-            label={serviceMode ? 'Service mode on' : 'Service mode'}
-            icon="sun.max.fill"
-            onPress={toggleServiceMode}
-          />
-        ) : null}
         {canBatch ? (
           <GlassButton
             accessibilityLabel="Batch: scale this drink for prep"
@@ -181,7 +164,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           }
         />
       ) : (
-        <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} scale={serviceMode ? 1.25 : 1} preview={preview} />
+        <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} preview={preview} />
       )}
       {item.notes && !lock ? (
         <View style={styles.notes}>
@@ -217,7 +200,6 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {serviceMode ? <KeepAwake /> : null}
       {wide ? (
         <View style={styles.row}>
           <View style={styles.heroColumn}>{hero}</View>

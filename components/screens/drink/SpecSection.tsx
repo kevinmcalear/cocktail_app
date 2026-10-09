@@ -25,8 +25,6 @@ interface SpecSectionProps {
   itemId: string;
   barId: string | null;
   recipes: PresentationRecipe[] | null | undefined;
-  /** Service mode: 1.25. */
-  scale: number;
   /** /dev/drink only: a simulated role and levels instead of the real ones. */
   preview?: { role: number; levels: SpecLevels };
 }
@@ -47,7 +45,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * The spec, showing exactly what this role can see. Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
@@ -107,7 +105,6 @@ export function SpecSection({ itemId, barId, recipes, scale, preview }: SpecSect
             note={l.note ?? undefined}
             detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
-            scale={scale}
             onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
           />
         ))}

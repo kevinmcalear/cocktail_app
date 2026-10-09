@@ -36,9 +36,7 @@ export function recentEntry(
       ? (draftHref({ id, entity_type: kind }) ?? '/drafts')
       : kind === 'menu'
         ? `/menus/${encodeURIComponent(id)}`
-        : kind === 'quiz'
-          ? '/(tabs)/test'
-          : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
+        : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
   return {
     id,
     kind,
@@ -56,7 +54,6 @@ export function recentMatchesContext(
   r: Pick<RecentActivity, 'kind' | 'barId'>,
   selectedContextIds: string[]
 ) {
-  if (r.kind === 'quiz') return true;
   // ponytail: legacy entries pre-barId stay visible until re-visited
   if (r.barId === undefined) return true;
   return inSelectedContext(r.barId, selectedContextIds);

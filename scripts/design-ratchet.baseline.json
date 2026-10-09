@@ -19,7 +19,7 @@
     "components/SearchBar.tsx": 8,
     "components/ViewAsBanner.tsx": 5,
     "components/auth/EmailLinkGate.tsx": 1,
-    "components/cocktail/CocktailDetailContent.tsx": 26,
+    "components/cocktail/CocktailDetailContent.tsx": 24,
     "components/cocktail/CocktailIngredientList.tsx": 14,
     "components/cocktail/CocktailPhotoPlaceholder.tsx": 2,
     "components/cocktail/SortableImageList.tsx": 20,
@@ -59,10 +59,10 @@
     "app/add-ingredient.tsx": 743,
     "app/ingredient/[id]/edit.tsx": 572,
     "components/ItemDetailLayout.tsx": 725,
-    "components/cocktail/CocktailDetailContent.tsx": 510,
-    "components/cocktail/CocktailIngredientList.tsx": 456,
+    "components/cocktail/CocktailDetailContent.tsx": 473,
+    "components/cocktail/CocktailIngredientList.tsx": 455,
     "components/cocktail/SpecPickerSheet.tsx": 336,
-    "components/drink/AddDrinkScreen.tsx": 355,
+    "components/drink/AddDrinkScreen.tsx": 353,
     "components/recipe/SortableRecipeList.tsx": 585,
     "components/ui/CustomIcons.tsx": 504
   }

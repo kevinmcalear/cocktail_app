@@ -1,15 +1,13 @@
 import { fireEvent, screen } from '@testing-library/react-native';
-import { useKeepAwake } from 'expo-keep-awake';
 import type { ComponentProps } from 'react';
 
 import { CocktailDetailContent } from '@/components/cocktail/CocktailDetailContent';
 import { renderWithTamagui } from '@/jest.setup';
 import { useAppStore } from '@/store/useAppStore';
-import { getPreferredUnit, useSettingsStore } from '@/store/useSettingsStore';
+import { getPreferredUnit } from '@/store/useSettingsStore';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
-jest.mock('expo-keep-awake', () => ({ useKeepAwake: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [], saveDraft: jest.fn() }) }));
 jest.mock('@/hooks/useBars', () => ({ useBars: () => ({ data: [] }) }));
@@ -58,7 +56,6 @@ const renderContent = (props: Partial<Props> = {}) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useSettingsStore.setState({ serviceMode: false });
   useAppStore.setState({ recentlyCreatedItem: null });
 });
 
@@ -85,23 +82,6 @@ describe('view mode', () => {
     await fireEvent.press(screen.getByRole('button', { name: '2 oz Gin' }));
     expect(onIngredientPress).toHaveBeenCalledWith('gin');
     expect(mockPush).toHaveBeenCalledTimes(1);
-  });
-
-  test('service mode is a switch that keeps the screen awake while on', async () => {
-    await renderContent();
-    const serviceMode = (checked: boolean) => screen.getByRole('switch', { name: 'Service mode', checked });
-
-    expect(serviceMode(false)).toBeTruthy();
-    expect(useKeepAwake).not.toHaveBeenCalled();
-
-    await fireEvent.press(serviceMode(false));
-    expect(serviceMode(true)).toBeTruthy();
-    expect(useKeepAwake).toHaveBeenCalledWith('service-mode');
-
-    jest.mocked(useKeepAwake).mockClear();
-    await fireEvent.press(serviceMode(true));
-    expect(serviceMode(false)).toBeTruthy();
-    expect(useKeepAwake).not.toHaveBeenCalled();
   });
 
   test('notes start collapsed and open on tap', async () => {
