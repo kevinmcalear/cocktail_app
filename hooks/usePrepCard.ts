@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { isGarnishUnit } from '@/lib/batch';
+import type { NoteLine } from '@/lib/noteRecipe';
 import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
 import { supabase } from '@/lib/supabase';
 
@@ -158,5 +160,38 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
       actions: prep.actions,
     },
     steps: prep.steps,
+  });
+}
+
+/**
+ * A recipe written as a note becomes the prep's own: its lines (each name
+ * found or added the way the ingredient wizard does), marked as a prep, and
+ * its steps when the card has none yet. The note itself stays as written.
+ */
+export function useAdoptNoteRecipe(itemId: string, barId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lines, steps, card }: { lines: NoteLine[]; steps: string[]; card: PrepCardData | undefined }) => {
+      if (lines.length) {
+        const made = new Map<string, string>();
+        const rows = [];
+        for (const [i, l] of lines.entries()) {
+          rows.push({ recipe_item_id: itemId, ingredient_item_id: await ensureIngredient({ id: null, name: l.name }, barId, made), amount: l.amount, unit: l.unit, preparation_notes: l.note ?? null, sort_order: i });
+        }
+        const added = await supabase.from('recipes').insert(rows);
+        if (added.error) throw added.error;
+      }
+      const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId).is('ingredient_role', null);
+      if (role.error) throw role.error;
+      if (steps.length && !card?.steps.length) {
+        const prep = card?.prep ?? { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] };
+        await savePrepCard(itemId, { prep, steps: steps.map((body) => ({ body, timer_seconds: null })) });
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ingredient', itemId] });
+      void queryClient.invalidateQueries({ queryKey: ['item-prep', itemId] });
+      void queryClient.invalidateQueries({ queryKey: ['drink-allergens', itemId] });
+    },
   });
 }

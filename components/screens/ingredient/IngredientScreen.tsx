@@ -21,12 +21,14 @@ import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { toQuantity } from '@/lib/quantity';
+import { readNoteRecipe } from '@/lib/noteRecipe';
 import { leadTimeLabel } from '@/lib/scale';
 
 import { DrinkControls } from '../drink/DrinkControls';
 import { DrinkFacts } from '../drink/DrinkFacts';
 import type { ShownPicture } from '../drink/PictureViewer';
 import { IngredientHero, IngredientTags, MakeBar, prepFacts } from './IngredientBits';
+import { NoteRecipe } from './NoteRecipe';
 import { PrepMethod } from './PrepMethod';
 import { PrepRecipe, type PrepLine } from './PrepRecipe';
 import { PrepUsedIn } from './PrepUsedIn';
@@ -99,7 +101,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
 
   const prep = card?.prep ?? null;
   const steps = card?.steps ?? [];
-  const isPrep = lines.length > 0 || ingredient.ingredient_role === 'prep' || !!prep || steps.length > 0;
+  // A recipe still written as a note: it's a prep, and whoever can edit it can turn it into lines.
+  const noteRead = lines.length ? null : readNoteRecipe(ingredient.description);
+  const isPrep = lines.length > 0 || ingredient.ingredient_role === 'prep' || !!prep || steps.length > 0 || !!noteRead;
   const showRecipe = canViewDetails && lines.length > 0;
   const facts = canViewDetails ? prepFacts(prep) : [];
   const yieldQ = toQuantity(prep?.yield_amount, prep?.yield_unit);
@@ -123,7 +127,11 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
       <IngredientTags isPrep={isPrep} actions={prep?.actions ?? []} venueName={venueName} shared={!ingredient.bar_id} mine={!!userId && ingredient.created_by === userId} role={ingredient.ingredient_role ?? null} />
       <Display>{ingredient.name}</Display>
-      {ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
+      {noteRead && canEditPrep && canViewDetails && ingredient.description ? (
+        <NoteRecipe itemId={ingredient.id} barId={ingredient.bar_id} note={ingredient.description} read={noteRead} card={card} />
+      ) : ingredient.description ? (
+        <Body tone="muted">{ingredient.description}</Body>
+      ) : null}
       <View style={styles.actions}>
         {showRecipe && wide ? <Button label="Make" icon="flask" onPress={() => make()} /> : null}
         {isPrep && canViewDetails ? <GlassButton accessibilityLabel="Proof: work out the strength" label="Proof" icon="percent" onPress={() => setProofing(true)} /> : null}
