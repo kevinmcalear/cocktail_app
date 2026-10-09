@@ -9,7 +9,7 @@
 --
 -- Every fold and every bottle here was checked against a real source (the
 -- producer, a major retailer, Difford's Guide or Wikipedia), not memory:
---   * 610 copies fold into a bottle or style we already have, each one
+--   * 612 copies fold into a bottle or style we already have, each one
 --     confirmed as the same product and expression ("Cinzano 1757 Rosso",
 --     "Cinzano 1757 Sweet Vermouth" and "1757 Vermouth di Torino Rosso" are
 --     one bottle; Cinzano Rosso stays separate). 104 of them are bottles the
@@ -120,6 +120,7 @@ INSERT INTO merge_in VALUES
 ($q$Blue Cheese Stuffed Olives$q$, $q$Blue Cheese Stuffed Olive$q$),
 ($q$Blue Curacao Liqueur$q$, $q$Blue Curaçao$q$),
 ($q$Blue Pea$q$, $q$Butterfly Pea$q$),
+($q$Boiron Passion Fruit Puree$q$, $q$Boiron Passionfruit Purée$q$),
 ($q$Bokbunja-Ju$q$, $q$Bokbunja Raspberry Wine$q$),
 ($q$Bombay Presse$q$, $q$Bombay Citron Presse$q$),
 ($q$Bordiga Dry$q$, $q$Bordiga Extra Dry Vermouth$q$),
@@ -415,6 +416,7 @@ INSERT INTO merge_in VALUES
 ($q$Modelo Negra$q$, $q$Negra Modelo$q$),
 ($q$Mole Xocolate Bitters$q$, $q$Bittermens Xocolatl Mole Bitters$q$),
 ($q$Monin Pure Cane$q$, $q$Monin Pure Cane Sugar Syrup$q$),
+($q$Monin Pure Cane Syrup$q$, $q$Monin Pure Cane Sugar Syrup$q$),
 ($q$Monkey 47$q$, $q$Monkey 47 Gin$q$),
 ($q$Monkey Shoulder Scotch Whisky$q$, $q$Monkey Shoulder Blended Malt Scotch$q$),
 ($q$Morita Chile$q$, $q$Morita Pepper$q$),
