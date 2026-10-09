@@ -3,7 +3,10 @@ import { groupMenus } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
 /** Library's filters, as they read in the URL: /library?show=staff. */
-export type Show = 'all' | 'on-menu' | 'staff' | 'past' | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price';
+export type Show =
+  | 'all' | 'on-menu' | 'staff' | 'past'
+  | 'batched' | 'preps' | 'garnishes' | 'bottles'
+  | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price';
 
 /** Which drinks: only at a venue. */
 export const LIST_FILTERS: { value: Show; label: string }[] = [
@@ -11,6 +14,18 @@ export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'on-menu', label: 'On menu' },
   { value: 'staff', label: 'Staff list' },
   { value: 'past', label: 'Past' },
+];
+
+/**
+ * A venue's spec book, shelved the way bar teams file it: drinks served from a
+ * batch, what the bar makes, how drinks are finished, and what it buys. Only at
+ * a venue, where they replace the one Ingredients filter.
+ */
+export const SHELF_FILTERS: { value: Show; label: string }[] = [
+  { value: 'batched', label: 'Batched' },
+  { value: 'preps', label: 'Preps' },
+  { value: 'garnishes', label: 'Garnishes' },
+  { value: 'bottles', label: 'Bottles' },
 ];
 
 /** What kind of thing. Needs a price shows with the costs capability. */
@@ -25,14 +40,17 @@ export const NEEDS_PRICE = { value: 'needs-price' as Show, label: 'Needs a price
 /** "All" is the drinks: cocktails, beer and wine. Ingredients have their own filter. */
 export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'Wine'];
 
-const SHOWS = new Set<string>([...LIST_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE].map((f) => f.value));
+const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE].map((f) => f.value));
 
 /** The filter in the URL, or All. The old Off menu screen arrives as ?show=staff. */
 export function parseShow(param: string | string[] | undefined, atVenue: boolean): Show {
   const value = Array.isArray(param) ? param[0] : param;
   const show = value && SHOWS.has(value) ? (value as Show) : 'all';
-  // Without a venue there are no menus or staff list: show the cocktails.
-  if (!atVenue && LIST_FILTERS.some((f) => f.value === show)) return 'cocktails';
+  // Without a venue there are no menus, staff list or shelves.
+  if (!atVenue && (LIST_FILTERS.some((f) => f.value === show) || show === 'batched')) return 'cocktails';
+  if (!atVenue && SHELF_FILTERS.some((f) => f.value === show)) return 'ingredients';
+  // At a venue the shelves replace Ingredients; old links land on Bottles.
+  if (atVenue && show === 'ingredients') return 'bottles';
   return show;
 }
 
@@ -71,4 +89,59 @@ export type MenuState = 'On menu' | 'Past' | 'Off menu';
 export function menuState(itemId: string, onNow: ReadonlySet<string>, past: ReadonlySet<string>): MenuState {
   if (onNow.has(itemId)) return 'On menu';
   return past.has(itemId) ? 'Past' : 'Off menu';
+}
+
+/** Service styles poured from a batch made ahead (lib/service.ts). */
+export const BATCHED_STYLES: readonly string[] = ['batched', 'bottled', 'carbonated', 'draught'];
+
+/**
+ * A drink's line that finishes it rather than goes in it: the note says
+ * garnish, or the unit is a peel, twist, wheel or rim. Same rule as My Bar's
+ * (supabase/migrations/20261009960000_my_bar_garnish.sql), minus the names.
+ */
+export function isGarnishLine(note: string | null | undefined, unit: string | null | undefined): boolean {
+  return /\bgarnish/i.test(note ?? '') || ['peel', 'twist', 'wheel', 'rim'].includes((unit ?? '').toLowerCase());
+}
+
+export interface ShelfLine {
+  display_ingredient_id?: string | null;
+  preparation_notes?: string | null;
+  unit?: string | null;
+}
+
+export interface ShelfIngredient {
+  id: string;
+  bar_id: string | null;
+  ingredient_role?: string | null;
+}
+
+/**
+ * Which shelf each ingredient sits on at a venue: its own ingredients, and the
+ * shared ones its drinks use. Garnishes are what the drinks only ever finish
+ * with; preps are made in house (the prep role); everything else is bought.
+ * ponytail: a prep's own lines aren't read here, so a bottle used only inside
+ * a prep stays off Bottles. Upgrade: an RPC that walks the venue's recipes.
+ */
+export function venueShelves(
+  venueId: string,
+  drinks: { recipes?: ShelfLine[] | null }[],
+  ingredients: ShelfIngredient[]
+): { preps: string[]; garnishes: string[]; bottles: string[] } {
+  const garnish = new Set<string>();
+  const inSpec = new Set<string>();
+  for (const d of drinks) {
+    for (const l of d.recipes ?? []) {
+      if (!l.display_ingredient_id) continue;
+      (isGarnishLine(l.preparation_notes, l.unit) ? garnish : inSpec).add(l.display_ingredient_id);
+    }
+  }
+  const out = { preps: [] as string[], garnishes: [] as string[], bottles: [] as string[] };
+  for (const i of ingredients) {
+    const used = garnish.has(i.id) || inSpec.has(i.id);
+    if (i.bar_id !== venueId && !used) continue;
+    if (garnish.has(i.id) && !inSpec.has(i.id)) out.garnishes.push(i.id);
+    else if (i.ingredient_role === 'prep') out.preps.push(i.id);
+    else out.bottles.push(i.id);
+  }
+  return out;
 }

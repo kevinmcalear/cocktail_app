@@ -33,6 +33,7 @@ export function toCocktailSearchItem(c: any): SearchItem {
     name: c.name,
     description: c.description,
     category: 'Cocktail',
+    serviceStyle: c.service_style ?? null,
     recipes: c.recipes,
     item_images: c.item_images,
     ...searchImage(c.item_images),
