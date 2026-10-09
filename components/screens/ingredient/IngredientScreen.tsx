@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -8,7 +9,6 @@ import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { PriceSection } from '@/components/costs/PriceSection';
 import { BackbarTheme, Body, BrandProvider, Button, Display, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { IngredientFacts } from '@/components/ingredient/IngredientFacts';
-import { MakeSheet } from '@/components/prep/MakeSheet';
 import { PrepEditSheet } from '@/components/prep/PrepEditSheet';
 import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { PublishSection } from '@/components/screens/publishing/PublishSection';
@@ -69,13 +69,13 @@ export function IngredientScreen(props: IngredientScreenProps) {
   return (
     <BackbarTheme>
       <BrandProvider accent={venue?.accent ?? undefined}>
-        <IngredientPage {...props} venueName={venue?.name ?? null} accent={venue?.accent ?? undefined} />
+        <IngredientPage {...props} venueName={venue?.name ?? null} />
       </BrandProvider>
     </BackbarTheme>
   );
 }
 
-function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, venueName, accent }: IngredientScreenProps & { venueName: string | null; accent: string | undefined }) {
+function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, venueName }: IngredientScreenProps & { venueName: string | null }) {
   const ds = useDs();
   const userId = useUserId();
   const insets = useSafeAreaInsets();
@@ -91,7 +91,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
   const venueRole = useEffectiveRole(ingredient.bar_id);
   const canViewDetails = !ingredient.bar_id || venueRole > 30;
   const canEditPrep = ingredient.bar_id ? !!capabilities?.includes('prep') || canEdit : canEdit;
-  const [making, setMaking] = useState(false);
+  const router = useRouter();
+  const [factor, setFactor] = useState(1);
+  const make = (mode?: 'have') => router.push(`/ingredient/${ingredient.id}/make?factor=${factor}${mode ? `&mode=${mode}` : ''}` as never);
   const [editingPrep, setEditingPrep] = useState(false);
   const [proofing, setProofing] = useState(false);
 
@@ -123,11 +125,11 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
       <Display>{ingredient.name}</Display>
       {ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
       <View style={styles.actions}>
-        {showRecipe && wide ? <Button label="Make" icon="flask" onPress={() => setMaking(true)} /> : null}
+        {showRecipe && wide ? <Button label="Make" icon="flask" onPress={() => make()} /> : null}
         {isPrep && canViewDetails ? <GlassButton accessibilityLabel="Proof: work out the strength" label="Proof" icon="percent" onPress={() => setProofing(true)} /> : null}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
-      {showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} /> : null}
+      {showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onFactor={setFactor} onFromWhatIHave={() => make('have')} /> : null}
       {isPrep && canViewDetails ? (
         <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} onEdit={canEditPrep ? () => setEditingPrep(true) : undefined} />
       ) : null}
@@ -171,10 +173,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit} editLabel="Edit ingredient"
       />
-      {pinned ? <MakeBar bottom={insets.bottom} onMake={() => setMaking(true)} drinks={drinks.length} onDrinks={toDrinks} /> : null}
-      {making && card ? (
-        <MakeSheet visible onClose={() => setMaking(false)} itemName={ingredient.name} recipe={lines} card={card} accent={accent} />
-      ) : null}
+      {pinned ? <MakeBar bottom={insets.bottom} onMake={() => make()} drinks={drinks.length} onDrinks={toDrinks} /> : null}
       {editingPrep && card ? <PrepEditSheet visible onClose={() => setEditingPrep(false)} itemId={ingredient.id} itemName={ingredient.name} current={card} /> : null}
       {proofing ? <ToolsSheet visible onClose={() => setProofing(false)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
     </View>

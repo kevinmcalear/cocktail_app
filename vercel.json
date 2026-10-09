@@ -47,6 +47,10 @@
       "destination": "/ingredient/[id]/edit"
     },
     {
+      "source": "/ingredient/:id/make",
+      "destination": "/ingredient/[id]/make"
+    },
+    {
       "source": "/wine/:id",
       "destination": "/wine/[id]"
     },
