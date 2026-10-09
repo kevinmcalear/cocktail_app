@@ -169,7 +169,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
         heroHeight={heroHeight}
         scrollY={scrollY}
         wide={wide}
-        isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
+        saved={isFavorite} onToggleSaved={onToggleFavorite} saveAs="favourite"
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit} editLabel="Edit ingredient"
       />

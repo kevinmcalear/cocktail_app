@@ -16,23 +16,26 @@ interface DrinkControlsProps {
   /** The page's scroll offset (phones). Wide screens leave it at 0. */
   scrollY: SharedValue<number>;
   wide: boolean;
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
+  /** On the To make list in Collection. */
+  saved: boolean;
+  onToggleSaved: () => void;
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
   canEdit: boolean;
   onEdit: () => void;
   /** What the edit button says to a screen reader; the ingredient page reuses these controls. */
   editLabel?: string;
+  /** Ingredients keep a favourites heart on the device; drinks go to To make. */
+  saveAs?: 'toMake' | 'favourite';
 }
 
 /**
- * Close, favourite and edit, pinned to the top of the drink page. Over the
+ * Close, To make and edit, pinned to the top of the drink page. Over the
  * hero they take the picture's colours: dark glass on a photo, light glass on
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink' }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -65,7 +68,12 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorit
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         />
         <View style={styles.right}>
-          <GlassButton accessibilityLabel={isFavorite ? 'Remove from favourites' : 'Add to favourites'} icon={isFavorite ? 'heart.fill' : 'heart'} scheme={right} onPress={onToggleFavorite} />
+          <GlassButton
+            accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
+            icon={`${saveAs === 'favourite' ? 'heart' : 'bookmark'}${saved ? '.fill' : ''}`}
+            scheme={right}
+            onPress={onToggleSaved}
+          />
           {FEATURES.study ? (
             <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} scheme={right} onPress={onToggleStudyPile} />
           ) : null}
