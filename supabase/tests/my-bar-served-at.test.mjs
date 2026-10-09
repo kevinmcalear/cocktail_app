@@ -1,5 +1,5 @@
 // My Bar's What to make, one row per recipe
-// (supabase/migrations/20261010910000_my_bar_served_at.sql): a bar's version
+// (supabase/migrations/20261011120000_my_bar_served_at.sql): a bar's version
 // that is the classic, as the caller sees it, folds into the classic's row,
 // which says where it's served; a variation keeps its row and says what it
 // changes. Local stack only: `npm run test:security`.

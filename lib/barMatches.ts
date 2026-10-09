@@ -21,7 +21,7 @@ export interface MatchRow {
   /** The bar it's from, and its logo: null for catalog drinks (20261010500000). */
   from_name?: string | null;
   from_logo?: string | null;
-  /** A classic's row: how many bars pour it as it is, and the first three (20261010910000). */
+  /** A classic's row: how many bars pour it as it is, and the first three (20261011120000). */
   served_count?: number | null;
   served_at?: ServedBar[] | null;
   /** A bar's row: 'variation' or 'riff', and what a variation changes. */

@@ -2,7 +2,7 @@
 --
 -- A classic used to come back once, then again for every bar that pours its
 -- own copy (production has 14 Boulevardiers). Now, with the spec match from
--- 20261010900000 and Kevin's rules (2026-10-09):
+-- 20261011110000 and Kevin's rules (2026-10-09):
 --   * a bar's version that is the classic as the caller sees it (the same
 --     spec, or none to tell) folds into the classic's row and no longer has
 --     its own;
@@ -235,7 +235,7 @@ BEGIN
     FROM matches m;
 
     -- A bar's version that is the classic, as the caller sees it (same spec, or
-    -- none to tell), folds into the classic's row (20261010900000).
+    -- none to tell), folds into the classic's row (20261011110000).
     SELECT coalesce(array_agg(s.item_id), '{}') INTO v_folded
     FROM private.spec_verdicts_seen(ARRAY(
         SELECT m.drink FROM unnest(v_m_drink) AS m(drink)
