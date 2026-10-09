@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useAppMode } from '@/store/useAppMode';
 
 type Auth = { loading: boolean; user: { id: string } | null };
 let mockAuth: Auth = { loading: true, user: null };
@@ -63,6 +64,30 @@ test('with nothing cached, the saved user waits for their venues', async () => {
   mockAuth = { loading: true, user: { id: 'u1' } };
   const { result, unmount } = await renderHook(() => useActiveVenue(), { wrapper: withCache(client) });
   expect(result.current).toMatchObject({ isLoading: true, active: null });
+  await unmount();
+  client.clear();
+});
+
+// A reload went back to the first venue by name (Bar Shapes) instead of the one picked (Caretaker's Cottage).
+test('comes back to the venue picked, and the first venue only when that one is gone', async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+  client.setQueryData(['bars', 'u1'], [
+    { bar_id: 'shapes', role_level: 50, bars: { id: 'shapes', name: 'Bar Shapes', logo_url: null } },
+    { bar_id: 'cottage', role_level: 50, bars: { id: 'cottage', name: "Caretaker's Cottage", logo_url: null } },
+  ]);
+  mockAuth = { loading: false, user: { id: 'u1' } };
+  useAppMode.getState().enterVenue('cottage');
+  const { result, rerender, unmount } = await renderHook(() => useActiveVenue(), { wrapper: withCache(client) });
+  expect(result.current.active?.id).toBe('cottage');
+
+  useAppMode.getState().enterVenue('left-this-team');
+  await rerender({});
+  expect(result.current.active?.id).toBe('shapes');
+
+  // Signed out: the next person on the device doesn't inherit it.
+  useAppMode.getState().enterVenue('cottage');
+  useAppMode.getState().forgetVenue();
+  expect(useAppMode.getState()).toMatchObject({ venueId: null, mode: null });
   await unmount();
   client.clear();
 });

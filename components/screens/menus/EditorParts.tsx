@@ -3,7 +3,6 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
-import { useMode } from '@/hooks/useMode';
 
 import { EditorSection } from './EditorSection';
 import { MenuVisual } from './MenuVisual';
@@ -44,9 +43,9 @@ export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height
   );
 }
 
-/** A menu of your own, in home mode: no venue calendar, prices or menu photos. */
+/** A menu of your own: no venue calendar, prices or menu photos, even opened while at a venue. */
 export function useHomeMenu(editor: LayoutEditor): boolean {
-  return useMode().mode === 'home' && !editor.menu.barId;
+  return !editor.menu.barId;
 }
 
 /**

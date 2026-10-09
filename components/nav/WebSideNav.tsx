@@ -10,6 +10,7 @@ import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useSearchPalette } from '@/store/useSearchPalette';
 import { currentProps } from '@/lib/a11yState';
+import { isEditable } from '@/lib/bringInAnywhere';
 import { withAlpha } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { canSeeTeam } from '@/lib/team';
@@ -78,13 +79,17 @@ function SideNavBody() {
   const searching = useSearchPalette((s) => s.open);
   const setSearching = useSearchPalette((s) => s.setOpen);
 
-  // ponytail: ⌘K lives on the always-mounted sidebar. It opens the search over this page and toggles it shut.
+  // ponytail: ⌘K and N live on the always-mounted sidebar. ⌘K toggles the search over this page; N toggles New.
+  // Browsers keep ⌘N for a new window, so New is a bare N, ignored while typing in a field.
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearching(!useSearchPalette.getState().open);
+      } else if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat && !isEditable(e.target as HTMLElement | null)) {
+        e.preventDefault();
+        setCreating((open) => !open);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -96,7 +101,7 @@ function SideNavBody() {
       <View style={styles.venue}>
         <VenueSwitcher />
       </View>
-      <NavRow label="New" icon="plus" role="button" current={false} onPress={() => setCreating(true)} />
+      <NavRow label="New" icon="plus" role="button" hint="N" current={false} onPress={() => setCreating(true)} />
       {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
       <NavRow
         label="Search"

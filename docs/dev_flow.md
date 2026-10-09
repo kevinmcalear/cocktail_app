@@ -37,7 +37,9 @@ Recipes:
 
 ## 4. Open the PR
 
-The template asks for: why, what changed, how it was verified (with screenshots at phone and desktop widths for UI), what CI covers, and how Kevin can check it directly (the Vercel preview URL for web, an EAS preview build for native). Link the issue with `Closes #N`.
+The template asks for: why, what changed, how it was verified (with screenshots at phone and desktop widths for UI), what CI covers, and how Kevin can check it directly (exact local steps for web, an EAS preview build for native). Link the issue with `Closes #N`.
+
+Vercel builds no PR previews: each build is billed by the CPU minute, and previews were most of the bill. `ignoreCommand` in `vercel.json` skips every non-production build, and production builds for merges that only touch `supabase/`, `docs/`, `.github/`, `desktop/` or Markdown. Preview deployments are also switched off in the Vercel project settings.
 
 ## 5. Merge
 
