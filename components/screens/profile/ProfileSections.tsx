@@ -12,7 +12,7 @@ import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { versionLabel } from '@/lib/servedAt';
 
-import { CreditTag } from '../drink/FamilyTree';
+import { CreditTag } from '../drink/DrinkCredit';
 import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';

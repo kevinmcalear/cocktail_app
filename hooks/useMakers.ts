@@ -166,11 +166,11 @@ export function useDrinkBarPage(itemId: string | null | undefined) {
     queryKey: ['drink-bar-page', itemId, userId],
     enabled: !!itemId && !!userId,
     queryFn: async (): Promise<MakerRef | null> => {
-      const { data: item, error } = await supabase.from('items').select('bar_id, origin_bar_profile_id').eq('id', itemId!).maybeSingle();
+      const { data: item, error } = await supabase.from('items').select('bar_id').eq('id', itemId!).maybeSingle();
       if (error) throw error;
-      if (!item?.bar_id && !item?.origin_bar_profile_id) return null;
-      const query = supabase.from('profiles').select(MAKER_REF).eq('kind', 'bar');
-      const { data } = await (item.bar_id ? query.eq('bar_id', item.bar_id) : query.eq('id', item.origin_bar_profile_id!)).maybeSingle();
+      // A bar credits its own ice on its own venue's drinks only (20261011155500).
+      if (!item?.bar_id) return null;
+      const { data } = await supabase.from('profiles').select(MAKER_REF).eq('kind', 'bar').eq('bar_id', item.bar_id).maybeSingle();
       return (data as MakerRef | null) ?? null;
     },
   });

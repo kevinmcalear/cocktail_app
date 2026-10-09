@@ -177,7 +177,7 @@ export function SelectRow<T extends string>({ label, detail, options, value, onC
 }
 
 /** An on/off setting that saves as soon as it's flipped. */
-export function SwitchRow({ label, detail, value, onValueChange }: { label: string; detail?: string; value: boolean; onValueChange: (on: boolean) => void }) {
+export function SwitchRow({ label, detail, value, onValueChange, disabled }: { label: string; detail?: string; value: boolean; onValueChange: (on: boolean) => void; disabled?: boolean }) {
   const ds = useDs();
   return (
     <View style={styles.row}>
@@ -188,6 +188,7 @@ export function SwitchRow({ label, detail, value, onValueChange }: { label: stri
       <Switch
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         aria-label={label}
         // Android's Switch ignores aria-label; this one reaches TalkBack.
         accessibilityLabel={label}

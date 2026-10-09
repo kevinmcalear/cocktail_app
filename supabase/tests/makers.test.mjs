@@ -73,7 +73,7 @@ before(async () => {
 
 after(async () => {
   const claimed = (await db.query('SELECT bar_id FROM public.profiles WHERE id = ANY($1) AND bar_id IS NOT NULL', [Object.values(pages)])).rows.map((r) => r.bar_id);
-  await db.query('DELETE FROM public.items WHERE id = ANY($1::uuid[])', [[ids.drink, ids.bottle]]);
+  await db.query('DELETE FROM public.items WHERE id = ANY($1::uuid[])', [[ids.drink, ids.bottle, ids.homeDrink].filter(Boolean)]);
   await db.query('DELETE FROM public.profiles WHERE id = ANY($1)', [Object.values(pages)]);
   await db.query('DELETE FROM public.bars WHERE id = ANY($1)', [[ids.team, ids.bar, ...claimed]]);
   const userIds = Object.values(users).map((u) => u.id);
@@ -134,6 +134,20 @@ describe('maker pages', () => {
     const other = await users.editor.client.from('item_maker_credits').insert({ item_id: ids.drink, profile_id: pages.Pub, makes: 'ice' });
     assert.ok(other.error, "another bar isn't this drink's ice maker");
     await db.query('DELETE FROM public.item_maker_credits WHERE item_id = $1 AND profile_id = $2', [ids.drink, own]);
+  });
+
+  test("a home drink's origin bar doesn't let its owner confirm that bar's ice (20261011155500)", async () => {
+    ids.homeDrink = (
+      await db.query(`INSERT INTO public.items (name, item_type, created_by, origin_bar_profile_id) VALUES ($1, 'cocktail', $2, $3) RETURNING id`, [
+        `Home Ice Drink ${run}`,
+        users.stranger.id,
+        pages.Pub,
+      ])
+    ).rows[0].id;
+    const claim = await users.stranger.client.from('item_maker_credits').insert({ item_id: ids.homeDrink, profile_id: pages.Pub, makes: 'ice' }).select('confirmed_at');
+    assert.match(claim.error?.message ?? '', /doesn't say it makes ice/, 'a bar page is credited for ice on its own venue\'s drinks only');
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM public.item_maker_credits WHERE item_id = $1', [ids.homeDrink]);
+    assert.equal(rows[0].n, 0);
   });
 
   test('makers stay out of Discover and the map', async () => {
