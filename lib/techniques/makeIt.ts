@@ -89,12 +89,15 @@ export function isBoughtName(name: string): boolean {
 }
 
 /** What a name says it starts from: a spirit, a juice, or nothing we can tell. */
-function startsFrom(n: string): BaseKind | null {
+/** What a name is, for what a technique can change: a spirit ("white rum") or a juice; null when it doesn't say. */
+export function startsFrom(n: string): BaseKind | null {
+  n = n.toLowerCase();
   if (new RegExp(`\\b(${SPIRIT})\\b`).test(n)) return 'spirit';
   if (/juice|\b(lime|lemon|grapefruit|orange|yuzu|pineapple|apple|pear|tomato|watermelon|cucumber|strawberr|raspberr|mango|peach|cherr|citrus)/.test(n)) return 'juice';
   return null;
 }
-const FITS: Partial<Record<BaseKind, BaseKind[]>> = { spirit: ['spirit', 'wine'], juice: ['juice', 'produce'] };
+/** The bases a technique can start from, for a line of each kind. */
+export const FITS: Partial<Record<BaseKind, BaseKind[]>> = { spirit: ['spirit', 'wine'], juice: ['juice', 'produce'] };
 
 /**
  * The techniques that would make a typed name, without repeats; none for an

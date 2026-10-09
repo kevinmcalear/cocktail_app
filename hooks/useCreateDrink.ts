@@ -162,7 +162,7 @@ export function useCreateDrink() {
           ingredient_item_id: ingredientId,
           amount,
           unit: line.unit || null,
-          preparation_notes: null,
+          preparation_notes: line.note?.trim() || null,
           is_optional: false,
         });
       }

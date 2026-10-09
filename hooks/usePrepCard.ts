@@ -143,7 +143,8 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
   const rows = [];
   let baseId: string | null = null;
   for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
-    if (!line.name.trim()) continue;
+    // A stand-in nobody filled ("Spirit") is never an ingredient.
+    if (!line.name.trim() || line.slot) continue;
     const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
     if (line.key === prep.baseKey) baseId = id;
     rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, sort_order: i });
@@ -152,12 +153,12 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
     const added = await supabase.from('recipes').insert(rows);
     if (added.error) throw added.error;
   }
-  if (baseId) {
-    const { data: base } = await supabase.from('items').select('ingredient_role').eq('id', baseId).maybeSingle();
-    if (base?.ingredient_role === 'product') {
-      const from = await supabase.from('items').update({ made_from_id: baseId }).eq('id', itemId);
-      if (from.error) throw from.error;
-    }
+  // Made it house from a bottle in the drink, or a base line that's a bottle.
+  const madeFrom = prep.madeFrom?.id ?? null;
+  const fromBase = !madeFrom && baseId ? (await supabase.from('items').select('ingredient_role').eq('id', baseId).maybeSingle()).data?.ingredient_role === 'product' : false;
+  if (madeFrom || fromBase) {
+    const from = await supabase.from('items').update({ made_from_id: madeFrom ?? baseId }).eq('id', itemId);
+    if (from.error) throw from.error;
   }
   const made = prepYield(prep);
   await savePrepCard(itemId, {

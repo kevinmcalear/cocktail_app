@@ -42,6 +42,8 @@ export interface WizardLine extends WizardPick {
   technique?: string;
   /** A new house prep's own recipe and method (lib/prepKinds), made in the wizard: saved with the drink. */
   prep?: PrepDraft;
+  /** A note on the spec line ("the bar uses Bacardí Heritage"). */
+  note?: string;
 }
 
 export interface WizardDraft {

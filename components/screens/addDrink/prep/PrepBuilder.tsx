@@ -28,6 +28,8 @@ export interface PrepBuilderProps {
   initial?: PrepDraft | null;
   /** Make it house from a line: the bottle it changes, and the "with what" if known. */
   picked?: { base?: PrepPick | null; adjunct?: PrepPick | null };
+  /** Make it house: the technique picked for the line, so it opens on its recipe. */
+  technique?: string | null;
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
   onDone: (draft: PrepDraft) => void;
@@ -49,17 +51,19 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-/** A new prep's first draft: the kind its name says, else the technique that most likely makes it, else blank. */
-function firstDraft(name: string, picked: PrepBuilderProps['picked']): PrepDraft {
+/** A new prep's first draft: the technique picked, else the kind its name says, else the technique that most likely makes it, else blank. */
+function firstDraft(name: string, picked: PrepBuilderProps['picked'], technique: string | null | undefined): PrepDraft {
+  const chosen = techniqueById(technique);
+  if (chosen) return prepFromTechnique(chosen, name, prepCardFor(chosen), picked);
   const kind = guessKind(name);
   const way = kind ? null : waysToMake(name)[0];
   return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
 }
 
-function Builder({ name, drinkName, initial, picked, ingredients, aliases, onDone, onClose }: PrepBuilderProps & { name: string }) {
-  const [step, setStep] = useState<Step>(initial ? 'recipe' : 'kind');
+function Builder({ name, drinkName, initial, picked, technique, ingredients, aliases, onDone, onClose }: PrepBuilderProps & { name: string }) {
+  const [step, setStep] = useState<Step>(initial || technique ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked));
+  const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
   const at = STEPS.indexOf(step);
   const go = (to: Step) => {
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);

@@ -50,3 +50,14 @@ test('a prep whose base is a plain ingredient isn’t made from anything', async
   await savePrepRecipe('prep-2', prep, ensure);
   expect(mockUpdates.some(([, v]) => 'made_from_id' in v)).toBe(false);
 });
+
+test('made house from a bottle in the drink: made from that bottle, and a stand-in is never saved', async () => {
+  mockUpdates.length = 0;
+  const prep = startPrep('infusion', 'Coconut infused rum');
+  prep.madeFrom = { id: 'bacardi', name: 'Bacardí Carta Blanca' };
+  prep.lines.push({ key: 'slot', id: null, name: 'Spirit', parts: 1, unit: 'ml', amount: '', slot: 'spirit' });
+  const names: string[] = [];
+  await savePrepRecipe('prep-3', prep, async (p) => (names.push(p.name), 'other'));
+  expect(mockUpdates).toContainEqual(['items', { made_from_id: 'bacardi' }, 'prep-3']);
+  expect(names).not.toContain('Spirit');
+});
