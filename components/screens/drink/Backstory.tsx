@@ -156,7 +156,7 @@ export function Backstory({ itemId }: { itemId: string }) {
           >
             <View style={styles.riffLine}>
               <Faces drinks={riffs} />
-              <Body numberOfLines={1} style={styles.flex}>
+              <Body numberOfLines={2} style={styles.flex}>
                 {makersLine(riffs)}
               </Body>
             </View>

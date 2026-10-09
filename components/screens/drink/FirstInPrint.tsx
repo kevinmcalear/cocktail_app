@@ -23,7 +23,8 @@ export function FirstInPrint({ records, borrowed }: { records: PrintedRecipe[]; 
   if (!lead) return null;
   const rest = records.filter((r) => r.id !== lead.id);
   const url = readUrl(lead);
-  const detail = [lead.printed_name ? `as "${lead.printed_name}"` : null, borrowed ? `for the ${borrowed}` : null].filter(Boolean).join(' · ');
+  // Whose printing it is comes first: a borrowed one must never be cut off.
+  const detail = [borrowed ? `for the ${borrowed}` : null, lead.printed_name ? `as "${lead.printed_name}"` : null].filter(Boolean).join(' · ');
   const label = RELATION_LABEL[lead.relation];
 
   return (
@@ -71,7 +72,7 @@ export function FirstInPrint({ records, borrowed }: { records: PrintedRecipe[]; 
         </>
       }
     >
-      <Body numberOfLines={2}>
+      <Body numberOfLines={3}>
         {lead.source.title}
         {detail ? <Body tone="muted">{` · ${detail}`}</Body> : null}
       </Body>

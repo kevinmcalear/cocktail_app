@@ -20,20 +20,20 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
 
 /**
  * The credit sentence as it reads under a name: a classic comes "From the
- * Whiskey Cocktail" (it isn't a riff), and a bar has its neighbourhood after
- * it ("at Temple Bar, NoHo").
+ * Whiskey Cocktail" (it isn't a riff), and a bar credited on its own has its
+ * neighbourhood after it ("at Temple Bar, NoHo").
  */
 function underName(parts: CreditPart[], drink: LineageDrink): CreditPart[] {
-  const bar = drink.origin_bar;
+  const place = !drink.creator && drink.origin_bar?.locality ? drink.origin_bar : null;
   return parts.flatMap((p, i) => {
     if (i === 0 && drink.is_catalog && p.text === 'Riff of ') return [{ text: 'From the ' }];
-    return p.profileId === bar?.id && bar?.locality ? [p, { text: `, ${bar.locality}` }] : [p];
+    return place && p.profileId === place.id ? [p, { text: `, ${place.locality}` }] : [p];
   });
 }
 
 /**
  * Under the drink's name: what it's a riff of, who made it, where and when,
- * with the maker's picture and how sure the credit is. Names link to drinks
+ * with the maker's picture and how sure the credit is ("· Suggested"). Names link to drinks
  * and profiles. Nothing when the drink has no credit or parent.
  */
 export function DrinkCredit({ itemId }: { itemId: string }) {
@@ -44,6 +44,7 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   const parts = underName(creditSentence(drink, data.ancestors.at(-1) ?? null), drink);
   if (!parts.length) return null;
   const who = drink.creator ?? drink.origin_bar;
+  const status = creditLabel(drink.credit_status);
 
   return (
     <View style={styles.row}>
@@ -52,7 +53,8 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
           <UserAvatar uri={who.avatar_url} name={who.display_name} size={28} />
         </View>
       ) : null}
-      <Body tone="muted" style={styles.flex}>
+      {/* The status rides at the end of the line as a word, so a long credit keeps the full width. */}
+      <Body tone="muted" style={styles.flex} accessibilityHint={creditHint(drink.credit_status) ?? undefined}>
         {parts.map((p, i) =>
           p.profileId || p.drinkId ? (
             <DsText
@@ -67,8 +69,8 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
             p.text
           )
         )}
+        {status ? ` · ${status}` : ''}
       </Body>
-      <CreditTag status={drink.credit_status} />
     </View>
   );
 }
