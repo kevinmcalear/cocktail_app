@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PalateFlower, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
+import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
@@ -110,6 +110,9 @@ export function MyBarScreen() {
     make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
   });
 
+  // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own, under one header.
+  const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
+
   const jump = (section: Jumpable) => {
     const index = rows.findIndex((r) => r.key === JUMP_ROW[section]);
     if (index >= 0) listRef.current?.scrollToIndex({ index, animated: true });
@@ -129,7 +132,7 @@ export function MyBarScreen() {
       case 'top':
         return (
           <View>
-            <ScreenHeaderSpacer />
+            {cut > 0 ? null : <ScreenHeaderSpacer />}
             <View style={styles.top}>
               <View>
                 <Display>My Bar</Display>
@@ -203,8 +206,6 @@ export function MyBarScreen() {
     }
   };
 
-  // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own.
-  const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
   const shelfList = (
     <FlatList
       ref={listRef}
@@ -225,6 +226,7 @@ export function MyBarScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      {cut > 0 ? <ScreenHeader /> : null}
       {cut > 0 ? (
         <View style={styles.columns}>
           {shelfList}
@@ -233,7 +235,6 @@ export function MyBarScreen() {
             keyExtractor={(r) => r.key}
             renderItem={({ item, index }) => renderRow({ item, index: index + cut })}
             windowSize={5}
-            ListHeaderComponent={ScreenHeaderSpacer}
             style={styles.makeColumn}
             contentContainerStyle={{ paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom }}
           />
