@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
-import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
+import { Caption, Headline, useDs } from '@/components/ds';
+import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
@@ -21,7 +21,7 @@ import { CollectionMenus } from './CollectionMenus';
  */
 export function CollectionScreen() {
   const ds = useDs();
-  const gutter = useGutter();
+  const column = usePageColumn();
   const bottom = useTabBarInset();
   const { favorites } = useFavorites();
   const bar = useMyBar();
@@ -35,8 +35,7 @@ export function CollectionScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.content}>
-            <ScreenHeaderSpacer />
-            <Display>Collection</Display>
+            <PageHeader title="Collection" />
             <CollectionMenus canMakeIds={bar.canMakeIds} />
             <CollectionCollected />
             {hearted.length ? (
@@ -57,7 +56,7 @@ export function CollectionScreen() {
             caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
           />
         )}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom + space.lg, maxWidth: 760, width: '100%' }}
+        contentContainerStyle={[column, { paddingBottom: bottom + space.lg }]}
       />
     </View>
   );
