@@ -10,6 +10,7 @@ import { useLineage } from '@/hooks/useLineage';
 import { historyFor } from '@/lib/drinkHistory';
 import { creditSentence, creditText, joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
 
+import { BarVersions } from './BarVersions';
 import { CreditTag } from './DrinkCredit';
 import { FactRow } from './FactRow';
 import { FirstInPrint } from './FirstInPrint';
@@ -98,7 +99,6 @@ export function Backstory({ itemId }: { itemId: string }) {
   const focus = drink?.is_catalog ? drink.id : ancestors.findLast((a) => a.is_catalog)?.id;
   const inTree = !!drink && (!!focus || lineStyles.length > 0);
   const borrowed = found && found.itemId !== family[0].id ? (family.find((f) => f.id === found.itemId)?.name ?? null) : null;
-  const riffLabel = drink?.is_catalog ? "Bars' versions" : 'Riffs on this';
 
   return (
     <View style={styles.section}>
@@ -144,12 +144,12 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
 
-        {riffs.length ? (
+        {riffs.length && !drink?.is_catalog ? (
           <FactRow
-            label={riffLabel}
+            label="Riffs on this"
             // The hook reads the best 100.
             mark={riffs.length >= 100 ? '100+' : String(riffs.length)}
-            accessibilityLabel={`${riffLabel}: ${makersLine(riffs)}`}
+            accessibilityLabel={`Riffs on this: ${makersLine(riffs)}`}
             more={riffs.map((r) => (
               <DrinkRow key={r.id} d={r} onPress={() => router.push(drinkHref(r.id))} />
             ))}
@@ -163,6 +163,8 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
       </View>
+      {/* A classic's bar versions: served at, variations and riffs, by spec match. */}
+      {riffs.length && drink?.is_catalog ? <BarVersions classicId={drink.id} versions={riffs} /> : null}
     </View>
   );
 }

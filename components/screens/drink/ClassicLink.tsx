@@ -6,6 +6,7 @@ import { space } from '@/constants/tokens';
 import { useLinkClassic } from '@/hooks/useClassics';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useRankTarget } from '@/hooks/useRankings';
+import { useSetSpecMatch, useSpecMatches } from '@/hooks/useSpecMatches';
 import { suggestClassic } from '@/lib/classics';
 import { findDrinks } from '@/lib/discover';
 import { plural } from '@/lib/ranking';
@@ -79,6 +80,31 @@ export function ClassicLink({ item }: { item: { id: string; name: string; bar_id
         </View>
       ) : null}
       {link.error ? <Caption tone="accent">{`Couldn't save the link: ${link.error.message}`}</Caption> : null}
+      {linked ? <SpecCall itemId={item.id} classicName={linked.name} /> : null}
+    </View>
+  );
+}
+
+/**
+ * Is this the classic as it's poured, or the venue's variation? Worked out from
+ * the spec; an editor can say otherwise, and change it back.
+ */
+function SpecCall({ itemId, classicName }: { itemId: string; classicName: string }) {
+  const { data: matches } = useSpecMatches(itemId, [itemId]);
+  const set = useSetSpecMatch();
+  const match = matches?.[itemId]?.spec_match;
+  if (!match || match === 'riff') return null;
+  const said = match === 'variation' ? `Listed as a variation of the ${classicName}.` : `Listed as the ${classicName} itself, under the classic.`;
+  const choose = (specMatch: 'same' | 'variation' | null) => set.mutate({ itemId, specMatch }, { onError: () => {} });
+  return (
+    <View style={styles.section}>
+      <Body tone="muted">{said}</Body>
+      <View role="radiogroup" accessibilityLabel="Same as the classic, or a variation" style={styles.row}>
+        <Chip label="Same as the classic" selected={match !== 'variation'} disabled={set.isPending} onPress={() => choose('same')} />
+        <Chip label="Our variation" selected={match === 'variation'} disabled={set.isPending} onPress={() => choose('variation')} />
+        <Button label="Work it out from the spec" variant="ghost" disabled={set.isPending} onPress={() => choose(null)} />
+      </View>
+      {set.error ? <Caption tone="accent">{`Couldn't save that: ${set.error.message}`}</Caption> : null}
     </View>
   );
 }

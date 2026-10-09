@@ -5,8 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useDropdowns } from '@/hooks/useDropdowns';
-import { usePairings, type PairEra } from '@/hooks/usePairings';
+import { useCoreIngredients, useIngredientNames, usePairings, type PairEra } from '@/hooks/usePairings';
 import { guessUnit, newLine } from '@/lib/drinkWizard';
 import { addPick, groupByRing, MAP_SIZE } from '@/lib/flavorMap';
 import { searchIngredients } from '@/lib/ingredientNames';
@@ -31,20 +30,23 @@ function FlavorMapPage() {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const params = useLocalSearchParams<{ with?: string }>();
-  const [picked, setPicked] = useState<string[]>(() => (params.with ?? '').split(',').filter(Boolean).slice(0, 3));
+  const opened = (params.with ?? '').split(',').filter(Boolean).slice(0, 3);
+  const [picked, setPicked] = useState<string[]>(opened);
   const [query, setQuery] = useState('');
   const [era, setEra] = useState<PairEra>('now');
-  const { data: dropdowns } = useDropdowns({ ingredients: true });
-  const ingredients = dropdowns?.ingredients ?? [];
-  const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
-  const nameOf = (id: string) => ingredients.find((i) => i.id === id)?.name ?? '…';
+  // Names come from what was tapped, so only the ids the page opened with need asking for.
+  const [named, setNamed] = useState<Record<string, string>>({});
+  const { data: openedNames = [] } = useIngredientNames(opened);
+  const { data: core = [] } = useCoreIngredients();
+  const nameOf = (id: string) => named[id] ?? openedNames.find((i) => i.id === id)?.name ?? '…';
   const { data: pairs = [], isLoading } = usePairings(picked, { limit: MAP_SIZE, era });
-  const results = searchIngredients(
-    query,
-    ingredients.filter((i) => coreIds.size === 0 || coreIds.has(i.id)),
-    { coreIds, limit: 6 }
-  );
+  const results = searchIngredients(query, core, { limit: 6 });
   const pickedNames = picked.map(nameOf);
+  const pick = (next: string[], id: string, name: string) => {
+    setNamed((n) => ({ ...n, [id]: name }));
+    setPicked(next);
+  };
+  const addPair = (p: { id: string; name: string }) => pick(addPick(picked, p.id), p.id, p.name);
 
   const start = () => {
     // ponytail: a drink started here is added at home; venue mode starts from Library.
@@ -103,7 +105,7 @@ function FlavorMapPage() {
                 role="button"
                 accessibilityLabel={`Start from ${r.name}`}
                 onPress={() => {
-                  setPicked([r.id]);
+                  pick([r.id], r.id, r.name);
                   setQuery('');
                 }}
                 style={[styles.result, { borderBottomColor: ds.c.line }]}
@@ -129,7 +131,10 @@ function FlavorMapPage() {
           </View>
         ) : null}
 
-        {picked.length ? <RingMap pairs={pairs} centre={pickedNames} onPick={(id) => setPicked(addPick(picked, id))} /> : null}
+        {picked.length ? <RingMap pairs={pairs} centre={pickedNames} onPick={(id) => {
+              const p = pairs.find((x) => x.id === id);
+              if (p) addPair(p);
+            }} /> : null}
 
         {picked.length && !isLoading && !pairs.length ? (
           <Body tone="muted">
@@ -153,7 +158,7 @@ function FlavorMapPage() {
                     key={p.id}
                     role="button"
                     accessibilityLabel={`Add ${p.name}. Together in ${p.together.join(' and ')} drinks`}
-                    onPress={() => setPicked(addPick(picked, p.id))}
+                    onPress={() => addPair(p)}
                     style={[styles.row, { borderTopColor: ds.c.line }]}
                   >
                     <Body style={styles.flex}>{p.name}</Body>
