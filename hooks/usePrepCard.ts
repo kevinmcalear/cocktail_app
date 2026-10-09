@@ -111,3 +111,18 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
     },
   });
 }
+
+/**
+ * After a batch: what it really made becomes the prep's yield, so the next
+ * scale starts from the truth. Only the yield columns change.
+ */
+export function useLearnYield(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ amount, unit }: { amount: number; unit: string }) => {
+      const { error } = await supabase.from('item_prep').upsert({ item_id: itemId, yield_amount: amount, yield_unit: unit }, { onConflict: 'item_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['item-prep', itemId] }),
+  });
+}

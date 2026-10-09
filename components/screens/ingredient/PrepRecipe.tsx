@@ -21,6 +21,10 @@ interface PrepRecipeProps {
   lines: PrepLine[];
   yieldAmount: number | null;
   yieldUnit: string | null;
+  /** The size picked, as a factor of one batch, so Make opens on it. */
+  onFactor: (factor: number) => void;
+  /** "From what I have": straight into Make, scaled from one line. */
+  onFromWhatIHave: () => void;
 }
 
 const VIEWS = [
@@ -33,7 +37,7 @@ const VIEWS = [
  * scaled to a batch, half, double or a bottle. Scaling here never changes the
  * saved recipe.
  */
-export function PrepRecipe({ lines, yieldAmount, yieldUnit }: PrepRecipeProps) {
+export function PrepRecipe({ lines, yieldAmount, yieldUnit, onFactor, onFromWhatIHave }: PrepRecipeProps) {
   const ds = useDs();
   const router = useRouter();
   const parts = prepParts(lines);
@@ -61,8 +65,18 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit }: PrepRecipeProps) {
       {showParts ? null : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sizes}>
           {sizes.map((s) => (
-            <Chip key={s.key} label={s.label} selected={s.key === size.key} onPress={() => setSizeKey(s.key)} accessibilityLabel={`Show amounts for ${s.label}`} />
+            <Chip
+              key={s.key}
+              label={s.label}
+              selected={s.key === size.key}
+              onPress={() => {
+                setSizeKey(s.key);
+                onFactor(s.factor);
+              }}
+              accessibilityLabel={`Show amounts for ${s.label}`}
+            />
           ))}
+          <Chip label="From what I have" selected={false} quiet onPress={onFromWhatIHave} accessibilityLabel="Make it from what you have of one ingredient" />
         </ScrollView>
       )}
       {measured ? (
