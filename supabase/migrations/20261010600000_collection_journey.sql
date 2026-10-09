@@ -188,10 +188,12 @@ CREATE POLICY "loved_bars_select_own" ON "public"."loved_bars" FOR SELECT TO "au
     USING ("user_id" = (SELECT "auth"."uid"()));
 CREATE POLICY "loved_bars_delete_own" ON "public"."loved_bars" FOR DELETE TO "authenticated"
     USING ("user_id" = (SELECT "auth"."uid"()));
--- Only a bar's page they can see; a person's profile can't be loved.
+-- Only a bar's page they can see; a person's profile can't be loved. Behind
+-- the drinking-age check like the rest of Collection.
 CREATE POLICY "loved_bars_insert_own" ON "public"."loved_bars" FOR INSERT TO "authenticated"
     WITH CHECK (
         "user_id" = (SELECT "auth"."uid"())
+        AND "private"."is_age_confirmed"()
         AND EXISTS (SELECT 1 FROM "public"."profiles" "p" WHERE "p"."id" = "profile_id" AND "p"."kind" = 'bar')
     );
 

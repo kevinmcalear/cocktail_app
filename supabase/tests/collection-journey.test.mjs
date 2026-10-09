@@ -214,9 +214,10 @@ describe('loved_bars', () => {
     assert.deepEqual((await users.home.client.from('loved_bars').select('profile_id')).data, []);
   });
 
-  test("only a bar's page they can see, and only for themselves", async () => {
+  test("only a bar's page they can see, only for themselves, and only past the age check", async () => {
     assert.ok((await users.home.client.from('loved_bars').insert({ profile_id: ids.personProfile })).error);
     assert.ok((await users.home.client.from('loved_bars').insert({ profile_id: ids.hiddenProfile })).error);
     assert.ok((await users.other.client.from('loved_bars').insert({ profile_id: ids.barProfile, user_id: users.home.id })).error);
+    assert.ok((await users.minor.client.from('loved_bars').insert({ profile_id: ids.barProfile })).error);
   });
 });
