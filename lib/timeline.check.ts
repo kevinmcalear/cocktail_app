@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { TreeNode } from './drinkTree';
-import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, thread, threadSummary, timelineSections, undatedCount, yearAt } from './timeline';
+import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, thread, timelineSections, undatedCount, yearAt } from './timeline';
 
 const node = (key: string, family: string, parentKey: string | null, year: number | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -85,18 +85,8 @@ assert.deepEqual(locate(all, 2030), { sectionIndex: 4, itemIndex: 1 });
 assert.deepEqual(locateKey(all, 'd:Martinez'), { sectionIndex: 2, itemIndex: 2 });
 assert.equal(locateKey(all, 'd:Undated'), null);
 
-// Thread and its summary.
+// Thread.
 assert.deepEqual(thread(nodes, 'd:Penicillin').map((n) => n.name), ['Punch', 'Sour', 'Whiskey Sour', 'Gold Rush', 'Penicillin']);
-assert.equal(
-  threadSummary(thread(nodes, 'd:Penicillin')),
-  '373 years, four steps. The longest jump is Punch, 1632, to Sour, 1856.',
-);
-assert.equal(
-  threadSummary([{ name: 'A', year: 1800 }, { name: 'B', year: 1810 }, { name: 'C', year: 1900, approx: true }, { name: 'D', year: 1905 }]),
-  '105 years, three steps. The longest jump is B, 1810, to C, c. 1900.',
-);
-assert.equal(threadSummary([{ name: 'Manhattan', year: 1882 }, { name: 'Martinez', year: 1884 }]), '2 years, one step.');
-assert.equal(threadSummary([{ name: 'Lonely', year: 1900 }]), null);
 
 assert.equal(fromLine({ from: nodes[5] }), 'Riff of Manhattan, 1882');
 assert.equal(fromLine({ from: nodes[1] }), 'From Sour, 1856');
