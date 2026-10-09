@@ -16,7 +16,7 @@ export function EquipmentScreen() {
     <TechniquePage
       eyebrow="Techniques"
       title="Equipment"
-      intro={<Body tone="muted">Mark what you have. Pots, jars, strainers, coffee filters, a fridge and a freezer are taken as given.</Body>}
+      intro={<Body tone="muted">Mark what you have. Pots, jars, fine strainers, coffee filters, a fridge and a freezer are taken as given.</Body>}
     >
       <Surface style={styles.summary}>
         <Spec>{`${can} of ${TECHNIQUES.length}`}</Spec>
@@ -40,13 +40,13 @@ function EquipmentRow({ e, kit }: { e: Equipment; kit: ReadonlySet<string> }) {
   const have = kit.has(e.id);
   const n = unlocks(e.id, kit);
   const used = techniquesUsing(e.id);
-  const opens = n ? `${have ? 'Opens' : 'Would open'} ${n} ${n === 1 ? 'technique' : 'techniques'}` : used.needs.length + used.helps.length ? 'Helps with techniques' : 'Garnish and service';
+  const opens = n ? `${have ? 'Opens' : 'Would open'} ${n} ${n === 1 ? 'technique' : 'techniques'}` : used.needs.length + used.helps.length ? 'Helps with techniques' : null;
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <PressableScale role="link" accessibilityLabel={`${e.name}. ${e.what}`} onPress={() => router.push(`/equipment/${e.id}` as never)} style={styles.flex}>
         <Headline>{e.name}</Headline>
         <Body tone="muted">{e.what}</Body>
-        <Caption tone="muted">{`${e.price ?? TIER_LABEL[e.tier]} · ${opens}`}</Caption>
+        <Caption tone="muted">{[e.price ?? TIER_LABEL[e.tier], opens].filter(Boolean).join(' · ')}</Caption>
       </PressableScale>
       <Chip label="I have it" accessibilityLabel={`I have it: ${e.name}`} multi selected={have} onPress={() => toggle(e.id)} />
     </View>

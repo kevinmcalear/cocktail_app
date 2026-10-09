@@ -106,7 +106,7 @@ export const CLARIFY: Technique[] = [
     vegan: true,
     watch: [
       'Lime and lemon are too acidic for the enzyme: per litre, add 2 ml kieselsol, wait 15 minutes, 2 ml chitosan, wait 15, 2 ml kieselsol again, then spin.',
-      'Most chitosan comes from shellfish.',
+      'Most chitosan comes from shellfish; fungal chitosan is vegan.',
     ],
     swap: 'No centrifuge: quick agar clarifying.',
     grade: 'A',

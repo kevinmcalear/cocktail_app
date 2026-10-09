@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Spec, useDs } from '@/components/ds';
-import { Notes, Section, TechniqueRow } from '@/components/techniques/bits';
+import { BuyList, Notes, Section, TechniqueRow } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { radius, space } from '@/constants/tokens';
 import { EQUIPMENT_KINDS, equipmentById, techniquesUsing, TIER_LABEL } from '@/lib/techniques';
@@ -59,6 +59,11 @@ export function EquipmentDetailScreen({ id }: { id: string }) {
           ))}
         </Section>
       ) : null}
+      {e.buy?.length ? (
+        <Section title="Where to buy">
+          <BuyList links={e.buy} />
+        </Section>
+      ) : null}
       {!e.price ? <Caption tone="muted">Prices are rough tiers, not quotes. Check current prices before buying.</Caption> : null}
     </TechniquePage>
   );
@@ -66,5 +71,5 @@ export function EquipmentDetailScreen({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   facts: { flexDirection: 'row', gap: space.sm },
-  fact: { flexGrow: 1, padding: space.sm, borderRadius: radius.control, gap: 2 },
+  fact: { flexGrow: 1, flexShrink: 1, minWidth: 0, padding: space.sm, borderRadius: radius.control, gap: 2 },
 });

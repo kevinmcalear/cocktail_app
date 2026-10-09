@@ -131,7 +131,7 @@ export const PRESERVE: Technique[] = [
       { text: 'Taste daily; refrigerate when it’s sour enough.' },
     ],
     equipment: ['scale'],
-    helpful: ['ph'],
+    helpful: ['ph', 'ferment-kit'],
     vegan: true,
     watch: ['Below about 2% salt, use a starter culture.', 'Throw out anything with mould.'],
     grade: 'B',
