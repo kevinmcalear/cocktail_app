@@ -14,6 +14,6 @@
 
 ## How to check it yourself
 
-<!-- Vercel preview URL for web, EAS preview build for native, or the exact steps. -->
+<!-- Exact local steps for web, EAS preview build for native. -->
 
 <!-- Needs approval before production? Migrations, RLS, auth, roles and edge function deploys do. -->

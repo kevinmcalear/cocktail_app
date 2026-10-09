@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react-native';
 
 import { useCanEditItem, useEffectiveRole, useMaxRealRole } from '@/hooks/useViewAs';
-import { useAppStore } from '@/store/useAppStore';
 
 // Query results by the first queryKey segment: 'bars' (useBars), 'viewAs' and
 // 'canEditItem' (the can_edit_item RPC).
@@ -20,8 +19,7 @@ const bars = [
   { bar_id: 'staff-bar', role_level: 20 },
 ];
 
-async function renderValue<T>(hook: () => T, data: Record<string, unknown>, selectedBarId: string | null = null) {
-  useAppStore.setState({ selectedBarId });
+async function renderValue<T>(hook: () => T, data: Record<string, unknown>) {
   mockQueryData = data;
   const { result, unmount } = await renderHook(hook);
   await unmount();
@@ -29,23 +27,23 @@ async function renderValue<T>(hook: () => T, data: Record<string, unknown>, sele
 }
 
 describe('useEffectiveRole', () => {
-  test('uses the role for the selected venue', async () => {
-    expect(await renderValue(() => useEffectiveRole(), { bars }, 'admin-bar')).toBe(40);
-    expect(await renderValue(() => useEffectiveRole(), { bars }, 'staff-bar')).toBe(20);
+  test('uses the role at that venue', async () => {
+    expect(await renderValue(() => useEffectiveRole('admin-bar'), { bars })).toBe(40);
+    expect(await renderValue(() => useEffectiveRole('staff-bar'), { bars })).toBe(20);
   });
 
   test('view-as lowers the role but never raises it', async () => {
-    expect(await renderValue(() => useEffectiveRole(), { bars, viewAs: 30 }, 'admin-bar')).toBe(30);
-    expect(await renderValue(() => useEffectiveRole(), { bars, viewAs: 30 }, 'staff-bar')).toBe(20);
+    expect(await renderValue(() => useEffectiveRole('admin-bar'), { bars, viewAs: 30 })).toBe(30);
+    expect(await renderValue(() => useEffectiveRole('staff-bar'), { bars, viewAs: 30 })).toBe(20);
   });
 
-  test('an explicit venue overrides the selected one', async () => {
-    expect(await renderValue(() => useEffectiveRole('staff-bar'), { bars }, 'admin-bar')).toBe(20);
+  test('no venue is a guest', async () => {
+    expect(await renderValue(() => useEffectiveRole(null), { bars })).toBe(10);
   });
 
   test('is Guest for an unknown venue or while bars are loading', async () => {
-    expect(await renderValue(() => useEffectiveRole(), { bars }, 'other-bar')).toBe(10);
-    expect(await renderValue(() => useEffectiveRole(), { bars: undefined }, 'admin-bar')).toBe(10);
+    expect(await renderValue(() => useEffectiveRole('other-bar'), { bars })).toBe(10);
+    expect(await renderValue(() => useEffectiveRole('admin-bar'), { bars: undefined })).toBe(10);
   });
 });
 
@@ -54,10 +52,9 @@ describe('useCanEditItem', () => {
   const staffBarItem = { id: 'fizz', bar_id: 'staff-bar' };
   const sharedItem = { id: 'gin', bar_id: null };
 
-  test('uses the role at the item\'s venue, not the selected one', async () => {
-    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars }, null)).toBe(true);
-    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars }, 'staff-bar')).toBe(true);
-    expect(await renderValue(() => useCanEditItem(staffBarItem), { bars }, 'admin-bar')).toBe(false);
+  test('uses the role at the item\'s venue', async () => {
+    expect(await renderValue(() => useCanEditItem(adminBarItem), { bars })).toBe(true);
+    expect(await renderValue(() => useCanEditItem(staffBarItem), { bars })).toBe(false);
   });
 
   test('view-as caps the venue role', async () => {
@@ -82,7 +79,7 @@ describe('useCanEditItem', () => {
   });
 
   test('is false while the item is loading', async () => {
-    expect(await renderValue(() => useCanEditItem(undefined), { bars, canEditItem: true }, 'admin-bar')).toBe(false);
+    expect(await renderValue(() => useCanEditItem(undefined), { bars, canEditItem: true })).toBe(false);
   });
 });
 

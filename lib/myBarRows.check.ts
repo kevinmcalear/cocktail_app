@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MAKE_PAGE, makeTab, myBarRows, searchCaption, searchMake } from './myBarRows';
+import { MAKE_PAGE, makeTab, myBarRows, pickSection, searchCaption, searchMake } from './myBarRows';
 
 const bottle = (i: number, kind: string | null = null) => ({ id: `b${i}`, name: `Bottle ${i}`, kind, uses: i % 2 });
 const drink = (i: number) => ({ id: `d${i}`, name: `Drink ${i}` });
@@ -9,27 +9,55 @@ const kinds = (rows: { kind: string }[]) => rows.map((r) => r.kind);
 // An empty shelf: the top, the pantry, the other sections folded, nothing to make yet.
 assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null })), ['top', 'pantry', 'folds']);
 
-// A serious bar: shortcuts at the top, each filled section in turn, only the empty one folded.
+// A serious bar: the section filter at the top, each filled section in turn, only the empty one folded.
 const full = myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, cols: 3, more: { lab: 3, preps: 0, kit: 2 }, make: null });
-assert.deepEqual(kinds(full), ['top', 'jump', 'shelf-head', 'bottles', 'shelf-foot', 'pantry', 'lab', 'kit', 'folds']);
+assert.deepEqual(kinds(full), ['top', 'filters', 'shelf-head', 'bottles', 'shelf-foot', 'pantry', 'lab', 'kit', 'folds']);
 assert.deepEqual(full.at(-1), { kind: 'folds', key: 'folds', empty: ['preps'] });
 assert.equal(new Set(full.map((r) => r.key)).size, full.length);
+// One section with anything in it has nothing to filter.
+assert.ok(!kinds(myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null })).includes('filters'));
 
-// Bottles come a row of tiles at a time; a long shelf folds to two rows until opened, and a search shows every match.
+// --- The section filter ---
+const filtered = (show: Parameters<typeof pickSection>[0]) =>
+  kinds(myBarRows({ bottles: Array.from({ length: 40 }, (_, i) => bottle(i)), sort: 'newest', query: '', shelfOpen: false, cols: 3, more: { fridge: 4, lab: 3, preps: 0, kit: 2 }, show, make: null }));
+// One section hides the rest, and the folds, and a picked shelf is the whole shelf.
+assert.deepEqual(filtered(['lab']), ['top', 'filters', 'lab']);
+assert.deepEqual(filtered(['bottles']).filter((k) => k === 'bottles').length, 14);
+assert.deepEqual(filtered(['fridge', 'kit']), ['top', 'filters', 'pantry', 'kit']);
+// A picked section that has since emptied is dropped, and with nothing left, everything shows.
+assert.deepEqual(filtered(['preps']), filtered([]));
+assert.deepEqual(filtered(['preps', 'kit']), ['top', 'filters', 'kit']);
+// Taps: the first picks one, the next adds, a picked one drops, All clears.
+assert.deepEqual(pickSection([], 'lab'), ['lab']);
+assert.deepEqual(pickSection(['lab'], 'kit'), ['lab', 'kit']);
+assert.deepEqual(pickSection(['lab', 'kit'], 'lab'), ['kit']);
+assert.deepEqual(pickSection(['kit'], 'kit'), []);
+assert.deepEqual(pickSection(['lab', 'kit'], 'all'), []);
+
+// Bottles come a row of tiles at a time, the Add tile first; a long shelf folds to two rows until opened, and a search shows every match.
 const tiles = (rows: ReturnType<typeof myBarRows>) => rows.flatMap((r) => (r.kind === 'bottles' ? [r.bottles.length] : []));
 const bottles = Array.from({ length: 40 }, (_, i) => bottle(i));
 const folded = myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null });
-assert.deepEqual(tiles(folded), [3, 3]);
-assert.deepEqual(tiles(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: false, cols: 4, make: null })), [4, 4], 'wider rows on a wider screen');
-assert.deepEqual(folded.at(-3), { kind: 'shelf-foot', key: 'shelf-foot', found: 40 });
-assert.deepEqual(tiles(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: true, cols: 3, make: null })), [...Array(13).fill(3), 1]);
-assert.equal(tiles(myBarRows({ bottles, sort: 'newest', query: 'Bottle 1', shelfOpen: false, cols: 3, make: null })).reduce((a, b) => a + b), 11);
+assert.deepEqual(tiles(folded), [2, 3]);
+assert.equal(folded.find((r) => r.kind === 'bottles')?.key, 'b:add');
+assert.deepEqual(tiles(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: false, cols: 4, make: null })), [3, 4], 'wider rows on a wider screen');
+assert.deepEqual(folded.at(-3), { kind: 'shelf-foot', key: 'shelf-foot', found: 40, foldable: true });
+assert.deepEqual(tiles(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: true, cols: 3, make: null })), [2, ...Array(12).fill(3), 2]);
+// A shelf that fits has nothing to fold, counting the Add tile's place.
+assert.deepEqual(myBarRows({ bottles: bottles.slice(0, 5), sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null }).at(-3), { kind: 'shelf-foot', key: 'shelf-foot', found: 5, foldable: false });
+assert.deepEqual(myBarRows({ bottles: bottles.slice(0, 6), sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null }).at(-3), { kind: 'shelf-foot', key: 'shelf-foot', found: 6, foldable: true });
+// A search lists only matches, with no Add tile.
+const searched = myBarRows({ bottles, sort: 'newest', query: 'Bottle 1', shelfOpen: false, cols: 3, make: null });
+assert.equal(tiles(searched).reduce((a, b) => a + b), 11);
+assert.ok(!searched.some((r) => r.kind === 'bottles' && r.add));
+// Editing: no Add tile, so full rows of bottles.
+assert.deepEqual(tiles(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: false, editing: true, cols: 3, make: null })), [3, 3]);
 
-// By style: each style starts a new row with its caption, bottles with none under Other.
+// By style: the Add tile on a row of its own, then each style starts a new row with its caption, bottles with none under Other.
 const styled = myBarRows({ bottles: [bottle(1, 'Gin'), bottle(2, null), bottle(3, 'Gin'), bottle(4, 'Amaro'), bottle(5, 'Gin'), bottle(6, 'Gin'), bottle(7, 'Gin')], sort: 'style', query: '', shelfOpen: true, cols: 3, make: null });
 assert.deepEqual(
   styled.flatMap((r) => (r.kind === 'bottles' ? [[r.heading, r.bottles.length]] : [])),
-  [['Amaro', 1], ['Gin', 3], [null, 2], ['Other', 1]],
+  [[null, 0], ['Amaro', 1], ['Gin', 3], [null, 2], ['Other', 1]],
 );
 
 // What to make: a page of drinks, then "Show more" with the rest counted.
