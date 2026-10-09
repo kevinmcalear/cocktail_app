@@ -48,6 +48,7 @@ const menu = (id: string, startsAt: string | null, endsAt: string | null, itemId
   createdAt: '2026-01-01T00:00:00Z',
   menuDate: null,
   guestCount: null,
+  kind: 'menu',
   sharedAt: null,
   itemIds,
   pictures: [],
@@ -70,7 +71,16 @@ assert.deepEqual(all.past.sort(), ['daiquiri', 'paloma']);
 
 assert.deepEqual(menuDrinks(menus, now, 'autumn').on, ['martini', 'negroni']);
 assert.deepEqual(menuDrinks(menus, now, 'summer').on.sort(), ['martini', 'negroni', 'spritz'], 'a menu that isn’t on is no pick');
-assert.deepEqual(menuDrinks([], now, null), { onMenus: [], on: [], onNow: [], past: [] });
+assert.deepEqual(menuDrinks([], now, null), { onMenus: [], on: [], onNow: [], past: [], rndMenus: [], rnd: [] });
+{
+  // R&D: a flight's drinks that aren't on any menu; picking the flight shows all of it.
+  const flight = { ...menu('flight', null, null, ['control', 'tea martini', 'negroni']), kind: 'rnd' as const };
+  const withFlight = menuDrinks([...menus, flight], now, null);
+  assert.deepEqual(withFlight.rnd, ['control', 'tea martini']);
+  assert.deepEqual(menuDrinks([...menus, flight], now, 'flight').rnd, ['control', 'tea martini', 'negroni']);
+  assert.deepEqual(withFlight.on.sort(), all.on.sort(), 'R&D is never on');
+}
+assert.equal(parseShow('rnd', false), 'cocktails');
 // Picking a menu narrows the list, not what counts as on now.
 assert.deepEqual(menuDrinks(menus, now, 'autumn').onNow.sort(), ['martini', 'negroni', 'spritz']);
 
