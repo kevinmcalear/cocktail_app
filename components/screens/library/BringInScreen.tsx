@@ -9,6 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useMode } from '@/hooks/useMode';
 import { isLink } from '@/lib/bringInAnywhere';
 import { takeBringIn } from '@/lib/bringInHandoff';
 import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
@@ -121,7 +122,9 @@ function BringInBody() {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const { active } = useActiveVenue();
-  const barId = active?.id ?? null;
+  // At home, things come in to your own bar, never to the venue you were last at.
+  const home = useMode().mode === 'home';
+  const barId = home ? null : (active?.id ?? null);
   const caps = useCapabilities(barId);
   const canEdit = !barId || !!caps.data?.includes('edit_drinks');
   const { catalog, aliases, methods, glasses, isLoading } = useSpecCatalog();
