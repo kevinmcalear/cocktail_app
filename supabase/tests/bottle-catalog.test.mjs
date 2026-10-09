@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { after, before, describe, test } from 'node:test';
 
 import pg from 'pg';
@@ -21,6 +21,11 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 
 const db = new pg.Client({ connectionString: status.DB_URL });
 const MIGRATION = new URL('../migrations/20261008900100_bottle_catalog.sql', import.meta.url);
+// The catalog fills after it correct some of its styles, so it is re-run with
+// them, in order (those this branch has).
+const MIGRATIONS = [MIGRATION, ...['20261010600000_ingredient_tree_fill.sql', '20261010630000_ingredient_tree_fill_2.sql']
+  .map((f) => new URL(`../migrations/${f}`, import.meta.url))
+  .filter((u) => existsSync(u))];
 
 before(() => db.connect());
 after(() => db.end());
@@ -90,7 +95,7 @@ describe('bottle catalog', () => {
     const before = await one(snapshot);
     await db.query('BEGIN');
     try {
-      await db.query(readFileSync(MIGRATION, 'utf8'));
+      for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
       assert.deepEqual(await one(snapshot), before);
     } finally {
       await db.query('ROLLBACK');

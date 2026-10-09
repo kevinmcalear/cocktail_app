@@ -10,7 +10,7 @@
 --     confirmed as the same product and expression (33 found by the bottle
 --     check). Bacardi Spiced and Caribbean Spiced, Herradura Blanco and Plata
 --     stay apart. Folded names stay as aliases.
---   * 417 rows take their proper label name, brand first; the old name
+--   * 416 rows take their proper label name, brand first; the old name
 --     stays an alias.
 --   * 2167 rows say what they are: 594 bottles, 1015 house preps,
 --     558 styles.
@@ -512,7 +512,6 @@ INSERT INTO rename_in VALUES
 ($q$Bowmore 25 Year Single Malt Scotch$q$, $q$Bowmore 25 Year Old$q$),
 ($q$Braulio Riserva Amaro$q$, $q$Braulio Riserva$q$),
 ($q$Brookie's Shirl The Pearl Gin$q$, $q$Brookie's Shirl the Pearl Cumquat Gin$q$),
-($q$Buffalo Trace Bourbon$q$, $q$Buffalo Trace Kentucky Straight Bourbon$q$),
 ($q$Bulldog Gin$q$, $q$Bulldog London Dry Gin$q$),
 ($q$Bumbu The Original Rum$q$, $q$Bumbu The Original$q$),
 ($q$Buskers Irish Whiskey$q$, $q$The Busker$q$),
@@ -4222,6 +4221,10 @@ INSERT INTO restyle_in VALUES
 ($q$Zero Proof Tequila$q$, $q$Non-Alcoholic Agave Spirit$q$),
 ($q$Zonzo Estate Limoncello$q$, $q$Limoncello$q$);
 
+CREATE TEMP TABLE alias_add_in (name text PRIMARY KEY, alias text NOT NULL);
+INSERT INTO alias_add_in VALUES
+($q$Buffalo Trace Bourbon$q$, $q$Buffalo Trace Kentucky Straight Bourbon$q$);
+
 CREATE TEMP TABLE made_from_in (name text PRIMARY KEY, made_from text NOT NULL);
 
 -- The shared row a name means right now: its own name, else an alias.
@@ -4339,6 +4342,15 @@ SELECT public.ingredient_key(r.old_name), r.id FROM renamed r
 ON CONFLICT (key) DO UPDATE SET item_id = EXCLUDED.item_id;
 RESET "app.ingredient_merge";
 
+-- Names the app itself uses keep them; the label name finds them too.
+INSERT INTO public.ingredient_aliases (key, item_id)
+SELECT public.ingredient_key(a.alias), pg_temp.shared(a.name)
+  FROM alias_add_in a
+ WHERE pg_temp.shared(a.name) IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM public.items o WHERE o.item_type = 'ingredient' AND o.bar_id IS NULL
+                    AND public.ingredient_key(o.name) = public.ingredient_key(a.alias))
+ON CONFLICT (key) DO NOTHING;
+
 -- No loops ("A is a kind of B is a kind of A"): drop a non-core link in each.
 DO $$
 DECLARE
@@ -4370,7 +4382,7 @@ FROM "flavor_jobs_before" o
 WHERE j.item_id = o.item_id AND j.revision <> o.revision;
 DROP TABLE "flavor_jobs_before";
 
-DROP TABLE "made_now", "renamed", "generic_in", "merge_in", "rename_in", "role_in", "parent_in", "restyle_in", "made_from_in";
+DROP TABLE "made_now", "renamed", "alias_add_in", "generic_in", "merge_in", "rename_in", "role_in", "parent_in", "restyle_in", "made_from_in";
 DROP FUNCTION pg_temp.shared(text);
 DROP FUNCTION pg_temp.own(text);
 RESET "app.image_worker";
