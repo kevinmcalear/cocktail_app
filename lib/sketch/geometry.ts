@@ -1,7 +1,7 @@
 // Glass shapes and the small geometry the sketch painter draws with. Units: a
 // 100 by 100 drawing, glass centred on x = 50.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 import type { SketchGlass } from './types';
 
 export type Pt = [number, number];

@@ -24,7 +24,7 @@ import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
-export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | null;
+export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | null;
 
 /**
  * Everything the menu editor does, for its phone and desktop layouts: the
@@ -133,6 +133,10 @@ export function useLayoutEditor(menu: MenuDetail) {
     persist,
     goLive: async () => {
       if (await persist()) setSheet({ kind: 'golive' });
+    },
+    /** A home menu: save what's changed, then the share step (it shares the saved menu). */
+    share: async () => {
+      if (await persist()) setSheet({ kind: 'share' });
     },
     leave: async () => {
       if (!(await confirmDiscardChanges(changed))) return;

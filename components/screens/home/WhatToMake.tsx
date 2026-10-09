@@ -50,7 +50,10 @@ export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: Ma
 
 /** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
 export const MakeDrink = memo(function MakeDrink({ drink, matchFor, glyphFor }: { drink: BarItem; matchFor: MatchFor; glyphFor?: GlyphFor }) {
-  return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={matchFor(drink.id)} trailing={glyphFor?.(drink.id)} />;
+  // The bar it's from under the name, so a classic's bar versions tell apart: "Harry's Bar · 92% match".
+  const caption = [drink.from?.name, matchFor(drink.id)].filter(Boolean).join(' · ') || undefined;
+  const logo = drink.from ? { uri: drink.from.logo, name: drink.from.name } : undefined;
+  return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={caption} logo={logo} trailing={glyphFor?.(drink.id)} />;
 });
 
 /** A tab with nothing in it, and where to look instead. */

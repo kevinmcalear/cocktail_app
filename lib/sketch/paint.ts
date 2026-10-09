@@ -8,7 +8,7 @@
 // gradient fades and paper-coloured lifts so react-native-svg can draw it on
 // every platform.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 import { band, ell, glassShape, hw, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
 import { paintIce } from './ice';
