@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, Spec, Tag, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, sheetFrame, Spec, Tag, useDs } from '@/components/ds';
 import { FamilyDot, PalateLegend } from '@/components/screens/taste/PalateParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -77,9 +77,9 @@ function FlavorSheet({ profile, onClose }: { profile: Profile; onClose: () => vo
   const size = Math.min(width, 360);
 
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
             <View style={styles.head}>
               <Headline role="heading">Flavor</Headline>

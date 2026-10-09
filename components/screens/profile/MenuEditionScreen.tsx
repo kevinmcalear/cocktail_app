@@ -9,7 +9,7 @@ import { plural } from '@/lib/menus';
 
 import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { MenuSections } from '../menus/MenuSections';
-import { PublicMissing, PublicShell } from '../published/PublicShell';
+import { loadFailure, PublicMissing, PublicShell } from '../published/PublicShell';
 
 /**
  * One menu a bar put out, set like the printed menu. Signed-in readers open
@@ -23,7 +23,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
-  if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" />;
+  if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
   const drinks = editionMenuDrinks(edition.drinks, loaded.data ?? []);

@@ -1,7 +1,7 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, DateField, Field, PressableScale, TimeField, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field, PressableScale, sheetFrame, TimeField, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
 import { toDay } from '@/lib/collection';
@@ -68,8 +68,8 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
       <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
         {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
-        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.avoider}>
-          <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
+        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.avoider, sheetFrame.scrim]}>
+          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <Title>New event</Title>
               <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
