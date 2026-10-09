@@ -14,6 +14,8 @@ jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () =
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('./PastJobs', () => ({ PastJobs: () => null }));
+jest.mock('../onboarding/CareerSteps', () => ({ PlaceStep: () => null }));
+jest.mock('@/hooks/useProfiles', () => ({ useProfilePositions: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({
   useMyProfile: () => ({ data: mockProfile, isPending: false, error: null }),
   useSaveMyProfile: () => ({ mutate: mockMutate, isPending: false, error: mockSaveError }),
@@ -36,13 +38,13 @@ describe('MyProfileScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Handle'), '@Jo.Home');
     await fireEvent.press(screen.getByRole('button', { name: 'Make my profile' }));
     expect(mockMutate).toHaveBeenCalledWith(
-      { id: null, draft: { name: 'Jo Juniper', handle: '@Jo.Home', bio: '', instagram: '', isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true } },
+      { id: null, draft: { name: 'Jo Juniper', handle: '@Jo.Home', bio: '', instagram: '', isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, tagline: '', headlinePositionId: null, showsPhoto: true } },
       expect.anything()
     );
   });
 
   test('each thing a profile shows is its own switch: made on, had and bars off, until you change them', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, isModerated: false };
+    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true };
     await renderWithTamagui(<MyProfileScreen />);
     expect(screen.getByRole('checkbox', { name: 'Drinks I’ve had', checked: false })).toBeTruthy();
     expect(screen.getByRole('checkbox', { name: 'Bars I’ve been to', checked: false })).toBeTruthy();
@@ -55,7 +57,7 @@ describe('MyProfileScreen', () => {
     expect(screen.getByText(/Your credits still show on each drink’s own page/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     expect(mockMutate).toHaveBeenCalledWith(
-      { id: 'p1', draft: { name: 'Jo', handle: 'jo.home', bio: '', instagram: '', isPublic: true, sharesRankings: true, sharesBars: false, sharesMade: false } },
+      { id: 'p1', draft: { name: 'Jo', handle: 'jo.home', bio: '', instagram: '', isPublic: true, sharesRankings: true, sharesBars: false, sharesMade: false, tagline: '', headlinePositionId: null, showsPhoto: true } },
       expect.anything()
     );
 
@@ -81,12 +83,23 @@ describe('MyProfileScreen', () => {
   });
 
   test('an existing profile edits in place, can go private, and shows the server’s words', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, isModerated: false };
+    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true };
     mockSaveError = new Error('That handle is taken. Try another.');
     await renderWithTamagui(<MyProfileScreen />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Only me' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-    expect(mockMutate).toHaveBeenCalledWith({ id: 'p1', draft: { name: 'Jo', handle: 'jo.home', bio: '', instagram: '', isPublic: false, sharesRankings: false, sharesBars: false, sharesMade: true } }, expect.anything());
+    expect(mockMutate).toHaveBeenCalledWith({ id: 'p1', draft: { name: 'Jo', handle: 'jo.home', bio: '', instagram: '', isPublic: false, sharesRankings: false, sharesBars: false, sharesMade: true, tagline: '', headlinePositionId: null, showsPhoto: true } }, expect.anything());
     expect(screen.getByText('That handle is taken. Try another.')).toBeTruthy();
+  });
+
+  test('the line under your name: nothing by default, a ready-made one, or your own words', async () => {
+    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharesRankings: false, sharesBars: false, sharesMade: true, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true };
+    await renderWithTamagui(<MyProfileScreen />);
+    expect(screen.getByRole('radio', { name: 'Nothing', checked: true })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Home bartender' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'In my own words' }));
+    await fireEvent.changeText(screen.getByLabelText('In your own words'), 'Makes drinks for friends');
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(mockMutate.mock.calls[0][0].draft).toMatchObject({ tagline: 'Makes drinks for friends', headlinePositionId: null, showsPhoto: true });
   });
 });

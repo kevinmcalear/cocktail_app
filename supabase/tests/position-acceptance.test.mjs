@@ -106,16 +106,24 @@ describe('a job someone adds themselves', () => {
     assert.equal(await reads(anon, data.id), true);
   });
 
-  test('waits for the bar, hidden from everyone but the person and the bar\'s Admins', async () => {
+  test('waits for the bar, but shows on their page as not confirmed (20261010700000)', async () => {
     const row = await add('person', ids.person, ids.bar, 'Bartender');
     ids.selfAdded = row.id;
     assert.equal(row.person_accepted, true);
     assert.equal(row.bar_accepted, false);
-    for (const client of [anon, users.stranger.client, users.creator.client, users.staffer.client]) {
-      assert.equal(await reads(client, row.id), false);
+    for (const client of [anon, users.stranger.client, users.creator.client, users.staffer.client, users.person.client, users.admin.client]) {
+      assert.equal(await reads(client, row.id), true);
     }
+  });
+
+  test('a past job they add stays hidden until they switch it on', async () => {
+    const row = await add('person', ids.person, ids.bar, 'Server', false);
+    assert.equal(await reads(anon, row.id), false);
     assert.equal(await reads(users.person.client, row.id), true);
-    assert.equal(await reads(users.admin.client, row.id), true);
+    const { error } = await users.person.client.from('profile_positions').update({ is_shown: true }).eq('id', row.id);
+    assert.ifError(error);
+    assert.equal(await reads(anon, row.id), true);
+    await service.from('profile_positions').delete().eq('id', row.id);
   });
 
   test('shows in the Admin\'s requests, not anyone else\'s', async () => {
@@ -146,7 +154,8 @@ describe('a job someone adds themselves', () => {
     const { error } = await users.person.client.from('profile_positions').update({ title: 'Bar manager' }).eq('id', ids.selfAdded);
     assert.ifError(error);
     assert.equal((await stored(ids.selfAdded)).bar_accepted, false);
-    assert.equal(await reads(anon, ids.selfAdded), false);
+    // Still theirs to show, marked not confirmed again.
+    assert.equal(await reads(anon, ids.selfAdded), true);
   });
 
   test('the Admin can decline instead; a non-Admin cannot', async () => {
@@ -167,7 +176,7 @@ describe('a job someone adds themselves', () => {
 
   test('at a bar with no venue on Cocktail, a moderator answers', async () => {
     const row = await add('person', ids.person, ids.wildBar, 'Head bartender');
-    assert.equal(await reads(anon, row.id), false);
+    assert.equal((await stored(row.id)).bar_accepted, false);
     const { data: adminList } = await users.admin.client.rpc('position_requests');
     assert.ok(!adminList.some((r) => r.id === row.id));
     const { data: modList } = await users.moderator.client.rpc('position_requests');

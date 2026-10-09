@@ -77,7 +77,40 @@ export interface ProfileDraft {
   sharesBars: boolean;
   /** Show the drinks you've made (Originals and menu credits). */
   sharesMade: boolean;
+  /** What you do with drinks, in your words, under your name. Blank: nothing. */
+  tagline: string;
+  /** Or one of your confirmed jobs there instead. */
+  headlinePositionId: string | null;
+  /** People see your account photo; off, your initials. */
+  showsPhoto: boolean;
 }
+
+/** Ready-made lines for under your name. Anything else is "in your own words". */
+export const TAGLINES = ['Drinks lover', 'Home bartender', 'Bartender', 'Bar manager', 'Bar owner', 'Drinks writer', 'Distiller', 'Brand rep'] as const;
+
+/** What's wrong with the line under your name, or nothing. Matches profiles_tagline_shape. */
+export function taglineProblem(raw: string): string | undefined {
+  const line = raw.trim();
+  if (line.length > 40) return 'Keep it to 40 characters.';
+  if (/\p{Cc}/u.test(line)) return 'Keep it to one line.';
+}
+
+/**
+ * The line under a person's name: the job they picked, while the bar has
+ * confirmed it and it's on their page, else what they said they do, else
+ * nothing. Never a label the app made up.
+ */
+export function profileLine(
+  p: { tagline: string | null; headline_position_id: string | null },
+  positions: { id: string; title: string; is_current: boolean; is_shown: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } }[]
+): string | null {
+  const job = positions.find((j) => j.id === p.headline_position_id && j.person_accepted && j.bar_accepted && (j.is_current || j.is_shown));
+  if (job) return `${job.title} ${job.is_current ? 'at' : 'formerly at'} ${job.bar.display_name}`;
+  return p.tagline?.trim() || null;
+}
+
+/** A new profile's line under the name (none) and photo (shown). */
+export const DEFAULT_IDENTITY = { tagline: '', headlinePositionId: null, showsPhoto: true } as const;
 
 /** What a new profile shows: the drinks you've made, and nothing you've had. */
 export const DEFAULT_SHARING = { sharesRankings: false, sharesBars: false, sharesMade: true } as const;
@@ -183,8 +216,8 @@ export function handleFromName(name: string): string {
  * What's wrong with a draft, field by field, in the same limits as the
  * profiles table's CHECKs. An empty object means it can be saved.
  */
-export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string; instagram?: string } {
-  const errors: { name?: string; handle?: string; bio?: string; instagram?: string } = {};
+export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string; instagram?: string; tagline?: string } {
+  const errors: { name?: string; handle?: string; bio?: string; instagram?: string; tagline?: string } = {};
   const name = d.name.trim();
   if (!name) errors.name = 'Add the name people will see.';
   else if (name.length > 80) errors.name = 'Keep your name to 80 characters.';
@@ -194,6 +227,8 @@ export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: s
   if (d.bio.trim().length > 500) errors.bio = 'Keep your bio to 500 characters.';
   const instagram = instagramProblem(d.instagram);
   if (instagram) errors.instagram = instagram;
+  const tagline = taglineProblem(d.tagline);
+  if (tagline) errors.tagline = tagline;
   return errors;
 }
 

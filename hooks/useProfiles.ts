@@ -43,9 +43,13 @@ export interface Profile {
   shares_made: boolean;
   /** A bar's: who outside it sees its page. Null for a person. */
   page_visibility: PageVisibility | null;
+  /** A person's own line under their name ("Home bartender"). */
+  tagline: string | null;
+  /** Or one of their jobs, shown while the bar has confirmed it (profileLine). */
+  headline_position_id: string | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, shares_bars, shares_made, page_visibility';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, shares_bars, shares_made, page_visibility, tagline, headline_position_id';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 

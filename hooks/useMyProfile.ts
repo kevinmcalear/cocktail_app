@@ -22,6 +22,9 @@ export interface MyProfile {
   sharesMade: boolean;
   /** A moderator hid it: nobody else sees it, whatever isPublic says. */
   isModerated: boolean;
+  tagline: string | null;
+  headlinePositionId: string | null;
+  showsPhoto: boolean;
 }
 
 const myProfileKey = (userId: string | null) => ['profile', 'mine', userId] as const;
@@ -35,7 +38,7 @@ export function useMyProfile() {
     queryFn: async (): Promise<MyProfile | null> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, bio, instagram, is_public, shares_rankings, shares_bars, shares_made, moderated_at')
+        .select('id, handle, display_name, bio, instagram, is_public, shares_rankings, shares_bars, shares_made, moderated_at, tagline, headline_position_id, shows_photo')
         .eq('user_id', userId!)
         .maybeSingle();
       if (error) throw error;
@@ -51,6 +54,9 @@ export function useMyProfile() {
         sharesBars: data.shares_bars,
         sharesMade: data.shares_made,
         isModerated: !!data.moderated_at,
+        tagline: data.tagline,
+        headlinePositionId: data.headline_position_id,
+        showsPhoto: data.shows_photo,
       };
     },
   });
@@ -64,6 +70,7 @@ function readable(error: { code?: string; message: string; details?: string | nu
     return new Error('That handle is taken. Try another.');
   }
   if (error.code === '23505') return new Error('You already have a profile. Reload to edit it.');
+  if (error.code === '23514' && /tagline/.test(`${error.message} ${error.details ?? ''}`)) return new Error('Keep the line under your name to 40 characters, on one line.');
   if (error.code === '23514' && /instagram/.test(`${error.message} ${error.details ?? ''}`)) {
     return new Error('Use up to 30 letters, numbers, dots or underscores. Dots can’t sit at the start, the end, or next to each other.');
   }
@@ -90,6 +97,9 @@ export function useSaveMyProfile() {
         shares_rankings: draft.sharesRankings,
         shares_bars: draft.sharesBars,
         shares_made: draft.sharesMade,
+        tagline: draft.tagline.trim() || null,
+        headline_position_id: draft.headlinePositionId,
+        shows_photo: draft.showsPhoto,
       };
       const { error } = id
         ? await supabase.from('profiles').update(row).eq('id', id)

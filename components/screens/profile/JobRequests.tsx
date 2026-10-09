@@ -83,7 +83,7 @@ export function MyJobRequests({ personId }: { personId: string }) {
             <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
             <View style={styles.flex}>
               <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
-              <Caption tone="muted">Pending. It shows on your profile once the bar confirms it.</Caption>
+              <Caption tone="muted">On your profile, marked not confirmed, until the bar says yes.</Caption>
             </View>
           </View>
         ))}
@@ -97,10 +97,14 @@ export function MyJobRequests({ personId }: { personId: string }) {
   );
 }
 
-/** A line for a job that isn't confirmed yet, or null once it is. */
+/**
+ * A line for a job that isn't confirmed yet, or null once it is. Everyone sees
+ * a job the person added before the bar confirms it; only the two sides see
+ * one the bar listed before the person accepts.
+ */
 export function pendingNote(p: { person_accepted: boolean; bar_accepted: boolean }): string | null {
   if (!p.person_accepted) return 'Pending: waiting for the person to accept';
-  if (!p.bar_accepted) return 'Pending: waiting for the bar to confirm';
+  if (!p.bar_accepted) return 'Not confirmed by the bar';
   return null;
 }
 

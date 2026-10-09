@@ -10,11 +10,11 @@ import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
-import { barsCrediting, personTabs } from '@/lib/profiles';
+import { barsCrediting, personTabs, profileLine } from '@/lib/profiles';
 
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { SignInCard } from '../published/SignInCard';
@@ -108,8 +108,6 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   );
 }
 
-const KIND: Record<Profile['kind'], string> = { person: 'Bartender', bar: 'Bar' };
-
 function ProfileBody({ profile, columns }: { profile: Profile; columns: number }) {
   const router = useRouter();
   const person = profile.kind === 'person';
@@ -134,6 +132,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
   const specsLocked = !person && pageLocksSpecs(profile.page_visibility, onTeam);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
+  // What they said they do, or the job they picked; never a label we made up.
+  const line = profileLine(profile, useProfilePositions(person ? profile : null).data ?? []);
 
   return (
     <View style={styles.body}>
@@ -146,11 +146,12 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
             <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
             <Title align="center">{profile.display_name}</Title>
             <Caption tone="muted" align="center">
-              {[`@${profile.handle}`, KIND[profile.kind], place].filter(Boolean).join(' · ')}
+              {[`@${profile.handle}`, place].filter(Boolean).join(' · ')}
             </Caption>
+            {line ? <Body align="center">{line}</Body> : null}
           </>
         ) : (
-          <BarHeader profile={profile} detail={[place || KIND.bar, unclaimed ? 'Not claimed yet' : 'Claimed'].join(' · ')} />
+          <BarHeader profile={profile} detail={[place || 'Bar', unclaimed ? 'Not claimed yet' : 'Claimed'].join(' · ')} />
         )}
         <View style={[styles.chips, !person && styles.chipsStart]}>
           {originals.length > 0 && person && showsMade ? <Tag label="Creator" /> : null}
