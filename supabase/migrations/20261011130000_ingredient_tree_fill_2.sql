@@ -2,7 +2,7 @@
 -- seeds added. A name trigger filed 2,966 of them under a broad style ("Gin",
 -- "Vermouth", "Rum") with no role and no check for duplicates: "Martini Rosso
 -- Vermouth" sat under Vermouth, not Sweet Vermouth, beside our own Martini
--- Rosso. Part 1 (20261010720000) did the rows with no style at all.
+-- Rosso. Part 1 (20261011100000) did the rows with no style at all.
 --
 -- Every fold and every bottle here was checked against a real source (the
 -- producer, a major retailer, Difford's Guide or Wikipedia), not memory:
