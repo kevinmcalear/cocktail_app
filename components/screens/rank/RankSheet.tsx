@@ -3,7 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Display, GlassButton, Headline, Tag, Title, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Display, GlassButton, Headline, sheetFrame, Tag, Title, useBreakpoint, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useAddRankEntry, useRecordComparisons, type RankEntry, type RankVenue } from '@/hooks/useRankings';
 import { heroPicture, type ItemPicture } from '@/lib/itemImages';
@@ -188,8 +188,8 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   }
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <Pressable role="dialog" aria-label={`Rank ${drink.name}`} style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
+      <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+        <Pressable role="dialog" aria-label={`Rank ${drink.name}`} style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
             <View style={styles.close}>
               <GlassButton accessibilityLabel="Close" icon="xmark" onPress={onClose} />
