@@ -30,6 +30,7 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
   return (
     <View style={styles.box}>
       <Headline role="heading">What your profile shows</Headline>
+      <Caption tone="muted">These save as you change them.</Caption>
       {SECTIONS.map(({ section, title }) => {
         const mode = modeOf(section);
         return (
