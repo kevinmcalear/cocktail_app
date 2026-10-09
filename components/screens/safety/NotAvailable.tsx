@@ -1,3 +1,4 @@
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -32,6 +33,28 @@ export function NotAvailable({ what }: { what: keyof typeof WHY }) {
         ) : (
           <Button label="Sign in to find more" onPress={() => router.replace('/auth/login')} />
         )}
+      </View>
+    </SafetyPage>
+  );
+}
+
+/** A retry of the requests that failed. Retrying puts the page back to loading (TanStack resets an errored query with no data to pending). */
+export interface LoadFailure {
+  retry: () => void;
+}
+
+/**
+ * Where a public page lands when its request failed: offline, a timeout, a
+ * server error. Says so and offers a retry, rather than Not available, which
+ * would wrongly suggest the owner or a moderator hid it.
+ */
+export function CouldNotLoad({ what, failed }: { what: keyof typeof WHY; failed: LoadFailure }) {
+  const offline = useNetInfo().isConnected === false;
+  const intro = offline ? 'You’re offline. Check your connection and try again.' : 'Something went wrong on our side. Try again in a moment.';
+  return (
+    <SafetyPage title={`Couldn’t load this ${what}`} intro={intro} backTo="/">
+      <View style={styles.actions}>
+        <Button label="Try again" onPress={failed.retry} />
       </View>
     </SafetyPage>
   );
