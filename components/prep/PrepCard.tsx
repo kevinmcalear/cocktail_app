@@ -10,6 +10,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { gramsPer100ml, leadTimeLabel, shelfLifeLabel, timerLabel, totals, totalsLine, type RecipeLine } from '@/lib/scale';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
+import { groupForAction } from '@/lib/techniques';
 
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 
@@ -77,9 +78,16 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
         </Caption>
         {prep?.actions.length ? (
           <View style={styles.tags}>
-            {prep.actions.map((a) => (
-              <Tag key={a} label={a} />
-            ))}
+            {prep.actions.map((a) =>
+              // A tag that's a technique opens how it's done.
+              groupForAction(a) ? (
+                <PressableScale key={a} role="link" accessibilityLabel={`${a}: how it's done`} onPress={() => router.push(`/techniques?group=${groupForAction(a)}` as never)}>
+                  <Tag label={a} tone="accent" />
+                </PressableScale>
+              ) : (
+                <Tag key={a} label={a} />
+              ),
+            )}
           </View>
         ) : null}
       </View>

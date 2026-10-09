@@ -123,5 +123,5 @@ export function countdown(seconds: number): string {
 
 /** The ways a prep gets made, for the card's tags and the editor's chips. */
 export const PREP_ACTIONS = [
-  'Blend', 'Infuse', 'Strain', 'Clarify', 'Syrup', 'Mix', 'Sous vide', 'Centrifuge', 'Distil', 'Ferment', 'Freeze', 'Carbonate', 'Fat wash', 'Dehydrate',
+  'Blend', 'Infuse', 'Strain', 'Clarify', 'Syrup', 'Mix', 'Sous vide', 'Centrifuge', 'Distil', 'Ferment', 'Freeze', 'Carbonate', 'Fat wash', 'Milk wash', 'Foam', 'Dehydrate',
 ] as const;

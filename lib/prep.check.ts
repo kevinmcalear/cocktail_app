@@ -6,6 +6,10 @@ import { formatQuantity, toQuantity } from './quantity';
 
 assert.equal(formatQuantity(toQuantity(1.5, 'L')!), '1.5 L');
 assert.equal(formatQuantity(toQuantity(2, 'oz')!), '59.1 ml');
+// A gum dose isn't rounded away: 0.05 g, not 0.1 g or 0 g.
+assert.equal(formatQuantity(toQuantity(0.05, 'g')!), '0.05 g');
+assert.equal(formatQuantity(toQuantity(0.3, 'g')!), '0.3 g');
+assert.equal(formatQuantity(toQuantity(2.5, 'g')!), '2.5 g');
 assert.equal(toQuantity(null, 'ml'), null);
 assert.deepEqual(toQuantity(3, 'Limes'), { kind: 'count', value: 3, unit: 'limes' });
 

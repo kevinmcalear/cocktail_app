@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
+import { TechnicalIngredientCard } from '@/components/techniques/TechnicalIngredientCard';
 import { layout, space } from '@/constants/tokens';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 
@@ -33,9 +34,19 @@ const ROLE_TITLE: Record<string, string> = { product: 'Bottle', prep: 'Made in h
 /**
  * On an ingredient's page: what it is (a bottle, a house prep, a style), what
  * it's a kind of, the bottle a prep is made from, and the bottles you can buy
- * that are a kind of it. Nothing shows when there's nothing to say.
+ * that are a kind of it; for a technical one (xanthan, agar), how to use it.
+ * Nothing shows when there's nothing to say.
  */
-export function IngredientFacts({ ingredient, bottles }: Props) {
+export function IngredientFacts(props: Props) {
+  return (
+    <>
+      <Facts {...props} />
+      <TechnicalIngredientCard name={props.ingredient.name} />
+    </>
+  );
+}
+
+function Facts({ ingredient, bottles }: Props) {
   const [all, setAll] = useState(false);
   const role = ingredient.ingredient_role ?? null;
   const facts = role === 'product' ? bottleFacts(ingredient) : '';
