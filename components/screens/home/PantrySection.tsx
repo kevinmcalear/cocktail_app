@@ -1,6 +1,6 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Button, Caption, Chip, Headline } from '@/components/ds';
+import { Button, Caption, Chip, Headline, IngredientThumb } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 
@@ -37,7 +37,7 @@ export function PantrySection({ items, onShelf, onAdd, onRemove, style }: Pantry
       <View role="group" accessibilityLabel="Fridge and pantry" style={styles.chips}>
         {staples.map((s) => {
           const on = onShelf.has(s.id);
-          return <Chip key={s.id} label={s.label} multi quiet selected={on} onPress={() => (on ? onRemove(s.id) : onAdd(withWater([s.id])))} />;
+          return <Chip key={s.id} label={s.label} leading={<IngredientThumb id={s.id} name={s.name} size={32} />} multi quiet selected={on} onPress={() => (on ? onRemove(s.id) : onAdd(withWater([s.id])))} />;
         })}
       </View>
       {missing.length === staples.length ? <Button label="I have all of these" variant="secondary" onPress={() => onAdd(withWater(missing))} /> : null}
