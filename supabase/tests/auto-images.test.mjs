@@ -104,9 +104,12 @@ async function jobFor(itemId) {
   return rows[0] ?? null;
 }
 
-/** Skips the debounce and runs the cron tick now. */
+/**
+ * Skips the debounce and runs the cron tick now. The tick takes the 200 oldest
+ * due jobs, so this one goes first in line or a backlog from other test files can starve it.
+ */
 async function settle(itemId) {
-  await db.query('UPDATE private.item_image_jobs SET run_after = now() WHERE item_id = $1', [itemId]);
+  await db.query("UPDATE private.item_image_jobs SET run_after = '-infinity' WHERE item_id = $1", [itemId]);
   await db.query('SELECT private.run_item_image_jobs()');
 }
 
