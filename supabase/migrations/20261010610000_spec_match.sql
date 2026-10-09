@@ -447,7 +447,9 @@ WITH classics AS (
      GROUP BY 1
     HAVING count(*) = 1
 )
-UPDATE public.items v SET riff_of_id = c.id
+-- The seeds label a linked drink 'Varient' (their spelling) and an unlinked
+-- one 'Original'; a drink linked here takes the linked label too.
+UPDATE public.items v SET riff_of_id = c.id, origin = CASE WHEN v.origin = 'Original' THEN 'Varient' ELSE v.origin END
   FROM classics c
  WHERE v.item_type = 'cocktail' AND NOT v.is_catalog AND v.riff_of_id IS NULL
    AND (v.origin_bar_profile_id IS NOT NULL OR v.bar_id IS NOT NULL)
