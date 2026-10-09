@@ -173,7 +173,7 @@ describe('showing the drinks you’ve had', () => {
     const home = rows.find((r) => r.venue_id === null);
     assert.equal(home.item_id, ids.items.classic);
     assert.equal(Number(home.score), 8.4);
-    assert.equal(home.had_on, '2026-09-12');
+    assert.equal(home.had_on, null, 'dates stay hidden until they show them (20261010710000)');
 
     const published = rows.find((r) => r.name === `Open Fizz ${run}`);
     assert.equal(published.venue_handle, `open${run}`);

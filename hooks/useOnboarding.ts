@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { splitName } from '@/lib/onboarding';
-import { DEFAULT_IDENTITY, DEFAULT_SHARING } from '@/lib/profiles';
+import { DEFAULT_IDENTITY } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 
 import { useSaveMyProfile } from './useMyProfile';
@@ -22,7 +22,7 @@ export function useSaveOnboardingName() {
       const { error: authError } = await updateProfile({ firstName, lastName, fullName: name });
       if (authError) throw new Error(SAVED);
       try {
-        await save.mutateAsync({ id: input.profileId, draft: { name, handle: input.handle, bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING, ...DEFAULT_IDENTITY } });
+        await save.mutateAsync({ id: input.profileId, draft: { name, handle: input.handle, bio: '', instagram: '', isPublic: true, ...DEFAULT_IDENTITY } });
       } catch (e) {
         const message = e instanceof Error ? e.message : SAVED;
         throw new Error(message);

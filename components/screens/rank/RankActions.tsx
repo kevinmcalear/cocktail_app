@@ -3,8 +3,10 @@ import { useState } from 'react';
 
 import { GlassButton } from '@/components/ds';
 import { useSignedIn } from '@/ctx/AuthContext';
-import { signatureBarOf, useBarProfile, useMyRankList, useRankTarget, type RankVenue } from '@/hooks/useRankings';
+import { useMyProfile } from '@/hooks/useMyProfile';
+import { signatureBarOf, useBarProfile, useMyHadPicks, useMyRankList, useRankTarget, useSetHadPick, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
+import { pickedShown } from '@/lib/profiles';
 import { rankedAs as rankedAsOf } from '@/lib/ranking';
 
 import { useAgeGate } from '../safety/AgeGate';
@@ -35,9 +37,34 @@ export function RankActions({ item, picture }: RankActionsProps) {
     <>
       {signedIn ? <GlassButton accessibilityLabel={`Rank ${item.name} against others you've had`} label="Rank it" icon="list.number" onPress={() => ageGate.gate(() => setOpen(true))} /> : null}
       <GlassButton accessibilityLabel={`Rankings for ${rankedAs?.name ?? item.name}`} label="Rankings" icon="trophy" onPress={() => router.push(`/rankings/${item.id}`)} />
+      {signedIn && rankedAs ? <ProfileToggle item={item} rankedAsId={rankedAs.id} /> : null}
       {open ? <RankFlow item={item} picture={picture} onClose={() => setOpen(false)} /> : null}
       {ageGate.sheet}
     </>
+  );
+}
+
+/**
+ * On a drink you've ranked, while your profile shows drinks: whether this one
+ * shows there, one tap to flip (every time you've had it, together).
+ */
+function ProfileToggle({ item, rankedAsId }: { item: RankItem; rankedAsId: string }) {
+  const profile = useMyProfile().data;
+  const { data: list } = useMyRankList(rankedAsId);
+  const picks = useMyHadPicks().data;
+  const set = useSetHadPick();
+  const entries = (list ?? []).filter((e) => e.item_id === item.id);
+  const mode = profile?.sharing.had;
+  if (!profile?.isPublic || !mode || mode === 'none' || !entries.length || !picks) return null;
+  const shown = entries.some((e) => pickedShown(mode, picks[e.id]?.onProfile));
+  const flip = () => entries.forEach((e) => set.mutate({ id: e.id, onProfile: !shown, pin: shown ? null : (picks[e.id]?.pin ?? null) }));
+  return (
+    <GlassButton
+      accessibilityLabel={shown ? `${item.name} shows on your profile. Hide it` : `${item.name} is hidden from your profile. Show it`}
+      label={shown ? 'On profile' : 'Not on profile'}
+      icon={shown ? 'eye' : 'eye.slash'}
+      onPress={flip}
+    />
   );
 }
 

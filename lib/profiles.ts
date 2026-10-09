@@ -71,12 +71,6 @@ export interface ProfileDraft {
   /** What they typed: @name, a bare name, or an instagram.com link. */
   instagram: string;
   isPublic: boolean;
-  /** Show the drinks you've had, with your scores, on the public profile. */
-  sharesRankings: boolean;
-  /** Show the bars you've had drinks at, with your average at each. */
-  sharesBars: boolean;
-  /** Show the drinks you've made (Originals and menu credits). */
-  sharesMade: boolean;
   /** What you do with drinks, in your words, under your name. Blank: nothing. */
   tagline: string;
   /** Or one of your confirmed jobs there instead. */
@@ -112,34 +106,57 @@ export function profileLine(
 /** A new profile's line under the name (none) and photo (shown). */
 export const DEFAULT_IDENTITY = { tagline: '', headlinePositionId: null, showsPhoto: true } as const;
 
-/** What a new profile shows: the drinks you've made, and nothing you've had. */
-export const DEFAULT_SHARING = { sharesRankings: false, sharesBars: false, sharesMade: true } as const;
+/**
+ * How much of one section a public profile shows (profiles.had_mode,
+ * bars_mode, made_mode): everything, new ones too, but single ones can be
+ * hidden; only the ones picked; or nothing (the picks are kept).
+ */
+export type ShareMode = 'all' | 'picked' | 'none';
+/** The three sections: drinks they've had, bars they've been to, drinks they made. */
+export type ShareSection = 'had' | 'bars' | 'originals';
 
-/** What a public profile shows besides who you are, in a few sentences for the settings form. */
-export function sharingSummary(draft: Pick<ProfileDraft, 'sharesRankings' | 'sharesBars' | 'sharesMade'>): string {
-  const shown = [
-    draft.sharesRankings ? 'your score for every drink you’ve ranked' : null,
-    draft.sharesBars ? 'your average at each bar you’ve had drinks at' : null,
-    draft.sharesMade ? 'the drinks you’ve made' : null,
-  ].filter((x): x is string => !!x);
-  const lines = [
-    shown.length
-      ? `Your profile shows ${shown.length > 2 ? `${shown.slice(0, -1).join(', ')}, and ${shown.at(-1)}` : shown.join(' and ')}.`
-      : 'Your profile shows who you are and where you work, nothing more.',
-  ];
-  if (draft.sharesRankings || draft.sharesBars) lines.push('Only people signed in to the app see what you’ve had, and drinks a bar hasn’t published stay out.');
-  if (draft.sharesRankings && !draft.sharesBars) lines.push('A drink you had at a bar says “At a bar”, not which one.');
-  if (!draft.sharesMade) lines.push('Your credits still show on each drink’s own page.');
-  if (!draft.sharesRankings && !draft.sharesBars) lines.push('Your scores still count, without your name, towards each bar’s score.');
-  return lines.join(' ');
+export const SHARE_MODES: { value: ShareMode; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'picked', label: 'Picked' },
+  { value: 'none', label: 'None' },
+];
+
+/** A new profile's: nothing they've had until they pick it; what they've made. */
+export const DEFAULT_SHARING: Record<ShareSection, ShareMode> = { had: 'picked', bars: 'picked', originals: 'all' };
+
+/**
+ * Whether one drink, bar or original shows: by its section's mode and their
+ * pick for it (true, false, or none yet). Same rule as private.picked_shown.
+ */
+export function pickedShown(mode: ShareMode, pick: boolean | null | undefined): boolean {
+  if (mode === 'all') return pick !== false;
+  if (mode === 'picked') return pick === true;
+  return false;
+}
+
+const SECTION_NOTE: Record<ShareSection, string> = {
+  had: 'Only people signed in see them, with your scores, and drinks a bar hasn’t published stay out.',
+  bars: 'A bar you hide is never named, even beside a drink. Your scores still count, without your name, towards each bar’s score.',
+  originals: 'Credits still show on each drink’s own page.',
+};
+
+/** A line under a section's mode in settings: what it means, then the section's own note. */
+export function modeSummary(section: ShareSection, mode: ShareMode): string {
+  const what =
+    mode === 'all'
+      ? 'All of them show, new ones too. Hide any one from Choose.'
+      : mode === 'picked'
+        ? 'Only the ones you pick show. New ones stay private.'
+        : 'None show. Your picks are kept for when you turn it back on.';
+  return mode === 'none' && section !== 'originals' ? what : `${what} ${SECTION_NOTE[section]}`;
 }
 
 /**
- * The tabs a person's profile shows a reader, in order: only what they share,
- * or everything to the owner (who gets a note on a tab others don't see).
+ * The tabs a person's profile shows a reader, in order: only sections they
+ * show, or every one to the owner (who gets a note on a tab others don't see).
  */
-export function personTabs(p: { shares_rankings: boolean; shares_bars: boolean; shares_made: boolean }, mine: boolean): ('had' | 'bars' | 'originals')[] {
-  const shows = { had: p.shares_rankings, bars: p.shares_bars, originals: p.shares_made };
+export function personTabs(p: { had_mode: ShareMode; bars_mode: ShareMode; made_mode: ShareMode }, mine: boolean): ShareSection[] {
+  const shows = { had: p.had_mode !== 'none', bars: p.bars_mode !== 'none', originals: p.made_mode !== 'none' };
   return (['had', 'bars', 'originals'] as const).filter((t) => mine || shows[t]);
 }
 
