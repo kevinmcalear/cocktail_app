@@ -8,7 +8,7 @@ import { fontFamilies, space } from '@/constants/tokens';
 import { useDrinkHistory } from '@/hooks/useDrinkHistory';
 import { useLineage } from '@/hooks/useLineage';
 import { historyFor } from '@/lib/drinkHistory';
-import { creditSentence, creditText, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
+import { creditSentence, creditText, joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
 
 import { CreditTag } from './DrinkCredit';
 import { FactRow } from './FactRow';
@@ -40,13 +40,22 @@ function DrinkRow({ d, onPress }: { d: LineageDrink; onPress: () => void }) {
   );
 }
 
+/** Who made these drinks, each once, best-credited first. */
+function makersOf(drinks: LineageDrink[]): CreditProfile[] {
+  return drinks.map((d) => d.origin_bar ?? d.creator).filter((p, i, all): p is CreditProfile => !!p && all.findIndex((q) => q?.id === p.id) === i);
+}
+
+/** "Death & Co, Temple Bar, Little Rye and more": versions often share the classic's name, so name who made them. */
+function makersLine(drinks: LineageDrink[]): string {
+  const names = makersOf(drinks).map((p) => p.display_name);
+  if (!names.length) return shortNames(drinks.map((d) => d.name));
+  return names.length > 3 ? `${names.slice(0, 3).join(', ')} and more` : joinNames(names);
+}
+
 /** Up to three makers' faces, overlapping. */
 function Faces({ drinks }: { drinks: LineageDrink[] }) {
   const ds = useDs();
-  const makers = drinks
-    .map((d) => d.creator ?? d.origin_bar)
-    .filter((p, i, all): p is CreditProfile => !!p && all.findIndex((q) => q?.id === p.id) === i)
-    .slice(0, 3);
+  const makers = makersOf(drinks).slice(0, 3);
   if (!makers.length) return null;
   return (
     <View aria-hidden style={styles.faces}>
@@ -140,7 +149,7 @@ export function Backstory({ itemId }: { itemId: string }) {
             label={riffLabel}
             // The hook reads the best 100.
             mark={riffs.length >= 100 ? '100+' : String(riffs.length)}
-            accessibilityLabel={`${riffLabel}: ${shortNames(riffs.map((r) => r.name))}`}
+            accessibilityLabel={`${riffLabel}: ${makersLine(riffs)}`}
             more={riffs.map((r) => (
               <DrinkRow key={r.id} d={r} onPress={() => router.push(drinkHref(r.id))} />
             ))}
@@ -148,7 +157,7 @@ export function Backstory({ itemId }: { itemId: string }) {
             <View style={styles.riffLine}>
               <Faces drinks={riffs} />
               <Body numberOfLines={1} style={styles.flex}>
-                {shortNames(riffs.map((r) => r.name))}
+                {makersLine(riffs)}
               </Body>
             </View>
           </FactRow>

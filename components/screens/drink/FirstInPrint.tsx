@@ -23,7 +23,7 @@ export function FirstInPrint({ records, borrowed }: { records: PrintedRecipe[]; 
   if (!lead) return null;
   const rest = records.filter((r) => r.id !== lead.id);
   const url = readUrl(lead);
-  const detail = [lead.source.author, lead.printed_name ? `as "${lead.printed_name}"` : null, borrowed ? `for the ${borrowed}` : null].filter(Boolean).join(' · ');
+  const detail = [lead.printed_name ? `as "${lead.printed_name}"` : null, borrowed ? `for the ${borrowed}` : null].filter(Boolean).join(' · ');
   const label = RELATION_LABEL[lead.relation];
 
   return (

@@ -18,11 +18,17 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
   );
 }
 
-/** The credit sentence with the bar's neighbourhood after its name: "at Temple Bar, NoHo". */
-function withPlace(parts: CreditPart[], drink: LineageDrink): CreditPart[] {
+/**
+ * The credit sentence as it reads under a name: a classic comes "From the
+ * Whiskey Cocktail" (it isn't a riff), and a bar has its neighbourhood after
+ * it ("at Temple Bar, NoHo").
+ */
+function underName(parts: CreditPart[], drink: LineageDrink): CreditPart[] {
   const bar = drink.origin_bar;
-  if (!bar?.locality) return parts;
-  return parts.flatMap((p) => (p.profileId === bar.id ? [p, { text: `, ${bar.locality}` }] : [p]));
+  return parts.flatMap((p, i) => {
+    if (i === 0 && drink.is_catalog && p.text === 'Riff of ') return [{ text: 'From the ' }];
+    return p.profileId === bar?.id && bar?.locality ? [p, { text: `, ${bar.locality}` }] : [p];
+  });
 }
 
 /**
@@ -35,7 +41,7 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   const { data } = useLineage(itemId);
   const drink = data?.drink;
   if (!drink) return null;
-  const parts = withPlace(creditSentence(drink, data.ancestors.at(-1) ?? null), drink);
+  const parts = underName(creditSentence(drink, data.ancestors.at(-1) ?? null), drink);
   if (!parts.length) return null;
   const who = drink.creator ?? drink.origin_bar;
 
