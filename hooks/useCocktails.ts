@@ -7,9 +7,7 @@ import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeU
 import { DatabaseItem } from '@/types/types';
 import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
-import { applyBarContextFilter } from '@/lib/barContextFilter';
 import { drinkSeed, seedDrink, type DrinkSeed } from '@/lib/drinkSeeds';
-import { useAppStore } from '@/store/useAppStore';
 
 /**
  * Columns for a drink list or search card (app_item_presentation). The lines
@@ -76,15 +74,13 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
     return (processed ?? []) as unknown as DatabaseItem[];
 }
 
-export function useCocktails(options?: { allContexts?: boolean }) {
-    const selectedContextIds = useAppStore((state) => state.selectedContextIds);
+/** Every drink the person can see, at home and every venue; screens filter by place, so switching doesn't download it again. */
+export function useCocktails() {
     const { viewAsRoleLevel } = useViewAs();
     const userId = useUserId();
-    // Every venue's list ignores the picked venues, so switching venue doesn't download it again.
-    const contexts = options?.allContexts ? null : selectedContextIds;
 
     return useQuery({
-        queryKey: ['cocktails', contexts, options, viewAsRoleLevel, userId],
+        queryKey: ['cocktails', viewAsRoleLevel, userId],
         queryFn: async () => {
             // By id, a page after the last id (an offset page re-sorts every row before it), then into name order here.
             const data = await allRowsById((after, size) => {
@@ -97,7 +93,6 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     // out of the Library. Search lists them apart, under "From bars".
                     .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
-                if (contexts) query = applyBarContextFilter(query, contexts);
                 if (after) query = query.gt('id', after);
 
                 return query.order('id').limit(size);
@@ -148,6 +143,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                             id,
                             name,
                             abv,
+                            ingredient_role,
                             item_images (
                                 angle,
                                 sort_order,

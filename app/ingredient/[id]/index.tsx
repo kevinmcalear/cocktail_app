@@ -1,42 +1,21 @@
-import { ErrorState } from '@/components/ui/ErrorState';
-import { IngredientDrawing } from "@/components/ds";
-import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Paragraph, ScrollView as TamaguiScrollView, Text, YStack, useTheme } from "tamagui";
+import { View } from "react-native";
 
-import { AllergenSection } from "@/components/allergens/AllergenSection";
-import { PriceSection } from "@/components/costs/PriceSection";
-import { PrepCard } from "@/components/prep/PrepCard";
-import { WhereItLives } from "@/components/backbar/WhereItLives";
-import { PublishSection } from "@/components/screens/publishing/PublishSection";
-import { ItemDetailLayout } from "@/components/ItemDetailLayout";
-import { IngredientFacts } from "@/components/ingredient/IngredientFacts";
-import { PairsWith } from "@/components/screens/pairings/PairsWith";
-import { GlassView } from "@/components/ui/GlassView";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { BackbarTheme, Body, Button, useDs } from "@/components/ds";
+import { IngredientScreen } from "@/components/screens/ingredient/IngredientScreen";
+import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
+import { FEATURES } from "@/constants/features";
+import { space } from "@/constants/tokens";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
-import { FEATURES } from "@/constants/features";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useCanEditItem, useEffectiveRole } from "@/hooks/useViewAs";
-import { PictureTag } from "@/components/ui/PictureTag";
-import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
-import { heroPicture, orderedPictures, pictureTag, type ItemImageLink } from "@/lib/itemImages";
+import { useCanEditItem } from "@/hooks/useViewAs";
+import { orderedPictures } from "@/lib/itemImages";
 
-interface IngredientDetail {
+interface RecipeRow {
     id: string;
-    name: string;
-    description: string | null;
-    bar_id: string | null;
-    generic?: { id: string; name: string } | null;
-    item_images?: ItemImageLink[];
-}
-
-interface RecipeItem {
-    id: string;
-    ingredient: { name: string };
+    ingredient: { id?: string; name: string; ingredient_role?: string | null } | null;
     amount: string | null;
     unit: string | null;
     preparation_notes: string | null;
@@ -44,256 +23,69 @@ interface RecipeItem {
 }
 
 export default function IngredientDetailScreen() {
-    const { id } = useLocalSearchParams();
+    const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const theme = useTheme();
-
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
     // first paint, when nothing is fetching, and those must not read as not found.
-    const { data, isPending: loading, error, refetch } = useIngredient(id as string);
-    const ingredient = data?.ingredient as IngredientDetail | null;
-    const recipe = data?.recipe as unknown as RecipeItem[] || [];
-    const usedIn = data?.usedIn || [];
+    const { data, isPending, error, refetch } = useIngredient(id);
+    const ingredient = data?.ingredient ?? null;
 
     useTrackRecent(
         !!ingredient,
-        ingredient
-            ? recentEntry('ingredient', ingredient.id, ingredient.name, {
-                barId: ingredient.bar_id ?? null,
-              })
-            : null
+        ingredient ? recentEntry('ingredient', ingredient.id, ingredient.name, { barId: ingredient.bar_id ?? null }) : null
     );
-
     const canEdit = useCanEditItem(ingredient);
-    // Batch recipes are for Drink Creators and up at the ingredient's venue.
-    // Shared ingredients have no venue, and the recipe view returns them in full.
-    const venueRole = useEffectiveRole(ingredient?.bar_id ?? null);
-    const canViewDetails = !ingredient?.bar_id || venueRole > 30;
 
-    if (loading || !ingredient) {
+    if (isPending || !ingredient) {
         return (
-            <ItemDetailLayout 
-                id={id as string}
-                title={loading ? "Loading..." : "Not Found"}
-                images={[]}
-                isLoading={loading}
-                isFavorite={false}
-                onToggleFavorite={() => {}}
-            >
-                <YStack flex={1} justifyContent="center" alignItems="center">
-                    {error ? (
-                        <ErrorState title="Couldn't load this ingredient" onRetry={() => void refetch()} />
-                    ) : (
-                        <Text color="$color">{loading ? "Loading Ingredient..." : "Ingredient not found."}</Text>
-                    )}
-                </YStack>
-            </ItemDetailLayout>
+            <BackbarTheme>
+                <Empty
+                    label={isPending ? "Loading ingredient" : error ? "Couldn't load this ingredient." : "Ingredient not found."}
+                    onRetry={error ? () => void refetch() : undefined}
+                    loading={isPending}
+                />
+            </BackbarTheme>
         );
     }
 
-    const pictures = orderedPictures(data?.heroImages);
+    const lines: PrepLine[] = ((data?.recipe ?? []) as unknown as RecipeRow[]).map((r) => ({
+        id: r.id,
+        name: r.ingredient?.name || "Hidden ingredient",
+        ingredientId: r.ingredient?.id ?? null,
+        amount: r.amount,
+        unit: r.unit,
+        note: r.preparation_notes?.trim() || null,
+        optional: !!r.is_optional,
+        houseMade: r.ingredient?.ingredient_role === 'prep',
+    }));
+    const key = `ingredient-${ingredient.id}`;
+
     return (
-        <ItemDetailLayout
-            id={`ingredient-${ingredient.id}`}
-            title={ingredient.name}
-            images={pictures.map((p) => p.url)}
-            imageTags={pictures.map(pictureTag)}
-            isFavorite={isFavorite(`ingredient-${ingredient.id}`)}
-            isInStudyPile={isInStudyPile(`ingredient-${ingredient.id}`)}
-            onToggleFavorite={toggleFavorite}
-            onToggleStudyPile={FEATURES.study ? toggleStudyPile : undefined}
-            onEditPress={canEdit ? () => router.push(`/ingredient/${id}/edit`) : undefined}
-            hero={<IngredientDrawing id={ingredient.id} name={ingredient.name} />}
-        >
-            <YStack paddingHorizontal="$4" gap="$4" paddingBottom="$8">
-                {/* Info Card */}
-                {(!recipe.length || canViewDetails) && (ingredient.description || recipe.length > 0) && (
-                    <GlassView style={styles.card} intensity={10}>
-                        <View style={styles.cardHeader}>
-                            <IconSymbol name="info.circle" size={24} color={theme.color?.get() as string} />
-                            <Text style={[styles.cardTitle, { color: theme.color?.get() as string }]}>About</Text>
-                            {recipe.length > 0 && (
-                                <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginLeft: 'auto' }}>
-                                    <Text style={{ color: theme.color?.get() as string, fontSize: 12, fontWeight: 'bold' }}>BATCH</Text>
-                                </View>
-                            )}
-                        </View>
-                        <Paragraph style={[styles.description, { color: theme.color?.get() as string, opacity: 0.8 }]}>
-                            {ingredient.description || "No description provided."}
-                        </Paragraph>
-                    </GlassView>
-                )}
-
-                <IngredientFacts ingredient={ingredient} bottles={data?.bottles ?? []} />
-                <PairsWith itemId={ingredient.id} name={ingredient.name} />
-
-                <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />
-                <PriceSection itemId={ingredient.id} />
-                <AllergenSection itemId={ingredient.id} houseMade={recipe.length > 0} canEditItem={canEdit} />
-                <PublishSection itemId={ingredient.id} barId={ingredient.bar_id} noun="ingredient" />
-
-                {/* Recipe Section (Only if it has recipes / is a batch) */}
-                {canViewDetails && (recipe.length > 0 || canEdit) && (
-                    <GlassView style={styles.card} intensity={10}>
-                        <View style={styles.cardHeader}>
-                            <IconSymbol name="flask" size={24} color={theme.color?.get() as string} />
-                            <Text style={[styles.cardTitle, { color: theme.color?.get() as string }]}>Build Spec</Text>
-                        </View>
-                        
-                        <View style={styles.recipeList}>
-                            {recipe.map((item, index) => (
-                                <View key={item.id} style={[styles.recipeRow, index !== recipe.length - 1 && styles.recipeBorder]}>
-                                    <Text style={[styles.recipeName, { color: theme.color?.get() as string }]}>{item.ingredient?.name || "Unknown"}</Text>
-                                    <View style={styles.amounts}>
-                                        {item.amount && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.amount}</Text>}
-                                        {item.unit && <Text style={[styles.amountText, { color: theme.color?.get() as string }]}>{item.unit}</Text>}
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-                    </GlassView>
-                )}
-
-                {canViewDetails && (recipe.length > 0 || canEdit) && (
-                    <PrepCard itemId={ingredient.id} itemName={ingredient.name} barId={ingredient.bar_id} canEditItem={canEdit} recipe={recipe.map((r) => ({ id: r.id, name: r.ingredient?.name || "Unknown", amount: r.amount, unit: r.unit }))} />
-                )}
-
-                {/* Used In Section (Horizontal Scroll) */}
-                {usedIn.length > 0 && (
-                    <View style={styles.horizontalSection}>
-                        <View style={[styles.cardHeader, { paddingHorizontal: 20 }]}>
-                            <IconSymbol name="wineglass" size={24} color={theme.color?.get() as string} />
-                            <Text style={[styles.cardTitle, { color: theme.color?.get() as string }]}>Cocktails with {ingredient.name}</Text>
-                        </View>
-                        <TamaguiScrollView 
-                            horizontal 
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalScrollContent}
-                        >
-                            {usedIn.map((item: any) => {
-                                const hero = heroPicture(item.cocktail.item_images);
-                                return (
-                                    <TouchableOpacity 
-                                        key={item.id} 
-                                        style={styles.horizontalCard}
-                                        onPress={() => router.push(`/cocktail/${item.cocktail.id}`)}
-                                        activeOpacity={0.8}
-                                    >
-                                        <View style={styles.horizontalCardImageContainer}>
-                                            {hero ? (
-                                                <Image
-                                                    source={{ uri: hero.url }}
-                                                    style={styles.horizontalCardImage}
-                                                    contentFit="cover"
-                                                />
-                                            ) : (
-                                                <PicturePlaceholder iconSize={40} />
-                                            )}
-                                            <PictureTag label={pictureTag(hero)} style={{ right: 6, bottom: 6 }} />
-                                        </View>
-                                        <Text style={[styles.horizontalCardTitle, { color: theme.color?.get() as string }]} numberOfLines={2}>
-                                            {item.cocktail.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </TamaguiScrollView>
-                    </View> 
-                )}
-            </YStack>
-        </ItemDetailLayout>
+        <IngredientScreen
+            ingredient={ingredient}
+            lines={lines}
+            drinks={(data?.usedIn ?? []).map((u) => ({ id: u.cocktail.id, name: u.cocktail.name }))}
+            bottles={data?.bottles ?? []}
+            pictures={orderedPictures(data?.heroImages)}
+            isFavorite={isFavorite(key)}
+            onToggleFavorite={() => toggleFavorite(key)}
+            inStudyPile={isInStudyPile(key)}
+            onToggleStudyPile={() => (FEATURES.study ? toggleStudyPile(key) : undefined)}
+            canEdit={canEdit}
+            onEdit={() => router.push(`/ingredient/${ingredient.id}/edit`)}
+        />
     );
 }
 
-const styles = StyleSheet.create({
-    card: {
-        borderRadius: 20,
-        padding: 20,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-        overflow: 'hidden'
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        gap: 12
-    },
-    cardTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    description: {
-        fontSize: 16,
-        lineHeight: 24
-    },
-    recipeList: {
-        gap: 12
-    },
-    recipeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 4
-    },
-    recipeBorder: {
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
-        paddingBottom: 12,
-        marginBottom: 4
-    },
-    recipeName: {
-        fontSize: 16,
-        fontWeight: '500'
-    },
-    amounts: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center'
-    },
-    amountText: {
-        fontSize: 15,
-        fontWeight: '600',
-        opacity: 0.8
-    },
-    horizontalSection: {
-        marginTop: 8,
-        marginBottom: 16,
-        marginHorizontal: -16, // Bleed to edges assuming parent padding is 16/20
-    },
-    horizontalScrollContent: {
-        paddingHorizontal: 20, // Initial offset
-        gap: 16,
-        paddingBottom: 20,
-    },
-    horizontalCard: {
-        width: 140,
-        gap: 8,
-    },
-    horizontalCardImageContainer: {
-        width: 140,
-        height: 140,
-        borderRadius: 24, // High border radius for Squircle effect
-        overflow: 'hidden',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        borderCurve: 'continuous', // Squircle effect on iOS
-    },
-    horizontalCardImage: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 24, // Ensure image is also rounded
-        borderCurve: 'continuous',
-    },
-    horizontalCardTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        paddingHorizontal: 4,
-        lineHeight: 18,
-    }
-});
+function Empty({ label, onRetry, loading }: { label: string; onRetry?: () => void; loading: boolean }) {
+    const ds = useDs();
+    return (
+        <View style={{ flex: 1, backgroundColor: ds.c.ground, alignItems: "center", justifyContent: "center", gap: space.md, padding: space.xl }} accessibilityLabel={label}>
+            {loading ? null : <Body tone="muted">{label}</Body>}
+            {onRetry ? <Button label="Try again" variant="secondary" onPress={onRetry} /> : null}
+        </View>
+    );
+}

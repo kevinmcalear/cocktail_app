@@ -100,6 +100,14 @@ describe('save_maker_sketch', () => {
     const { error } = await users.maker.client.rpc('save_maker_sketch', { p_item_id: ids.drink, p_inputs: { ...INPUTS, glass: 'goblet' } });
     assert.equal(error?.code, '22023');
   });
+
+  // The app leaves "variant" out when no glass drawing is picked (hooks/useCreateDrink.ts): a null one is refused.
+  test('a glass drawing is saved; a null one is refused', async () => {
+    const { error } = await users.maker.client.rpc('save_maker_sketch', { p_item_id: ids.drink, p_inputs: { ...INPUTS, variant: 'rocks_heavy' } });
+    assert.ifError(error);
+    const { error: nullError } = await users.maker.client.rpc('save_maker_sketch', { p_item_id: ids.drink, p_inputs: { ...INPUTS, variant: null } });
+    assert.equal(nullError?.code, '22023');
+  });
 });
 
 describe('the worker and a maker drawing', () => {

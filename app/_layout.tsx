@@ -171,6 +171,11 @@ function RootLayoutNav() {
               name="ingredient/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
+            {/* Make mode: a whole screen over the page, no swipe away mid-batch. */}
+            <Stack.Screen
+              name="ingredient/[id]/make"
+              options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
+            />
             {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />

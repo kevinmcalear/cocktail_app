@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
-import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useAppMode, useAppModeHydrated, type AppMode } from '@/store/useAppMode';
 
 /**
@@ -33,4 +33,14 @@ export function useMode(): { mode: AppMode; setMode: (mode: AppMode) => void; is
     isLoading,
     ready: Platform.OS === 'web' || settled !== null || guess !== null,
   };
+}
+
+/**
+ * The venue you're working in, or null at home. For anything shown or saved,
+ * use this rather than useActiveVenue().active, which at home is still the
+ * venue you'd go back to.
+ */
+export function useHereVenue(): Venue | null {
+  const { active } = useActiveVenue();
+  return useMode().mode === 'venue' ? active : null;
 }

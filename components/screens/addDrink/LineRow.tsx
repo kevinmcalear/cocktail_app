@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, DsText, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
+import { leadText } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
@@ -16,6 +17,8 @@ interface LineRowProps {
   onRemove: () => void;
   /** Tapping the name: swap it for another ingredient, keeping the amount. */
   onSwap: () => void;
+  /** A new house prep made here: open its recipe again. */
+  onEditPrep?: () => void;
 }
 
 /**
@@ -24,7 +27,7 @@ interface LineRowProps {
  * (tap to change) and remove. On a phone the controls sit under the name; on
  * a wider screen they share its line.
  */
-export function LineRow({ line, onChange, onRemove, onSwap }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRowProps) {
   const ds = useDs();
   const [units, setUnits] = useState(false);
   const top = line.unit === 'top';
@@ -43,12 +46,22 @@ export function LineRow({ line, onChange, onRemove, onSwap }: LineRowProps) {
             style={styles.name}
           >
             <Body numberOfLines={2}>{line.name}</Body>
-            {line.id ? null : line.technique ? (
+            {line.id ? null : line.prep ? (
+              <View style={styles.prepNote}>
+                <Tag label="House-made" tone="accent" />
+                <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
+              </View>
+            ) : line.technique ? (
               <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
             ) : (
               <Caption tone="muted">New, added when you save</Caption>
             )}
           </PressableScale>
+          {line.prep && onEditPrep ? (
+            <PressableScale onPress={onEditPrep} role="button" accessibilityLabel={`Edit the recipe for ${line.name}`} style={styles.editPrep}>
+              <Caption tone="accent">Edit the recipe</Caption>
+            </PressableScale>
+          ) : null}
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
               {top ? (
@@ -128,6 +141,8 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 }
 
 const styles = StyleSheet.create({
+  prepNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap', paddingTop: 2 },
+  editPrep: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   // Name and controls wrap: two lines on a phone, one on a wide screen.
