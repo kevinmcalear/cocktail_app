@@ -1,15 +1,16 @@
-import { useRouter } from 'expo-router';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { layout, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
-import { confirmAsync } from '@/lib/dialogs';
-import { itemHref } from '@/lib/itemRoutes';
-import { SHELF_FOLDED } from '@/lib/myBarRows';
-import { bottleLine, type ShelfSort } from '@/lib/pantry';
+import { SHELF_FOLDED_ROWS } from '@/lib/myBarRows';
+import type { ShelfSort } from '@/lib/pantry';
+
+import { SectionActions, SectionHead, ShelfTile } from './BarSections';
+import { TileGrid } from './BarTile';
 
 const SORTS: { value: ShelfSort; label: string }[] = [
   { value: 'newest', label: 'Newest' },
@@ -21,97 +22,95 @@ const SORTS: { value: ShelfSort; label: string }[] = [
 /** A shelf this long gets a search box. */
 const SEARCH_FROM = 9;
 
+interface ShelfHeadProps {
+  count: number;
+  sort: ShelfSort;
+  onSort: (sort: ShelfSort) => void;
+  query: string;
+  onQuery: (query: string) => void;
+  editing: boolean;
+  onEdit: (on: boolean) => void;
+  onAdd: () => void;
+}
+
 /**
- * The top of Bottles: its count, a search box for a long shelf, and the
- * sorts. The bottles are rows of My Bar's list (BottleRow), then ShelfFoot.
+ * The top of Bottles: its count, the sort (an icon that opens the choices,
+ * so it never looks like the bottles; tinted when it isn't Newest), Edit and Add, and a search box for a
+ * long shelf. The bottles are rows of My Bar's list (BottleTiles), then ShelfFoot.
  */
-export function ShelfHead({ count, sort, onSort, query, onQuery }: { count: number; sort: ShelfSort; onSort: (sort: ShelfSort) => void; query: string; onQuery: (query: string) => void }) {
+export function ShelfHead({ count, sort, onSort, query, onQuery, editing, onEdit, onAdd }: ShelfHeadProps) {
+  const ds = useDs();
+  const [sorting, setSorting] = useState(false);
+  const current = SORTS.find((s) => s.value === sort)?.label ?? 'Newest';
   return (
     <View style={styles.section}>
-      <View style={styles.head}>
-        <Headline role="heading">Bottles</Headline>
-        <Caption tone="muted">
-          {count} {count === 1 ? 'bottle' : 'bottles'}
-        </Caption>
-      </View>
+      <SectionHead section="bottles" count={count}>
+        {count > 1 && !editing ? (
+          <PressableScale role="button" accessibilityLabel={`Sort bottles, now ${current}`} onPress={() => setSorting(true)} style={styles.sort}>
+            <IconSymbol name="line.3.horizontal.decrease" size={20} color={sort === 'newest' ? ds.c.ink : ds.accentText} />
+          </PressableScale>
+        ) : null}
+        <SectionActions section="bottles" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={count > 0} />
+      </SectionHead>
       {count >= SEARCH_FROM ? (
         <Field label="Search your bottles" value={query} onChangeText={onQuery} placeholder="Gin, Campari…" autoCorrect={false} autoCapitalize="none" returnKeyType="search" />
       ) : null}
-      {count > 1 ? (
+      <MenuSheet visible={sorting} onClose={() => setSorting(false)} title="Sort bottles">
         <View role="radiogroup" accessibilityLabel="Sort your bottles" style={styles.sorts}>
           {SORTS.map((s) => (
-            <Chip key={s.value} label={s.label} quiet selected={sort === s.value} onPress={() => onSort(s.value)} />
+            <Chip
+              key={s.value}
+              label={s.label}
+              selected={sort === s.value}
+              onPress={() => {
+                onSort(s.value);
+                setSorting(false);
+              }}
+            />
           ))}
         </View>
-      ) : null}
+      </MenuSheet>
     </View>
   );
 }
 
 /** Under the bottles: why none show, or Show all / Show fewer. */
-export function ShelfFoot({ found, sort, query, open, onOpen }: { found: number; sort: ShelfSort; query: string; open: boolean; onOpen: (open: boolean) => void }) {
+export function ShelfFoot({ found, cols, sort, query, open, onOpen }: { found: number; cols: number; sort: ShelfSort; query: string; open: boolean; onOpen: (open: boolean) => void }) {
   const q = query.trim();
+  const folded = SHELF_FOLDED_ROWS * cols;
   const note = q && !found ? `No bottle on your shelf matches “${q}”.` : sort === 'unused' && !found ? 'Every bottle goes into something you can make.' : null;
-  if (!note && (q || found <= SHELF_FOLDED)) return null;
+  if (!note && (q || found <= folded)) return null;
   return (
     <View style={styles.foot}>
       {note ? <Body tone="muted">{note}</Body> : null}
-      {!q && found > SHELF_FOLDED ? <Button label={open ? 'Show fewer' : `Show all ${found}`} variant="ghost" onPress={() => onOpen(!open)} /> : null}
+      {!q && found > folded ? <Button label={open ? 'Show fewer' : `Show all ${found}`} variant="ghost" onPress={() => onOpen(!open)} style={styles.left} /> : null}
     </View>
   );
 }
 
 /**
- * One bottle on the shelf: drawing, name, maker and strength, and how many
- * drinks it goes into. Memoized: a list row, re-rendered by every change to the list.
+ * One row of bottle tiles: drawing, name, and how many drinks each goes
+ * into. Memoized: a list row, re-rendered
+ * by every change to the list.
  */
-export const BottleRow = memo(function BottleRow({ item, heading, onRemove }: { item: ShelfItem; heading: string | null; onRemove: (id: string) => void }) {
-  const ds = useDs();
-  const router = useRouter();
-  const line = bottleLine(item);
-  const used = item.uses ? `In ${item.uses} ${item.uses === 1 ? 'drink' : 'drinks'}` : 'Not used yet';
-  const remove = async () => {
-    const ok = await confirmAsync({ title: `Take ${item.name} off your shelf?`, message: 'Drinks that need it leave What to make.', confirmText: 'Take off', destructive: true });
-    if (ok) onRemove(item.id);
-  };
+export const BottleTiles = memo(function BottleTiles({ bottles, heading, cols, editing, onRemove }: { bottles: ShelfItem[]; heading: string | null; cols: number; editing: boolean; onRemove: (id: string) => void }) {
   return (
-    <View>
-      {heading ? (
-        <Caption tone="muted" style={styles.group}>
-          {heading}
-        </Caption>
-      ) : null}
-      <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-        <PressableScale role="link" accessibilityLabel={[item.name, line, used].filter(Boolean).join(', ')} onPress={() => router.push(itemHref('Ingredient', item.id) as never)} style={styles.open}>
-          <IngredientThumb id={item.id} name={item.name} size={44} />
-          <View style={styles.text}>
-            <Body numberOfLines={1}>{item.name}</Body>
-            {line ? (
-              <Caption tone="muted" numberOfLines={1}>
-                {line}
-              </Caption>
-            ) : null}
-          </View>
-          <Caption tone={item.uses ? 'accent' : 'muted'} aria-hidden>
-            {used}
-          </Caption>
-        </PressableScale>
-        <PressableScale accessibilityLabel={`Take ${item.name} off your shelf`} onPress={remove} style={styles.remove}>
-          <IconSymbol name="xmark" size={16} color={ds.c.muted} />
-        </PressableScale>
-      </View>
+    <View style={styles.row}>
+      {heading ? <Caption tone="muted">{heading}</Caption> : null}
+      <TileGrid cols={cols}>
+        {bottles.map((b) => (
+          <ShelfTile key={b.id} item={b} editing={editing} onRemove={onRemove} />
+        ))}
+      </TileGrid>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  sorts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  sorts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.lg },
   foot: { gap: space.md, paddingTop: space.md },
-  group: { paddingTop: space.md },
-  row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
-  open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, minHeight: layout.minTapTarget },
-  text: { flex: 1, gap: 2 },
-  remove: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  left: { alignSelf: 'flex-start' },
+  sort: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  row: { gap: space.sm, paddingTop: space.lg },
 });
