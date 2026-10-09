@@ -24,7 +24,7 @@ export const dropdownKeys = {
 /** What the spec pickers, badges and drink facts read from a method, glass, family or ice row. */
 const SPEC_COLUMNS = 'id, name, item_type, bar_id, icon_key, icon_url, capacity_ml, iced_capacity_ml';
 
-/** Methods, glassware, families, ice, categories and menu templates: small, and on most screens. */
+/** Methods, glassware, families, ice and categories: small, and on most screens. */
 function useSpecLists() {
   return useQuery({
     queryKey: dropdownKeys.specs,
@@ -33,7 +33,7 @@ function useSpecLists() {
     meta: { persist: true },
     queryFn: async () => {
       // A request stops at 1,000 rows, so page (a new "Freezer pour" method once sorted past it).
-      const [specs, templatesRes, sectionsRes, categoriesRes] = await Promise.all([
+      const [specs, categoriesRes] = await Promise.all([
         allRows((from, to) =>
           supabase
             .from('app_item_presentation')
@@ -43,8 +43,6 @@ function useSpecLists() {
             .order('id')
             .range(from, to)
         ),
-        supabase.from('menu_templates').select('*').order('name'),
-        supabase.from('template_sections').select('*').order('sort_order'),
         supabase.from('categories').select('*').order('name'),
       ]);
       return {
@@ -52,8 +50,6 @@ function useSpecLists() {
         glassware: specs.filter((item) => item.item_type === 'glassware'),
         families: specs.filter((item) => item.item_type === 'family'),
         iceTypes: specs.filter((item) => item.item_type === 'ice'),
-        menuTemplates: templatesRes.data || [],
-        templateSections: sectionsRes.data || [],
         categories: categoriesRes.data || [],
       };
     },
@@ -115,13 +111,13 @@ export async function refreshIngredients(client: QueryClient, ids: string[]) {
   );
 }
 
-/** Every menu the person can read, for the legacy creator screens and Prep. Tonight uses useVenueMenus. */
+/** Every menu the person can read, for search and Prep. Tonight uses useVenueMenus. */
 function useAllMenus(enabled: boolean) {
   return useQuery({
     queryKey: dropdownKeys.menus,
     enabled,
     queryFn: async () => {
-      // ponytail: every menu; Current filters is_active (inactive stay in the creator tree)
+      // ponytail: every menu; Prep filters is_active
       const { data, error } = await supabase
         .from('menus')
         .select('id, name, template_id, bar_id, is_active, created_at, cover_url, cover_position')

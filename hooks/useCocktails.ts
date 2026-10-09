@@ -94,7 +94,7 @@ export function useCocktails(options?: { allContexts?: boolean }) {
                     .eq('item_type', 'cocktail')
                     // Drinks credited to another bar or person with no venue behind them (a
                     // bar's signatures, a bartender's originals) stay on that public profile,
-                    // out of the Library. Search lists them apart, under "From bars" (usePublicDrinks).
+                    // out of the Library. Search lists them apart, under "From bars".
                     .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
                 if (contexts) query = applyBarContextFilter(query, contexts);

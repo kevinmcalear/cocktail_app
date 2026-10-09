@@ -14,7 +14,8 @@ const ROUTE: Record<string, string> = {
   beer: '/add-beer',
   wine: '/add-wine',
   ingredient: '/add-ingredient',
-  menu: '/menus/create',
+  // ponytail: menu drafts came from the old menu creator, which is gone. They
+  // list (and delete) but don't open; converting them to menus is Kevin's call.
 };
 
 export const DRAFT_KIND_LABEL: Record<string, string> = {

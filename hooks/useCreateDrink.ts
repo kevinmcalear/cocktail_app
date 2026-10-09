@@ -9,11 +9,10 @@ import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
-import { withDrinkInSection } from '@/lib/menuDrinkAttach';
 import { capitalize } from '@/lib/stringUtils';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 
 export interface CreateDrinkInput {
@@ -23,7 +22,6 @@ export interface CreateDrinkInput {
   /** Your own person profile, for "I made it". */
   myProfileId: string | null;
   /** Adding it from a menu section: it lands in that section. */
-  menuDraftId?: string | null;
   menuSectionId?: string | null;
   /** The drawing the wizard showed (draftSketchInputs): the new drink shows it at once, not its glass icon. */
   sketch?: SketchInputs | null;
@@ -48,10 +46,9 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
 export function useCreateDrink() {
   const qc = useQueryClient();
   const userId = useAuth().user?.id ?? null;
-  const { drafts, saveDraft } = useDrafts();
 
   return useMutation({
-    mutationFn: async ({ draft, barId, myProfileId, menuDraftId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
+    mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
       const warnings: string[] = [];
       // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
@@ -191,14 +188,7 @@ export function useCreateDrink() {
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
-      if (menuSectionId) {
-        const menuDraft = menuDraftId ? drafts.find((d) => d.id === menuDraftId) : null;
-        if (menuDraft) {
-          const selections = withDrinkInSection(menuDraft.draft_data?.selections || {}, menuSectionId, id);
-          await saveDraft({ id: menuDraft.id, entityType: 'menu', draftData: { ...menuDraft.draft_data, selections } });
-        }
-        useCreatorNavStore.getState().deliverMenuDrink(menuSectionId, id);
-      }
+      if (menuSectionId) useMenuDrinkHandoff.getState().deliver(menuSectionId, id);
 
       // The worker writes its drawing inputs a little later; until then (and
       // instead of a cached "none yet") it shows the drawing the wizard did.
@@ -211,7 +201,7 @@ export function useCreateDrink() {
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
       return { id, warnings };
     },
-    onSuccess: (_, { barId, menuDraftId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuDraftId }),
+    onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),
     // The wizard says what went wrong itself, and keeps the draft.
     onError: () => {},
   });

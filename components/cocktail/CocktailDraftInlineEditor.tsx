@@ -14,8 +14,6 @@ import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 interface CocktailDraftInlineEditorProps {
     draftId?: string | null;
     barId?: string | null;
-    menuDraftId?: string | null;
-    menuSectionId?: string | null;
     initialName?: string | null;
     embedded?: boolean;
     onClose?: () => void;
@@ -27,8 +25,6 @@ interface CocktailDraftInlineEditorProps {
 export function CocktailDraftInlineEditor({
     draftId,
     barId,
-    menuDraftId,
-    menuSectionId,
     initialName,
     embedded = true,
     onClose,
@@ -40,8 +36,6 @@ export function CocktailDraftInlineEditor({
     const editor = useCocktailDraftEditor({
         draftId,
         barId,
-        menuDraftId,
-        menuSectionId,
         initialName,
         enabled: true,
     });

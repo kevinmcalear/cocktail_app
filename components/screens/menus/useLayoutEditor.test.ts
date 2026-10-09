@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
-import { useCreatorNavStore } from '@/store/useCreatorNavStore';
+import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { useLayoutEditor } from './useLayoutEditor';
@@ -32,8 +32,8 @@ const menu = {
 test('a drink made from "Create a new drink" lands in its section', async () => {
   const { result } = await renderHook(() => useLayoutEditor(menu));
   mockLibrary = [drink('new'), drink('old')];
-  await act(async () => useCreatorNavStore.getState().deliverMenuDrink('s2', 'new'));
+  await act(async () => useMenuDrinkHandoff.getState().deliver('s2', 'new'));
   await waitFor(() => expect(result.current.layout.sections[1].drinks.map((d) => d.id)).toEqual(['new']));
   expect(result.current.changed).toBe(true);
-  expect(useCreatorNavStore.getState().pendingMenuDrink).toBeNull();
+  expect(useMenuDrinkHandoff.getState().pending).toBeNull();
 });

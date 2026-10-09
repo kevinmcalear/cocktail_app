@@ -5,7 +5,7 @@ import { draftHref, draftTitle, groupDrafts } from './draftList';
 assert.equal(draftHref({ id: 'a1', entity_type: 'cocktail' }), '/add-cocktail?draftId=a1');
 assert.equal(draftHref({ id: 'a1', entity_type: 'beer', bar_id: 'b 1' }), '/add-beer?draftId=a1&barId=b%201');
 assert.equal(draftHref({ id: 'a1', entity_type: 'ingredient', bar_id: null }), '/add-ingredient?draftId=a1');
-assert.equal(draftHref({ id: 'a1', entity_type: 'menu' }), '/menus/create?draftId=a1');
+assert.equal(draftHref({ id: 'a1', entity_type: 'menu' }), null);
 assert.equal(draftHref({ id: 'a1', entity_type: 'spaceship' }), null);
 
 assert.equal(draftTitle({ id: '1', entity_type: 'cocktail', updated_at: '', draft_data: { name: ' Paloma ' } }), 'Paloma');
