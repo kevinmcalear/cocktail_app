@@ -18,6 +18,7 @@ import { EditorActions, EditorSections } from './EditorParts';
 import { GoLiveSheet } from './GoLiveSheet';
 import { PaperLip, PhoneBand } from './PhoneBand';
 import { SectionSheet } from './SectionSheet';
+import { ShareMenuSheet } from './ShareMenuSheet';
 import { useLayoutEditor, type LayoutEditor } from './useLayoutEditor';
 
 /**
@@ -88,7 +89,7 @@ function EditorPhone({ editor }: { editor: LayoutEditor }) {
 
 function EditorSheets({ editor }: { editor: LayoutEditor }) {
   const { sheet } = editor;
-  const section = sheet && sheet.kind !== 'golive' ? editor.section(sheet.key) : null;
+  const section = sheet && sheet.kind !== 'golive' && sheet.kind !== 'share' ? editor.section(sheet.key) : null;
   const index = section ? editor.layout.sections.indexOf(section) : -1;
   return (
     <>
@@ -123,11 +124,24 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
           onRemove={() => editor.removeSection(section.key)}
         />
       ) : null}
+      {sheet?.kind === 'share' ? (
+        <ShareMenuSheet
+          menu={{ ...editor.menu, name: editor.layout.name, coverUrl: editor.layout.coverUrl, coverPosition: editor.layout.coverPosition, sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })) }}
+          onClose={() => editor.setSheet(null)}
+        />
+      ) : null}
       {sheet?.kind === 'golive' ? (
         <GoLiveSheet
           visible
           onClose={() => editor.setSheet(null)}
-          menu={{ id: editor.menu.id, name: editor.layout.name, barId: editor.menu.barId, sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })) }}
+          menu={{
+            id: editor.menu.id,
+            name: editor.layout.name,
+            barId: editor.menu.barId,
+            coverUrl: editor.layout.coverUrl,
+            coverPosition: editor.layout.coverPosition,
+            sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })),
+          }}
           others={editor.others}
           onDone={editor.done}
         />

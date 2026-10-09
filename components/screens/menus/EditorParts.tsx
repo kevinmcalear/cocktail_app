@@ -75,7 +75,10 @@ export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; s
           <Caption tone="muted">Saved</Caption>
         </View>
       )}
-      {on ? null : (
+      {home ? (
+        // Sharing is the home menu's next step: in the accent once there's nothing left to save.
+        <Button label="Share…" icon="square.and.arrow.up" size={size} variant={editor.changed || editor.saving ? 'secondary' : 'primary'} onPress={editor.share} disabled={editor.saving} style={styles.flex} />
+      ) : on ? null : (
         <Button label={editor.status === 'upcoming' ? 'Change date…' : 'Go live…'} size={size} onPress={editor.goLive} disabled={editor.saving} style={styles.flex} />
       )}
     </View>
