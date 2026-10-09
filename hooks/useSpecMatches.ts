@@ -32,7 +32,7 @@ function idsKey(ids: string[]): string {
 /**
  * Whether each of these bar versions of a classic is the classic itself, a
  * variation (and what it changes) or a riff, as this person sees the spec
- * (public.spec_matches, supabase/migrations/20261010610000_spec_match.sql).
+ * (public.spec_matches, supabase/migrations/20261011110000_spec_match.sql).
  * `key` names the set (a classic's id, a search) for the cache.
  */
 export function useSpecMatches(key: string | undefined, ids: string[]) {
@@ -114,6 +114,26 @@ export function useSetSpecMatch() {
     },
     onSettled: () => {
       for (const key of ['spec-match', 'spec-matches', 'bar-version-labels', 'home-bar']) void client.invalidateQueries({ queryKey: [key] });
+    },
+  });
+}
+
+/**
+ * Where a drink's spec came from: its own ('bar'), or filled in from a classic
+ * ('classic', spec_from_id) because the bar published none
+ * (20261011140000_classic_fill.sql). Null on a server without the column yet.
+ */
+export function useSpecSource(itemId: string | undefined) {
+  return useQuery({
+    queryKey: ['spec-source', itemId],
+    enabled: !!itemId,
+    queryFn: async (): Promise<{ spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null> => {
+      const { data, error } = await supabase.from('items').select('spec_source, spec_from_id').eq('id', itemId!).maybeSingle();
+      if (error) {
+        if (error.code === '42703' || error.code === 'PGRST204') return null;
+        throw error;
+      }
+      return (data as { spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null) ?? null;
     },
   });
 }
