@@ -253,6 +253,7 @@ export function MyBarScreen() {
         filter={adding ?? 'all'}
         onFilter={setAdding}
         onShelf={bar.shelfIds}
+        counts={Object.fromEntries(counts)}
         onToggle={(item, on) => (on ? addIds(item.id) : removeId(item.id))}
         onClose={() => setAdding(null)}
       />
