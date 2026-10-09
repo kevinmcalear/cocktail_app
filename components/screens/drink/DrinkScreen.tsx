@@ -23,6 +23,7 @@ import type { DatabaseItem } from '@/types/types';
 
 import { BatchSheet } from '../batch/BatchSheet';
 import { PublishSection } from '../publishing/PublishSection';
+import { MadeAction } from '../made/MadeAction';
 import { RankActions } from '../rank/RankActions';
 import { useCollectToggle } from '../published/useCollectToggle';
 import { ReportAction } from '../safety/ReportSheet';
@@ -148,6 +149,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
           />
         ) : null}
         {preview ? null : <RankActions item={item} picture={heroPic} />}
+        {preview || lock ? null : <MadeAction item={item} ingredients={lines.flatMap((l) => (l.ingredient ? [l.ingredient] : []))} />}
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />

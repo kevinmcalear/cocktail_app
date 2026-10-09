@@ -7,9 +7,14 @@ import { MemorySheet } from '@/components/screens/published/MemorySheet';
 import { space } from '@/constants/tokens';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { useMadeDrinks } from '@/hooks/useMade';
+import { useMyHadDrinks } from '@/hooks/useRankings';
 import { hadOnLine, splitCollection } from '@/lib/collection';
 import { itemHref } from '@/lib/itemRoutes';
+import { tallyMade } from '@/lib/madeIt';
 import { readyFirst, shelfTag } from '@/lib/toMake';
+
+import { DrinkCounts, MadeAtHome } from './CollectionMade';
 
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
@@ -22,14 +27,17 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 }
 
 /**
- * Collection's Drinks: To make, every drink saved with the bookmark (on any
- * drink page, or Collect on a bar's), ready ones first against your shelf;
- * then past drinks, memories of bar drinks that aren't public any more,
+ * Collection's Drinks, from had out to made: how many of each; To make, every
+ * drink saved with the bookmark (on any drink page, or Collect on a bar's)
+ * and not made yet, ready ones first against your shelf; what you've made at
+ * home; then past drinks, memories of bar drinks that aren't public any more,
  * grouped by bar. Tapping a memory edits when you had it and your note.
  */
 export function CollectionDrinks() {
   const { data, isLoading, error } = useCollection();
   const bar = useMyBar();
+  const made = useMadeDrinks().data ?? [];
+  const had = useMyHadDrinks().data ?? [];
   const [now] = useState(() => Date.now());
   const [editing, setEditing] = useState<CollectedDrink | null>(null);
   if (error) return <Body tone="muted">Couldn’t load your collection. Try again in a moment.</Body>;
@@ -37,11 +45,14 @@ export function CollectionDrinks() {
 
   const { live, past } = splitCollection(data.drinks);
   const tagOf = (d: CollectedDrink) => shelfTag(d.itemId, bar.canMakeIds, bar.oneAway);
-  const toMake = readyFirst(live, tagOf);
+  const tallies = tallyMade(made);
+  const madeIds = new Set(tallies.map((t) => t.itemId));
+  const toMake = readyFirst(live.filter((d) => !d.itemId || !madeIds.has(d.itemId)), tagOf);
   const line = (d: CollectedDrink, withBar: boolean) => [withBar ? d.barName : null, hadOnLine(d.hadOn, now)].filter(Boolean).join(' · ') || undefined;
 
   return (
     <View style={styles.wrap}>
+      <DrinkCounts had={had.filter((h) => h.venue || h.atBar).length} toMake={toMake.length} made={tallies.length} />
       <Section title="To make" note={toMake.length ? 'Ready from your shelf first.' : undefined}>
         {toMake.length ? (
           <View role="list">
@@ -65,6 +76,7 @@ export function CollectionDrinks() {
           <Body tone="muted">Tap the bookmark on any drink to save it here for a night in. Drinks you collect from bars land here too.</Body>
         )}
       </Section>
+      <MadeAtHome tallies={tallies} had={had} />
       {past.length ? (
         <Section title="Past drinks" note="No longer on the bar’s public menu. You keep the memory; the spec went with it.">
           {past.map((group) => (
