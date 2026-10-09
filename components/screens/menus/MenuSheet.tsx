@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, PressableScale, Title, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, sheetAnimation, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 interface MenuSheetProps {
   visible: boolean;
@@ -20,16 +19,15 @@ interface MenuSheetProps {
 }
 
 /**
- * The app's sheet: slides up over the screen, closes on the scrim. On desktop
- * web it's a dialog in the middle of the window instead, since a panel rising
- * from the bottom of a wide window reads as a phone screen.
+ * The app's sheet: slides up over the screen on phones, closes on the scrim.
+ * On the web it's a dialog in the middle of the window (components/ds/sheetFrame).
  */
 export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const dialog = useIsWideWeb();
+  const dialog = sheetIsDialog;
   return (
-    <Modal visible={visible} transparent animationType={dialog ? 'fade' : 'slide'} onRequestClose={onClose} onShow={onShow}>
+    <Modal visible={visible} transparent animationType={sheetAnimation} onRequestClose={onClose} onShow={onShow}>
       <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]}>
         <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose} />
         {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). The negative

@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, PressableScale, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, PressableScale, sheetFrame, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -95,14 +95,14 @@ function Sheet({ onClose, ...props }: PeekProps & { onClose: () => void }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <Pressable
         role="dialog"
         accessibilityLabel={props.node.name}
-        style={[styles.sheet, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong, paddingBottom: insets.bottom + space.lg }]}
+        style={[styles.sheet, sheetFrame.panel, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong, paddingBottom: insets.bottom + space.lg }]}
         onPress={(e) => e.stopPropagation()}
       >
-        <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />
+        {sheetIsDialog ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
         <ScrollView contentContainerStyle={styles.body}>
           <DrinkDetail {...props} />
         </ScrollView>
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   destName: { fontFamily: fontFamilies.bodySemiBold },
   barMark: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
   scrim: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { maxHeight: '75%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm },
+  sheet: { width: '100%', maxWidth: 560, alignSelf: 'center', maxHeight: '75%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm },
   grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: radius.pill, marginBottom: space.sm },
   body: { paddingHorizontal: space.lg, paddingBottom: space.sm },
 });
