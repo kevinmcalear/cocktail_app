@@ -32,10 +32,14 @@ BEGIN
       LEFT JOIN public.profiles cp ON cp.user_id = i.created_by AND cp.is_public
      WHERE p.id = NEW.item_id AND NOT p.is_reference
      LIMIT 1;
-    -- A classic or another drink the collector can read but nobody published.
-    -- The insert policy has already checked they can read it.
+    -- A classic or another drink the collector can read but nobody published,
+    -- with the bar it comes from when it has one (a drink on a bar's menu
+    -- history). The insert policy has already checked they can read it.
     IF NEW.name IS NULL THEN
-        SELECT i.name INTO NEW.name FROM public.items i WHERE i.id = NEW.item_id;
+        SELECT i.name, op.display_name INTO NEW.name, NEW.bar_name
+          FROM public.items i
+          LEFT JOIN public.profiles op ON op.id = i.origin_bar_profile_id AND op.is_public
+         WHERE i.id = NEW.item_id;
     END IF;
     RETURN NEW;
 END;

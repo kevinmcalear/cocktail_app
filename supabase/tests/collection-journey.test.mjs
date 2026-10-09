@@ -74,6 +74,7 @@ before(async () => {
   // A catalog classic nobody published, and a bar's own drink a guest can't read.
   ids.classic = (await serviceInsert('items', { name: `Paper Plane ${run}`, item_type: 'cocktail', created_by: null })).id;
   ids.secret = (await serviceInsert('items', { name: `House Secret ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+  ids.fromBar = (await serviceInsert('items', { name: `Figs & Pear ${run}`, item_type: 'cocktail', created_by: null, origin_bar_profile_id: ids.barProfile })).id;
 
   ids.edition = (await serviceInsert('profile_menu_editions', { profile_id: ids.barProfile, name: `Autumn ${run}`, year: 2026 })).id;
   ids.hiddenEdition = (await serviceInsert('profile_menu_editions', { profile_id: ids.hiddenProfile, name: `Night Garden ${run}`, year: 2026 })).id;
@@ -82,7 +83,7 @@ before(async () => {
 after(async () => {
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await service.from('profile_menu_editions').delete().in('id', [ids.edition, ids.hiddenEdition]);
-  await service.from('items').delete().in('id', [ids.classic, ids.secret]);
+  await service.from('items').delete().in('id', [ids.classic, ids.secret, ids.fromBar]);
   await service.from('profiles').delete().in('id', [ids.barProfile, ids.hiddenProfile, ids.personProfile]);
   await service.from('bars').delete().in('id', [ids.bar, ids.hiddenBar]);
   await db.end();
@@ -93,6 +94,12 @@ describe('hearts as collected_items', () => {
     const { data, error } = await users.home.client.from('collected_items').insert({ item_id: ids.classic }).select('name').single();
     assert.ifError(error);
     assert.equal(data.name, `Paper Plane ${run}`);
+  });
+
+  test('a drink from a bar\'s menu history keeps the bar it comes from', async () => {
+    const { data, error } = await users.home.client.from('collected_items').insert({ item_id: ids.fromBar }).select('name, bar_name').single();
+    assert.ifError(error);
+    assert.deepEqual(data, { name: `Figs & Pear ${run}`, bar_name: `Little Rye ${run}` });
   });
 
   test("a drink the collector can't read can't be collected, and its name doesn't leak", async () => {
