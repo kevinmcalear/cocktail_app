@@ -55,12 +55,22 @@ export interface BarPublishing {
   /** Whether people outside the venue see how its published specs changed. Off by default. */
   showSpecChanges: boolean;
   /** The venue's public page, which has to exist before anything goes public. */
-  profile: { id: string; handle: string | null; instagram: string | null } | null;
+  profile: PublishingProfile | null;
   menus: { id: string; name: string; publish_mode: PublishMode | null }[];
   /** Drinks (not ingredients) by what the public sees. */
   counts: Record<PublishMode, number>;
   /** The venue's drinks by name, with what the public sees of each. */
   drinks: { id: string; name: string; mode: PublishMode }[];
+}
+
+/** The venue's public page; makes and serves are a maker page's own. */
+export interface PublishingProfile {
+  id: string;
+  handle: string | null;
+  instagram: string | null;
+  kind: string;
+  makes: string[] | null;
+  serves: string[] | null;
 }
 
 interface BarItem {
@@ -78,7 +88,7 @@ export function useBarPublishing(barId: string) {
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items] = await Promise.all([
         supabase.from('bars').select('default_publish_mode, page_visibility, show_spec_changes').eq('id', barId).single(),
-        supabase.from('profiles').select('id, handle, instagram').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
+        supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
         supabase.from('menus').select('id, name, publish_mode, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
         supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
       ]);
@@ -100,7 +110,7 @@ export function useBarPublishing(barId: string) {
         barDefault,
         pageVisibility,
         showSpecChanges,
-        profile: (profile.data as { id: string; handle: string | null; instagram: string | null } | null) ?? null,
+        profile: (profile.data as PublishingProfile | null) ?? null,
         menus: menuRows.map(({ id, name, publish_mode }) => ({ id, name, publish_mode })),
         counts,
         drinks,

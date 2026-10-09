@@ -81,3 +81,29 @@ export function useLineage(itemId: string | null | undefined) {
     },
   });
 }
+
+export type CreditDrink = LineageDrink & {
+  riff_of: Pick<LineageDrink, 'id' | 'name'> | null;
+  lineage_parent: Pick<LineageDrink, 'id' | 'name'> | null;
+};
+
+/**
+ * Just what the line under a drink's name needs, in one request: its credit
+ * and the drink it comes from. Separate from useLineage, whose walk up the
+ * tree takes a request per ancestor, so the line arrives with the page.
+ */
+export function useDrinkCredit(itemId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['drink-credit', itemId],
+    enabled: !!itemId && UUID.test(itemId),
+    queryFn: async (): Promise<CreditDrink | null> => {
+      const { data, error } = await supabase
+        .from('items')
+        .select(`${LINEAGE_COLUMNS}, riff_of:riff_of_id(id, name), lineage_parent:lineage_parent_id(id, name)`)
+        .eq('id', itemId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as unknown as CreditDrink | null) ?? null;
+    },
+  });
+}

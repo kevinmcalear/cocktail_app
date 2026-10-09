@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useWithdrawClaim } from '@/hooks/useBarClaims';
 import type { Profile, ProfileClaim } from '@/hooks/useProfiles';
-import { REVIEW_REASON, claimProblem, pageInstagram, spacedCode } from '@/lib/claimVerification';
+import { REVIEW_REASON, claimPlace, claimProblem, pageInstagram, spacedCode } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
 
 /** The claim's six digits, big enough to read out across a bar. */
@@ -38,7 +38,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
         ? ['Keep this code by the phone', `We’ll ring ${name} on a number we look up ourselves. Whoever answers reads us this code, so leave it with the team.`]
         : [
             'A moderator is checking',
-            `You signed in at ${claim.evidence?.email_domain ?? 'the bar’s domain'}. ${reason ? `Because ${REVIEW_REASON[reason]}, someone` : 'Someone'} checks it before the page is yours.`,
+            `You signed in at ${claim.evidence?.email_domain ?? `the ${claimPlace(profile.kind)}’s domain`}. ${reason ? `Because ${REVIEW_REASON[reason]}, someone` : 'Someone'} checks it before the page is yours.`,
           ];
 
   return (
@@ -81,9 +81,11 @@ export function ClaimApproved({ profile }: { profile: Profile }) {
       </View>
       <Title>{`${profile.display_name} is yours`}</Title>
       <Body tone="muted">
-        You’re its Admin. The page starts Locked: guests see the bar, its awards, team and drink names, not descriptions or specs.
+        {profile.kind === 'bar'
+          ? 'You’re its Admin. The page starts Locked: guests see the bar, its awards, team and drink names, not descriptions or specs.'
+          : 'You’re its Admin. Invite your team from the venue settings.'}
       </Body>
-      {profile.bar_id ? (
+      {profile.bar_id && profile.kind === 'bar' ? (
         <Button label="Choose who sees your page" size="lg" onPress={() => router.push(`/settings/bar/${profile.bar_id}/publishing` as Href)} />
       ) : null}
       <Button label="Back to the page" variant="secondary" onPress={() => router.replace(`/p/${profile.handle}` as Href)} />

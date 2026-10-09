@@ -7,10 +7,14 @@ import { TechnicalIngredientCard } from '@/components/techniques/TechnicalIngred
 import { layout, space } from '@/constants/tokens';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 
+import { IngredientMaker } from './IngredientMaker';
+
 type Link = { id: string; name: string };
 
 interface Props {
   ingredient: {
+    id?: string;
+    bar_id?: string | null;
     name: string;
     ingredient_role?: string | null;
     brand_maker?: string | null;
@@ -63,6 +67,7 @@ function Facts({ ingredient, bottles, hideRole }: Props) {
           {facts ? <Caption tone="muted">{facts}</Caption> : null}
         </View>
       ) : null}
+      {role === 'product' && ingredient.id ? <IngredientMaker item={{ id: ingredient.id, bar_id: ingredient.bar_id ?? null }} /> : null}
       {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
       {ingredient.generic ? <LinkRow lead="A kind of" item={ingredient.generic} /> : null}
       {bottles.length ? (

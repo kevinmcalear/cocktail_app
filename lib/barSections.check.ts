@@ -14,6 +14,7 @@ const cases: [Sortable, BarSection][] = [
   [{ name: 'Whole Milk', role: 'generic' }, 'fridge'],
   [{ name: 'Soda Water', role: 'generic', abv: 0 }, 'fridge'],
   [{ name: 'Ginger Beer', role: 'generic', abv: 0 }, 'fridge'],
+  [{ name: 'Supasawa', kind: 'Sour Mixer', role: 'product', abv: 0 }, 'fridge'],
   [{ name: 'Water' }, 'fridge'],
   [{ name: 'Sugar' }, 'fridge'],
   [{ name: 'Coffee', role: 'generic', abv: 0 }, 'fridge'],

@@ -27,6 +27,7 @@ import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { Favourites, SharedDrinks } from './HadDrinks';
 import { LockedOriginals } from './LockedOriginals';
+import { MakerProfile } from './MakerProfile';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
 import { WorkedMenus } from './WorkedMenus';
@@ -54,7 +55,8 @@ const BAR_TABS = [
 ] as const;
 
 /**
- * A public profile: a person or a bar, the same kind of page. Who they are,
+ * A public profile: a person or a bar, the same kind of page (a maker's has
+ * its own, MakerProfile). Who they are,
  * the drinks credited to them, and the bars that put those drinks on a menu
  * (the credit that matters most). A person who chooses to can show the
  * drinks they've had, with their scores.
@@ -96,7 +98,10 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
 
   let body;
   if (profile && gated) body = <SignInCard text={`Sign in to see ${profile.display_name}’s profile: the drinks they’ve made, where they’ve worked and what they’re drinking.`} />;
-  else if (profile) body = <ProfileBody profile={profile} columns={breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4} />;
+  else if (profile) {
+    const columns = breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4;
+    body = profile.kind === 'maker' ? <MakerProfile profile={profile} columns={columns} /> : <ProfileBody profile={profile} columns={columns} />;
+  }
   else if (isLoading) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
   else
     body = (

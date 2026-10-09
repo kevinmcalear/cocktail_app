@@ -14,6 +14,7 @@ import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
@@ -27,7 +28,9 @@ import { MadeAction } from '../made/MadeAction';
 import { RankActions } from '../rank/RankActions';
 import { useCollectToggle } from '../published/useCollectToggle';
 import { ReportAction } from '../safety/ReportSheet';
+import { Backstory } from './Backstory';
 import { DrinkControls } from './DrinkControls';
+import { DrinkCredit } from './DrinkCredit';
 import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
@@ -35,7 +38,6 @@ import { AllergensSection } from './AllergensSection';
 import { ClassicLink } from './ClassicLink';
 import { ClassicNote } from './ClassicNote';
 import { CostSection } from './CostSection';
-import { FamilyTree } from './FamilyTree';
 import { FlavorSection } from './FlavorSection';
 import { ServiceSection } from './ServiceSection';
 import { SpecLockPanel } from './SpecLockPanel';
@@ -113,6 +115,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     openGlass: preview ? undefined : () => setGlassOpen(true),
     specLocked: !!lock,
     measures: access.amounts && !lock,
+    makers: useDrinkMakerCredits(preview ? null : item.id).data,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   // No photo of its own: the newest one someone posted leads, credited under the name.
@@ -129,6 +132,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
       <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
       <Display>{item.name}</Display>
+      {preview ? null : <DrinkCredit itemId={item.id} />}
       {item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null}
       {!preview && shown.credit ? (
         <Caption
@@ -195,7 +199,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
       )}
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
-      {preview ? null : <FamilyTree itemId={item.id} />}
+      {preview ? null : <Backstory itemId={item.id} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
       {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
     </View>

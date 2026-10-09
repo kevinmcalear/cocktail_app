@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimProblem, emailCheck, isSharedHost, pageInstagram, siteHost, siteIsRoot, spacedCode } from './claimVerification';
+import { claimPlace, claimProblem, emailCheck, isSharedHost, pageInstagram, siteHost, siteIsRoot, spacedCode } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -46,4 +46,7 @@ assert.equal(spacedCode('482913'), '482 913');
 // The database's own words come through; anything else is a connection problem.
 assert.equal(claimProblem({ code: 'P0001', message: 'This page has already been claimed.' }), 'This page has already been claimed.');
 assert.equal(claimProblem({ code: '23505', message: 'duplicate key' }), 'You already have a claim waiting on this bar.');
+assert.equal(claimProblem({ code: '23505', message: 'You already have a claim waiting on this maker.' }), 'You already have a claim waiting on this maker.');
+assert.equal(claimPlace('maker'), 'company');
+assert.equal(claimPlace('bar'), 'bar');
 assert.match(claimProblem(null), /connection/);

@@ -19,13 +19,13 @@ function claimError(error: unknown): string {
 }
 
 /**
- * "Claim this profile". A bar's page goes to its own claim screen
- * (/p/<id>/claim), where the bar proves it's theirs. A person asks to take
+ * "Claim this profile". A bar's or maker's page goes to its own claim screen
+ * (/p/<id>/claim), where the venue team proves it's theirs. A person asks to take
  * over an unclaimed profile with a note a moderator checks on
  * /p/review-claims.
  */
 export function ClaimProfile({ profile, label = 'Claim this profile' }: { profile: Profile; label?: string }) {
-  return profile.kind === 'bar' ? <ClaimBar profile={profile} label={label} /> : <ClaimPerson profile={profile} label={label} />;
+  return profile.kind === 'person' ? <ClaimPerson profile={profile} label={label} /> : <ClaimBar profile={profile} label={label} />;
 }
 
 /** Where a bar's claim stands, and the way into the claim screen. */

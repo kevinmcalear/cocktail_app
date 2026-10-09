@@ -163,33 +163,6 @@ export function thread(nodes: readonly TreeNode[], key: string): TreeNode[] {
     .filter((n): n is TreeNode => !!n);
 }
 
-export interface Dated {
-  name: string;
-  year: number | null;
-  approx?: boolean | null;
-}
-
-const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
-
-/**
- * "373 years, four steps. The longest jump is Whiskey Sour, 1862, to Gold
- * Rush, c. 2000." for a line oldest first. Null when fewer than two of it
- * have a year.
- */
-export function threadSummary(line: readonly Dated[]): string | null {
-  const dated = line.filter((d) => d.year != null);
-  if (dated.length < 2) return null;
-  const span = dated.at(-1)!.year! - dated[0].year!;
-  const steps = line.length - 1;
-  let jump = { from: dated[0], to: dated[1] };
-  for (let i = 1; i < dated.length - 1; i++) {
-    if (dated[i + 1].year! - dated[i].year! > jump.to.year! - jump.from.year!) jump = { from: dated[i], to: dated[i + 1] };
-  }
-  const head = `${span} year${span === 1 ? '' : 's'}, ${WORDS[steps] ?? steps} step${steps === 1 ? '' : 's'}.`;
-  if (dated.length < 3) return head;
-  return `${head} The longest jump is ${jump.from.name}, ${yearLabel(jump.from.year, jump.from.approx)}, to ${jump.to.name}, ${yearLabel(jump.to.year, jump.to.approx)}.`;
-}
-
 /** "c. 1880" or "1880" for a row; "c.1880" squeezes into the year column. */
 export function shortYear(n: Pick<TreeNode, 'year' | 'approx'>): string {
   return n.year == null ? '' : `${n.approx ? 'c.' : ''}${n.year}`;

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { RowDivider, SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { Body, Button, Caption, Field, PressableScale, Surface, Tag, useDs } from '@/components/ds';
+import { MakerCreditRequests } from '@/components/maker/MakerCreditRequests';
 import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -169,6 +170,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
       ) : null}
 
       {manage ? <JobRequests venueId={barId} title="Job requests" /> : null}
+      {manage ? <MakerCreditRequests venueId={barId} /> : null}
 
       {manage ? (
         <>

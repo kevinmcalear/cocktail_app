@@ -41,7 +41,7 @@ export function barSection({ name, kind, role, abv, hasRecipe }: Sortable): BarS
   if (role === 'prep' || (role !== 'product' && (hasRecipe || MADE.test(names[0])))) return 'preps';
   if (technicalIngredientFor(name) || names.some((n) => LAB.test(n))) return 'lab';
   if (abv && abv > 0) return 'bottles';
-  if (MIXER.test(names[0])) return 'fridge';
+  if (MIXER.test(names[0]) || /\bsour mixer\b/.test(names[1])) return 'fridge';
   if (names.some((n) => ALCOHOL.test(n)) || role === 'product') return 'bottles';
   return 'fridge';
 }
