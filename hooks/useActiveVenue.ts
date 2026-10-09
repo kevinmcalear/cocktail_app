@@ -5,7 +5,7 @@ import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { DisplayFace } from '@/constants/tokens';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppMode, useAppModeHydrated } from '@/store/useAppMode';
 
 export interface Venue {
   id: string;
@@ -20,9 +20,10 @@ export interface Venue {
 }
 
 /**
- * The venue the person is working in, and the venues they can switch to.
- * Uses the app's existing venue context (useAppStore.selectedBarId), so
- * switching here also scopes search and editing to that venue.
+ * The venue the person is working in, and the venues they can switch to. The
+ * pick is saved on the device (useAppMode), so a reload comes back to it.
+ * In home mode this is still the venue going back would land on: home
+ * screens check useMode() before using it.
  */
 export function useActiveVenue() {
   const { data, isError } = useBars();
@@ -31,9 +32,12 @@ export function useActiveVenue() {
   // While auth settles, `user` can already be the saved session's user, whose
   // cached bars count as known; with no user yet, nothing is.
   const { loading: authLoading, userId } = useAuthIdentity();
-  const isLoading = userId ? data === undefined && !isError : authLoading;
-  const selectedBarId = useAppStore((s) => s.selectedBarId);
-  const setActive = useAppStore((s) => s.setSelectedBarId);
+  // The saved pick isn't known until storage is read, so nothing is active
+  // before then: the first venue would flash up, and fetch, in its place.
+  const hydrated = useAppModeHydrated();
+  const isLoading = !hydrated || (userId ? data === undefined && !isError : authLoading);
+  const venueId = useAppMode((s) => s.venueId);
+  const enterVenue = useAppMode((s) => s.enterVenue);
 
   const venues = useMemo<Venue[]>(() => {
     const out: Venue[] = [];
@@ -53,8 +57,8 @@ export function useActiveVenue() {
     return out.sort((a, b) => a.name.localeCompare(b.name));
   }, [data]);
 
-  // ponytail: with no venue chosen yet (search context "personal"), show the
-  // first venue rather than an empty state. Choosing one sets the context.
-  const active = venues.find((v) => v.id === selectedBarId) ?? venues[0] ?? null;
-  return { venues, active, setActive, isLoading };
+  // Nothing picked yet, or the picked venue is gone (left the team, another
+  // person signed in): the first venue, until one is chosen.
+  const active = hydrated ? (venues.find((v) => v.id === venueId) ?? venues[0] ?? null) : null;
+  return { venues, active, enterVenue, isLoading };
 }
