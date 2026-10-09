@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, DsText, Tag } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
-import { useLineage } from '@/hooks/useLineage';
+import { useDrinkCredit } from '@/hooks/useLineage';
 import { creditHint, creditLabel, creditSentence, type CreditPart, type CreditStatus, type LineageDrink } from '@/lib/lineage';
 
 /** Credit status as a word, with what it means for screen readers. Colour is never the only signal. */
@@ -38,10 +38,9 @@ function underName(parts: CreditPart[], drink: LineageDrink): CreditPart[] {
  */
 export function DrinkCredit({ itemId }: { itemId: string }) {
   const router = useRouter();
-  const { data } = useLineage(itemId);
-  const drink = data?.drink;
+  const { data: drink } = useDrinkCredit(itemId);
   if (!drink) return null;
-  const parts = underName(creditSentence(drink, data.ancestors.at(-1) ?? null), drink);
+  const parts = underName(creditSentence(drink, drink.riff_of ?? drink.lineage_parent), drink);
   if (!parts.length) return null;
   const who = drink.creator ?? drink.origin_bar;
   const status = creditLabel(drink.credit_status);
