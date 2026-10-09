@@ -11,7 +11,7 @@ jest.mock('@tanstack/react-query', () => ({
   useMutation: (opts: unknown) => opts,
   useQueryClient: () => ({ invalidateQueries: jest.fn(), setQueryData: (...args: unknown[]) => mockSetQueryData(...args) }),
 }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' } }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [], saveDraft: jest.fn() }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ dropdownKeys: { specs: ['dropdowns', 'specs'] }, refreshIngredients: jest.fn() }));
 jest.mock('@/hooks/useTrackRecent', () => ({ recentEntry: () => ({}) }));

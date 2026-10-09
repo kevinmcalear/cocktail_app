@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { viewerScoped } from '@/lib/authCache';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +17,7 @@ export interface SpecLock {
  * locked. Only a shared drink credited to a bar can be.
  */
 export function useSpecLock(item: { id: string; bar_id?: string | null; origin_bar_profile_id?: string | null } | null | undefined) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   const barProfileId = item && !item.bar_id ? (item.origin_bar_profile_id ?? null) : null;
   return useQuery({
     queryKey: ['spec-lock', item?.id, viewer.key],

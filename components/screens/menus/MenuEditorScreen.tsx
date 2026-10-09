@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenu } from '@/hooks/useMenus';
 import type { MenuDetail } from '@/types/menus';
@@ -28,7 +28,7 @@ export function MenuEditorScreen({ menuId }: { menuId: string }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const router = useRouter();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   // Edits start from the server's copy, never a cached one: saving writes the
   // whole layout, so a stale start would undo someone else's changes.
   const { data: menu, isLoading, isFetchedAfterMount } = useMenu(menuId, { fresh: true });

@@ -7,7 +7,7 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ChipRow } from '@/components/screens/home/DiscoverArea';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { usePublicIngredientSearch } from '@/hooks/useIngredients';
@@ -43,7 +43,7 @@ interface PublicResultsProps {
  */
 export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }: PublicResultsProps) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const q = query.trim();
   const everywhere = !area;
   const where = areaLabel(area ?? ANYWHERE);

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { track } from '@/lib/analytics';
 import { getAuthSite } from '@/lib/authRedirect';
 import { invokeFunction } from '@/lib/invokeFunction';
@@ -85,7 +85,7 @@ export function useAcceptInvite(barId: string) {
 
 /** Every venue that has invited the signed-in person and is still waiting. */
 export function useMyInvites(enabled = true) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['my-invites', userId],
     enabled: !!userId && enabled,

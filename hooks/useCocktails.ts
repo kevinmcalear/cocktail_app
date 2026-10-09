@@ -1,4 +1,4 @@
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { useViewAs } from '@/hooks/useViewAs';
 import { allRowsById, byName } from '@/lib/allRows';
@@ -79,7 +79,7 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
 export function useCocktails(options?: { allContexts?: boolean }) {
     const selectedContextIds = useAppStore((state) => state.selectedContextIds);
     const { viewAsRoleLevel } = useViewAs();
-    const userId = useAuth().user?.id ?? null;
+    const userId = useUserId();
     // Every venue's list ignores the picked venues, so switching venue doesn't download it again.
     const contexts = options?.allContexts ? null : selectedContextIds;
 

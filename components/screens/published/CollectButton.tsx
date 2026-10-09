@@ -4,7 +4,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 
 import { Button, Caption } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useCollect, useCollection } from '@/hooks/useCollection';
 
 import { useAgeGate } from '../safety/AgeGate';
@@ -18,7 +18,7 @@ type Target = { kind: 'drink'; itemId: string; releaseId?: string | null } | { k
  */
 export function CollectButton({ target, name }: { target: Target; name: string }) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data: collection } = useCollection();
   const age = useAgeGate();
   const collect = useCollect();

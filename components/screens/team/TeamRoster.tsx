@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { STATUS } from '@/constants/palette';
 import { radius, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
 import { useBarMembers, useRemoveMember, useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
 import { plainDbMessage } from '@/lib/dbError';
@@ -42,7 +42,7 @@ function problem(error: unknown): string | null {
  * them. The database decides who may; this only hides the controls.
  */
 export function TeamRoster({ barId, barName, role }: { barId: string; barName: string; role: number }) {
-  const myId = useAuth().user?.id;
+  const myId = useUserId();
   const manage = canManageTeam(role);
   const members = useBarMembers(barId);
   const change = useSetMemberRole(barId);

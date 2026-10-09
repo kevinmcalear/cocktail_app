@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { chunk } from '@/lib/commandSearchGrid';
 import { blendTaste, DIMENSIONS, MIN_COVERAGE, type FlavorDrink, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
 import { tasteFromRankings, type RankedFlavor } from '@/lib/palate';
@@ -65,7 +65,7 @@ export interface MyTaste {
  * moves the moment you rank. Signed out: null.
  */
 export function useMyTaste() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const had = useMyHadDrinks();
   const ids = (had.data ?? []).map((d) => d.itemId);
   const flavors = useItemFlavors(ids, !!had.data, true);
@@ -95,7 +95,7 @@ export function useMyTaste() {
 
 /** Save your answers (owner-only row in user_prefs). Empty clears them. */
 export function useSaveTasteAnswers() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (answers: Taste): Promise<Taste | null> => {
@@ -114,7 +114,7 @@ export function useSaveTasteAnswers() {
  * "usual" means in match reasons. Null until it loads, or when there are none.
  */
 export function useFlavorBaseline() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['flavor-baseline', userId],
     enabled: !!userId,
@@ -138,7 +138,7 @@ interface ForYouRow extends Record<(typeof DIMENSIONS)[number], number> {
 
 /** The drinks nearest your taste, nearest first, leaving out ones you've ranked (flavor_for_you). */
 export function useForYouDrinks(taste: Taste | null | undefined, limit = 10) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['flavor-for-you', userId, taste, limit],
     enabled: !!userId && !!taste,

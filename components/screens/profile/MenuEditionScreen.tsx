@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PressableScale, Tag } from '@/components/ds';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { editionDates, editionMenuDrinks, menuRange, menuState } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
@@ -17,7 +17,7 @@ import { PublicMissing, PublicShell } from '../published/PublicShell';
  */
 export function MenuEditionScreen({ profileRef, editionId }: { profileRef: string; editionId: string }) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const profile = useProfile(profileRef);
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);

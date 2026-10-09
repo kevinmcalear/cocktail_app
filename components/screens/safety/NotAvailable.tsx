@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 
 import { SafetyPage } from './SafetyPage';
 
@@ -22,7 +22,7 @@ const WHY = {
  */
 export function NotAvailable({ what }: { what: keyof typeof WHY }) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const blocked = signedIn && what !== 'release' ? ' Or it’s from someone you’ve blocked.' : '';
   return (
     <SafetyPage title="Not available" intro={`This ${what} isn’t available to you. ${WHY[what]}${blocked}`} backTo="/">

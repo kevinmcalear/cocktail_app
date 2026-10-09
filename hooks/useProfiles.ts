@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type Query } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
@@ -58,7 +58,7 @@ export const changedProfiles = (change: ProfileChange) => ({
 /** A profile by id or handle (a /p/<ref> link). Public ones for anyone; private ones for their owner. */
 export function useProfile(ref: string | string[] | null | undefined) {
   const parsed = parseProfileRef(ref);
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['profile', parsed, viewer.key],
     meta: viewer.meta,
@@ -144,7 +144,7 @@ async function publicOriginals(profileId: string): Promise<Original[]> {
  * items, so everyone else gets their public cards (names and credits) as well.
  */
 export function useProfileOriginals(profileId: string | null | undefined, { locked = false }: { locked?: boolean } = {}) {
-  const userId = useAuth().user?.id;
+  const userId = useUserId();
   const viewer = viewerScoped(userId);
   return useQuery({
     queryKey: ['profile-originals', profileId, viewer.key, locked],
@@ -176,7 +176,7 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
  * other people see only what's credited (useProfileOriginals).
  */
 export function useMyMadeDrinks(profileId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['my-made', userId, profileId ?? null],
     enabled: !!userId,
@@ -196,7 +196,7 @@ export function useMyMadeDrinks(profileId: string | null | undefined) {
 
 /** A profile's list places and titled awards, newest first. */
 export function useProfileAwards(profileId: string | null | undefined) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['profile-awards', profileId, viewer.key],
     meta: viewer.meta,
@@ -235,7 +235,7 @@ export interface DrinkMenuRun extends MenuDates {
 
 /** The bar menus a drink was on, and when (menu_drink_runs). Empty for a drink no menu lists. */
 export function useDrinkMenuRuns(itemId: string | null) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['drink-menu-runs', itemId, viewer.key],
     meta: viewer.meta,
@@ -262,7 +262,7 @@ export function useDrinkMenuRuns(itemId: string | null) {
  * menu shows their names (lib/menuEditions editionMenuDrinks).
  */
 export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const ids = drinks.map((d) => d.id);
   return useQuery({
     queryKey: ['menu-edition-drinks', ids, userId],
@@ -287,7 +287,7 @@ export interface MenuCreditWithProfile extends MenuCredit {
  * "on the menu at" read from the publishing piece (7d).
  */
 export function useMenuCredits(itemIds: string[]) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['menu-credits', itemIds, viewer.key],
     meta: viewer.meta,
@@ -331,16 +331,16 @@ export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, 
 
 /** The signed-in person's claims on one profile, newest first. */
 export function useMyClaims(profileId: string | null | undefined) {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['profile-claims', 'mine', profileId, user?.id],
-    enabled: !!profileId && !!user,
+    queryKey: ['profile-claims', 'mine', profileId, userId],
+    enabled: !!profileId && !!userId,
     queryFn: async (): Promise<ProfileClaim[]> => {
       const { data, error } = await supabase
         .from('profile_claims')
         .select(CLAIM_COLUMNS)
         .eq('profile_id', profileId!)
-        .eq('user_id', user!.id)
+        .eq('user_id', userId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProfileClaim[];
@@ -403,10 +403,10 @@ export interface ClaimForReview extends ProfileClaim {
  * claims (RLS), so for everyone else this is empty.
  */
 export function usePendingClaims() {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['profile-claims', 'pending', user?.id],
-    enabled: !!user,
+    queryKey: ['profile-claims', 'pending', userId],
+    enabled: !!userId,
     // A moderation queue: always refetch rather than trust the persisted cache.
     staleTime: 0,
     queryFn: async (): Promise<ClaimForReview[]> => {
@@ -414,7 +414,7 @@ export function usePendingClaims() {
         .from('profile_claims')
         .select(`${CLAIM_COLUMNS}, profile:profiles(id, kind, handle, display_name, website, instagram, social_links, locality, city, country_code, is_closed), bar:bars(name)`)
         .eq('status', 'pending')
-        .neq('user_id', user!.id)
+        .neq('user_id', userId!)
         .order('created_at')
         .limit(100);
       if (error) throw error;
@@ -442,7 +442,7 @@ export interface ClaimReview {
 /** Approves (hands the profile over) or turns down a claim. Moderators only. */
 export function useReviewClaim() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ claimId, approve, code, reason }: ClaimReview) => {
       if (approve) {
@@ -455,7 +455,7 @@ export function useReviewClaim() {
         .update({
           status: 'rejected',
           decline_reason: reason?.trim().slice(0, 300) || null,
-          reviewed_by: user?.id ?? null,
+          reviewed_by: userId ?? null,
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', claimId)
@@ -537,7 +537,7 @@ export interface WorkedMenu {
 
 /** Menus a person says they worked on, including at a bar that has closed. */
 export function useWorkedMenus(profileId: string | null | undefined) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['profile-worked-menus', profileId, viewer.key],
     meta: viewer.meta,
@@ -558,7 +558,7 @@ export function useWorkedMenus(profileId: string | null | undefined) {
 
 /** Where a person works, or who works at a bar: current first, then by name. */
 export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null | undefined) {
-  const viewer = viewerScoped(useAuth().user?.id);
+  const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['profile-positions', profile?.id, viewer.key],
     meta: viewer.meta,

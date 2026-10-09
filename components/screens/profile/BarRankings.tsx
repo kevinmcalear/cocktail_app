@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DrinkImage, Headline, PressableScale, Spec, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarTopDrinks } from '@/hooks/useRankings';
 import { pastMenuLabel, splitTopDrinks, topDrinkCaption, topDrinkHref, topDrinkLabel, type BarTopDrink } from '@/lib/barTopDrinks';
 import { MIN_RANKERS, formatScore } from '@/lib/ranking';
@@ -25,7 +25,7 @@ interface BarRankingsProps {
  */
 export function BarRankings({ bar }: BarRankingsProps) {
   const router = useRouter();
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data, isLoading, error } = useBarTopDrinks(bar.id);
   const [picking, setPicking] = useState(false);
   const [ranking, setRanking] = useState<BarTopDrink | null>(null);

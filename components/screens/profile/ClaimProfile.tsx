@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Tag } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useClaimProfile, useMyClaims, type Profile } from '@/hooks/useProfiles';
 
 import { CLAIM_PAST_JOBS } from './PastJobs';
@@ -31,10 +31,10 @@ export function ClaimProfile({ profile, label = 'Claim this profile' }: { profil
 /** Where a bar's claim stands, and the way into the claim screen. */
 function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const userId = useUserId();
   const { data: claims } = useMyClaims(profile.id);
   const latest = claims?.[0];
-  const open = () => router.push((user ? `/p/${profile.id}/claim` : '/auth/login') as Href);
+  const open = () => router.push((userId ? `/p/${profile.id}/claim` : '/auth/login') as Href);
   if (latest?.status === 'pending') {
     return (
       <View style={styles.centered} role="status">
@@ -59,13 +59,13 @@ function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
 }
 
 function ClaimPerson({ profile, label }: { profile: Profile; label: string }) {
-  const { user } = useAuth();
+  const userId = useUserId();
   const { data: claims } = useMyClaims(profile.id);
   const claim = useClaimProfile();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
 
-  if (!user) return null;
+  if (!userId) return null;
   const latest = claims?.[0];
   if (latest?.status === 'pending') {
     return (

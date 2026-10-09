@@ -1,21 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { track } from '@/lib/analytics';
 import type { AgeCheck } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
 
-const key = (userId: string | undefined) => ['age-check', userId];
+const key = (userId: string | null) => ['age-check', userId];
 
 /**
  * Whether the signed-in person has passed the age check: 'confirmed',
  * 'under_age' or 'unknown'. Undefined while it loads or signed out.
  */
 export function useAgeCheck() {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: key(user?.id),
-    enabled: !!user,
+    queryKey: key(userId),
+    enabled: !!userId,
     queryFn: async (): Promise<AgeCheck> => {
       const { data, error } = await supabase.rpc('get_my_age_check');
       if (error) throw error;
@@ -30,7 +30,7 @@ export function useAgeCheck() {
  */
 export function useConfirmAge() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ birthDate, country }: { birthDate: string; country: string }): Promise<AgeCheck> => {
       const { data, error } = await supabase.rpc('confirm_age', { p_birth_date: birthDate, p_country_code: country });
@@ -42,7 +42,7 @@ export function useConfirmAge() {
       return data == null ? 'under_age' : 'confirmed';
     },
     onSuccess: (outcome) => {
-      qc.setQueryData(key(user?.id), outcome);
+      qc.setQueryData(key(userId), outcome);
       if (outcome === 'confirmed') track('age_check_passed');
     },
     // Shown inline by the form.

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Field, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useAddComment, useDeleteComment, useItemComments } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
@@ -30,7 +30,7 @@ const ADMIN = 40;
  */
 export function TeamNotes({ itemId, barId, currentVersion }: TeamNotesProps) {
   const ds = useDs();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const role = useEffectiveRole(barId);
   const { data: capabilities } = useCapabilities(barId);
   const canRead = !!capabilities?.includes('talking_points');

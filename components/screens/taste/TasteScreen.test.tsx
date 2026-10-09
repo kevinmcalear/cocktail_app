@@ -10,7 +10,7 @@ let mockMe: MyTaste | null = null;
 let mockUser: { id: string } | null = { id: 'me' };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), navigate: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: mockUser, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: mockUser, loading: false })));
 jest.mock('@/hooks/useFlavor', () => ({
   useMyTaste: () => ({ data: mockMe, isLoading: false, error: null }),
   useSaveTasteAnswers: () => ({ mutate: mockSave, isPending: false, error: null }),

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 /** A job someone listed at a bar, waiting on the bar's yes (position_requests). */
@@ -26,10 +26,10 @@ export interface PositionRequest {
  * gets an empty list.
  */
 export function usePositionRequests(enabled = true) {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['position-requests', user?.id],
-    enabled: !!user && enabled,
+    queryKey: ['position-requests', userId],
+    enabled: !!userId && enabled,
     // A queue: refetch rather than trust the persisted cache.
     staleTime: 0,
     queryFn: async (): Promise<PositionRequest[]> => {

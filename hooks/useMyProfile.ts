@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { changedProfiles } from '@/hooks/useProfiles';
 import { plainDbMessage } from '@/lib/dbError';
 import { instagramProblem, normalizeHandle, normalizeInstagram, type ProfileDraft } from '@/lib/profiles';
@@ -28,7 +28,7 @@ const myProfileKey = (userId: string | null) => ['profile', 'mine', userId] as c
 
 /** Your person profile, or null when you haven't made one. */
 export function useMyProfile() {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: myProfileKey(userId),
     enabled: !!userId,
@@ -78,7 +78,7 @@ function readable(error: { code?: string; message: string; details?: string | nu
  */
 export function useSaveMyProfile() {
   const qc = useQueryClient();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ id, draft }: { id: string | null; draft: ProfileDraft }) => {
       const row = {

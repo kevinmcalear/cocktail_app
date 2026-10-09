@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 /** Someone's photo of a drink, as get_drink_photos() returns it. */
@@ -33,7 +33,7 @@ const key = (itemId: string, userId: string | null) => ['drink-photos', itemId, 
  * photos and anyone on either side of a block. Empty when signed out.
  */
 export function useDrinkPhotos(itemId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: key(itemId ?? '', userId),
     enabled: !!itemId && !!userId,

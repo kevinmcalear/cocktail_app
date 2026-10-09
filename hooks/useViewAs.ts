@@ -2,7 +2,7 @@ import { useBars } from '@/hooks/useBars';
 import { effectiveRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 async function fetchViewAs(): Promise<number | null> {
@@ -15,27 +15,27 @@ async function fetchViewAs(): Promise<number | null> {
 }
 
 export function useViewAs() {
-  const { user } = useAuth();
+  const userId = useUserId();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['viewAs', user?.id],
+    queryKey: ['viewAs', userId],
     queryFn: fetchViewAs,
-    enabled: !!user,
+    enabled: !!userId,
   });
 
   const mutation = useMutation({
     mutationFn: async (level: number | null) => {
-      if (!user) throw new Error('Not signed in');
+      if (!userId) throw new Error('Not signed in');
       const { error } = await supabase.from('user_prefs').upsert({
-        user_id: user.id,
+        user_id: userId,
         view_as_role_level: level,
       });
       if (error) throw error;
       return level;
     },
     onSuccess: async (level) => {
-      queryClient.setQueryData(['viewAs', user?.id], level);
+      queryClient.setQueryData(['viewAs', userId], level);
       // Presentation views read view-as from user_prefs — drop cached lists/details.
       await queryClient.invalidateQueries({
         predicate: (q) => q.queryKey[0] !== 'viewAs',
@@ -72,15 +72,15 @@ export function useEffectiveRole(barId?: string | null) {
  *   role of Bartender (30) or lower hides editing here too.
  */
 export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
-  const { user } = useAuth();
+  const userId = useUserId();
   const barId = item?.bar_id ?? null;
   const venueRole = useEffectiveRole(barId);
   const { viewAsRoleLevel } = useViewAs();
   const shared = !!item && !barId;
 
   const { data: canEditShared } = useQuery({
-    queryKey: ['canEditItem', item?.id, user?.id],
-    enabled: shared && !!user,
+    queryKey: ['canEditItem', item?.id, userId],
+    enabled: shared && !!userId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('can_edit_item', { p_item_id: item!.id });
       if (error) throw error;

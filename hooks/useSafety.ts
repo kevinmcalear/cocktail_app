@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { reportErrorMessage, reportRow, type ReportKind, type ReportReason, type ReportStatus, type ReportTarget } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
 
@@ -18,10 +18,10 @@ export interface BlockedPerson {
 
 /** Everyone I've blocked, newest first (get_my_blocks: their profile is hidden from me). */
 export function useMyBlocks() {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['my-blocks', user?.id],
-    enabled: !!user,
+    queryKey: ['my-blocks', userId],
+    enabled: !!userId,
     queryFn: async (): Promise<BlockedPerson[]> => {
       const { data, error } = await supabase.rpc('get_my_blocks');
       if (error) throw error;
@@ -35,10 +35,10 @@ export function useMyBlocks() {
  * and only while I can see the profile.
  */
 export function useProfileUserId(profileId: string | null | undefined) {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['profile-user-id', profileId, user?.id],
-    enabled: !!profileId && !!user,
+    queryKey: ['profile-user-id', profileId, userId],
+    enabled: !!profileId && !!userId,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase.from('profiles').select('user_id').eq('id', profileId!).maybeSingle();
       if (error) throw error;
@@ -102,16 +102,16 @@ export interface MyReport {
 
 /** Reports I've sent, newest first, with what happened to each. */
 export function useMyReports() {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['my-reports', user?.id],
-    enabled: !!user,
+    queryKey: ['my-reports', userId],
+    enabled: !!userId,
     staleTime: 0,
     queryFn: async (): Promise<MyReport[]> => {
       const { data, error } = await supabase
         .from('reports')
         .select('id, target_kind, reason, details, status, resolution, created_at, reviewed_at, item_id, profile:profiles(display_name), item:items(name), release:releases(name)')
-        .eq('reporter_id', user!.id)
+        .eq('reporter_id', userId!)
         .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -130,13 +130,13 @@ export function useMyReports() {
 
 /** My open report on this target, if I've already filed one. */
 export function useMyOpenReport(target: ReportTarget | null) {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['my-open-report', target, user?.id],
-    enabled: !!target && !!user,
+    queryKey: ['my-open-report', target, userId],
+    enabled: !!target && !!userId,
     staleTime: 0,
     queryFn: async (): Promise<{ id: string; created_at: string } | null> => {
-      let query = supabase.from('reports').select('id, created_at').eq('reporter_id', user!.id).eq('status', 'open').eq('target_kind', target!.kind);
+      let query = supabase.from('reports').select('id, created_at').eq('reporter_id', userId!).eq('status', 'open').eq('target_kind', target!.kind);
       for (const [column, value] of Object.entries(targetColumns(target!))) {
         query = value ? query.eq(column, value) : query.is(column, null);
       }
@@ -150,15 +150,15 @@ export function useMyOpenReport(target: ReportTarget | null) {
 /** Files a report. Errors come back as words (the daily limit, a repeat). */
 export function useFileReport() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const userId = useUserId();
   return useMutation({
     mutationFn: async ({ target, reason, details }: { target: ReportTarget; reason: ReportReason; details: string }) => {
       const { error } = await supabase.from('reports').insert(reportRow(target, reason, details));
       if (!error) return;
       let today: number | null = null;
-      if (error.code === '42501' && user) {
+      if (error.code === '42501' && userId) {
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { count } = await supabase.from('reports').select('id', { count: 'exact', head: true }).eq('reporter_id', user.id).gt('created_at', since);
+        const { count } = await supabase.from('reports').select('id', { count: 'exact', head: true }).eq('reporter_id', userId).gt('created_at', since);
         today = count;
       }
       throw new Error(reportErrorMessage(error, today));

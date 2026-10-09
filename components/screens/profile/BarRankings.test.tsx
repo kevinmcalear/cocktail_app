@@ -10,7 +10,7 @@ let mockUser: { id: string } | null = { id: 'me' };
 let mockRows: BarTopDrink[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
+jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: mockUser })));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockRows, isLoading: false, error: null }) }));
 jest.mock('../safety/AgeGate', () => ({ useAgeGate: () => ({ gate: (go: () => void) => go(), sheet: null }) }));
 jest.mock('./RankPickSheet', () => {

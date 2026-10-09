@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 // The photo someone posted that leads for a drink with no photo of its own
@@ -43,7 +43,7 @@ function load(id: string): Promise<string | null> {
  * memory and never saved with the query cache.
  */
 export function usePeopleHero(itemId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: ['people-hero', userId, itemId],
     enabled: !!userId && !!itemId,

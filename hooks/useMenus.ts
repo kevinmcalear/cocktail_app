@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
@@ -62,7 +62,7 @@ export const menuKeys = {
  * and Tonight. Every state: drafts, coming up, on now, previous.
  */
 export function useVenueMenus(barId: string | null | undefined) {
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   return useQuery({
     queryKey: menuKeys.venue(barId ?? null, userId),
     enabled: !!userId,

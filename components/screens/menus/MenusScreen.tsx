@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -41,7 +41,7 @@ export function MenusScreen() {
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
   const barId = home ? null : (active?.id ?? null);

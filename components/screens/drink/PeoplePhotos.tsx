@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DrinkImage, Headline, PressableScale } from '@/components/ds';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useDeleteDrinkPhoto, useDrinkPhotos, type DrinkPhoto } from '@/hooks/useDrinkPhotos';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { photoCredit } from '@/lib/drinkPhotos';
@@ -21,7 +21,7 @@ import { PhotoViewer } from './PhotoViewer';
  * see it full screen, delete yours or report someone else's.
  */
 export function PeoplePhotos({ itemId, name, glass, wide }: { itemId: string; name: string; glass: string | null; wide: boolean }) {
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data: photos = [] } = useDrinkPhotos(itemId);
   const ageGate = useAgeGate();
   const remove = useDeleteDrinkPhoto(itemId);

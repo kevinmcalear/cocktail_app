@@ -1,15 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import type { ReportReason } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
 
 /** Whether I'm a moderator (a catalog admin). False for everyone else. */
 export function useIsModerator() {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['am-i-moderator', user?.id],
-    enabled: !!user,
+    queryKey: ['am-i-moderator', userId],
+    enabled: !!userId,
     queryFn: async (): Promise<boolean> => {
       const { data, error } = await supabase.rpc('am_i_moderator');
       if (error) throw error;
@@ -45,10 +45,10 @@ export interface QueuedReport {
 
 /** The moderator inbox: open reports oldest first, or closed ones newest first. */
 export function useReportQueue(open: boolean) {
-  const { user } = useAuth();
+  const userId = useUserId();
   return useQuery({
-    queryKey: ['report-queue', open, user?.id],
-    enabled: !!user,
+    queryKey: ['report-queue', open, userId],
+    enabled: !!userId,
     // A moderation queue: always refetch rather than trust the persisted cache.
     staleTime: 0,
     queryFn: async (): Promise<QueuedReport[]> => {

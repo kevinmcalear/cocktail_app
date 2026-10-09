@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useBars } from '@/hooks/useBars';
-import { useAuth } from '@/ctx/AuthContext';
+import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { DisplayFace } from '@/constants/tokens';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
@@ -30,8 +30,8 @@ export function useActiveVenue() {
   // query reports isLoading false, which briefly put venue staff in home mode.
   // While auth settles, `user` can already be the saved session's user, whose
   // cached bars count as known; with no user yet, nothing is.
-  const { loading: authLoading, user } = useAuth();
-  const isLoading = user ? data === undefined && !isError : authLoading;
+  const { loading: authLoading, userId } = useAuthIdentity();
+  const isLoading = userId ? data === undefined && !isError : authLoading;
   const selectedBarId = useAppStore((s) => s.selectedBarId);
   const setActive = useAppStore((s) => s.setSelectedBarId);
 

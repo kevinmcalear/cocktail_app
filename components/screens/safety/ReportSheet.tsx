@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Field, GlassButton, Headline } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useFileReport, useMyOpenReport } from '@/hooks/useSafety';
 import { REPORT_REASONS, type ReportReason, type ReportTarget } from '@/lib/safety';
 
@@ -113,7 +113,7 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
 
 /** A "Report" pill that opens the sheet. Signed in only: reports need an account. */
 export function ReportAction({ subject, targets, onMedia }: { subject: string; targets: ReportChoice[]; onMedia?: boolean }) {
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
   if (!signedIn || !targets.length) return null;
   return (

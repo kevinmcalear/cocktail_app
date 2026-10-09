@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, GlassButton, Headline, Segmented, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
 import { countryName } from '@/lib/countries';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
@@ -43,7 +43,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
-  const signedIn = !!useAuth().user;
+  const signedIn = useSignedIn();
   const { data: mine, isLoading: mineLoading } = useMyRankList(rankedAs.id);
 
   // The area is around the drink's bar, or else the last bar I had it at.

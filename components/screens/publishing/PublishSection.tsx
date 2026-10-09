@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { describePublish, PUBLISH_COPY } from '@/lib/publishing';
@@ -18,7 +18,7 @@ import { PublishChoice } from './PublishChoice';
  */
 export function PublishSection({ itemId, barId, noun = 'drink' }: { itemId: string; barId: string | null; noun?: string }) {
   const router = useRouter();
-  const userId = useAuth().user?.id ?? null;
+  const userId = useUserId();
   const { data: caps = [] } = useCapabilities(barId);
   const { data } = useItemPublishing(itemId, barId);
   const set = useSetPublish(barId);
