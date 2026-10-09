@@ -1,5 +1,5 @@
 // Same spec or a variation: a bar's version of a catalog classic
-// (supabase/migrations/20261010900000_spec_match.sql). The verdict is worked
+// (supabase/migrations/20261011110000_spec_match.sql). The verdict is worked
 // out from the full spec, and spec_matches() answers as the caller sees the
 // spec: a Locked bar page reads as unlisted, floor staff see generic names and
 // no measures. Local stack only: `npm run test:security`.
