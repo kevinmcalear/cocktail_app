@@ -37,14 +37,16 @@ export interface FoamAgent {
   technique?: string;
   /** The ingredient's name, to add it to a spec. */
   ingredient: string;
+  /** What one drink takes, for a shaken foam added to a spec. */
+  perDrink?: { amount: string; unit: string };
   grade: Grade;
 }
 
 export const FOAM_AGENTS: FoamAgent[] = [
-  { id: 'egg', name: 'Egg white', kinds: ['shaken'], dose: '1 white (30 ml) per drink. Pasteurised is safer.', how: 'Reverse dry shake', vegan: false, egg: true, fatOk: false, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Egg white', grade: 'A' },
-  { id: 'aquafaba', name: 'Aquafaba', kinds: ['shaken'], dose: '22 to 30 ml per drink', how: 'Reverse dry shake', vegan: true, fatOk: false, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Aquafaba', grade: 'B' },
-  { id: 'quillaja', name: 'Foamer drops (quillaja)', kinds: ['shaken'], dose: '2 to 6 drops per drink, start with 3', how: 'Shake as usual', vegan: true, fatOk: true, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Cocktail foamer', grade: 'B' },
-  { id: 'mc-syrup', name: 'Methylcellulose sour syrup', kinds: ['shaken'], dose: 'In place of the simple syrup', how: 'One hard shake, no dry shake', vegan: true, fatOk: false, strongOk: true, technique: 'sour-syrup', ingredient: 'Methylcellulose sour syrup', grade: 'B' },
+  { id: 'egg', name: 'Egg white', kinds: ['shaken'], dose: '1 white (30 ml) per drink. Pasteurised is safer.', how: 'Reverse dry shake', vegan: false, egg: true, fatOk: false, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Egg white', perDrink: { amount: '30', unit: 'ml' }, grade: 'A' },
+  { id: 'aquafaba', name: 'Aquafaba', kinds: ['shaken'], dose: '22 to 30 ml per drink', how: 'Reverse dry shake', vegan: true, fatOk: false, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Aquafaba', perDrink: { amount: '25', unit: 'ml' }, grade: 'B' },
+  { id: 'quillaja', name: 'Foamer drops (quillaja)', kinds: ['shaken'], dose: '2 to 6 drops per drink, start with 3', how: 'Shake as usual', vegan: true, fatOk: true, strongOk: true, technique: 'reverse-dry-shake', ingredient: 'Cocktail foamer', perDrink: { amount: '3', unit: 'drop' }, grade: 'B' },
+  { id: 'mc-syrup', name: 'Methylcellulose sour syrup', kinds: ['shaken'], dose: 'In place of the simple syrup', how: 'One hard shake, no dry shake', vegan: true, fatOk: false, strongOk: true, technique: 'sour-syrup', ingredient: 'Methylcellulose sour syrup', perDrink: { amount: '20', unit: 'ml' }, grade: 'B' },
   { id: 'gelatin', name: 'Gelatin', kinds: ['siphon'], dose: '0.75% with 0.1% xanthan', how: 'Siphon, chill an hour', vegan: false, fatOk: true, strongOk: false, technique: 'siphon-foam', ingredient: 'Gelatin', grade: 'B' },
   { id: 'mc-siphon', name: 'Methylcellulose and xanthan', kinds: ['siphon'], dose: '0.6% + 0.1% xanthan + 8% sugar', how: 'Siphon, cold', vegan: true, fatOk: false, strongOk: false, technique: 'vegan-siphon-foam', ingredient: 'Methylcellulose', grade: 'A' },
   { id: 'versawhip', name: 'Versawhip', kinds: ['siphon', 'shaken'], dose: '1% + 0.15% xanthan (a 4% stock for shaking)', how: 'Siphon or shake', vegan: true, soy: true, fatOk: false, strongOk: false, technique: 'siphon-foam', ingredient: 'Versawhip', grade: 'B' },
@@ -84,4 +86,11 @@ export function pickFoam(q: FoamQuestion): FoamAnswer {
   if (strongMatters) note = 'Most foamers fade above about 20% alcohol (our estimate, not a tested limit). Foam the syrup or juice and pour it over, or dilute the spirit by half first.';
   else if (!works.length) note = 'Nothing here foams that combination. Try a siphon with cream, or leave the fat out of the foam.';
   return { works, ruledOut, note };
+}
+
+const FOAMER = /egg white|aquafaba|foamer|quillaja|versawhip|methylcellulose|sour syrup|foam/i;
+
+/** A dry shake with nothing in the spec that foams: the method step offers a foamer. */
+export function needsFoamer(methods: readonly string[], lines: readonly string[]): boolean {
+  return methods.some((m) => /dry shake/i.test(m)) && !lines.some((l) => FOAMER.test(l));
 }

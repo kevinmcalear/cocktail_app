@@ -11,6 +11,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 import { BalanceCard, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
+import { MakeItSheet } from './MakeItSheet';
 import { StartFromClassic } from './StartFromClassic';
 import { WizardChip } from './WizardChrome';
 
@@ -39,6 +40,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ line: WizardLine; at: number } | null>(null);
+  /** A new name being made in house: the sheet of ways to make it is open. */
+  const [making, setMaking] = useState<string | null>(null);
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -50,10 +53,10 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     return () => clearTimeout(t);
   }, [removed]);
 
-  const add = (pick: WizardPick) => {
+  const add = (pick: WizardPick, technique?: string) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
     const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
-    set({ lines: [...draft.lines, newLine(pick, unit, amount)] });
+    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(technique ? { technique } : null) }] });
     setRemoved(null);
   };
   const change = (key: string, c: Partial<WizardLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
@@ -104,7 +107,19 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} />
+      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={setMaking} />
+      <MakeItSheet
+        name={making}
+        onClose={() => setMaking(null)}
+        onChoose={(t) => {
+          add({ id: null, name: making! }, t.id);
+          setMaking(null);
+        }}
+        onPlain={() => {
+          add({ id: null, name: making! });
+          setMaking(null);
+        }}
+      />
 
       {typing || !forDrink ? null : (
         <>

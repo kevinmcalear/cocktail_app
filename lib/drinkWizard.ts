@@ -37,6 +37,8 @@ export interface WizardLine extends WizardPick {
   key: string;
   amount: string;
   unit: string;
+  /** A new house prep made by this technique (lib/techniques): it gets a prep card when the drink is saved. */
+  technique?: string;
 }
 
 export interface WizardDraft {

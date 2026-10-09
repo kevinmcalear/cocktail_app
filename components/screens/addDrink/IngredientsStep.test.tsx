@@ -33,4 +33,20 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari' });
   });
+
+  test('a prep the shelf lacks can be made in house, and the line carries how it is made', async () => {
+    const set = jest.fn();
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Clarified grapefruit');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Clarified grapefruit” in house' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Make it by Quick agar clarifying/ }));
+    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Clarified grapefruit', technique: 'agar-quick' });
+  });
+
+  test('an ordinary new name is only offered as new', async () => {
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Yuzu juice');
+    expect(screen.queryByRole('button', { name: /in house/ })).toBeNull();
+  });
 });

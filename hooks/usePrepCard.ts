@@ -49,21 +49,24 @@ export interface PrepCardInput {
   steps: { body: string; timer_seconds: number | null }[];
 }
 
+/** Upsert an item's prep row and replace its steps. Also used when a new house prep is saved from the add-drink wizard. */
+export async function savePrepCard(itemId: string, { prep, steps }: PrepCardInput) {
+  const saved = await supabase.from('item_prep').upsert({ item_id: itemId, ...prep }, { onConflict: 'item_id' });
+  if (saved.error) throw saved.error;
+  const gone = await supabase.from('item_steps').delete().eq('item_id', itemId);
+  if (gone.error) throw gone.error;
+  const kept = steps.map((s) => s.body.trim()).map((body, i) => ({ body, timer_seconds: steps[i].timer_seconds })).filter((s) => s.body);
+  if (kept.length) {
+    const added = await supabase.from('item_steps').insert(kept.map((s, position) => ({ item_id: itemId, position, ...s })));
+    if (added.error) throw added.error;
+  }
+}
+
 /** Save the card: upsert the prep row and replace the steps. */
 export function useSaveItemPrep(itemId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ prep, steps }: PrepCardInput) => {
-      const saved = await supabase.from('item_prep').upsert({ item_id: itemId, ...prep }, { onConflict: 'item_id' });
-      if (saved.error) throw saved.error;
-      const gone = await supabase.from('item_steps').delete().eq('item_id', itemId);
-      if (gone.error) throw gone.error;
-      const kept = steps.map((s) => s.body.trim()).map((body, i) => ({ body, timer_seconds: steps[i].timer_seconds })).filter((s) => s.body);
-      if (kept.length) {
-        const added = await supabase.from('item_steps').insert(kept.map((s, position) => ({ item_id: itemId, position, ...s })));
-        if (added.error) throw added.error;
-      }
-    },
+    mutationFn: (input: PrepCardInput) => savePrepCard(itemId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['item-prep', itemId] });
       void queryClient.invalidateQueries({ queryKey: ['prep-data'] });

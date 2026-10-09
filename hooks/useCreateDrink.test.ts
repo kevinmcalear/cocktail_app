@@ -18,6 +18,8 @@ jest.mock('@/hooks/useTrackRecent', () => ({ recentEntry: () => ({}) }));
 jest.mock('@/lib/analytics', () => ({ track: jest.fn() }));
 
 const mockSaveSpec = jest.fn();
+const mockSavePrepCard = jest.fn();
+jest.mock('@/hooks/usePrepCard', () => ({ savePrepCard: (...args: unknown[]) => mockSavePrepCard(...args) }));
 jest.mock('@/hooks/useVersions', () => ({ saveDrinkSpec: (...args: unknown[]) => mockSaveSpec(...args) }));
 
 // Rows that exist; 'gone' was merged away (deleted) after the draft picked it.
@@ -90,4 +92,20 @@ test('an id the database already has saves under one of its own', async () => {
   const { id } = await result.current.mutationFn({ draft: { ...EMPTY_DRAFT, id: 'draft-2', name: 'Sour', creator: 'nobody' }, barId: null, myProfileId: null });
   expect(id).toBe('db-made');
   expect(mockInserts.map((r) => r.id)).toEqual(['draft-2', undefined]);
+});
+
+test('a new house prep made by a technique gets its prep card; one already on the shelf keeps its own', async () => {
+  mockSavePrepCard.mockClear();
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const made = (key: string, name: string) => ({ key, id: null, name, amount: '40', unit: 'ml', technique: 'agar-quick' });
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, name: 'Clear Paloma', creator: 'nobody', lines: [made('a', 'Clarified grapefruit'), made('b', 'Cupuacu')] },
+    barId: null,
+    myProfileId: null,
+  });
+  expect(mockSavePrepCard).toHaveBeenCalledTimes(1);
+  const [itemId, card] = mockSavePrepCard.mock.calls[0];
+  expect(itemId).toBe('new-row');
+  expect(card.prep.actions).toEqual(['Clarify']);
+  expect(card.steps[0].body).toBe('For 375 g juice: 125 g water, 1 g agar.');
 });

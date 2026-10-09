@@ -21,6 +21,7 @@ import { CreditsStep } from './CreditsStep';
 import { GarnishStep } from './GarnishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
+import { FoamerHint } from './FoamerHint';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
@@ -136,6 +137,7 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
           <>
             {serveCard ? <ServeGuessCard guess={guess} onUse={takeGuess} /> : null}
             <PickStep label="Method" ownLabel="Your own method" multi options={methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={guess.method} why={serveCard ? null : guess.why} />
+            <FoamerHint draft={draft} set={set} ingredients={ingredients} />
           </>
         );
       case 'glass':
