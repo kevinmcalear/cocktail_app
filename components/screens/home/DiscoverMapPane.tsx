@@ -39,6 +39,8 @@ interface DiscoverMapPaneProps {
   top?: ReactNode;
   /** Room for the tab bar: the phone sheet floats above it rather than behind it. */
   bottomInset?: number;
+  /** Room for the screen header over the top of the map: the controls and the open sheet stay below it. */
+  topInset?: number;
 }
 
 /** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
@@ -61,7 +63,7 @@ const SHEET_PEEK = layout.minTapTarget + space.sm;
  * area, drink or layer changes, but never after "Search this area", so the
  * view the person chose stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0 }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0 }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
   const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
@@ -203,7 +205,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   return (
     <View style={styles.fill}>
       {map}
-      <View pointerEvents="box-none" style={[styles.overlay, styles.overlayTop]}>
+      <View pointerEvents="box-none" style={[styles.overlay, { top: topInset + space.lg }]}>
         {top}
         {searchHere}
       </View>
@@ -221,7 +223,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
         </View>
       ) : null}
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
-      <View pointerEvents="box-none" style={[styles.sheetBox, { bottom: bottomInset }]}>
+      <View pointerEvents="box-none" style={[styles.sheetBox, { top: topInset, bottom: bottomInset }]}>
         <BottomSheet
           ref={sheetRef}
           snapPoints={[SHEET_PEEK, '50%', '88%']}
@@ -293,5 +295,5 @@ const styles = StyleSheet.create({
   sheetEmpty: { gap: space.md },
   sheetFoot: { gap: space.md, paddingTop: space.md },
   // Floats above the tab bar, clear of the screen edges, like the tab bar itself.
-  sheetBox: { position: 'absolute', top: 0, left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
+  sheetBox: { position: 'absolute', left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
 });
