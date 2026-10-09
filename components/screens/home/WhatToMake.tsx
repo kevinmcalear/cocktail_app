@@ -1,13 +1,13 @@
 import { useRouter } from 'expo-router';
-import { memo, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { memo, useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
+import { Body, Button, Caption, Field, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
-import type { MakeTab } from '@/lib/myBarRows';
+import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
 
 /** Drinks under each bottle before "and N more". */
 const PER_BOTTLE = 3;
@@ -23,13 +23,42 @@ type MatchFor = (id: string) => string | undefined;
 /** A small palate flower at the end of the row, when the drink's flavor is known. */
 type GlyphFor = (id: string) => ReactNode;
 
+/** What to make's search: what's typed, and how far each section of results is shown. */
+export function useMakeSearch() {
+  const [query, setQuery] = useState('');
+  const [shownIn, setShownIn] = useState<Partial<Record<Found, number>>>({});
+  return {
+    query,
+    shownIn,
+    onQuery: (q: string) => {
+      setQuery(q);
+      setShownIn({});
+    },
+    onMore: (section: Found) => setShownIn((s) => ({ ...s, [section]: (s[section] ?? MAKE_PAGE) + MAKE_PAGE })),
+  };
+}
+
 /**
  * What the shelf makes now, and what one or two more bottles would open,
  * grouped by what to buy. Only drinks the shelf gets close to: everything
- * else is in Search. This is the heading and the tabs; the drinks and groups
- * are rows of My Bar's list (MakeDrink, BottleGroup), then MakeFoot.
+ * else is in Search. This is the heading, the search box and the tabs; the
+ * drinks and groups are rows of My Bar's list (MakeDrink, BottleGroup), then
+ * MakeFoot. While searching, one line saying what matched takes the tabs' place
+ * (`found`, from lib/myBarRows.ts).
  */
-export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: MakeTab) => void; counts: { ready: number; first: number; one: number; two: number; projects?: number } }) {
+export function MakeHead({
+  tab,
+  onTab,
+  counts,
+  search,
+  found,
+}: {
+  tab: MakeTab;
+  onTab: (tab: MakeTab) => void;
+  counts: { ready: number; first: number; one: number; two: number; projects?: number };
+  search: { query: string; onQuery: (query: string) => void };
+  found?: Record<Found, number>;
+}) {
   const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
   if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
   options.push(
@@ -41,9 +70,27 @@ export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: Ma
   return (
     <View style={styles.section}>
       <Headline role="heading">What to make</Headline>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
-      </ScrollView>
+      <Field
+        label="Search what you can make"
+        hideLabel
+        value={search.query}
+        onChangeText={search.onQuery}
+        placeholder="A drink, or a bottle you want to use"
+        inputMode="search"
+        returnKeyType="search"
+        clearButtonMode="while-editing"
+        autoCorrect={false}
+        autoCapitalize="none"
+      />
+      {found ? (
+        <Caption tone="muted" aria-live="polite">
+          {searchCaption(search.query, found)}
+        </Caption>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -70,11 +117,33 @@ export function MakeEmpty({ tab, oneAway }: { tab: MakeTab; oneAway: number }) {
   );
 }
 
-/** "Show more" while there are, then the way to every other drink. */
-export function MakeFoot({ more, onMore }: { more: number; onMore: () => void }) {
+const SECTION: Record<Found, string> = { ready: 'Ready', one: 'One bottle away', two: 'Two bottles away' };
+
+/** A search's own rows: each section's title, its "Show more", and the line when nothing matches. */
+export function MakeSearchRow({ row, onMore }: { row: MakeSearchRowData; onMore: (section: Found) => void }) {
+  if (row.kind === 'make-heading') {
+    return (
+      <Caption tone="muted" role="heading" style={styles.heading}>
+        {SECTION[row.section]}
+      </Caption>
+    );
+  }
+  if (row.kind === 'make-more') {
+    return <Button label={`Show more (${row.more})`} accessibilityLabel={`Show ${row.more} more: ${SECTION[row.section]}`} variant="ghost" onPress={() => onMore(row.section)} />;
+  }
+  return <Body tone="muted">No drink you can make, or nearly make, matches “{row.query}”.</Body>;
+}
+
+/**
+ * "Show more" while there are, then the way to every other drink. Under a
+ * search it holds a screen's height, so fewer results don't pull the list up
+ * and slide the search box under the keyboard.
+ */
+export function MakeFoot({ more, searching, onMore }: { more: number; searching?: boolean; onMore: () => void }) {
   const router = useRouter();
+  const { height } = useWindowDimensions();
   return (
-    <View style={styles.foot}>
+    <View style={[styles.foot, searching ? { minHeight: height } : null]}>
       {more > 0 ? <Button label={`Show more (${more})`} variant="ghost" onPress={onMore} /> : null}
       <View style={styles.more}>
         <Caption tone="muted">Looking for a drink you can’t make yet?</Caption>
@@ -122,6 +191,7 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
 
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },
+  heading: { paddingTop: space.lg, paddingBottom: space.xs },
   group: { gap: space.xs },
   groupHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   thumbs: { flexDirection: 'row', gap: space.xs },

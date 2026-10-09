@@ -20,7 +20,7 @@ import { MakeFirst } from './MakeFirst';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
 import { BottleRow, ShelfFoot, ShelfHead } from './ShelfSection';
-import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, type AwayGroup } from './WhatToMake';
+import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, MakeSearchRow, useMakeSearch, type AwayGroup } from './WhatToMake';
 
 type Row = MyBarRow<ShelfItem, BarItem, AwayGroup>;
 
@@ -51,6 +51,7 @@ export function MyBarScreen() {
   const [shelfOpen, setShelfOpen] = useState(false);
   const [picked, setPicked] = useState<MakeTab | null>(null);
   const [shown, setShown] = useState(MAKE_PAGE);
+  const search = useMakeSearch();
   const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
   const openGroup = (key: string) => setOpenGroups((open) => new Set(open).add(key));
 
@@ -107,7 +108,7 @@ export function MyBarScreen() {
     query,
     shelfOpen,
     more: { lab: lab.length, preps: preps.length, kit: owned.length },
-    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
+    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown, query: search.query, shownIn: search.shownIn, shelf: bar.shelf } : null,
   });
 
   // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own, under one header.
@@ -177,7 +178,7 @@ export function MyBarScreen() {
       case 'make-head':
         return (
           <View style={styles.section}>
-            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} />
+            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} search={search} found={item.found} />
           </View>
         );
       case 'drink':
@@ -201,8 +202,12 @@ export function MyBarScreen() {
         return projects ? <Projects ready={projects.ready} away={projects.away} onKit={toggleKit} onLab={() => setAdding('lab')} /> : null;
       case 'make-empty':
         return <MakeEmpty tab={tab} oneAway={bar.oneAway.length} />;
+      case 'make-heading':
+      case 'make-more':
+      case 'make-none':
+        return <MakeSearchRow row={item} onMore={search.onMore} />;
       case 'make-foot':
-        return <MakeFoot more={item.more} onMore={() => setShown(shown + MAKE_PAGE)} />;
+        return <MakeFoot more={item.more} searching={item.searching} onMore={() => setShown(shown + MAKE_PAGE)} />;
     }
   };
 
@@ -214,6 +219,7 @@ export function MyBarScreen() {
       renderItem={renderRow}
       // Two screens either side: a sort or tab change re-renders every mounted row.
       windowSize={5}
+      keyboardShouldPersistTaps="handled"
       // A section shortcut past what's mounted: get close, then land on it once it renders.
       onScrollToIndexFailed={(info) => {
         listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
@@ -235,6 +241,7 @@ export function MyBarScreen() {
             keyExtractor={(r) => r.key}
             renderItem={({ item, index }) => renderRow({ item, index: index + cut })}
             windowSize={5}
+            keyboardShouldPersistTaps="handled"
             style={styles.makeColumn}
             contentContainerStyle={{ paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom }}
           />
