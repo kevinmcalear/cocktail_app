@@ -30,7 +30,7 @@ export function SaveMenuButton({ editionId, drinkIds }: { editionId: string; dri
         accessibilityHint={on ? 'Removes this menu from your Collection' : 'Keeps this menu in your Collection'}
         onPress={() => (on ? save.mutate({ editionId, save: false }) : age.gate(() => save.mutate({ editionId, save: true })))}
       />
-      {drinkIds.length && bar.shelf.length ? <Caption tone="muted">{`${ready} of ${drinkIds.length} ready from your shelf`}</Caption> : null}
+      {ready ? <Caption tone="muted">{`${ready} of ${drinkIds.length} ready from your shelf`}</Caption> : null}
       {save.error ? <Caption tone="accent">{save.error.message}</Caption> : null}
       {age.sheet}
     </View>

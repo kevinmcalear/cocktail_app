@@ -5,6 +5,7 @@ import { Caption, Headline, PressableScale, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSavedMenus } from '@/hooks/useKept';
 import { menuRange, menuState } from '@/lib/menuEditions';
+import { plural } from '@/lib/menus';
 
 /**
  * Bar menus you saved (Save menu on a bar's menu page), on Collection's
@@ -23,7 +24,7 @@ export function CollectionSavedMenus({ canMakeIds }: { canMakeIds: Set<string> }
         {menus.map((m) => {
           const ready = m.drinkIds.filter((id) => canMakeIds.has(id)).length;
           const when = menuState(m.dates) === 'past' ? `Past · ${menuRange(m.dates)}` : menuRange(m.dates);
-          const make = m.drinkIds.length ? `${ready} of ${m.drinkIds.length} ready to make` : null;
+          const make = !m.drinkIds.length ? null : ready ? `${ready} of ${m.drinkIds.length} ready to make` : plural(m.drinkIds.length, 'drink');
           return (
             <View role="listitem" key={m.editionId}>
               <PressableScale
