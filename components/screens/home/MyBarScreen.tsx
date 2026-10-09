@@ -6,12 +6,12 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
+import { useKit } from '@/hooks/useKit';
 import { useMadePreps, useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { JUMP_ROW, MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
 import { PANTRY_WATER, type ShelfSort } from '@/lib/pantry';
 import { labFromNames, projectsFor } from '@/lib/techniques/projects';
-import { useKitStore } from '@/store/useKitStore';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
@@ -42,8 +42,7 @@ export function MyBarScreen() {
   const addIds = add.mutate;
   const removeId = remove.mutate;
   const [adding, setAdding] = useState<AddFilter | null>(null);
-  const owned = useKitStore((s) => s.owned);
-  const toggleKit = useKitStore((s) => s.toggle);
+  const { owned, toggle: toggleKit } = useKit();
   const listRef = useRef<FlatList<Row>>(null);
   const [snapping, setSnapping] = useState(false);
   const [sort, setSort] = useState<ShelfSort>('newest');

@@ -1,6 +1,6 @@
 // My Bar's Projects: the techniques your kit and lab shelf allow, and the
 // ones a single missing piece stands in front of. Kit is equipment ids
-// (store/useKitStore); the lab is technical ingredient ids, matched from the
+// (hooks/useKit); the lab is technical ingredient ids, matched from the
 // names on your shelf.
 
 import { equipmentById } from './equipment';

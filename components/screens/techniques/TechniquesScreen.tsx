@@ -8,7 +8,7 @@ import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { canMake, EQUIPMENT, groupById, GROUPS, searchTechniques, TECHNIQUES, type Technique, type TechniqueGroup } from '@/lib/techniques';
-import { useKit } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 type Filter = 'kit' | 'vegan' | 'quick';
 
@@ -26,7 +26,7 @@ const FILTERS: { value: Filter; label: string; test: (t: Technique, kit: Readonl
 export function TechniquesScreen({ group }: { group?: string }) {
   const ds = useDs();
   const router = useRouter();
-  const kit = useKit();
+  const { kit } = useKit();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filter[]>([]);
   const only = groupById(group);
