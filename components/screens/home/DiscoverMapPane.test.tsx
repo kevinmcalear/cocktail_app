@@ -19,9 +19,11 @@ let mockTopDrinks: unknown[] = [];
 let mockDrinks: DiscoverDrink[] = [];
 let mockMartinis = new Set<string>();
 let mockBars: DiscoverBar[] = [];
+// The bars query's own state, when a test needs it (a new city still showing the last area's bars).
+let mockBarsQuery: { data: DiscoverBar[]; isPending: boolean; isPlaceholderData: boolean } | null = null;
 const page = (drinks: DiscoverDrink[]) => ({ drinks, totals: { drinks: drinks.length, bars: 1 }, isLoading: false, hasMore: false, isLoadingMore: false, loadMore: () => {}, error: null });
 jest.mock('@/hooks/useDiscoverDrinks', () => ({
-  useDiscoverBars: () => ({ data: mockBars, isPending: false }),
+  useDiscoverBars: () => mockBarsQuery ?? { data: mockBars, isPending: false, isPlaceholderData: false },
   useTileBars: () => ({ bars: [], isLoading: false }),
   useDiscoverList: (f: DrinkFilter, o: { barId?: string | null; enabled?: boolean }) =>
     page(!o.enabled ? [] : f.kinds.includes('martini') ? mockDrinks.filter((d) => mockMartinis.has(d.id)) : o.barId ? mockDrinks.filter((d) => d.barId === o.barId) : mockDrinks),
@@ -38,12 +40,15 @@ jest.mock('@gorhom/bottom-sheet', () => {
   });
   return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView, BottomSheetFlatList: FlatList };
 });
+// The camera the map was last given.
+let mockCamera: { latitude: number; longitude: number; zoom: number } | null = null;
 jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');
   return {
     mapAvailable: true,
-    DiscoverMap: ({ pins, onSelect }: { pins: { id: string; name: string }[]; onSelect: (id: string) => void }) => (
+    DiscoverMap: ({ pins, onSelect, camera }: { pins: { id: string; name: string }[]; onSelect: (id: string) => void; camera: typeof mockCamera }) => (
       <>
+        {(mockCamera = camera) && null}
         {pins.map((p) => (
           <Pressable key={p.id} role="button" accessibilityLabel={`pin ${p.name}`} onPress={() => onSelect(p.id)} />
         ))}
@@ -172,4 +177,26 @@ test('Best Martini lists every martini at the bar, scores beside the scored ones
   expect(screen.getByRole('button', { name: 'House Martini. House Martini note, open' })).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
   expect(screen.queryByText('Not ranked yet')).toBeNull();
+});
+
+test('switching to a city fits its bars, not the last area\'s still on screen', async () => {
+  const nyc: DiscoverBar = { ...bar, id: 'b2', name: 'Dante', city: 'New York', countryCode: 'US', latitude: 40.73, longitude: -74.0, drinks: 3 };
+  const results = { drinks: [], more, barsById: new Map(), isLoading: false, title: 'Drinks' };
+  const pane = (where: Area) => <DiscoverMapPane mode="side" area={where} onArea={() => {}} drink={null} filter={{ kinds: [], search: '', area: where }} results={results} />;
+  mockBarsQuery = { data: [{ ...bar, drinks: 2 }, nyc], isPending: false, isPlaceholderData: false };
+  const { rerender } = await renderWithTamagui(pane(area));
+  const anywhere = mockCamera;
+
+  // New York picked: its bars are loading, the query still holds anywhere's. The map waits.
+  const city: Area = { kind: 'city', city: 'New York', country_code: 'US', label: 'New York' };
+  mockBarsQuery = { ...mockBarsQuery, isPlaceholderData: true };
+  await rerender(pane(city));
+  expect(mockCamera).toEqual(anywhere);
+
+  // They land: the camera is on New York, close in.
+  mockBarsQuery = { data: [nyc], isPending: false, isPlaceholderData: false };
+  await rerender(pane(city));
+  expect(mockCamera).toMatchObject({ latitude: 40.73, longitude: -74.0 });
+  expect(mockCamera!.zoom).toBeGreaterThan(10);
+  mockBarsQuery = null;
 });

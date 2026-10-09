@@ -107,12 +107,12 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
   const atBar = useDiscoverList({ ...filter, area }, { barId: selected?.id, enabled: !!selected && byDrinks && !selected.closed, pageSize: 100 });
 
-  // Refit when what's shown changes, not when the person searched the view they're on.
-  // While pins load, go to the area itself (near me at once), then fit the pins once they're in.
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, rows.isLoading]);
+  // Refit when what's shown changes (not after "Search this area"): to the area while it loads, then its own pins, not the last area's.
+  const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, fitting]);
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   if (fitKey !== null && fit?.key !== fitKey) {
-    setFit({ key: fitKey, camera: (rows.isLoading ? null : cameraFor(pins)) ?? cameraForArea(area) ?? fit?.camera ?? null });
+    setFit({ key: fitKey, camera: (fitting ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? cameraForArea(area) ?? fit?.camera ?? null });
     setViewport(null);
   }
   // The maps report only the person's own moves, so any settled move since
