@@ -122,6 +122,8 @@ export interface Viewport {
   longitude: number;
   latitudeDelta: number;
   longitudeDelta: number;
+  /** Web-mercator zoom, as Camera has it. */
+  zoom: number;
 }
 
 export interface Camera {
@@ -132,8 +134,22 @@ export interface Camera {
 }
 
 /** A viewport from a map's centre and its [west, south, east, north] bounds, as MapLibre reports them. */
-export function viewportFrom(center: { lat: number; lng: number }, [west, south, east, north]: readonly [number, number, number, number]): Viewport {
-  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west };
+export function viewportFrom(center: { lat: number; lng: number }, [west, south, east, north]: readonly [number, number, number, number], zoom: number): Viewport {
+  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west, zoom };
+}
+
+/**
+ * Whether the map has moved far enough from where its results are for (the
+ * last search, or the camera that fit them) to search again: half a zoom
+ * step, or a sixth of the view across. Smaller nudges keep the list as it is.
+ * No `from` (nothing fit yet) counts any move.
+ */
+export function movedFrom(from: Camera | null, v: Viewport): boolean {
+  if (!from) return true;
+  if (Math.abs(v.zoom - from.zoom) >= 0.5) return true;
+  // Across the antimeridian, 179 to -179 is two degrees, not 358.
+  const dLng = ((v.longitude - from.longitude + 540) % 360) - 180;
+  return Math.abs(v.latitude - from.latitude) > Math.abs(v.latitudeDelta) / 6 || Math.abs(dLng) > Math.abs(v.longitudeDelta) / 6;
 }
 
 const KM_PER_DEG = 111.045;

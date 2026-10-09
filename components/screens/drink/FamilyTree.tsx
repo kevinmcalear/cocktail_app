@@ -19,6 +19,7 @@ import {
   type LineageDrink,
 } from '@/lib/lineage';
 
+import { BarVersions } from './BarVersions';
 import { FromTheBooks } from './FromTheBooks';
 import { InTime } from './InTime';
 
@@ -182,10 +183,12 @@ export function FamilyTree({ itemId }: { itemId: string }) {
         </View>
       ) : null}
 
-      {riffs.length ? (
+      {riffs.length && drink!.is_catalog ? <BarVersions classicId={drink!.id} versions={riffs} /> : null}
+
+      {riffs.length && !drink!.is_catalog ? (
         <View style={styles.riffs}>
           <Caption tone="muted" style={styles.cap}>
-            {drink!.is_catalog ? "Bars' versions" : 'Riffs on this'}
+            Riffs on this
           </Caption>
           <View role="list">
             {riffs.map((r) => (

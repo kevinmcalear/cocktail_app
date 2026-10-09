@@ -8,6 +8,7 @@ import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { barSection, type BarSection } from '@/lib/barSections';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortMatches, type MatchRow } from '@/lib/barMatches';
+import { specNoteText, type ServedBar } from '@/lib/servedAt';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
@@ -23,6 +24,10 @@ export interface BarItem {
   shelfUses?: string[];
   /** The bar a drink is from, so a classic's many bar versions tell apart. */
   from?: { name: string; logo: string | null };
+  /** A classic: the bars that pour it as it is ("Served at Harry's Bar, The Gold Room +5"). */
+  served?: { count: number; bars: ServedBar[] };
+  /** A bar's variation of a classic: what it changes ("uses Rye Whiskey, not Bourbon"). */
+  variation?: string;
 }
 
 /** A house prep the shelf can make but doesn't have, and every drink that leans on it (my_bar_preps). */
@@ -287,7 +292,18 @@ export function useBarDrinks() {
   const matches = useMatches();
   const glass = useGlassIcons();
   return useMemo(() => {
-    const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id), shelfUses: r.uses ?? undefined, from: r.from_name ? { name: r.from_name, logo: r.from_logo ?? null } : undefined });
+    const drink = (r: MatchRow): BarItem => ({
+      id: r.id,
+      name: r.name,
+      type: 'cocktail',
+      imageUrl: r.image_url,
+      glass: glass(r.glassware_id),
+      shelfUses: r.uses ?? undefined,
+      from: r.from_name ? { name: r.from_name, logo: r.from_logo ?? null } : undefined,
+      // Read only when there: older servers don't send these.
+      served: r.served_count && r.served_at?.length ? { count: r.served_count, bars: r.served_at } : undefined,
+      variation: r.spec_match === 'variation' ? specNoteText(r.spec_note) ?? 'a variation' : undefined,
+    });
     const sorted = sortMatches(matches.data ?? [], drink);
     const bottle = (b: { id: string; name: string }): BarItem => ({ id: b.id, name: b.name, type: 'ingredient', imageUrl: null, glass: null });
     return {
