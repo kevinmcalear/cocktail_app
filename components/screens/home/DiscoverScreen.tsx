@@ -181,13 +181,7 @@ export function DiscoverScreen() {
       style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
     >
-      <View>
-        <ScreenHeaderSpacer />
-        <View style={styles.titleRow}>
-          <Display>Discover</Display>
-          <EightBallButton />
-        </View>
-      </View>
+      <ScreenHeaderSpacer title={<Display>Discover</Display>} actions={<EightBallButton />} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
         {note ? (
@@ -236,7 +230,6 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },

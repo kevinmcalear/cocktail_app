@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { AppState, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { PressableScale, useDs } from '@/components/ds';
 import { eightBall, layout } from '@/constants/tokens';
 import { canListenForShakes, listenForShakes } from '@/lib/shake';
 
@@ -47,7 +47,7 @@ export function EightBallProvider({ children }: { children: ReactNode }) {
 function EightBallGlyph() {
   const ds = useDs();
   return (
-    // Fills most of the glass circle; the muted rim keeps a black ball visible on a dark ground.
+    // The muted rim keeps a black ball visible on a dark ground.
     <Svg width={32} height={32} viewBox="0 0 24 24" aria-hidden>
       <Circle cx={12} cy={12} r={11.2} fill={eightBall.body} stroke={ds.c.muted} strokeOpacity={0.6} strokeWidth={0.8} />
       <Circle cx={7.6} cy={7} r={2.6} fill={eightBall.shine} />
@@ -58,7 +58,7 @@ function EightBallGlyph() {
   );
 }
 
-/** The eight ball without shaking: a round glass button with the ball in it. */
+/** The eight ball without shaking: the bare ball, no glass circle, at the avatar's size. */
 export function EightBallButton() {
   const open = useContext(OpenEightBall);
   return (
@@ -66,15 +66,13 @@ export function EightBallButton() {
       role="button"
       onPress={open}
       accessibilityLabel={canListenForShakes() ? 'Pick a random drink. You can also shake your phone.' : 'Pick a random drink'}
-      hitSlop={4}
+      style={styles.target}
     >
-      <GlassSurface interactive style={styles.circle}>
-        <EightBallGlyph />
-      </GlassSurface>
+      <EightBallGlyph />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  circle: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  target: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });
