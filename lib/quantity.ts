@@ -15,9 +15,10 @@ export interface Quantity {
 
 // ponytail: bar units only. Dashes and barspoons are approximate, which is
 // fine for prep and ordering, never for a spec.
-const VOLUME_ML: Record<string, number> = {
+export const VOLUME_ML: Record<string, number> = {
   ml: 1, cl: 10, dl: 100, l: 1000, litre: 1000, liter: 1000,
-  oz: 29.57, 'fl oz': 29.57, dash: 0.8, dashes: 0.8, barspoon: 5, bsp: 5, tsp: 5, tbsp: 15, cup: 240,
+  oz: 29.57, 'fl oz': 29.57, dash: 0.8, dashes: 0.8, drop: 0.05, drops: 0.05,
+  barspoon: 5, bsp: 5, tsp: 5, tbsp: 15, cup: 240,
 };
 const WEIGHT_G: Record<string, number> = { g: 1, kg: 1000, gram: 1, grams: 1 };
 

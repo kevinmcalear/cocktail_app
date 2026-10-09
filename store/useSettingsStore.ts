@@ -1,4 +1,3 @@
-import { FEATURES } from '@/constants/features';
 import { DEFAULT_SEARCH_ALL } from '@/lib/barContextFilter';
 import { DEFAULT_UNIT } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,9 +32,6 @@ interface SettingsState {
     /** How a spec reads on the drink page: as written, or converted to g, ml or oz. */
     specUnit: SpecUnit;
     setSpecUnit: (unit: SpecUnit) => void;
-    /** Behind the bar: keep the screen awake on specs and use larger spec type. */
-    serviceMode: boolean;
-    toggleServiceMode: () => void;
     setThemeMode: (mode: ThemeMode) => void;
     setDefaultSearchContext: (value: DefaultSearchContext) => void;
     setDefaultUnit: (unit: string) => void;
@@ -49,8 +45,6 @@ export const useSettingsStore = create<SettingsState>()(
             defaultUnit: DEFAULT_UNIT,
             specUnit: 'ml',
             setSpecUnit: (unit) => set({ specUnit: unit }),
-            serviceMode: false,
-            toggleServiceMode: () => set((state) => ({ serviceMode: !state.serviceMode })),
             setThemeMode: (mode) => set({ themeMode: mode }),
             setDefaultSearchContext: (value) => set({ defaultSearchContext: value }),
             setDefaultUnit: (unit) => set({ defaultUnit: unit }),
@@ -58,11 +52,6 @@ export const useSettingsStore = create<SettingsState>()(
         {
             name: 'settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
-            // Service mode is switched off for launch: don't bring back a stored "on".
-            merge: (persisted, current) => {
-                const saved = persisted as Partial<SettingsState> | undefined;
-                return { ...current, ...saved, serviceMode: FEATURES.service && !!saved?.serviceMode };
-            },
         }
     )
 );

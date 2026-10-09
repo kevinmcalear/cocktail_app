@@ -217,7 +217,6 @@ function ViewIngredientRow({
     recipe: any;
     onIngredientPress?: (id: string) => void;
 }) {
-    const typeScale = useSettingsStore((s) => (s.serviceMode ? 1.25 : 1));
     const ingredientsData = recipe.ingredient;
     const measurementParts = [];
     if (recipe.amount) measurementParts.push(`${recipe.amount}`);
@@ -239,13 +238,13 @@ function ViewIngredientRow({
             accessibilityRole={ingredientId ? "button" : undefined}
             accessibilityLabel={measurement ? `${measurement} ${name}` : name}
         >
-            <XStack alignItems="center" gap="$3" minHeight={56 * typeScale}>
-                <XStack width={76 * typeScale} justifyContent="flex-end" alignItems="baseline" gap={3}>
+            <XStack alignItems="center" gap="$3" minHeight={56}>
+                <XStack width={76} justifyContent="flex-end" alignItems="baseline" gap={3}>
                     {recipe.amount ? (
                         <Text
                             color="$color"
-                            fontSize={24 * typeScale}
-                            lineHeight={28 * typeScale}
+                            fontSize="$8"
+                            lineHeight={28}
                             fontWeight="700"
                             fontVariant={["tabular-nums"]}
                         >
@@ -253,12 +252,12 @@ function ViewIngredientRow({
                         </Text>
                     ) : null}
                     {recipe.unit ? (
-                        <Text color="$color11" fontSize={13 * typeScale} fontWeight="600">
+                        <Text color="$color11" fontSize="$3" fontWeight="600">
                             {recipe.unit}
                         </Text>
                     ) : null}
                 </XStack>
-                <Text flex={1} minWidth={0} textAlign="left" color="$color" fontSize={18 * typeScale} lineHeight={24 * typeScale} fontWeight="500">
+                <Text flex={1} minWidth={0} textAlign="left" color="$color" fontSize="$6" lineHeight={24} fontWeight="500">
                     {name}
                 </Text>
                 {ingredientId ? (

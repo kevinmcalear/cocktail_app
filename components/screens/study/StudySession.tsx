@@ -106,7 +106,7 @@ export function StudySession({ deck, cards, glasses }: StudySessionProps) {
             ) : null}
             {revealed ? (
               card.kind === 'cocktail' ? (
-                <SpecSection itemId={card.id} barId={card.barId} recipes={card.recipes} scale={1} />
+                <SpecSection itemId={card.id} barId={card.barId} recipes={card.recipes} />
               ) : (
                 <PourBack card={card} />
               )

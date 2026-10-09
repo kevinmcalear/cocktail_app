@@ -1,4 +1,4 @@
-import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { DEFAULT_SEARCH_ALL, PERSONAL_CONTEXT, resolveDefaultContextIds } from '@/lib/barContextFilter';
@@ -9,8 +9,7 @@ import { DEFAULT_UNIT_OPTIONS, THEME_MODES, useSettingsStore } from '@/store/use
 /** How the app looks and behaves on this device. Everything saves as it changes. */
 export function PreferencesSection() {
   const bars = useActiveVenue().venues.map((v) => ({ id: v.id, label: v.name }));
-  const { themeMode, setThemeMode, defaultSearchContext, setDefaultSearchContext, defaultUnit, setDefaultUnit, serviceMode, toggleServiceMode } =
-    useSettingsStore();
+  const { themeMode, setThemeMode, defaultSearchContext, setDefaultSearchContext, defaultUnit, setDefaultUnit } = useSettingsStore();
   const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
@@ -30,8 +29,6 @@ export function PreferencesSection() {
       <ControlRow label="Default unit" detail="For new recipe ingredients">
         <ChoiceChips label="Default unit" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
       </ControlRow>
-      <RowDivider />
-      <SwitchRow label="Service mode" detail="Keeps the screen awake on specs and uses larger spec type." value={serviceMode} onValueChange={toggleServiceMode} />
       <RowDivider />
       <SelectRow
         label="Search starts in"

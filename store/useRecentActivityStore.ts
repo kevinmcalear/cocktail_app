@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-export type RecentKind = 'cocktail' | 'beer' | 'wine' | 'ingredient' | 'menu' | 'quiz';
+const KINDS = ['cocktail', 'beer', 'wine', 'ingredient', 'menu'] as const;
+export type RecentKind = (typeof KINDS)[number];
 
 export type RecentActivity = {
   id: string;
@@ -41,6 +42,11 @@ export const useRecentActivityStore = create<RecentState>()(
     {
       name: 'recent-activity',
       storage: createJSONStorage(() => AsyncStorage),
+      // Older builds saved "quiz" entries, and the quiz is gone: keep only kinds that still open.
+      merge: (saved, current) => ({
+        ...current,
+        items: ((saved as Partial<RecentState> | undefined)?.items ?? []).filter((i) => (KINDS as readonly string[]).includes(i.kind)),
+      }),
     }
   )
 );

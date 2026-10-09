@@ -11,14 +11,13 @@ function recentMatchesContext(
   r: { kind: string; barId?: string | null },
   selectedContextIds: string[]
 ) {
-  if (r.kind === 'quiz') return true;
   if (r.barId === undefined) return true;
   return inSelectedContext(r.barId, selectedContextIds);
 }
 
 const a = { kind: 'cocktail', id: '1' };
 const b = { kind: 'menu', id: '2' };
-const c = { kind: 'quiz', id: '3' };
+const c = { kind: 'ingredient', id: '3' };
 const d = { kind: 'beer', id: '4' };
 
 let items = pushRing([], a);
@@ -40,12 +39,10 @@ assert.deepEqual(
 const venueA = { kind: 'cocktail', id: 'x', barId: 'happiness' };
 const personal = { kind: 'cocktail', id: 'y', barId: null };
 const legacy = { kind: 'cocktail', id: 'z' };
-const quiz = { kind: 'quiz', id: 'q' };
 assert.equal(recentMatchesContext(venueA, ['other']), false);
 assert.equal(recentMatchesContext(venueA, ['happiness']), true);
 assert.equal(recentMatchesContext(personal, [PERSONAL_CONTEXT]), true);
 assert.equal(recentMatchesContext(personal, ['happiness']), false);
 assert.equal(recentMatchesContext(legacy, ['happiness']), true);
-assert.equal(recentMatchesContext(quiz, ['happiness']), true);
 
 console.log('recentActivity.check: ok');
