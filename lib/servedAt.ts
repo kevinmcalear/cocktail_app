@@ -66,3 +66,32 @@ export function splitVersions<T extends { id: string; barId?: string | null }>(
   }
   return { served, variations, riffs };
 }
+
+/** What a bar's drink is to its classic, for a row's caption: "the classic spec", or what its variation changes. */
+export function versionLabel(match: { spec_match: string; notes?: SpecNote | null } | null | undefined): string | undefined {
+  if (match?.spec_match === 'same') return 'the classic spec';
+  if (match?.spec_match === 'variation') return specNoteText(match.notes) ?? 'a variation';
+  return undefined;
+}
+
+/**
+ * Search: bars' drinks that are a classic shown in the same results fold into
+ * it. Returns the drinks still listed, and for each classic the bars that pour
+ * it as it is, in the results' order.
+ */
+export function foldIntoClassics<T extends { id: string; bar: ServedBar }>(
+  drinks: T[],
+  classicIds: ReadonlySet<string>,
+  match: (id: string) => { spec_match: string; classic_id: string } | undefined
+): { drinks: T[]; servedBy: Record<string, ServedBar[]> } {
+  const kept: T[] = [];
+  const servedBy: Record<string, ServedBar[]> = {};
+  for (const d of drinks) {
+    const m = match(d.id);
+    if (m && (m.spec_match === 'same' || m.spec_match === 'unlisted') && classicIds.has(m.classic_id)) {
+      const bars = (servedBy[m.classic_id] ??= []);
+      if (!bars.some((b) => b.name === d.bar.name)) bars.push(d.bar);
+    } else kept.push(d);
+  }
+  return { drinks: kept, servedBy };
+}
