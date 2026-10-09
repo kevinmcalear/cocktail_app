@@ -11,7 +11,7 @@ import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 
-import { CreditTag } from '../drink/FamilyTree';
+import { CreditTag } from '../drink/DrinkCredit';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
