@@ -2,8 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
+import { Body, Button, GlassButton, Headline, useDs } from '@/components/ds';
+import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { MenuCard } from '@/components/screens/menus/MenuRows';
@@ -25,8 +25,7 @@ function today(): string {
  */
 export function TonightScreen() {
   const ds = useDs();
-  const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
+  const column = usePageColumn();
   const bottom = useTabBarInset();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const router = useRouter();
@@ -53,18 +52,19 @@ export function TonightScreen() {
             caption={item.category !== 'Cocktail' ? item.category : undefined}
           />
         )}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={[column, { paddingBottom: bottom }]}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ScreenHeaderSpacer />
-            <View style={styles.titleRow}>
-              <Display>Tonight</Display>
-              <View style={styles.titleActions}>
-                <EightBallButton />
-                {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
-              </View>
-            </View>
-            <Caption tone="muted">{today()}</Caption>
+            <PageHeader
+              title="Tonight"
+              subtitle={today()}
+              action={
+                <>
+                  <EightBallButton />
+                  {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+                </>
+              }
+            />
             {onNow.map((m) => (
               <MenuCard key={m.id} menu={m} now={now} />
             ))}
@@ -91,8 +91,6 @@ export function TonightScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.sm, paddingBottom: space.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
-  titleActions: { flexDirection: 'row', gap: space.sm },
   emptyButton: { alignSelf: 'flex-start', marginTop: space.sm },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

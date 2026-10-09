@@ -7,13 +7,12 @@ import { BackBarPlan } from '@/components/backbar/BackBarPlan';
 import { AddZone, ZoneEditor } from '@/components/backbar/PlanEditor';
 import { WaitingForSpot } from '@/components/backbar/WaitingForSpot';
 import { ZoneInspector } from '@/components/backbar/ZoneInspector';
-import { Body, Button, Caption, Display, GlassButton, LockedSection, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { Body, Button, Caption, LockedSection, Surface, useBreakpoint, useDs } from '@/components/ds';
+import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations, useLocationMutations, useWaitingForSpot, useZoneMutations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { moveRectTo, rectColumns, summaryLine, zoneRect, type NamedItem } from '@/lib/backBar';
 import { roleLabel } from '@/lib/roles';
 import type { BarZone, ItemLocation } from '@/types/backBar';
@@ -25,11 +24,10 @@ import type { BarZone, ItemLocation } from '@/types/backBar';
  */
 export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   const ds = useDs();
-  const gutter = useGutter();
+  const column = usePageColumn('wide');
   const wide = useBreakpoint() !== 'phone';
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const sidebar = useIsWideWeb();
   const { active } = useActiveVenue();
   const barId = active?.id ?? null;
 
@@ -173,28 +171,18 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + space.xxl }}>
-        <ScreenHeader />
-        <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          {!sidebar ? (
-            <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/prep'))} />
-          ) : null}
-          <View style={[styles.header, wide && styles.headerWide]}>
-            <View style={styles.flex}>
-              <Display>Back bar</Display>
-              {canRead && zones.length ? <Caption tone="muted">{summaryLine(zones.length, locations, waiting.length)}</Caption> : null}
-            </View>
-            {canDraw && zones.length ? (
-              <Button
-                label={editing ? 'Done' : 'Edit the plan'}
-                variant={editing ? 'secondary' : 'primary'}
-                onPress={() => setEditing((e) => !e)}
-                style={styles.headerAction}
-              />
-            ) : null}
-          </View>
-          {body}
-        </View>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[column, styles.body, { paddingBottom: insets.bottom + space.xxl }]}>
+        <PageHeader
+          title="Back bar"
+          subtitle={canRead && zones.length ? summaryLine(zones.length, locations, waiting.length) : null}
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/prep'))}
+          action={
+            canDraw && zones.length ? (
+              <Button label={editing ? 'Done' : 'Edit the plan'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
+            ) : null
+          }
+        />
+        {body}
       </ScrollView>
     </View>
   );
@@ -203,10 +191,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   flex: { flex: 1 },
-  body: { gap: space.lg, maxWidth: 1240, width: '100%' },
-  header: { gap: space.md },
-  headerWide: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  headerAction: { alignSelf: 'flex-start' },
+  body: { gap: space.lg },
   stack: { gap: space.lg },
   columns: { flexDirection: 'row', gap: space.xl, alignItems: 'flex-start' },
   inspector: { width: 340, borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: space.xl },

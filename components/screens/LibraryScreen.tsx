@@ -2,8 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { Body, Button, Caption, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
@@ -135,10 +135,7 @@ export function LibraryScreen() {
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <View style={{ marginHorizontal: -gutter }}>
-        <ScreenHeader />
-      </View>
-      <Display>Library</Display>
+      <PageHeader title="Library" />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow label="Show" gutter={gutter}>
