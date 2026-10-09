@@ -84,6 +84,8 @@ export interface PrepUsedIn {
   preps: UsedInPrep[];
   /** It goes on a drink as a garnish (a twist, a wheel, a sprig), so it can carry a prep card of its own. */
   garnish: boolean;
+  /** How much each drink pours, by drink id, as this role's recipe view shows it (null amounts when masked). */
+  pours: Record<string, { amount: number | string | null; unit: string | null }>;
 }
 
 /** Where this ingredient goes: into other preps, and whether it's a garnish on a drink. */
@@ -94,16 +96,18 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
     queryFn: async (): Promise<PrepUsedIn> => {
       const { data, error } = await supabase
         .from('app_recipe_presentation')
-        .select('unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
+        .select('amount, unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
         .eq('display_ingredient_id', itemId!);
       if (error) throw error;
       const seen = new Map<string, UsedInPrep>();
       let garnish = false;
-      for (const row of (data ?? []) as unknown as { unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
+      const pours: PrepUsedIn['pours'] = {};
+      for (const row of (data ?? []) as unknown as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
         if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name });
+        else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit };
         if (isGarnishUnit(row.unit)) garnish = true;
       }
-      return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish };
+      return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish, pours };
     },
   });
 }
