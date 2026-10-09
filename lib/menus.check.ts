@@ -22,7 +22,7 @@ assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: new Date(
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({
   id, name: id, barId: 'bar', createdBy: null, coverUrl: null, coverPosition: 50,
-  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, itemIds: [], pictures: [], event: null,
+  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, kind: 'menu', itemIds: [], pictures: [], event: null,
 });
 const groups = groupMenus(
   [
@@ -34,6 +34,8 @@ const groups = groupMenus(
     menu('xmas', '2026-12-01', null),
     menu('winter', null, null, '2026-09-20'),
     menu('old draft', null, null, '2026-05-01'),
+    { ...menu('flights', null, null), kind: 'rnd' },
+    { ...menu('assignments', null, null), kind: 'rnd' },
   ],
   now
 );
@@ -41,6 +43,7 @@ assert.deepEqual(groups.on.map((m) => m.id), ['autumn', 'beer']);
 assert.deepEqual(groups.upcoming.map((m) => m.id), ['takeover', 'xmas']);
 assert.deepEqual(groups.draft.map((m) => m.id), ['winter', 'old draft']);
 assert.deepEqual(groups.previous.map((m) => m.id), ['summer', 'spring']);
+assert.deepEqual(groups.rnd.map((m) => m.id), ['assignments', 'flights'], 'R&D is filed apart, by name');
 
 // --- date lines ---
 assert.equal(menuDateLine(menu('a', '2026-09-01T12:00:00Z', null), now, 'en-GB'), 'since Tue 1 Sept');

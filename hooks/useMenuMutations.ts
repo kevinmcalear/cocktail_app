@@ -140,6 +140,22 @@ export function useEndMenu() {
 }
 
 /**
+ * Files a venue's draft menu under R&D (trials, flights, assignments), or
+ * back with the menus. R&D is never dated: the database refuses a dated one.
+ */
+export function useSetMenuKind() {
+  const invalidate = useInvalidateMenus();
+  return useMutation({
+    mutationFn: async ({ menuId, kind }: { menuId: string; kind: 'menu' | 'rnd' }) => {
+      const { error } = await supabase.from('menus').update({ kind }).eq('id', menuId);
+      if (error) throw readable(error);
+    },
+    onSuccess: invalidate,
+    onError: () => {},
+  });
+}
+
+/**
  * Shares a home menu with a link (/m/<id>), or stops sharing it. The server
  * sets the time, and refuses without a public profile. No drink's visibility
  * changes: the link shows only drinks that are already public.

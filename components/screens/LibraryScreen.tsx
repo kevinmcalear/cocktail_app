@@ -113,8 +113,11 @@ export function LibraryScreen() {
       const set = new Set(ids);
       return published.filter((i) => set.has(itemIdOf(i.id)));
     };
+    const rnd = new Set(byMenu.rnd);
     const out: Record<Show, typeof published> = {
-      all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory)),
+      // R&D (trials, a flight's control) has its own filter, out of All.
+      all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory) && !rnd.has(itemIdOf(i.id))),
+      rnd: inSet(byMenu.rnd),
       'on-menu': inSet(byMenu.on),
       staff: [],
       past: inSet(byMenu.past),
@@ -159,6 +162,15 @@ export function LibraryScreen() {
       ) : null}
       {show === 'on-menu' && !byMenu.onMenus.length && menus ? <Caption tone="muted">No menu is on right now. Menus are built and scheduled in Menus.</Caption> : null}
       {show === 'past' ? <Caption tone="muted">Drinks from menus that have finished, and aren’t on one now.</Caption> : null}
+      {show === 'rnd' && byMenu.rndMenus.length > 1 ? (
+        <FilterRow label="Which collection" gutter={gutter}>
+          <Filter label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />
+          {byMenu.rndMenus.map((m) => (
+            <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />
+          ))}
+        </FilterRow>
+      ) : null}
+      {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu.</Caption> : null}
       {show === 'batched' ? <Caption tone="muted">Drinks served bottled, carbonated, on draught or from a batch made ahead.</Caption> : null}
       {show === 'bottles' && activeId ? (
         canEdit ? (

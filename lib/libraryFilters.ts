@@ -4,7 +4,7 @@ import type { MenuSummary } from '@/types/menus';
 
 /** Library's filters, as they read in the URL: /library?show=staff. */
 export type Show =
-  | 'all' | 'on-menu' | 'staff' | 'past'
+  | 'all' | 'on-menu' | 'staff' | 'past' | 'rnd'
   | 'batched' | 'preps' | 'garnishes' | 'bottles'
   | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price';
 
@@ -14,6 +14,7 @@ export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'on-menu', label: 'On menu' },
   { value: 'staff', label: 'Staff list' },
   { value: 'past', label: 'Past' },
+  { value: 'rnd', label: 'R&D' },
 ];
 
 /**
@@ -67,20 +68,26 @@ export interface OnMenu {
 
 /**
  * The venue's drinks by menu: the menus on now, the drinks on them (or on the
- * one picked), and the drinks that were on a past menu and aren't on now.
+ * one picked), the drinks that were on a past menu and aren't on now, and
+ * R&D: drinks on an R&D collection and on no menu (or the picked collection's).
  */
 export function menuDrinks(
   menus: MenuSummary[],
   now: number,
   picked: string | null
-): { onMenus: OnMenu[]; on: string[]; onNow: string[]; past: string[] } {
+): { onMenus: OnMenu[]; on: string[]; onNow: string[]; past: string[]; rndMenus: OnMenu[]; rnd: string[] } {
   const groups = groupMenus(menus, now);
-  const onMenus = groups.on.map((m) => ({ id: m.id, name: m.name, itemIds: [...new Set(m.itemIds)] }));
+  const listed = (ms: MenuSummary[]) => ms.map((m) => ({ id: m.id, name: m.name, itemIds: [...new Set(m.itemIds)] }));
+  const onMenus = listed(groups.on);
   const onNow = new Set(onMenus.flatMap((m) => m.itemIds));
   const pick = onMenus.find((m) => m.id === picked);
   const on = pick ? pick.itemIds : [...onNow];
   const past = [...new Set(groups.previous.flatMap((m) => m.itemIds))].filter((id) => !onNow.has(id));
-  return { onMenus, on, onNow: [...onNow], past };
+  const rndMenus = listed(groups.rnd);
+  const onAMenu = new Set([...groups.on, ...groups.upcoming, ...groups.draft, ...groups.previous].flatMap((m) => m.itemIds));
+  const rndPick = rndMenus.find((m) => m.id === picked);
+  const rnd = rndPick ? rndPick.itemIds : [...new Set(rndMenus.flatMap((m) => m.itemIds))].filter((id) => !onAMenu.has(id));
+  return { onMenus, on, onNow: [...onNow], past, rndMenus, rnd };
 }
 
 export type MenuState = 'On menu' | 'Past' | 'Off menu';
