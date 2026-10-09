@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, DEFAULT_ACCENT, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, DEFAULT_ACCENT, fontFamilies, layout, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { accentFill } from '@/lib/color';
@@ -75,47 +76,45 @@ export function VenueSwitcher() {
         {canSwitch ? <IconSymbol name="chevron.down" size={14} color={ds.c.muted} /> : null}
       </PressableScale>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={() => setOpen(false)}>
-          <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-            <Title>Switch to</Title>
-            <PressableScale
-              role="radio"
-              aria-selected={home}
-              accessibilityLabel="Home bar, your shelf and collection"
-              onPress={() => choose('home')}
-              style={[styles.row, { borderBottomColor: ds.c.line }]}
-            >
-              <HomeMark size={40} />
-              <View style={styles.rowText}>
-                <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>Home bar</Body>
-                <Caption tone="muted">Your shelf and collection</Caption>
-              </View>
-              {home ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
-            </PressableScale>
-            {venues.map((v) => {
-              const selected = !home && v.id === active?.id;
-              return (
-                <PressableScale
-                  key={v.id}
-                  role="radio"
-                  aria-selected={selected}
-                  accessibilityLabel={`${v.name}, ${roleLabel(v.roleLevel)}`}
-                  onPress={() => choose(v)}
-                  style={[styles.row, { borderBottomColor: ds.c.line }]}
-                >
-                  <VenueMark venue={v} size={40} />
-                  <View style={styles.rowText}>
-                    <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{v.name}</Body>
-                    <Caption tone="muted">{roleLabel(v.roleLevel)}</Caption>
-                  </View>
-                  {selected ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
-                </PressableScale>
-              );
-            })}
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* The app's sheet, so it's a dialog in the middle of the window on desktop web. */}
+      <MenuSheet visible={open} onClose={() => setOpen(false)} title="Switch to">
+        <View role="radiogroup">
+          <PressableScale
+            role="radio"
+            aria-checked={home}
+            accessibilityLabel="Home bar, your shelf and collection"
+            onPress={() => choose('home')}
+            style={[styles.row, { borderBottomColor: ds.c.line }]}
+          >
+            <HomeMark size={40} />
+            <View style={styles.rowText}>
+              <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>Home bar</Body>
+              <Caption tone="muted">Your shelf and collection</Caption>
+            </View>
+            {home ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
+          </PressableScale>
+          {venues.map((v) => {
+            const selected = !home && v.id === active?.id;
+            return (
+              <PressableScale
+                key={v.id}
+                role="radio"
+                aria-checked={selected}
+                accessibilityLabel={`${v.name}, ${roleLabel(v.roleLevel)}`}
+                onPress={() => choose(v)}
+                style={[styles.row, { borderBottomColor: ds.c.line }]}
+              >
+                <VenueMark venue={v} size={40} />
+                <View style={styles.rowText}>
+                  <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{v.name}</Body>
+                  <Caption tone="muted">{roleLabel(v.roleLevel)}</Caption>
+                </View>
+                {selected ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
+              </PressableScale>
+            );
+          })}
+        </View>
+      </MenuSheet>
     </>
   );
 }
@@ -124,16 +123,6 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, flexShrink: 1 },
   chipName: { flexShrink: 1 },
   initial: { alignItems: 'center', justifyContent: 'center' },
-  scrim: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: {
-    width: '100%',
-    maxWidth: 520,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space.xl,
-    paddingBottom: space.xxxl,
-    gap: space.sm,
-  },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderBottomWidth: StyleSheet.hairlineWidth },
   rowText: { flex: 1, gap: 2 },
 });
