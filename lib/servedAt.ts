@@ -1,5 +1,5 @@
 // What a classic's row and a bar's variation say in My Bar's What to make
-// (my_bar_drinks, supabase/migrations/20261010620000_my_bar_served_at.sql).
+// (my_bar_drinks, supabase/migrations/20261010910000_my_bar_served_at.sql).
 
 /** A bar pouring the classic as it is. */
 export interface ServedBar {
