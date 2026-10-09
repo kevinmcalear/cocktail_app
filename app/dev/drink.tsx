@@ -13,11 +13,11 @@ import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
 // Through the drink page routes, not the components: a static import here made
 // the web build put the whole drink page in the chunk every page loads.
 const DrinkScreen = lazy(() => import('@/app/cocktail/[id]/index').then((m) => ({ default: m.DrinkScreen })));
-const BatchScreen = lazy(() => import('@/app/cocktail/[id]/batch').then((m) => ({ default: m.BatchScreen })));
+const BatchSheet = lazy(() => import('@/app/cocktail/[id]/index').then((m) => ({ default: m.BatchSheet })));
 
 /**
  * The redesigned drink page with a sample Penicillin, masked as the server
- * would mask it for each role, and its Batch screen with a sample drink for
+ * would mask it for each role, and its Batch sheet with a sample drink for
  * each batching rule (`?batch=martini` opens straight to it). Hidden, like
  * /dev/gallery.
  */
@@ -42,17 +42,19 @@ function Preview() {
     return (
       <View style={styles.flex}>
         <Stack.Screen options={{ headerShown: false, title: 'Batch preview' }} />
-        <View style={styles.flex}>
-          <BatchScreen
-            key={batch}
-            name={BATCH_SAMPLES[batch].name}
-            lines={batchSampleLines(batch, role)}
-            methodNames={[...BATCH_SAMPLES[batch].methods]}
-            lockedUntil={role >= SAMPLE_LEVELS.measurement ? null : roleLabel(SAMPLE_LEVELS.measurement)}
-            initialServes={batch === 'martini' ? 24 : 8}
-            onClose={() => setBatch(null)}
-          />
-        </View>
+        <BackbarTheme>
+          <Ground />
+        </BackbarTheme>
+        <BatchSheet
+          key={batch}
+          visible
+          name={BATCH_SAMPLES[batch].name}
+          lines={batchSampleLines(batch, role)}
+          methodNames={[...BATCH_SAMPLES[batch].methods]}
+          lockedUntil={role >= SAMPLE_LEVELS.measurement ? null : roleLabel(SAMPLE_LEVELS.measurement)}
+          initialServes={batch === 'martini' ? 24 : 8}
+          onClose={() => setBatch(null)}
+        />
         <BackbarTheme>
           <RoleBar role={role} setRole={setRole} docked>
             {(Object.keys(BATCH_SAMPLES) as BatchSampleKey[]).map((k) => chip(BATCH_SAMPLES[k].name, k === batch, () => setBatch(k)))}
@@ -72,7 +74,7 @@ function Preview() {
         onToggleStudyPile={() => {}}
         canEdit={false}
         onEdit={() => {}}
-        preview={{ heroSource: photo ? SAMPLE_IMAGES.photo : null, role, levels: SAMPLE_LEVELS, onBatch: () => setBatch('penicillin') }}
+        preview={{ heroSource: photo ? SAMPLE_IMAGES.photo : null, role, levels: SAMPLE_LEVELS }}
       />
       <BackbarTheme>
         <RoleBar role={role} setRole={setRole}>
@@ -81,6 +83,11 @@ function Preview() {
       </BackbarTheme>
     </View>
   );
+}
+
+function Ground() {
+  const ds = useDs();
+  return <View style={[styles.flex, { backgroundColor: ds.c.ground }]} />;
 }
 
 function chip(label: string, selected: boolean, onPress: () => void) {

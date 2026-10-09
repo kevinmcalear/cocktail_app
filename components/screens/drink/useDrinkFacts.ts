@@ -71,5 +71,5 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
-  return { facts, tags, glass, ice: ice ? { name: ice.name } : null, method, strength };
+  return { facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
 }
