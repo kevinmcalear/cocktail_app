@@ -6,12 +6,14 @@ import { Body, Button, Caption, Chip, Field, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyProfile, useSaveMyProfile, type MyProfile } from '@/hooks/useMyProfile';
-import { DEFAULT_SHARING, handleFromName, normalizeHandle, profileDraftErrors, sharingSummary, type ProfileDraft } from '@/lib/profiles';
+import { DEFAULT_IDENTITY, DEFAULT_SHARING, handleFromName, normalizeHandle, profileDraftErrors, sharingSummary, type ProfileDraft } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { PlaceStep } from '../onboarding/CareerSteps';
 import { SafetyPage } from '../safety/SafetyPage';
 import { MyJobRequests } from './JobRequests';
 import { PastJobs } from './PastJobs';
+import { ProfileIdentity } from './ProfileIdentity';
 
 const PUBLIC_MEANS =
   'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
@@ -48,8 +50,20 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
   const suggestedName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
   const [draft, setDraft] = useState<ProfileDraft>(() =>
     profile
-      ? { name: profile.displayName, handle: profile.handle, bio: profile.bio ?? '', instagram: profile.instagram ?? '', isPublic: profile.isPublic, sharesRankings: profile.sharesRankings, sharesBars: profile.sharesBars, sharesMade: profile.sharesMade }
-      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING }
+      ? {
+          name: profile.displayName,
+          handle: profile.handle,
+          bio: profile.bio ?? '',
+          instagram: profile.instagram ?? '',
+          isPublic: profile.isPublic,
+          sharesRankings: profile.sharesRankings,
+          sharesBars: profile.sharesBars,
+          sharesMade: profile.sharesMade,
+          tagline: profile.tagline ?? '',
+          headlinePositionId: profile.headlinePositionId,
+          showsPhoto: profile.showsPhoto,
+        }
+      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING, ...DEFAULT_IDENTITY }
   );
   const [tried, setTried] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -82,6 +96,7 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         autoCorrect={false}
         maxLength={31}
       />
+      <ProfileIdentity draft={draft} edit={edit} error={errors.tagline} personId={profile?.id ?? null} />
       <Field
         label="Bio (optional)"
         value={draft.bio}
@@ -131,16 +146,36 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
       {profile ? (
         <View style={styles.visibility}>
           <Headline role="heading">Where you’ve worked</Headline>
-          <Caption tone="muted">Where you work now always shows. Switch on a past job to show it too. Each switch saves straight away.</Caption>
+          <Caption tone="muted">
+            Where you work now always shows. Switch on a past job to show it too. A job you add shows marked not confirmed until the bar says yes. Each switch saves
+            straight away.
+          </Caption>
           <MyJobRequests personId={profile.id} />
           <PastJobs personId={profile.id} />
+          <AddJob personId={profile.id} />
         </View>
       ) : null}
     </View>
   );
 }
 
+/** Add a job you have now or had before: the same search and save as onboarding. */
+function AddJob({ personId }: { personId: string }) {
+  const [when, setWhen] = useState<'now' | 'before' | null>(null);
+  if (!when) return <Button label="Add a job" variant="secondary" onPress={() => setWhen('now')} style={styles.start} />;
+  return (
+    <View style={styles.visibility}>
+      <View role="radiogroup" accessibilityLabel="When" style={styles.chips}>
+        <Chip label="I work there now" selected={when === 'now'} onPress={() => setWhen('now')} />
+        <Chip label="I used to" selected={when === 'before'} onPress={() => setWhen('before')} />
+      </View>
+      <PlaceStep key={when} personId={personId} isCurrent={when === 'now'} listJobs={false} onDone={() => setWhen(null)} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  start: { alignSelf: 'flex-start' },
   form: { gap: space.lg, marginTop: space.lg },
   visibility: { gap: space.sm },
   chips: { flexDirection: 'row', gap: space.sm },

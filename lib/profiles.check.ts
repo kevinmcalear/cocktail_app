@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, DEFAULT_SHARING, personTabs, sharingSummary, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_IDENTITY, DEFAULT_SHARING, profileLine, taglineProblem, personTabs, sharingSummary, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -51,7 +51,7 @@ assert.equal(handleFromName('Zoë  O’Brien!'), 'zoe.o.brien');
 assert.equal(handleFromName('Al'), '', 'too short for a handle');
 assert.equal(handleFromName('大'), '');
 assert.equal(handleFromName('x'.repeat(40)).length, 30);
-const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING };
+const draft = { name: 'Jo', handle: '@Jo.Juniper', bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING, ...DEFAULT_IDENTITY };
 assert.deepEqual(profileDraftErrors(draft), {});
 assert.deepEqual(Object.keys(profileDraftErrors({ ...draft, name: '  ', handle: 'a', bio: 'x'.repeat(501), instagram: 'a..b' })), ['name', 'handle', 'bio', 'instagram']);
 assert.ok(profileDraftErrors({ ...draft, handle: 'jo.' }).handle, 'no trailing dot');
@@ -130,3 +130,19 @@ assert.deepEqual(profileLinks({ instagram: null, website: 'https://www.instagram
   assert.equal(profileQueryShows(['profile', 'mine', 'u'], { id: 'p9' }, { id: 'p1' }), false);
   assert.equal(profileQueryShows(['profile-awards', 'p1'], page, { id: 'p1' }), false);
 }
+
+// The line under a name: a confirmed job they picked, else their own words, else nothing.
+assert.equal(taglineProblem(' Home bartender '), undefined);
+assert.equal(taglineProblem(''), undefined);
+assert.ok(taglineProblem('x'.repeat(41)));
+assert.ok(taglineProblem('two\nlines'));
+const job = (over: Partial<{ id: string; is_current: boolean; is_shown: boolean; person_accepted: boolean; bar_accepted: boolean }>) => ({
+  id: 'j1', title: 'Head bartender', is_current: true, is_shown: false, person_accepted: true, bar_accepted: true, bar: { display_name: 'Little Rye' }, ...over,
+});
+assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: null }, [job({})]), 'Home bartender');
+assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: 'j1' }, [job({})]), 'Head bartender at Little Rye');
+assert.equal(profileLine({ tagline: null, headline_position_id: 'j1' }, [job({ is_current: false, is_shown: true })]), 'Head bartender formerly at Little Rye');
+// Not confirmed by the bar, or a past job they hid: back to their words.
+assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: 'j1' }, [job({ bar_accepted: false })]), 'Home bartender');
+assert.equal(profileLine({ tagline: null, headline_position_id: 'j1' }, [job({ is_current: false })]), null);
+assert.equal(profileLine({ tagline: '  ', headline_position_id: null }, []), null);
