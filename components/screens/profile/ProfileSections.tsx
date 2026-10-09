@@ -4,16 +4,16 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
-import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { versionLabel } from '@/lib/servedAt';
 
 import { CreditTag } from '../drink/FamilyTree';
+import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
@@ -25,28 +25,12 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
  */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
   const router = useRouter();
-  const ds = useDs();
   const prefetch = usePrefetchCocktail();
-  const { data: matches } = useSpecMatches(`originals:${selfId}`, originals.map((d) => d.id));
+  const { poured, own, matches } = usePouredSplit(selfId, originals);
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
-  const poured = originals.filter((d) => ['same', 'unlisted'].includes(matches?.[d.id]?.spec_match ?? ''));
-  const own = originals.filter((d) => !poured.includes(d));
   return (
     <View style={styles.originals}>
-      {poured.length ? (
-        <View style={styles.menus}>
-          <Caption tone="muted" role="heading" style={styles.cap}>
-            Classics they pour
-          </Caption>
-          <View role="list" style={styles.poured}>
-            {poured.map((d) => (
-              <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(`/cocktail/${d.id}` as Href)} style={[styles.pill, { borderColor: ds.c.line }]}>
-                <Body>{d.name}</Body>
-              </PressableScale>
-            ))}
-          </View>
-        </View>
-      ) : null}
+      <ClassicsTheyPour drinks={poured} />
       <View role="list" style={styles.grid}>
         {own.map((d) => {
           const hero = heroPicture(d.item_images);
@@ -185,8 +169,6 @@ export function Stat({ value, label }: { value: number | string; label: string }
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   originals: { gap: space.lg },
-  poured: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  pill: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 36, justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
   tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
   menus: { gap: space.xs },
