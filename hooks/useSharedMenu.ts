@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
+import { isUuid } from '@/lib/menuPreview';
 import { supabase } from '@/lib/supabase';
 
 /** A home menu someone shared, as anyone reads it: /m/<id>. */
@@ -35,6 +36,8 @@ export function useSharedMenu(id: string | null | undefined) {
     meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<SharedMenuPage | null> => {
+      // A mangled link is Not available, not a failed load.
+      if (!isUuid(id)) return null;
       const { data, error } = await supabase.rpc('shared_menu', { p_menu_id: id });
       if (error) throw error;
       if (!data) return null;
