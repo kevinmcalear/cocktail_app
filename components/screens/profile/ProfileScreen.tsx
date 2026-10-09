@@ -18,6 +18,7 @@ import { barsCrediting, personTabs } from '@/lib/profiles';
 
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { SignInCard } from '../published/SignInCard';
+import { LoveBarButton } from '../kept/LoveBarButton';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
 import { BarRankings } from './BarRankings';
@@ -83,7 +84,12 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
-      {profile && !gated ? <ProfileSafety profile={profile} /> : null}
+      {profile && !gated ? (
+        <View style={styles.right}>
+          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} /> : null}
+          <ProfileSafety profile={profile} />
+        </View>
+      ) : null}
     </View>
   );
 
@@ -247,6 +253,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
+  right: { flexDirection: 'row', gap: space.sm },
   body: { gap: space.xl },
   header: { alignItems: 'center', gap: space.sm },
   barHead: { gap: space.sm },
