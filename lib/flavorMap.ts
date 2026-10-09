@@ -158,6 +158,36 @@ export function layoutLabels(placed: readonly PlacedPair[], width: number, fontS
   });
 }
 
+export interface CentreLine {
+  text: string;
+  /** Offset of the line's middle from the circle's middle, in points. */
+  dy: number;
+}
+
+/**
+ * The names in the middle circle (radius `r`), one line each, cut short with
+ * an ellipsis to the room across the circle at that line's height, which
+ * narrows away from the middle. A lone name too long for one line breaks at
+ * the space nearest its middle instead. The chips above carry full names.
+ * charWidth is the semibold caption's average (about 6 points at 13).
+ */
+export function centreLines(names: readonly string[], r: number, fontSize: number, charWidth = 6.4): CentreLine[] {
+  const step = fontSize + 3;
+  const room = (dy: number) => 2 * Math.sqrt(Math.max(r * r - (Math.abs(dy) + fontSize / 2) ** 2, 0)) - 8;
+  let lines = [...names];
+  if (lines.length === 1 && lines[0].length * charWidth > room(0) && lines[0].includes(' ')) {
+    const name = lines[0];
+    const spaces = [...name].flatMap((ch, i) => (ch === ' ' ? [i] : []));
+    const cut = spaces.reduce((best, i) => (Math.abs(i - name.length / 2) < Math.abs(best - name.length / 2) ? i : best));
+    lines = [name.slice(0, cut), name.slice(cut + 1)];
+  }
+  return lines.map((line, i) => {
+    const dy = (i - (lines.length - 1) / 2) * step;
+    const chars = Math.max(Math.floor(room(dy) / charWidth), 2);
+    return { text: line.length <= chars ? line : `${line.slice(0, chars - 1).trimEnd()}…`, dy };
+  });
+}
+
 /** How many partners fit: fewer on a phone, where the outer ring gets crowded. */
 export const mapSizeFor = (width: number) => (width < 480 ? 14 : MAP_SIZE);
 
