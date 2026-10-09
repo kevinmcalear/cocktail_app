@@ -36,6 +36,9 @@ assert.deepEqual(spiritsOf(d('Sakura', 'Junmai sake with ume')), ['sake']);
 // --- findKinds: labels and classics by word prefix ---
 assert.deepEqual(findKinds('gin').map((k) => k.id), ['gin']);
 assert.deepEqual(findKinds('smok').map((k) => k.id), ['note:smoky']);
+assert.deepEqual(findKinds('spicy').map((k) => k.id), ['note:spicy'], 'old note words still find the renamed chip');
+assert.deepEqual(findKinds('heat').map((k) => k.id), ['note:spicy']);
+assert.deepEqual(findKinds('botan').map((k) => k.id), ['note:botanical']);
 assert.equal(kindLabel('note:smoky'), 'Smoky');
 assert.deepEqual(findKinds('marg').map((k) => k.id), ['margarita']);
 assert.deepEqual(findKinds('boulevardier').map((k) => k.id), ['negroni']);

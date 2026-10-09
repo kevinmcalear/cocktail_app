@@ -29,16 +29,19 @@ export type Profile = Record<Dimension, number>;
 /** A taste can be partial: quick answers only cover some dimensions. */
 export type Taste = Partial<Record<Dimension, number>>;
 
+// The words people see. Keys stay as stored; the shown word follows how
+// drinkers talk: nobody says "botanical" or "spiced", and "spicy" reads as
+// chili, ginger or rye (https://claude.ai/artifact/K3hyAh5Zr1eGAcaaunrWFj).
 export const LABEL: Record<Dimension, string> = {
   sweet: 'sweet',
   sour: 'sour',
   bitter: 'bitter',
   strong: 'strong',
-  botanical: 'botanical',
+  botanical: 'juniper',
   herbal: 'herbal',
   fruity: 'fruity',
-  spiced: 'spiced',
-  spicy: 'spicy',
+  spiced: 'warm spice',
+  spicy: 'heat',
   smoky: 'smoky',
   savory: 'savory',
   creamy: 'creamy',
@@ -219,11 +222,11 @@ export const QUESTIONS: readonly TasteQuestion[] = [
   { dim: 'strong', prompt: 'Strong and stirred, like an Old Fashioned?' },
   { dim: 'smoky', prompt: 'Smoky, like mezcal?' },
   { dim: 'creamy', prompt: 'Creamy, like a Piña Colada?' },
-  { dim: 'botanical', prompt: 'Botanical, like a gin Martini?' },
+  { dim: 'botanical', prompt: 'Juniper and pine, like a gin Martini?' },
   { dim: 'herbal', prompt: 'Herbal, like a Last Word or a Mojito?' },
   { dim: 'fruity', prompt: 'Fruity, like a Bramble?' },
-  { dim: 'spiced', prompt: 'Warmly spiced, like a Zombie?' },
-  { dim: 'spicy', prompt: 'Chili hot, like a Spicy Margarita?' },
+  { dim: 'spiced', prompt: 'Warm spice, like cinnamon and clove in a Zombie?' },
+  { dim: 'spicy', prompt: 'Heat, like a Spicy Margarita or a Moscow Mule?' },
   { dim: 'savory', prompt: 'Savory, like a Bloody Mary?' },
 ];
 
