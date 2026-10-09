@@ -11,7 +11,7 @@
  * Keeps are always the safer number when sources differ.
  */
 import type { Allergen } from './allergens';
-import { asLike, keepFor, nameParts, partsFor, prepFacts, splitName } from './techniques/template';
+import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
 import type { Technique } from './techniques/types';
 
 export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other';
@@ -366,7 +366,8 @@ export function prepFromTechnique(
 
   let usedAdjunct = false;
   for (const p of partsFor(t, { adjunct: adjunct?.name ?? null, name })) {
-    const fill = p.slot && adjunct && !p.name.toLowerCase().includes(adjunct.name.toLowerCase()) ? asLike(adjunct.name, p.name) : null;
+    // A picked ingredient is used as is; a word from the name becomes the catalog thing it means in this slot (coconut → Coconut Oil).
+    const fill = p.slot && adjunct && !p.name.toLowerCase().includes(adjunct.name.toLowerCase()) ? (picked.adjunct ? adjunct.name : (slotIngredient(p.slot, adjunct.name) ?? asLike(adjunct.name, p.name))) : null;
     if (p.slot) usedAdjunct = true;
     const l = p.unit === 'drops' ? line(fill ?? p.name, null, 'drops', 0) : line(fill ?? p.name, p.per, p.unit, yieldPer(p.name, p.unit, p.removed));
     if (fill) l.id = picked.adjunct?.id ?? null;
@@ -375,7 +376,7 @@ export function prepFromTechnique(
     lines.push(l);
   }
   if (t.withWhat && !usedAdjunct) {
-    if (adjunct) lines.push({ ...line(adjunct.name, null, 'g', 0), id: adjunct.id ?? null });
+    if (adjunct) lines.push({ ...line(picked.adjunct ? adjunct.name : (slotIngredient(t.withWhat, adjunct.name) ?? adjunct.name), null, 'g', 0), id: adjunct.id ?? null });
     else if (needsWith(t)) lines.push(slotLine(WITH_STAND_IN[t.withWhat] ?? 'Flavour', t.withWhat, null, 'g', 0));
   }
   const extra = (t.extra ?? []).map((e) => ({ ...line(e.name, null, '', 0), ...(e.removed ? { removed: true } : null) }));

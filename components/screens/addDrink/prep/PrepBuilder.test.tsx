@@ -21,7 +21,7 @@ describe('PrepBuilder', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('The recipe')).toBeTruthy();
     expect(screen.getByText('White rum')).toBeTruthy();
-    expect(screen.getByText('Coconut')).toBeTruthy();
+    expect(screen.getByText('Coconut Oil')).toBeTruthy();
     expect(screen.getByText('Taken out before bottling')).toBeTruthy();
   });
 

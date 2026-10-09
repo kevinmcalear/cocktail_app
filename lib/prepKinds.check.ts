@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromTechnique, prepYield, slotMessage, startPrep, withFacts } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
-import { nameFor, nameParts, prepFacts } from './techniques/template';
+import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
 
 // The name says the kind.
 assert.equal(guessKind('Pineapple chili shrub'), 'shrub');
@@ -87,13 +87,13 @@ assert.equal(chamomile.keepsHours, 14 * 24);
 assert.equal(chamomile.storage, 'Fridge, sealed bottle');
 assert.deepEqual(openSlots(startPrep('infusion', 'Infusion')).map((l) => l.slot), ['spirit', 'flavour']);
 
-// Fat wash from a typed name: White rum the base, Coconut the fat, lifted off so it isn't in the yield.
+// Fat wash from a typed name: White rum the base, coconut the flavour and Coconut Oil the fat, lifted off so it isn't in the yield.
 const t = (id: string) => techniqueById(id)!;
 const fromTech = (id: string, name: string, picked?: Parameters<typeof prepFromTechnique>[3]) => prepFromTechnique(t(id), name, prepCardFor(t(id)), picked);
 assert.deepEqual(nameParts('coconut fat washed white rum', t('fat-wash')), { base: 'White rum', adjunct: 'Coconut', extra: [] });
 assert.deepEqual(nameParts('Brown butter bourbon', t('fat-wash')), { base: 'Bourbon', adjunct: 'Brown butter', extra: [] });
 const coconut = fromTech('fat-wash', 'coconut fat washed white rum');
-assert.deepEqual(coconut.lines.map((l) => l.name), ['White rum', 'Coconut']);
+assert.deepEqual(coconut.lines.map((l) => l.name), ['White rum', 'Coconut Oil'], 'the fat stirred in is coconut oil, not the fruit');
 assert.deepEqual(prepAmounts(coconut).map((a) => a.amount), [750, 60]);
 assert.equal(prepYield(coconut), 750, 'the fat is lifted off: makes about what the spirit was');
 assert.equal(coconut.keepsHours, 7 * 24, 'coconut is treated like a nut wash: the shorter keep');
@@ -107,7 +107,28 @@ assert.equal(bacon.vegan, false);
 const butter = fromTech('fat-wash', 'Brown butter rum');
 assert.deepEqual(butter.allergens, ['milk']);
 assert.equal(butter.keepsHours, 7 * 24);
-assert.ok(butter.lines.find((l) => l.name === 'Brown butter')?.removed);
+assert.ok(butter.lines.find((l) => l.name === 'Brown Butter')?.removed);
+// Each flavour word means a real catalog fat or milk in its slot; the name keeps the flavour.
+const fat = (name: string) => fromTech('fat-wash', name).lines[1].name;
+assert.equal(fat('Butter-washed rum'), 'Butter');
+assert.equal(fat('Bacon bourbon'), 'Bacon Fat');
+assert.equal(fat('Olive oil washed gin'), 'Olive Oil');
+assert.equal(fat('Sesame fat-washed vodka'), 'Sesame Oil');
+assert.equal(fat('Duck fat washed cognac'), 'Duck Fat');
+assert.equal(fat('Peanut butter washed bourbon'), 'Peanut Butter');
+assert.equal(fat('Ghee washed rum'), 'Ghee');
+assert.equal(fat('Coconut and pistachio fat-washed rum'), 'Coconut and pistachio', 'two things stay as typed');
+assert.equal(nameParts('coconut fat washed white rum', t('fat-wash')).adjunct, 'Coconut');
+assert.equal(nameFor(t('fat-wash'), { base: 'White rum', adjunct: 'Coconut' }), 'Coconut fat-washed White rum');
+assert.equal(fromTech('milk-wash', 'Yogurt washed gin').lines[1].name, 'Yogurt');
+assert.equal(fromTech('milk-wash', 'Greek yoghurt washed gin').lines[1].name, 'Greek Yoghurt');
+assert.equal(fromTech('milk-wash', 'Milk washed gin').lines[1].name, 'Whole milk');
+assert.equal(fromTech('vegan-wash', 'Coconut milk washed rum').lines[1].name, 'Coconut Milk');
+assert.deepEqual(fromTech('vegan-wash', 'Oat milk washed gin').lines.map((l) => l.name), ['Gin', 'Oat Milk']);
+assert.equal(slotIngredient('flavour', 'coconut'), null, 'only fat and milk slots map');
+assert.equal(fromTech('milk-wash', 'Whey washed rum').lines[1].name, 'Whey');
+// A picked "with what" is used as picked, never remapped.
+assert.equal(fromTech('fat-wash', 'Coconut fat-washed rum', { adjunct: { id: 'c1', name: 'Coconut' } }).lines[1].name, 'Coconut');
 // A picked bottle is the base, by id, and is what it's made from.
 const bacardi = fromTech('fat-wash', 'Coconut fat-washed rum', { base: { id: 'b1', name: 'Bacardí Carta Blanca' } });
 assert.deepEqual({ id: bacardi.lines[0].id, name: bacardi.lines[0].name }, { id: 'b1', name: 'Bacardí Carta Blanca' });

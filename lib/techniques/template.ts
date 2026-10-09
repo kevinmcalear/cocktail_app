@@ -5,7 +5,7 @@
  * builder (lib/prepKinds) turns this into a draft.
  */
 import type { Allergen } from '../allergens';
-import type { Storage, Technique } from './types';
+import type { SlotRole, Storage, Technique } from './types';
 
 // --- reading a name ---
 
@@ -116,6 +116,53 @@ export function keepFor(t: Pick<Technique, 'keepsHours' | 'storage' | 'variants'
 export function partsFor(t: Pick<Technique, 'parts' | 'variants'>, picked: { adjunct?: string | null; name?: string } = {}) {
   const v = (t.variants ?? []).find((x) => x.parts && x.words.test((x.on === 'name' ? picked.name : picked.adjunct)?.toLowerCase() ?? ''));
   return v?.parts ?? t.parts ?? [];
+}
+
+/**
+ * The catalog ingredient a flavour word means in a slot: "coconut" in a fat
+ * wash is Coconut Oil (not the fruit), in a vegan wash Coconut Milk. Only
+ * names that exist in the catalog (checked against the local seed), and only
+ * when the whole "with what" is that one thing: "Coconut and pistachio"
+ * stays as typed.
+ */
+const SLOT_INGREDIENTS: Partial<Record<SlotRole, [RegExp, string][]>> = {
+  fat: [
+    [/^brown butter$/, 'Brown Butter'],
+    [/^(unsalted )?butter$/, 'Butter'],
+    [/^ghee$/, 'Ghee'],
+    [/^bacon( fat| grease)?$/, 'Bacon Fat'],
+    [/^duck( fat)?$/, 'Duck Fat'],
+    [/^coconut( oil)?$/, 'Coconut Oil'],
+    [/^(extra virgin )?olive( oil)?$/, 'Olive Oil'],
+    [/^(toasted )?sesame( oil)?$/, 'Sesame Oil'],
+    [/^peanut( butter)?$/, 'Peanut Butter'],
+    [/^avocado( oil)?$/, 'Avocado Oil'],
+    [/^walnut( oil)?$/, 'Walnut Oil'],
+    [/^hazelnut( oil)?$/, 'Hazelnut Oil'],
+    [/^pistachio( oil)?$/, 'Pistachio Oil'],
+  ],
+  milk: [
+    [/^greek yogh?urt$/, 'Greek Yoghurt'],
+    [/^yogh?urt$/, 'Yogurt'],
+    [/^(heavy|double) cream$/, 'Heavy Cream'],
+    [/^cream$/, 'Cream'],
+    [/^cream cheese$/, 'Cream Cheese'],
+    [/^whey$/, 'Whey'],
+    [/^buttermilk$/, 'Buttermilk'],
+    [/^ricotta$/, 'Ricotta'],
+    [/^coconut cream$/, 'Coconut Cream'],
+    [/^coconut( milk)?$/, 'Coconut Milk'],
+    [/^soya?( milk)?$/, 'Soy Milk'],
+    [/^oat( milk)?$/, 'Oat Milk'],
+    [/^almond( milk)?$/, 'Almond Milk'],
+    [/^cashew( milk)?$/, 'Cashew Milk'],
+  ],
+};
+
+/** "Coconut" as a fat → "Coconut Oil"; null when the slot or the word has no catalog match. */
+export function slotIngredient(role: SlotRole | undefined, flavour: string): string | null {
+  const n = flavour.trim().toLowerCase().replace(/\s+/g, ' ');
+  return (role && SLOT_INGREDIENTS[role]?.find(([re]) => re.test(n))?.[1]) ?? null;
 }
 
 // --- what's in it ---
