@@ -53,7 +53,8 @@ function NavRow({ label, icon, current, hint, role = 'link', onPress }: { label:
 
 /**
  * The redesign's sidebar for wide web, where the tab bar is hidden: the venue
- * chip, New, search, and the current mode's tabs (the same ones as the phone bar).
+ * chip, New, search, the current mode's tabs (the same ones as the phone bar),
+ * and You, so pages need no header row of their own.
  */
 export function WebSideNav() {
   return (
@@ -122,6 +123,12 @@ function SideNavBody() {
           </View>
         ) : null}
       </View>
+      {/* Home mode has You as a tab; venue mode keeps it at the foot, where the phone has the avatar. */}
+      {mode === 'venue' ? (
+        <View style={styles.you}>
+          <NavRow label="You" icon="person.crop.circle" current={pathname === '/you'} onPress={() => router.push('/you')} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -131,6 +138,7 @@ const styles = StyleSheet.create({
   venue: { paddingHorizontal: space.xs, paddingBottom: space.sm },
   tabs: { gap: 2 },
   team: { marginTop: space.md },
+  you: { marginTop: 'auto' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
 });

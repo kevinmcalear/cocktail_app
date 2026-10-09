@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { missingKit, type Technique } from '@/lib/techniques';
 import { waysToMake } from '@/lib/techniques/makeIt';
-import { useKit } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 interface Props {
   /** The typed name ("Clarified grapefruit"); null when closed. */
@@ -22,7 +22,7 @@ interface Props {
 /** "Make it in house": the ways to make a prep the shelf doesn't have, each with its time and kit. */
 export function MakeItSheet({ name, onClose, onChoose, onPlain }: Props) {
   const ds = useDs();
-  const kit = useKit();
+  const { kit } = useKit();
   const ways = name ? waysToMake(name) : [];
   return (
     <TechniqueSheet visible={!!name} onClose={onClose} eyebrow="New house prep" title={name ?? ''}>

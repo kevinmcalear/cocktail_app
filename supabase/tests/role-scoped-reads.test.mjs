@@ -442,6 +442,22 @@ describe('get_bar_members', () => {
     assert.equal(data.find((m) => m.user_id === users.employee.id).avatar_url, null);
   });
 
+  test('names come from full_name, then first and last name, then the person profile, then the email', async () => {
+    const meta = { creator: { full_name: 'Juniper Jo Vale', first_name: 'Jo' }, guest: { first_name: 'Sam', last_name: 'Reyes' } };
+    for (const [label, user_metadata] of Object.entries(meta)) {
+      const { error } = await service.auth.admin.updateUserById(users[label].id, { user_metadata });
+      assert.ifError(error);
+    }
+    await serviceInsert('profiles', { kind: 'person', handle: `rosie${run}`, display_name: 'Rosie Hart', user_id: users.employee.id, is_public: false });
+    const { data, error } = await members('bartender');
+    assert.ifError(error);
+    const name = (label) => data.find((m) => m.user_id === users[label].id).display_name;
+    assert.equal(name('creator'), 'Juniper Jo Vale');
+    assert.equal(name('guest'), 'Sam Reyes');
+    assert.equal(name('employee'), 'Rosie Hart');
+    assert.equal(name('admin'), users.admin.email.split('@')[0]);
+  });
+
   test('someone outside the bar gets an error', async () => {
     const { data, error } = await members('outsider');
     assert.ok(error);
