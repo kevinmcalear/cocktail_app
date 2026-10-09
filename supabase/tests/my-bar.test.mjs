@@ -163,6 +163,7 @@ after(async () => {
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
+  await db.query('DELETE FROM public.profiles WHERE handle LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
   await db.end();
@@ -262,6 +263,26 @@ describe('my_bar_drinks', () => {
     assert.deepEqual(first.map((r) => r.id), all.slice(0, 2).map((r) => r.id));
     const { data: next } = await users.home.client.rpc('my_bar_drinks', { p_after_name: first[1].name, p_after_id: first[1].id, p_limit: 2 });
     assert.deepEqual(next.map((r) => r.id), all.slice(2, 4).map((r) => r.id));
+  });
+
+  test('says which bar a drink is from: the credited bar, else the venue, and nothing for the catalog', async () => {
+    // A credited bar whose page is open, so its drinks' specs show to everyone.
+    const venue = await serviceInsert('bars', { name: `From Bar venue ${run}`, page_visibility: 'open' });
+    const bar = await serviceInsert('profiles', { kind: 'bar', handle: `frombar${run}`, display_name: `From Bar ${run}`, avatar_url: 'https://example.test/logo.png', is_public: true, bar_id: venue.id });
+    await item('barMartini', { name: 'martini', item_type: 'cocktail', origin_bar_profile_id: bar.id });
+    // Mezcal only, so the other tests' shelves and used-in lists stay as they were.
+    await recipe('barMartini', [['mezcal']]);
+    await item('classic', { name: 'classic martini', item_type: 'cocktail', is_catalog: true, origin_bar_profile_id: bar.id });
+    await recipe('classic', [['mezcal']]);
+    await shelve('home', ['mezcal']);
+    const { rows } = await myBar('home');
+    const row = (key) => rows.find((r) => r.id === ids[key]);
+    assert.equal(row('barMartini').from_name, `From Bar ${run}`);
+    assert.equal(row('barMartini').from_logo, 'https://example.test/logo.png');
+    assert.equal(row('classic').from_name, null);
+    await shelve('member', ['gin']);
+    const house = (await myBar('member')).rows.find((r) => r.id === ids.house);
+    assert.equal(house.from_name, `My Bar Test ${run}`);
   });
 });
 
