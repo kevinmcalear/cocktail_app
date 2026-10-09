@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { WizardPick } from '@/lib/drinkWizard';
 import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
+import { guessKind } from '@/lib/prepKinds';
 import { waysToMake } from '@/lib/techniques/makeIt';
 
 // The generated view types call `images` a list; it's one row per link.
@@ -26,7 +27,7 @@ export interface IngredientSearchProps {
   onTyping?: (typing: boolean) => void;
   /** Off: only existing ingredients can be picked (a kind of must exist). */
   allowNew?: boolean;
-  /** A new name a technique makes ("Clarified grapefruit"): offers to make it in house. */
+  /** A new name: offers to make it in house, with its own recipe. */
   onMake?: (name: string) => void;
 }
 
@@ -45,6 +46,19 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
   const results = searchIngredients(query, ingredients, { aliases, coreIds });
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
   const near = exact ? null : nearIngredient(query, ingredients, aliases);
+
+  // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice) offers it first.
+  const prepLike = !!guessKind(query) || waysToMake(query).length > 0;
+  const makeRow = onMake ? (
+    <ResultRow
+      label={`Make “${query.trim()}” in house`}
+      isNew
+      onPress={() => {
+        onMake(query.trim());
+        setQuery('');
+      }}
+    />
+  ) : null;
 
   const pick = (p: WizardPick) => {
     onPick(p);
@@ -92,17 +106,9 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
             </Body>
           ) : exact || !allowNew ? null : (
             <>
-              {onMake && waysToMake(query).length ? (
-                <ResultRow
-                  label={`Make “${query.trim()}” in house`}
-                  isNew
-                  onPress={() => {
-                    onMake(query.trim());
-                    setQuery('');
-                  }}
-                />
-              ) : null}
+              {makeRow && prepLike ? makeRow : null}
               <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => pick({ id: null, name: query.trim() })} />
+              {makeRow && !prepLike ? makeRow : null}
             </>
           )}
         </View>

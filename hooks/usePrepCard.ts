@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { isGarnishUnit } from '@/lib/batch';
+import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
 import { supabase } from '@/lib/supabase';
 
 export interface PrepStep {
@@ -84,6 +85,8 @@ export interface PrepUsedIn {
   preps: UsedInPrep[];
   /** It goes on a drink as a garnish (a twist, a wheel, a sprig), so it can carry a prep card of its own. */
   garnish: boolean;
+  /** How much each drink pours, by drink id, as this role's recipe view shows it (null amounts when masked). */
+  pours: Record<string, { amount: number | string | null; unit: string | null }>;
 }
 
 /** Where this ingredient goes: into other preps, and whether it's a garnish on a drink. */
@@ -94,16 +97,66 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
     queryFn: async (): Promise<PrepUsedIn> => {
       const { data, error } = await supabase
         .from('app_recipe_presentation')
-        .select('unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
+        .select('amount, unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
         .eq('display_ingredient_id', itemId!);
       if (error) throw error;
       const seen = new Map<string, UsedInPrep>();
       let garnish = false;
-      for (const row of (data ?? []) as unknown as { unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
+      const pours: PrepUsedIn['pours'] = {};
+      for (const row of (data ?? []) as unknown as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
         if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name });
+        else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit };
         if (isGarnishUnit(row.unit)) garnish = true;
       }
-      return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish };
+      return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish, pours };
     },
+  });
+}
+
+/**
+ * After a batch: what it really made becomes the prep's yield, so the next
+ * scale starts from the truth. Only the yield columns change.
+ */
+export function useLearnYield(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ amount, unit }: { amount: number; unit: string }) => {
+      const { error } = await supabase.from('item_prep').upsert({ item_id: itemId, yield_amount: amount, yield_unit: unit }, { onConflict: 'item_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['item-prep', itemId] }),
+  });
+}
+
+/**
+ * A house prep made in the add-drink wizard (lib/prepKinds): marks the new row
+ * as a prep, writes its recipe lines (typed names become ingredients through
+ * `ensure`, the drink save's own resolver) and its card: yield, keeps,
+ * storage, lead time, actions and steps.
+ */
+export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>) {
+  const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
+  if (role.error) throw role.error;
+  const rows = [];
+  for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
+    if (!line.name.trim()) continue;
+    rows.push({ recipe_item_id: itemId, ingredient_item_id: await ensure({ id: line.id, name: line.name }, 'ingredient'), amount, unit: line.unit || null, sort_order: i });
+  }
+  if (rows.length) {
+    const added = await supabase.from('recipes').insert(rows);
+    if (added.error) throw added.error;
+  }
+  const made = prepYield(prep);
+  await savePrepCard(itemId, {
+    prep: {
+      yield_amount: made,
+      yield_unit: made ? 'ml' : null,
+      shelf_life_hours: prep.keepsHours,
+      lead_time_minutes: prep.leadMinutes,
+      lead_time_note: null,
+      storage: prep.storage || null,
+      actions: prep.actions,
+    },
+    steps: prep.steps,
   });
 }

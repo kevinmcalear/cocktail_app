@@ -51,7 +51,7 @@ const ENTRY_COLUMNS = `
  * so the embedded drink comes back empty. Fill its name and picture from
  * published_items. One the bar has since unpublished stays empty.
  */
-async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
+export async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
   const missing = [...new Set(rows.filter((r) => !r.item).map((r) => r.item_id))];
   if (!missing.length) return rows;
   const published = await fetchPublished(missing);

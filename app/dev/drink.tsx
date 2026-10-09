@@ -68,8 +68,6 @@ function Preview() {
       <Stack.Screen options={{ headerShown: false, title: 'Drink page preview' }} />
       <DrinkScreen
         item={sampleDrink(role)}
-        isFavorite={false}
-        onToggleFavorite={() => {}}
         inStudyPile={false}
         onToggleStudyPile={() => {}}
         canEdit={false}

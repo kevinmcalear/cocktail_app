@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, EquipmentDrawing, Field, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
@@ -11,20 +11,23 @@ import { useKit } from '@/hooks/useKit';
 import { SECTIONS, type BarSection } from '@/lib/barSections';
 import { itemHref } from '@/lib/itemRoutes';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
+import { SHELF_SECTIONS } from '@/lib/myBarRows';
 import { EQUIPMENT, EQUIPMENT_KINDS, TECHNICAL_INGREDIENTS } from '@/lib/techniques';
 
+import { SectionChips } from './BarSections';
 import { BarTile, TileGrid, useTileCols } from './BarTile';
 
 export type AddFilter = 'all' | BarSection | 'kit';
 
-const TABS: { value: AddFilter; label: string; blurb: string }[] = [
-  { value: 'all', label: 'All', blurb: 'Tap what you keep. It goes in the right section of My Bar.' },
-  { value: 'bottles', label: 'Bottles', blurb: SECTIONS.bottles.blurb },
-  { value: 'fridge', label: 'Fridge', blurb: 'Fruit, sugar, eggs and mixers. Most drinks need a few of these.' },
-  { value: 'lab', label: 'Lab', blurb: SECTIONS.lab.blurb },
-  { value: 'preps', label: 'Preps', blurb: 'Syrups and cordials you make. Tap the ones in your fridge now, or open a recipe to make one.' },
-  { value: 'kit', label: 'Kit', blurb: SECTIONS.kit.blurb },
-];
+/** The line under the section filter, for each section. */
+const BLURBS: Record<AddFilter, string> = {
+  all: 'Tap what you keep. It goes in the right section of My Bar.',
+  bottles: SECTIONS.bottles.blurb,
+  fridge: 'Fruit, sugar, eggs and mixers. Most drinks need a few of these.',
+  lab: SECTIONS.lab.blurb,
+  preps: 'Syrups and cordials you make. Tap the ones in your fridge now, or open a recipe to make one.',
+  kit: SECTIONS.kit.blurb,
+};
 const ORDER: BarSection[] = ['bottles', 'fridge', 'lab', 'preps'];
 
 /** What each tab offers before anything is typed, by catalog name. */
@@ -50,9 +53,9 @@ interface AddToBarSheetProps {
 
 /**
  * One search for everything on your bar: bottles, fridge, lab, house preps
- * and kit. The sections are tabs (text, underlined), so they never look like
- * what's in them; what's in them is picture tiles you tick, the same tiles
- * as My Bar. Typed results are listed under the section each goes in.
+ * and kit. The sections are the same filter chips as My Bar's, one picked at
+ * a time here; what's in them is picture tiles you tick, the same tiles as
+ * My Bar. Typed results are listed under the section each goes in.
  */
 export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onToggle, onClose }: AddToBarSheetProps) {
   const router = useRouter();
@@ -72,7 +75,6 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     onClose();
     router.push(itemHref('Ingredient', id) as never);
   };
-  const tab = TABS.find((t) => t.value === filter) ?? TABS[0];
 
   return (
     <MenuSheet
@@ -93,15 +95,15 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
         autoFocus={MODAL_AUTOFOCUS}
         returnKeyType="search"
       />
-      <Tabs value={filter} onChange={onFilter} counts={counts} />
+      <SectionChips sections={SHELF_SECTIONS} counts={counts} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
       <View style={styles.results}>
-        <Caption tone="muted">{tab.blurb}</Caption>
+        <Caption tone="muted">{BLURBS[filter]}</Caption>
         {filter === 'kit' ? (
           <KitResults query={typed} cols={cols} />
         ) : !typed ? (
           <View style={styles.group}>
             <Caption tone="muted" style={styles.heading}>
-              {filter === 'all' ? 'Most used in drinks' : `Common ${tab.label.toLowerCase()}`}
+              {filter === 'all' ? 'Most used in drinks' : `Common ${SECTIONS[filter].short.toLowerCase()}`}
             </Caption>
             <TileGrid cols={cols}>
               {(ideas.data ?? []).map((item) => {
@@ -146,27 +148,6 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
         )}
       </View>
     </MenuSheet>
-  );
-}
-
-/** The sections, as underlined text with how many of each you have. */
-function Tabs({ value, onChange, counts }: { value: AddFilter; onChange: (filter: AddFilter) => void; counts: Partial<Record<AddFilter, number>> }) {
-  const ds = useDs();
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.tabsScroll, { borderBottomColor: ds.c.line }]} contentContainerStyle={styles.tabs}>
-      <View role="tablist" accessibilityLabel="Sections" style={styles.tabs}>
-        {TABS.map((t) => {
-          const on = t.value === value;
-          const n = counts[t.value];
-          return (
-            <PressableScale key={t.value} role="tab" aria-selected={on} accessibilityLabel={n ? `${t.label}, ${n} on your bar` : t.label} onPress={() => onChange(t.value)} style={[styles.tab, { borderBottomColor: on ? ds.accentText : 'transparent' }]}>
-              <Body tone={on ? 'ink' : 'muted'}>{t.label}</Body>
-              {n ? <Caption tone={on ? 'accent' : 'muted'}>{n}</Caption> : null}
-            </PressableScale>
-          );
-        })}
-      </View>
-    </ScrollView>
   );
 }
 
@@ -258,9 +239,6 @@ function KitResults({ query, cols }: { query: string; cols: number }) {
 const styles = StyleSheet.create({
   // Holds the sheet's height steady while results come and go.
   results: { minHeight: 320, gap: space.md },
-  tabsScroll: { flexGrow: 0, borderBottomWidth: StyleSheet.hairlineWidth, marginHorizontal: -space.xs },
-  tabs: { flexDirection: 'row', gap: 2 },
-  tab: { flexDirection: 'row', alignItems: 'baseline', gap: 3, minHeight: layout.minTapTarget, paddingHorizontal: space.xs + 1, paddingTop: space.md, paddingBottom: space.sm, borderBottomWidth: 2 },
   group: { gap: space.sm },
   heading: { paddingTop: space.md },
   withLink: { gap: 0 },
