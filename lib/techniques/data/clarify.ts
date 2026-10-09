@@ -156,7 +156,7 @@ export const WASH: Technique[] = [
     totalMinutes: 12 * 60,
     keeps: '2 weeks cold, to be safe. Some bars report far longer.',
     base: { name: 'Batch', unit: 'ml', amounts: [500, 1000, 2000], slot: true },
-    parts: [{ name: 'Whole milk', per: 0.25, unit: 'ml', slot: 'milk', removed: true }],
+    parts: [{ name: 'Milk', per: 0.25, unit: 'ml', slot: 'milk', removed: true }],
     // The acid that breaks the milk, when the batch isn't sour or tannic already.
     extra: [{ name: 'Lemon juice' }],
     steps: [

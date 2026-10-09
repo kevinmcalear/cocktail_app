@@ -122,7 +122,7 @@ assert.equal(nameParts('coconut fat washed white rum', t('fat-wash')).adjunct, '
 assert.equal(nameFor(t('fat-wash'), { base: 'White rum', adjunct: 'Coconut' }), 'Coconut fat-washed White rum');
 assert.equal(fromTech('milk-wash', 'Yogurt washed gin').lines[1].name, 'Yogurt');
 assert.equal(fromTech('milk-wash', 'Greek yoghurt washed gin').lines[1].name, 'Greek Yoghurt');
-assert.equal(fromTech('milk-wash', 'Milk washed gin').lines[1].name, 'Whole milk');
+assert.equal(fromTech('milk-wash', 'Milk washed gin').lines[1].name, 'Milk', 'the catalog Milk, never a new ingredient');
 assert.equal(fromTech('vegan-wash', 'Coconut milk washed rum').lines[1].name, 'Coconut Milk');
 assert.deepEqual(fromTech('vegan-wash', 'Oat milk washed gin').lines.map((l) => l.name), ['Gin', 'Oat Milk']);
 assert.equal(slotIngredient('flavour', 'coconut'), null, 'only fat and milk slots map');
@@ -177,7 +177,7 @@ assert.equal(fromTech('kombucha', 'Kombucha').keepsHours, 30 * 24);
 
 // Milk wash: the acid that breaks the milk is in the recipe; the curds aren't in the yield.
 const punch = fromTech('milk-wash', 'Clarified rum');
-assert.deepEqual(punch.lines.map((l) => l.name), ['Rum', 'Whole milk', 'Lemon juice']);
+assert.deepEqual(punch.lines.map((l) => l.name), ['Rum', 'Milk', 'Lemon juice']);
 assert.equal(prepYield(punch), 1000);
 assert.deepEqual(punch.allergens, ['milk']);
 // Reverse spheres: the flavour liquid is the base; the bath is poured away.
