@@ -7,12 +7,12 @@ import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
+import { useKit } from '@/hooks/useKit';
 import { SECTIONS, type BarSection } from '@/lib/barSections';
 import { COMMON_INGREDIENTS } from '@/lib/drinkWizard';
 import { itemHref } from '@/lib/itemRoutes';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 import { EQUIPMENT, TECHNICAL_INGREDIENTS } from '@/lib/techniques';
-import { useKitStore } from '@/store/useKitStore';
 
 export type AddFilter = 'all' | BarSection | 'kit';
 
@@ -176,8 +176,7 @@ function PrepResult({ item, has, onToggle, onRecipe }: { item: FoundItem; has: b
 
 /** The equipment list, searched by name: what you tick here is your kit. */
 function KitResults({ query }: { query: string }) {
-  const owned = useKitStore((s) => s.owned);
-  const toggle = useKitStore((s) => s.toggle);
+  const { owned, toggle } = useKit();
   const q = query.toLowerCase();
   const list = q ? EQUIPMENT.filter((e) => `${e.name} ${e.what}`.toLowerCase().includes(q)) : EQUIPMENT;
   if (!list.length) return <Body tone="muted">{`No kit called “${query}”.`}</Body>;

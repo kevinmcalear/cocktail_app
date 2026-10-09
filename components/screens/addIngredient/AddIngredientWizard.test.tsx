@@ -32,6 +32,7 @@ jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) })
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/components/ds/IngredientDrawing', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
   return { IngredientDrawing: () => <View testID="drawing" /> };
 });
 

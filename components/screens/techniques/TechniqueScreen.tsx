@@ -9,7 +9,7 @@ import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { equipmentById, groupById, techniqueById } from '@/lib/techniques';
-import { useKit } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 const GATE = {
   safety: 'This can hurt someone. Read every warning before you start.',
@@ -20,7 +20,7 @@ const GATE = {
 export function TechniqueScreen({ id }: { id: string }) {
   const ds = useDs();
   const router = useRouter();
-  const kit = useKit();
+  const { kit } = useKit();
   const t = techniqueById(id);
   if (!t) {
     return (

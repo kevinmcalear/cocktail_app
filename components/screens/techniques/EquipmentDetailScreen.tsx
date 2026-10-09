@@ -6,14 +6,13 @@ import { Notes, Section, TechniqueRow } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { radius, space } from '@/constants/tokens';
 import { EQUIPMENT_KINDS, equipmentById, techniquesUsing, TIER_LABEL } from '@/lib/techniques';
-import { useKit, useKitStore } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 /** One piece of kit: what it's for, the cost, what to use without it, the safety point, and every technique it's needed for or helps with. */
 export function EquipmentDetailScreen({ id }: { id: string }) {
   const ds = useDs();
   const router = useRouter();
-  const kit = useKit();
-  const toggle = useKitStore((s) => s.toggle);
+  const { kit, toggle } = useKit();
   const e = equipmentById(id);
   if (!e) {
     return (

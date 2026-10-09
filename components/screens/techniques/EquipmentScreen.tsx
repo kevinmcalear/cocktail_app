@@ -6,11 +6,11 @@ import { Section } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { space } from '@/constants/tokens';
 import { canMake, EQUIPMENT, EQUIPMENT_KINDS, TECHNIQUES, techniquesUsing, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
-import { useKit, useKitStore } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 /** The bar's equipment: what each piece is for, roughly what it costs, and which you have. What you have filters the technique library. */
 export function EquipmentScreen() {
-  const kit = useKit();
+  const { kit, toggle } = useKit();
   const can = TECHNIQUES.filter((t) => canMake(t, kit)).length;
   return (
     <TechniquePage
@@ -25,7 +25,7 @@ export function EquipmentScreen() {
       {EQUIPMENT_KINDS.map((k) => (
         <Section key={k.id} title={k.name}>
           {EQUIPMENT.filter((e) => e.kind === k.id).map((e) => (
-            <EquipmentRow key={e.id} e={e} kit={kit} />
+            <EquipmentRow key={e.id} e={e} kit={kit} onToggle={toggle} />
           ))}
         </Section>
       ))}
@@ -33,10 +33,9 @@ export function EquipmentScreen() {
   );
 }
 
-function EquipmentRow({ e, kit }: { e: Equipment; kit: ReadonlySet<string> }) {
+function EquipmentRow({ e, kit, onToggle }: { e: Equipment; kit: ReadonlySet<string>; onToggle: (id: string) => void }) {
   const ds = useDs();
   const router = useRouter();
-  const toggle = useKitStore((s) => s.toggle);
   const have = kit.has(e.id);
   const n = unlocks(e.id, kit);
   const used = techniquesUsing(e.id);
@@ -48,7 +47,7 @@ function EquipmentRow({ e, kit }: { e: Equipment; kit: ReadonlySet<string> }) {
         <Body tone="muted">{e.what}</Body>
         <Caption tone="muted">{`${e.price ?? TIER_LABEL[e.tier]} · ${opens}`}</Caption>
       </PressableScale>
-      <Chip label="I have it" accessibilityLabel={`I have it: ${e.name}`} multi selected={have} onPress={() => toggle(e.id)} />
+      <Chip label="I have it" accessibilityLabel={`I have it: ${e.name}`} multi selected={have} onPress={() => onToggle(e.id)} />
     </View>
   );
 }

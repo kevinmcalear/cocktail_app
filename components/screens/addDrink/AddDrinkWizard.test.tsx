@@ -30,6 +30,7 @@ jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mo
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }) }));
+jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 beforeEach(() => {
   mockCreate.mockReset();

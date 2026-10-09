@@ -2,7 +2,8 @@
 // (supabase/migrations/20261008340000_my_bar_rpc.sql, and the kind-of tree,
 // two away and uses from 20261009950000_my_bar_kinds.sql, garnishes from
 // 20261009960000_my_bar_garnish.sql, the preps behind them from
-// 20261010400000_my_bar_preps.sql). The can-make cases are
+// 20261010400000_my_bar_preps.sql), and the kit list from
+// 20261010410000_home_kit.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -158,6 +159,7 @@ before(async () => {
 after(async () => {
   const like = `%${run}%`;
   for (const user of Object.values(users)) await db.query('DELETE FROM public.home_bar_items WHERE user_id = $1', [user.id]);
+  for (const user of Object.values(users)) await db.query('DELETE FROM public.home_kit_items WHERE user_id = $1', [user.id]);
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
@@ -289,6 +291,27 @@ describe('my_bar_preps', () => {
   test('nothing made from an empty shelf, and a recipe cycle stops', async () => {
     await shelve('home', []);
     assert.deepEqual(await myPreps('home'), {});
+  });
+});
+
+describe('home_kit_items', () => {
+  test('a kit is private to its owner, and signed-out callers get nothing', async () => {
+    const { error } = await users.home.client.from('home_kit_items').insert({ equipment_id: 'scale-fine' });
+    assert.ifError(error);
+    const mine = await users.home.client.from('home_kit_items').select('equipment_id');
+    assert.deepEqual(mine.data.map((r) => r.equipment_id), ['scale-fine']);
+    assert.deepEqual((await users.other.client.from('home_kit_items').select('equipment_id')).data, []);
+    const { data: anonRows, error: anonError } = await anon.from('home_kit_items').select('equipment_id');
+    assert.ok(anonError || !anonRows.length, 'anon reads nothing');
+  });
+
+  test('nobody writes into someone else\'s kit, and ids are short equipment ids', async () => {
+    assert.ok((await users.other.client.from('home_kit_items').insert({ user_id: users.home.id, equipment_id: 'whipper' })).error);
+    assert.ok((await users.home.client.from('home_kit_items').insert({ equipment_id: 'Not An Id!' })).error);
+    assert.ok((await anon.from('home_kit_items').insert({ equipment_id: 'whipper' })).error);
+    await users.other.client.from('home_kit_items').delete().eq('equipment_id', 'scale-fine');
+    const { count } = await db.query("SELECT count(*)::int AS count FROM public.home_kit_items WHERE user_id = $1 AND equipment_id = 'scale-fine'", [users.home.id]).then((r) => r.rows[0]);
+    assert.equal(count, 1, 'another person\'s delete takes nothing');
   });
 });
 
