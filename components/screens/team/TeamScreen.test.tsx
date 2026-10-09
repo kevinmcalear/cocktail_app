@@ -51,14 +51,16 @@ beforeEach(() => {
 
 test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
   await renderWithTamagui(<TeamScreen />);
-  expect(screen.getByText('Caretakers')).toBeTruthy();
+  // The sidebar names the venue; the heading only shows beside the invites.
+  expect(screen.queryByText('Caretakers')).toBeNull();
+  expect(screen.getByText('Team · 2')).toBeTruthy();
   expect(screen.getByText('jo@example.test')).toBeTruthy();
   expect(screen.getByText('Nia')).toBeTruthy();
   expect(screen.getByText('new@example.test · Invited as Bartender')).toBeTruthy();
   // Your own row has no sheet: nobody demotes or removes themselves here.
   expect(screen.queryByRole('button', { name: /^Ada, Admin/ })).toBeNull();
 
-  await fireEvent.changeText(screen.getByLabelText('Look up'), 'jo');
+  await fireEvent.changeText(screen.getByLabelText('Search the team'), 'jo');
   expect(screen.queryByText('Ada (you)')).toBeNull();
 
   await fireEvent.press(screen.getByRole('button', { name: 'Jo, Employee. Manage' }));
@@ -110,7 +112,8 @@ test('an employee sees the team and cannot manage it', async () => {
   expect(screen.getByText('Employee')).toBeTruthy();
   expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
-  expect(screen.queryByLabelText('Look up')).toBeNull();
+  expect(screen.queryByLabelText('Search the team')).toBeNull();
+  expect(screen.queryByText('Team · 2')).toBeNull();
   expect(screen.queryByText('Invite someone')).toBeNull();
   expect(screen.queryByText('jo@example.test')).toBeNull();
   expect(screen.queryByText('new@example.test · Invited as Bartender')).toBeNull();
