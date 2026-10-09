@@ -110,9 +110,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   const dots = useRef<GeoJSON.FeatureCollection>(dotsOf([]));
   // Set while the map is moving because we moved it.
   const ours = useRef(false);
-  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera });
+  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera, scheme });
   useEffect(() => {
-    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera };
+    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera, scheme };
   });
 
   const syncPins = () => {
@@ -158,7 +158,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       const start = latest.current.camera;
       const m = new ml.Map({
         container,
-        style: MAP_STYLE[scheme],
+        // The scheme now, not at mount: it starts light until hydration, and
+        // a flip to dark while maplibre loads finds no map to restyle.
+        style: MAP_STYLE[latest.current.scheme],
         center: start ? [start.longitude, start.latitude] : [0, 20],
         zoom: start?.zoom ?? 1.5,
         // OpenStreetMap asks for a visible credit: in full here, or in the sheet (MapCredit) on phones.
