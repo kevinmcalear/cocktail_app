@@ -14,6 +14,7 @@ import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
@@ -112,6 +113,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     openGlass: preview ? undefined : () => setGlassOpen(true),
     specLocked: !!lock,
     measures: access.amounts && !lock,
+    makers: useDrinkMakerCredits(preview ? null : item.id).data,
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   // No photo of its own: the newest one someone posted leads, credited under the name.

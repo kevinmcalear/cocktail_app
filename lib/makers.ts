@@ -30,3 +30,17 @@ export function servesLine(serves: readonly string[] | null | undefined): string
   const cities = (serves ?? []).map((c) => c.trim()).filter(Boolean);
   return cities.length ? `Delivers to ${andList(cities)}` : null;
 }
+
+/** Cities typed as "New York, Jersey City" (commas or new lines): trimmed, no repeats, at most 100 of up to 80 characters. */
+export function parseCities(text: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of text.split(/[,\n]/)) {
+    const city = raw.trim().replace(/\s+/g, ' ').slice(0, 80).trim();
+    if (!city || seen.has(city.toLowerCase())) continue;
+    seen.add(city.toLowerCase());
+    out.push(city);
+    if (out.length === 100) break;
+  }
+  return out;
+}

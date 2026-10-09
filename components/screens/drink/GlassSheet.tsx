@@ -7,6 +7,8 @@ import { useSetGlassSize, useSetIcePerServe } from '@/hooks/useGlassIce';
 import { useCanEditItem } from '@/hooks/useViewAs';
 import { defaultIcePerServe, formatIce, glassFit, glassSizeLabel, type GlassSize } from '@/lib/glass';
 
+import { DrinkMakerCredits } from './DrinkMakerCredits';
+
 export interface GlassSheetGlass extends GlassSize {
   id: string;
   name: string;
@@ -38,9 +40,9 @@ export function hasIce(iceName: string | null | undefined): boolean {
 
 /**
  * The glass and the ice: whether the serve fits, the glass's capacity with
- * and without ice (editable by whoever can edit the glass), and the ice a
- * serve takes (editable by the drink's editors), which the event prep list
- * adds up.
+ * and without ice (editable by whoever can edit the glass), the ice a serve
+ * takes (editable by the drink's editors), which the event prep list adds up,
+ * and who cut the ice and made the glass.
  */
 export function GlassSheet(props: GlassSheetProps) {
   return (
@@ -118,6 +120,7 @@ function Sheet({ onClose, itemId, name, glass, iceName, serveMl, icePerServeG, c
                 </>
               ) : null}
             </View>
+            <DrinkMakerCredits itemId={itemId} canEdit={canEditDrink} />
           </ScrollView>
         </Pressable>
       </View>
