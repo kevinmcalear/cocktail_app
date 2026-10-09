@@ -4,50 +4,77 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
+import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
+import { versionLabel } from '@/lib/servedAt';
 
 import { CreditTag } from '../drink/FamilyTree';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
-/** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
+/**
+ * A profile's credited drinks as tiles; each opens the drink. The profile's
+ * own name is left out of each tile. Their copies of a classic poured as it is
+ * (the same spec, or none to tell) sit in one line, "Classics they pour",
+ * instead of a tile each; a variation's tile says what it changes.
+ */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
   const router = useRouter();
+  const ds = useDs();
   const prefetch = usePrefetchCocktail();
+  const { data: matches } = useSpecMatches(`originals:${selfId}`, originals.map((d) => d.id));
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
+  const poured = originals.filter((d) => ['same', 'unlisted'].includes(matches?.[d.id]?.spec_match ?? ''));
+  const own = originals.filter((d) => !poured.includes(d));
   return (
-    <View role="list" style={styles.grid}>
-      {originals.map((d) => {
-        const hero = heroPicture(d.item_images);
-        const others = [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
-        const meta = [d.origin_year, ...others].filter(Boolean).join(' · ');
-        return (
-          <PressableScale
-            key={d.id}
-            role="link"
-            accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
-            onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
-            onPress={() => router.push(`/cocktail/${d.id}` as Href)}
-            style={[styles.tile, { width: `${100 / columns}%` }]}
-          >
-            <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
-            <DsText variant="headline" numberOfLines={2}>
-              {d.name}
-            </DsText>
-            {meta ? (
-              <Caption tone="muted" numberOfLines={1}>
-                {meta}
-              </Caption>
-            ) : null}
-            <CreditTag status={d.credit_status} />
-          </PressableScale>
-        );
-      })}
+    <View style={styles.originals}>
+      {poured.length ? (
+        <View style={styles.menus}>
+          <Caption tone="muted" role="heading" style={styles.cap}>
+            Classics they pour
+          </Caption>
+          <View role="list" style={styles.poured}>
+            {poured.map((d) => (
+              <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(`/cocktail/${d.id}` as Href)} style={[styles.pill, { borderColor: ds.c.line }]}>
+                <Body>{d.name}</Body>
+              </PressableScale>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      <View role="list" style={styles.grid}>
+        {own.map((d) => {
+          const hero = heroPicture(d.item_images);
+          const others = [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
+          const meta = [d.origin_year, ...others, versionLabel(matches?.[d.id])].filter(Boolean).join(' · ');
+          return (
+            <PressableScale
+              key={d.id}
+              role="link"
+              accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
+              onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
+              onPress={() => router.push(`/cocktail/${d.id}` as Href)}
+              style={[styles.tile, { width: `${100 / columns}%` }]}
+            >
+              <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
+              <DsText variant="headline" numberOfLines={2}>
+                {d.name}
+              </DsText>
+              {meta ? (
+                <Caption tone="muted" numberOfLines={1}>
+                  {meta}
+                </Caption>
+              ) : null}
+              <CreditTag status={d.credit_status} />
+            </PressableScale>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -157,6 +184,9 @@ export function Stat({ value, label }: { value: number | string; label: string }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  originals: { gap: space.lg },
+  poured: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  pill: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 36, justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
   tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
   menus: { gap: space.xs },
