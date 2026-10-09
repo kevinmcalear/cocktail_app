@@ -8,7 +8,7 @@ import { foldName } from '@/lib/discover';
 import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, type BarRow, type DiscoverBar, type DiscoverDrink, type DrinkFilter, type DrinkRow } from '@/lib/discoverDrinks';
 import type { Viewport } from '@/lib/discoverMap';
 import { inBox, parentTiles, tileBox, tilesFor, type Tile } from '@/lib/discoverTiles';
-import { areaParams, type Area } from '@/lib/nearMe';
+import { areaParams, roundCoord, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -32,6 +32,8 @@ interface ListOptions {
   enabled?: boolean;
   /** Drinks per page (at most 500). */
   pageSize?: number;
+  /** Nearest: sort by distance from here (the bars with no place drop out). */
+  from?: { latitude: number; longitude: number } | null;
 }
 
 interface ListPage {
@@ -45,17 +47,19 @@ interface ListPage {
  * same area keeps the last results up while it loads; a new area doesn't, so
  * the map refits.
  */
-export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE }: ListOptions = {}) {
+export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE, from = null }: ListOptions = {}) {
   const signedIn = !!useAuth().user;
   const search = searchKey(useDebounced(filter.search, 250));
   const where = barId ? {} : areaParams(filter.area);
   const kinds = kindParams(filter.kinds);
   // "Search this area" keeps the last results up while the new ones load, so the list doesn't blank.
   const searchedHere = !barId && filter.area.kind === 'point' && filter.area.source === 'map';
+  // On the ~100 m grid, so a phone's position wobbling doesn't ask again.
+  const near = from ? { p_from_latitude: roundCoord(from.latitude), p_from_longitude: roundCoord(from.longitude) } : null;
   const query = useInfiniteQuery({
-    queryKey: ['discover-list', where, barId, kinds, search, pageSize],
+    queryKey: ['discover-list', where, barId, kinds, search, pageSize, near],
     // Saved: the first screen of an area people come back to. Not a searched patch of map, a bar's own, or a big page.
-    meta: { persist: !barId && !searchedHere && pageSize === PAGE },
+    meta: { persist: !barId && !searchedHere && !near && pageSize === PAGE },
     enabled: signedIn && enabled,
     staleTime: 10 * 60 * 1000,
     placeholderData: (previous, previousQuery) =>
@@ -66,12 +70,12 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
     getNextPageParam: (last: ListPage) => (last.drinks.length < pageSize ? undefined : cursorAfter(last.drinks[last.drinks.length - 1])),
     queryFn: async ({ pageParam, signal }): Promise<ListPage> => {
       const { data, error } = await supabase
-        .rpc('discover_list', { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...pageParam, p_limit: pageSize })
+        .rpc('discover_list', { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...near, ...pageParam, p_limit: pageSize })
         .abortSignal(signal);
       if (error) throw error;
       const rows = (data ?? []) as DrinkRow[];
       const first = rows[0];
-      return { drinks: rows.map(toDiscoverDrink), totals: first && first.total_drinks !== null ? { drinks: first.total_drinks, bars: first.total_bars ?? 0 } : pageParam ? null : { drinks: 0, bars: 0 } };
+      return { drinks: rows.map((r) => toDiscoverDrink(r, search)), totals: first && first.total_drinks !== null ? { drinks: first.total_drinks, bars: first.total_bars ?? 0 } : pageParam ? null : { drinks: 0, bars: 0 } };
     },
   });
   const pages = query.data?.pages;

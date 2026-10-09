@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,17 +10,18 @@ import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePositions, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePicks, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
-import { hadStats } from '@/lib/hadDrinks';
+import { hadStats, topFour } from '@/lib/hadDrinks';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
-import { barsCrediting, personTabs, profileLine } from '@/lib/profiles';
+import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
 
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { SignInCard } from '../published/SignInCard';
 import { LoveBarButton } from '../kept/LoveBarButton';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
+import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
@@ -124,12 +125,15 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const [picked, setTab] = useState<Tab | null>(null);
   // Until they pick, the first tab; and never one the profile has stopped showing.
   const tab: Tab | undefined = tabs.find((t) => t.value === picked)?.value ?? tabs[0]?.value;
-  // A bar's credits always show; a person's when they choose to.
-  const showsMade = !person || profile.shares_made;
-  const had = useProfileDrinks(profile.id, person && profile.shares_rankings);
-  const bars = useProfileBars(profile.id, person && profile.shares_bars);
+  // A bar's credits always show; a person's when they choose to, one by one.
+  const showsMade = !person || profile.made_mode !== 'none';
+  const had = useProfileDrinks(profile.id, person && profile.had_mode !== 'none');
+  const bars = useProfileBars(profile.id, person && profile.bars_mode !== 'none');
   const hadStat = hadStats(had.data ?? []);
-  const { data: originals = [], isLoading } = useProfileOriginals(profile.id, { locked: profile.page_visibility === 'locked' });
+  const pinned = topFour(had.data ?? []);
+  const madePicks = useProfilePicks(person ? profile.id : null, 'originals').data ?? {};
+  const { data: credited = [], isLoading } = useProfileOriginals(profile.id, { locked: profile.page_visibility === 'locked' });
+  const originals = person ? credited.filter((d) => pickedShown(profile.made_mode, madePicks[d.id])) : credited;
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   const names = new Map(originals.map((d) => [d.id, d.name]));
   const onMenus = barsCrediting(credits);
@@ -180,6 +184,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <BarStats profile={profile} originals={originals.length} />
       )}
 
+      {profile.kind === 'bar' ? <BarMatches barProfileId={profile.id} /> : null}
+
       {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 
       <Awards profileId={profile.id} />
@@ -192,19 +198,25 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
 
       {showsMade ? <MenuCredits credits={credits} names={names} /> : null}
 
-      {had.data?.some((d) => d.sentiment === 'loved') ? (
+      {had.data && (pinned.length || had.data.some((d) => d.sentiment === 'loved')) ? (
         <View style={styles.favourites}>
-          <Headline role="heading">Favourites</Headline>
-          <Favourites drinks={had.data} columns={columns} />
+          <Headline role="heading">{pinned.length ? 'Top four' : 'Favourites'}</Headline>
+          <Favourites drinks={had.data} picked={pinned} columns={columns} />
         </View>
       ) : null}
 
       {tab ? <Segmented accessibilityLabel="Profile sections" options={tabs} value={tab} onChange={setTab} /> : null}
+      {mine && person && (tab === 'had' || tab === 'bars' || tab === 'originals') ? (
+        <View style={styles.mine}>
+          <Caption tone="muted" style={styles.flex}>This is what others see.</Caption>
+          <Button label="Choose what shows" variant="ghost" onPress={() => router.push(`/settings/profile-picks?section=${tab}` as Href)} />
+        </View>
+      ) : null}
       {tab === 'had' || tab === 'bars' ? (
         <SharedDrinks
           name={profile.display_name}
           tab={tab}
-          shared={tab === 'had' ? profile.shares_rankings : profile.shares_bars}
+          shared={(tab === 'had' ? profile.had_mode : profile.bars_mode) !== 'none'}
           signedIn={signedIn}
           drinks={had.data}
           bars={bars.data}
@@ -262,4 +274,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
   favourites: { gap: space.md },
   start: { alignSelf: 'flex-start' },
+  mine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
 });

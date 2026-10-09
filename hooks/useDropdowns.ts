@@ -60,7 +60,7 @@ function useSpecLists() {
 export const INGREDIENTS_KEY = [...DROPDOWNS_QUERY_KEY, 'ingredients'] as const;
 
 /** The columns an ingredient picker and the Library's ingredient list read. */
-const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_maker, bar_id, hide_from_search, created_at,
+const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_maker, bar_id, hide_from_search, created_at, ingredient_role,
   item_images ( sort_order, is_generated, images ( url ) ),
   item_categories ( category_id )`;
 

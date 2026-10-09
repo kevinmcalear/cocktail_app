@@ -24,7 +24,8 @@ import { venueContextIds } from '@/lib/barContextFilter';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchScope } from '@/lib/searchScope';
-import { DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, SHELF_FILTERS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { useVenueShelves } from '@/hooks/useVenueShelves';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
@@ -63,9 +64,10 @@ function Filter({ label, count, selected, onPress }: { label: string; count?: nu
 }
 
 /**
- * Library: the venue's one list of drinks. All of them, what's on the menu
- * now (one menu or every one that's on), the staff list (ranked, with cut
- * lines), what was on past menus, and each type on its own. The filter lives
+ * Library: the venue's spec book. All its drinks, what's on the menu now (one
+ * menu or every one that's on), the staff list (ranked, with cut lines), what
+ * was on past menus, then the shelves: drinks poured from a batch, preps,
+ * garnishes and bottles. Without a venue, each type on its own. The filter lives
  * in the URL (?show=staff&menu=<id>), so a link opens the same view. Drinks
  * without a photo still get a proper tile, never someone else's photo.
  */
@@ -100,6 +102,7 @@ export function LibraryScreen() {
   const [now] = useState(() => Date.now());
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
+  const shelves = useVenueShelves(activeId, published);
   const byMenu = useMemo(
     () => menuDrinks((menus ?? []).filter((m) => m.barId === activeId), now, params.menu ?? null),
     [menus, activeId, now, params.menu]
@@ -110,8 +113,11 @@ export function LibraryScreen() {
       const set = new Set(ids);
       return published.filter((i) => set.has(itemIdOf(i.id)));
     };
+    const rnd = new Set(byMenu.rnd);
     const out: Record<Show, typeof published> = {
-      all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory)),
+      // R&D (trials, a flight's control) has its own filter, out of All.
+      all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory) && !rnd.has(itemIdOf(i.id))),
+      rnd: inSet(byMenu.rnd),
       'on-menu': inSet(byMenu.on),
       staff: [],
       past: inSet(byMenu.past),
@@ -120,15 +126,18 @@ export function LibraryScreen() {
       beer: [],
       wine: [],
       'needs-price': canCost ? published.filter((i) => i.category === 'Ingredient' && !priced.has(i.id)) : [],
+      batched: published.filter((i) => i.category === 'Cocktail' && BATCHED_STYLES.includes(i.serviceStyle ?? '')),
+      ...shelves,
     };
     for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category);
     return out;
-  }, [published, pricedIds, canCost, byMenu]);
+  }, [published, pricedIds, canCost, byMenu, shelves]);
   const onNow = useMemo(() => new Set(byMenu.onNow), [byMenu]);
   const past = useMemo(() => new Set(byMenu.past), [byMenu]);
   const shown = useMemo(() => [...lists[show]].sort((a, b) => a.name.localeCompare(b.name)), [lists, show]);
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
-  const filters = [...(activeId ? LIST_FILTERS : []), ...TYPE_FILTERS, ...(canCost ? [NEEDS_PRICE] : [])];
+  const types = activeId ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
+  const filters = [...(activeId ? [...LIST_FILTERS, ...SHELF_FILTERS] : []), ...types, ...(canCost ? [NEEDS_PRICE] : [])];
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined });
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
@@ -153,7 +162,17 @@ export function LibraryScreen() {
       ) : null}
       {show === 'on-menu' && !byMenu.onMenus.length && menus ? <Caption tone="muted">No menu is on right now. Menus are built and scheduled in Menus.</Caption> : null}
       {show === 'past' ? <Caption tone="muted">Drinks from menus that have finished, and aren’t on one now.</Caption> : null}
-      {show === 'ingredients' && activeId ? (
+      {show === 'rnd' && byMenu.rndMenus.length > 1 ? (
+        <FilterRow label="Which collection" gutter={gutter}>
+          <Filter label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />
+          {byMenu.rndMenus.map((m) => (
+            <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />
+          ))}
+        </FilterRow>
+      ) : null}
+      {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu.</Caption> : null}
+      {show === 'batched' ? <Caption tone="muted">Drinks served bottled, carbonated, on draught or from a batch made ahead.</Caption> : null}
+      {show === 'bottles' && activeId ? (
         canEdit ? (
           <View style={styles.actions}>
             <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />

@@ -195,3 +195,54 @@ export function useAdoptNoteRecipe(itemId: string, barId: string | null) {
     },
   });
 }
+
+export interface PrepCopySource {
+  id: string;
+  name: string;
+  description: string | null;
+  abv?: number | null;
+  /** The lines as this role sees them; a line with a hidden ingredient isn't copied. */
+  lines: { ingredientId: string | null; amount: number | string | null; unit: string | null; note: string | null; optional: boolean }[];
+  card: PrepCardData | undefined;
+}
+
+/**
+ * Your own version of a prep someone else keeps (a shared recipe, another
+ * bar's): a copy at your venue, or yours at home, that's a kind of the
+ * original, with its lines, card and steps. Drinks keep using the original
+ * until their line is swapped.
+ */
+export function useCopyPrep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ source, name, barId }: { source: PrepCopySource; name: string; barId: string | null }): Promise<string> => {
+      const { data, error } = await supabase
+        .from('items')
+        .insert({ name, item_type: 'ingredient', bar_id: barId, description: source.description, abv: source.abv ?? null, generic_id: source.id, ingredient_role: 'prep' })
+        .select('id')
+        .single();
+      if (error || !data) throw error ?? new Error('Couldn’t make your version.');
+      const id = data.id as string;
+      try {
+        const rows = source.lines
+          .filter((l) => l.ingredientId)
+          .map((l, i) => ({ recipe_item_id: id, ingredient_item_id: l.ingredientId!, amount: l.amount === null || l.amount === '' ? null : Number(l.amount), unit: l.unit, preparation_notes: l.note, is_optional: l.optional, sort_order: i }));
+        if (rows.length) {
+          const added = await supabase.from('recipes').insert(rows);
+          if (added.error) throw added.error;
+        }
+        if (source.card?.prep || source.card?.steps.length) {
+          await savePrepCard(id, {
+            prep: source.card.prep ?? { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
+            steps: source.card.steps.map((s) => ({ body: s.body, timer_seconds: s.timer_seconds })),
+          });
+        }
+      } catch (e) {
+        await supabase.from('items').delete().eq('id', id);
+        throw e;
+      }
+      return id;
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
+  });
+}

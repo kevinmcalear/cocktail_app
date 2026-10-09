@@ -1,7 +1,7 @@
 // Checks for lib/hadDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { favourites, fromSharedBarRow, fromSharedRow, hadStats, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
+import { favourites, fromSharedBarRow, fromSharedRow, hasDates, hadStats, topFour, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
 
 const bellamy = { id: 'v1', handle: 'bar.bellamy', display_name: 'Bar Bellamy', avatar_url: null, locality: 'Carlton', city: 'Melbourne' };
 const shapes = { id: 'v2', handle: null, display_name: 'Shapes', avatar_url: 'https://x/logo.png', locality: null, city: 'London' };
@@ -51,9 +51,9 @@ assert.equal(whereLine(toHadDrink(row({ id: 'e', venue: shapes }))), 'Shapes, Lo
 const shared = fromSharedRow({
   id: 's1', item_id: 'i1', name: 'House Martini', list_name: 'Martini', image_url: 'https://x/photo.jpg', image_is_generated: null, at_bar: true,
   venue_id: 'v1', venue_handle: 'bar.bellamy', venue_name: 'Bar Bellamy', venue_avatar_url: null, venue_locality: 'Carlton', venue_city: 'Melbourne',
-  sentiment: 'loved', score: '8.4', had_on: '2026-08-14', created_at: '2026-09-01T10:00:00Z',
+  sentiment: 'loved', score: '8.4', had_on: '2026-08-14', created_at: '2026-09-01T10:00:00Z', pin: null,
 });
-assert.deepEqual(shared, { ...martini, id: 's1', itemId: 'i1', createdAt: '2026-09-01T10:00:00Z' });
+assert.deepEqual(shared, { ...martini, id: 's1', itemId: 'i1', createdAt: '2026-09-01T10:00:00Z', pin: null });
 assert.equal(fromSharedRow({ ...({} as Parameters<typeof fromSharedRow>[0]), id: 's2', item_id: 'i2', name: 'Negroni', venue_id: null, sentiment: 'fine', score: 5, created_at: '2026-09-01T10:00:00Z' }).venue, null);
 
 // They show drinks but not bars: a bar drink says so without naming it.
@@ -103,5 +103,11 @@ assert.deepEqual(tallyBars([]), []);
 
 assert.deepEqual(hadStats(had), { drinks: 5, bars: 2 }, 'home is not a bar');
 assert.deepEqual(hadStats([]), { drinks: 0, bars: 0 });
+
+// Their top four, in their order; a profile that hides dates has none to sort by.
+const pinned = (id: string, pin: number | null) => fromSharedRow({ ...({} as Parameters<typeof fromSharedRow>[0]), id, item_id: id, name: id, sentiment: 'loved', score: 9, created_at: null, pin });
+assert.deepEqual(topFour([pinned('a', null), pinned('b', 3), pinned('c', 1)]).map((d) => d.id), ['c', 'b']);
+assert.equal(hasDates([pinned('a', null)]), false);
+assert.equal(hasDates(had), true);
 
 console.log('hadDrinks checks passed');
