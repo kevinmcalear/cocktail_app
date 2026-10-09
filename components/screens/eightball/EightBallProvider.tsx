@@ -15,8 +15,8 @@ const OpenEightBall = createContext<() => void>(() => {});
  * Shake the phone on any main tab to open the magic eight ball (issue #18);
  * shake again while it's open for another drink. Listens only while the app
  * is in front and a tab is showing, so a drink page, sheet route or the
- * background never pick up a shake. Screens add EightBallButton for web and
- * for anyone who can't or won't shake.
+ * background never pick up a shake. Screens add EightBallButton, which shows
+ * only where shaking can't work (web, binaries without the accelerometer).
  */
 export function EightBallProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -58,14 +58,18 @@ function EightBallGlyph() {
   );
 }
 
-/** The eight ball without shaking: the bare ball, no glass circle, at the avatar's size. */
+/**
+ * The eight ball without shaking: the bare ball, no glass circle, at the
+ * avatar's size. Hidden in the apps, where a shake is the only way in.
+ */
 export function EightBallButton() {
   const open = useContext(OpenEightBall);
+  if (canListenForShakes()) return null;
   return (
     <PressableScale
       role="button"
       onPress={open}
-      accessibilityLabel={canListenForShakes() ? 'Pick a random drink. You can also shake your phone.' : 'Pick a random drink'}
+      accessibilityLabel="Pick a random drink"
       style={styles.target}
     >
       <EightBallGlyph />
