@@ -103,14 +103,21 @@ describe('bottle catalog', () => {
     // against the chain's own first run: later migrations refile some rows on
     // purpose (taxonomy v2 moves Tequila under Agave Spirit), which a fresh run
     // of the chain undoes, and a second run must change nothing more.
-    await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
-    try {
-      for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
-      const once = await one(snapshot);
-      for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
-      assert.deepEqual(await one(snapshot), once);
-    } finally {
-      await db.query('ROLLBACK');
+    // That snapshot means a test file writing a catalog row we also write can
+    // abort us with a serialization failure (40001); start over when it does.
+    for (let attempt = 1; ; attempt++) {
+      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      try {
+        for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
+        const once = await one(snapshot);
+        for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
+        assert.deepEqual(await one(snapshot), once);
+        return;
+      } catch (error) {
+        if (error?.code !== '40001' || attempt >= 3) throw error;
+      } finally {
+        await db.query('ROLLBACK');
+      }
     }
   });
 });
