@@ -179,7 +179,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           return;
         }
         const b = m.getBounds();
-        latest.current.onViewportChange(viewportFrom(m.getCenter(), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]));
+        latest.current.onViewportChange(viewportFrom(m.getCenter(), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], m.getZoom()));
       });
       // The style loads (and loads again on a scheme change) without our dots: add them each time.
       m.on('style.load', () => addDots(m, dots.current));

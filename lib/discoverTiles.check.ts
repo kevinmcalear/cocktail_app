@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { inBox, parentTiles, tileBox, tileLevel, tilesFor } from './discoverTiles';
 
 // A phone over lower Manhattan (about 0.1 degrees wide) gets level 11 tiles; a continent, level 2.
-const manhattan = { latitude: 40.72, longitude: -73.99, latitudeDelta: 0.12, longitudeDelta: 0.08 };
+const manhattan = { latitude: 40.72, longitude: -73.99, latitudeDelta: 0.12, longitudeDelta: 0.08, zoom: 12 };
 assert.equal(tileLevel(manhattan), 11);
 assert.equal(tileLevel({ ...manhattan, longitudeDelta: 2 }), 5);
 assert.equal(tileLevel({ ...manhattan, longitudeDelta: 60 }), 2);
