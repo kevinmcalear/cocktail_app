@@ -40,7 +40,7 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
-  const { Text } = require('react-native');
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return { CollectButton: () => <Text>Collect</Text> };
 });
 jest.mock('@/components/screens/rank/RankActions', () => ({ RankFlow: () => null }));
