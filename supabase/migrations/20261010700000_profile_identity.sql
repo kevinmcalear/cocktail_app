@@ -1,5 +1,3 @@
--- DRAFT. Local stack only. Not applied to production; needs Kevin's review first.
---
 -- Who a person says they are on their public profile, in their own hands.
 --
 --   profiles.tagline               what they do with drinks, in their words
@@ -68,8 +66,10 @@ CREATE TRIGGER "check_profile_headline" BEFORE INSERT OR UPDATE OF "headline_pos
 
 -- --- Photo ---
 
--- The account photo, but only one in the person's own avatars folder (the
--- same rule as get_bar_members), never any picture on the web.
+-- The account photo, but only one in the person's own folder of our avatars
+-- bucket, never any picture on the web. The user sets this metadata, so the
+-- host is checked too: production's project, or a local stack (as
+-- is_drinks_bucket_url, 20261008750000).
 CREATE FUNCTION "private"."account_photo"("p_user_id" "uuid") RETURNS "text"
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
@@ -77,7 +77,11 @@ CREATE FUNCTION "private"."account_photo"("p_user_id" "uuid") RETURNS "text"
   SELECT au.raw_user_meta_data->>'avatar_url'
   FROM auth.users au
   WHERE au.id = p_user_id
-    AND au.raw_user_meta_data->>'avatar_url' LIKE '%/storage/v1/object/public/avatars/' || p_user_id::text || '/%';
+    AND au.raw_user_meta_data->>'avatar_url'
+        ~ ('^(https://uzrqriixgxbvhunwrwkn\.supabase\.co|http://(127\.0\.0\.1|localhost)(:[0-9]+)?)/storage/v1/object/public/avatars/'
+           || p_user_id::text || '/[^?#\\]+$')
+    AND au.raw_user_meta_data->>'avatar_url' !~* '(/\.|%2e|%2f|%5c)'
+    AND char_length(au.raw_user_meta_data->>'avatar_url') <= 1000;
 $$;
 
 REVOKE EXECUTE ON FUNCTION "private"."account_photo"("uuid") FROM PUBLIC, "anon", "authenticated";
@@ -87,8 +91,14 @@ CREATE FUNCTION "private"."set_profile_photo"() RETURNS "trigger"
     SET "search_path" TO ''
     AS $$
 BEGIN
+    -- A claimed person's picture is only ever their account photo, or the one
+    -- already on the page (seeded before they claimed it). A URL they write
+    -- into avatar_url themselves is ignored.
     IF NEW.kind = 'person' AND NEW.user_id IS NOT NULL THEN
-        NEW.avatar_url := CASE WHEN NEW.shows_photo THEN COALESCE(private.account_photo(NEW.user_id), NEW.avatar_url) END;
+        NEW.avatar_url := CASE WHEN NEW.shows_photo THEN COALESCE(
+            private.account_photo(NEW.user_id),
+            CASE WHEN TG_OP = 'UPDATE' THEN OLD.avatar_url END
+        ) END;
     END IF;
     RETURN NEW;
 END;
@@ -114,6 +124,58 @@ GRANT EXECUTE ON FUNCTION "public"."refresh_my_profile_photo"() TO "authenticate
 
 -- Everyone who already has an account photo gets it on their page.
 UPDATE "public"."profiles" SET "shows_photo" = true WHERE "kind" = 'person' AND "user_id" IS NOT NULL;
+
+-- My team's photos (get_bar_members, 20261009800000) go through the same
+-- check, host included. Same body otherwise.
+CREATE OR REPLACE FUNCTION "public"."get_bar_members"("p_bar_id" "uuid")
+RETURNS TABLE(
+    "user_id" "uuid",
+    "email" "text",
+    "role_level" integer,
+    "display_name" "text",
+    "joined_at" timestamp with time zone,
+    "avatar_url" "text"
+)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+    v_user_role INT;
+BEGIN
+    SELECT ub.role_level INTO v_user_role
+    FROM public.user_bars ub
+    WHERE ub.bar_id = p_bar_id AND ub.user_id = auth.uid()
+      AND NOT EXISTS (
+          SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
+      );
+
+    IF v_user_role IS NULL THEN
+        RAISE EXCEPTION 'You do not have access to view this bar members.';
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        ub.user_id,
+        CASE
+            WHEN v_user_role >= 40 OR ub.user_id = auth.uid() THEN au.email::TEXT
+            ELSE NULL::TEXT
+        END,
+        ub.role_level,
+        private.member_display_name(ub.user_id),
+        ub.created_at,
+        COALESCE(
+            private.account_photo(ub.user_id),
+            p.avatar_url
+        )
+    FROM public.user_bars ub
+    JOIN auth.users au ON ub.user_id = au.id
+    LEFT JOIN public.profiles p ON p.user_id = ub.user_id AND p.kind = 'person'
+    WHERE ub.bar_id = p_bar_id
+      AND NOT EXISTS (
+          SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now()
+      );
+END;
+$$;
 
 -- --- Screen the tagline like the rest of the public text ---
 
