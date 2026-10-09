@@ -4,7 +4,7 @@
 --
 --   * 261 checked bottles from 114 producers: the core range of every gin
 --     house in our catalog or on BC Liquor's list. On a copy of production
---     (2026-10-09): 116 new bottles, and 132 we had that get their label
+--     (2026-10-09, after #437 and #438): 124 new bottles, and 138 we had that get their label
 --     name (50 renamed, the old name kept as an alias), style, ABV, country
 --     and maker where they were missing or wrong.
 --   * Styles: London Dry Gin only when the label says so, Old Tom, Navy
