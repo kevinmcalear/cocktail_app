@@ -117,3 +117,23 @@ export function useSetSpecMatch() {
     },
   });
 }
+
+/**
+ * Where a drink's spec came from: its own ('bar'), or filled in from a classic
+ * ('classic', spec_from_id) because the bar published none
+ * (20261010640000_classic_fill.sql). Null on a server without the column yet.
+ */
+export function useSpecSource(itemId: string | undefined) {
+  return useQuery({
+    queryKey: ['spec-source', itemId],
+    enabled: !!itemId,
+    queryFn: async (): Promise<{ spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null> => {
+      const { data, error } = await supabase.from('items').select('spec_source, spec_from_id').eq('id', itemId!).maybeSingle();
+      if (error) {
+        if (error.code === '42703' || error.code === 'PGRST204') return null;
+        throw error;
+      }
+      return (data as { spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null) ?? null;
+    },
+  });
+}
