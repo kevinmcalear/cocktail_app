@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { useDrafts } from '@/hooks/useDrafts';
-import { savePrepCard } from '@/hooks/usePrepCard';
+import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
@@ -10,6 +10,7 @@ import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
+import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
@@ -120,10 +121,14 @@ export function useCreateDrink() {
       const lines = [];
       // New house preps made by a technique, to get their prep card once the drink is in.
       const preps: { id: string; technique: string }[] = [];
+      // New house preps with their own recipe (made in the wizard), saved once the drink is in.
+      const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
         const ingredientId = await ensure(line, 'ingredient');
-        if (line.technique && newIngredients.length > madeBefore) preps.push({ id: ingredientId, technique: line.technique });
+        const isNew = newIngredients.length > madeBefore;
+        if (line.prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep: line.prep });
+        else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         lines.push({
           id: null,
           ingredient_item_id: ingredientId,
@@ -194,6 +199,15 @@ export function useCreateDrink() {
       if (coIds.length) {
         const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
+      }
+
+      // A prep made here: its recipe, method and keeping, on the row this save made.
+      for (const p of ownPreps) {
+        try {
+          await savePrepRecipe(p.id, p.prep, ensure);
+        } catch (e) {
+          warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
+        }
       }
 
       // Only rows this save made get a card: an existing prep keeps its own.

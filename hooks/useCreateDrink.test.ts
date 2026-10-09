@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react-native';
 import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { startPrep } from '@/lib/prepKinds';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 const mockSetQueryData = jest.fn();
@@ -19,7 +20,11 @@ jest.mock('@/lib/analytics', () => ({ track: jest.fn() }));
 
 const mockSaveSpec = jest.fn();
 const mockSavePrepCard = jest.fn();
-jest.mock('@/hooks/usePrepCard', () => ({ savePrepCard: (...args: unknown[]) => mockSavePrepCard(...args) }));
+const mockSavePrepRecipe = jest.fn();
+jest.mock('@/hooks/usePrepCard', () => ({
+  savePrepCard: (...args: unknown[]) => mockSavePrepCard(...args),
+  savePrepRecipe: (...args: unknown[]) => mockSavePrepRecipe(...args),
+}));
 jest.mock('@/hooks/useVersions', () => ({ saveDrinkSpec: (...args: unknown[]) => mockSaveSpec(...args) }));
 
 // Rows that exist; 'gone' was merged away (deleted) after the draft picked it.
@@ -108,4 +113,22 @@ test('a new house prep made by a technique gets its prep card; one already on th
   expect(itemId).toBe('new-row');
   expect(card.prep.actions).toEqual(['Clarify']);
   expect(card.steps[0].body).toBe('For 375 g juice: 125 g water, 1 g agar.');
+});
+
+test('a house prep made in the wizard is saved with its own recipe, not a technique card', async () => {
+  mockSavePrepCard.mockClear();
+  mockSavePrepRecipe.mockClear();
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const prep = startPrep('shrub', 'Pineapple chili shrub');
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, name: 'Pineapple Heat', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pineapple chili shrub', amount: '20', unit: 'ml', prep }] },
+    barId: null,
+    myProfileId: null,
+  });
+  expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
+  const [id, saved, ensure] = mockSavePrepRecipe.mock.calls[0];
+  expect(id).toBe('new-row');
+  expect(saved).toBe(prep);
+  expect(typeof ensure).toBe('function');
+  expect(mockSavePrepCard).not.toHaveBeenCalled();
 });

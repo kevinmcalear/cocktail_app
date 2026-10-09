@@ -5,13 +5,14 @@ import { Body, Button, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
+import type { PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { BalanceCard, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
-import { MakeItSheet } from './MakeItSheet';
+import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
 import { WizardChip } from './WizardChrome';
 
@@ -40,8 +41,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ line: WizardLine; at: number } | null>(null);
-  /** A new name being made in house: the sheet of ways to make it is open. */
-  const [making, setMaking] = useState<string | null>(null);
+  /** A new house prep being made, or one in the drink being edited (its line's key). */
+  const [making, setMaking] = useState<{ name: string; key?: string } | null>(null);
+  // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
+  const editingKey = making?.key ?? null;
+  const makingName = making?.name ?? null;
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -53,10 +57,10 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     return () => clearTimeout(t);
   }, [removed]);
 
-  const add = (pick: WizardPick, technique?: string) => {
+  const add = (pick: WizardPick, prep?: PrepDraft) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
     const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
-    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(technique ? { technique } : null) }] });
+    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null) }] });
     setRemoved(null);
   };
   const change = (key: string, c: Partial<WizardLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
@@ -94,7 +98,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 />
               </View>
             ) : (
-              <LineRow key={l.key} line={l} onChange={(c) => change(l.key, c)} onRemove={() => remove(l)} onSwap={() => setSwapKey(l.key)} />
+              <LineRow key={l.key} line={l} onChange={(c) => change(l.key, c)} onRemove={() => remove(l)} onSwap={() => setSwapKey(l.key)} onEditPrep={() => setMaking({ name: l.name, key: l.key })} />
             )
           )}
         </View>
@@ -107,16 +111,17 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={setMaking} />
-      <MakeItSheet
-        name={making}
+      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => setMaking({ name }) : undefined} />
+      <PrepBuilder
+        name={makingName}
+        drinkName={draft.name.trim()}
+        initial={editingKey ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
+        ingredients={ingredients}
+        aliases={aliases}
         onClose={() => setMaking(null)}
-        onChoose={(t) => {
-          add({ id: null, name: making! }, t.id);
-          setMaking(null);
-        }}
-        onPlain={() => {
-          add({ id: null, name: making! });
+        onDone={(prep) => {
+          if (editingKey) change(editingKey, { prep, technique: prep.technique });
+          else if (makingName) add({ id: null, name: makingName }, prep);
           setMaking(null);
         }}
       />

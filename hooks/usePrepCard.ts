@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { isGarnishUnit } from '@/lib/batch';
+import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
 import { supabase } from '@/lib/supabase';
 
 export interface PrepStep {
@@ -124,5 +125,38 @@ export function useLearnYield(itemId: string) {
       if (error) throw error;
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['item-prep', itemId] }),
+  });
+}
+
+/**
+ * A house prep made in the add-drink wizard (lib/prepKinds): marks the new row
+ * as a prep, writes its recipe lines (typed names become ingredients through
+ * `ensure`, the drink save's own resolver) and its card: yield, keeps,
+ * storage, lead time, actions and steps.
+ */
+export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>) {
+  const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
+  if (role.error) throw role.error;
+  const rows = [];
+  for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
+    if (!line.name.trim()) continue;
+    rows.push({ recipe_item_id: itemId, ingredient_item_id: await ensure({ id: line.id, name: line.name }, 'ingredient'), amount, unit: line.unit || null, sort_order: i });
+  }
+  if (rows.length) {
+    const added = await supabase.from('recipes').insert(rows);
+    if (added.error) throw added.error;
+  }
+  const made = prepYield(prep);
+  await savePrepCard(itemId, {
+    prep: {
+      yield_amount: made,
+      yield_unit: made ? 'ml' : null,
+      shelf_life_hours: prep.keepsHours,
+      lead_time_minutes: prep.leadMinutes,
+      lead_time_note: null,
+      storage: prep.storage || null,
+      actions: prep.actions,
+    },
+    steps: prep.steps,
   });
 }
