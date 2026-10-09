@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Button, Caption, Field, GlassButton, Headline, useDs } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSaveLayout } from '@/hooks/useMenuMutations';
@@ -11,7 +12,9 @@ import { cannotAdd, filterLibrary, libraryNote } from '@/lib/menuLayout';
 import { menuDateLine, menuReadiness, plural } from '@/lib/menus';
 
 import { LibraryRow } from './AddDrinkSheet';
+import { Eyebrow } from '../addDrink/WizardChrome';
 import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
+import { GuestPreview } from './GuestPreview';
 import { Choice } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
@@ -104,13 +107,22 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
       setLayoutSaved(false);
     }
   };
+  const { coverUrl } = editor.layout;
+  // The preview card wants room, but the menu in the middle comes first: narrower under 1440.
+  const width = useWindowDimensions().width >= 1440 ? 380 : 320;
   return (
-    <ScrollView style={[styles.side, styles.inspector, { borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
-      <MenuCoverEdit editor={editor} height={128} />
-      <Caption tone="muted">{venue ? `For ${venue.name}` : 'Just yours'}</Caption>
-      <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-      <Headline>{home ? 'Ready to share?' : 'Ready to go on?'}</Headline>
-      {lines.length ? lines.map((l) => <Body key={l} tone="muted">{`! ${l}`}</Body>) : <Body tone="muted">✓ Every section has what it needs.</Body>}
+    <ScrollView style={[styles.side, styles.inspector, { width, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
+      <GuestPreview editor={editor} venue={venue ?? null} />
+      <View style={styles.checks}>
+        <Eyebrow>{home ? 'Before you share' : 'Before it goes on'}</Eyebrow>
+        {lines.length ? lines.map((l) => <Check key={l} label={l} />) : <Check done label="Every section has what it needs" />}
+        <Check
+          done={!!coverUrl}
+          label={coverUrl ? 'Cover photo' : 'Cover'}
+          note={coverUrl ? (venue ? `For ${venue.name}` : 'Just yours') : 'Drawn from your drinks until you add a photo'}
+          action={<MenuCoverEdit editor={editor} height={96} />}
+        />
+      </View>
       {home ? null : (
         <>
           <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
@@ -129,6 +141,21 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
   );
 }
 
+/** One thing to check before the menu goes out: done, or still to do. */
+function Check({ label, note, done = false, action }: { label: string; note?: string; done?: boolean; action?: ReactNode }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.check, { borderBottomColor: ds.c.line }]}>
+      <IconSymbol name={done ? 'checkmark.circle.fill' : 'exclamationmark.circle'} size={18} color={done ? ds.c.ink : ds.c.muted} />
+      <View style={[styles.flex, styles.checkText]}>
+        <Body accessibilityLabel={`${label}${done ? ', done' : ', to do'}`}>{label}</Body>
+        {note ? <Caption tone="muted">{note}</Caption> : null}
+        {action}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg, paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
@@ -136,7 +163,10 @@ const styles = StyleSheet.create({
   columns: { flex: 1, flexDirection: 'row', minHeight: 0 },
   side: { width: 280, flexGrow: 0, padding: space.lg, gap: space.md, borderRightWidth: StyleSheet.hairlineWidth },
   inspector: { borderRightWidth: 0, borderLeftWidth: StyleSheet.hairlineWidth, padding: 0 },
-  inspectorBody: { padding: space.lg, gap: space.md },
+  inspectorBody: { padding: space.lg, gap: space.xl },
+  checks: { gap: 0 },
+  checkText: { gap: space.xs },
+  check: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   center: { padding: space.xl, gap: space.lg, maxWidth: 760, width: '100%', alignSelf: 'center' },
   rule: { height: StyleSheet.hairlineWidth },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, Tag, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { displayFaces, space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
@@ -40,13 +40,18 @@ function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable
 }
 
 /** The name, its price and its line. On the guest card the name is set in the venue's display face. */
-function DrinkLine({ drink, centered, card = false }: { drink: MenuDrink; centered: boolean; card?: boolean }) {
+function DrinkLine({ drink, centered, card = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact' }) {
+  const ds = useDs();
   const price = formatPrice(drink.price);
   return (
     <View style={centered ? styles.centered : styles.flex}>
       <View style={[styles.nameRow, centered && styles.nameRowCentered]}>
         {card ? (
-          <DsText variant="title" align={centered ? 'center' : undefined} style={centered ? undefined : styles.flex}>
+          <DsText
+            variant={card === 'compact' ? 'headline' : 'title'}
+            align={centered ? 'center' : undefined}
+            style={[centered ? undefined : styles.flex, card === 'compact' && { fontFamily: displayFaces[ds.displayFace].regular }]}
+          >
             {drink.name}
           </DsText>
         ) : (
@@ -70,6 +75,8 @@ interface MenuSectionsProps {
   hrefFor?: (drink: MenuDrink) => string | null;
   /** On the `card`: each drink's picture above its name (two across), beside it, or none. */
   pictures?: CardPictures;
+  /** The card at preview size: smaller pictures and names. */
+  compact?: boolean;
 }
 
 /**
@@ -78,7 +85,7 @@ interface MenuSectionsProps {
  * with each drink's photo or sketch unless `pictures` is 'none'. The card is
  * your own menu, so every drink on it has a real id to draw from.
  */
-export function MenuSections({ sections, variant, hrefFor, pictures = 'above' }: MenuSectionsProps) {
+export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false }: MenuSectionsProps) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
@@ -102,8 +109,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above' }:
               <View style={styles.cardGrid}>
                 {s.drinks.map((d) => (
                   <View key={d.id} style={styles.cardTile}>
-                    <DrinkThumb drink={d} drawable size={144} />
-                    <DrinkLine drink={d} centered card />
+                    <DrinkThumb drink={d} drawable size={compact ? 96 : 144} />
+                    <DrinkLine drink={d} centered card={compact ? 'compact' : true} />
                   </View>
                 ))}
               </View>
@@ -112,8 +119,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above' }:
               if (card && pictures === 'beside') {
                 return (
                   <View key={d.id} style={[styles.row, styles.cardBeside]}>
-                    <DrinkThumb drink={d} drawable size={88} />
-                    <DrinkLine drink={d} centered={false} card />
+                    <DrinkThumb drink={d} drawable size={compact ? 56 : 88} />
+                    <DrinkLine drink={d} centered={false} card={compact ? 'compact' : true} />
                   </View>
                 );
               }
@@ -165,7 +172,7 @@ const styles = StyleSheet.create({
   cardRow: { paddingVertical: space.xs },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: space.xl, paddingTop: space.sm },
   // Two across, even on a phone; one alone sits in the middle.
-  cardTile: { flexBasis: '50%', minWidth: 150, flexGrow: 0, alignItems: 'center', gap: space.sm, paddingHorizontal: space.sm },
+  cardTile: { flexBasis: '50%', minWidth: 120, flexGrow: 0, alignItems: 'center', gap: space.sm, paddingHorizontal: space.sm },
   cardBeside: { borderBottomWidth: 0, paddingVertical: space.sm },
   drawnNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, gap: 2 },

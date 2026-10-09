@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Display, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
 import { menuAsText } from '@/lib/menus';
+import type { MenuSectionDetail } from '@/types/menus';
 
 import { MenuSections, type CardPictures } from './MenuSections';
 
@@ -49,6 +50,40 @@ function VenueMark({ venue }: { venue: Venue }) {
   );
 }
 
+interface GuestCardContentProps {
+  name: string;
+  startsAt: string | null;
+  venue: Venue | null;
+  sections: Pick<MenuSectionDetail, 'id' | 'name' | 'drinks'>[];
+  pictures: CardPictures;
+  /** Smaller type and pictures: the editor's live preview beside the menu. */
+  compact?: boolean;
+}
+
+/** The card itself: the venue's mark, the menu's name and date, its sections. Inside the light theme, on paper. */
+export function GuestCardContent({ name, startsAt, venue, sections, pictures, compact = false }: GuestCardContentProps) {
+  const ds = useDs();
+  const from = startsAt ? new Date(startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null;
+  return (
+    <View style={styles.card}>
+      {venue ? <VenueMark venue={venue} /> : null}
+      {venue ? (
+        <DsText variant="headline" align="center">
+          {venue.name}
+        </DsText>
+      ) : null}
+      <DsText variant={compact ? 'title' : 'display'} role="heading" align="center">
+        {name}
+      </DsText>
+      {from ? <Caption tone="muted">From {from}</Caption> : null}
+      <View style={[styles.rule, compact && styles.ruleCompact, { backgroundColor: ds.c.lineStrong }]} />
+      <View style={styles.sections}>
+        <MenuSections sections={sections} variant="card" pictures={pictures} compact={compact} />
+      </View>
+    </View>
+  );
+}
+
 function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
   const ds = useDs();
   const router = useRouter();
@@ -66,8 +101,6 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
     // on public menus (the publishing step): today a guest couldn't open the link.
     else void Share.share({ message: menuAsText(menu, venue?.name) });
   };
-  const from = menu?.startsAt ? new Date(menu.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null;
-
   return (
     // Paper, the sketches' own ground, so they sit on the page instead of in boxes.
     <View style={[styles.screen, { backgroundColor: ds.c.paper }]}>
@@ -88,20 +121,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
         {!menu ? (
           <Body tone="muted">{isLoading ? 'Setting the menu…' : 'This menu isn’t there any more.'}</Body>
         ) : (
-          <View style={styles.card}>
-            {venue ? <VenueMark venue={venue} /> : null}
-            {venue ? (
-              <DsText variant="headline" align="center">
-                {venue.name}
-              </DsText>
-            ) : null}
-            <Display align="center">{menu.name}</Display>
-            {from ? <Caption tone="muted">From {from}</Caption> : null}
-            <View style={[styles.rule, { backgroundColor: ds.c.lineStrong }]} />
-            <View style={styles.sections}>
-              <MenuSections sections={menu.sections} variant="card" pictures={pictures} />
-            </View>
-          </View>
+          <GuestCardContent name={menu.name} startsAt={menu.startsAt} venue={venue} sections={menu.sections} pictures={pictures} />
         )}
       </ScrollView>
     </View>
@@ -117,5 +137,6 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 640, alignItems: 'center', gap: space.sm },
   mark: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   rule: { width: 48, height: 1, marginVertical: space.lg },
+  ruleCompact: { marginVertical: space.sm },
   sections: { width: '100%' },
 });
