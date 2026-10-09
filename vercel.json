@@ -21,6 +21,14 @@
       "destination": "/cocktail/[id]"
     },
     {
+      "source": "/techniques/:id",
+      "destination": "/techniques/[id]"
+    },
+    {
+      "source": "/equipment/:id",
+      "destination": "/equipment/[id]"
+    },
+    {
       "source": "/cocktail/:id/edit",
       "destination": "/cocktail/[id]/edit"
     },

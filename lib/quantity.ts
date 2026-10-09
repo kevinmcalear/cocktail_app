@@ -39,9 +39,9 @@ export function scale(q: Quantity, by: number): Quantity {
   return { ...q, value: q.value * by };
 }
 
-/** "1.8 L", "360 ml", "2 kg", "12 limes". */
+/** "1.8 L", "360 ml", "2 kg", "12 limes", and "0.05 g" for a gum (sub-unit amounts keep two decimals). */
 export function formatQuantity(q: Quantity): string {
-  const round = (v: number) => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10);
+  const round = (v: number) => (v >= 100 ? Math.round(v) : v >= 1 ? Math.round(v * 10) / 10 : Math.round(v * 100) / 100);
   if (q.kind === 'ml') return q.value >= 1000 ? `${round(q.value / 1000)} L` : `${round(q.value)} ml`;
   if (q.kind === 'g') return q.value >= 1000 ? `${round(q.value / 1000)} kg` : `${round(q.value)} g`;
   return `${round(q.value)} ${q.unit}`;

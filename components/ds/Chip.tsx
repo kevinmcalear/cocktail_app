@@ -13,8 +13,9 @@ import { useDs } from './theme';
  * `quiet` rests as a line instead of a fill, for a long browse row.
  * `multi` makes it a checkbox, for a group where several can be on (role="group").
  * `disabled` dims it and ignores presses, for a choice the person can see but not change.
+ * `accessibilityLabel` names it when the label alone is ambiguous in a list ("I have it" beside each tool).
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string }) {
   const ds = useDs();
   return (
     <PressableScale
@@ -22,7 +23,7 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled }: { lab
       aria-checked={selected}
       aria-disabled={disabled}
       disabled={disabled}
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       style={[
         styles.chip,

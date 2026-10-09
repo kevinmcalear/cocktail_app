@@ -121,6 +121,15 @@ function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine;
         </View>
       ) : null}
       <ResultRow
+        title="Techniques and equipment"
+        caption="Foams, clarifying, milk punch, infusions, and the kit for each"
+        icon="flask"
+        onPress={() => {
+          onJump?.();
+          router.push('/techniques' as never);
+        }}
+      />
+      <ResultRow
         title="Cocktail history"
         caption="Every classic's family tree, back to the punch bowl"
         icon="book"
