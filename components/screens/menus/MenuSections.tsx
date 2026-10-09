@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, Tag, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
@@ -10,24 +10,48 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
+/** Where the guest card puts each drink's picture. */
+export type CardPictures = 'above' | 'beside' | 'none';
+
+/** A drink with no photo of its own, or only a generated one: it shows a drawing. */
+const isDrawn = (d: MenuDrink) => !d.imageUrl || d.isSketch;
+
 /**
  * The drink's picture beside its line on the page. Decorative: the line says
- * what it is. Only a drink that opens has a real id to draw a sketch from.
+ * what it is. Only a drink with a real id (one that opens, or any drink on
+ * your own guest card) can be drawn as a sketch.
  */
-function DrinkThumb({ drink, opens }: { drink: MenuDrink; opens: boolean }) {
+function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable: boolean; size?: number }) {
   return (
-    <View style={styles.thumb} aria-hidden>
-      <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={opens ? drink.id : null} accessibilityLabel={drink.name} radius="control" hideTag />
+    <View style={{ width: size }} aria-hidden>
+      <DrinkImage
+        thumb
+        sketchDetail={size < 140 ? 'thumb' : undefined}
+        source={drink.imageUrl}
+        generated={drink.isSketch}
+        glass={drink.glass}
+        itemId={drawable ? drink.id : null}
+        accessibilityLabel={drink.name}
+        radius="control"
+        hideTag
+      />
     </View>
   );
 }
 
-function DrinkLine({ drink, centered }: { drink: MenuDrink; centered: boolean }) {
+/** The name, its price and its line. On the guest card the name is set in the venue's display face. */
+function DrinkLine({ drink, centered, card = false }: { drink: MenuDrink; centered: boolean; card?: boolean }) {
   const price = formatPrice(drink.price);
   return (
     <View style={centered ? styles.centered : styles.flex}>
       <View style={[styles.nameRow, centered && styles.nameRowCentered]}>
-        <Headline style={centered ? undefined : styles.flex}>{drink.name}</Headline>
+        {card ? (
+          <DsText variant="title" align={centered ? 'center' : undefined} style={centered ? undefined : styles.flex}>
+            {drink.name}
+          </DsText>
+        ) : (
+          <Headline style={centered ? undefined : styles.flex}>{drink.name}</Headline>
+        )}
         {price ? <Spec>{price}</Spec> : null}
       </View>
       {drink.line ? (
@@ -44,19 +68,24 @@ interface MenuSectionsProps {
   variant: 'page' | 'card';
   /** Where a `page` row opens; null leaves the row still. Default: the drink's own page. */
   hrefFor?: (drink: MenuDrink) => string | null;
+  /** On the `card`: each drink's picture above its name (two across), beside it, or none. */
+  pictures?: CardPictures;
 }
 
 /**
  * A menu's sections, set like the printed menu. `page`: rows with each
- * drink's picture that open it. `card`: centred, still and text only, for the
- * share card and print.
+ * drink's picture that open it. `card`: still, for the guest card and print,
+ * with each drink's photo or sketch unless `pictures` is 'none'. The card is
+ * your own menu, so every drink on it has a real id to draw from.
  */
-export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) {
+export function MenuSections({ sections, variant, hrefFor, pictures = 'above' }: MenuSectionsProps) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
   const card = variant === 'card';
   const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : itemHref(CATEGORY[d.kind], d.id));
+  const grid = card && pictures === 'above';
+  const drawn = card && pictures !== 'none' && sections.some((s) => s.drinks.some(isDrawn));
   return (
     <View style={styles.sections}>
       {sections
@@ -69,13 +98,30 @@ export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) 
               </Caption>
               {card ? null : <Caption tone="muted">{s.drinks.length}</Caption>}
             </View>
-            {s.drinks.map((d) => {
+            {grid ? (
+              <View style={styles.cardGrid}>
+                {s.drinks.map((d) => (
+                  <View key={d.id} style={styles.cardTile}>
+                    <DrinkThumb drink={d} drawable size={144} />
+                    <DrinkLine drink={d} centered card />
+                  </View>
+                ))}
+              </View>
+            ) : s.drinks.map((d) => {
               const to = href(d);
+              if (card && pictures === 'beside') {
+                return (
+                  <View key={d.id} style={[styles.row, styles.cardBeside]}>
+                    <DrinkThumb drink={d} drawable size={88} />
+                    <DrinkLine drink={d} centered={false} card />
+                  </View>
+                );
+              }
               if (!to) {
                 return (
                   <View key={d.id} style={card ? styles.cardRow : [styles.row, { borderBottomColor: ds.c.line }]}>
-                    {card ? null : <DrinkThumb drink={d} opens={false} />}
-                    <DrinkLine drink={d} centered={card} />
+                    {card ? null : <DrinkThumb drink={d} drawable={false} />}
+                    <DrinkLine drink={d} centered={card} card={card} />
                   </View>
                 );
               }
@@ -91,13 +137,20 @@ export function MenuSections({ sections, variant, hrefFor }: MenuSectionsProps) 
                   onPress={() => router.push(to as never)}
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
-                  <DrinkThumb drink={d} opens />
+                  <DrinkThumb drink={d} drawable />
                   <DrinkLine drink={d} centered={false} />
                 </PressableScale>
               );
             })}
           </View>
         ))}
+      {drawn ? (
+        // One note for the whole card instead of a tag on every picture.
+        <View style={styles.drawnNote}>
+          <Tag label="Sketch" tone="sketch" />
+          <Caption tone="muted">Drawn from each drink’s spec until it has a photo</Caption>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -109,8 +162,12 @@ const styles = StyleSheet.create({
   sectionHeadCentered: { justifyContent: 'center' },
   sectionTitle: { letterSpacing: 1.5 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  thumb: { width: 56 },
   cardRow: { paddingVertical: space.xs },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: space.xl, paddingTop: space.sm },
+  // Two across, even on a phone; one alone sits in the middle.
+  cardTile: { flexBasis: '50%', minWidth: 150, flexGrow: 0, alignItems: 'center', gap: space.sm, paddingHorizontal: space.sm },
+  cardBeside: { borderBottomWidth: 0, paddingVertical: space.sm },
+  drawnNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, gap: 2 },
   centered: { alignItems: 'center', gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
