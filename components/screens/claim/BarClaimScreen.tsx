@@ -7,6 +7,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useMyClaims, useProfile } from '@/hooks/useProfiles';
+import { claimPlace } from '@/lib/claimVerification';
 
 import { ClaimStart } from './ClaimStart';
 import { ClaimApproved, ClaimPending } from './ClaimStatus';
@@ -38,11 +39,11 @@ function ClaimPage({ profileRef }: { profileRef: string }) {
   const body = (() => {
     if (isLoading || (profile && userId && claimsLoading)) return <Caption tone="muted">Loading…</Caption>;
     if (error) return <Body tone="muted">Couldn’t load this page. Check your connection and try again.</Body>;
-    if (!profile || profile.kind !== 'bar') return <Body tone="muted">There’s no bar page here to claim.</Body>;
+    if (!profile || profile.kind === 'person') return <Body tone="muted">There’s no bar or maker page here to claim.</Body>;
     if (!userId) {
       return (
         <View style={styles.gap}>
-          <Body>{`Sign in to claim ${profile.display_name}. Use your work email if you have one at the bar’s own domain: that’s the quickest way.`}</Body>
+          <Body>{`Sign in to claim ${profile.display_name}. Use your work email if you have one at the ${claimPlace(profile.kind)}’s own domain: that’s the quickest way.`}</Body>
           <Button label="Sign in" onPress={() => router.push('/auth/login' as Href)} style={styles.hug} />
         </View>
       );

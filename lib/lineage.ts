@@ -8,9 +8,12 @@
 
 export type CreditStatus = 'suggested' | 'claimed' | 'verified';
 
+/** A person, a bar, or a maker (the house that makes a bottle, a bar's ice or its glass). */
+export type ProfileKind = 'person' | 'bar' | 'maker';
+
 export interface CreditProfile {
   id: string;
-  kind: 'person' | 'bar';
+  kind: ProfileKind;
   handle: string;
   display_name: string;
   avatar_url: string | null;
