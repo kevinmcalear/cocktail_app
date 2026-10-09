@@ -4,7 +4,7 @@ import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import { PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, layout, type } from '@/constants/tokens';
-import { layoutLabels, mapSizeFor, placePairs, RINGS, type MapPair } from '@/lib/flavorMap';
+import { centreLines, layoutLabels, mapSizeFor, placePairs, RINGS, type MapPair } from '@/lib/flavorMap';
 
 /**
  * The rings. Drawn at the size it's given (so labels stay at caption size),
@@ -53,17 +53,17 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
             );
           })}
           <Circle cx={c} cy={c} r={centreR} fill={ds.accentFill.fill} />
-          {centre.map((name, i) => (
+          {centreLines(centre, centreR, type.caption.fontSize).map((line, i) => (
             <SvgText
-              key={`${name}-${i}`}
+              key={`${line.text}-${i}`}
               x={c}
-              y={c + 5 + (i - (centre.length - 1) / 2) * (type.caption.fontSize + 3)}
+              y={c + 5 + line.dy}
               fill={ds.accentFill.text}
               textAnchor="middle"
               fontWeight="600"
               {...font}
             >
-              {name.length > 14 ? `${name.slice(0, 13)}…` : name}
+              {line.text}
             </SvgText>
           ))}
         </Svg>
