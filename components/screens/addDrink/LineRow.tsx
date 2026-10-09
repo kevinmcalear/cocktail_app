@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { tidyAmount } from '@/lib/specDefaults';
+import { techniqueById } from '@/lib/techniques';
 
 import { WizardChip } from './WizardChrome';
 
@@ -42,7 +43,11 @@ export function LineRow({ line, onChange, onRemove, onSwap }: LineRowProps) {
             style={styles.name}
           >
             <Body numberOfLines={2}>{line.name}</Body>
-            {line.id ? null : <Caption tone="muted">New, added when you save</Caption>}
+            {line.id ? null : line.technique ? (
+              <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
+            ) : (
+              <Caption tone="muted">New, added when you save</Caption>
+            )}
           </PressableScale>
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
