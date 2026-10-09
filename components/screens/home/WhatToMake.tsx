@@ -29,12 +29,13 @@ type GlyphFor = (id: string) => ReactNode;
  * else is in Search. This is the heading and the tabs; the drinks and groups
  * are rows of My Bar's list (MakeDrink, BottleGroup), then MakeFoot.
  */
-export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: MakeTab) => void; counts: { ready: number; one: number; two: number; projects?: number } }) {
-  const options: { value: MakeTab; label: string }[] = [
-    { value: 'ready', label: `Ready · ${counts.ready}` },
+export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: MakeTab) => void; counts: { ready: number; first: number; one: number; two: number; projects?: number } }) {
+  const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
+  if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
+  options.push(
     { value: 'one', label: `One away · ${counts.one}` },
     { value: 'two', label: `Two away · ${counts.two}` },
-  ];
+  );
   // Projects only once there's kit or a lab shelf: a beginner's tabs stay three.
   if (counts.projects !== undefined) options.push({ value: 'projects', label: `Projects · ${counts.projects}` });
   return (
@@ -62,7 +63,9 @@ export function MakeEmpty({ tab, oneAway }: { tab: MakeTab; oneAway: number }) {
           ? 'No drink is one bottle away yet.'
           : tab === 'two'
             ? 'No drink is two bottles away yet.'
-            : 'No technique fits your kit and lab shelf yet. Add what you have.'}
+            : tab === 'first'
+              ? 'Nothing to make first: every drink you can make uses what’s on your bar.'
+              : 'No technique fits your kit and lab shelf yet. Add what you have.'}
     </Body>
   );
 }

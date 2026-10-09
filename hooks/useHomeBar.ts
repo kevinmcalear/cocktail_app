@@ -19,6 +19,15 @@ export interface BarItem {
   imageUrl: string | null;
   /** Glass icon key, for the drawn placeholder when there's no photo. */
   glass: string | null;
+  /** For a drink you can make: the shelf rows it uses (my_bar_drinks). */
+  shelfUses?: string[];
+}
+
+/** A house prep the shelf can make but doesn't have, and every drink that leans on it (my_bar_preps). */
+export interface MadePrep {
+  id: string;
+  name: string;
+  drinks: string[];
 }
 
 interface ItemRow {
@@ -214,6 +223,23 @@ function useMatches() {
 }
 
 /**
+ * The preps your shelf can make that aren't on it yet, most-used first: My
+ * Bar's "Make first". Under the shelf's key, so a shelf change refreshes it.
+ */
+export function useMadePreps() {
+  return useQuery({
+    queryKey: [...SHELF_KEY, 'preps'],
+    queryFn: async (): Promise<MadePrep[]> => {
+      const { data, error } = await supabase.rpc('my_bar_preps');
+      // ponytail: a database without 20261010400000 has no my_bar_preps; show no Make first. Drop once it's in production.
+      if (error?.code === 'PGRST202') return [];
+      if (error) throw error;
+      return (data ?? []) as MadePrep[];
+    },
+  });
+}
+
+/**
  * What the shelf makes and what one or two more bottles would unlock,
  * without the shelf's own names: all the eight ball needs, so it never waits on them.
  */
@@ -221,7 +247,7 @@ export function useBarDrinks() {
   const matches = useMatches();
   const glass = useGlassIcons();
   return useMemo(() => {
-    const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id) });
+    const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id), shelfUses: r.uses ?? undefined });
     const sorted = sortMatches(matches.data ?? [], drink);
     const bottle = (b: { id: string; name: string }): BarItem => ({ id: b.id, name: b.name, type: 'ingredient', imageUrl: null, glass: null });
     return {
