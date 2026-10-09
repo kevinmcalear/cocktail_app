@@ -41,3 +41,28 @@ function list(names: string[]): string {
   if (names.length <= 1) return names.join('');
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
+
+/**
+ * A classic's bar versions sorted by their verdicts: the bars pouring it as it
+ * is (one per bar), the variations, and the rest as riffs. A version with no
+ * verdict yet is a riff, as "Bars' versions" read before.
+ */
+export function splitVersions<T extends { id: string; barId?: string | null }>(
+  versions: T[],
+  verdict: (id: string) => string | undefined
+): { served: T[]; variations: T[]; riffs: T[] } {
+  const served: T[] = [];
+  const variations: T[] = [];
+  const riffs: T[] = [];
+  const bars = new Set<string>();
+  for (const v of versions) {
+    const m = verdict(v.id);
+    if (m === 'same' || m === 'unlisted') {
+      const bar = v.barId ?? v.id;
+      if (!bars.has(bar)) served.push(v);
+      bars.add(bar);
+    } else if (m === 'variation') variations.push(v);
+    else riffs.push(v);
+  }
+  return { served, variations, riffs };
+}

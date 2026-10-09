@@ -32,6 +32,7 @@ import { DrinkHero } from './DrinkHero';
 import type { ShownPicture } from './PictureViewer';
 import { AllergensSection } from './AllergensSection';
 import { ClassicLink } from './ClassicLink';
+import { ClassicNote } from './ClassicNote';
 import { CostSection } from './CostSection';
 import { FamilyTree } from './FamilyTree';
 import { FlavorSection } from './FlavorSection';
@@ -156,6 +157,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
       {home && !preview ? <FlavorSection itemId={item.id} /> : null}
+      {preview ? null : <ClassicNote itemId={item.id} />}
       {lock ? (
         <SpecLockPanel
           note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
