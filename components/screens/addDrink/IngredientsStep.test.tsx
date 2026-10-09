@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { startPrep } from '@/lib/prepKinds';
 
 import { IngredientsStep } from './IngredientsStep';
 
@@ -50,7 +51,7 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to the drink' }));
     const line = set.mock.calls[0][0].lines[0];
-    expect(line).toMatchObject({ id: null, name: 'Clarified grapefruit', technique: 'agar-quick' });
+    expect(line).toMatchObject({ id: null, name: 'Clarified Grapefruit', technique: 'agar-quick' });
     expect(line.prep.technique).toBe('agar-quick');
     expect(line.prep.lines.length).toBeGreaterThan(1);
   });
@@ -80,4 +81,24 @@ describe('IngredientsStep', () => {
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Add “Yuzu juice” as new')).toBeLessThan(rows.indexOf('Make “Yuzu juice” in house'));
   });
+
+  test('a name that exists can still be made your own', async () => {
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Campari');
+    expect(screen.queryByRole('button', { name: /as new/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Make your own “Campari”' })).toBeTruthy();
+  });
+
+  test('swapping a house-made line for a bottle drops its recipe; a swap can be made in house too', async () => {
+    const set = jest.fn();
+    const prep = startPrep('other', 'Mint oil');
+    const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: null, name: 'Mint oil', amount: '', unit: 'drop', prep }] };
+    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI]} />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Mint oil, / }));
+    await fireEvent.changeText(screen.getByLabelText('Swap Mint oil for…'), 'Campari');
+    expect(screen.getByRole('button', { name: 'Make your own “Campari”' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
+    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari', prep: undefined, technique: undefined });
+  });
 });
+

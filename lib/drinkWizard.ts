@@ -250,7 +250,7 @@ export function stepAmount(amount: string, unit: string, dir: 1 | -1): string {
 }
 
 /** The units a line can cycle through with one tap, in the order a bartender reaches for them. */
-export const QUICK_UNITS = ['ml', 'oz', 'cl', 'dash', 'bsp', 'top', 'each', 'g'] as const;
+export const QUICK_UNITS = ['ml', 'oz', 'cl', 'dash', 'drop', 'bsp', 'tsp', 'top', 'each', 'g'] as const;
 
 export function nextUnit(unit: string): string {
   const i = (QUICK_UNITS as readonly string[]).indexOf(unit);

@@ -118,6 +118,33 @@ export function useCreateDrink() {
         return data.id;
       };
 
+      // A house prep made in the wizard is always a row of its own, so its
+      // recipe is never dropped for a same-named one. A name that's taken
+      // becomes your version of it, the way a prep page copies one
+      // (useCopyPrep): the same name at a venue, "My …" at home.
+      const own = async (line: WizardPick): Promise<string> => {
+        const key = `own:${line.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
+        const known = made.get(key);
+        if (known) return known;
+        const name = capitalize(line.name);
+        const insert = (row: { name: string; generic_id?: string }) =>
+          supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
+        let { data, error } = await insert({ name });
+        const taken = existingIngredientId(error);
+        if (taken) ({ data, error } = await insert({ name: barId ? name : `My ${name}`, generic_id: taken }));
+        // Your version from before: the drink uses it, and it keeps its recipe.
+        const yours = taken ? existingIngredientId(error) : null;
+        if (yours) {
+          warnings.push(`You already have “My ${name}”, so the drink uses it. Change its recipe on its page.`);
+          made.set(key, yours);
+          return yours;
+        }
+        if (error || !data) throw error ?? new Error(`Couldn’t add ${line.name}.`);
+        made.set(key, data.id);
+        newIngredients.push(data.id);
+        return data.id;
+      };
+
       const lines = [];
       // New house preps made by a technique, to get their prep card once the drink is in.
       const preps: { id: string; technique: string }[] = [];
@@ -125,7 +152,8 @@ export function useCreateDrink() {
       const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
-        const ingredientId = await ensure(line, 'ingredient');
+        const ownPrep = !!line.prep && !(line.id && live.has(line.id));
+        const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
         if (line.prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep: line.prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
@@ -221,6 +249,8 @@ export function useCreateDrink() {
         if (!t) continue;
         const card = prepCardFor(t);
         try {
+          const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', p.id);
+          if (role.error) throw role.error;
           await savePrepCard(p.id, {
             prep: { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: card.leadMinutes, lead_time_note: card.leadNote, storage: null, actions: card.actions },
             steps: card.steps,
