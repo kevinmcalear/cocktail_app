@@ -86,7 +86,8 @@ export function ShelfTile({ item, meta, editing, onRemove, onHold }: { item: She
       accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}
       badge={editing ? 'remove' : null}
       onPress={() => (editing ? onRemove(item.id) : router.push(itemHref('Ingredient', item.id) as never))}
-      onLongPress={editing ? undefined : onHold}
+      // Kept while editing: the release that ends the long press must not count as a tap on the remove action it just revealed.
+      onLongPress={onHold}
     />
   );
 }
@@ -163,7 +164,7 @@ export function KitSection({ owned, cols, editing, onEdit, onToggle, onAdd, styl
             accessibilityLabel={editing ? `Take ${e.name} out of your kit` : e.name}
             badge={editing ? 'remove' : null}
             onPress={() => (editing ? onToggle(e.id) : router.push(`/equipment/${e.id}` as never))}
-            onLongPress={editing ? undefined : () => onEdit(true)}
+            onLongPress={() => onEdit(true)}
           />
         ))}
         {ideas.map((e) => (
