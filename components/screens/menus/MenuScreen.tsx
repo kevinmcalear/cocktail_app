@@ -116,7 +116,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       </ScrollView>
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={back} onMedia={!!hero} />
-        {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
+        {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, file under R&D, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
       {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
       {sharing ? <ShareMenuSheet menu={menu} onClose={() => setSharing(false)} /> : null}
