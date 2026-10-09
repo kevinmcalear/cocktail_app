@@ -10,44 +10,55 @@ import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
+import { versionLabel } from '@/lib/servedAt';
 
 import { CreditTag } from '../drink/FamilyTree';
+import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
-/** A profile's credited drinks as tiles; each opens the drink. The profile's own name is left out of each tile. */
+/**
+ * A profile's credited drinks as tiles; each opens the drink. The profile's
+ * own name is left out of each tile. Their copies of a classic poured as it is
+ * (the same spec, or none to tell) sit in one line, "Classics they pour",
+ * instead of a tile each; a variation's tile says what it changes.
+ */
 export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
+  const { poured, own, matches } = usePouredSplit(selfId, originals);
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
   return (
-    <View role="list" style={styles.grid}>
-      {originals.map((d) => {
-        const hero = heroPicture(d.item_images);
-        const others = [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
-        const meta = [d.origin_year, ...others].filter(Boolean).join(' · ');
-        return (
-          <PressableScale
-            key={d.id}
-            role="link"
-            accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
-            onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
-            onPress={() => router.push(`/cocktail/${d.id}` as Href)}
-            style={[styles.tile, { width: `${100 / columns}%` }]}
-          >
-            <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
-            <DsText variant="headline" numberOfLines={2}>
-              {d.name}
-            </DsText>
-            {meta ? (
-              <Caption tone="muted" numberOfLines={1}>
-                {meta}
-              </Caption>
-            ) : null}
-            <CreditTag status={d.credit_status} />
-          </PressableScale>
-        );
-      })}
+    <View style={styles.originals}>
+      <ClassicsTheyPour drinks={poured} />
+      <View role="list" style={styles.grid}>
+        {own.map((d) => {
+          const hero = heroPicture(d.item_images);
+          const others = [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
+          const meta = [d.origin_year, ...others, versionLabel(matches?.[d.id])].filter(Boolean).join(' · ');
+          return (
+            <PressableScale
+              key={d.id}
+              role="link"
+              accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
+              onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
+              onPress={() => router.push(`/cocktail/${d.id}` as Href)}
+              style={[styles.tile, { width: `${100 / columns}%` }]}
+            >
+              <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
+              <DsText variant="headline" numberOfLines={2}>
+                {d.name}
+              </DsText>
+              {meta ? (
+                <Caption tone="muted" numberOfLines={1}>
+                  {meta}
+                </Caption>
+              ) : null}
+              <CreditTag status={d.credit_status} />
+            </PressableScale>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -157,6 +168,7 @@ export function Stat({ value, label }: { value: number | string; label: string }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  originals: { gap: space.lg },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
   tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
   menus: { gap: space.xs },

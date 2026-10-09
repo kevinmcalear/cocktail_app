@@ -86,7 +86,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
       ) : bestLoading ? (
         <ListNote>Loading…</ListNote>
       ) : best?.length ? (
-        <AreaRankList rows={best} />
+        <AreaRankList rows={best} classicId={rankedAs.id} />
       ) : (
         <ListNote>{`Not enough rankers yet ${scope ? `in ${where}` : 'anywhere'}. A bar's ${rankedAs.name} shows here once ${MIN_RANKERS} people have ranked it there.`}</ListNote>
       )}

@@ -8,6 +8,7 @@ import { space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
+import { servedCaption } from '@/lib/servedAt';
 
 /** Drinks under each bottle before "and N more". */
 const PER_BOTTLE = 3;
@@ -97,9 +98,12 @@ export function MakeHead({
 
 /** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
 export const MakeDrink = memo(function MakeDrink({ drink, matchFor, glyphFor }: { drink: BarItem; matchFor: MatchFor; glyphFor?: GlyphFor }) {
-  // The bar it's from under the name, so a classic's bar versions tell apart: "Harry's Bar · 92% match".
-  const caption = [drink.from?.name, matchFor(drink.id)].filter(Boolean).join(' · ') || undefined;
-  const logo = drink.from ? { uri: drink.from.logo, name: drink.from.name } : undefined;
+  // A classic says where it's served; a bar's version says which bar, and what its variation changes:
+  // "Served at Harry's Bar, The Gold Room +5", "The Long Island Bar · uses Rye Whiskey, not Bourbon · 92% match".
+  const where = drink.served ? servedCaption(drink.served.count, drink.served.bars) : drink.from?.name;
+  const caption = [where, drink.variation, matchFor(drink.id)].filter(Boolean).join(' · ') || undefined;
+  const bar = drink.served?.bars[0] ?? drink.from;
+  const logo = bar ? { uri: bar.logo, name: bar.name } : undefined;
   return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={caption} logo={logo} trailing={glyphFor?.(drink.id)} />;
 });
 
