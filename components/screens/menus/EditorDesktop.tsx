@@ -11,7 +11,7 @@ import { cannotAdd, filterLibrary, libraryNote } from '@/lib/menuLayout';
 import { menuDateLine, menuReadiness, plural } from '@/lib/menus';
 
 import { LibraryRow } from './AddDrinkSheet';
-import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput } from './EditorParts';
+import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
 import { Choice } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
@@ -86,13 +86,15 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
   const { venues } = useActiveVenue();
   const saveLayout = useSaveLayout();
   const [layoutSaved, setLayoutSaved] = useState(false);
+  // A home menu has no photos to shoot, prices or venue layouts: only its sections' rules apply.
+  const home = useHomeMenu(editor);
   const ready = menuReadiness(editor.layout);
   const venue = venues.find((v) => v.id === editor.menu.barId);
   const lines = [
     ...ready.short.map((s) => `${s.name} needs ${plural(s.needed, 'more drink')}`),
     ...ready.over.map((s) => `${s.name} has ${plural(s.extra, 'drink')} too many`),
-    ...(ready.needsPhoto.length ? [`${plural(ready.needsPhoto.length, 'drink')} still need${ready.needsPhoto.length === 1 ? 's' : ''} a photo`] : []),
-    ...(ready.noPrice.length ? [`${plural(ready.noPrice.length, 'drink')} with no price`] : []),
+    ...(!home && ready.needsPhoto.length ? [`${plural(ready.needsPhoto.length, 'drink')} still need${ready.needsPhoto.length === 1 ? 's' : ''} a photo`] : []),
+    ...(!home && ready.noPrice.length ? [`${plural(ready.noPrice.length, 'drink')} with no price`] : []),
   ];
   const keepLayout = async () => {
     try {
@@ -107,18 +109,22 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
       <MenuCoverEdit editor={editor} height={128} />
       <Caption tone="muted">{venue ? `For ${venue.name}` : 'Just yours'}</Caption>
       <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-      <Headline>Ready to go on?</Headline>
+      <Headline>{home ? 'Ready to share?' : 'Ready to go on?'}</Headline>
       {lines.length ? lines.map((l) => <Body key={l} tone="muted">{`! ${l}`}</Body>) : <Body tone="muted">✓ Every section has what it needs.</Body>}
-      <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-      <Headline>Layout</Headline>
-      <Body tone="muted">{`${plural(editor.layout.sections.length, 'section')}. Changes here stay on this menu.`}</Body>
-      <Button
-        label={layoutSaved ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
-        variant="secondary"
-        onPress={keepLayout}
-        disabled={layoutSaved || saveLayout.isPending}
-      />
-      {saveLayout.error ? <Caption tone="accent">{saveLayout.error.message}</Caption> : null}
+      {home ? null : (
+        <>
+          <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
+          <Headline>Layout</Headline>
+          <Body tone="muted">{`${plural(editor.layout.sections.length, 'section')}. Changes here stay on this menu.`}</Body>
+          <Button
+            label={layoutSaved ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
+            variant="secondary"
+            onPress={keepLayout}
+            disabled={layoutSaved || saveLayout.isPending}
+          />
+          {saveLayout.error ? <Caption tone="accent">{saveLayout.error.message}</Caption> : null}
+        </>
+      )}
     </ScrollView>
   );
 }
