@@ -18,6 +18,8 @@ assert.deepEqual(live.map((d) => d.id), ['a', 'e']);
 assert.deepEqual(past.map((g) => g.bar), ['Pale Moth', 'Little Rye', UNKNOWN_BAR]);
 assert.deepEqual(past[0].drinks.map((d) => d.id), ['b', 'f']);
 assert.deepEqual(splitCollection([]), { live: [], past: [] });
+// A saved classic was never published, but it still opens: it's live, not a memory.
+assert.deepEqual(splitCollection([{ ...drink('g', null, null, '2026-09-28T00:00:00Z'), readable: true }]).live.map((d) => d.id), ['g']);
 
 // --- typed dates: real days only, normalised ---
 assert.equal(parseDay('2026-09-27'), '2026-09-27');

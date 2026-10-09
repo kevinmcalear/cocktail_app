@@ -1,4 +1,3 @@
-import { DEFAULT_SEARCH_ALL } from '@/lib/barContextFilter';
 import { DEFAULT_UNIT } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -7,9 +6,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 export type ThemeMode = 'system' | 'light' | 'dark';
 
 export type SpecUnit = 'g' | 'ml' | 'oz';
-
-/** 'all' | 'personal' | bar uuid */
-export type DefaultSearchContext = string;
 
 export const THEME_MODES: { id: ThemeMode; label: string }[] = [
     { id: 'system', label: 'System' },
@@ -27,7 +23,6 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
 
 interface SettingsState {
     themeMode: ThemeMode;
-    defaultSearchContext: DefaultSearchContext;
     defaultUnit: string;
     /** How a spec reads on the drink page: as written, or converted to g, ml or oz. */
     specUnit: SpecUnit;
@@ -36,7 +31,6 @@ interface SettingsState {
     freezerC: number;
     setFreezerC: (c: number) => void;
     setThemeMode: (mode: ThemeMode) => void;
-    setDefaultSearchContext: (value: DefaultSearchContext) => void;
     setDefaultUnit: (unit: string) => void;
 }
 
@@ -44,14 +38,12 @@ export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
             themeMode: 'system',
-            defaultSearchContext: DEFAULT_SEARCH_ALL,
             defaultUnit: DEFAULT_UNIT,
             specUnit: 'ml',
             setSpecUnit: (unit) => set({ specUnit: unit }),
             freezerC: -18,
             setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
-            setDefaultSearchContext: (value) => set({ defaultSearchContext: value }),
             setDefaultUnit: (unit) => set({ defaultUnit: unit }),
         }),
         {

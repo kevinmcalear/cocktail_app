@@ -11,7 +11,6 @@ import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { useCocktail, useDeleteCocktail } from "@/hooks/useCocktails";
 import { useCocktailEditor } from "@/hooks/useCocktailEditor";
-import { useFavorites } from "@/hooks/useFavorites";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
@@ -29,7 +28,6 @@ export { BatchSheet } from "@/components/screens/batch/BatchSheet";
 export default function CocktailDetailsScreen() {
     const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
 
-    const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
@@ -94,8 +92,6 @@ export default function CocktailDetailsScreen() {
         return cocktail ? (
             <DrinkScreen
                 item={cocktail}
-                isFavorite={isFavorite(cocktail.id)}
-                onToggleFavorite={() => toggleFavorite(cocktail.id)}
                 inStudyPile={isInStudyPile(cocktail.id)}
                 onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
                 canEdit={canEdit}
@@ -144,8 +140,8 @@ export default function CocktailDetailsScreen() {
                 images={images}
                 imageTags={imageTags}
                 emptyPhotoPlaceholder={isEditing && images.length === 0}
-                isFavorite={isFavorite(cocktail.id)}
-                onToggleFavorite={toggleFavorite}
+                isFavorite={false}
+                onToggleFavorite={() => {}}
                 canEdit={canEdit}
                 onStartEdit={() => setIsEditing(true)}
                 onCancelEdit={handleCancelEdit}

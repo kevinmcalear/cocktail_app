@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, Display, GlassButton, useGutter } from '@/components/ds';
@@ -7,27 +7,42 @@ import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { ScreenHeader } from './ScreenHeader';
+import { WEB_SIDEBAR_WIDTH } from './WebSideNav';
+
+type ColumnWidth = 'text' | 'wide' | 'full';
 
 /**
  * The column a page's scroll content sits in: the gutter either side, and on
  * wide screens a maximum width, left-aligned next to the sidebar so every page
  * starts at the same edge. 'full' is for grids that use the whole width.
+ *
+ * The cap is right padding rather than maxWidth, so PageHeader's row can reach
+ * past it and keep your avatar at the page's right edge, like every other page.
  */
-export function usePageColumn(width: 'text' | 'wide' | 'full' = 'text'): ViewStyle {
+export function usePageColumn(width: ColumnWidth = 'text'): ViewStyle {
   const gutter = useGutter();
-  return { width: '100%', maxWidth: width === 'full' ? undefined : layout.page[width], paddingHorizontal: gutter };
+  return { width: '100%', paddingLeft: gutter, paddingRight: useColumnRightPad(width) };
+}
+
+function useColumnRightPad(width: ColumnWidth): number {
+  const gutter = useGutter();
+  const sidebar = useIsWideWeb();
+  const page = useWindowDimensions().width - (sidebar ? WEB_SIDEBAR_WIDTH : 0);
+  return width === 'full' ? gutter : Math.max(gutter, page - layout.page[width] + gutter);
 }
 
 /**
  * The top of a page: the venue / New / You row (or, on a phone, a back button
  * for a page opened from another one), then the title, with the page's main
- * action on the right. Goes first inside a usePageColumn column.
+ * action on the right. Goes first inside a usePageColumn column; pass the
+ * same `width`.
  *
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back' }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', width = 'text' }: {
   title: string;
+  width?: ColumnWidth;
   subtitle?: string | null;
   action?: ReactNode;
   /** Set on pages opened from another page; phones get a back button instead of the venue row. */
@@ -37,6 +52,7 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const sidebar = useIsWideWeb();
+  const rightPad = useColumnRightPad(width);
   return (
     <View style={styles.header}>
       {onBack && !sidebar ? (
@@ -44,8 +60,8 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
           <GlassButton icon="chevron.left" accessibilityLabel={backLabel} onPress={onBack} />
         </View>
       ) : (
-        // ScreenHeader brings its own gutter.
-        <View style={{ marginHorizontal: -gutter }}>
+        // ScreenHeader brings its own gutter, and runs to the page's right edge.
+        <View style={{ marginLeft: -gutter, marginRight: -rightPad }}>
           <ScreenHeader />
         </View>
       )}

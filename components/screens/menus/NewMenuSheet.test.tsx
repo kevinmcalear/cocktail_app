@@ -21,6 +21,7 @@ const now = Date.parse('2026-10-09T12:00:00Z');
 
 beforeEach(() => {
   mockMode = 'home';
+  mockVenue.roleLevel = 50;
   mockPush.mockReset();
   mockCreate.mockReset();
 });
@@ -61,4 +62,16 @@ test('a venue menu takes two steps, with no night', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Next: start from' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
   expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ barId: 'bar', night: undefined }));
+});
+
+// A Bartender at a venue whose settings let Bartenders build menus got another venue, or a personal menu.
+test('a venue menu is for the venue you are in, even below Drink Creator', async () => {
+  mockMode = 'venue';
+  mockVenue.roleLevel = 30;
+  mockCreate.mockResolvedValue('venue-id');
+  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await fireEvent.changeText(screen.getByLabelText('Name'), 'Spring menu');
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: start from' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
+  expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ barId: 'bar' }));
 });

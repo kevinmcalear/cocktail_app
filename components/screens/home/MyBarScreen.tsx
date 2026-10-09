@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PalateFlower, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -9,14 +9,14 @@ import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
 import { useKit } from '@/hooks/useKit';
 import { useMadePreps, useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
-import { JUMP_ROW, MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
+import { MAKE_PAGE, makeTab, myBarRows, pickSection, SHELF_SECTIONS, type MakeTab, type MyBarRow, type ShelfSection } from '@/lib/myBarRows';
 import { PANTRY_WATER, type ShelfSort } from '@/lib/pantry';
 import { labFromNames, projectsFor } from '@/lib/techniques/projects';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { useTileCols } from './BarTile';
-import { KitSection, LabSection, MoreSections, PrepsSection, SectionJump, type Jumpable } from './BarSections';
+import { KitSection, LabSection, MoreSections, PrepsSection, SectionChips, type Jumpable } from './BarSections';
 import { MakeFirst } from './MakeFirst';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
@@ -44,7 +44,6 @@ export function MyBarScreen() {
   const removeId = remove.mutate;
   const [adding, setAdding] = useState<AddFilter | null>(null);
   const { owned, toggle: toggleKit } = useKit();
-  const listRef = useRef<FlatList<Row>>(null);
   const wide = useBreakpoint() === 'desktop';
   const [snapping, setSnapping] = useState(false);
   const [sort, setSort] = useState<ShelfSort>('newest');
@@ -54,6 +53,9 @@ export function MyBarScreen() {
   // One section at a time takes things off on a tap.
   const [editing, setEditing] = useState<Jumpable | null>(null);
   const edit = (section: Jumpable) => (on: boolean) => setEditing(on ? section : null);
+  // The section filter: none picked is All.
+  const [show, setShow] = useState<ShelfSection[]>([]);
+  const addBottles = () => setAdding('bottles');
   const [picked, setPicked] = useState<MakeTab | null>(null);
   const [shown, setShown] = useState(MAKE_PAGE);
   const search = useMakeSearch();
@@ -68,6 +70,11 @@ export function MyBarScreen() {
   const lab = listed.filter((b) => b.section === 'lab');
   const preps = listed.filter((b) => b.section === 'preps');
   const empty = !bar.isLoading && bottles.length === 0;
+  // Water comes with the staples but is never shown, so it isn't counted.
+  const fridgeCount = (pantry.data ?? []).filter((p) => p.name !== PANTRY_WATER && bar.shelfIds.has(p.id)).length + fridge.length;
+  const counts: Record<ShelfSection, number> = { bottles: bottles.length, fridge: fridgeCount, lab: lab.length, preps: preps.length, kit: owned.length };
+  const filled = SHELF_SECTIONS.filter((s) => counts[s] > 0);
+  const showing = show.filter((s) => counts[s] > 0);
 
   const { data: me } = useMyTaste();
   // Match percentages only once your taste comes from enough rankings.
@@ -112,27 +119,16 @@ export function MyBarScreen() {
     sort,
     query,
     shelfOpen,
+    editing: editing === 'bottles',
     cols,
-    more: { lab: lab.length, preps: preps.length, kit: owned.length },
+    more: { fridge: fridgeCount, lab: lab.length, preps: preps.length, kit: owned.length },
+    show: showing,
     make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown, query: search.query, shownIn: search.shownIn, shelf: bar.shelf } : null,
   });
 
   // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own, under one header.
   const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
 
-  const jump = (section: Jumpable) => {
-    const index = rows.findIndex((r) => r.key === JUMP_ROW[section]);
-    if (index >= 0) listRef.current?.scrollToIndex({ index, animated: true });
-  };
-  // Water comes with the staples but is never shown, so it isn't counted.
-  const fridgeCount = (pantry.data ?? []).filter((p) => p.name !== PANTRY_WATER && bar.shelfIds.has(p.id)).length + fridge.length;
-  const counts: [Jumpable, number][] = [
-    ['bottles', bottles.length],
-    ['fridge', fridgeCount],
-    ['lab', lab.length],
-    ['preps', preps.length],
-    ['kit', owned.length],
-  ];
 
   const renderRow = ({ item, index }: { item: Row; index: number }) => {
     switch (item.kind) {
@@ -153,24 +149,28 @@ export function MyBarScreen() {
               </View>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
               <View style={styles.actions}>
-                <Button label="Add to your bar" icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding('all')} style={styles.grow} />
+                <Button label="Add to your bar" icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding(showing.length === 1 ? showing[0] : 'all')} style={styles.grow} />
                 <Button label="Snap" accessibilityLabel="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
               </View>
             </View>
           </View>
         );
-      case 'jump':
-        return <SectionJump counts={counts.filter(([, n]) => n > 0)} onJump={jump} />;
+      case 'filters':
+        return (
+          <View style={styles.filters}>
+            <SectionChips sections={filled} counts={counts} picked={showing} onPick={(s) => setShow(pickSection(showing, s))} multi bleed={cut > 0 ? 0 : gutter} />
+          </View>
+        );
       case 'shelf-head':
         return (
           <View style={styles.section}>
-            <ShelfHead count={bottles.length} sort={sort} onSort={setSort} query={query} onQuery={setQuery} editing={editing === 'bottles'} onEdit={edit('bottles')} onAdd={() => setAdding('bottles')} />
+            <ShelfHead count={bottles.length} sort={sort} onSort={setSort} query={query} onQuery={setQuery} editing={editing === 'bottles'} onEdit={edit('bottles')} />
           </View>
         );
       case 'bottles':
-        return <BottleTiles bottles={item.bottles} heading={item.heading} cols={cols} editing={editing === 'bottles'} onRemove={removeId} />;
+        return <BottleTiles bottles={item.bottles} heading={item.heading} add={item.add} cols={cols} editing={editing === 'bottles'} onRemove={removeId} onAdd={addBottles} onHold={setEditing} />;
       case 'shelf-foot':
-        return <ShelfFoot found={item.found} cols={cols} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
+        return <ShelfFoot found={item.found} foldable={item.foldable} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
       case 'pantry':
         return <PantrySection items={pantry.data ?? []} extras={fridge} shelf={bar.shelf} onShelf={bar.shelfIds} cols={cols} editing={editing === 'fridge'} onEdit={edit('fridge')} onAdd={addIds} onRemove={removeId} onMore={() => setAdding('fridge')} style={styles.section} />;
       case 'lab':
@@ -219,18 +219,12 @@ export function MyBarScreen() {
 
   const shelfList = (
     <FlatList
-      ref={listRef}
       data={cut > 0 ? rows.slice(0, cut) : rows}
       keyExtractor={(r) => r.key}
       renderItem={renderRow}
       // Two screens either side: a sort or tab change re-renders every mounted row.
       windowSize={5}
       keyboardShouldPersistTaps="handled"
-      // A section shortcut past what's mounted: get close, then land on it once it renders.
-      onScrollToIndexFailed={(info) => {
-        listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
-        setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 50);
-      }}
       style={cut > 0 ? styles.shelfColumn : null}
       contentContainerStyle={cut > 0 ? { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom } : { paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
     />
@@ -260,7 +254,7 @@ export function MyBarScreen() {
         filter={adding ?? 'all'}
         onFilter={setAdding}
         onShelf={bar.shelfIds}
-        counts={Object.fromEntries(counts)}
+        counts={counts}
         onToggle={(item, on) => (on ? addIds(item.id) : removeId(item.id))}
         onClose={() => setAdding(null)}
       />
@@ -272,6 +266,8 @@ export function MyBarScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   top: { gap: space.xl },
+  /** Clear of the Add and Snap buttons above. */
+  filters: { paddingTop: space.xl },
   /** Each section starts this far below the last. */
   section: { paddingTop: space.xl },
   nextGroup: { marginTop: space.md },

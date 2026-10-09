@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Body, Caption, Chip, GlassButton, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
@@ -94,7 +94,46 @@ export function FilterRow({ area, preferNear, filters, onArea, onFilters, view }
   );
 }
 
+/** "Search this area", once the person has moved the map. */
+export function SearchHere({ onPress }: { onPress: () => void }) {
+  return (
+    <View style={styles.center}>
+      <GlassButton accessibilityLabel="Search this area" label="Search this area" icon="magnifyingglass" onPress={onPress} />
+    </View>
+  );
+}
+
+export type MapLayer = 'drinks' | 'best' | 'bars' | 'nearest';
+
+interface MapLayersProps {
+  layer: MapLayer;
+  onLayer: (layer: MapLayer) => void;
+  /** The drink picked on Discover, for "Best Martini". */
+  drinkName: string | null;
+  searching: boolean;
+  /** Whether there's a place to measure Nearest from. */
+  nearest: boolean;
+}
+
+/**
+ * What the map shows: the matching drinks, a drink's best ("Best Martini")
+ * or the top bars. Searching, they read as a sort of what was found: Best
+ * match, Top rated, and Nearest when there's somewhere to measure from.
+ */
+export function MapLayers({ layer, onLayer, drinkName, searching, nearest }: MapLayersProps) {
+  return (
+    <View role="radiogroup" accessibilityLabel="Show on the map" style={styles.chips}>
+      <Chip label={searching ? 'Best match' : 'Drinks'} selected={layer === 'drinks'} onPress={() => onLayer('drinks')} />
+      {drinkName ? <Chip label={searching ? 'Top rated' : `Best ${drinkName}`} selected={layer === 'best'} onPress={() => onLayer('best')} /> : null}
+      {nearest ? <Chip label="Nearest" selected={layer === 'nearest'} onPress={() => onLayer('nearest')} /> : null}
+      {searching ? null : <Chip label="Top bars" selected={layer === 'bars'} onPress={() => onLayer('bars')} />}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
+  center: { alignItems: 'center' },
   flex: { flex: 1, minWidth: 0 },
   shrink: { flexShrink: 1 },
   pill: {

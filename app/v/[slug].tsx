@@ -15,7 +15,7 @@ import { useBars } from '@/hooks/useBars';
 import { useVenueBranding, type VenueBranding } from '@/hooks/useVenueBranding';
 import { useVenueWebHead } from '@/hooks/useVenueWebHead';
 import { installMode, promptInstall, subscribeInstall, type InstallMode } from '@/lib/webInstall';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppMode } from '@/store/useAppMode';
 
 /**
  * A venue's staff link (/v/<slug>): sign in under the venue's name and logo,
@@ -93,8 +93,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { data: bars, isPending, isError, refetch } = useBars();
-  const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
-  const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
+  const enterVenue = useAppMode((s) => s.enterVenue);
   const mode = useInstallMode();
 
   const isMember = !!bars?.some((b) => b.bar_id === venue.id);
@@ -102,10 +101,9 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   const invite = invites.data?.find((i) => i.bar_id === venue.id) ?? null;
 
   const enter = useCallback(() => {
-    setSelectedContextIds([venue.id]);
-    markContextDefaultApplied();
+    enterVenue(venue.id);
     router.replace('/(tabs)');
-  }, [venue.id, setSelectedContextIds, markContextDefaultApplied, router]);
+  }, [venue.id, enterVenue, router]);
 
   // Opened from the home screen: nothing to install, go straight in.
   useEffect(() => {
