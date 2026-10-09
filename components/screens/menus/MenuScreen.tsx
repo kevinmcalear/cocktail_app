@@ -96,7 +96,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
           {/* A home menu is always a draft to the venue calendar: its night is in the line below. */}
           {menu.barId || status !== 'draft' ? (
-            <Tag label={[STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
+            <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
           ) : null}
           <Display>{menu.name}</Display>
           <Caption tone="muted">
