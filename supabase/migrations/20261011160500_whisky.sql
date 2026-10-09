@@ -1,6 +1,6 @@
 -- Whisky and whiskey: every bottle checked on its producer's own page (or,
 -- where that page was blocked, a major retailer or Difford's), after
--- 20261011155000. Step 3c of the bottle catalog plan:
+-- 20261011160000. Step 3c of the bottle catalog plan:
 -- https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR
 --
 --   * 811 checked bottles from 214 producers: the core range of every whisky
@@ -758,7 +758,7 @@ INSERT INTO bottle_in VALUES
 ($q$Keeper's Heart 10 Year Irish Single Malt$q$, NULL, $q$Single Malt Irish Whiskey$q$, $q$Keeper's Heart$q$, NULL, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://keepersheartwhiskey.com/whiskey/10-year-single-malt/$q$, $q$producer$q$),
 ($q$Keeper's Heart 21 Year Irish Single Malt$q$, NULL, $q$Single Malt Irish Whiskey$q$, $q$Keeper's Heart$q$, NULL, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://keepersheartwhiskey.com/whiskey/$q$, $q$producer$q$),
 ($q$Keeper's Heart American Pot Still$q$, NULL, $q$American Whiskey$q$, $q$Keeper's Heart$q$, 46, $q$US$q$, NULL, $q$https://keepersheartwhiskey.com/whiskey/american-pot-still/$q$, $q$producer$q$),
-($q$Keeper's Heart Irish + American$q$, $q$Keeper's Heart Irish American Whiskey$q$, $q$Whiskey$q$, $q$Keeper's Heart$q$, 43, NULL, NULL, $q$https://keepersheartwhiskey.com/whiskey/irish-american/$q$, $q$producer$q$),
+($q$Keeper's Heart Irish + American$q$, $q$Keeper's Heart Irish American Whiskey$q$, $q$Whiskey$q$, $q$Keeper's Heart$q$, NULL, NULL, NULL, $q$https://keepersheartwhiskey.com/whiskey/irish-american/$q$, $q$producer$q$),
 ($q$Keeper's Heart Irish + American 110 Proof$q$, NULL, $q$Whiskey$q$, $q$Keeper's Heart$q$, 55, NULL, NULL, $q$https://keepersheartwhiskey.com/whiskey/$q$, $q$producer$q$),
 ($q$Keeper's Heart Irish + Bourbon$q$, NULL, $q$Whiskey$q$, $q$Keeper's Heart$q$, 46, NULL, NULL, $q$https://keepersheartwhiskey.com/whiskey/irish-bourbon/$q$, $q$producer$q$),
 ($q$Keeper's Heart Irish + Bourbon Cask Strength$q$, NULL, $q$Whiskey$q$, $q$Keeper's Heart$q$, NULL, NULL, NULL, $q$https://keepersheartwhiskey.com/whiskey/$q$, $q$producer$q$),
@@ -812,9 +812,9 @@ INSERT INTO bottle_in VALUES
 ($q$Macaloney's An Aba$q$, NULL, $q$Single Malt Whisky$q$, $q$Macaloney's Island Distillery$q$, 46, $q$CA$q$, NULL, $q$https://www.strathliquor.com/product/macaloneys-island-distillery-an-aba/$q$, $q$retailer$q$),
 ($q$Macaloney's An Loy$q$, NULL, $q$Single Malt Whisky$q$, $q$Macaloney's Island Distillery$q$, 46, $q$CA$q$, NULL, $q$https://www.strathliquor.com/product/macaloneys-island-distillery-an-aba/$q$, $q$retailer$q$),
 ($q$Maclean's Nose$q$, $q$Maclean's Nose Whisky$q$, $q$Blended Scotch$q$, $q$Maclean's Nose$q$, 46, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.whiskyshop.com/maclean-s-nose-blended-whisky$q$, $q$retailer$q$),
-($q$Maker's Mark$q$, $q$Maker's Mark Bourbon$q$, $q$Bourbon$q$, $q$Maker's Mark$q$, 45, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark$q$, $q$producer$q$),
+($q$Maker's Mark$q$, $q$Maker's Mark Bourbon Whiskey$q$, $q$Bourbon$q$, $q$Maker's Mark$q$, 45, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark$q$, $q$producer$q$),
 ($q$Maker's Mark 101$q$, NULL, $q$Bourbon$q$, $q$Maker's Mark$q$, 50.5, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark-101$q$, $q$producer$q$),
-($q$Maker's Mark 46$q$, NULL, $q$Bourbon$q$, $q$Maker's Mark$q$, 47, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark-46$q$, $q$producer$q$),
+($q$Maker's Mark 46$q$, NULL, $q$Bourbon$q$, $q$Maker's Mark$q$, NULL, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark-46$q$, $q$producer$q$),
 ($q$Maker's Mark Cask Strength$q$, $q$Cask-Strength Maker's Mark$q$, $q$Bourbon$q$, $q$Maker's Mark$q$, NULL, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark-cask-strength$q$, $q$producer$q$),
 ($q$Maker's Mark Private Selection$q$, NULL, $q$Bourbon$q$, $q$Maker's Mark$q$, NULL, $q$US$q$, NULL, $q$https://www.makersmark.com/bourbons/makers-mark-private-selection$q$, $q$producer$q$),
 ($q$Iwai 45$q$, $q$Mars Iwai 45 Japanese Whisky$q$, $q$Japanese Whisky$q$, $q$Mars Whisky$q$, 45, $q$JP$q$, NULL, $q$https://www.skurnik.com/sku/whisky-iwai-45-mars-shinshu/$q$, $q$retailer$q$),
@@ -975,7 +975,7 @@ INSERT INTO bottle_in VALUES
 ($q$Sierra Norte Single Barrel Yellow Corn Whiskey$q$, NULL, $q$Whiskey$q$, $q$Sierra Norte$q$, NULL, $q$MX$q$, NULL, $q$https://www.sierranortewhiskey.com/whiskies$q$, $q$producer$q$),
 ($q$Slane Batch Strength$q$, NULL, $q$Irish Whiskey$q$, $q$Slane$q$, NULL, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.slaneirishwhiskey.com/whiskey/batch-strength/$q$, $q$producer$q$),
 ($q$Slane Extra Sherry Wood$q$, NULL, $q$Irish Whiskey$q$, $q$Slane$q$, 45, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.slaneirishwhiskey.com/extra-sherry-wood/$q$, $q$producer$q$),
-($q$Slane Irish Whiskey$q$, $q$Slane Irish Whiskey$q$, $q$Irish Whiskey$q$, $q$Slane$q$, 40, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.slaneirishwhiskey.com/whiskey/$q$, $q$producer$q$),
+($q$Slane Irish Whiskey$q$, $q$Slane Irish Whiskey$q$, $q$Irish Whiskey$q$, $q$Slane$q$, NULL, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.slaneirishwhiskey.com/whiskey/$q$, $q$producer$q$),
 ($q$Sortilège Rye Whiskey$q$, NULL, $q$Canadian Rye Whisky$q$, $q$Sortilège$q$, 40, $q$CA$q$, NULL, $q$https://www.bcliquorstores.com/product/277795$q$, $q$retailer$q$),
 ($q$John Sleeman and Sons Rye Whisky$q$, NULL, $q$Canadian Rye Whisky$q$, $q$Spring Mill Distillery$q$, 40, $q$CA$q$, NULL, $q$https://www.bcliquorstores.com/product/287993$q$, $q$retailer$q$),
 ($q$Starward 100 Proof$q$, NULL, $q$Single Malt Whisky$q$, $q$Starward$q$, 50, $q$AU$q$, NULL, $q$https://starward.com.au/products/100-proof$q$, $q$producer$q$),
@@ -1009,7 +1009,7 @@ INSERT INTO bottle_in VALUES
 ($q$Tamnavulin Sherry Cask$q$, NULL, $q$Single Malt Scotch$q$, $q$Tamnavulin$q$, 40, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.bcliquorstores.com/product/441488$q$, $q$retailer$q$),
 ($q$Tamnavulin White Wine Cask$q$, NULL, $q$Single Malt Scotch$q$, $q$Tamnavulin$q$, 40, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.bcliquorstores.com/product/288806$q$, $q$retailer$q$),
 ($q$Teacher's 50$q$, NULL, $q$Blended Scotch$q$, $q$Teacher's$q$, NULL, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.teacherswhisky.com/our-whiskies$q$, $q$producer$q$),
-($q$Teacher's Highland Cream$q$, $q$Teacher's Highland Cream$q$, $q$Blended Scotch$q$, $q$Teacher's$q$, 40, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.teacherswhisky.com/our-whiskies$q$, $q$producer$q$),
+($q$Teacher's Highland Cream$q$, $q$Teacher's Highland Cream$q$, $q$Blended Scotch$q$, $q$Teacher's$q$, NULL, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.teacherswhisky.com/our-whiskies$q$, $q$producer$q$),
 ($q$Teacher's Origin$q$, NULL, $q$Blended Scotch$q$, $q$Teacher's$q$, NULL, $q$GB$q$, $q$Scotch Whisky$q$, $q$https://www.teacherswhisky.com/our-whiskies$q$, $q$producer$q$),
 ($q$Teeling Blackpitts Peated Single Malt$q$, $q$Teeling Blackpitts Single Malt Irish Whiskey$q$, $q$Single Malt Irish Whiskey$q$, $q$Teeling Whiskey$q$, 46, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.teelingwhiskey.com/teeling-whiskeys/teeling-blackpitts-peated-single-malt/$q$, $q$producer$q$),
 ($q$Teeling Single Grain$q$, $q$Teeling Single Grain Irish Whiskey$q$, $q$Single Grain Irish Whiskey$q$, $q$Teeling Whiskey$q$, 46, $q$IE$q$, $q$Irish Whiskey$q$, $q$https://www.teelingwhiskey.com/teeling-whiskeys/single-grain-whiskey/$q$, $q$producer$q$),
