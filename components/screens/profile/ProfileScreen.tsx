@@ -125,7 +125,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const had = useProfileDrinks(profile.id, person && profile.shares_rankings);
   const bars = useProfileBars(profile.id, person && profile.shares_bars);
   const hadStat = hadStats(had.data ?? []);
-  const { data: originals = [], isLoading } = useProfileOriginals(profile.id);
+  const { data: originals = [], isLoading } = useProfileOriginals(profile.id, { locked: profile.page_visibility === 'locked' });
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   const names = new Map(originals.map((d) => [d.id, d.name]));
   const onMenus = barsCrediting(credits);

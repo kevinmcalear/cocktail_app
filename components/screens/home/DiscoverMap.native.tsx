@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
-import { MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
+import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -12,19 +12,13 @@ import type { DiscoverMapProps } from './DiscoverMap';
 export const mapAvailable = true;
 
 /**
- * Pins drawn as views (logo, score), best first: a view per pin is costly
- * on a phone, so past these (and the selected one) the rest are dots the map
- * draws itself, gathered into counted clusters when they crowd.
+ * Pins drawn as views (logo, score), best first. A view per pin is costly on
+ * a phone (each is a native view, mounted again whenever the set changes), so
+ * past these (and the selected one) the rest are labelled dots the map draws
+ * itself, gathered into counted clusters (light, so a group of bars reads
+ * apart from one bar's drink count) when they crowd.
  */
-const RICH_PINS = 40;
-
-/** The pins past RICH_PINS as GeoJSON for the dots layer. */
-function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection {
-  return {
-    type: 'FeatureCollection',
-    features: pins.map((p) => ({ type: 'Feature', properties: { id: p.id }, geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] } })),
-  };
-}
+const RICH_PINS = 12;
 
 /**
  * The native map: MapLibre Native with the same OpenFreeMap style and the
@@ -34,9 +28,9 @@ function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection {
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
   const cameraRef = useRef<CameraRef>(null);
   const dotsRef = useRef<GeoJSONSourceRef>(null);
-  const rich = pins.filter((p, i) => i < RICH_PINS || p.id === selectedId);
-  const rest = pins.filter((p, i) => i >= RICH_PINS && p.id !== selectedId);
-  const dots = useMemo(() => dotsOf(rest), [rest]);
+  // Rebuilt only when the pins or the selection change (the pins come memoized), never on a plain re-render.
+  const rich = useMemo(() => pins.filter((p, i) => i < RICH_PINS || p.id === selectedId), [pins, selectedId]);
+  const dots = useMemo(() => dotsOf(pins.filter((p, i) => i >= RICH_PINS && p.id !== selectedId)), [pins, selectedId]);
   // Where the map starts; later cameras move it (below).
   const [start] = useState(camera);
   // On iOS a pin tap also reaches the map's own tap handler just after, which
@@ -109,20 +103,27 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           id="discover-clusters"
           type="circle"
           filter={['has', 'point_count']}
-          paint={{ 'circle-color': ink, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 17, 50, 21], 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
+          paint={{ 'circle-color': ring, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 17, 50, 21], 'circle-stroke-color': ink, 'circle-stroke-width': 2 }}
         />
         <Layer
           id="discover-cluster-counts"
           type="symbol"
           filter={['has', 'point_count']}
           layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': type.caption.fontSize, 'text-allow-overlap': true }}
-          paint={{ 'text-color': ring }}
+          paint={{ 'text-color': ink }}
         />
         <Layer
           id="discover-dots"
           type="circle"
           filter={['!', ['has', 'point_count']]}
-          paint={{ 'circle-color': ink, 'circle-radius': 6, 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
+          paint={{ 'circle-color': ink, 'circle-radius': ['case', ['==', ['get', 'label'], ''], 6, 13], 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
+        />
+        <Layer
+          id="discover-dot-labels"
+          type="symbol"
+          filter={['all', ['!', ['has', 'point_count']], ['!=', ['get', 'label'], '']]}
+          layout={{ 'text-field': ['get', 'label'], 'text-font': ['Noto Sans Bold'], 'text-size': type.caption.fontSize - 1, 'text-allow-overlap': true }}
+          paint={{ 'text-color': ring }}
         />
       </GeoJSONSource>
       <Fragment key={order}>

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { changedProfiles } from '@/hooks/useProfiles';
 import { plainDbMessage } from '@/lib/dbError';
 import { instagramProblem, normalizeHandle, normalizeInstagram, type ProfileDraft } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
@@ -95,8 +96,8 @@ export function useSaveMyProfile() {
         : await supabase.from('profiles').insert({ ...row, kind: 'person', user_id: userId });
       if (error) throw readable(error);
     },
-    // Every profile page, and anything that checks for a public profile, reads fresh.
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile'] }),
+    // Your profile (and anything that checks you have a public one) and its page read fresh.
+    onSuccess: (_data, { id }) => qc.invalidateQueries(changedProfiles({ id, mine: true })),
     // Shown inline by the form, not as the global toast.
     onError: () => {},
   });
@@ -112,8 +113,8 @@ export function useSaveProfileInstagram() {
       const { error } = await supabase.from('profiles').update({ instagram: normalizeInstagram(raw) || null }).eq('id', id);
       if (error) throw readable(error);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['profile'] });
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries(changedProfiles({ id }));
       qc.invalidateQueries({ queryKey: ['bar-publishing'] });
     },
     onError: () => {},

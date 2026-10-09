@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button, Caption, Chip, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -10,13 +10,14 @@ interface PantrySectionProps {
   onShelf: Set<string>;
   onAdd: (ids: string[]) => void;
   onRemove: (id: string) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Fridge and pantry: lemons, sugar, eggs and the rest, so a sour isn't
  * blocked by a lemon. Each is a shelf row; water comes with any of them.
  */
-export function PantrySection({ items, onShelf, onAdd, onRemove }: PantrySectionProps) {
+export function PantrySection({ items, onShelf, onAdd, onRemove, style }: PantrySectionProps) {
   const ids = new Map(items.map((i) => [i.name, i.id]));
   const water = ids.get(PANTRY_WATER);
   const staples = PANTRY.flatMap((p) => {
@@ -28,7 +29,7 @@ export function PantrySection({ items, onShelf, onAdd, onRemove }: PantrySection
   const missing = staples.filter((s) => !onShelf.has(s.id)).map((s) => s.id);
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, style]}>
       <View style={styles.head}>
         <Headline role="heading">Fridge & pantry</Headline>
         <Caption tone="muted">Most drinks need a few of these. Tap what you keep.</Caption>

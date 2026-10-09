@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { isHeroLink } from "@/lib/itemImages";
@@ -222,7 +222,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 .select("id")
                 .single();
             if (error || !data) throw error || new Error(`Failed to create ${type}`);
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
             newId = data.id;
         }
         return newId;
@@ -246,7 +246,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             .select("id")
             .single();
         if (error || !data) throw error || new Error("Failed to create glassware");
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
         setGlasswareIdDirty(data.id);
         return data.id;
     };

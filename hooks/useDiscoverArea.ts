@@ -3,15 +3,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { useNearMe, type NearMe } from '@/hooks/useNearMe';
+import { distanceKm } from '@/lib/discoverDrinks';
 import { nearMeArea, type Area } from '@/lib/nearMe';
 import { useLastPlace } from '@/store/useLastPlace';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 
+/** How far a fresh fix must be from the area's middle before near me moves: a walk, not GPS drift. */
+const STAY_KM = 2;
+
 /**
  * Discover's "where". It opens near the last place this device was found
  * (store/useLastPlace.ts) at once, asks for a fresh position as the screen
- * shows, and moves only if that lands in another ~1 km cell (so the same
+ * shows, and moves only if that is more than STAY_KM away (so the same
  * query, and its cache, carry on). With no place yet it waits for location
  * (`locating`) rather than load every bar drink as a stand-in.
  */
@@ -31,7 +35,9 @@ export function useDiscoverArea() {
       const last = found.status === 'unavailable' ? useLastPlace.getState().place : null;
       if (found.status === 'ready' || last) {
         setPreferNear(true);
-        setArea(nearMeArea(found.status === 'ready' ? found : last!));
+        const next = nearMeArea(found.status === 'ready' ? found : last!);
+        // A fresh fix a street or two from where Discover opened keeps the same results (and their cache).
+        setArea((a) => (a.kind === 'point' && a.source === 'me' && distanceKm(a, next) < STAY_KM ? a : next));
         return;
       }
       // Location turned off: forget the last place too, and stop showing near it.

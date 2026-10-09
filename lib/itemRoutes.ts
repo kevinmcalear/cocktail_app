@@ -17,6 +17,11 @@ export function itemHref(category: ItemCategory | undefined, id: string): string
   }
 }
 
+/** The drink in a drink page link (/cocktail/<id>), or null for any other page. */
+export function drinkIdFromHref(href: string | null | undefined): string | null {
+  return href?.startsWith('/cocktail/') ? href.slice('/cocktail/'.length) || null : null;
+}
+
 /** CustomIcons key to draw when an item has no image yet. */
 export function fallbackGlass(category: ItemCategory | undefined): string {
   if (category === 'Beer') return 'Beer';

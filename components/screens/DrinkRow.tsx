@@ -6,6 +6,7 @@ import { Caption, DrinkImage, Headline, PressableScale, Tag, useDs } from '@/com
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { drinkIdFromHref } from '@/lib/itemRoutes';
 
 export interface DrinkRowProps {
   name: string;
@@ -39,7 +40,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   const router = useRouter();
   // A drink page starts loading on press, ahead of the tap.
   const prefetch = usePrefetchCocktail();
-  const drinkId = !onPress && href?.startsWith('/cocktail/') ? href.slice('/cocktail/'.length) : null;
+  const drinkId = onPress ? null : drinkIdFromHref(href);
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo ? (
     <View style={styles.byline}>
@@ -56,12 +57,12 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   return (
     <PressableScale
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
-      onPressIn={drinkId ? () => prefetch(drinkId) : undefined}
+      onPressIn={drinkId ? () => prefetch(drinkId, { name, imageUrl }) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <View style={styles.thumb}>
-        <DrinkImage thumb source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" hideTag />
+        <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" hideTag />
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{name}</Headline>

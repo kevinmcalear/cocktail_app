@@ -25,6 +25,7 @@ import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchScope } from '@/lib/searchScope';
 import { DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 
@@ -71,6 +72,7 @@ function Filter({ label, count, selected, onPress }: { label: string; count?: nu
 export function LibraryScreen() {
   const ds = useDs();
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const bottom = useTabBarInset();
@@ -186,6 +188,7 @@ export function LibraryScreen() {
             return (
               <PressableScale
                 accessibilityLabel={`${item.name}, open`}
+                onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
                 onPress={() => router.push(itemHref(category, item.id) as never)}
                 style={[styles.tile, { maxWidth: `${100 / columns}%` }]}
               >

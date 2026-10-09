@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,10 +12,12 @@ import type { MenuDrink } from '@/types/menus';
 
 import { Choice, MenuSheet } from './MenuSheet';
 
-const CREATE_ROUTE: Record<MenuDrink['kind'], Href> = { cocktail: '/add-cocktail', beer: '/add-beer', wine: '/add-wine' };
+const CREATE_ROUTE: Record<MenuDrink['kind'], '/add-cocktail' | '/add-beer' | '/add-wine'> = { cocktail: '/add-cocktail', beer: '/add-beer', wine: '/add-wine' };
 
 interface AddDrinkSheetProps {
   section: EditSection | null;
+  /** The menu's venue, so a drink made from here is the venue's (null: a personal menu). */
+  barId: string | null;
   onClose: () => void;
   library: MenuDrink[];
   /** Which other menu each drink is on (on now or coming up), by drink id. */
@@ -29,7 +31,7 @@ export function LibraryRow({ drink, note, added, onAdd }: { drink: MenuDrink; no
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <View style={styles.thumb}>
-        <DrinkImage thumb source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
+        <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
       </View>
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{drink.name}</Headline>
@@ -50,7 +52,7 @@ export function LibraryRow({ drink, note, added, onAdd }: { drink: MenuDrink; no
   );
 }
 
-export function AddDrinkSheet({ section, onClose, library, elsewhere, onAdd }: AddDrinkSheetProps) {
+export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onAdd }: AddDrinkSheetProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [freeOnly, setFreeOnly] = useState(false);
@@ -72,12 +74,12 @@ export function AddDrinkSheet({ section, onClose, library, elsewhere, onAdd }: A
             variant="secondary"
             onPress={() => {
               onClose();
-              router.push(CREATE_ROUTE[kind]);
+              // The editor puts it in this section once it's saved (useLayoutEditor).
+              router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, ...(barId ? { barId } : {}) } });
             }}
           />
-          {/* ponytail: a new drink doesn't land in the section by itself yet; it shows up here to add. */}
           <Caption tone="muted" align="center">
-            Once it’s saved, add it from this list.
+            Once it’s saved, it goes in {section.name}.
           </Caption>
         </>
       }

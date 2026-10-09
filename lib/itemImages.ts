@@ -14,7 +14,7 @@ export interface ItemImageLink {
   sort_order?: number | null;
   is_generated?: boolean | null;
   outdated_since?: string | null;
-  images?: { url?: string | null; credit?: string | null; source_url?: string | null } | null;
+  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: string[] | null } | null;
 }
 
 export interface ItemPicture {
@@ -24,6 +24,8 @@ export interface ItemPicture {
   /** Who a borrowed photo belongs to, and the page it came from. */
   credit: string | null;
   sourceUrl: string | null;
+  /** Its colours (images.palette), where the query read them: the first fills the frame while it loads. */
+  palette?: string[] | null;
 }
 
 /** Whether a link is one of the item's hero pictures (not a service angle). */
@@ -55,6 +57,7 @@ export function toPicture(link: ItemImageLink): ItemPicture {
     isOutdated: !link.is_generated && !!link.outdated_since,
     credit: link.images!.credit ?? null,
     sourceUrl: link.images!.source_url ?? null,
+    palette: link.images!.palette ?? null,
   };
 }
 

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import type { ProfileClaim } from '@/hooks/useProfiles';
+import { changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { track } from '@/lib/analytics';
 import type { BarClaimMethod } from '@/lib/claimVerification';
 import { supabase } from '@/lib/supabase';
@@ -38,7 +38,7 @@ export function useStartBarClaim() {
       if (claim.status === 'approved') {
         // A new venue, and a page that's now theirs.
         qc.invalidateQueries({ queryKey: ['bars'] });
-        qc.invalidateQueries({ queryKey: ['profile'] });
+        qc.invalidateQueries(changedProfiles({ id: claim.profile_id }));
       }
     },
     // Shown inline on the claim screen, not as the global toast.

@@ -9,17 +9,21 @@ export const isReadableFile = (mimeType: string) => mimeType.startsWith('image/'
 
 /**
  * The files to read (their indexes, at most four), else the text, else
- * nothing. Text has to look like more than a word: two lines, or a sentence.
- * A lone link isn't read yet.
+ * nothing. Text has to look like more than a word: two lines, a sentence,
+ * or a link (Bring in offers to read it).
  */
 export function bringInChoice(files: readonly { type: string }[], text: string | null): { files: number[] } | { text: string } | null {
   const keep = files.flatMap((file, i) => (isReadableFile(file.type) ? [i] : [])).slice(0, MAX_FILES);
   if (keep.length) return { files: keep };
   const trimmed = (text ?? '').trim();
-  if (!trimmed || /^https?:\/\/\S+$/i.test(trimmed)) return null;
+  if (!trimmed) return null;
+  if (isLink(trimmed)) return { text: trimmed };
   const lines = trimmed.split('\n').filter((line) => line.trim()).length;
   return lines >= 2 || trimmed.length >= 20 ? { text: trimmed } : null;
 }
+
+/** A lone web link, which Bring in can fetch and read. */
+export const isLink = (text: string) => /^https?:\/\/\S+$/i.test(text.trim());
 
 /** A paste aimed at a text box, or a drop on a drop zone that already took it, is left alone. */
 export function isEditable(target: { tagName?: string; isContentEditable?: boolean } | null): boolean {

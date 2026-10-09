@@ -8,7 +8,7 @@ import { Alert, Platform } from "react-native";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { useDrafts } from "@/hooks/useDrafts";
-import { DROPDOWNS_QUERY_KEY, useDropdowns } from "@/hooks/useDropdowns";
+import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import {
     resolveIngredientId,
@@ -18,18 +18,14 @@ import {
 import { draftMethodIds, findByName, toggleId } from "@/lib/drinkMethods";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
-import { withDrinkInSection } from "@/lib/menuDrinkAttach";
 import { capitalize } from "@/lib/stringUtils";
 import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
-import { useCreatorNavStore } from "@/store/useCreatorNavStore";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import type { SpecCategory } from "@/hooks/useCocktailEditor";
 
 export interface UseCocktailDraftEditorOptions {
     draftId?: string | null;
     barId?: string | null;
-    menuDraftId?: string | null;
-    menuSectionId?: string | null;
     initialName?: string | null;
     enabled?: boolean;
 }
@@ -37,8 +33,6 @@ export interface UseCocktailDraftEditorOptions {
 export function useCocktailDraftEditor({
     draftId: initialDraftId,
     barId: initialBarId,
-    menuDraftId,
-    menuSectionId,
     initialName,
     enabled = true,
 }: UseCocktailDraftEditorOptions = {}) {
@@ -251,25 +245,6 @@ export function useCocktailDraftEditor({
                 setCurrentDraftId(result.id);
                 draftLoadedRef.current = result.id;
             }
-            if (menuSectionId && result?.id) {
-                if (menuDraftId) {
-                    const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
-                    if (menuDraft) {
-                        const selections = withDrinkInSection(
-                            menuDraft.draft_data?.selections || {},
-                            menuSectionId,
-                            result.id
-                        );
-                        await saveDraft({
-                            id: menuDraft.id,
-                            entityType: "menu",
-                            draftData: { ...menuDraft.draft_data, selections },
-                        });
-                    }
-                }
-                // notify picker host so UI updates even if menu remounts without draftId
-                useCreatorNavStore.getState().deliverMenuDrink(menuSectionId, result.id);
-            }
             cleanSnapshotRef.current = draftDataSnapshot;
             setIsDirty(false);
             if (!silent) toastDone('Draft saved');
@@ -294,9 +269,6 @@ export function useCocktailDraftEditor({
             overridePrep,
             currentDraftId,
             saveDraft,
-            menuDraftId,
-            menuSectionId,
-            drafts,
             draftDataSnapshot,
         ]
     );
@@ -397,7 +369,7 @@ export function useCocktailDraftEditor({
             .select("id")
             .single();
         if (error || !data) throw error || new Error(`Failed to create ${type}`);
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
         return data.id;
     };
 
@@ -419,7 +391,7 @@ export function useCocktailDraftEditor({
             .select("id")
             .single();
         if (error || !data) throw error || new Error("Failed to create glassware");
-        await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+        await queryClient.invalidateQueries({ queryKey: dropdownKeys.specs });
         setGlasswareId(data.id);
         markDirty();
         return data.id;
@@ -517,31 +489,9 @@ export function useCocktailDraftEditor({
             }
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
-            await queryClient.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+            await queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks });
 
             const activeDraftId = currentDraftId;
-            if (menuSectionId) {
-                if (menuDraftId) {
-                    const menuDraft = drafts.find((d: any) => d.id === menuDraftId);
-                    if (menuDraft) {
-                        const selections = withDrinkInSection(
-                            menuDraft.draft_data?.selections || {},
-                            menuSectionId,
-                            cocktailId,
-                            activeDraftId
-                        );
-                        await saveDraft({
-                            id: menuDraft.id,
-                            entityType: "menu",
-                            draftData: { ...menuDraft.draft_data, selections },
-                        });
-                    }
-                }
-                useCreatorNavStore
-                    .getState()
-                    .deliverMenuDrink(menuSectionId, cocktailId, activeDraftId || undefined);
-            }
-
             if (activeDraftId) {
                 await updateMenuDraftsWithPublishedId(activeDraftId, cocktailId, drafts, saveDraft);
                 await deleteDraft(activeDraftId);

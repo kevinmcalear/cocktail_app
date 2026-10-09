@@ -100,6 +100,6 @@ test('New opens the create sheet with the draft count, and each choice goes wher
 
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/edit-mode');
+  expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 });
 

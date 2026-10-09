@@ -27,7 +27,11 @@ export function useSetDilutionDefaults(barId: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['dilution-defaults', barId] });
-      void queryClient.invalidateQueries({ queryKey: ['cocktail'] });
+      // Only this venue's open drink pages: the others' dilution didn't change.
+      void queryClient.invalidateQueries({
+        queryKey: ['cocktail'],
+        predicate: (query) => (query.state.data as { bar_id?: string | null } | null | undefined)?.bar_id === barId,
+      });
     },
   });
 }

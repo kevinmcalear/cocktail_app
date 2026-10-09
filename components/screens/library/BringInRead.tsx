@@ -6,6 +6,7 @@ import { Button, Caption, TextLink, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useReadAnything } from '@/hooks/useBulk';
 import { listenBringIn, type BringInDelivery } from '@/lib/bringInHandoff';
+import { isLink } from '@/lib/bringInAnywhere';
 import { parseBringIn, readingText } from '@/lib/paste';
 import { isReadableFile, MAX_READ_FILES, pickReadFiles, type AnythingReading, type ReadFile } from '@/lib/readAnything';
 import { takeMenuPhoto } from '@/lib/readMenu';
@@ -38,7 +39,7 @@ export function BringInRead({ mode, text, onRead, onPasteText }: BringInReadProp
   // The simulator has no camera, and launching it there crashes the app.
   const camera = !web && Device.isDevice;
 
-  const go = async (input: { files?: ReadFile[]; text?: string }, replace: boolean) => {
+  const go = async (input: { files?: ReadFile[]; text?: string; url?: string }, replace: boolean) => {
     try {
       const reading = await read.mutateAsync({ ...input, hint: mode === 'drinks' ? 'recipes' : 'bottles' });
       setError(null);
@@ -60,7 +61,8 @@ export function BringInRead({ mode, text, onRead, onPasteText }: BringInReadProp
   useEffect(() => listenBringIn((delivery) => arrived(delivery)), []);
   const dragging = useMenuPhotoDrop(zone, (files) => void go({ files: files.slice(0, MAX_READ_FILES) }, false), isReadableFile);
   // Pasted drinks with no spec lines it could read: a caption, a social post, a recipe written out in sentences.
-  const messy = mode === 'drinks' && !!text.trim() && parseBringIn(text, 'drinks').every((block) => !block.lines.length);
+  const link = isLink(text);
+  const messy = !link && mode === 'drinks' && !!text.trim() && parseBringIn(text, 'drinks').every((block) => !block.lines.length);
 
   return (
     <View ref={zone} style={[styles.wrap, web && [styles.zone, { borderColor: dragging ? ds.accentText : ds.c.lineStrong }]]}>
@@ -69,6 +71,7 @@ export function BringInRead({ mode, text, onRead, onPasteText }: BringInReadProp
         {camera ? <Button label="Snap" icon="camera.fill" variant="secondary" onPress={() => void fromFiles(takeMenuPhoto)} disabled={read.isPending} /> : null}
         <Button label={web ? 'Photos or a PDF' : 'Photos'} icon="photo" variant="secondary" onPress={() => void fromFiles(pickReadFiles)} disabled={read.isPending} />
       </View>
+      {link && !read.isPending ? <TextLink label="Read this link" accessibilityHint="Opens the page and sends what it says to Google AI to find the recipes in it" onPress={() => void go({ url: text.trim() }, true)} /> : null}
       {messy && !read.isPending ? <TextLink label="Read this text with AI" accessibilityHint="Sends the text above to Google AI to find the recipes in it" onPress={() => void go({ text }, true)} /> : null}
       {read.isPending ? (
         <Caption tone="muted" role="status">

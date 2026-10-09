@@ -7,10 +7,7 @@ import { useItemSketch } from '@/hooks/useItemSketch';
 import { usePeopleHero } from '@/hooks/usePeopleHero';
 
 import { AnimatedSketch } from './AnimatedSketch';
-import { SketchDrawing } from './SketchDrawing';
-
-/** Below this width a drawing drops its searching lines and hatching. */
-const THUMB_WIDTH = 140;
+import { SketchDrawing, type SketchDetail } from './SketchDrawing';
 
 interface DrawnSketchProps {
   itemId: string;
@@ -18,12 +15,13 @@ interface DrawnSketchProps {
   fallback: ReactNode;
   /** Draw it in front of you, and again on a tap. One per screen (the drink page's hero). */
   animate?: boolean;
+  /** 'thumb' for list rows (under about 140 wide): no searching lines or hatching. */
+  detail?: SketchDetail;
 }
 
-function Loaded({ itemId, fallback, animate }: DrawnSketchProps) {
+function Loaded({ itemId, fallback, animate, detail = 'full' }: DrawnSketchProps) {
   const person = usePeopleHero(itemId).data ?? null;
   const sketch = useItemSketch(person ? null : itemId).data ?? null;
-  const [width, setWidth] = useState(0);
   const [play, setPlay] = useState(0);
   if (person) return <Image source={{ uri: person }} style={styles.fill} contentFit="cover" transition={200} />;
   if (!sketch) return <>{fallback}</>;
@@ -35,11 +33,11 @@ function Loaded({ itemId, fallback, animate }: DrawnSketchProps) {
       </Pressable>
     );
   }
-  // Draws straight away as a thumb and adds the full detail once it's measured
-  // wide, so a missing or slow layout event never leaves blank paper.
+  // The caller says how much detail, rather than a layout pass measuring it: no
+  // second render, and nothing waits on a layout event that may never come (#284).
   return (
-    <View style={styles.fill} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      <SketchDrawing inputs={sketch} seed={itemId} detail={width < THUMB_WIDTH ? 'thumb' : 'full'} />
+    <View style={styles.fill}>
+      <SketchDrawing inputs={sketch} seed={itemId} detail={detail} />
     </View>
   );
 }

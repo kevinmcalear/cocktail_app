@@ -7,6 +7,7 @@ import { layout, radius, space } from '@/constants/tokens';
 import type { Original } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { creators } from '@/lib/lineage';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /**
  * A bar's drinks when its page keeps the specs back: each name, and (unless
@@ -16,6 +17,7 @@ import { creators } from '@/lib/lineage';
 export function LockedOriginals({ originals, selfId, details, emptyText }: { originals: Original[]; selfId: string; details: boolean; emptyText: string }) {
   const ds = useDs();
   const router = useRouter();
+  const prefetch = usePrefetchCocktail();
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
   return (
     <View role="list">
@@ -29,12 +31,13 @@ export function LockedOriginals({ originals, selfId, details, emptyText }: { ori
             key={d.id}
             role="link"
             accessibilityLabel={[d.name, meta, description, 'Spec private'].filter(Boolean).join('. ')}
+            onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
             onPress={() => router.push(`/cocktail/${d.id}` as Href)}
             style={[styles.row, { borderBottomColor: ds.c.line }]}
           >
             {details ? (
               <View style={styles.thumb}>
-                <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} radius="control" hideTag />
+                <DrinkImage thumb sketchDetail="thumb" source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} radius="control" hideTag />
               </View>
             ) : null}
             <View style={styles.text}>
