@@ -50,7 +50,9 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const { venues, active } = useActiveVenue();
   // Home mode is like another account: a menu made there is always your own.
   const home = useMode().mode === 'home';
-  const buildable = home ? [] : venues.filter((v) => v.roleLevel >= BUILDS_MENUS);
+  // The venue you're in always counts: its Menus page only opens this when the
+  // venue lets you build menus, which it can allow below Drink Creator.
+  const buildable = home ? [] : venues.filter((v) => v.id === active?.id || v.roleLevel >= BUILDS_MENUS);
   const steps: Step[] = home ? ['name', 'start', 'night'] : ['name', 'start'];
   const [step, setStep] = useState<Step>('name');
   const at = steps.indexOf(step);

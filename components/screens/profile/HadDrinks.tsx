@@ -6,7 +6,7 @@ import { Body, Button, Caption, Chip, DrinkImage, DsText, PalateFlower, Pressabl
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { useItemFlavors } from '@/hooks/useFlavor';
-import { favourites, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
+import { favourites, hasDates, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 import { dayOf, formatScore } from '@/lib/ranking';
@@ -16,11 +16,14 @@ import { RankRow } from '../rankings/RankingLists';
 const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 const href = (d: HadDrink) => itemHref('Cocktail', d.itemId);
 
-/** The drinks they loved most, as tiles: the picture, the score, and where. */
-export function Favourites({ drinks, columns }: { drinks: HadDrink[]; columns: number }) {
+/**
+ * The drinks they loved most, as tiles: the picture, the score, and where.
+ * Or the four they picked, in their order (picked).
+ */
+export function Favourites({ drinks, columns, picked }: { drinks: HadDrink[]; columns: number; picked?: HadDrink[] }) {
   const router = useRouter();
   // Two rows on a phone, one on wider screens.
-  const top = favourites(drinks, columns === 2 ? 4 : columns);
+  const top = picked?.length ? picked : favourites(drinks, columns === 2 ? 4 : columns);
   if (!top.length) return null;
   return (
     <View role="list" style={styles.grid}>
@@ -59,11 +62,14 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
   const flavors = useItemFlavors(drinks.map((d) => d.itemId));
   return (
     <View style={styles.section}>
-      <View role="radiogroup" accessibilityLabel="Order" style={styles.chips}>
-        {SORTS.map((s) => (
-          <Chip key={s.value} label={s.label} selected={sort === s.value} onPress={() => setSort(s.value)} />
-        ))}
-      </View>
+      {/* Nothing to order by when they don't show when they had them. */}
+      {hasDates(drinks) ? (
+        <View role="radiogroup" accessibilityLabel="Order" style={styles.chips}>
+          {SORTS.map((s) => (
+            <Chip key={s.value} label={s.label} selected={sort === s.value} onPress={() => setSort(s.value)} />
+          ))}
+        </View>
+      ) : null}
       <View role="list">
         {sortHad(drinks, sort).map((d) => {
           const caption = [d.listName, whereLine(d), d.hadOn ? MONTH_YEAR.format(dayOf(d.hadOn)) : null].filter(Boolean).join(' · ');

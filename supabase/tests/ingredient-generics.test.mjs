@@ -124,8 +124,10 @@ describe('generic ingredients', () => {
       LEFT JOIN public.items g ON g.id = i.generic_id
       LEFT JOIN public.item_categories ic ON ic.item_id = i.id
       LEFT JOIN public.categories c ON c.id = ic.category_id
-      WHERE i.item_type = 'ingredient' AND i.bar_id IS NULL AND lower(i.name) IN ('campari', 'gin', 'sweet vermouth', 'dry vermouth', 'angostura bitters')`);
-    const byName = Object.fromEntries(rows.map((r) => [r.name, r]));
+      WHERE i.item_type = 'ingredient' AND i.bar_id IS NULL
+        AND (lower(i.name) IN ('campari', 'gin', 'sweet vermouth', 'dry vermouth') OR i.id = public.resolve_ingredient('Angostura Bitters'))`);
+    // Angostura goes by its label name since 20261011100000; the old name is an alias.
+    const byName = Object.fromEntries(rows.map((r) => [r.name.startsWith('angostura') ? 'angostura bitters' : r.name, r]));
     assert.equal(byName['sweet vermouth']?.generic, 'Vermouth');
     assert.equal(byName['dry vermouth']?.generic, 'Vermouth');
     assert.equal(byName['angostura bitters']?.generic, 'Aromatic Bitters');

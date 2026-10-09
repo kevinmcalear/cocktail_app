@@ -4,7 +4,6 @@
     "app/+not-found.tsx": 3,
     "app/add-ingredient.tsx": 19,
     "app/ingredient/[id]/edit.tsx": 20,
-    "app/ingredient/[id]/index.tsx": 17,
     "app/settings/create-bar.tsx": 3,
     "components/BarAssignmentAccordion.tsx": 9,
     "components/CategoryPickerModal.tsx": 5,

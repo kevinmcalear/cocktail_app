@@ -52,10 +52,13 @@ assert.ok(manhattan.zoom > 11 && manhattan.zoom < 13.5, `a few km across, got ${
 const world = cameraFor([{ latitude: 40.7, longitude: -74 }, { latitude: -37.8, longitude: 144.96 }])!;
 assert.equal(world.zoom, 2);
 
-// --- an empty area still frames its circle ---
-const empty = cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' })!;
+// --- a map area frames its circle; near me opens on the person's neighbourhood ---
+const empty = cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' })!;
 assert.ok(Math.abs(empty.latitude - 40.72) < 1e-9 && empty.longitude === -73.99);
 assert.ok(empty.zoom > 9 && empty.zoom < 12, `a 20 km circle, got ${empty.zoom}`);
+const near = cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' })!;
+assert.deepEqual([near.latitude, near.longitude], [40.72, -73.99]);
+assert.ok(near.zoom >= 13 && near.zoom <= 15, `near me shows the neighbourhood, got ${near.zoom}`);
 assert.equal(cameraForArea({ kind: 'anywhere' }), null);
 
 // --- search this area: half the diagonal, rounded, clamped ---

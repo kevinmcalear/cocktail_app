@@ -7,8 +7,8 @@ import { Body, Button, Caption, Field, GlassButton, Headline, LockedSection, Rev
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { space } from '@/constants/tokens';
 import { useBringIn, useSpecCatalog } from '@/hooks/useBulk';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useHereVenue } from '@/hooks/useMode';
 import { isLink } from '@/lib/bringInAnywhere';
 import { takeBringIn } from '@/lib/bringInHandoff';
 import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
@@ -120,7 +120,8 @@ function BringInBody() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const { active } = useActiveVenue();
+  // At home, things come in to your own bar, never to the venue you were last at.
+  const active = useHereVenue();
   const barId = active?.id ?? null;
   const caps = useCapabilities(barId);
   const canEdit = !barId || !!caps.data?.includes('edit_drinks');

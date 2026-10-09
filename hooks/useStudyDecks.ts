@@ -80,9 +80,9 @@ interface CategoryRow {
 export function useStudyDecks() {
   const { active } = useActiveVenue();
   const { drinks: tonight, isLoading: tonightLoading } = useTonight(active?.id ?? null);
-  const { data: cocktails, isLoading: cocktailsLoading } = useCocktails({ allContexts: true });
-  const { data: beers, isLoading: beersLoading } = useBeers({ allContexts: true });
-  const { data: wines, isLoading: winesLoading } = useWines({ allContexts: true });
+  const { data: cocktails, isLoading: cocktailsLoading } = useCocktails();
+  const { data: beers, isLoading: beersLoading } = useBeers();
+  const { data: wines, isLoading: winesLoading } = useWines();
   const { data: dropdowns } = useDropdowns();
   const { studyPile } = useStudyPile();
 

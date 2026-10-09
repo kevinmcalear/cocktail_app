@@ -23,8 +23,9 @@ import type { DatabaseItem } from '@/types/types';
 
 import { BatchSheet } from '../batch/BatchSheet';
 import { PublishSection } from '../publishing/PublishSection';
+import { MadeAction } from '../made/MadeAction';
 import { RankActions } from '../rank/RankActions';
-import { useAgeGate } from '../safety/AgeGate';
+import { useCollectToggle } from '../published/useCollectToggle';
 import { ReportAction } from '../safety/ReportSheet';
 import { DrinkControls } from './DrinkControls';
 import { DrinkFacts, DrinkTags } from './DrinkFacts';
@@ -48,8 +49,6 @@ import { useDrinkFacts } from './useDrinkFacts';
 
 export interface DrinkScreenProps {
   item: DatabaseItem;
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
   canEdit: boolean;
@@ -80,7 +79,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, openBatch, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, openBatch, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -92,9 +91,8 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
   const lock = useSpecLock(preview ? null : item).data;
-  // Saving to your Collection (home mode) needs a confirmed age.
-  const ageGate = useAgeGate();
-  const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
+  // The bookmark: To make in Collection (collected_items).
+  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name);
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   // Both modes: a party batch at home, a prep bottle at the bar.
   const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);
@@ -152,6 +150,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           />
         ) : null}
         {preview ? null : <RankActions item={item} picture={heroPic} />}
+        {preview || lock ? null : <MadeAction item={item} ingredients={lines.flatMap((l) => (l.ingredient ? [l.ingredient] : []))} />}
         {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
@@ -225,11 +224,11 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         heroHeight={heroHeight}
         scrollY={scrollY}
         wide={wide}
-        isFavorite={isFavorite} onToggleFavorite={toggleFavorite}
+        saved={toMake.saved} onToggleSaved={preview ? () => {} : toMake.toggle}
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit}
       />
-      {ageGate.sheet}
+      {toMake.sheet}
       {glassOpen ? (
         <GlassSheet
           visible

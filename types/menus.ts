@@ -27,6 +27,8 @@ export interface MenuSummary {
   guestCount: number | null;
   /** A home menu shared with a link (/m/<id>) since then; null when it isn't. */
   sharedAt: string | null;
+  /** A menu, or an R&D collection (trials, flights): never dated, filed apart. */
+  kind: 'menu' | 'rnd';
   itemIds: string[];
   /** The first few drinks' own pictures, for a menu with no cover photo. Null image: drawn from its spec. */
   pictures: MenuPicture[];

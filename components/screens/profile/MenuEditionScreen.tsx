@@ -7,6 +7,7 @@ import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/usePr
 import { editionDates, editionMenuDrinks, menuRange, menuState } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
 
+import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { MenuSections } from '../menus/MenuSections';
 import { PublicMissing, PublicShell } from '../published/PublicShell';
 
@@ -39,6 +40,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
       <Display>{edition.name}</Display>
       <Caption tone="muted">{[menuRange(dates), drinks.length ? plural(drinks.length, 'drink') : null].filter(Boolean).join(' · ')}</Caption>
       {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
+      <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} />
       {drinks.length ? (
         <MenuSections sections={[{ id: edition.id, name: 'Cocktails', drinks }]} variant="page" hrefFor={(d) => (signedIn ? `/cocktail/${d.id}` : null)} />
       ) : (

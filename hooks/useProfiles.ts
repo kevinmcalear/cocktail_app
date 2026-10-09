@@ -10,7 +10,7 @@ import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEdit
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
-import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange } from '@/lib/profiles';
+import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange, type ShareMode, type ShareSection } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
@@ -35,17 +35,21 @@ export interface Profile {
   /** A bar that has shut for good; closed_year when it's known. */
   is_closed: boolean;
   closed_year: number | null;
-  /** A person who shows the drinks they've had, with their scores. */
-  shares_rankings: boolean;
-  /** A person who shows the bars they've had drinks at, with their average at each. */
-  shares_bars: boolean;
-  /** Shows the drinks they've made. Always true for a bar. */
-  shares_made: boolean;
+  /** How much of the drinks they've had a person shows, with their scores. */
+  had_mode: ShareMode;
+  /** The bars they've had drinks at, with their average at each. */
+  bars_mode: ShareMode;
+  /** The drinks they've made. A bar's always show. */
+  made_mode: ShareMode;
   /** A bar's: who outside it sees its page. Null for a person. */
   page_visibility: PageVisibility | null;
+  /** A person's own line under their name ("Home bartender"). */
+  tagline: string | null;
+  /** Or one of their jobs, shown while the bar has confirmed it (profileLine). */
+  headline_position_id: string | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, shares_rankings, shares_bars, shares_made, page_visibility';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, had_mode, bars_mode, made_mode, page_visibility, tagline, headline_position_id';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -589,6 +593,42 @@ export function useShowPosition() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-positions'] }),
     // Shown inline by PastJobs, not as the global toast.
+    onError: () => {},
+  });
+}
+
+/** A person's picks in one section, by bar profile or drink id: shown or hidden. Plain JSON. */
+export type Picks = Record<string, boolean>;
+
+/**
+ * Which bars or originals a person picked to show or hide (profile_picks).
+ * Anyone reads a profile's originals picks; only the person reads their bars.
+ */
+export function useProfilePicks(profileId: string | null | undefined, section: Exclude<ShareSection, 'had'>) {
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['profile-picks', profileId, section, viewer.key],
+    meta: viewer.meta,
+    enabled: !!profileId,
+    queryFn: async (): Promise<Picks> => {
+      const { data, error } = await supabase.from('profile_picks').select('target_id, shown').eq('profile_id', profileId!).eq('section', section).limit(1000);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r) => [r.target_id as string, r.shown as boolean]));
+    },
+  });
+}
+
+/** Shows or hides one bar or original on your own profile. */
+export function useSetPick() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pick: { profileId: string; section: Exclude<ShareSection, 'had'>; targetId: string; shown: boolean }) => {
+      const { error } = await supabase
+        .from('profile_picks')
+        .upsert({ profile_id: pick.profileId, section: pick.section, target_id: pick.targetId, shown: pick.shown }, { onConflict: 'profile_id,section,target_id' });
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-picks'] }),
     onError: () => {},
   });
 }

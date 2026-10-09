@@ -4,7 +4,7 @@ import { GLASS_SHAPES, GLASS_VARIANTS, glassShape, variantsOf } from './geometry
 import { paintSketch } from './paint';
 import { CRUMB } from './styles';
 import { mixHex } from './random';
-import type { SceneEl } from './scene';
+import { boundsOf, type SceneEl } from './scene';
 import { readSketchInputs, SKETCH_FOAMS, SKETCH_GARNISHES, SKETCH_GLASSES, SKETCH_ICES, type SketchInputs } from './types';
 
 // Stored rows are read strictly: anything this app can't draw is null.
@@ -122,6 +122,22 @@ assert.ok(sawLiquid, `the liquid is washed in as ${muted}`);
   assert.ok(bandedMoving > 0);
   const [a, b] = [weight(still.els).bytes, weight(moving.els).bytes];
   assert.ok(Math.abs(a - b) / a < 0.05, `same drawing either way (${a} vs ${b} bytes)`);
+}
+
+// Layer bounds (AnimatedSketch): the strokes, padded by half their weight; dots by their radius.
+assert.deepEqual(boundsOf([{ k: 'stroke', d: 'M10 20L30 5M40 50', color: '#000', o: 1, w: 2, dash: null }]), [8, 3, 42, 52]);
+assert.deepEqual(boundsOf([{ k: 'fill', d: 'M95 100a5 5 0 1 0 10 0a5 5 0 1 0 -10 0', color: '#000', o: 1 }]), [89, 94, 111, 106]);
+assert.equal(boundsOf([]), null);
+assert.equal(boundsOf([{ k: 'fill', d: 'M0 0C1 1 2 2 3 3', color: '#000', o: 1 }]), null);
+// Every layer of a moving drawing reads, and sits on the page.
+{
+  const moving = paintSketch({ ...base, foam: 'cap', fizz: true }, { seed: 'bounds', bands: true });
+  for (const el of moving.els) {
+    if (el.k !== 'stage' || !el.children.length) continue;
+    const b = boundsOf(el.children);
+    assert.ok(b, `${el.name} has bounds`);
+    assert.ok(b[0] > -64 && b[1] > -64 && b[2] < moving.size + 64 && b[3] < moving.size + 64, `${el.name} on the page: ${b}`);
+  }
 }
 
 console.log('sketch renderer: ok');

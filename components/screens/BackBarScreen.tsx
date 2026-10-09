@@ -174,6 +174,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[column, styles.body, { paddingBottom: insets.bottom + space.xxl }]}>
         <PageHeader
           title="Back bar"
+          width="wide"
           subtitle={canRead && zones.length ? summaryLine(zones.length, locations, waiting.length) : null}
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/prep'))}
           action={
