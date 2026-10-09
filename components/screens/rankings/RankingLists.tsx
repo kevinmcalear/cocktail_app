@@ -6,6 +6,7 @@ import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
+import { useBarVersionLabels } from '@/hooks/useSpecMatches';
 import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
@@ -93,9 +94,14 @@ function placeOf(r: { locality: string | null; city: string | null; distance_km?
 
 type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string | null };
 
-/** Bars in an area, best first. Each opens the bar's profile. */
-export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; scoreDetail?: (r: AreaRow) => string }) {
+/**
+ * Bars in an area, best first. Each opens the bar's profile. For a classic's
+ * list (`classicId`), each says what the bar pours of it: "the classic spec",
+ * or what its variation changes.
+ */
+export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string }) {
   const router = useRouter();
+  const pours = useBarVersionLabels(classicId, rows.map((r) => r.venue_profile_id));
   return (
     <View>
       {rows.map((r) => (
@@ -103,7 +109,7 @@ export function AreaRankList({ rows, scoreDetail = (r) => `${r.rankers} ranked` 
           key={r.venue_profile_id}
           position={r.position}
           title={r.display_name}
-          detail={placeOf(r)}
+          detail={[placeOf(r), pours[r.venue_profile_id]].filter(Boolean).join(' · ')}
           score={r.score}
           scoreDetail={scoreDetail(r)}
           logo={r.avatar_url}
