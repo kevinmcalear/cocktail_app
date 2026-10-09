@@ -7,6 +7,7 @@ import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, typ
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount } from '@/lib/specDefaults';
+import { capitalize } from '@/lib/stringUtils';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { BalanceCard, GoesWith } from './GoesWith';
@@ -41,11 +42,17 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ line: WizardLine; at: number } | null>(null);
-  /** A new house prep being made, or one in the drink being edited (its line's key). */
-  const [making, setMaking] = useState<{ name: string; key?: string } | null>(null);
+  /**
+   * A house prep being made: a new line, the recipe of a line in the drink
+   * (its key), or a line swapped for one (its key, `replace`).
+   */
+  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean } | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;
+  const replacing = !!making?.replace;
+  // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
+  const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -92,9 +99,18 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                   autoFocus
                   onCancel={() => setSwapKey(null)}
                   onPick={(p) => {
-                    change(l.key, { id: p.id, name: p.name });
+                    // A different ingredient isn't the house prep that was here.
+                    change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
                     setSwapKey(null);
                   }}
+                  onMake={
+                    forDrink
+                      ? (name) => {
+                          make(name, l.key);
+                          setSwapKey(null);
+                        }
+                      : undefined
+                  }
                 />
               </View>
             ) : (
@@ -111,16 +127,17 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => setMaking({ name }) : undefined} />
+      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => make(name) : undefined} />
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}
-        initial={editingKey ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
+        initial={editingKey && !replacing ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
         ingredients={ingredients}
         aliases={aliases}
         onClose={() => setMaking(null)}
         onDone={(prep) => {
-          if (editingKey) change(editingKey, { prep, technique: prep.technique });
+          if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique });
+          else if (editingKey) change(editingKey, { prep, technique: prep.technique });
           else if (makingName) add({ id: null, name: makingName }, prep);
           setMaking(null);
         }}

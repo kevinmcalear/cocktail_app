@@ -27,7 +27,7 @@ export interface IngredientSearchProps {
   onTyping?: (typing: boolean) => void;
   /** Off: only existing ingredients can be picked (a kind of must exist). */
   allowNew?: boolean;
-  /** A new name: offers to make it in house, with its own recipe. */
+  /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string) => void;
 }
 
@@ -51,7 +51,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
   const prepLike = !!guessKind(query) || waysToMake(query).length > 0;
   const makeRow = onMake ? (
     <ResultRow
-      label={`Make “${query.trim()}” in house`}
+      label={exact ? `Make your own “${query.trim()}”` : `Make “${query.trim()}” in house`}
       isNew
       onPress={() => {
         onMake(query.trim());
@@ -104,7 +104,9 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
             <Body tone="muted" style={styles.loading}>
               Loading ingredients…
             </Body>
-          ) : exact || !allowNew ? null : (
+          ) : exact ? (
+            makeRow
+          ) : !allowNew ? null : (
             <>
               {makeRow && prepLike ? makeRow : null}
               <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => pick({ id: null, name: query.trim() })} />
