@@ -7,8 +7,9 @@ import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings
 import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
 import { useBestDrink } from '@/hooks/useBestDrink';
-import { useDebounced, useTopBars } from '@/hooks/useDiscover';
+import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
+import { useMapMoves } from '@/hooks/useMapMoves';
 import { barPins, byScore, closedPins, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins } from '@/lib/discoverMatch';
@@ -62,10 +63,10 @@ const SHEET_PEEK = layout.minTapTarget + space.sm;
  * Discover on a map: pins for the bars with matching drinks, for the drink's
  * best ("Best Martini": every martini, with the scores people gave it and its
  * bar, unscored ones plain), or the top bars (the score on each; early bars
- * as plain dots). Tap one to see it, and "Search this area" once the person
- * has moved the map. The camera fits the results whenever the
- * area, drink or layer changes, but never after "Search this area", so the
- * view the person chose stays put.
+ * as plain dots). Tap one to see it. Browsing, the results follow the map
+ * once it settles somewhere new; searching (or anywhere), "Search this area"
+ * asks. The camera fits the results whenever the area, drink or layer
+ * changes, but never after a search of the map, so the person's view stays put.
  */
 export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, pick }: DiscoverMapPaneProps) {
   const ds = useDs();
@@ -91,14 +92,14 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     return () => clearTimeout(t);
   }, [results.isLoading, warm]);
   const barRows = useTopBars(area, layer === 'bars' || warm);
+  const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
+  // Browsing, the list follows the map (a tapped bar stays open); a search, or anywhere, waits for "Search this area".
+  const follow = !searching && area.kind !== 'anywhere';
+  const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)));
   // Pins on the drinks layer: the area's bars with matching drinks first, then, once the person
   // moves the map, the bars in view a tile at a time (anywhere already has every bar).
-  const [viewport, setViewport] = useState<Viewport | null>(null);
-  const settled = useDebounced(viewport, 350);
-  // The view last searched: it stays the view (its pins stay up), but isn't offered again.
-  const [searched, setSearched] = useState<Viewport | null>(null);
   const areaBars = useDiscoverBars(area, filter, byDrinks);
-  const tileBars = useTileBars(area.kind === 'anywhere' ? null : settled, filter, byDrinks);
+  const tileBars = useTileBars(area.kind === 'anywhere' ? null : moves.settled, filter, byDrinks);
   // "Best Martini": every martini here, scored where people have ranked it, best first.
   const { picked, scores, isLoading: pickedLoading } = useBestDrink(drink, filter, { load: byDrink || warm, active: byDrink });
   // Nearest: the same matches, closest first.
@@ -125,24 +126,16 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
   const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, !nearMe && fitting]);
-  const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   if (fitKey !== null && fit?.key !== fitKey) {
     setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? cameraForArea(area) ?? fit?.camera ?? null });
-    setViewport(null);
+    moves.reset();
   }
-  // The maps report only the person's own moves, so any settled move since
-  // the last fit or search is worth offering.
-  const offer = viewport && settled === viewport && viewport !== searched ? viewport : null;
-  useEffect(() => onViewport?.(settled), [settled, onViewport]);
-  const searchArea = (v: Viewport) => {
-    setSearched(v);
-    setSelectedId(null);
-    onArea(areaFromViewport(v));
-  };
+  useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
 
   const title = byDrinks ? results.title : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
   const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
-  const searchHere = offer ? <SearchHere onPress={() => searchArea(offer)} /> : null;
+  const offer = moves.offer;
+  const searchHere = offer ? <SearchHere onPress={() => moves.search(offer)} /> : null;
 
   const ranked = rows.data?.ranked ?? [];
   const early = rows.data?.early ?? [];
@@ -161,7 +154,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     selected && (mode === 'side' || barDrinks.length > 0) ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} />
     ) : (
-      <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
+      <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
   ) : ranked.length ? (
     <AreaRankList rows={ranked} scoreDetail={(r) => peopleCount(r.rankers)} />
@@ -171,7 +164,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       <EarlyList rows={early} />
     </>
   ) : (
-    <ListNote>{`Nobody has ranked a drink at a bar ${areaLabel(area)} yet. Move the map and search this area.`}</ListNote>
+    <ListNote>{`Nobody has ranked a drink at a bar ${areaLabel(area)} yet. Move the map${follow ? '' : ' and search this area'}.`}</ListNote>
   );
 
   const map = (
@@ -183,7 +176,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
         setSelectedId(id);
         if (id && mode === 'sheet') sheetRef.current?.snapToIndex(1);
       }}
-      onViewportChange={setViewport}
+      onViewportChange={moves.onMove}
       camera={fit?.camera ?? null}
       scheme={ds.scheme}
       accent={ds.accentFill}

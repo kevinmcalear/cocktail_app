@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { areaFromViewport, cameraFor, cameraForArea, dotsOf, pinLabel, pinLook, pinsFrom, viewportFrom } from './discoverMap';
+import { areaFromViewport, cameraFor, cameraForArea, dotsOf, pinLabel, pinLook, pinsFrom, movedFrom, viewportFrom } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -38,8 +38,8 @@ assert.equal(pinLook(pins[1], true, accent).color, accent.text);
 assert.equal(pinLook(pins[1], true, accent).borderColor, accent.fill);
 
 // --- viewport from MapLibre's centre and [west, south, east, north] bounds ---
-assert.deepEqual(viewportFrom({ lat: 40.72, lng: -73.99 }, [-74.01, 40.7, -73.97, 40.74]), {
-  latitude: 40.72, longitude: -73.99, latitudeDelta: 40.74 - 40.7, longitudeDelta: -73.97 - -74.01,
+assert.deepEqual(viewportFrom({ lat: 40.72, lng: -73.99 }, [-74.01, 40.7, -73.97, 40.74], 13), {
+  latitude: 40.72, longitude: -73.99, latitudeDelta: 40.74 - 40.7, longitudeDelta: -73.97 - -74.01, zoom: 13,
 });
 
 // --- camera: fits the pins, a city view for one, nothing for none ---
@@ -62,12 +62,24 @@ assert.ok(near.zoom >= 13 && near.zoom <= 15, `near me shows the neighbourhood, 
 assert.equal(cameraForArea({ kind: 'anywhere' }), null);
 
 // --- search this area: half the diagonal, rounded, clamped ---
-const area = areaFromViewport({ latitude: 40.7209, longitude: -73.988, latitudeDelta: 0.1, longitudeDelta: 0.1 });
+const area = areaFromViewport({ latitude: 40.7209, longitude: -73.988, latitudeDelta: 0.1, longitudeDelta: 0.1, zoom: 11 });
 assert.deepEqual([area.latitude, area.longitude, area.source], [40.721, -73.988, 'map']);
 // 5.55 km up, 4.21 km across (longitude shrinks at 40.7 N): 6.97 km.
 assert.equal(area.radiusKm, 7);
-assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 0.0001, longitudeDelta: 0.0001 }).radiusKm, 0.5);
-assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 90, longitudeDelta: 180 }).radiusKm, 200);
+assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 0.0001, longitudeDelta: 0.0001, zoom: 20 }).radiusKm, 0.5);
+assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 90, longitudeDelta: 180, zoom: 1 }).radiusKm, 200);
+
+// --- the list follows the map: half a zoom step or a sixth of the view, not a nudge ---
+const view = { latitude: 40.72, longitude: -73.99, latitudeDelta: 0.06, longitudeDelta: 0.04, zoom: 13 };
+const at = { latitude: 40.72, longitude: -73.99, zoom: 13 };
+assert.equal(movedFrom(null, view), true, 'nothing fit yet: any move');
+assert.equal(movedFrom(at, view), false);
+assert.equal(movedFrom(at, { ...view, latitude: 40.725 }), false, 'a nudge');
+assert.equal(movedFrom(at, { ...view, latitude: 40.735 }), true, 'a quarter of the view up');
+assert.equal(movedFrom(at, { ...view, longitude: -73.98 }), true, 'a quarter of the view across');
+assert.equal(movedFrom(at, { ...view, zoom: 13.3 }), false, 'a little pinch');
+assert.equal(movedFrom(at, { ...view, zoom: 12.4 }), true, 'zoomed out');
+assert.equal(movedFrom({ ...at, longitude: 179.999 }, { ...view, longitude: -179.999 }), false, 'across the antimeridian is close');
 
 console.log('discoverMap: ok');
 

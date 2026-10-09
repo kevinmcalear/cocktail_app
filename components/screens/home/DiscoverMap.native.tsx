@@ -73,8 +73,8 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
 
   // Only the person's own moves count for "search this area".
   const onMoved = (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-    const { userInteraction, center, bounds } = e.nativeEvent;
-    if (userInteraction) onViewportChange(viewportFrom({ lng: center[0], lat: center[1] }, bounds));
+    const { userInteraction, center, bounds, zoom } = e.nativeEvent;
+    if (userInteraction) onViewportChange(viewportFrom({ lng: center[0], lat: center[1] }, bounds, zoom));
   };
 
   return (

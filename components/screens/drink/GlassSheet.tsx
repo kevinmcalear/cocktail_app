@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
@@ -73,62 +73,69 @@ function Sheet({ onClose, itemId, name, glass, iceName, serveMl, icePerServeG, c
 
   return (
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Caption tone="muted">Glass and ice</Caption>
-            <Title>{name}</Title>
-            {glass ? (
+      {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
+      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.keyboard} pointerEvents="box-none">
+        <View style={styles.avoider} pointerEvents="box-none">
+          <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <Caption tone="muted">Glass and ice</Caption>
+              <Title>{name}</Title>
+              {glass ? (
+                <View style={styles.group}>
+                  <Headline>{glass.name}</Headline>
+                  <Body tone="muted">
+                    {glassSizeLabel(glass) ?? 'No capacity on file yet.'}
+                    {fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
+                  </Body>
+                  {canEditGlass ? (
+                    <>
+                      <Field label="Capacity (ml, to the brim)" value={capacity} onChangeText={setCapacity} placeholder="180" keyboardType="decimal-pad" />
+                      <Field label="Iced capacity (ml, what the liquid fills with ice in)" value={iced} onChangeText={setIced} placeholder={capacity || '180'} keyboardType="decimal-pad" error={sizeProblem ?? undefined} />
+                      <Button label={setSize.isPending ? 'Saving…' : 'Save glass'} variant="secondary" disabled={setSize.isPending || !!sizeProblem} onPress={() => setSize.mutate({ capacity_ml: capN, iced_capacity_ml: icedN })} style={styles.button} />
+                      {setSize.error ? <Caption tone="accent">{"Couldn't save the glass. Check your connection and try again."}</Caption> : null}
+                    </>
+                  ) : (
+                    <Caption tone="muted">Whoever looks after this glass in the Library sets its capacity.</Caption>
+                  )}
+                </View>
+              ) : (
+                <Body tone="muted">No glass set for this drink.</Body>
+              )}
               <View style={styles.group}>
-                <Headline>{glass.name}</Headline>
+                <Headline>Ice per serve</Headline>
                 <Body tone="muted">
-                  {glassSizeLabel(glass) ?? 'No capacity on file yet.'}
-                  {fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
+                  {withIce
+                    ? icePerServeG != null
+                      ? `${formatIce(icePerServeG)} of ${iceName!.toLowerCase()} per serve. An event's prep list adds it up.`
+                      : suggested
+                        ? `Not weighed yet. From the glass, about ${formatIce(suggested)} of ${iceName!.toLowerCase()} fills it.`
+                        : 'Not weighed yet.'
+                    : 'No ice in the glass.'}
                 </Body>
-                {canEditGlass ? (
+                {canEditDrink && withIce ? (
                   <>
-                    <Field label="Capacity (ml, to the brim)" value={capacity} onChangeText={setCapacity} placeholder="180" keyboardType="decimal-pad" />
-                    <Field label="Iced capacity (ml, what the liquid fills with ice in)" value={iced} onChangeText={setIced} placeholder={capacity || '180'} keyboardType="decimal-pad" error={sizeProblem ?? undefined} />
-                    <Button label={setSize.isPending ? 'Saving…' : 'Save glass'} variant="secondary" disabled={setSize.isPending || !!sizeProblem} onPress={() => setSize.mutate({ capacity_ml: capN, iced_capacity_ml: icedN })} style={styles.button} />
-                    {setSize.error ? <Caption tone="accent">{"Couldn't save the glass. Check your connection and try again."}</Caption> : null}
+                    <Field label="Grams of ice in the glass" value={ice} onChangeText={setIceDraft} placeholder={suggested ? String(suggested) : '140'} keyboardType="decimal-pad" error={iceProblem ?? undefined} hint="Leave blank to clear it." />
+                    <Button label={setIce.isPending ? 'Saving…' : 'Save ice'} disabled={setIce.isPending || !!iceProblem} onPress={() => setIce.mutate(iceN)} style={styles.button} />
+                    {setIce.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
                   </>
-                ) : (
-                  <Caption tone="muted">Whoever looks after this glass in the Library sets its capacity.</Caption>
-                )}
+                ) : null}
               </View>
-            ) : (
-              <Body tone="muted">No glass set for this drink.</Body>
-            )}
-            <View style={styles.group}>
-              <Headline>Ice per serve</Headline>
-              <Body tone="muted">
-                {withIce
-                  ? icePerServeG != null
-                    ? `${formatIce(icePerServeG)} of ${iceName!.toLowerCase()} per serve. An event's prep list adds it up.`
-                    : suggested
-                      ? `Not weighed yet. From the glass, about ${formatIce(suggested)} of ${iceName!.toLowerCase()} fills it.`
-                      : 'Not weighed yet.'
-                  : 'No ice in the glass.'}
-              </Body>
-              {canEditDrink && withIce ? (
-                <>
-                  <Field label="Grams of ice in the glass" value={ice} onChangeText={setIceDraft} placeholder={suggested ? String(suggested) : '140'} keyboardType="decimal-pad" error={iceProblem ?? undefined} hint="Leave blank to clear it." />
-                  <Button label={setIce.isPending ? 'Saving…' : 'Save ice'} disabled={setIce.isPending || !!iceProblem} onPress={() => setIce.mutate(iceN)} style={styles.button} />
-                  {setIce.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
-                </>
-              ) : null}
-            </View>
-          </ScrollView>
-        </Pressable>
-      </View>
+            </ScrollView>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end' },
-  avoider: { width: '100%', maxWidth: 560, alignSelf: 'center' },
-  sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', maxHeight: '90%' },
+  scrim: { flex: 1 },
+  keyboard: { flex: 1, justifyContent: 'flex-end' },
+  // The height cap sits on the wrapper: a percentage on the sheet resolves against
+  // the content-sized wrapper and leaves a gap under a tall sheet.
+  avoider: { width: '100%', maxWidth: 560, maxHeight: '90%', alignSelf: 'center' },
+  sheet: { flexShrink: 1, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
+  scroll: { flexShrink: 1 },
   body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.lg },
   group: { gap: space.sm },
   button: { alignSelf: 'flex-start' },
