@@ -2,18 +2,20 @@ import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, GlassButton, GlassSurface, Title, useDs } from '@/components/ds';
+import { Caption, GlassSurface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { DrinkAtBarList, DrinkAtBarRow, type DrinkScores, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
+import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
-import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
+import { useBestDrink } from '@/hooks/useBestDrink';
+import { useDebounced, useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
-import { useItemScores } from '@/hooks/useFlavor';
-import { barPins, barScoresFor, byScore, closedPins, drinkCount, pickFilter, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
-import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type Viewport } from '@/lib/discoverMap';
+import { barPins, byScore, closedPins, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
+import { namePins } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
 
+import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
 import { SelectedBar } from './SelectedBar';
@@ -41,12 +43,14 @@ interface DiscoverMapPaneProps {
   bottomInset?: number;
   /** Room for the screen header over the top of the map: the controls and the open sheet stay below it. */
   topInset?: number;
+  /** Nearest (phones, searching): where distances count from, the person else the area's middle. */
+  from?: { latitude: number; longitude: number } | null;
+  /** Wide screens: the tapped pin is the screen's, shown in its list rather than over the map. */
+  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; onLayer: (layer: MapLayer) => void };
 }
 
 /** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
 const NO_DRINKS: DiscoverDrink[] = [];
-const NO_ROWS: never[] = [];
-const NO_SCORES: Readonly<Record<string, number>> = {};
 const drinkKey = (d: DiscoverDrink) => d.id;
 /** How long after the drinks land before the other layers load behind them. */
 const PREFETCH_AFTER_MS = 2000;
@@ -63,11 +67,20 @@ const SHEET_PEEK = layout.minTapTarget + space.sm;
  * area, drink or layer changes, but never after "Search this area", so the
  * view the person chose stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0 }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, pick }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
-  const [layer, setLayer] = useState<'drinks' | 'best' | 'bars'>('drinks');
-  const byDrinks = layer === 'drinks';
+  // Searching, the layers read as a sort of what was found, pins name the best drinks, and a tapped bar leads with its best match (as filtering does).
+  const searching = !!filter.search.trim();
+  const [chosen, setChosen] = useState<MapLayer>('drinks');
+  const setLayer = (next: MapLayer) => {
+    setChosen(next);
+    pick?.onLayer(next);
+  };
+  const canNear = searching && mode === 'sheet' && !!from;
+  const layer = chosen === 'nearest' && !canNear ? 'drinks' : chosen;
+  const nearest = layer === 'nearest';
+  const byDrinks = layer === 'drinks' || nearest;
   const byDrink = layer === 'best' && !!drink;
   // The other layers load a moment after the drinks are in (not while the map is still drawing),
   // so switching to one is instant.
@@ -77,7 +90,6 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     const t = setTimeout(() => setWarm(true), PREFETCH_AFTER_MS);
     return () => clearTimeout(t);
   }, [results.isLoading, warm]);
-  const drinkRows = useDiscoverRankings(drink?.id, area, byDrink || warm);
   const barRows = useTopBars(area, layer === 'bars' || warm);
   // Pins on the drinks layer: the area's bars with matching drinks first, then, once the person
   // moves the map, the bars in view a tile at a time (anywhere already has every bar).
@@ -88,21 +100,22 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : settled, filter, byDrinks);
   // "Best Martini": every martini here, scored where people have ranked it, best first.
-  const pickedList = useDiscoverList(drink ? pickFilter(filter, drink.name) : filter, { enabled: !!drink && (byDrink || warm), pageSize: 300 });
-  const picked = byDrink ? pickedList.drinks : NO_DRINKS;
+  const { picked, scores, isLoading: pickedLoading } = useBestDrink(drink, filter, { load: byDrink || warm, active: byDrink });
+  // Nearest: the same matches, closest first.
+  const near = useDiscoverList(filter, { from, enabled: nearest });
   const rows = byDrinks
-    ? { data: undefined, isLoading: results.isLoading || areaBars.isPending }
+    ? { data: undefined, isLoading: (nearest ? near.isLoading : results.isLoading) || areaBars.isPending }
     : byDrink
-      ? { data: undefined, isLoading: pickedList.isLoading }
+      ? { data: undefined, isLoading: pickedLoading }
       : barRows;
-  const drinkScores = useItemScores(drink ? pickedList.drinks.map((d) => d.id) : NO_ROWS).data ?? NO_SCORES;
-  const scores: DrinkScores | undefined = byDrink ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, drinkRows.data?.ranked ?? NO_ROWS) } : undefined;
-  const drinks = scores ? byScore(picked, scores.drinks) : results.drinks;
+  const drinks = scores ? byScore(picked, scores.drinks) : nearest ? near.drinks : results.drinks;
   const pins = [
     ...(byDrinks ? barPins([...(areaBars.data ?? []), ...tileBars.bars]) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
     ...closedPins(results.closed ?? []),
   ];
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [ownId, setOwnId] = useState<string | null>(null);
+  const selectedId = pick ? pick.id : ownId;
+  const setSelectedId = (id: string | null) => (pick ? pick.onPick(pins.find((p) => p.id === id) ?? null) : setOwnId(id));
   const selected = pins.find((p) => p.id === selectedId) ?? null;
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
   const atBar = useDiscoverList({ ...filter, area }, { barId: selected?.id, enabled: !!selected && byDrinks && !selected.closed, pageSize: 100 });
@@ -126,33 +139,24 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   };
 
   const title = byDrinks ? results.title : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
-  const layers = (
-    <View role="radiogroup" accessibilityLabel="Show on the map" style={styles.chips}>
-      <Chip label="Drinks" selected={byDrinks} onPress={() => setLayer('drinks')} />
-      {drink ? <Chip label={`Best ${drink.name}`} selected={byDrink} onPress={() => setLayer('best')} /> : null}
-      <Chip label="Top bars" selected={layer === 'bars'} onPress={() => setLayer('bars')} />
-    </View>
-  );
-  const searchHere = offer ? (
-    <View style={styles.center}>
-      <GlassButton accessibilityLabel="Search this area" label="Search this area" icon="magnifyingglass" onPress={() => searchArea(offer)} />
-    </View>
-  ) : null;
+  const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
+  const searchHere = offer ? <SearchHere onPress={() => searchArea(offer)} /> : null;
 
   const ranked = rows.data?.ranked ?? [];
   const early = rows.data?.early ?? [];
   const drinkLayer = byDrinks || byDrink;
+  const lead = drinkLayer && (searching || filter.kinds.length > 0);
   // A tapped bar narrows the drinks to its own.
   const barDrinks = selected ? (byDrinks ? atBar.drinks : drinks.filter((d) => d.barId === selected.id)) : drinks;
-  const more: MoreDrinks | undefined = selected ? undefined : byDrinks ? results.more : undefined;
+  const more: MoreDrinks | undefined = selected || !byDrinks ? undefined : nearest ? { total: near.totals?.drinks ?? null, hasMore: near.hasMore, loadMore: near.loadMore, loading: near.isLoadingMore } : results.more;
   const loadingBar = !!selected && byDrinks && atBar.isLoading;
   // The phone sheet's rows; anything else (loading, a note, the ranked lists) shows as its empty state.
-  const sheetDrinks = drinkLayer && !rows.isLoading && !loadingBar ? barDrinks : NO_DRINKS;
+  const sheetDrinks = drinkLayer && !rows.isLoading && !loadingBar ? (selected && lead ? barDrinks.slice(1) : barDrinks) : NO_DRINKS;
   const list = rows.isLoading || loadingBar ? (
     <ListNote>Loading…</ListNote>
   ) : drinkLayer ? (
-    // Wide screens list a selected bar's drinks in its card; phones preview them there and list them all here.
-    selected && mode === 'side' ? null : barDrinks.length ? (
+    // Wide screens list a selected bar's drinks in its card; the phone sheet's list has them (its first in the head).
+    selected && (mode === 'side' || barDrinks.length > 0) ? null : barDrinks.length ? (
       <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} />
     ) : (
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map and search this area, or pick another style.`}</ListNote>
@@ -170,12 +174,12 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
 
   const map = (
     <DiscoverMap
-      pins={pins}
+      pins={searching && byDrinks ? namePins(pins, results.drinks, selectedId) : pins}
       selectedId={selectedId}
-      // On phones a tapped bar lowers the sheet, so its card (and drinks) sit over the map, not behind the list.
+      // On phones a tapped bar opens the sheet halfway on it: its matching drink, then the bar.
       onSelect={(id) => {
         setSelectedId(id);
-        if (id && mode === 'sheet') sheetRef.current?.snapToIndex(0);
+        if (id && mode === 'sheet') sheetRef.current?.snapToIndex(1);
       }}
       onViewportChange={setViewport}
       camera={fit?.camera ?? null}
@@ -193,9 +197,9 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
           <GlassSurface style={styles.glassRow}>{layers}</GlassSurface>
           {searchHere}
         </View>
-        {selected ? (
+        {selected && !pick ? (
           <View pointerEvents="box-none" style={[styles.overlay, styles.overlayBottom]}>
-            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} onClose={() => setSelectedId(null)} />
+            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} query={filter.search} lead={lead} onClose={() => setSelectedId(null)} />
           </View>
         ) : null}
       </View>
@@ -209,19 +213,6 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
         {top}
         {searchHere}
       </View>
-      {selected ? (
-        // Floats over the map just above the peek, so the map and the card share the screen.
-        <View pointerEvents="box-none" style={[styles.overlay, { bottom: bottomInset + SHEET_PEEK + space.sm }]}>
-          <SelectedBar
-            key={selected.id}
-            pin={selected}
-            drinks={drinkLayer ? barDrinks : []}
-            scores={scores}
-            onClose={() => setSelectedId(null)}
-            onShowAll={() => sheetRef.current?.snapToIndex(2)}
-          />
-        </View>
-      ) : null}
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
       <View pointerEvents="box-none" style={[styles.sheetBox, { top: topInset, bottom: bottomInset }]}>
         <BottomSheet
@@ -235,27 +226,36 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
           <BottomSheetFlatList
             data={sheetDrinks}
             keyExtractor={drinkKey}
-            renderItem={({ item }: { item: DiscoverDrink }) => <DrinkAtBarRow drink={item} scores={scores} />}
+            renderItem={({ item, index }: { item: DiscoverDrink; index: number }) => (
+              <>
+                {searching ? <AlsoMentions drinks={sheetDrinks} index={index} search={filter.search} /> : null}
+                <DrinkAtBarRow drink={item} scores={scores} />
+              </>
+            )}
             extraData={scores}
             contentContainerStyle={styles.sheet}
             ListHeaderComponent={
               <View style={styles.sheetHead}>
-                {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
-                <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
-                  <Caption tone="muted" numberOfLines={1}>
-                    {rows.isLoading
-                      ? 'Loading…'
-                      : selected?.closed
-                        ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
-                        : selected && drinkLayer
-                          ? `${drinkCount(byDrinks ? (atBar.totals?.drinks ?? barDrinks.length) : barDrinks.length)} at ${selected.name} · tap or swipe up for them`
-                          : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
-                  </Caption>
-                </Pressable>
-                <Title role="heading" numberOfLines={1}>
-                  {title}
-                </Title>
-                {layers}
+                {selected && !selected.closed ? (
+                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} query={filter.search} lead={lead} onClose={() => setSelectedId(null)} />
+                ) : (
+                  <>
+                    {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
+                    <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
+                      <Caption tone="muted" numberOfLines={1}>
+                        {rows.isLoading
+                          ? 'Loading…'
+                          : selected?.closed
+                            ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
+                            : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
+                      </Caption>
+                    </Pressable>
+                    <Title role="heading" numberOfLines={1}>
+                      {title}
+                    </Title>
+                    {layers}
+                  </>
+                )}
               </View>
             }
             // In a View: the list measures its empty state, and some of these are fragments.
@@ -287,8 +287,6 @@ const styles = StyleSheet.create({
   overlayTop: { top: space.lg },
   // Clear of the map's attribution line.
   overlayBottom: { bottom: space.xxxl, maxWidth: 420 },
-  center: { alignItems: 'center' },
-  chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   glassRow: { alignSelf: 'flex-start', padding: space.xs },
   sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl },
   sheetHead: { gap: space.md, paddingBottom: space.md },
