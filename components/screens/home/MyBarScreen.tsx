@@ -10,12 +10,14 @@ import { useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } 
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { JUMP_ROW, MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
 import { PANTRY_WATER, type ShelfSort } from '@/lib/pantry';
+import { labFromNames, projectsFor } from '@/lib/techniques/projects';
 import { useKitStore } from '@/store/useKitStore';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { KitSection, LabSection, MoreSections, PrepsSection, SectionJump, type Jumpable } from './BarSections';
 import { PantrySection } from './PantrySection';
+import { Projects } from './Projects';
 import { BottleRow, ShelfFoot, ShelfHead } from './ShelfSection';
 import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, type AwayGroup } from './WhatToMake';
 
@@ -73,7 +75,9 @@ export function MyBarScreen() {
     return profile ? `${matchPercent(scored, profile)}% match` : undefined;
   };
 
-  const tab = makeTab(picked, bar);
+  // Projects need kit or a lab shelf to mean anything; until then the tab isn't offered.
+  const projects = owned.length || lab.length ? projectsFor(new Set(owned), labFromNames(lab.map((l) => l.name))) : null;
+  const tab = makeTab(picked === 'projects' && !projects ? null : picked, bar);
   const pick = (t: MakeTab) => {
     setPicked(t);
     setShown(MAKE_PAGE);
@@ -84,7 +88,7 @@ export function MyBarScreen() {
     query,
     shelfOpen,
     more: { lab: lab.length, preps: preps.length, kit: owned.length },
-    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, tab, shown } : null,
+    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
   });
 
   const jump = (section: Jumpable) => {
@@ -151,7 +155,7 @@ export function MyBarScreen() {
       case 'make-head':
         return (
           <View style={styles.section}>
-            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, one: bar.oneAway.length, two: bar.twoAway.length }} />
+            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} />
           </View>
         );
       case 'drink':
@@ -169,6 +173,8 @@ export function MyBarScreen() {
             style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null}
           />
         );
+      case 'projects':
+        return projects ? <Projects ready={projects.ready} away={projects.away} onKit={toggleKit} onLab={() => setAdding('lab')} /> : null;
       case 'make-empty':
         return <MakeEmpty tab={tab} oneAway={bar.oneAway.length} />;
       case 'make-foot':

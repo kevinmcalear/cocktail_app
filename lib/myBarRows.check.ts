@@ -43,6 +43,12 @@ assert.equal(new Set(ready.map((r) => r.key)).size, ready.length);
 assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'one' } })).slice(3), ['make-head', 'group', 'make-foot']);
 assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'two' } })).slice(3), ['make-head', 'make-empty', 'make-foot']);
 
+// Projects are one row, with no "Show more"; none says so.
+const projects = myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, projects: 12, tab: 'projects' } });
+assert.deepEqual(kinds(projects).slice(3), ['make-head', 'projects', 'make-foot']);
+assert.deepEqual(projects.at(-1), { kind: 'make-foot', key: 'make-foot', more: 0 });
+assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, projects: 0, tab: 'projects' } })).slice(3), ['make-head', 'make-empty', 'make-foot']);
+
 // The tab opens on what you can make, else on what's closest.
 assert.equal(makeTab(null, { canMake: [], oneAway: [], twoAway: [1] }), 'two');
 assert.equal(makeTab(null, { canMake: [], oneAway: [1], twoAway: [1] }), 'one');
