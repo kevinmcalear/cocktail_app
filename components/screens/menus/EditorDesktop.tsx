@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Button, Caption, Field, GlassButton, Headline, useDs } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
@@ -8,14 +8,16 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSaveLayout } from '@/hooks/useMenuMutations';
 import { cannotAdd, filterLibrary, libraryNote } from '@/lib/menuLayout';
-import { menuDateLine, menuReadiness, plural } from '@/lib/menus';
+import { menuDateLine, plural } from '@/lib/menus';
 
 import { LibraryRow } from './AddDrinkSheet';
-import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput } from './EditorParts';
+import { Eyebrow } from '../addDrink/WizardChrome';
+import { EDITOR_STATUS, EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
+import { GuestPreview } from './GuestPreview';
+import { Check, ReadyChecks } from './ReviewParts';
 import { Choice } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
-const STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
 
 /** Desktop: the library to add from, the menu, and its settings side by side. */
 export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
@@ -27,7 +29,7 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={editor.leave} />
         <View style={styles.flex}>
-          <Caption tone="muted">{`Menus › ${STATUS[editor.status]}${editor.changed ? ' · unsaved changes' : ''}`}</Caption>
+          <Caption tone="muted">{`Menus › ${EDITOR_STATUS[editor.status]}${editor.changed ? ' · unsaved changes' : ''}`}</Caption>
           <MenuNameInput editor={editor} />
           <Caption tone="muted">{[menuDateLine(editor.menu, now), plural(editor.layout.sections.reduce((n, s) => n + s.drinks.length, 0), 'drink')].filter(Boolean).join(' · ')}</Caption>
         </View>
@@ -86,14 +88,9 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
   const { venues } = useActiveVenue();
   const saveLayout = useSaveLayout();
   const [layoutSaved, setLayoutSaved] = useState(false);
-  const ready = menuReadiness(editor.layout);
+  // A home menu has no photos to shoot, prices or venue layouts.
+  const home = useHomeMenu(editor);
   const venue = venues.find((v) => v.id === editor.menu.barId);
-  const lines = [
-    ...ready.short.map((s) => `${s.name} needs ${plural(s.needed, 'more drink')}`),
-    ...ready.over.map((s) => `${s.name} has ${plural(s.extra, 'drink')} too many`),
-    ...(ready.needsPhoto.length ? [`${plural(ready.needsPhoto.length, 'drink')} still need${ready.needsPhoto.length === 1 ? 's' : ''} a photo`] : []),
-    ...(ready.noPrice.length ? [`${plural(ready.noPrice.length, 'drink')} with no price`] : []),
-  ];
   const keepLayout = async () => {
     try {
       await saveLayout.mutateAsync({ name: `${editor.layout.name.trim()} layout`, sections: editor.layout.sections });
@@ -102,23 +99,36 @@ function Inspector({ editor }: { editor: LayoutEditor }) {
       setLayoutSaved(false);
     }
   };
+  const { coverUrl } = editor.layout;
+  // The preview card wants room, but the menu in the middle comes first: narrower under 1440.
+  const width = useWindowDimensions().width >= 1440 ? 380 : 320;
   return (
-    <ScrollView style={[styles.side, styles.inspector, { borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
-      <MenuCoverEdit editor={editor} height={128} />
-      <Caption tone="muted">{venue ? `For ${venue.name}` : 'Just yours'}</Caption>
-      <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-      <Headline>Ready to go on?</Headline>
-      {lines.length ? lines.map((l) => <Body key={l} tone="muted">{`! ${l}`}</Body>) : <Body tone="muted">✓ Every section has what it needs.</Body>}
-      <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-      <Headline>Layout</Headline>
-      <Body tone="muted">{`${plural(editor.layout.sections.length, 'section')}. Changes here stay on this menu.`}</Body>
-      <Button
-        label={layoutSaved ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
-        variant="secondary"
-        onPress={keepLayout}
-        disabled={layoutSaved || saveLayout.isPending}
-      />
-      {saveLayout.error ? <Caption tone="accent">{saveLayout.error.message}</Caption> : null}
+    <ScrollView style={[styles.side, styles.inspector, { width, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
+      <GuestPreview editor={editor} venue={venue ?? null} />
+      <View style={styles.checks}>
+        <Eyebrow>{home ? 'Before you share' : 'Before it goes on'}</Eyebrow>
+        <ReadyChecks sections={editor.layout.sections} home={home} />
+        <Check
+          done={!!coverUrl}
+          label={coverUrl ? 'Cover photo' : 'Cover'}
+          note={coverUrl ? (venue ? `For ${venue.name}` : 'Just yours') : 'Drawn from your drinks until you add a photo'}
+          action={<MenuCoverEdit editor={editor} height={96} />}
+        />
+      </View>
+      {home ? null : (
+        <>
+          <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
+          <Headline>Layout</Headline>
+          <Body tone="muted">{`${plural(editor.layout.sections.length, 'section')}. Changes here stay on this menu.`}</Body>
+          <Button
+            label={layoutSaved ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
+            variant="secondary"
+            onPress={keepLayout}
+            disabled={layoutSaved || saveLayout.isPending}
+          />
+          {saveLayout.error ? <Caption tone="accent">{saveLayout.error.message}</Caption> : null}
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -130,7 +140,8 @@ const styles = StyleSheet.create({
   columns: { flex: 1, flexDirection: 'row', minHeight: 0 },
   side: { width: 280, flexGrow: 0, padding: space.lg, gap: space.md, borderRightWidth: StyleSheet.hairlineWidth },
   inspector: { borderRightWidth: 0, borderLeftWidth: StyleSheet.hairlineWidth, padding: 0 },
-  inspectorBody: { padding: space.lg, gap: space.md },
+  inspectorBody: { padding: space.lg, gap: space.xl },
+  checks: { gap: 0 },
   center: { padding: space.xl, gap: space.lg, maxWidth: 760, width: '100%', alignSelf: 'center' },
   rule: { height: StyleSheet.hairlineWidth },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

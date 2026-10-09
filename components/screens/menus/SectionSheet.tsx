@@ -21,13 +21,15 @@ interface SectionSheetProps {
   onClose: () => void;
   onSave: (rule: SectionRule) => void;
   onMove: (by: -1 | 1) => void;
+  /** Paste a list of drinks into this section. */
+  onPaste: () => void;
   onRemove: () => void;
 }
 
 const toCount = (text: string): number | null => (text.trim() === '' ? null : Number(text));
 
 /** A section's name and rules: what it takes and how many. */
-export function SectionSheet({ section, isFirst, isLast, onClose, onSave, onMove, onRemove }: SectionSheetProps) {
+export function SectionSheet({ section, isFirst, isLast, onClose, onSave, onMove, onPaste, onRemove }: SectionSheetProps) {
   const [name, setName] = useState(section.name);
   const [types, setTypes] = useState<SectionDrinkType[]>(section.allowedTypes);
   const [min, setMin] = useState(String(section.minItems));
@@ -68,6 +70,7 @@ export function SectionSheet({ section, isFirst, isLast, onClose, onSave, onMove
         <Button label="Move up" icon="chevron.up" variant="secondary" disabled={isFirst} onPress={() => onMove(-1)} />
         <Button label="Move down" icon="chevron.down" variant="secondary" disabled={isLast} onPress={() => onMove(1)} />
       </View>
+      <Button label="Paste a list into it" icon="doc.text" variant="secondary" onPress={onPaste} style={styles.start} />
       <Button
         label="Remove section"
         icon="trash"
@@ -85,4 +88,5 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   pair: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
+  start: { alignSelf: 'flex-start' },
 });

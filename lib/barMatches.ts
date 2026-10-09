@@ -16,6 +16,9 @@ export interface MatchRow {
   missing2_name?: string | null;
   /** The shelf rows the drink uses. */
   uses?: string[] | null;
+  /** The bar it's from, and its logo: null for catalog drinks (20261010500000). */
+  from_name?: string | null;
+  from_logo?: string | null;
 }
 
 export interface Buy {

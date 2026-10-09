@@ -23,19 +23,22 @@ export function ScreenHeader({ you = true }: { you?: boolean }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
-  // Wide web has the chip, New and You in the sidebar (WebSideNav), so the row
-  // is only space, and every page's title starts at the same height.
-  if (wide && you) return <View style={styles.wide} />;
+  const avatar = (
+    // Home mode has You as a tab; venue mode opens it over the tabs.
+    <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (home ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
+      <CurrentUserAvatar size={32} />
+    </PressableScale>
+  );
+  // Wide web has the chip and New in the sidebar (WebSideNav); the row keeps
+  // only your avatar, at the same height, so every page's title starts level.
+  if (wide && you) return <View style={[styles.wide, styles.wideRow, { paddingHorizontal: gutter }]}>{avatar}</View>;
   return (
     <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       {wide ? <View /> : <VenueSwitcher />}
       <View style={styles.end}>
         {wide ? null : <CreateButton />}
         {you ? (
-          // Home mode has You as a tab; venue mode opens it over the tabs.
-          <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (home ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
-            <CurrentUserAvatar size={32} />
-          </PressableScale>
+          avatar
         ) : (
           <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />
         )}
@@ -47,6 +50,7 @@ export function ScreenHeader({ you = true }: { you?: boolean }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   wide: { height: space.xxl },
+  wideRow: { height: space.xxl + space.md, paddingTop: space.md, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' },
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   avatar: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });
