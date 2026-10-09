@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, DEFAULT_SHARING, personTabs, sharingSummary, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_SHARING, personTabs, sharingSummary, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -112,3 +112,21 @@ assert.deepEqual(
 assert.deepEqual(profileLinks({ instagram: null, website: 'https://www.instagram.com/still.here/' }), [
   { href: 'https://www.instagram.com/still.here/', network: 'instagram' },
 ]);
+
+// profileQueryShows: a write refetches only the profile pages it changed.
+{
+  const page = { id: 'p1', bar_id: 'b1', is_claimed: false };
+  const other = { id: 'p2', bar_id: null, is_claimed: true };
+  assert.equal(profileQueryShows(['profile', { id: 'p1' }, 'u'], page, { id: 'p1' }), true);
+  assert.equal(profileQueryShows(['profile', { handle: 'x' }, 'u'], page, { id: 'p1' }), true, 'opened by handle');
+  assert.equal(profileQueryShows(['profile', { id: 'p2' }, 'u'], other, { id: 'p1' }), false);
+  assert.equal(profileQueryShows(['profile', { id: 'p1' }, 'u'], page, { barId: 'b1' }), true);
+  assert.equal(profileQueryShows(['profile', { id: 'p2' }, 'u'], other, { barId: 'b1' }), false);
+  assert.equal(profileQueryShows(['profile', { id: 'p1' }, 'u'], page, { unclaimed: true }), true);
+  assert.equal(profileQueryShows(['profile', { id: 'p2' }, 'u'], other, { unclaimed: true }), false);
+  assert.equal(profileQueryShows(['profile', { id: 'p1' }, 'u'], null, { id: 'p1' }), false, 'a not-found page waits for its own refetch');
+  assert.equal(profileQueryShows(['profile', 'mine', 'u'], null, { mine: true }), true, 'yours, even before you have one');
+  assert.equal(profileQueryShows(['profile', 'mine', 'u'], { id: 'p1' }, { id: 'p1' }), true);
+  assert.equal(profileQueryShows(['profile', 'mine', 'u'], { id: 'p9' }, { id: 'p1' }), false);
+  assert.equal(profileQueryShows(['profile-awards', 'p1'], page, { id: 'p1' }), false);
+}

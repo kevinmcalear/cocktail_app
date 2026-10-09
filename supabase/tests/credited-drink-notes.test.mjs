@@ -116,8 +116,9 @@ describe("a credited drink's notes live behind the page", () => {
     for (const key of ['locked', 'unclaimed']) {
       assert.deepEqual(await notesFor(users.stranger.client, key), { raw: null, view: null, side: null }, key);
     }
-    // The drink itself still reads: name and credit.
-    const row = await users.stranger.client.from('items').select('name, origin_bar_profile_id').eq('id', ids.items.locked).single();
+    // A Locked page's drink is its team's alone in items
+    // (20261010100000_bar_page_direct_reads.sql); its card still reads: name and credit.
+    const row = await users.stranger.client.from('published_items').select('name, origin_bar_profile_id').eq('id', ids.items.locked).eq('is_reference', false).single();
     assert.ifError(row.error);
     assert.equal(row.data.origin_bar_profile_id, ids.locked);
   });

@@ -53,7 +53,7 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
           hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
           icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />}
           trailing={drafts.length ? <Caption tone="muted">{drafts.length}</Caption> : null}
-          onPress={() => go('/edit-mode')}
+          onPress={() => go('/drafts')}
         />
       </View>
     </MenuSheet>

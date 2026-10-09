@@ -1,6 +1,6 @@
 import { memo, useEffect, useId, type ReactNode } from 'react';
 import { Platform } from 'react-native';
-import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Defs, G, Rect } from 'react-native-svg';
 
 import { GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
@@ -12,7 +12,7 @@ import { useDs } from './theme';
 const AnimatedG = Animated.createAnimatedComponent(G);
 
 type Stage = Extract<SceneEl, { k: 'stage' }>;
-type Move = 'fade' | 'draw' | 'pour' | 'rise' | 'drop' | 'land' | 'fizz';
+type Move = 'fade' | 'draw' | 'spread' | 'rise' | 'drop' | 'land' | 'fizz';
 interface Beat {
   at: number;
   dur: number;
@@ -23,7 +23,7 @@ interface Beat {
 const BEATS: Record<Stage['name'], Beat> = {
   search: { at: 0, dur: 900, move: 'draw' },
   glass: { at: 450, dur: 1200, move: 'draw' },
-  liquid: { at: 1350, dur: 900, move: 'pour' },
+  liquid: { at: 1350, dur: 900, move: 'spread' },
   ice: { at: 2000, dur: 700, move: 'drop' },
   foam: { at: 2250, dur: 600, move: 'rise' },
   fizz: { at: 2450, dur: 400, move: 'fizz' },
@@ -45,7 +45,10 @@ interface StageProps {
 // Native SVG groups take a 6-number matrix; react-native-svg on web reads it from transform.
 const ON_WEB = Platform.OS === 'web';
 
-const easePour = Easing.inOut(Easing.cubic);
+function cubicOut(t: number) {
+  'worklet';
+  return 1 - (1 - t) * (1 - t) * (1 - t);
+}
 /** Eases out past 1 and settles back (Easing.out(Easing.back(s))), written out: Reanimated's test mock has no Easing.back. */
 function backOut(t: number, s: number) {
   'worklet';
@@ -79,8 +82,11 @@ function Layer({ beat, ox, oy, size, t, bubble, children }: LayerProps) {
       case 'draw':
         // Pencil lines carry their own broken dash, so a band is drawn by appearing, not by a dash sweep.
         return { opacity: p };
-      case 'pour':
-        return { opacity: shown(6), ...at2(1, Math.max(0.001, easePour(p)), 0) };
+      case 'spread': {
+        // Out from the middle of the drink to the glass's walls, like a wash taking.
+        const e = Math.max(0.001, cubicOut(p));
+        return { opacity: shown(4), ...at2(e, e, 0) };
+      }
       case 'rise':
         return { opacity: shown(4), ...at2(1, Math.max(0.001, backOut(p, 2.2)), 0) };
       case 'drop':
@@ -129,7 +135,7 @@ function StageLayer({ el, u, ...rest }: Omit<LayerProps, 'beat' | 'ox' | 'oy' | 
   );
 }
 
-const AnimatedScene = memo(function AnimatedScene({ scene, play }: { scene: Scene; play: number }) {
+const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scene: Scene; play: number; delay: number }) {
   const ds = useDs();
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
   const reduceMotion = useReducedMotion();
@@ -142,14 +148,14 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play }: { scene: Scen
       return;
     }
     t.set(0);
-    t.set(withTiming(1, { duration: TOTAL, easing: Easing.linear }));
+    t.set(withDelay(delay, withTiming(1, { duration: TOTAL, easing: Easing.linear })));
     bubble.set(0);
     bubble.set(withSequence(
-      withTiming(0, { duration: BEATS.fizz.at + BEATS.fizz.dur }),
+      withTiming(0, { duration: delay + BEATS.fizz.at + BEATS.fizz.dur }),
       withRepeat(withTiming(1, { duration: BUBBLE_MS, easing: Easing.out(Easing.quad) }), BUBBLE_LOOPS, false),
       withTiming(0, { duration: 0 }),
     ));
-  }, [scene, play, reduceMotion, t, bubble]);
+  }, [scene, play, delay, reduceMotion, t, bubble]);
   return (
     <Svg width="100%" height="100%" viewBox={`0 0 ${scene.size} ${scene.size}`} preserveAspectRatio="xMidYMid meet" style={{ backgroundColor: ds.c.paper }} aria-hidden>
       <Rect x={0} y={0} width={scene.size} height={scene.size} fill={ds.c.paper} />
@@ -166,14 +172,16 @@ export interface AnimatedSketchProps {
   detail?: SketchDetail;
   /** Change it to draw again from a blank page (a tap on the drawing, a new step). */
   play?: number;
+  /** Blank paper this long (ms) before the pencil starts: time for what was there to fade away. */
+  delay?: number;
 }
 
 /**
  * A drink's drawing, made in front of you: the pencil finds the glass, the
- * drink pours in, ice drops, foam rises, the garnish lands and bubbles climb.
+ * drink spreads in, ice drops, foam rises, the garnish lands and bubbles climb.
  * Ends on exactly the still drawing (SketchDrawing). Reduced motion shows it
  * finished. One at a time: a list of these would cost too much.
  */
-export const AnimatedSketch = memo(function AnimatedSketch({ inputs, seed, detail = 'full', play = 0 }: AnimatedSketchProps) {
-  return <AnimatedScene scene={sceneFor(inputs, seed, detail, true)} play={play} />;
+export const AnimatedSketch = memo(function AnimatedSketch({ inputs, seed, detail = 'full', play = 0, delay = 0 }: AnimatedSketchProps) {
+  return <AnimatedScene scene={sceneFor(inputs, seed, detail, true)} play={play} delay={delay} />;
 });

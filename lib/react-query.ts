@@ -6,7 +6,8 @@ import Constants from 'expo-constants';
 import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
-import { createCachePersister, guardStorage, shouldPersistQuery } from '@/lib/queryCachePersist';
+import { createCachePersister, guardStorage, PERSISTED_KEYS, shouldPersistQuery } from '@/lib/queryCachePersist';
+import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 
 // Setup network listener for TanStack Query
 onlineManager.setEventListener((setOnline) => {
@@ -25,10 +26,6 @@ if (Platform.OS !== 'web') {
   });
 }
 
-const HOUR = 1000 * 60 * 60;
-/** How long a saved result is worth showing on launch (and kept in memory unused): a week. */
-const KEEP = HOUR * 24 * 7;
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,10 +34,9 @@ export const queryClient = new QueryClient({
       // retry, and retrying only keeps a blank page up before the not
       // available one.
       retry: (failures, error) => (error as { code?: string } | null)?.code !== 'PGRST116' && failures < 2,
-      refetchOnWindowFocus: true,
-      // As long as the saved cache lasts, or the persister drops what it restored.
-      gcTime: KEEP,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      // 5 minutes fresh, 30 in memory unused, and no refetch on returning to the
+      // app; per-user and live data opt back in by tier (lib/queryDefaults.ts).
+      ...BASE,
     },
     mutations: {
       // Writes aren't idempotent (a retried create can insert twice), so fail
@@ -87,11 +83,10 @@ export const persistOptions = {
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
-// Lists that change rarely (and are refreshed by the writes that change
-// them) stay fresh for an hour, so a restored cache doesn't refetch them all
-// at launch. A hook's own staleTime wins over these.
-for (const key of [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars'], ['my-ranked-ids']]) {
-  queryClient.setQueryDefaults(key, { staleTime: HOUR });
+// Freshness by kind of data (static, catalog, public, yours, live), and a
+// week in memory for whatever is saved between launches. A hook's own options win.
+for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) {
+  queryClient.setQueryDefaults(queryKey, options);
 }
 
 // Register mutation defaults so they can resume offline

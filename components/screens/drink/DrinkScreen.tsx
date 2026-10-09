@@ -82,19 +82,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
   );
 }
 
-/** While the drink loads: the page's own ground, so there's no flash of the old theme. */
-export function DrinkLoading() {
-  return (
-    <BackbarTheme>
-      <LoadingGround />
-    </BackbarTheme>
-  );
-}
-
-function LoadingGround() {
-  const ds = useDs();
-  return <View style={[styles.screen, { backgroundColor: ds.c.ground }]} accessibilityLabel="Loading drink" />;
-}
+export { DrinkLoading } from './DrinkLoading';
 
 function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, preview }: DrinkScreenProps) {
   const ds = useDs();

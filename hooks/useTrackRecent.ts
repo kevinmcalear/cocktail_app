@@ -1,13 +1,7 @@
 import { inSelectedContext } from '@/lib/barContextFilter';
+import { draftHref } from '@/lib/draftList';
 import { RecentActivity, RecentKind, useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useEffect } from 'react';
-
-const DRAFT_ROUTE: Partial<Record<RecentKind, string>> = {
-  cocktail: '/add-cocktail',
-  beer: '/add-beer',
-  wine: '/add-wine',
-  ingredient: '/add-ingredient',
-};
 
 /** Push one recent entry when the entity becomes available. */
 export function useTrackRecent(
@@ -36,18 +30,15 @@ export function recentEntry(
     isDraft?: boolean;
   }
 ): Omit<RecentActivity, 'at'> {
-  const draftRoute = opts?.isDraft ? DRAFT_ROUTE[kind] : undefined;
   const href =
     opts?.href ||
-    (opts?.isDraft && kind === 'menu'
-      ? `/edit-mode?type=menu_draft&id=${encodeURIComponent(id)}`
-      : draftRoute
-        ? `${draftRoute}?draftId=${id}`
-        : kind === 'menu'
-          ? `/menus/${encodeURIComponent(id)}`
-          : kind === 'quiz'
-            ? '/(tabs)/test'
-            : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
+    (opts?.isDraft
+      ? (draftHref({ id, entity_type: kind }) ?? '/drafts')
+      : kind === 'menu'
+        ? `/menus/${encodeURIComponent(id)}`
+        : kind === 'quiz'
+          ? '/(tabs)/test'
+          : `/${kind}/${kind === 'beer' || kind === 'wine' ? `${kind}-${id}` : id}`);
   return {
     id,
     kind,

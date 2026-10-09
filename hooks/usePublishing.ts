@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { changedProfiles } from '@/hooks/useProfiles';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { effectivePublish, type PublishMode, type PublishSource } from '@/lib/publishing';
 import { supabase } from '@/lib/supabase';
@@ -125,7 +126,7 @@ export function useSetPublish(barId: string | null) {
       client.invalidateQueries({ queryKey: ['item-publishing'] });
       client.invalidateQueries({ queryKey: ['bar-publishing'] });
       // The bar's page and its drinks' locks follow the page setting.
-      client.invalidateQueries({ queryKey: ['profile'] });
+      if (barId) client.invalidateQueries(changedProfiles({ barId }));
       client.invalidateQueries({ queryKey: ['spec-lock'] });
     },
   });

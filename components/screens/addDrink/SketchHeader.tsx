@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { AnimatedSketch } from '@/components/ds/AnimatedSketch';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
@@ -11,6 +12,8 @@ import { PaperBand } from './PaperBand';
 
 /** The seed only moves the pencil's wobble; a fixed one keeps the drawing steady while the drink changes. */
 const SEED = 'new-drink';
+/** On review, how long the finished drawing takes to fade before it's drawn again. */
+const FADE_FIRST_MS = 450;
 
 // The last drawing's inputs, so a keystroke that doesn't change the drink
 // hands SketchDrawing the same object (it caches the painted scene by it).
@@ -61,7 +64,9 @@ export function SketchHeader({ draft, step, barVariants, ...band }: SketchHeader
         reviewing ? (
           // A toy, not a control: the band's label already names the drawing.
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setPlay((n) => n + 1)} accessible={false}>
-            <AnimatedSketch inputs={inputs} seed={seed} play={play} />
+            <AnimatedSketch inputs={inputs} seed={seed} play={play} delay={FADE_FIRST_MS} />
+            {/* The finished drawing fades away first, then the pencil starts on blank paper. */}
+            <FadeAway key={`fade-${play}`} inputs={inputs} seed={seed} />
           </Pressable>
         ) : (
           <SketchDrawing inputs={inputs} seed={seed} detail="full" />
@@ -73,3 +78,21 @@ export function SketchHeader({ draft, step, barVariants, ...band }: SketchHeader
     />
   );
 }
+
+/** The finished drawing, fading out once when it mounts; taps pass through to the drawing under it. */
+function FadeAway({ inputs, seed }: { inputs: SketchInputs; seed: string }) {
+  const opacity = useSharedValue(1);
+  useEffect(() => {
+    opacity.set(withTiming(0, { duration: FADE_FIRST_MS }));
+  }, [opacity]);
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, styles.passThrough, fade]}>
+      <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  passThrough: { pointerEvents: 'none' },
+});

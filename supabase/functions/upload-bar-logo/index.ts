@@ -1,23 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
+import { requireUser } from "../_shared/auth.ts";
+import { HttpError, serveJson } from "../_shared/http.ts";
 import { decodableSize } from "../_shared/imageSize.ts";
 
 /** A logo's largest decoded file size: 5 MB, the same as the avatars bucket. */
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-    status,
-  });
-}
 
 function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b].map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, "0")).join("")}`;
@@ -79,99 +67,68 @@ async function extractBrandColors(bytes: Uint8Array): Promise<{ primaryColor: st
   return { primaryColor, secondaryColor };
 }
 
-serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+serveJson("upload-bar-logo", async (req) => {
+  const caller = await requireUser(req);
+
+  const { bar_id, image_base64, extract_only = false } = await req.json().catch(() => ({}));
+  if (typeof bar_id !== "string" || typeof image_base64 !== "string" || !bar_id || !image_base64) {
+    throw new HttpError(400, "bar_id and image_base64 are required");
+  }
+  // Base64 is 4 characters per 3 bytes; refuse before decoding anything.
+  if (image_base64.length > Math.ceil(MAX_LOGO_BYTES / 3) * 4 + 4) {
+    throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
   }
 
+  const { data: membership, error: membershipError } = await caller.userClient
+    .from("user_bars")
+    .select("role_level")
+    .eq("bar_id", bar_id)
+    .eq("user_id", caller.user.id)
+    .maybeSingle();
+
+  // The bars row is visible only while the role is current (an ended
+  // venue role drops it), the same rule update_bar_settings uses.
+  const { data: bar, error: barError } = await caller.userClient.from("bars").select("id").eq("id", bar_id).maybeSingle();
+  if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
+    throw new HttpError(403, "Only the venue's Admins can change its logo.");
+  }
+
+  let binaryStr: string;
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return json({ error: "Missing authorization" }, 401);
-    }
-
-    const { bar_id, image_base64, extract_only = false } = await req.json();
-    if (typeof bar_id !== "string" || typeof image_base64 !== "string" || !bar_id || !image_base64) {
-      return json({ error: "bar_id and image_base64 are required" }, 400);
-    }
-    // Base64 is 4 characters per 3 bytes; refuse before decoding anything.
-    if (image_base64.length > Math.ceil(MAX_LOGO_BYTES / 3) * 4 + 4) {
-      return json({ error: "That logo is too large. Use an image under 5 MB." }, 413);
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: authData, error: authError } = await userClient.auth.getUser();
-    if (authError || !authData.user) {
-      return json({ error: "Unauthorized" }, 401);
-    }
-
-    const { data: membership, error: membershipError } = await userClient
-      .from("user_bars")
-      .select("role_level")
-      .eq("bar_id", bar_id)
-      .eq("user_id", authData.user.id)
-      .maybeSingle();
-
-    // The bars row is visible only while the role is current (an ended
-    // venue role drops it), the same rule update_bar_settings uses.
-    const { data: bar, error: barError } = await userClient.from("bars").select("id").eq("id", bar_id).maybeSingle();
-    if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
-      return json({ error: "Only the venue's Admins can change its logo." }, 403);
-    }
-
-    let binaryStr: string;
-    try {
-      binaryStr = atob(image_base64);
-    } catch {
-      return json({ error: "That logo isn't a readable image." }, 400);
-    }
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
-    }
-    if (bytes.length > MAX_LOGO_BYTES) {
-      return json({ error: "That logo is too large. Use an image under 5 MB." }, 413);
-    }
-    if (!decodableSize(bytes)) {
-      return json({ error: "Use a PNG, JPEG or GIF logo up to 4096 by 4096 pixels." }, 400);
-    }
-
-    const { primaryColor, secondaryColor } = await extractBrandColors(bytes);
-
-    if (extract_only) {
-      return json({ primaryColor, secondaryColor });
-    }
-
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const storageFilePath = `bars/${bar_id}/${Date.now()}.png`;
-
-    const { error: uploadError } = await adminClient.storage.from("drinks").upload(storageFilePath, bytes, {
-      contentType: "image/png",
-      cacheControl: "3600",
-      upsert: true,
-    });
-
-    if (uploadError) {
-      throw new Error(`Failed to upload logo: ${uploadError.message}`);
-    }
-
-    const { data: publicUrlData } = adminClient.storage.from("drinks").getPublicUrl(storageFilePath);
-
-    return json({
-      imageUrl: publicUrlData.publicUrl,
-      primaryColor,
-      secondaryColor,
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error("upload-bar-logo error:", err);
-    return json({ error: message }, 500);
+    binaryStr = atob(image_base64);
+  } catch {
+    throw new HttpError(400, "That logo isn't a readable image.");
   }
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  if (bytes.length > MAX_LOGO_BYTES) {
+    throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
+  }
+  if (!decodableSize(bytes)) {
+    throw new HttpError(400, "Use a PNG, JPEG or GIF logo up to 4096 by 4096 pixels.");
+  }
+
+  const { primaryColor, secondaryColor } = await extractBrandColors(bytes);
+
+  if (extract_only) {
+    return { primaryColor, secondaryColor };
+  }
+
+  // Each upload gets its own path, so it can be cached for a year.
+  const storageFilePath = `bars/${bar_id}/${Date.now()}.png`;
+  const bucket = caller.admin.storage.from("drinks");
+  const { error: uploadError } = await bucket.upload(storageFilePath, bytes, {
+    contentType: "image/png",
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (uploadError) throw uploadError;
+
+  return {
+    imageUrl: bucket.getPublicUrl(storageFilePath).data.publicUrl,
+    primaryColor,
+    secondaryColor,
+  };
 });

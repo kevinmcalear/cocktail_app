@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Switch, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Chip, PressableScale, Surface, useDs, type IconName } from '@/components/ds';
+import { Body, Button, Caption, Chip, PressableScale, Surface, useDs, useGutter, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { backbar, layout, space } from '@/constants/tokens';
@@ -200,7 +201,41 @@ export function SwitchRow({ label, detail, value, onValueChange }: { label: stri
   );
 }
 
+/**
+ * Pinned under a settings page while it has unsaved edits: Discard and Save.
+ * Render it after the page's ScrollView so it stays on screen.
+ */
+export function UnsavedBar({ saving, onDiscard, onSave, canSave = true, maxWidth = 680 }: {
+  saving: boolean;
+  onDiscard: () => void;
+  onSave: () => void;
+  /** False while something on the page needs fixing first. */
+  canSave?: boolean;
+  maxWidth?: number;
+}) {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  return (
+    <View
+      role="region"
+      aria-label="Unsaved changes"
+      style={[styles.saveBar, { backgroundColor: ds.c.surface, borderTopColor: ds.c.line, paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter }]}
+    >
+      <View style={[styles.saveRow, { maxWidth }]}>
+        <Body tone="muted" style={styles.rowText}>
+          Unsaved changes
+        </Body>
+        <Button label="Discard" variant="ghost" disabled={saving} onPress={onDiscard} />
+        <Button label={saving ? 'Saving…' : 'Save'} disabled={saving || !canSave} onPress={onSave} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  saveBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
+  saveRow: { width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: space.sm },
   section: { gap: space.sm },
   sectionTitle: { textTransform: 'uppercase', letterSpacing: 0.8, paddingHorizontal: space.lg },
   note: { paddingHorizontal: space.lg },

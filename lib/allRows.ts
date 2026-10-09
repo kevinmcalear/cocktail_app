@@ -34,3 +34,23 @@ export async function allRows<T>(page: (from: number, to: number) => Page<T>): P
         if ((data ?? []).length < PAGE_ROWS) return rows;
     }
 }
+
+// Intl.Collator compares far faster than localeCompare over a 14,000-row list.
+const names = new Intl.Collator();
+
+/** Name order for a list loaded by id: by name, then id so rows with one name keep a fixed order. */
+export function byName<T extends { id: string; name?: string | null }>(a: T, b: T): number {
+    return names.compare(a.name ?? '', b.name ?? '') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+
+/**
+ * A name-sorted list with one row put in place (or swapped for its new
+ * version), or taken out when `row` is null: how a save updates a loaded
+ * list without downloading it again.
+ */
+export function withRow<T extends { id: string; name?: string | null }>(rows: T[], id: string, row: T | null): T[] {
+    const rest = rows.filter((r) => r.id !== id);
+    if (!row) return rest;
+    const at = rest.findIndex((r) => byName(row, r) < 0);
+    return at < 0 ? [...rest, row] : [...rest.slice(0, at), row, ...rest.slice(at)];
+}

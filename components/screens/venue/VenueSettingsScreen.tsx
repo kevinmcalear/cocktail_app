@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
 import { layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -69,21 +70,7 @@ function VenuePage({ barId }: { barId: string }) {
           <BarInlineEditor barId={barId} embedded onChromeState={setChrome} />
         </View>
       </ScrollView>
-      {dirty && chrome ? (
-        <View
-          role="region"
-          aria-label="Unsaved changes"
-          style={[styles.saveBar, { backgroundColor: ds.c.surface, borderTopColor: ds.c.line, paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter }]}
-        >
-          <View style={styles.saveRow}>
-            <Body tone="muted" style={styles.title}>
-              Unsaved changes
-            </Body>
-            <Button label="Discard" variant="ghost" disabled={chrome.saving} onPress={chrome.cancel} />
-            <Button label={chrome.saving ? 'Saving…' : 'Save'} disabled={chrome.saving} onPress={() => void chrome.save()} />
-          </View>
-        </View>
-      ) : null}
+      {dirty && chrome ? <UnsavedBar saving={chrome.saving} onDiscard={chrome.cancel} onSave={() => void chrome.save()} /> : null}
     </View>
   );
 }
@@ -94,6 +81,4 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.mark, borderWidth: StyleSheet.hairlineWidth },
   title: { flex: 1, gap: 2, minWidth: 0 },
-  saveBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
-  saveRow: { width: '100%', maxWidth: 680, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

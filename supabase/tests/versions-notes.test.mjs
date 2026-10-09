@@ -72,11 +72,19 @@ before(async () => {
   await insert('item_methods', { item_id: ids.drink, method_item_id: ids.stir, sort_order: 0 });
   ids.bourbonLine = (await insert('recipes', { recipe_item_id: ids.drink, ingredient_item_id: ids.bourbon, amount: 60, unit: 'ml', sort_order: 1, at_service: false })).id;
   ids.demeraraLine = (await insert('recipes', { recipe_item_id: ids.drink, ingredient_item_id: ids.demerara, amount: 7.5, unit: 'g', sort_order: 2 })).id;
+  ids.sazerac = (await insert('items', { name: `Sazerac ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+  // A second venue the employee also works at, and one they don't.
+  ids.sisterBar = (await insert('bars', { name: `Sister bar ${run}` })).id;
+  await insert('user_bars', { user_id: users.employee.id, bar_id: ids.sisterBar, role_level: ROLES.employee });
+  ids.sisterDrink = (await insert('items', { name: `Sister drink ${run}`, item_type: 'cocktail', bar_id: ids.sisterBar })).id;
+  ids.otherBar = (await insert('bars', { name: `Other bar ${run}` })).id;
+  await insert('user_bars', { user_id: users.outsider.id, bar_id: ids.otherBar, role_level: ROLES.admin });
+  ids.otherDrink = (await insert('items', { name: `Other drink ${run}`, item_type: 'cocktail', bar_id: ids.otherBar })).id;
 });
 
 after(async () => {
-  for (const id of [ids.drink, ids.bourbon, ids.demerara, ids.saline, ids.stir, ids.shake]) if (id) await service.from('items').delete().eq('id', id);
-  if (ids.bar) await service.from('bars').delete().eq('id', ids.bar);
+  for (const id of [ids.drink, ids.sazerac, ids.sisterDrink, ids.otherDrink, ids.bourbon, ids.demerara, ids.saline, ids.stir, ids.shake]) if (id) await service.from('items').delete().eq('id', id);
+  for (const id of [ids.bar, ids.sisterBar, ids.otherBar]) if (id) await service.from('bars').delete().eq('id', id);
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await db.end();
 });
@@ -195,6 +203,42 @@ describe('item_comments', () => {
     const asAdmin = await users.admin.client.from('item_comments').delete().eq('id', ids.note).select('id');
     assert.ifError(asAdmin.error);
     assert.equal(asAdmin.data.length, 1);
+  });
+
+  test('editing a note changes only its text', async () => {
+    const posted = await users.employee.client.from('item_comments').insert({ item_id: ids.drink, bar_id: ids.bar, body: 'Stir 30 turns.', version: 2 }).select('id').single();
+    assert.ifError(posted.error);
+    const id = posted.data.id;
+    const note = async () => (await service.from('item_comments').select('item_id, bar_id, version, author_name, body').eq('id', id).single()).data;
+
+    const edited = await users.employee.client.from('item_comments').update({ body: 'Stir 40 turns.' }).eq('id', id).select('body').single();
+    assert.ifError(edited.error);
+    assert.equal(edited.data.body, 'Stir 40 turns.', 'the author edits the text');
+
+    const attempts = {
+      'another venue': { bar_id: ids.otherBar, item_id: ids.otherDrink },
+      'another venue they work at': { bar_id: ids.sisterBar, item_id: ids.sisterDrink },
+      'another drink': { item_id: ids.sazerac },
+      'the shown name': { author_name: 'Admin Tester' },
+      'the version': { version: 1 },
+      'the text and the venue together': { body: 'Moved.', bar_id: ids.otherBar, item_id: ids.otherDrink },
+    };
+    for (const [what, change] of Object.entries(attempts)) {
+      const { error } = await users.employee.client.from('item_comments').update(change).eq('id', id);
+      assert.ok(error, `refused: ${what}`);
+    }
+    assert.deepEqual(await note(), { item_id: ids.drink, bar_id: ids.bar, version: 2, author_name: 'Employee Tester', body: 'Stir 40 turns.' });
+
+    const otherAdmin = await users.outsider.client.from('item_comments').select('id').eq('id', id);
+    assert.ifError(otherAdmin.error);
+    assert.equal(otherAdmin.data.length, 0, 'the other venue never sees it');
+
+    // Off the venue, the author can no longer edit it.
+    await service.from('user_bars').delete().eq('user_id', users.employee.id).eq('bar_id', ids.bar);
+    const afterLeaving = await users.employee.client.from('item_comments').update({ body: 'Changed after leaving.' }).eq('id', id).select('id');
+    assert.ok(afterLeaving.error || afterLeaving.data.length === 0);
+    assert.equal((await note()).body, 'Stir 40 turns.');
+    await insert('user_bars', { user_id: users.employee.id, bar_id: ids.bar, role_level: ROLES.employee });
   });
 
   test('a note can be reported', async () => {
