@@ -155,8 +155,8 @@ function You({ inTabs }: { inTabs?: boolean }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // Left, next to the sidebar, like every page (components/nav/Page.tsx); wider than text for the drink grids.
-  body: { gap: space.xl, width: '100%', maxWidth: 960 },
+  // Centred: the profile itself is centred under your avatar. Wider than text for the drink grids.
+  body: { gap: space.xl, width: '100%', maxWidth: 960, alignSelf: 'center' },
   underHeader: { paddingTop: space.lg },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   header: { alignItems: 'center', gap: space.sm },
