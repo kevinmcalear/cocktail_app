@@ -1,6 +1,6 @@
 /**
  * Why a drink is in Discover's search results, from discover_list's
- * match_kind and match_text (supabase/migrations/20261010620000_discover_match.sql):
+ * match_kind and match_text (supabase/migrations/20261010625000_discover_match.sql):
  * its name, the classic it's a version of, an ingredient, its description or
  * its bar's name. Strong matches (name, classic) lead; the rest read as
  * "Also mentions". Also names the best match on its bar's map pin. Pure;
