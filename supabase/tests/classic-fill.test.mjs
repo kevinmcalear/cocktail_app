@@ -1,5 +1,5 @@
 // Specs filled in from a classic, and classic aliases
-// (supabase/migrations/20261010640000_classic_fill.sql): only an app admin
+// (supabase/migrations/20261010930000_classic_fill.sql): only an app admin
 // marks a spec as the classic's, the first edit by someone signed in makes it
 // the drink's own, a filled spec never counts as the bar choosing the classic,
 // and an alias counts as the classic's name. Local stack only:

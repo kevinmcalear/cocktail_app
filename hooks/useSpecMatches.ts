@@ -32,7 +32,7 @@ function idsKey(ids: string[]): string {
 /**
  * Whether each of these bar versions of a classic is the classic itself, a
  * variation (and what it changes) or a riff, as this person sees the spec
- * (public.spec_matches, supabase/migrations/20261010610000_spec_match.sql).
+ * (public.spec_matches, supabase/migrations/20261010900000_spec_match.sql).
  * `key` names the set (a classic's id, a search) for the cache.
  */
 export function useSpecMatches(key: string | undefined, ids: string[]) {
@@ -121,7 +121,7 @@ export function useSetSpecMatch() {
 /**
  * Where a drink's spec came from: its own ('bar'), or filled in from a classic
  * ('classic', spec_from_id) because the bar published none
- * (20261010640000_classic_fill.sql). Null on a server without the column yet.
+ * (20261010930000_classic_fill.sql). Null on a server without the column yet.
  */
 export function useSpecSource(itemId: string | undefined) {
   return useQuery({

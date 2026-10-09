@@ -26,8 +26,8 @@
 -- label ('Varient').
 --
 -- Then the flavour refill Kevin OK'd: every drink whose spec no longer matches
--- its saved flavour profile (the ingredient tree fills 20261010600000 and
--- 20261010630000, and the specs filled here) is queued. With FLAVOR_MODEL=live,
+-- its saved flavour profile (the ingredient tree fills 20261010720000 and
+-- 20261010920000, and the specs filled here) is queued. With FLAVOR_MODEL=live,
 -- ingredients the rules don't know and no cached answer reach the model once
 -- per drink (estimated under $10).
 
