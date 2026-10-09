@@ -100,7 +100,7 @@ export function useIngredient(id?: string | string[]) {
                     unit,
                     preparation_notes,
                     is_optional,
-                    display_ingredient(id, name)
+                    display_ingredient(id, name, ingredient_role)
                 `)
                 .eq('recipe_item_id', ingredientId);
 

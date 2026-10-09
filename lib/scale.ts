@@ -97,10 +97,11 @@ export function shelfLifeLabel(hours: number | null): string | null {
   return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
 }
 
-/** "20 min", "2 h", "24 h drip" (the note wins when there is one). */
+/** "20 min", "2 h", "3 days", "24 h drip" (the note wins when there is one). */
 export function leadTimeLabel(minutes: number | null, note: string | null): string | null {
   if (note) return note;
   if (!minutes) return null;
+  if (minutes >= 2 * 24 * 60 && minutes % (24 * 60) === 0) return `${minutes / (24 * 60)} days`;
   if (minutes % 60 === 0) return `${minutes / 60} h`;
   return `${minutes} min`;
 }
