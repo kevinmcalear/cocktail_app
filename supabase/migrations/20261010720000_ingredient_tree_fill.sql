@@ -9,13 +9,13 @@
 --
 -- Every fold and every bottle here was checked against a real source (the
 -- producer, a major retailer, Difford's Guide or Wikipedia), not memory:
---   * 609 copies fold into a bottle or style we already have, each one
+--   * 610 copies fold into a bottle or style we already have, each one
 --     confirmed as the same product and expression ("Cinzano 1757 Rosso",
 --     "Cinzano 1757 Sweet Vermouth" and "1757 Vermouth di Torino Rosso" are
 --     one bottle; Cinzano Rosso stays separate). 104 of them are bottles the
 --     check found already in the catalog under another spelling. Folded names
 --     stay as aliases, so typing one finds the bottle.
---   * 372 rows take their proper label name, brand first ("Cinzano
+--   * 371 rows take their proper label name, brand first ("Cinzano
 --     Bianco", "Caffè Borghetti", "Elijah Craig Small Batch"); the old name
 --     stays an alias.
 --   * 350 kept bottles get a corrected or more specific style.
@@ -207,7 +207,7 @@ INSERT INTO merge_in VALUES
 ($q$Comoz Blanc$q$, $q$C. Comoz de Chambery$q$),
 ($q$Condesa Clásica$q$, $q$Condesa Clásica Gin$q$),
 ($q$Contratto Aperitivo$q$, $q$Contratto Aperitif$q$),
-($q$Cordusio$q$, $q$Cordusio Aperitivo$q$),
+($q$Cordusio$q$, $q$Bitter Cordusio$q$),
 ($q$Coriander Leaf$q$, $q$Cilantro$q$),
 ($q$Corona$q$, $q$Corona Extra$q$),
 ($q$Creme de Noyeux$q$, $q$Crème de Noyaux$q$),
@@ -638,6 +638,7 @@ INSERT INTO merge_in VALUES
 ($q$Vita Coco$q$, $q$Vita Coconut Water$q$),
 ($q$Wakamomo$q$, $q$Japanese Wakamomo$q$),
 ($q$Warm Spice$q$, $q$Warm Spices$q$),
+($q$Watermelon Red Bull$q$, $q$Red Bull Red Edition$q$),
 ($q$Whiskey Barrel Bitters$q$, $q$Fee Brothers Whiskey Barrel-Aged Bitters$q$),
 ($q$Whiskey barrel-aged bitters$q$, $q$Fee Brothers Whiskey Barrel-Aged Bitters$q$),
 ($q$Whistle Pig Canadian Rye 6y$q$, $q$WhistlePig PiggyBack Rye$q$),
@@ -1022,7 +1023,6 @@ INSERT INTO rename_in VALUES
 ($q$VEP Yellow Chartreuse$q$, $q$Chartreuse V.E.P. Jaune$q$),
 ($q$Vicario Nocino Walnut Liqueur$q$, $q$Vicario Nocino$q$),
 ($q$Volcan XA$q$, $q$Volcán De Mi Tierra X.A$q$),
-($q$Watermelon Red Bull$q$, $q$Red Bull Red Edition$q$),
 ($q$WhistlePig 12 Rye$q$, $q$WhistlePig 12 Year Old World Rye$q$),
 ($q$Wild Idol Na Brut$q$, $q$Wild Idol Brut$q$),
 ($q$Willett Rye 4 Year$q$, $q$Willett Family Estate 4 Year Rye$q$),
@@ -3265,7 +3265,6 @@ INSERT INTO role_in VALUES
 ($q$Watermelon Frozen Margarita$q$, $q$prep$q$),
 ($q$Watermelon Liqueur$q$, $q$generic$q$),
 ($q$Watermelon Radish$q$, $q$generic$q$),
-($q$Watermelon Red Bull$q$, $q$product$q$),
 ($q$Watermelon Rind Brine$q$, $q$prep$q$),
 ($q$Watermelon Shrub$q$, $q$prep$q$),
 ($q$Wattle Seed Bitters$q$, $q$generic$q$),
@@ -5552,7 +5551,6 @@ INSERT INTO parent_in VALUES
 ($q$Watermelon Champagne Cordial$q$, $q$Cordial$q$),
 ($q$Watermelon Liqueur$q$, $q$Melon Liqueur$q$),
 ($q$Watermelon Radish$q$, $q$Garden Vegetables$q$),
-($q$Watermelon Red Bull$q$, $q$Energy Drink$q$),
 ($q$Watermelon Rind Brine$q$, $q$Brine$q$),
 ($q$Watermelon Shrub$q$, $q$Shrub$q$),
 ($q$Wattle Seed Bitters$q$, $q$Bitters$q$),
@@ -6006,6 +6004,7 @@ INSERT INTO made_from_in VALUES
 ($q$Butter-Washed Malibu$q$, $q$Malibu$q$),
 ($q$Cacao Nib and Tonka Bean-Infused Ketel One$q$, $q$Ketel One Vodka$q$),
 ($q$Cacao Nib-Infused Lalo Tequila Blanco$q$, $q$LALO Blanco Tequila$q$),
+($q$Cacao Nib-Smoked Cinzano Rosso$q$, $q$Cinzano Rosso Vermouth$q$),
 ($q$Cacao-Infused Lillet Blanc$q$, $q$Lillet Blanc$q$),
 ($q$Campari Candied Pepper$q$, $q$Campari$q$),
 ($q$Campari Crystals$q$, $q$Campari$q$),
