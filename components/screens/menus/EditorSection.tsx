@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Caption, DrinkImage, DsText, Headline, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
@@ -39,9 +39,6 @@ const GRIP = 28;
 /** One section being edited: its rule, its drinks in order (drag to reorder), and adding more. */
 export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onSettings, home, onRemove, onReorder, onMove }: EditorSectionProps) {
   const ds = useDs();
-  // Web from tablet width up: buttons to move a drink, for keyboards and mice.
-  const breakpoint = useBreakpoint();
-  const moveButtons = Platform.OS === 'web' && breakpoint !== 'phone';
   const count = section.drinks.length;
   const short = section.minItems - count;
   const over = section.maxItems !== null ? count - section.maxItems : 0;
@@ -50,15 +47,24 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onS
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<MenuDrink>) => {
     const i = getIndex() ?? 0;
     const s = status(item, home);
+    // Keyboard (web): the focused grip moves its drink with the arrow keys.
+    const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
+      const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
+      if (to === null) return;
+      e.preventDefault();
+      if (to >= 0 && to < count) onMove(i, to);
+    };
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
         <PressableScale
           accessibilityLabel={`Reorder ${item.name}`}
-          accessibilityHint="Drag, or use the actions to move it up or down"
+          accessibilityHint={Platform.OS === 'web' ? 'Drag, or press the up and down arrow keys, to move it' : 'Drag, or use the actions to move it up or down'}
           accessibilityActions={[{ name: 'moveUp', label: 'Move up' }, { name: 'moveDown', label: 'Move down' }]}
           onAccessibilityAction={(e) => onMove(i, e.nativeEvent.actionName === 'moveUp' ? i - 1 : i + 1)}
           onLongPress={Platform.OS === 'web' ? undefined : drag}
           onPressIn={Platform.OS === 'web' ? drag : undefined}
+          // @ts-expect-error onKeyDown is web-only (react-native-web)
+          onKeyDown={onKeyDown}
           disabled={isActive}
           style={[styles.grip, dragGripStyle]}
         >
@@ -73,16 +79,6 @@ export function EditorSection({ section, targeted, onTarget, onAdd, onPaste, onS
             {s.text}
           </Caption>
         </View>
-        {moveButtons ? (
-          <>
-            <PressableScale accessibilityLabel={`Move ${item.name} up`} aria-disabled={i === 0} disabled={i === 0} onPress={() => onMove(i, i - 1)} style={[styles.icon, i === 0 && styles.off]}>
-              <IconSymbol name="chevron.up" size={16} color={ds.c.muted} />
-            </PressableScale>
-            <PressableScale accessibilityLabel={`Move ${item.name} down`} aria-disabled={i === count - 1} disabled={i === count - 1} onPress={() => onMove(i, i + 1)} style={[styles.icon, i === count - 1 && styles.off]}>
-              <IconSymbol name="chevron.down" size={16} color={ds.c.muted} />
-            </PressableScale>
-          </>
-        ) : null}
         <PressableScale accessibilityLabel={`Remove ${item.name}`} onPress={() => onRemove(item.id)} style={styles.icon}>
           <IconSymbol name="xmark" size={16} color={ds.c.muted} />
         </PressableScale>
@@ -139,7 +135,6 @@ const styles = StyleSheet.create({
   thumb: { width: 44 },
   flex: { flex: 1, gap: 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  off: { opacity: 0.3 },
   add: { marginTop: space.sm, minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   paste: { minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });
