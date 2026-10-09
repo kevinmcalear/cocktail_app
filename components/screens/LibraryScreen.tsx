@@ -135,7 +135,7 @@ export function LibraryScreen() {
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <PageHeader title="Library" />
+      <PageHeader title="Library" width="full" />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow label="Show" gutter={gutter}>
