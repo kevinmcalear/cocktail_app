@@ -67,7 +67,7 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <View style={styles.avoider} pointerEvents="box-none">
         <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Caption tone="muted">Strength</Caption>
             <Title>{name}</Title>
             <View>
@@ -120,8 +120,11 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
 
 const styles = StyleSheet.create({
   scrim: { flex: 1, justifyContent: 'flex-end' },
-  avoider: { width: '100%', maxWidth: 560, alignSelf: 'center' },
-  sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', maxHeight: '90%' },
+  // The height cap sits on the wrapper: a percentage on the sheet resolves against
+  // the content-sized wrapper and leaves a gap under a tall sheet.
+  avoider: { width: '100%', maxWidth: 560, maxHeight: '90%', alignSelf: 'center' },
+  sheet: { flexShrink: 1, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
+  scroll: { flexShrink: 1 },
   body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   name: { flex: 1 },
