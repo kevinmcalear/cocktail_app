@@ -20,6 +20,7 @@ jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: mockProf
 jest.mock('@/hooks/useProfiles', () => ({ useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet' }], isLoading: false }) }));
 jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }), useItemFlavors: () => ({ data: {} }) }));
 jest.mock('@/hooks/useRankings', () => ({ useMyHadDrinks: () => ({ data: mockHad, isLoading: false, error: null }) }));
+jest.mock('@/hooks/useSpecMatches', () => ({ useSpecMatches: () => ({ data: undefined }) }));
 
 const rye = { id: 'v1', handle: 'little.rye', name: 'Little Rye', avatarUrl: null, place: 'Fitzroy, Melbourne' };
 const drink = (id: string, name: string, score: number, over: Partial<HadDrink> = {}): HadDrink => ({
