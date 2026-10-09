@@ -14,9 +14,11 @@ import type { MenuDetail } from '@/types/menus';
 import { AddDrinkSheet } from './AddDrinkSheet';
 import { PasteMenuSheet } from './PasteMenuSheet';
 import { EditorDesktop } from './EditorDesktop';
-import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput } from './EditorParts';
+import { EditorActions, EditorSections } from './EditorParts';
 import { GoLiveSheet } from './GoLiveSheet';
+import { PaperLip, PhoneBand } from './PhoneBand';
 import { SectionSheet } from './SectionSheet';
+import { ShareMenuSheet } from './ShareMenuSheet';
 import { useLayoutEditor, type LayoutEditor } from './useLayoutEditor';
 
 /**
@@ -67,15 +69,14 @@ function EditorPhone({ editor }: { editor: LayoutEditor }) {
   const [barHeight, setBarHeight] = useState(96);
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FormScrollContainer contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingHorizontal: gutter, paddingBottom: barHeight + space.xl, gap: space.md }}>
-        <View style={styles.top}>
-          <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={editor.leave} />
+      <FormScrollContainer contentContainerStyle={{ paddingBottom: barHeight + space.xl, gap: space.lg }}>
+        <PhoneBand editor={editor} />
+        <View style={{ paddingHorizontal: gutter, gap: space.md }}>
+          {editor.error ? <Body tone="accent">{editor.error}</Body> : null}
+          <EditorSections editor={editor} />
         </View>
-        <MenuCoverEdit editor={editor} height={112} />
-        <MenuNameInput editor={editor} />
-        {editor.error ? <Body tone="accent">{editor.error}</Body> : null}
-        <EditorSections editor={editor} />
       </FormScrollContainer>
+      <PaperLip />
       <View
         onLayout={(e) => setBarHeight(e.nativeEvent.layout.height)}
         style={[styles.bar, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}
@@ -88,7 +89,7 @@ function EditorPhone({ editor }: { editor: LayoutEditor }) {
 
 function EditorSheets({ editor }: { editor: LayoutEditor }) {
   const { sheet } = editor;
-  const section = sheet && sheet.kind !== 'golive' ? editor.section(sheet.key) : null;
+  const section = sheet && sheet.kind !== 'golive' && sheet.kind !== 'share' ? editor.section(sheet.key) : null;
   const index = section ? editor.layout.sections.indexOf(section) : -1;
   return (
     <>
@@ -123,11 +124,24 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
           onRemove={() => editor.removeSection(section.key)}
         />
       ) : null}
+      {sheet?.kind === 'share' ? (
+        <ShareMenuSheet
+          menu={{ ...editor.menu, name: editor.layout.name, coverUrl: editor.layout.coverUrl, coverPosition: editor.layout.coverPosition, sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })) }}
+          onClose={() => editor.setSheet(null)}
+        />
+      ) : null}
       {sheet?.kind === 'golive' ? (
         <GoLiveSheet
           visible
           onClose={() => editor.setSheet(null)}
-          menu={{ id: editor.menu.id, name: editor.layout.name, barId: editor.menu.barId, sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })) }}
+          menu={{
+            id: editor.menu.id,
+            name: editor.layout.name,
+            barId: editor.menu.barId,
+            coverUrl: editor.layout.coverUrl,
+            coverPosition: editor.layout.coverPosition,
+            sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })),
+          }}
           others={editor.others}
           onDone={editor.done}
         />
@@ -139,6 +153,5 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   message: { gap: space.lg },
-  top: { flexDirection: 'row', alignItems: 'center' },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
 });
