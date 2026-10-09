@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, sheetFrame, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useSaveItemPrep, type PrepCardData } from '@/hooks/usePrepCard';
 import { PREP_ACTIONS } from '@/lib/scale';
@@ -93,8 +93,8 @@ export function PrepEditSheet({ visible, onClose, itemId, itemName, current }: P
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.avoider}>
-          <Pressable style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
+        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.avoider, sheetFrame.scrim]}>
+          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <Title>Prep card</Title>
               <Body tone="muted">{itemName}. What one batch of the recipe makes.</Body>

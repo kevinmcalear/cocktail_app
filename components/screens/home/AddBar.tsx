@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, sheetFrame, Title, useDs } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
 import { DuplicateVenueError, useAddressSearch, useAddVenue, type AddedVenue } from '@/hooks/useDiscover';
 import { ADDRESS_MIN_CHARS, type VenueAddress } from '@/lib/nearMe';
@@ -109,8 +109,8 @@ export function AddBarSheet({ onClose, onAdded, onOpenExisting }: { onClose: () 
   const insets = useSafeAreaInsets();
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <Pressable role="dialog" aria-label="Add a bar" style={[styles.sheet, { backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
+      <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+        <Pressable role="dialog" aria-label="Add a bar" style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
             <View style={styles.close}>
               <GlassButton accessibilityLabel="Close" icon="xmark" onPress={onClose} />
