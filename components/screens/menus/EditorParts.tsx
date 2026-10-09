@@ -1,6 +1,7 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, GlassButton, useDs } from '@/components/ds';
+import { Button, Caption, GlassButton, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
 import { useMode } from '@/hooks/useMode';
 
@@ -45,21 +46,32 @@ export function useHomeMenu(editor: LayoutEditor): boolean {
   return useMode().mode === 'home' && !editor.menu.barId;
 }
 
-/** Save and Go live, or just Save for a menu that's already on (or a home menu, which has its own night). */
+/**
+ * Save and Go live, or just Save for a menu that's already on (or a home
+ * menu, which has its own night). With nothing to save, Save gives way to a
+ * quiet "Saved", so the accent only marks something to do.
+ */
 export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; size?: 'md' | 'lg' }) {
+  const ds = useDs();
   const home = useHomeMenu(editor);
   const on = editor.status === 'on' || home;
-  const saveLabel = editor.saving ? 'Saving…' : editor.changed ? (on ? 'Save changes' : 'Save draft') : 'Saved';
   return (
     <View style={styles.actions}>
-      <Button
-        label={saveLabel}
-        size={size}
-        variant={on ? 'primary' : 'secondary'}
-        onPress={editor.persist}
-        disabled={editor.saving || !editor.changed}
-        style={styles.flex}
-      />
+      {editor.changed || editor.saving ? (
+        <Button
+          label={editor.saving ? 'Saving…' : on ? 'Save changes' : 'Save draft'}
+          size={size}
+          variant={on ? 'primary' : 'secondary'}
+          onPress={editor.persist}
+          disabled={editor.saving}
+          style={styles.flex}
+        />
+      ) : (
+        <View style={[styles.flex, styles.saved]} aria-live="polite">
+          <IconSymbol name="checkmark" size={14} color={ds.c.muted} />
+          <Caption tone="muted">Saved</Caption>
+        </View>
+      )}
       {on ? null : (
         <Button label={editor.status === 'upcoming' ? 'Change date…' : 'Go live…'} size={size} onPress={editor.goLive} disabled={editor.saving} style={styles.flex} />
       )}
@@ -79,7 +91,6 @@ export function EditorSections({ editor, targetable }: { editor: LayoutEditor; t
           targeted={targetable && editor.targetKey === s.key}
           onTarget={targetable ? () => editor.setTargetKey(s.key) : undefined}
           onAdd={() => editor.setSheet({ kind: 'add', key: s.key })}
-          onPaste={() => editor.setSheet({ kind: 'paste', key: s.key })}
           onSettings={() => editor.setSheet({ kind: 'section', key: s.key })}
           home={home}
           onRemove={(id) => editor.remove(s.key, id)}
@@ -100,5 +111,6 @@ const styles = StyleSheet.create({
   sections: { gap: space.lg },
   addSection: { alignSelf: 'flex-start' },
   actions: { flexDirection: 'row', gap: space.sm },
+  saved: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minHeight: 44 },
   flex: { flex: 1 },
 });

@@ -59,6 +59,23 @@ export function menuDateLine(menu: Dated, now: number, locale?: string): string 
 }
 
 /** The price as the venue typed it, or null when there isn't one. */
+/**
+ * A cocktail's line on a menu: its ingredients in spec order, each once. A
+ * spec that lists an ingredient twice (cream for the drink and for the float)
+ * would otherwise read "Heavy Cream, Heavy Cream".
+ */
+export function ingredientLine(names: (string | null | undefined)[]): string {
+  const seen = new Set<string>();
+  const kept: string[] = [];
+  for (const raw of names) {
+    const name = raw?.trim();
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    kept.push(name);
+  }
+  return kept.join(', ');
+}
+
 export function formatPrice(price: string | null | undefined): string | null {
   const p = price?.trim();
   return p ? p : null;

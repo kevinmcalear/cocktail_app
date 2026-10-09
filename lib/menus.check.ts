@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { groupMenus, homeMenuLine, homeNight, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
+import { groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -112,3 +112,7 @@ assert.ok('error' in homeNight({ when: 'none', date: '', guests: '2.5' }, at));
 assert.ok('error' in homeNight({ when: 'none', date: '', guests: '501' }, at));
 
 console.log('menus: ok');
+
+// --- a cocktail's menu line: spec order, each ingredient once ---
+assert.equal(ingredientLine(['Fernet-Branca', 'Heavy Cream', 'Coffee Liqueur', 'heavy cream ', null, '']), 'Fernet-Branca, Heavy Cream, Coffee Liqueur');
+assert.equal(ingredientLine([]), '');

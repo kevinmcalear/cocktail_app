@@ -19,7 +19,7 @@ const section: EditSection = { key: 's1', id: 's1', name: 'Drinks', minItems: 0,
 async function renderSection() {
   const onMove = jest.fn();
   await renderWithTamagui(
-    <EditorSection section={section} onAdd={jest.fn()} onPaste={jest.fn()} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={onMove} />
+    <EditorSection section={section} onAdd={jest.fn()} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={onMove} />
   );
   return onMove;
 }
