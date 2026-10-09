@@ -3,7 +3,7 @@
 // "Citrus"). The first name a rule matches wins, so "Lime Cordial" is a
 // corked bottle and "Lime Juice" a cut lime. Same ingredient, same drawing.
 
-import { PANTRY } from '@/constants/pantry';
+import { PANTRY } from '../../constants/pantry';
 
 import type { BottleInputs, BottleShapeKey } from './bottle';
 import type { Grain, ProduceInputs } from './produce';
