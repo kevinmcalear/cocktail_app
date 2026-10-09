@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
-import { groupLabel, PER_GROUP } from '@/lib/searchScope';
+import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 const THUMB = 56;
 
@@ -80,18 +80,19 @@ interface ResultGroupProps<T> {
   render: (item: T) => ReactNode;
 }
 
-/** "Drinks · 12": the first few, then the rest behind "All 12". Nothing when empty. */
+/** "Drinks · 12": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
 export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
-  const [all, setAll] = useState(false);
+  const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
-  const shown = all ? items : items.slice(0, PER_GROUP);
+  const shown = items.slice(0, count);
+  const more = moreLabel(items.length, shown.length);
   return (
     <View style={styles.group}>
       <Caption tone="muted" role="heading">
         {groupLabel(label, items.length)}
       </Caption>
       <View role="list">{shown.map(render)}</View>
-      {items.length > shown.length ? <Button label={`All ${items.length}`} variant="ghost" onPress={() => setAll(true)} style={styles.more} /> : null}
+      {more ? <Button label={more} variant="ghost" onPress={() => setCount(moreCount(items.length, shown.length))} style={styles.more} /> : null}
     </View>
   );
 }

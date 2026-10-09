@@ -31,7 +31,7 @@ export function LibraryRow({ drink, note, added, onAdd }: { drink: MenuDrink; no
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <View style={styles.thumb}>
-        <DrinkImage thumb source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
+        <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
       </View>
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{drink.name}</Headline>

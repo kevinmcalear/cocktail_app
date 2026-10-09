@@ -75,6 +75,7 @@
     "posthog-react-native": "^4.77.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-freeze": "^1.0.4",
     "react-native": "0.88.0-rc.3",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~3.2.1",

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Caption, Display, Headline, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
@@ -29,40 +29,42 @@ export function CollectionScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}>
-        <View style={styles.content}>
-          <ScreenHeaderSpacer />
-          <Display>Collection</Display>
-          <CollectionMenus canMakeIds={bar.canMakeIds} />
-          <CollectionCollected />
-          {hearted.length ? (
-            <View style={styles.section}>
-              <Headline role="heading">Hearted</Headline>
-              <Caption tone="muted">{`${hearted.length} saved with the heart on a drink page`}</Caption>
-              <View role="list">
-                {hearted.map((item) => (
-                  <View role="listitem" key={item.id}>
-                    <DrinkRow
-                      name={item.name}
-                      href={itemHref('Cocktail', item.id)}
-                      itemId={item.id}
-                      imageUrl={item.imageUrl}
-                      glass={item.glass}
-                      caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
-                    />
-                  </View>
-                ))}
+      {/* The hearted drinks are the list, so a long one only mounts what's on screen. */}
+      <FlatList
+        data={hearted}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <View style={styles.content}>
+            <ScreenHeaderSpacer />
+            <Display>Collection</Display>
+            <CollectionMenus canMakeIds={bar.canMakeIds} />
+            <CollectionCollected />
+            {hearted.length ? (
+              <View style={styles.section}>
+                <Headline role="heading">Hearted</Headline>
+                <Caption tone="muted">{`${hearted.length} saved with the heart on a drink page`}</Caption>
               </View>
-            </View>
-          ) : null}
-        </View>
-      </ScrollView>
+            ) : null}
+          </View>
+        }
+        renderItem={({ item }) => (
+          <DrinkRow
+            name={item.name}
+            href={itemHref('Cocktail', item.id)}
+            itemId={item.id}
+            imageUrl={item.imageUrl}
+            glass={item.glass}
+            caption={bar.canMakeIds.has(item.id) ? 'You can make this' : undefined}
+          />
+        )}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom + space.lg, maxWidth: 760, width: '100%' }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: space.xl, paddingBottom: space.lg },
-  section: { gap: space.xs },
+  content: { gap: space.xl },
+  section: { gap: space.xs, paddingBottom: space.xs },
 });

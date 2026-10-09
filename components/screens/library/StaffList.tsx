@@ -16,6 +16,8 @@ import { StaffRow } from './StaffRow';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const NO_PICKS: StaffPick[] = [];
+/** Rows in the first paint: a phone screen under the header. */
+const FIRST_PAINT = 12;
 
 /**
  * The staff list in Library: the drinks every new hire should know, ranked to
@@ -147,8 +149,11 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
       // The list's wrapper must fill the screen, or on web it grows to its
       // content and the screen clips it, so it never scrolls.
       containerStyle={styles.fill}
-      // Fifty rows at most: render them all, so a drag never lands on an unrendered row.
-      initialNumToRender={STAFF_LIST_MAX}
+      // Fifty rows at most. The first screen paints, the rest mount in one batch
+      // right after, and the default window (21 screens) keeps all fifty mounted,
+      // so a drag never lands on an unrendered row.
+      initialNumToRender={FIRST_PAINT}
+      maxToRenderPerBatch={STAFF_LIST_MAX}
       activationDistance={10}
     />
   );
