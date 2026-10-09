@@ -12,7 +12,7 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { stageBringInFiles } from '@/lib/bringInHandoff';
 import type { ReadFile } from '@/lib/readAnything';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
 import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
@@ -66,8 +66,7 @@ export function OnboardingScreen() {
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
-  const setSelectedContextIds = useAppStore((s) => s.setSelectedContextIds);
-  const markContextDefaultApplied = useAppStore((s) => s.markContextDefaultApplied);
+  const enterVenue = useAppMode((s) => s.enterVenue);
   const [chosen, setStep] = useState<OnboardingStep | null>(null);
   const [joined, setJoined] = useState<MyInvite | null>(null);
   const [passwordSaved, setPasswordSaved] = useState(false);
@@ -176,8 +175,7 @@ export function OnboardingScreen() {
         invite={invite}
         onJoined={() => {
           setJoined(invite);
-          setSelectedContextIds([invite.bar_id]);
-          markContextDefaultApplied();
+          enterVenue(invite.bar_id);
           setStep('name');
         }}
         onDeclined={() => setStep('name')}

@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Button, Caption, EquipmentDrawing, EquipmentThumb, GlassButton, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Caption, Chip, EquipmentDrawing, EquipmentThumb, GlassButton, Headline, IngredientDrawing, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
@@ -10,11 +10,11 @@ import { madeLine, SECTIONS, type BarSection } from '@/lib/barSections';
 import { itemHref } from '@/lib/itemRoutes';
 import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
 
-import { BarTile, TileGrid } from './BarTile';
+import { AddTile, BarTile, TileGrid } from './BarTile';
 
 export type Jumpable = BarSection | 'kit';
 
-/** A section's title and count, with its actions on the right (Edit, Add, a sort). */
+/** A section's title and count, with its actions on the right (a sort, Edit), icons all. */
 export function SectionHead({ section, count, children }: { section: Jumpable; count?: number; children?: ReactNode }) {
   return (
     <View style={styles.head}>
@@ -29,29 +29,40 @@ export function SectionHead({ section, count, children }: { section: Jumpable; c
   );
 }
 
-/** Edit (tap a tile to take it off) while there's something to take off, and Add. */
-export function SectionActions({ section, editing, onEdit, onAdd, canEdit }: { section: Jumpable; editing: boolean; onEdit: (on: boolean) => void; onAdd: () => void; canEdit: boolean }) {
+/**
+ * Edit, while there's something to take off: a pencil, then a tinted check
+ * for Done (the iOS 26 confirm button). Icons only, like the sort beside it;
+ * adding is the Add tile in the grid. A long press on a tile edits too.
+ */
+export function SectionActions({ section, editing, onEdit, canEdit }: { section: Jumpable; editing: boolean; onEdit: (on: boolean) => void; canEdit: boolean }) {
+  const ds = useDs();
   const title = SECTIONS[section].title;
-  return (
-    <>
-      {canEdit ? <Button label={editing ? 'Done' : 'Edit'} variant="ghost" accessibilityLabel={editing ? `Done editing ${title}` : `Edit ${title}`} onPress={() => onEdit(!editing)} /> : null}
-      {editing ? null : <GlassButton icon="plus" accessibilityLabel={`Add to ${title}`} onPress={onAdd} />}
-    </>
-  );
+  if (!canEdit) return null;
+  return <GlassButton icon={editing ? 'checkmark' : 'pencil'} color={editing ? ds.accentText : undefined} accessibilityLabel={editing ? `Done editing ${title}` : `Edit ${title}`} onPress={() => onEdit(!editing)} />;
 }
 
-/** Shortcuts down a long My Bar: each section with how much is in it. */
-export function SectionJump({ counts, onJump }: { counts: [Jumpable, number][]; onJump: (section: Jumpable) => void }) {
-  const ds = useDs();
-  return (
-    <View role="navigation" accessibilityLabel="Sections" style={styles.jump}>
-      {counts.map(([section, n]) => (
-        <PressableScale key={section} role="link" accessibilityLabel={`${SECTIONS[section].title}, ${n}`} onPress={() => onJump(section)} style={[styles.jumpLink, { backgroundColor: ds.c.surface }]}>
-          <Caption>{section === 'fridge' ? 'Fridge' : SECTIONS[section].title}</Caption>
-          <Caption tone="muted">{n}</Caption>
-        </PressableScale>
+/**
+ * The sections as filter chips with their counts: All, then each section.
+ * The same row on My Bar and in Add to your bar. `multi` (My Bar): a tap shows
+ * that section alone, more taps add sections, All shows everything. Otherwise
+ * one is picked at a time. `bleed`: the page gutter, so the row scrolls edge to edge.
+ */
+export function SectionChips({ sections, counts, picked, onPick, multi, bleed = 0 }: { sections: readonly Jumpable[]; counts: Partial<Record<Jumpable, number>>; picked: readonly Jumpable[]; onPick: (section: Jumpable | 'all') => void; multi?: boolean; bleed?: number }) {
+  const phone = useBreakpoint() === 'phone';
+  const chips = (
+    <View role={multi ? 'group' : 'radiogroup'} accessibilityLabel="Sections" style={[styles.chips, phone ? null : styles.wrap]}>
+      <Chip label="All" selected={!picked.length} multi={multi} onPress={() => onPick('all')} />
+      {sections.map((section) => (
+        <Chip key={section} label={SECTIONS[section].short} count={counts[section]} selected={picked.includes(section)} multi={multi} onPress={() => onPick(section)} />
       ))}
     </View>
+  );
+  // A phone scrolls the row sideways; with a mouse that's hard to find, so wider screens wrap.
+  if (!phone) return chips;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.chipsScroll, { marginHorizontal: -bleed }]} contentContainerStyle={[styles.chips, { paddingHorizontal: bleed }]}>
+      {chips}
+    </ScrollView>
   );
 }
 
@@ -59,9 +70,10 @@ export const usedLine = (uses: number) => (uses ? `In ${uses} ${uses === 1 ? 'dr
 
 /**
  * A shelf item's tile: opens it, or while editing takes it off on a tap.
- * Memo-free on purpose: a section re-renders as a whole when the shelf changes.
+ * A long press starts editing (`onHold`). Memo-free on purpose: a section
+ * re-renders as a whole when the shelf changes.
  */
-export function ShelfTile({ item, meta, editing, onRemove }: { item: ShelfItem; meta?: string | null; editing: boolean; onRemove: (id: string) => void }) {
+export function ShelfTile({ item, meta, editing, onRemove, onHold }: { item: ShelfItem; meta?: string | null; editing: boolean; onRemove: (id: string) => void; onHold?: () => void }) {
   const router = useRouter();
   const line = meta === undefined ? usedLine(item.uses) : meta;
   return (
@@ -74,6 +86,8 @@ export function ShelfTile({ item, meta, editing, onRemove }: { item: ShelfItem; 
       accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}
       badge={editing ? 'remove' : null}
       onPress={() => (editing ? onRemove(item.id) : router.push(itemHref('Ingredient', item.id) as never))}
+      // Kept while editing: the release that ends the long press must not count as a tap on the remove action it just revealed.
+      onLongPress={onHold}
     />
   );
 }
@@ -93,11 +107,12 @@ export function LabSection({ items, cols, editing, onEdit, onAdd, onRemove, styl
   return (
     <View style={[styles.section, style]}>
       <SectionHead section="lab" count={items.length}>
-        <SectionActions section="lab" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={items.length > 0} />
+        <SectionActions section="lab" editing={editing} onEdit={onEdit} canEdit={items.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
+        {editing ? null : <AddTile label={SECTIONS.lab.add} onPress={onAdd} />}
         {items.map((item) => (
-          <ShelfTile key={item.id} item={item} editing={editing} onRemove={onRemove} />
+          <ShelfTile key={item.id} item={item} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
         ))}
       </TileGrid>
     </View>
@@ -109,11 +124,12 @@ export function PrepsSection({ items, cols, editing, onEdit, onAdd, onRemove, st
   return (
     <View style={[styles.section, style]}>
       <SectionHead section="preps" count={items.length}>
-        <SectionActions section="preps" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={items.length > 0} />
+        <SectionActions section="preps" editing={editing} onEdit={onEdit} canEdit={items.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
+        {editing ? null : <AddTile label={SECTIONS.preps.add} onPress={onAdd} />}
         {items.map((item) => (
-          <ShelfTile key={item.id} item={item} meta={madeLine(item.addedAt) ?? usedLine(item.uses)} editing={editing} onRemove={onRemove} />
+          <ShelfTile key={item.id} item={item} meta={madeLine(item.addedAt) ?? usedLine(item.uses)} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
         ))}
       </TileGrid>
     </View>
@@ -128,15 +144,16 @@ const kindName = (kind: string) => EQUIPMENT_KINDS.find((k) => k.id === kind)?.n
 export function KitSection({ owned, cols, editing, onEdit, onToggle, onAdd, style }: { owned: readonly string[]; cols: number; editing: boolean; onEdit: (on: boolean) => void; onToggle: (id: string) => void; onAdd: () => void; style?: StyleProp<ViewStyle> }) {
   const router = useRouter();
   const kit = owned.flatMap((id) => equipmentById(id) ?? []);
-  // Enough faded suggestions to finish the row, and never more than one row.
-  const room = editing ? 0 : (cols - (kit.length % cols)) % cols || (kit.length ? 0 : cols);
+  // Enough faded suggestions to finish the row (after the Add tile), and never more than one row.
+  const room = editing ? 0 : (cols - ((kit.length + 1) % cols)) % cols;
   const ideas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).slice(0, room).flatMap((id) => equipmentById(id) ?? []);
   return (
     <View style={[styles.section, style]}>
       <SectionHead section="kit" count={kit.length}>
-        <SectionActions section="kit" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={kit.length > 0} />
+        <SectionActions section="kit" editing={editing} onEdit={onEdit} canEdit={kit.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
+        {editing ? null : <AddTile label={SECTIONS.kit.add} onPress={onAdd} />}
         {kit.map((e) => (
           <BarTile
             key={e.id}
@@ -147,6 +164,7 @@ export function KitSection({ owned, cols, editing, onEdit, onToggle, onAdd, styl
             accessibilityLabel={editing ? `Take ${e.name} out of your kit` : e.name}
             badge={editing ? 'remove' : null}
             onPress={() => (editing ? onToggle(e.id) : router.push(`/equipment/${e.id}` as never))}
+            onLongPress={() => onEdit(true)}
           />
         ))}
         {ideas.map((e) => (
@@ -195,8 +213,9 @@ const styles = StyleSheet.create({
   section: { gap: space.md },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   title: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: space.sm, minWidth: 0 },
-  jump: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  jumpLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill },
+  chipsScroll: { flexGrow: 0 },
+  chips: { flexDirection: 'row', gap: space.sm },
+  wrap: { flexWrap: 'wrap' },
   text: { flex: 1, gap: 2 },
   folds: { gap: space.sm },
   link: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },

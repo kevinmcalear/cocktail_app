@@ -45,7 +45,7 @@ function HomeMark({ size = 28 }: { size?: number }) {
 export function VenueSwitcher() {
   const ds = useDs();
   const router = useRouter();
-  const { venues, active, setActive } = useActiveVenue();
+  const { venues, active, enterVenue } = useActiveVenue();
   const { mode, setMode } = useMode();
   const [open, setOpen] = useState(false);
   const home = mode === 'home';
@@ -53,10 +53,7 @@ export function VenueSwitcher() {
   // Land on the mode's first tab (Discover at home, Tonight at a venue), since the tabs change with the mode.
   const choose = (next: 'home' | Venue) => {
     if (next === 'home') setMode('home');
-    else {
-      setActive(next.id);
-      setMode('venue');
-    }
+    else enterVenue(next.id);
     setOpen(false);
     router.navigate(next === 'home' ? '/discover' : '/');
   };

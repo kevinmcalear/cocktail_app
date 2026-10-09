@@ -126,7 +126,7 @@ export function MenusScreen() {
           </Group>
         ) : null}
       </ScrollView>
-      {creating ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
+      {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>
   );
 }
