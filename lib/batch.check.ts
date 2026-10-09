@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, isGarnishUnit, leaveOutFor } from './batch';
+import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, servesFromStock, servesToFill, stockLines, stockUnit } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -134,5 +134,43 @@ assert.equal(clampServes(7.6), 8);
 const locked = buildBatch(specLines([row('gin', 'Gin', null, null)]), ['Stir'], 10);
 assert.equal(locked.totalMl, 0);
 assert.equal(locked.bottles, 0);
+
+// The Penicillin from the design canvas: 12 serves fill a litre; lemon and the Islay float stay at the station.
+const pen = specLines([
+  grow('scotch', 'Blended Scotch', 60, 'ml', 40),
+  grow('lemon', 'Lemon juice', 22.5, 'ml'),
+  grow('hg', 'Honey-ginger syrup', 22.5, 'ml'),
+  { ...grow('islay', 'Islay Scotch', 7.5, 'ml', 43), at_service: true },
+]);
+const pb = buildBatch(pen, ['Shake'], 12, { bottleSize: 1000 });
+assert.equal(pb.total, '990 ml');
+assert.equal(pb.bottles, 1);
+assert.equal(pb.pour, '82.5 ml', 'what each serve takes from the bottle');
+assert.deepEqual(pb.lines.filter((l) => l.leaveOut).map((l) => [l.ingredient, l.perServe, l.amount]), [['Lemon juice', '22.5 ml', '270 ml'], ['Islay Scotch', '7.5 ml', '90 ml']]);
+assert.equal(Math.round(pb.abv! * 10) / 10, 29.1, '288 ml of ethanol in 990 ml');
+assert.equal(servesToFill(pen, ['Shake'], 1000), 12, '82.5 ml a serve: 12 fit in a litre');
+assert.equal(servesToFill(pen, ['Shake'], 700), 8);
+
+// A freezer Martini for home: 6 serves fill a 750 ml bottle at 20% water, and it's about 30% ABV.
+const fm = specLines([grow('gin', 'London Dry Gin', 75, 'ml', 40), grow('dry', 'Dry vermouth', 15, 'ml', 18)]);
+assert.equal(servesToFill(fm, ['Stir'], 750), 6, '108 ml a serve with the water');
+const fmb = buildBatch(fm, ['Stir'], 6);
+assert.equal(fmb.total, '648 ml');
+assert.equal(Math.round(fmb.abv!), 30, 'water counts in the bottle strength');
+assert.ok(freezingPointC(fmb.abv!) > -18, 'so it slushes in a -18 C freezer');
+assert.equal(freezingPointC(30), -15);
+assert.equal(freezingPointC(40), -23);
+assert.equal(freezingPointC(35), -19);
+assert.equal(freezingPointC(0), 0);
+assert.equal(buildBatch(specLines([row('x', 'Mystery', 30, 'ml')]), ['Stir'], 2).abv, null, 'no ABV on file: no strength');
+
+// Start from what's on the shelf: the line in its own kind of unit.
+assert.equal(servesFromStock(pen[0], 700, 'ml'), 11, '700 ml of Scotch at 60 a serve');
+assert.equal(servesFromStock(pen[0], 23.67, 'oz'), 11);
+assert.equal(servesFromStock(pen[0], 0, 'ml'), 1);
+const honey = specLines([grow('h', 'Honey', 20, 'g'), row('t', 'Lemon', 1, 'twist')]);
+assert.equal(stockUnit(honey[0], 'ml'), 'g');
+assert.equal(servesFromStock(honey[0], 450, 'g'), 22);
+assert.deepEqual(stockLines(honey).map((l) => l.key), ['h'], 'a twist is not something you run out of by the ml');
 
 console.log('batch: ok');

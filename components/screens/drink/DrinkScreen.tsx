@@ -5,7 +5,6 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FEATURES } from '@/constants/features';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
@@ -22,6 +21,7 @@ import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { BatchSheet } from '../batch/BatchSheet';
 import { PublishSection } from '../publishing/PublishSection';
 import { RankActions } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
@@ -55,8 +55,10 @@ export interface DrinkScreenProps {
   onEdit: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
-  /** /dev/drink only: a bundled hero image, a simulated role, and where Batch goes. */
-  preview?: { heroSource?: number | null; role: number; levels: SpecLevels; onBatch?: () => void };
+  /** Open with the Batch sheet up (/cocktail/[id]/batch links here). */
+  openBatch?: boolean;
+  /** /dev/drink only: a bundled hero image and a simulated role. */
+  preview?: { heroSource?: number | null; role: number; levels: SpecLevels };
 }
 
 /**
@@ -77,7 +79,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, preview }: DrinkScreenProps) {
+function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, openBatch, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -93,7 +95,9 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   const ageGate = useAgeGate();
   const toggleFavorite = () => (home && !isFavorite ? ageGate.gate(onToggleFavorite) : onToggleFavorite());
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
-  const canBatch = FEATURES.prep && access.amounts && lines.some((l) => l.value !== null);
+  // Both modes: a party batch at home, a prep bottle at the bar.
+  const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);
+  const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
@@ -102,7 +106,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
   // A bar's drink: when it was on the bar's menus. Ranking and collecting stay open either way.
   const { data: menuRuns = [] } = useDrinkMenuRuns(preview || item.bar_id ? null : item.id);
 
-  const { facts, tags, glass, ice, method, strength } = useDrinkFacts(item, {
+  const { facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
     lines,
     amounts: access.amounts && !preview,
     dilutionDefaults,
@@ -140,10 +144,10 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
       <View style={styles.actions}>
         {canBatch ? (
           <GlassButton
-            accessibilityLabel="Batch: scale this drink for prep"
+            accessibilityLabel="Batch: scale this drink into a bottle"
             label="Batch"
             icon="flask"
-            onPress={() => (preview ? preview.onBatch?.() : router.push(`/cocktail/${item.id}/batch`))}
+            onPress={() => setBatchOpen(true)}
           />
         ) : null}
         {preview ? null : <RankActions item={item} picture={heroPic} />}
@@ -173,7 +177,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
         </View>
       ) : null}
       {preview ? null : <PeoplePhotos itemId={item.id} name={item.name} glass={glass?.icon_key || glass?.name || null} wide={wide} />}
-      {FEATURES.service ? (
+      {home ? null : (
         <ServiceSection
           itemId={item.id}
           barId={item.bar_id}
@@ -187,7 +191,7 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           serviceStyle={item.service_style}
           preview={preview}
         />
-      ) : null}
+      )}
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
       {preview ? null : <FamilyTree itemId={item.id} />}
@@ -235,6 +239,21 @@ function DrinkPage({ item, isFavorite, onToggleFavorite, inStudyPile, onToggleSt
           serveMl={item.serve_ml ?? null}
           icePerServeG={item.ice_per_serve_g ?? null}
           canEditDrink={canEdit}
+          accent={venue?.accent ?? undefined}
+        />
+      ) : null}
+      {canBatch && batchOpen ? (
+        <BatchSheet
+          visible
+          onClose={() => setBatchOpen(false)}
+          name={item.name}
+          lines={lines}
+          methodNames={methods}
+          lockedUntil={null}
+          dilutionPct={strength?.dilutionPct ?? null}
+          abv={strength?.abv ?? null}
+          serviceStyle={item.service_style ?? null}
+          canEdit={canEdit}
           accent={venue?.accent ?? undefined}
         />
       ) : null}

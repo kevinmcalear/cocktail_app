@@ -24,9 +24,10 @@ import { ShotList } from "@/components/screens/drink/ShotList";
 // For /dev/drink, which loads it through this route so the web build reuses this
 // route's chunk instead of putting the whole drink page in the shared one.
 export { DrinkScreen };
+export { BatchSheet } from "@/components/screens/batch/BatchSheet";
 
 export default function CocktailDetailsScreen() {
-    const { id } = useLocalSearchParams();
+    const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
 
     const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
@@ -99,6 +100,7 @@ export default function CocktailDetailsScreen() {
                 onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
                 canEdit={canEdit}
                 onEdit={() => setIsEditing(true)}
+                openBatch={batch === "1"}
                 sheet
             />
         ) : (

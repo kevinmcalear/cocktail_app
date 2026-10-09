@@ -32,6 +32,9 @@ interface SettingsState {
     /** How a spec reads on the drink page: as written, or converted to g, ml or oz. */
     specUnit: SpecUnit;
     setSpecUnit: (unit: SpecUnit) => void;
+    /** This device's freezer, in °C, for the Batch sheet's "will it freeze" check. */
+    freezerC: number;
+    setFreezerC: (c: number) => void;
     setThemeMode: (mode: ThemeMode) => void;
     setDefaultSearchContext: (value: DefaultSearchContext) => void;
     setDefaultUnit: (unit: string) => void;
@@ -45,6 +48,8 @@ export const useSettingsStore = create<SettingsState>()(
             defaultUnit: DEFAULT_UNIT,
             specUnit: 'ml',
             setSpecUnit: (unit) => set({ specUnit: unit }),
+            freezerC: -18,
+            setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
             setDefaultSearchContext: (value) => set({ defaultSearchContext: value }),
             setDefaultUnit: (unit) => set({ defaultUnit: unit }),

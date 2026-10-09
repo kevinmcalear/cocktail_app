@@ -1,7 +1,12 @@
 /**
- * Batching a drink for prep: scale the spec by N serves, work out what goes
- * in the bottle and what's added fresh or to order, how much water a stirred
- * drink needs, and how many bottles to fill. Pure; the batch screen renders it.
+ * Batching a drink: scale the spec by N serves (or to fill a bottle, or to use
+ * up what's on the shelf), work out what goes in the bottle and what's added
+ * at the station, how much water a stirred drink needs, how strong the bottle
+ * is and whether it stays liquid in a freezer. Pure; the drink page's Batch
+ * sheet renders it.
+ *
+ * Dilution is always water as a percent of what's in the bottle before the
+ * water goes in (the undiluted mix).
  *
  * The rules follow the Back Bar brief's spec glass:
  * - stirred drinks get 20% filtered water, so they pour straight from the freezer;
@@ -15,7 +20,8 @@ import type { SpecLine } from '@/lib/spec';
 
 export type BatchMethod = 'stirred' | 'shaken' | 'built' | 'unknown';
 export type VolumeUnit = 'ml' | 'oz';
-export type BottleSize = 750 | 1000;
+export type BottleSize = 700 | 750 | 1000;
+export const BOTTLE_SIZES: readonly BottleSize[] = [700, 750, 1000];
 /** Why a line stays out of the bottle. `station`: the bar said so, for no reason the name gives away. */
 export type LeaveOut = 'citrus' | 'dairy' | 'bubbles' | 'garnish' | 'station';
 
@@ -30,6 +36,10 @@ export interface BatchLine {
   leaveOut: LeaveOut | null;
   /** Scaled volume in ml (weights by density); null for counts and missing amounts. */
   ml: number | null;
+  /** The same line for one serve: "22.5 ml", "1 twist", or "". */
+  perServe: string;
+  /** The ingredient's ABV, for the bottle's strength; null when not on file. */
+  abv: number | null;
 }
 
 export interface Batch {
@@ -42,6 +52,11 @@ export interface Batch {
   total: string;
   bottles: number;
   bottleSize: BottleSize;
+  /** What to pour from the bottle for each serve, water included. */
+  pourMl: number;
+  pour: string;
+  /** Percent ABV of what's in the bottle, water included; null when no bottled line has an ABV on file. */
+  abv: number | null;
   /** What to do, in plain words. */
   note: string;
 }
@@ -135,7 +150,7 @@ function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine 
   const ingredient = line.ingredient ?? 'Hidden ingredient';
   const u = (line.unit ?? '').toLowerCase();
   const out = leaveOutFor(ingredient, u, line.atService);
-  const base = { key: line.key, ingredient, leaveOut: out };
+  const base = { key: line.key, ingredient, leaveOut: out, perServe: '', abv: line.abv };
   if (line.value === null) return { ...base, amount: '', sub: null, ml: null };
   const n = line.value * serves;
   const perG = GRAMS[u];
@@ -193,7 +208,7 @@ export function buildBatch(
   const bottleSize = opts.bottleSize ?? 750;
   const n = clampServes(serves);
   const method = classifyMethod(methodNames);
-  const lines = spec.map((l) => scaleLine(l, n, unit));
+  const lines = spec.map((l) => ({ ...scaleLine(l, n, unit), perServe: scaleLine(l, 1, unit).amount }));
   const bottledMl = lines.reduce((sum, l) => sum + (!l.leaveOut && l.ml !== null ? l.ml : 0), 0);
   const poured = method === 'stirred' || opts.serviceStyle === 'bottled' || opts.serviceStyle === 'carbonated' || opts.serviceStyle === 'draught';
   const preDiluted = spec.some((l) => l.atService !== true && WATER.test((l.ingredient ?? '').trim()));
@@ -201,6 +216,9 @@ export function buildBatch(
   const waterMl = poured && !preDiluted ? (bottledMl * pct) / 100 : 0;
   const water = waterMl > 0 ? { ml: waterMl, amount: formatVolume(waterMl, unit), pct } : null;
   const totalMl = bottledMl + waterMl;
+  const bottled = lines.filter((l) => !l.leaveOut && l.ml !== null);
+  const ethanolMl = bottled.reduce((sum, l) => sum + (l.ml! * (l.abv ?? 0)) / 100, 0);
+  const abv = totalMl > 0 && bottled.some((l) => l.abv !== null) ? (ethanolMl / totalMl) * 100 : null;
   return {
     serves: n,
     method,
@@ -210,8 +228,51 @@ export function buildBatch(
     total: formatVolume(totalMl, unit),
     bottles: totalMl > 0 ? Math.ceil(totalMl / bottleSize) : 0,
     bottleSize,
+    pourMl: totalMl / n,
+    pour: formatVolume(totalMl / n, unit),
+    abv,
     note: noteFor(method, lines, water, poured),
   };
+}
+
+type BatchOpts = Parameters<typeof buildBatch>[3];
+
+/** As many whole serves as fit in one bottle of `bottleMl`, water included (at least 1). */
+export function servesToFill(spec: SpecLine[], methodNames: readonly string[], bottleMl: number, opts: BatchOpts = {}): number {
+  const perServe = buildBatch(spec, methodNames, 1, opts).totalMl;
+  return perServe > 0 ? clampServes(Math.max(MIN_SERVES, Math.floor(bottleMl / perServe + 1e-9))) : MIN_SERVES;
+}
+
+/** The lines you can start from: a measured amount in ml or grams. */
+export function stockLines(spec: SpecLine[]): SpecLine[] {
+  return spec.filter((l) => l.value !== null && l.ingredient !== null && (GRAMS[(l.unit ?? '').toLowerCase()] !== undefined || l.ml !== null));
+}
+
+/** Weighed lines are counted in grams; everything else in ml or oz. */
+export function stockUnit(line: SpecLine, unit: VolumeUnit): 'g' | VolumeUnit {
+  return GRAMS[(line.unit ?? '').toLowerCase()] !== undefined ? 'g' : unit;
+}
+
+/** How many whole serves `have` of one line makes ("I have 430 ml of Campari"), at least 1. */
+export function servesFromStock(line: SpecLine, have: number, haveUnit: 'g' | VolumeUnit): number {
+  if (!(have > 0) || line.value === null) return MIN_SERVES;
+  const perG = GRAMS[(line.unit ?? '').toLowerCase()];
+  const perServe = haveUnit === 'g' ? (perG !== undefined ? line.value * perG : null) : line.ml;
+  const amount = haveUnit === 'oz' ? have * ML_PER_OZ : have;
+  return perServe ? clampServes(Math.max(MIN_SERVES, Math.floor(amount / perServe + 1e-9))) : MIN_SERVES;
+}
+
+// Ethanol in water by volume (Engineering ToolBox), as [ABV %, freezes at °C].
+// Sugar lowers it further, so for a sweet batch this errs on the warm side.
+const FREEZES: readonly [number, number][] = [[0, 0], [10, -3.5], [20, -9], [30, -15], [40, -23], [50, -32], [60, -37]];
+
+/** About where a mix of this ABV starts to freeze, in °C. */
+export function freezingPointC(abv: number): number {
+  const a = Math.min(60, Math.max(0, abv));
+  const i = Math.min(FREEZES.length - 2, Math.floor(a / 10));
+  const [a0, t0] = FREEZES[i];
+  const [a1, t1] = FREEZES[i + 1];
+  return t0 + ((a - a0) / (a1 - a0)) * (t1 - t0);
 }
 
 /** Whole serves between MIN_SERVES and MAX_SERVES; anything unreadable is 1. */
