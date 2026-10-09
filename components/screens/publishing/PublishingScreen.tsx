@@ -12,6 +12,7 @@ import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { instagramProblem } from '@/lib/profiles';
 
+import { MakerDetailsEditor } from './MakerDetailsEditor';
 import { PageVisibilityChoice } from './PageVisibilityChoice';
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
@@ -107,6 +108,9 @@ function PublishingPage({ barId }: { barId: string }) {
                     </Body>
                     <Button label="See the public page" variant="secondary" icon="globe" onPress={() => router.push(`/p/${data.profile!.handle ?? data.profile!.id}` as Href)} />
                     {canPublish ? <InstagramEditor profileId={data.profile.id} initial={data.profile.instagram ?? ''} /> : null}
+                    {canPublish && data.profile.kind === 'maker' ? (
+                      <MakerDetailsEditor profileId={data.profile.id} makes={data.profile.makes ?? []} serves={data.profile.serves ?? []} />
+                    ) : null}
                   </>
                 ) : (
                   <Body>Nothing goes public until the venue has a public page. Find it on the map and claim it for this venue, then come back here.</Body>

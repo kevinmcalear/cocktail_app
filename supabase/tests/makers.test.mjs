@@ -183,6 +183,28 @@ describe('maker pages', () => {
     assert.equal(off.data?.length, 1, "the maker's own team can take its credit off");
   });
 
+  test("a maker's team sees the credits waiting for it (20261011154000); nobody else does", async () => {
+    const add = await users.editor.client.from('item_maker_credits').insert({ item_id: ids.drink, profile_id: pages.Team, makes: 'ice' });
+    assert.equal(add.error, null);
+    const { data, error } = await users.publisher.client.rpc('maker_credit_requests', { p_bar_id: ids.team });
+    assert.equal(error, null);
+    assert.deepEqual(
+      data.map(({ item_id, makes, drink_name, credited_by }) => ({ item_id, makes, drink_name, credited_by })),
+      [{ item_id: ids.drink, makes: 'ice', drink_name: `Ice Old Fashioned ${run}`, credited_by: `OwnBar ${run}` }],
+      'the drink and its bar by its page name, even though the drink is private to the bar'
+    );
+    for (const who of ['editor', 'stranger']) {
+      const other = await users[who].client.rpc('maker_credit_requests', { p_bar_id: ids.team });
+      assert.deepEqual(other.data, [], `${who} is not on the maker's team`);
+    }
+    const signedOut = await anon.rpc('maker_credit_requests', { p_bar_id: ids.team });
+    assert.ok(signedOut.error, 'signed-out people cannot ask');
+    await users.publisher.client.rpc('confirm_maker_credit', { p_item_id: ids.drink, p_profile_id: pages.Team, p_makes: 'ice' });
+    const after = await users.publisher.client.rpc('maker_credit_requests', { p_bar_id: ids.team });
+    assert.deepEqual(after.data, [], 'confirmed credits leave the inbox');
+    await db.query('DELETE FROM public.item_maker_credits WHERE item_id = $1', [ids.drink]);
+  });
+
   test('a maker page is claimed like a bar page: a venue with the claimant as Admin', async () => {
     const { data, error } = await users.claimer.client.rpc('start_bar_claim', { p_profile_id: pages.Clearcut, p_method: 'instagram' });
     assert.equal(error, null);

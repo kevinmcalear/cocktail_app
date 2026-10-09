@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { andList, makesLine, servesLine } from './makers';
+import { andList, makesLine, parseCities, servesLine } from './makers';
 
 assert.equal(andList([]), '');
 assert.equal(andList(['ice']), 'ice');
@@ -17,5 +17,10 @@ assert.equal(makesLine(null), 'Maker');
 assert.equal(servesLine(['New York', ' Jersey City ']), 'Delivers to New York and Jersey City');
 assert.equal(servesLine(['  ']), null);
 assert.equal(servesLine(undefined), null);
+
+assert.deepEqual(parseCities(' New York,  Jersey   City\nnew york,, Hoboken '), ['New York', 'Jersey City', 'Hoboken']);
+assert.deepEqual(parseCities(''), []);
+assert.equal(parseCities(Array.from({ length: 120 }, (_, i) => `City ${i}`).join(',')).length, 100);
+assert.equal(parseCities('x'.repeat(90))[0].length, 80);
 
 console.log('makers: ok');
