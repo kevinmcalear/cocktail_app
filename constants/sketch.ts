@@ -54,6 +54,15 @@ export const SKETCH = {
   ginger: '#D59A35',
   chili: '#C0301E',
   apple: '#E8E0A8',
+  // bar kit (lib/sketch/kit.ts): cool steel, appliance enamel, a scale's display, a torch flame
+  steel: '#A3ADB2',
+  steelDark: '#4F5A60',
+  enamel: '#E9E4DA',
+  rubber: '#2E2A28',
+  lcd: '#A9BFA0',
+  water: '#A7C7D6',
+  flame: '#5B8BD8',
+  butane: '#C8553D',
 } as const;
 
 /** Drink colours for the gallery's sample sketches (components/ds/gallery). */

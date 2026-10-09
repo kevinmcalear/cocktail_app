@@ -1,27 +1,42 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, Chip, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, EquipmentDrawing, EquipmentThumb, GlassButton, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
 import { madeLine, SECTIONS, type BarSection } from '@/lib/barSections';
-import { confirmAsync } from '@/lib/dialogs';
 import { itemHref } from '@/lib/itemRoutes';
-import { equipmentById } from '@/lib/techniques';
+import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
+
+import { BarTile, TileGrid } from './BarTile';
 
 export type Jumpable = BarSection | 'kit';
 
-/** A section's title, count and line about what goes in it. */
-export function SectionHead({ section, count }: { section: Jumpable; count?: number }) {
+/** A section's title and count, with its actions on the right (Edit, Add, a sort). */
+export function SectionHead({ section, count, children }: { section: Jumpable; count?: number; children?: ReactNode }) {
   return (
     <View style={styles.head}>
       <View style={styles.title}>
-        <Headline role="heading">{SECTIONS[section].title}</Headline>
+        <Headline role="heading" numberOfLines={1}>
+          {SECTIONS[section].title}
+        </Headline>
         {count ? <Caption tone="muted">{count}</Caption> : null}
       </View>
-      <Caption tone="muted">{SECTIONS[section].blurb}</Caption>
+      {children}
     </View>
+  );
+}
+
+/** Edit (tap a tile to take it off) while there's something to take off, and Add. */
+export function SectionActions({ section, editing, onEdit, onAdd, canEdit }: { section: Jumpable; editing: boolean; onEdit: (on: boolean) => void; onAdd: () => void; canEdit: boolean }) {
+  const title = SECTIONS[section].title;
+  return (
+    <>
+      {canEdit ? <Button label={editing ? 'Done' : 'Edit'} variant="ghost" accessibilityLabel={editing ? `Done editing ${title}` : `Edit ${title}`} onPress={() => onEdit(!editing)} /> : null}
+      {editing ? null : <GlassButton icon="plus" accessibilityLabel={`Add to ${title}`} onPress={onAdd} />}
+    </>
   );
 }
 
@@ -40,88 +55,104 @@ export function SectionJump({ counts, onJump }: { counts: [Jumpable, number][]; 
   );
 }
 
-const confirmOff = async (item: ShelfItem, onRemove: (id: string) => void) => {
-  const ok = await confirmAsync({ title: `Take ${item.name} off your bar?`, message: 'Drinks that need it leave What to make.', confirmText: 'Take off', destructive: true });
-  if (ok) onRemove(item.id);
-};
+export const usedLine = (uses: number) => (uses ? `In ${uses} ${uses === 1 ? 'drink' : 'drinks'}` : 'Not used yet');
 
-/** Acids, enzymes and gums, two to a row. */
-export function LabSection({ items, onRemove, style }: { items: ShelfItem[]; onRemove: (id: string) => void; style?: StyleProp<ViewStyle> }) {
-  const ds = useDs();
+/**
+ * A shelf item's tile: opens it, or while editing takes it off on a tap.
+ * Memo-free on purpose: a section re-renders as a whole when the shelf changes.
+ */
+export function ShelfTile({ item, meta, editing, onRemove }: { item: ShelfItem; meta?: string | null; editing: boolean; onRemove: (id: string) => void }) {
   const router = useRouter();
+  const line = meta === undefined ? usedLine(item.uses) : meta;
+  return (
+    <BarTile
+      name={item.name}
+      meta={line}
+      metaTone={meta === undefined && item.uses ? 'accent' : 'muted'}
+      picture={<IngredientDrawing id={item.id} name={item.name} />}
+      role={editing ? 'button' : 'link'}
+      accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}
+      badge={editing ? 'remove' : null}
+      onPress={() => (editing ? onRemove(item.id) : router.push(itemHref('Ingredient', item.id) as never))}
+    />
+  );
+}
+
+interface TileSectionProps {
+  items: ShelfItem[];
+  cols: number;
+  editing: boolean;
+  onEdit: (on: boolean) => void;
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** Acids, enzymes and gums. */
+export function LabSection({ items, cols, editing, onEdit, onAdd, onRemove, style }: TileSectionProps) {
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="lab" count={items.length} />
-      <View style={styles.grid}>
+      <SectionHead section="lab" count={items.length}>
+        <SectionActions section="lab" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={items.length > 0} />
+      </SectionHead>
+      <TileGrid cols={cols}>
         {items.map((item) => (
-          <View key={item.id} style={[styles.tile, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-            <PressableScale role="link" accessibilityLabel={item.name} onPress={() => router.push(itemHref('Ingredient', item.id) as never)} style={styles.tileOpen}>
-              <IngredientThumb id={item.id} name={item.name} size={32} />
-              <View style={styles.text}>
-                <Caption numberOfLines={2}>{item.name}</Caption>
-              </View>
-            </PressableScale>
-            <PressableScale accessibilityLabel={`Take ${item.name} off your bar`} onPress={() => confirmOff(item, onRemove)} style={styles.remove}>
-              <IconSymbol name="xmark" size={14} color={ds.c.muted} />
-            </PressableScale>
-          </View>
+          <ShelfTile key={item.id} item={item} editing={editing} onRemove={onRemove} />
         ))}
-      </View>
+      </TileGrid>
     </View>
   );
 }
 
-/** House preps you have: when you made each and what it goes into. */
-export function PrepsSection({ items, onRemove, style }: { items: ShelfItem[]; onRemove: (id: string) => void; style?: StyleProp<ViewStyle> }) {
-  const ds = useDs();
-  const router = useRouter();
+/** House preps you have, and when you made each. */
+export function PrepsSection({ items, cols, editing, onEdit, onAdd, onRemove, style }: TileSectionProps) {
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="preps" count={items.length} />
-      <View>
-        {items.map((item) => {
-          const made = madeLine(item.addedAt);
-          const used = item.uses ? `In ${item.uses} ${item.uses === 1 ? 'drink' : 'drinks'}` : 'Not used yet';
-          return (
-            <View key={item.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-              <PressableScale role="link" accessibilityLabel={[item.name, made, used].filter(Boolean).join(', ')} onPress={() => router.push(itemHref('Ingredient', item.id) as never)} style={styles.open}>
-                <IngredientThumb id={item.id} name={item.name} size={44} />
-                <View style={styles.text}>
-                  <Body numberOfLines={1}>{item.name}</Body>
-                  {made ? (
-                    <Caption tone="muted" numberOfLines={1}>
-                      {made}
-                    </Caption>
-                  ) : null}
-                </View>
-                <Caption tone={item.uses ? 'accent' : 'muted'} aria-hidden>
-                  {used}
-                </Caption>
-              </PressableScale>
-              <PressableScale accessibilityLabel={`Take ${item.name} off your bar`} onPress={() => confirmOff(item, onRemove)} style={styles.remove}>
-                <IconSymbol name="xmark" size={16} color={ds.c.muted} />
-              </PressableScale>
-            </View>
-          );
-        })}
-      </View>
+      <SectionHead section="preps" count={items.length}>
+        <SectionActions section="preps" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={items.length > 0} />
+      </SectionHead>
+      <TileGrid cols={cols}>
+        {items.map((item) => (
+          <ShelfTile key={item.id} item={item} meta={madeLine(item.addedAt) ?? usedLine(item.uses)} editing={editing} onRemove={onRemove} />
+        ))}
+      </TileGrid>
     </View>
   );
 }
 
-/** The kit you have, ticked like the fridge: tap one to take it off. */
-export function KitSection({ owned, onToggle, onAdd, style }: { owned: readonly string[]; onToggle: (id: string) => void; onAdd: () => void; style?: StyleProp<ViewStyle> }) {
+/** Kit suggested to someone who has little: the bar tools, cheapest first, as faded tiles to tap. */
+const KIT_SUGGESTIONS = EQUIPMENT.filter((e) => e.kind === 'bar' && e.tier === '$').map((e) => e.id);
+const kindName = (kind: string) => EQUIPMENT_KINDS.find((k) => k.id === kind)?.name ?? null;
+
+/** The kit you have, a few common pieces to tap in, and where each piece is explained. */
+export function KitSection({ owned, cols, editing, onEdit, onToggle, onAdd, style }: { owned: readonly string[]; cols: number; editing: boolean; onEdit: (on: boolean) => void; onToggle: (id: string) => void; onAdd: () => void; style?: StyleProp<ViewStyle> }) {
   const router = useRouter();
   const kit = owned.flatMap((id) => equipmentById(id) ?? []);
+  // Enough faded suggestions to finish the row, and never more than one row.
+  const room = editing ? 0 : (cols - (kit.length % cols)) % cols || (kit.length ? 0 : cols);
+  const ideas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).slice(0, room).flatMap((id) => equipmentById(id) ?? []);
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="kit" count={kit.length} />
-      <View role="group" accessibilityLabel="Kit" style={styles.chips}>
+      <SectionHead section="kit" count={kit.length}>
+        <SectionActions section="kit" editing={editing} onEdit={onEdit} onAdd={onAdd} canEdit={kit.length > 0} />
+      </SectionHead>
+      <TileGrid cols={cols}>
         {kit.map((e) => (
-          <Chip key={e.id} label={e.name} multi quiet selected onPress={() => onToggle(e.id)} />
+          <BarTile
+            key={e.id}
+            name={e.name}
+            meta={kindName(e.kind)}
+            picture={<EquipmentDrawing id={e.id} />}
+            role={editing ? 'button' : 'link'}
+            accessibilityLabel={editing ? `Take ${e.name} out of your kit` : e.name}
+            badge={editing ? 'remove' : null}
+            onPress={() => (editing ? onToggle(e.id) : router.push(`/equipment/${e.id}` as never))}
+          />
         ))}
-        <Button label="Add kit" icon="plus" variant="secondary" onPress={onAdd} />
-      </View>
+        {ideas.map((e) => (
+          <BarTile key={e.id} name={e.name} meta="Tap if you have it" picture={<EquipmentDrawing id={e.id} />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
+        ))}
+      </TileGrid>
       <PressableScale role="link" onPress={() => router.push('/equipment' as never)} style={styles.link}>
         <Caption tone="accent">What each piece is for</Caption>
       </PressableScale>
@@ -145,9 +176,7 @@ export function MoreSections({ empty, onOpen, style }: { empty: ('lab' | 'preps'
           style={[styles.fold, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
         >
           {section === 'kit' ? (
-            <View style={[styles.kitIcon, { backgroundColor: ds.c.paper }]}>
-              <IconSymbol name="gearshape" size={18} color={ds.c.sketchInk} />
-            </View>
+            <EquipmentThumb id="shaker" name="Shaker tins" size={32} />
           ) : (
             <IngredientThumb name={FOLD_PICTURE[section]} size={32} />
           )}
@@ -164,20 +193,12 @@ export function MoreSections({ empty, onOpen, style }: { empty: ('lab' | 'preps'
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  head: { gap: 2 },
-  title: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  title: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: space.sm, minWidth: 0 },
   jump: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   jumpLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tile: { flexBasis: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, paddingLeft: space.sm },
-  tileOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 56 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
-  open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, minHeight: layout.minTapTarget },
   text: { flex: 1, gap: 2 },
-  remove: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   folds: { gap: space.sm },
   link: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
   fold: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth },
-  kitIcon: { width: 32, height: 32, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 });

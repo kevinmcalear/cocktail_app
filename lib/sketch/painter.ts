@@ -2,7 +2,7 @@
 // hatching, glazes and soft smudges, all in glass units (0 to 100) and
 // written to a SceneBuilder in scene units.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 import { bottomOf, band, ecc, ell, hw, resample, resampleN, type GlassShape, type Pt, type PtV } from './geometry';
 import { gauss, mixHex, noise1, type Rng } from './random';
 import { SCENE_SIZE, SceneBuilder } from './scene';

@@ -3,8 +3,8 @@
 // a sprig of herbs, a dish of spice or beans, eggs, a flower, chocolate,
 // mushrooms, roots and truffles, onions and garlic, seaweed, a wedge of cheese.
 
-import { PANTRY } from '@/constants/pantry';
-import { SKETCH } from '@/constants/sketch';
+import { PANTRY } from '../../constants/pantry';
+import { SKETCH } from '../../constants/sketch';
 import { drawBottle, handFor } from './bottle';
 import { ell, GLASS_SHAPES, type Pt } from './geometry';
 import { makePainter, type Painter } from './painter';
@@ -43,11 +43,11 @@ const LEAF = PANTRY.leaf;
 const DISH = PANTRY.dish;
 const GROUND = 86;
 
-const oval = (cx: number, cy: number, rx: number, ry: number, rot = 0, n = 28): Pt[] => ell(cx, cy, rx, ry, 0, Math.PI * 2, n, rot).slice(0, n);
-const closed = (p: Pt[]): Pt[] => [...p, p[0]];
-const shade = (c: string) => mixHex(c, SKETCH.pool, 0.3);
+export const oval = (cx: number, cy: number, rx: number, ry: number, rot = 0, n = 28): Pt[] => ell(cx, cy, rx, ry, 0, Math.PI * 2, n, rot).slice(0, n);
+export const closed = (p: Pt[]): Pt[] => [...p, p[0]];
+export const shade = (c: string) => mixHex(c, SKETCH.pool, 0.3);
 
-function shadow(P: Painter, r: Rng, cx: number, w: number, y = GROUND) {
+export function shadow(P: Painter, r: Rng, cx: number, w: number, y = GROUND) {
   P.soft(cx + w * 0.2, y + 1, w * 1.2, 3.4, 0, P.S.ink, 0.1 * P.S.shadow);
   for (let i = 0; i < Math.round(5 + 8 * P.S.shadow); i++) {
     const yy = y + 0.4 + r() * 2.2;
@@ -56,7 +56,7 @@ function shadow(P: Painter, r: Rng, cx: number, w: number, y = GROUND) {
 }
 
 /** A round thing with a soft highlight and a darker side. */
-function ball(P: Painter, pts: Pt[], c: string, cx: number, cy: number, R: number, strength = 0.95) {
+export function ball(P: Painter, pts: Pt[], c: string, cx: number, cy: number, R: number, strength = 0.95) {
   P.wash(pts, c, strength, { n: 16 });
   P.wash(pts.filter(([x, y]) => x + y > cx + cy - R * 0.2), shade(c), strength * 0.35, { layers: 0.5, spill: 0, fadeAngle: Math.PI / 4, fadeTo: 0, blooms: 0, n: 12 });
   P.soft(cx - R * 0.35, cy - R * 0.38, R * 0.32, R * 0.22, -0.5, LIFT, 0.55);

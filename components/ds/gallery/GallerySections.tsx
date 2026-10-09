@@ -18,6 +18,7 @@ import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { AnimatedDrawings, GlassVariants } from './GlassVariants';
+import { KitDrawings } from './KitDrawings';
 import { IMAGES, PENICILLIN } from './samples';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -155,6 +156,10 @@ export function GallerySections() {
 
       <Section title="Drawn glassware">
         <GlassVariants />
+      </Section>
+
+      <Section title="Drawn kit">
+        <KitDrawings />
       </Section>
 
       <Section title="Drawn as you watch">

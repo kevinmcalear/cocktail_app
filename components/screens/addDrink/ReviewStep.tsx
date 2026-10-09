@@ -40,7 +40,7 @@ export function ReviewList({ rows, onJump, after }: { rows: { key: string; label
   return (
     <View role="list">
       {rows.map((r) => (
-        <Row key={r.key} label={r.label} value={r.value} onPress={() => onJump(r.key)} />
+        <AnswerRow key={r.key} label={r.label} value={r.value} onPress={() => onJump(r.key)} />
       ))}
       {after ? (
         <Caption tone="muted" style={styles.after}>
@@ -51,13 +51,40 @@ export function ReviewList({ rows, onJump, after }: { rows: { key: string; label
   );
 }
 
-function Row({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+/**
+ * One answer on a review step: its label and value, with a pencil; a tap goes
+ * back to change it. With no `onPress` it's just the answer, to read.
+ */
+export function AnswerRow({
+  label,
+  value,
+  onPress,
+  hint = 'Goes back to change it',
+  opens = false,
+}: {
+  label: string;
+  value: string;
+  onPress?: () => void;
+  hint?: string;
+  /** It goes somewhere rather than changing the answer: a chevron, not a pencil. */
+  opens?: boolean;
+}) {
   const ds = useDs();
+  if (!onPress) {
+    return (
+      <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+        <View style={styles.text}>
+          <Caption tone="muted">{label}</Caption>
+          <Body selectable>{value}</Body>
+        </View>
+      </View>
+    );
+  }
   return (
     <PressableScale
       role="button"
       accessibilityLabel={`${label}: ${value || 'not added'}`}
-      accessibilityHint="Goes back to change it"
+      accessibilityHint={hint}
       onPress={onPress}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
@@ -65,7 +92,7 @@ function Row({ label, value, onPress }: { label: string; value: string; onPress:
         <Caption tone="muted">{label}</Caption>
         <Body tone={value ? 'ink' : 'muted'}>{value || 'Not added'}</Body>
       </View>
-      <IconSymbol name="pencil" size={16} color={ds.c.muted} />
+      <IconSymbol name={opens ? 'chevron.right' : 'pencil'} size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }
