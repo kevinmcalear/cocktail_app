@@ -55,7 +55,8 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
   return (
     <View style={styles.stack}>
       <View style={styles.head}>
-        <Caption tone="muted">{base ? `Everything follows the ${base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
+        {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
+        <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
         <Choice label="Show as" options={VIEWS} value={view} onChange={setView} />
       </View>
       <View role="list">
