@@ -131,9 +131,11 @@ function You({ inTabs }: { inTabs?: boolean }) {
             )}
             {drinks.length && tab !== 'made' ? (
               <Caption tone="muted">
-                {shown && (tab === 'had' ? profile?.sharesRankings : profile?.sharesBars)
-                  ? 'Shown on your public profile, apart from drinks a bar hasn’t published. Change it in Edit profile.'
-                  : `Only you can see ${tab === 'had' ? 'what you’ve had and your scores' : 'your bars and your average at each'}. You can show them on a public profile.`}
+                {shown && profile?.sharing[tab === 'had' ? 'had' : 'bars'] === 'all'
+                  ? 'Shown on your public profile, apart from ones you hide and drinks a bar hasn’t published. Change it in Edit profile.'
+                  : shown && profile?.sharing[tab === 'had' ? 'had' : 'bars'] === 'picked'
+                    ? 'Only the ones you pick show on your public profile. Choose them in Edit profile.'
+                    : `Only you can see ${tab === 'had' ? 'what you’ve had and your scores' : 'your bars and your average at each'}. You can show them on a public profile.`}
               </Caption>
             ) : null}
           </View>

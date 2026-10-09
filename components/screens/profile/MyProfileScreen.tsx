@@ -6,7 +6,7 @@ import { Body, Button, Caption, Chip, Field, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyProfile, useSaveMyProfile, type MyProfile } from '@/hooks/useMyProfile';
-import { DEFAULT_IDENTITY, DEFAULT_SHARING, handleFromName, normalizeHandle, profileDraftErrors, sharingSummary, type ProfileDraft } from '@/lib/profiles';
+import { DEFAULT_IDENTITY, handleFromName, normalizeHandle, profileDraftErrors, type ProfileDraft } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { PlaceStep } from '../onboarding/CareerSteps';
@@ -14,16 +14,11 @@ import { SafetyPage } from '../safety/SafetyPage';
 import { MyJobRequests } from './JobRequests';
 import { PastJobs } from './PastJobs';
 import { ProfileIdentity } from './ProfileIdentity';
+import { SharingChoices } from './SharingChoices';
 
 const PUBLIC_MEANS =
   'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
 
-/** The three things a public profile can show, each its own switch. */
-const SHARE_CHOICES = [
-  { key: 'sharesRankings', label: 'Drinks I’ve had' },
-  { key: 'sharesBars', label: 'Bars I’ve been to' },
-  { key: 'sharesMade', label: 'Drinks I’ve made' },
-] as const;
 const PRIVATE_MEANS = 'Only you see it. Drinks you’ve published and menus you’ve shared stop showing to anyone else while it’s private.';
 
 /** Settings › Public profile: make your profile, choose your handle, and say whether it's public. */
@@ -56,14 +51,11 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
           bio: profile.bio ?? '',
           instagram: profile.instagram ?? '',
           isPublic: profile.isPublic,
-          sharesRankings: profile.sharesRankings,
-          sharesBars: profile.sharesBars,
-          sharesMade: profile.sharesMade,
           tagline: profile.tagline ?? '',
           headlinePositionId: profile.headlinePositionId,
           showsPhoto: profile.showsPhoto,
         }
-      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_SHARING, ...DEFAULT_IDENTITY }
+      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_IDENTITY }
   );
   const [tried, setTried] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -124,17 +116,6 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         </View>
         <Caption tone="muted">{draft.isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
       </View>
-      {draft.isPublic ? (
-        <View style={styles.visibility}>
-          <Headline role="heading">What your profile shows</Headline>
-          <View role="group" accessibilityLabel="What your profile shows" style={styles.wrap}>
-            {SHARE_CHOICES.map((c) => (
-              <Chip key={c.key} multi label={c.label} selected={draft[c.key]} onPress={() => edit({ [c.key]: !draft[c.key] })} />
-            ))}
-          </View>
-          <Caption tone="muted">{sharingSummary(draft)}</Caption>
-        </View>
-      ) : null}
       {save.error ? <Body tone="accent">{save.error.message}</Body> : null}
       <View style={styles.actions}>
         <Button label={profile ? 'Save' : 'Make my profile'} onPress={submit} disabled={save.isPending} />
@@ -143,6 +124,8 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         ) : null}
       </View>
       {saved ? <Caption tone="muted">Saved.</Caption> : null}
+      {/* Saved straight away, not by Save: shown once there's a public profile to show them on. */}
+      {profile && profile.isPublic ? <SharingChoices profile={profile} /> : null}
       {profile ? (
         <View style={styles.visibility}>
           <Headline role="heading">Where you’ve worked</Headline>
