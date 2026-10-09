@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Spec, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
@@ -65,61 +65,65 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
 
   return (
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Caption tone="muted">Strength</Caption>
-            <Title>{name}</Title>
-            <View>
-              {strength.lines.map((l) => (
-                <View key={l.key} accessible accessibilityLabel={`${l.ingredient}, ${formatAmount(l.ml, 'ml')}, ${trim(l.ethanolMl)} ml ethanol`} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                  <Body style={styles.name}>{l.ingredient}</Body>
-                  <Spec tone="muted">{formatAmount(l.ml, 'ml')}</Spec>
+      {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
+      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.keyboard} pointerEvents="box-none">
+        <View style={styles.avoider} pointerEvents="box-none">
+          <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <Caption tone="muted">Strength</Caption>
+              <Title>{name}</Title>
+              <View>
+                {strength.lines.map((l) => (
+                  <View key={l.key} accessible accessibilityLabel={`${l.ingredient}, ${formatAmount(l.ml, 'ml')}, ${trim(l.ethanolMl)} ml ethanol`} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                    <Body style={styles.name}>{l.ingredient}</Body>
+                    <Spec tone="muted">{formatAmount(l.ml, 'ml')}</Spec>
+                    <Spec tone="accent" style={styles.ethanol}>
+                      {l.abvUnknown ? 'no ABV' : `${trim(l.ethanolMl)} ml`}
+                    </Spec>
+                  </View>
+                ))}
+                <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                  <Body style={styles.name}>Before dilution</Body>
+                  <Spec tone="muted">{formatAmount(strength.totalMl, 'ml')}</Spec>
                   <Spec tone="accent" style={styles.ethanol}>
-                    {l.abvUnknown ? 'no ABV' : `${trim(l.ethanolMl)} ml`}
+                    {known ? formatAbv(strength.abv) : 'no ABV'}
                   </Spec>
                 </View>
-              ))}
-              <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                <Body style={styles.name}>Before dilution</Body>
-                <Spec tone="muted">{formatAmount(strength.totalMl, 'ml')}</Spec>
-                <Spec tone="accent" style={styles.ethanol}>
-                  {known ? formatAbv(strength.abv) : 'no ABV'}
-                </Spec>
-              </View>
-              <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                <Body style={styles.name}>In the glass</Body>
-                <Spec tone="muted">{formatAmount(strength.serveMl, 'ml')}</Spec>
-                <Spec tone="accent" style={styles.ethanol}>
-                  {known ? formatAbv(strength.serveAbv) : 'no ABV'}
-                </Spec>
-              </View>
-            </View>
-            <Body tone="muted">
-              {trim(strength.ethanolMl)} ml of ethanol, {trim(strength.unitsUk)} UK units. Dilution {trim(strength.dilutionPct)}%: {source}.
-              {strength.unknownAbv ? ` ${strength.unknownAbv === 1 ? '1 ingredient has' : `${strength.unknownAbv} ingredients have`} no ABV on file and counted as 0%.` : ''}
-            </Body>
-            {canEdit ? (
-              <View style={styles.edit}>
-                <Headline>Measured dilution</Headline>
-                <Field label="Percent of the drink, weighed before and after" value={draft} onChangeText={setDraft} placeholder={String(strength.dilutionPct)} keyboardType="decimal-pad" hint="Leave blank to use the house default." />
-                <View style={styles.actions}>
-                  <Button label={set.isPending ? 'Saving…' : 'Save'} disabled={set.isPending || (draft.trim() !== '' && !valid)} onPress={() => set.mutate(draft.trim() === '' ? null : value)} />
-                  {defaultsHref ? <Button label="House defaults" variant="secondary" onPress={() => router.push(defaultsHref)} /> : null}
+                <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                  <Body style={styles.name}>In the glass</Body>
+                  <Spec tone="muted">{formatAmount(strength.serveMl, 'ml')}</Spec>
+                  <Spec tone="accent" style={styles.ethanol}>
+                    {known ? formatAbv(strength.serveAbv) : 'no ABV'}
+                  </Spec>
                 </View>
-                {set.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
-                {set.isSuccess ? <Caption tone="muted">Saved. The figures update once the server has recalculated.</Caption> : null}
               </View>
-            ) : null}
-          </ScrollView>
-        </Pressable>
-      </View>
+              <Body tone="muted">
+                {trim(strength.ethanolMl)} ml of ethanol, {trim(strength.unitsUk)} UK units. Dilution {trim(strength.dilutionPct)}%: {source}.
+                {strength.unknownAbv ? ` ${strength.unknownAbv === 1 ? '1 ingredient has' : `${strength.unknownAbv} ingredients have`} no ABV on file and counted as 0%.` : ''}
+              </Body>
+              {canEdit ? (
+                <View style={styles.edit}>
+                  <Headline>Measured dilution</Headline>
+                  <Field label="Percent of the drink, weighed before and after" value={draft} onChangeText={setDraft} placeholder={String(strength.dilutionPct)} keyboardType="decimal-pad" hint="Leave blank to use the house default." />
+                  <View style={styles.actions}>
+                    <Button label={set.isPending ? 'Saving…' : 'Save'} disabled={set.isPending || (draft.trim() !== '' && !valid)} onPress={() => set.mutate(draft.trim() === '' ? null : value)} />
+                    {defaultsHref ? <Button label="House defaults" variant="secondary" onPress={() => router.push(defaultsHref)} /> : null}
+                  </View>
+                  {set.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
+                  {set.isSuccess ? <Caption tone="muted">Saved. The figures update once the server has recalculated.</Caption> : null}
+                </View>
+              ) : null}
+            </ScrollView>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end' },
+  scrim: { flex: 1 },
+  keyboard: { flex: 1, justifyContent: 'flex-end' },
   // The height cap sits on the wrapper: a percentage on the sheet resolves against
   // the content-sized wrapper and leaves a gap under a tall sheet.
   avoider: { width: '100%', maxWidth: 560, maxHeight: '90%', alignSelf: 'center' },
