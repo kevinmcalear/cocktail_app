@@ -9,6 +9,7 @@ import { barSection, type BarSection } from '@/lib/barSections';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
+import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -107,12 +108,30 @@ export function useBarSearch(text: string) {
           .order('id')
           .limit(limit);
       const like = likeExactly(query);
-      const [starts, has] = await Promise.all([read(`${like}%`, 50), read(`%${like}%`, 150)]);
+      // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
+      const q = query.toLowerCase();
+      const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
+      const [starts, has, also] = await Promise.all([
+        read(`${like}%`, 50),
+        read(`%${like}%`, 150),
+        aliases.length
+          ? supabase
+              .from('app_item_presentation')
+              .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+              .eq('item_type', 'ingredient')
+              .or(aliases.map((n) => `name.ilike.${likeExactly(n)}`).join(','))
+              .limit(10)
+          : { data: [], error: null },
+      ]);
       if (starts.error) throw starts.error;
       if (has.error) throw has.error;
+      if (also.error) throw also.error;
       const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
       const rows = [...byId.values()] as unknown as ItemRow[];
-      return searchByName(query, rows, 40).map((r) => ({
+      // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
+      const named = (also.data ?? []) as unknown as ItemRow[];
+      const found = [...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))];
+      return found.map((r) => ({
         id: r.id,
         name: r.name,
         type: 'ingredient' as const,
