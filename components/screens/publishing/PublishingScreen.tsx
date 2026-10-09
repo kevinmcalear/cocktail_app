@@ -12,6 +12,8 @@ import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { instagramProblem } from '@/lib/profiles';
 
+import { SwitchRow } from '../settings/SettingsParts';
+
 import { PageVisibilityChoice } from './PageVisibilityChoice';
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
@@ -79,7 +81,7 @@ function PublishingPage({ barId }: { barId: string }) {
   const canPublish = caps.includes('publish');
   const errorFor = (key: string) => {
     const v = set.variables;
-    return set.error && v && (v.level === 'bar' || v.level === 'page' ? v.level : v.id) === key ? set.error.message : null;
+    return set.error && v && (v.level === 'bar' || v.level === 'page' || v.level === 'changes' ? v.level : v.id) === key ? set.error.message : null;
   };
 
   return (
@@ -122,6 +124,24 @@ function PublishingPage({ barId }: { barId: string }) {
                   error={errorFor('page')}
                   onChange={(visibility) => set.mutate({ level: 'page', visibility })}
                 />
+              ) : null}
+
+              {data.profile ? (
+                <View style={styles.group}>
+                  <Headline role="heading">Spec changes</Headline>
+                  <SwitchRow
+                    label="Show how specs changed"
+                    detail="Guests who can see a drink’s spec also see each saved change to it, with the date. Never who made it, version notes or bartender notes."
+                    value={data.showSpecChanges}
+                    disabled={!canPublish || set.isPending}
+                    onValueChange={(show) => set.mutate({ level: 'changes', show })}
+                  />
+                  {errorFor('changes') ? (
+                    <Caption tone="accent" role="alert">
+                      {errorFor('changes')}
+                    </Caption>
+                  ) : null}
+                </View>
               ) : null}
 
               <View style={styles.group}>

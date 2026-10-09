@@ -17,10 +17,12 @@ interface HistorySectionProps {
 }
 
 /**
- * History: every save of the spec as a version with what changed in plain
- * words, who and when, with restore for editors, and the team's notes
+ * Spec changes: every save of the spec as a version with what changed in
+ * plain words, who and when, with restore for editors, and the team's notes
  * underneath. Versions open with the specs capability (a snapshot holds the
- * amounts); notes with talking points, so the floor can read them.
+ * amounts); notes with talking points, so the floor can read them. Guests
+ * see what changed on the public drink page, when the bar shows it
+ * (PublicSpecChanges).
  */
 export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) {
   const { data: capabilities } = useCapabilities(barId);
@@ -29,16 +31,16 @@ export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) 
   const { data: versions, isPending } = useItemVersions(itemId, unlocked);
   if (!barId && !canEdit) return null;
   return (
-    <LockedSection title="History" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Bartender'}>
+    <LockedSection title="Spec changes" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Bartender'}>
       {isPending ? <Caption tone="muted">Loading…</Caption> : null}
-      {versions && versions.length === 0 ? <Body tone="muted">No versions yet. The next save of the spec starts the history.</Body> : null}
+      {versions && versions.length === 0 ? <Body tone="muted">No changes saved yet. Each save of the spec shows here.</Body> : null}
       {versions?.length ? <Versions itemId={itemId} versions={versions} canEdit={canEdit} /> : null}
       {barId ? <TeamNotes itemId={itemId} barId={barId} currentVersion={versions?.[0]?.version ?? null} /> : null}
     </LockedSection>
   );
 }
 
-function Versions({ itemId, versions, canEdit }: { itemId: string; versions: ItemVersion[]; canEdit: boolean }) {
+export function Versions({ itemId, versions, canEdit }: { itemId: string; versions: ItemVersion[]; canEdit: boolean }) {
   const ds = useDs();
   const restore = useRestoreVersion(itemId);
   const [confirm, setConfirm] = useState<number | null>(null);
