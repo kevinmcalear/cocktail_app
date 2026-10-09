@@ -29,10 +29,9 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /**
- * Every menu at the venue: on now, coming up, drafts and previous, plus the
- * person's own menus. Reached from Tonight and, on wide web, the sidebar. In
- * home mode (or with no venue) it's only the person's own menus, reached from
- * Collection.
+ * Every menu at the venue: on now, coming up, drafts and previous. Reached
+ * from Tonight and, on wide web, the sidebar. In home mode (or with no venue)
+ * it's the person's own menus, reached from Collection. The two never mix.
  */
 export function MenusScreen() {
   const ds = useDs();
@@ -56,7 +55,7 @@ export function MenusScreen() {
   const canCreate = canBuild || !barId;
 
   const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
-  const mine = menus.filter((m) => m.barId === null && m.createdBy === userId);
+  const mine = barId ? [] : menus.filter((m) => m.barId === null && m.createdBy === userId);
   const summary = [
     barId ? active?.name : null,
     venue.on.length ? `${venue.on.length} on now` : null,
@@ -134,7 +133,7 @@ export function MenusScreen() {
           </Group>
         ) : null}
         {mine.length ? (
-          <Group title={barId ? 'Just yours' : 'Your menus'}>
+          <Group title="Your menus">
             {mine.map((m) => (
               <MenuListRow key={m.id} menu={m} now={now} />
             ))}
