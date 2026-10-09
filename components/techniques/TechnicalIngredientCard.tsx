@@ -5,7 +5,7 @@ import { Body, Caption, Headline, PressableScale, Spec, Surface, Tag, useDs } fr
 import { radius, space } from '@/constants/tokens';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
-import { GradeTag } from './bits';
+import { BuyList, GradeTag } from './bits';
 
 /**
  * On a technical ingredient's page (xanthan, agar, lecithin...): what it does,
@@ -49,6 +49,12 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           {w}
         </Caption>
       ))}
+      {t.buy?.length ? (
+        <View style={styles.block}>
+          <Headline>Where to buy</Headline>
+          <BuyList links={t.buy} />
+        </View>
+      ) : null}
       <View style={styles.tags}>
         {t.techniques.map((id) => {
           const tech = techniqueById(id);

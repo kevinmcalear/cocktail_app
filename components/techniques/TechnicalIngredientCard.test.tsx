@@ -13,6 +13,7 @@ test('a technical ingredient shows its doses by job and links to the techniques 
   expect(screen.getByText('0.05 to 0.1%')).toBeTruthy();
   // A number nobody has tested says so.
   expect(screen.getAllByText('Starting point').length).toBeGreaterThan(0);
+  expect(screen.getByLabelText('Xanthan gum 1 lb, WebstaurantStore. Opens the shop')).toBeTruthy();
   fireEvent.press(screen.getByLabelText('How to: Suspended garnish'));
   expect(mockPush).toHaveBeenCalledWith('/techniques/suspension');
 });

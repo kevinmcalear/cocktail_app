@@ -70,7 +70,8 @@ export function useVenueMenus(barId: string | null | undefined) {
     queryFn: async (): Promise<MenuSummary[]> => {
       // ponytail: every menu the venue has ever had, in one page. A venue runs
       // a handful a year; page by ends_at if one ever has hundreds.
-      const scope = barId ? `bar_id.eq.${barId},and(bar_id.is.null,created_by.eq.${userId})` : `and(bar_id.is.null,created_by.eq.${userId})`;
+      // A venue's list is only the venue's menus; your own live in home mode.
+      const scope = barId ? `bar_id.eq.${barId}` : `and(bar_id.is.null,created_by.eq.${userId})`;
       const { data, error } = await supabase
         .from('menus')
         // Every drink's id (Library's "on a menu" filter), but pictures for

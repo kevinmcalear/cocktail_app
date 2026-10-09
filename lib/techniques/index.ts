@@ -17,7 +17,7 @@ import { TEXTURE } from './data/texture';
 import { equipmentById } from './equipment';
 import type { Part, Technique, TechniqueGroup } from './types';
 
-export type { Equipment, EquipmentKind, Grade, Part, Source, Step, Technique, TechniqueGroup } from './types';
+export type { BuyAudience, BuyLink, Equipment, EquipmentKind, Grade, Part, Source, Step, Technique, TechniqueGroup } from './types';
 export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, TIER_LABEL } from './equipment';
 export { technicalIngredientFor, TECHNICAL_INGREDIENTS, type TechnicalIngredient } from './ingredients';
 

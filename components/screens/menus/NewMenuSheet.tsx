@@ -111,14 +111,13 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
     >
       <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder={start.kind === 'photo' ? 'Or use the one on the menu' : home ? 'Friday at ours' : 'Winter menu'} autoFocus={MODAL_AUTOFOCUS} />
       {home ? <HomeNightFields value={night} onChange={setNight} /> : null}
-      {buildable.length ? (
+      {buildable.length > 1 ? (
         <>
           <Caption tone="muted">For</Caption>
           <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
             {buildable.map((v) => (
               <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
             ))}
-            <Choice label="Just me" selected={barId === null} onPress={() => pickVenue(null)} />
           </View>
         </>
       ) : null}

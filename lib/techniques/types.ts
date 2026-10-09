@@ -69,7 +69,7 @@ export interface Technique {
   sources: Source[];
 }
 
-export type EquipmentKind = 'measure' | 'mix' | 'pressure' | 'temperature' | 'separate' | 'specialist';
+export type EquipmentKind = 'bar' | 'measure' | 'mix' | 'pressure' | 'temperature' | 'separate' | 'specialist';
 
 export interface Equipment {
   id: string;
@@ -84,4 +84,16 @@ export interface Equipment {
   swap?: string;
   /** The spec or safety point that matters. */
   note?: string;
+  /** Where to buy one: a maker or specialist shop page, best first. Not affiliate links. */
+  buy?: BuyLink[];
 }
+
+export interface BuyLink {
+  /** The product and the shop: "Thermapen ONE, ThermoWorks". */
+  name: string;
+  url: string;
+  /** Home size or home-grade; bar is bulk or commercial. Left out, it suits both. */
+  audience?: BuyAudience;
+}
+
+export type BuyAudience = 'home' | 'bar';

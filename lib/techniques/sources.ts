@@ -58,6 +58,8 @@ const S = {
   breville: { name: 'Breville: smoking gun', url: 'https://breville.com/inspiration/en-us/recipes/specialty-appliances/smoking-in-the-side-car' },
   ttb: { name: 'TTB: home distilling', url: 'https://www.ttb.gov/spirits/home-distilling.shtml' },
   punchRotovap: { name: 'Punch: rotovap in bars', url: 'https://punchdrink.com/articles/rotovap-distillation-cocktail-bars/' },
+  sosaSucro: { name: 'Sosa: Sucro Emul', url: 'https://www.sosa.cat/en/product/sucro-emul/' },
+  siAlcoholFoam: { name: 'Special Ingredients: alcohol foam', url: 'https://recipes.specialingredientseurope.com/en/alcohol-foam-a-fun-and-fluffy-cocktail-garnish-to-elevate-your-cocktails/' },
   specialSuspension: { name: 'Special Ingredients: suspension syrup', url: 'https://recipes.specialingredientseurope.com/en/suspension-syrup-recipe/' },
   patentGellan: { name: 'US patent 5562939 (gellan in drinks)', url: 'https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5562939' },
   anovaChamber: { name: 'Anova: chamber vacuum recipes', url: 'https://anovaculinary.com/en-tw/pages/chamber-vacuum-sealer-recipes' },
