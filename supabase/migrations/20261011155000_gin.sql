@@ -2,10 +2,10 @@
 -- was blocked, a major retailer, importer or Difford's), after 20261011154000.
 -- Step 3b of the bottle catalog plan: https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR
 --
---   * 262 checked bottles from 115 producers: the core range of every gin
+--   * 261 checked bottles from 114 producers: the core range of every gin
 --     house in our catalog or on BC Liquor's list. On a copy of production
---     (2026-10-09): 116 new bottles, and 133 we had that get their label
---     name (51 renamed, the old name kept as an alias), style, ABV, country
+--     (2026-10-09): 116 new bottles, and 132 we had that get their label
+--     name (50 renamed, the old name kept as an alias), style, ABV, country
 --     and maker where they were missing or wrong.
 --   * Styles: London Dry Gin only when the label says so, Old Tom, Navy
 --     Strength (57% or more), Aged Gin (barrel-rested), Pink Gin, Flavoured
@@ -16,7 +16,8 @@
 --   * Each producer gets an unclaimed maker page (makes: bottles), and each
 --     bottle names it.
 --   * Every fact keeps the page it was checked on in item_sources. An ABV
---     read off a different page than the bottle's source isn't kept.
+--     read off a different page than the bottle's source isn't kept,
+--     and a review site isn't a source.
 --   * An independent second check of 100 random rows found 2 wrong facts in
 --     469 (0.4%), both style calls (Citadelle Rouge and Conniption Kinship
 --     are Flavoured Gin); both are taken.
@@ -142,7 +143,6 @@ INSERT INTO maker_in VALUES
 ($q$Glendalough Distillery$q$, $q$glendalough.distillery$q$, $q$https://www.glendaloughdistillery.com$q$, $q$IE$q$, NULL),
 ($q$Gordon's$q$, $q$gordon.s$q$, $q$https://www.gordonsgin.com$q$, NULL, NULL),
 ($q$Greenall's$q$, $q$greenall.s$q$, $q$https://www.greenallsgin.com$q$, $q$GB$q$, NULL),
-($q$Griffo Distillery$q$, $q$griffo.distillery$q$, $q$https://griffodistillery.com$q$, $q$US$q$, NULL),
 ($q$Hammer & Son$q$, $q$hammer.son$q$, NULL, $q$GB$q$, NULL),
 ($q$Hayman's$q$, $q$hayman.s$q$, $q$https://www.haymansgin.com$q$, $q$GB$q$, NULL),
 ($q$Hendrick's$q$, $q$hendrick.s$q$, $q$https://www.hendricksgin.com$q$, $q$GB$q$, NULL),
@@ -355,7 +355,6 @@ INSERT INTO bottle_in VALUES
 ($q$Greenall's Blueberry Gin$q$, NULL, $q$Flavoured Gin$q$, $q$Greenall's$q$, 37.5, $q$GB$q$, NULL, $q$https://www.greenallsgin.com/greenalls-gin-range/blueberry-gin/$q$, $q$producer$q$),
 ($q$Greenall's Original London Dry Gin$q$, $q$Greenall's Original London Dry Gin$q$, $q$London Dry Gin$q$, $q$Greenall's$q$, 37.5, $q$GB$q$, NULL, $q$https://www.greenallsgin.com/greenalls-gin-range/london-dry-gin/$q$, $q$producer$q$),
 ($q$Greenall's Wild Berry Pink Gin$q$, NULL, $q$Pink Gin$q$, $q$Greenall's$q$, 37.5, $q$GB$q$, NULL, $q$https://www.greenallsgin.com/greenalls-gin-range/wild-berry-pink-gin/$q$, $q$producer$q$),
-($q$Griffo Scott Street Gin$q$, $q$Griffo Gin$q$, $q$Gin$q$, $q$Griffo Distillery$q$, 46, $q$US$q$, NULL, $q$https://www.drinkhacker.com/2026/06/18/review-spirits-of-griffo-distillery-updated-2026/$q$, $q$reference$q$),
 ($q$Hammer & Son Old English Gin$q$, $q$Hammer & Son Old English Gin$q$, $q$Old Tom Gin$q$, $q$Hammer & Son$q$, 44, $q$GB$q$, NULL, $q$https://www.diffordsguide.com/beer-wine-spirits/2352/hammer-and-son-old-english-gin$q$, $q$reference$q$),
 ($q$Hayman's Gently Rested Gin$q$, NULL, $q$Aged Gin$q$, $q$Hayman's$q$, 41.3, $q$GB$q$, NULL, $q$https://www.haymansgin.com/product/gently-rested/$q$, $q$producer$q$),
 ($q$Hayman's Old Tom Gin$q$, $q$Hayman's Old Tom Gin$q$, $q$Old Tom Gin$q$, $q$Hayman's$q$, 41.4, $q$GB$q$, NULL, $q$https://www.haymansgin.com/product/old-tom-gin/$q$, $q$producer$q$),
