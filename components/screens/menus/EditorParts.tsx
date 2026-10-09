@@ -9,6 +9,9 @@ import { EditorSection } from './EditorSection';
 import { MenuVisual } from './MenuVisual';
 import type { LayoutEditor } from './useLayoutEditor';
 
+/** Where the menu stands, for the editor's header. */
+export const EDITOR_STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
+
 /** The name, in the venue's display face, edited in place. */
 export function MenuNameInput({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();

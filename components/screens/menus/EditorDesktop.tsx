@@ -13,12 +13,11 @@ import { menuDateLine, menuReadiness, plural } from '@/lib/menus';
 
 import { LibraryRow } from './AddDrinkSheet';
 import { Eyebrow } from '../addDrink/WizardChrome';
-import { EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
+import { EDITOR_STATUS, EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
 import { Choice } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
-const STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
 
 /** Desktop: the library to add from, the menu, and its settings side by side. */
 export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
@@ -30,7 +29,7 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={editor.leave} />
         <View style={styles.flex}>
-          <Caption tone="muted">{`Menus › ${STATUS[editor.status]}${editor.changed ? ' · unsaved changes' : ''}`}</Caption>
+          <Caption tone="muted">{`Menus › ${EDITOR_STATUS[editor.status]}${editor.changed ? ' · unsaved changes' : ''}`}</Caption>
           <MenuNameInput editor={editor} />
           <Caption tone="muted">{[menuDateLine(editor.menu, now), plural(editor.layout.sections.reduce((n, s) => n + s.drinks.length, 0), 'drink')].filter(Boolean).join(' · ')}</Caption>
         </View>

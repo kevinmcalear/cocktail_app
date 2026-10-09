@@ -18,17 +18,10 @@ import type { LayoutEditor } from './useLayoutEditor';
  */
 export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: Venue | null }) {
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
   const sections = editor.layout.sections.map((s) => ({ id: s.key, name: s.name, drinks: s.drinks }));
   const count = sections.reduce((n, s) => n + s.drinks.length, 0);
 
-  const scale = useSharedValue(1);
-  const before = useRef(count);
-  useEffect(() => {
-    if (count > before.current && !reduceMotion) scale.set(withSequence(withSpring(0.97, springs.snap), withSpring(1, springs.pour)));
-    before.current = count;
-  }, [count, reduceMotion, scale]);
-  const bounce = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  const bounce = usePourBounce(count);
 
   return (
     <View style={styles.wrap}>
@@ -47,6 +40,18 @@ export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: V
       </Animated.View>
     </View>
   );
+}
+
+/** A small pour bounce whenever `count` goes up (a drink landed), as the add-drink wizard's drawing does. None with Reduce Motion. */
+export function usePourBounce(count: number) {
+  const reduceMotion = useReducedMotion();
+  const scale = useSharedValue(1);
+  const before = useRef(count);
+  useEffect(() => {
+    if (count > before.current && !reduceMotion) scale.set(withSequence(withSpring(0.97, springs.snap), withSpring(1, springs.pour)));
+    before.current = count;
+  }, [count, reduceMotion, scale]);
+  return useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 }
 
 /** The card's paper, in the light theme whatever the app is in. */
