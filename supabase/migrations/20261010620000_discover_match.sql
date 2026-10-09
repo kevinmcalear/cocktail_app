@@ -7,7 +7,12 @@
 --     ingredient), 'description' or 'bar' (its bar's name); null with no search.
 --   match_text: the classic's name for 'riff', the ingredient for 'line'.
 --
--- and orders a search in three tiers: every word in the drink's name, then
+-- With p_from_latitude/p_from_longitude ("Nearest"), it orders by how far
+-- each drink's bar is from there instead, returns distance_m, and pages on
+-- (distance_m, name, id): pass the last row's distance as p_after_distance.
+-- Bars with no coordinates can't be placed, so they're left out of that sort.
+--
+-- It also orders a search in three tiers: every word in the drink's name, then
 -- every word in its classic's name (riffs), then the rest; within a tier as
 -- before (menu, picture, name). The cursor is still (rank, name, id).
 --
@@ -70,7 +75,10 @@ CREATE FUNCTION "public"."discover_list"(
     "p_after_rank" smallint DEFAULT NULL,
     "p_after_name" "text" DEFAULT NULL,
     "p_after_id" "uuid" DEFAULT NULL,
-    "p_limit" integer DEFAULT 30
+    "p_limit" integer DEFAULT 30,
+    "p_from_latitude" double precision DEFAULT NULL,
+    "p_from_longitude" double precision DEFAULT NULL,
+    "p_after_distance" integer DEFAULT NULL
 ) RETURNS TABLE(
     "id" "uuid",
     "name" "text",
@@ -87,13 +95,15 @@ CREATE FUNCTION "public"."discover_list"(
     "total_drinks" integer,
     "total_bars" integer,
     "match_kind" "text",
-    "match_text" "text"
+    "match_text" "text",
+    "distance_m" integer
 )
     LANGUAGE "plpgsql" STABLE SECURITY INVOKER
     SET "search_path" TO ''
     AS $$
 DECLARE
     v_point boolean := p_latitude IS NOT NULL;
+    v_from boolean := p_from_latitude IS NOT NULL;
     v_radius double precision := least(greatest(coalesce(p_radius_km, 10), 0.1), 200);
     v_limit integer := least(greatest(coalesce(p_limit, 30), 1), 500);
     v_words text[];
@@ -109,6 +119,13 @@ BEGIN
     IF (p_after_id IS NULL) <> (p_after_rank IS NULL) OR (p_after_id IS NULL) <> (p_after_name IS NULL) THEN
         RAISE EXCEPTION 'A cursor needs its rank, name and id.' USING ERRCODE = '22023';
     END IF;
+    IF (p_from_latitude IS NULL) <> (p_from_longitude IS NULL)
+       OR (v_from AND (p_from_latitude NOT BETWEEN -90 AND 90 OR p_from_longitude NOT BETWEEN -180 AND 180)) THEN
+        RAISE EXCEPTION 'Nearest needs a point on the map.' USING ERRCODE = '22023';
+    END IF;
+    IF v_from AND p_after_id IS NOT NULL AND p_after_distance IS NULL THEN
+        RAISE EXCEPTION 'A nearest cursor needs its distance.' USING ERRCODE = '22023';
+    END IF;
     IF v_point THEN
         v_dlat := v_radius / 111.045;
         v_dlng := v_radius / (111.045 * greatest(cos(radians(p_latitude)), 0.01));
@@ -120,9 +137,14 @@ BEGIN
     RETURN QUERY
     WITH bars AS (
         SELECT p.id, p.handle, p.display_name, p.avatar_url, p.locality, p.city,
-               CASE WHEN v_words IS NOT NULL THEN private.discover_fold_ws(p.display_name) END AS folded
+               CASE WHEN v_words IS NOT NULL THEN private.discover_fold_ws(p.display_name) END AS folded,
+               CASE WHEN v_from THEN round(1000 * 2 * 6371.0088 * asin(least(1, sqrt(
+                   power(sin(radians(p.latitude - p_from_latitude) / 2), 2)
+                   + cos(radians(p_from_latitude)) * cos(radians(p.latitude)) * power(sin(radians(p.longitude - p_from_longitude) / 2), 2)
+               ))))::integer END AS distance_m
         FROM public.profiles p
         WHERE p.kind = 'bar' AND p.is_public AND NOT p.is_closed
+          AND (NOT v_from OR (p.latitude IS NOT NULL AND p.longitude IS NOT NULL))
           AND (p_bar_id IS NULL OR p.id = p_bar_id)
           AND (p_bar_id IS NOT NULL OR p_country_code IS NULL OR v_point OR p.country_code = upper(p_country_code))
           AND (p_bar_id IS NOT NULL OR p_city IS NULL OR v_point OR lower(p.city) = lower(p_city))
@@ -140,7 +162,7 @@ BEGIN
               ))) <= v_radius
           ))
     ), matched AS MATERIALIZED (
-        SELECT f.item_id, f.name, f.bar_profile_id, f.base_rank, f.haystack, b.folded AS bar_folded
+        SELECT f.item_id, f.name, f.bar_profile_id, f.base_rank, f.haystack, b.folded AS bar_folded, b.distance_m
         FROM public.discover_drink_facts f
         JOIN bars b ON b.id = f.bar_profile_id
         WHERE (p_styles IS NULL OR f.styles && p_styles)
@@ -152,23 +174,30 @@ BEGIN
           ))
     ), hits AS MATERIALIZED (
         -- With a search: the name holds every word (tier 0), else the classic's name does (12), else 24.
-        SELECT m.item_id, m.name, m.bar_profile_id,
+        SELECT m.item_id, m.name, m.bar_profile_id, m.distance_m,
                (m.base_rank + CASE
                    WHEN v_words IS NULL OR private.discover_has_all(private.discover_fold_ws(m.name), v_words) THEN 0
-                   WHEN private.discover_has_all(private.discover_fold_ws(rf.name), v_words) THEN 12
+                   -- Looked up only for drinks whose own name missed.
+                   WHEN coalesce((
+                       SELECT private.discover_has_all(private.discover_fold_ws(rf.name), v_words)
+                       FROM public.items i JOIN public.items rf ON rf.id = i.riff_of_id
+                       WHERE i.id = m.item_id
+                   ), false) THEN 12
                    ELSE 24
                END)::smallint AS rank
         FROM matched m
-        LEFT JOIN public.items i ON v_words IS NOT NULL AND i.id = m.item_id
-        LEFT JOIN public.items rf ON rf.id = i.riff_of_id
+    ), keyed AS (
+        -- What the page sorts on: the distance for Nearest, else the rank.
+        SELECT h.*, CASE WHEN v_from THEN h.distance_m ELSE h.rank END AS sort_key FROM hits h
     ), totals AS (
         SELECT count(*)::integer AS drinks, count(DISTINCT h.bar_profile_id)::integer AS bars
         FROM hits h
         WHERE p_after_id IS NULL
     ), page AS (
-        SELECT h.* FROM hits h
-        WHERE p_after_id IS NULL OR (h.rank, h.name, h.item_id) > (p_after_rank, p_after_name, p_after_id)
-        ORDER BY h.rank, h.name, h.item_id
+        SELECT k.* FROM keyed k
+        WHERE p_after_id IS NULL
+           OR (k.sort_key, k.name, k.item_id) > (CASE WHEN v_from THEN p_after_distance ELSE p_after_rank END, p_after_name, p_after_id)
+        ORDER BY k.sort_key, k.name, k.item_id
         LIMIT v_limit
     )
     SELECT pg.item_id, i.name, i.description, hero.url, pg.bar_profile_id,
@@ -180,7 +209,8 @@ BEGIN
            CASE WHEN p_after_id IS NULL THEN (SELECT t.drinks FROM totals t) END,
            CASE WHEN p_after_id IS NULL THEN (SELECT t.bars FROM totals t) END,
            why.kind,
-           why.text
+           why.text,
+           pg.distance_m
     FROM page pg
     JOIN public.items i ON i.id = pg.item_id
     JOIN bars b ON b.id = pg.bar_profile_id
@@ -204,9 +234,9 @@ BEGIN
     LEFT JOIN LATERAL (
         SELECT * FROM private.discover_match_why(v_words, i.name, rf.name, i.description, m.haystack, m.bar_folded)
     ) why ON v_words IS NOT NULL
-    ORDER BY pg.rank, pg.name, pg.item_id;
+    ORDER BY pg.sort_key, pg.name, pg.item_id;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION "public"."discover_list"(double precision, double precision, double precision, "text", "text", "uuid", "text"[], "text"[], "text"[], "text", smallint, "text", "uuid", integer) FROM PUBLIC, "anon";
-GRANT EXECUTE ON FUNCTION "public"."discover_list"(double precision, double precision, double precision, "text", "text", "uuid", "text"[], "text"[], "text"[], "text", smallint, "text", "uuid", integer) TO "authenticated", "service_role";
+REVOKE ALL ON FUNCTION "public"."discover_list"(double precision, double precision, double precision, "text", "text", "uuid", "text"[], "text"[], "text"[], "text", smallint, "text", "uuid", integer, double precision, double precision, integer) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "public"."discover_list"(double precision, double precision, double precision, "text", "text", "uuid", "text"[], "text"[], "text"[], "text", smallint, "text", "uuid", integer, double precision, double precision, integer) TO "authenticated", "service_role";

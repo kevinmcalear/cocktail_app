@@ -23,10 +23,29 @@ const page = (drinks: DiscoverDrink[]) => ({ drinks, totals: { drinks: drinks.le
 jest.mock('@/hooks/useDiscoverDrinks', () => ({
   useDiscoverBars: () => ({ data: mockBars, isPending: false }),
   useTileBars: () => ({ bars: [], isLoading: false }),
-  useDiscoverList: (f: DrinkFilter, o: { barId?: string | null; enabled?: boolean }) =>
-    page(!o.enabled ? [] : f.kinds.includes('martini') ? mockDrinks.filter((d) => mockMartinis.has(d.id)) : o.barId ? mockDrinks.filter((d) => d.barId === o.barId) : mockDrinks),
+  useDiscoverList: (f: DrinkFilter, o: { barId?: string | null; enabled?: boolean; from?: unknown }) =>
+    page(
+      !o.enabled
+        ? []
+        : o.from
+          ? // Nearest: the same drinks, closest first, each with its distance.
+            [...mockDrinks].reverse().map((d, i) => ({ ...d, distance: 400 + i * 1000 }))
+          : f.kinds.includes('martini')
+            ? mockDrinks.filter((d) => mockMartinis.has(d.id))
+            : o.barId
+              ? mockDrinks.filter((d) => d.barId === o.barId)
+              : mockDrinks
+    ),
 }));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
+// The hero's Collect and Rank have their own tests; here they only need to be there.
+jest.mock('@/components/screens/published/CollectButton', () => {
+  const { Text } = require('react-native');
+  return { CollectButton: () => <Text>Collect</Text> };
+});
+jest.mock('@/components/screens/rank/RankActions', () => ({ RankFlow: () => null }));
+jest.mock('@/components/screens/safety/AgeGate', () => ({ useAgeGate: () => ({ gate: (run: () => void) => run(), sheet: null, underAge: false }) }));
+jest.mock('@/ctx/AuthContext', () => ({ useSignedIn: () => true }));
 // The phone sheet: its content shows, and snapping is recorded.
 const mockSnap = jest.fn();
 jest.mock('@gorhom/bottom-sheet', () => {
@@ -81,12 +100,18 @@ function drink(id: string, name: string, styles: string[] = [], match: DiscoverD
     rank: 6,
     match,
     why,
+    distance: null,
   };
 }
 
 const more = { total: null, hasMore: false, loadMore: () => {}, loading: false };
 
-function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '') {
+interface Extra {
+  from?: { latitude: number; longitude: number } | null;
+  pick?: { id: string | null; onPick: (pin: unknown) => void };
+}
+
+function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', extra: Extra = {}) {
   mockDrinks = drinks;
   mockBars = [{ ...bar, drinks: drinks.length }];
   return renderWithTamagui(
@@ -97,6 +122,7 @@ function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } 
       drink={pick}
       filter={{ kinds: [], search, area }}
       results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
+      {...extra}
     />
   );
 }
@@ -209,4 +235,38 @@ test('Best Martini lists every martini at the bar, scores beside the scored ones
   expect(screen.getByRole('button', { name: 'House Martini. House Martini note, open' })).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
   expect(screen.queryByText('Not ranked yet')).toBeNull();
+});
+
+test('searching on a phone with somewhere to count from, Nearest lists the closest first with how far', async () => {
+  const drinks = [drink('d1', 'Dirty Martini', [], { kind: 'name', text: null }), drink('d2', 'Gibson', [], { kind: 'riff', text: 'Martini' }, 'Riff on a Martini')];
+  await renderPane(drinks, null, 'sheet', 'martini', { from: { latitude: -37.8, longitude: 144.97 } });
+  await fireEvent.press(screen.getByRole('radio', { name: 'Nearest' }));
+  const rows = screen.getAllByText(/^(Dirty Martini|Gibson)$/).map((n) => n.props.children);
+  expect(rows).toEqual(['Gibson', 'Dirty Martini']);
+  // Metres or miles, as the device's region uses.
+  expect(screen.getByText(/400 m|0\.2 mi/)).toBeTruthy();
+});
+
+test('no Nearest without a search, or without somewhere to count from', async () => {
+  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { from: { latitude: -37.8, longitude: 144.97 } });
+  expect(screen.queryByRole('radio', { name: 'Nearest' })).toBeNull();
+  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', 'martini');
+  expect(screen.queryByRole('radio', { name: 'Nearest' })).toBeNull();
+});
+
+test('on wide screens a tapped pin goes to the list, not a card over the map', async () => {
+  const onPick = jest.fn();
+  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], null, 'side', 'martini', { pick: { id: null, onPick } });
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
+  expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ id: bar.id }));
+  expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
+});
+
+test("the drink that leads can be opened, collected and ranked", async () => {
+  mockTopDrinks = [];
+  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], null, 'side', 'martini');
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
+  expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
+  expect(screen.getByText('Collect')).toBeTruthy();
+  expect(screen.getByRole('button', { name: "Rank Dirty Martini against others you've had" })).toBeTruthy();
 });

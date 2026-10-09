@@ -7,7 +7,8 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkScore, scoreWords, type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
-import { drinkCount, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
+import { drinkCount, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
 import { barSearchHref } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
@@ -115,6 +116,18 @@ export function SelectedBar({ pin, drinks, scores, query = '', lead = false, var
       </View>
     </Surface>
   );
+}
+
+/**
+ * Wide screens: the tapped pin at the top of Discover's list, its matching
+ * drink first, rather than a card over the map.
+ * ponytail: the drinks layer's matches, so "Top rated" scores don't show
+ * here; lift the pane's scores if that's missed.
+ */
+export function PickedBar({ pin, filter, onClose }: { pin: MapPin; filter: DrinkFilter; onClose: () => void }) {
+  const atBar = useDiscoverList(filter, { barId: pin.id, enabled: !pin.closed, pageSize: 100 });
+  const lead = !!filter.search.trim() || filter.kinds.length > 0;
+  return <SelectedBar pin={pin} drinks={atBar.drinks} query={filter.search} lead={lead} onClose={onClose} />;
 }
 
 const styles = StyleSheet.create({

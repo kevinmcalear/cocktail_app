@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -15,6 +15,7 @@ import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
 import { AreaSheet, FiltersSheet } from '@/components/screens/home/DiscoverSheet';
 import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
+import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
@@ -25,7 +26,7 @@ import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { kindsTitle } from '@/lib/discoverDrinks';
-import { areaFromViewport, type Viewport } from '@/lib/discoverMap';
+import { areaFromViewport, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaLabel, type Area } from '@/lib/nearMe';
 import type { SearchScope } from '@/lib/searchScope';
@@ -60,6 +61,13 @@ export function DiscoverScreen() {
   const mine = useSearchMine();
   const [sheet, setSheet] = useState<'search' | 'filters' | 'area' | 'add' | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  // Wide screens: the tapped pin, shown at the top of the list.
+  const [picked, setPicked] = useState<MapPin | null>(null);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const onPick = (pin: MapPin | null) => {
+    setPicked(pin);
+    if (pin) listRef.current?.scrollTo({ y: 0, animated: true });
+  };
   const viewport = useRef<Viewport | null>(null);
   const onViewport = useCallback((v: Viewport | null) => {
     viewport.current = v;
@@ -88,6 +96,8 @@ export function DiscoverScreen() {
   const hereLabel = onMap ? 'This area' : areaChipLabel(area, preferNear);
   const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed };
   const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
+  // Nearest counts from the person, else the middle of the area.
+  const from = near.status === 'ready' ? near : area.kind === 'point' ? area : null;
 
   const openSearch = () => {
     // On the map, "this area" is what the map shows: search it, as "Search this area" would.
@@ -158,6 +168,7 @@ export function DiscoverScreen() {
           onViewport={onViewport}
           bottomInset={bottom}
           topInset={headerHeight}
+          from={from}
           top={
             <>
               {controls}
@@ -182,6 +193,7 @@ export function DiscoverScreen() {
 
   const list = (
     <ScrollView
+      ref={listRef}
       keyboardShouldPersistTaps="handled"
       stickyHeaderIndices={[1]}
       style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
@@ -190,6 +202,7 @@ export function DiscoverScreen() {
       <ScreenHeaderSpacer title={<Display>Discover</Display>} actions={<EightBallButton />} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
+        {split && picked ? <PickedBar key={picked.id} pin={picked} filter={filter} onClose={() => setPicked(null)} /> : null}
         {note ? (
           <Caption tone="muted" role="status">
             {note}
@@ -226,7 +239,7 @@ export function DiscoverScreen() {
       {list}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} pick={{ id: picked?.id ?? null, onPick }} />
         </View>
       ) : null}
       {overlay}

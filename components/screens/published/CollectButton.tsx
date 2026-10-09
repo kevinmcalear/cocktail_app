@@ -16,7 +16,7 @@ type Target = { kind: 'drink'; itemId: string; releaseId?: string | null } | { k
  * sign in; without a confirmed age, it asks for that first and then collects
  * (the database refuses the save otherwise). Collected, it lets go again.
  */
-export function CollectButton({ target, name }: { target: Target; name: string }) {
+export function CollectButton({ target, name, quiet = false }: { target: Target; name: string; /** Outlined even before it's collected, beside a stronger action. */ quiet?: boolean }) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const { data: collection } = useCollection();
@@ -54,7 +54,7 @@ export function CollectButton({ target, name }: { target: Target; name: string }
       <Button
         label={mine ? 'Collected' : 'Collect'}
         icon={mine ? 'bookmark.fill' : 'bookmark'}
-        variant={mine ? 'secondary' : 'primary'}
+        variant={mine || quiet ? 'secondary' : 'primary'}
         disabled={collect.isPending}
         accessibilityHint={mine ? `Removes ${name} from your collection` : `Keeps ${name} in your collection`}
         onPress={press}

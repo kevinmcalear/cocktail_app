@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { space } from '@/constants/tokens';
 import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 const place = (b: DiscoverDrink['bar']) => [b.locality, b.city].filter(Boolean).join(', ');
@@ -49,7 +51,8 @@ export function scoreWords(drink?: number, bar?: number): string | null {
 /** One drink at its bar: the bar and where it is under the name, the scores (when given) at the end. */
 export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scores?: DrinkScores }) {
   const bar = d.bar;
-  const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
+  const away = d.distance === null || d.distance === undefined ? null : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
+  const caption = [bar.name, away ?? place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
   const barScore = scores?.bars[d.barId]?.score;
   const said = scoreWords(drinkScore, barScore);

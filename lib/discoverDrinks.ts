@@ -79,6 +79,8 @@ export interface DiscoverDrink {
   match: DrinkMatch | null;
   /** That in words when the name doesn't say it: "Riff on a Martini", "Has Martini Rosso". */
   why: string | null;
+  /** Sorted by Nearest: metres from where the list was asked from; else null. */
+  distance: number | null;
 }
 
 /** A discover_list row. */
@@ -102,6 +104,8 @@ export interface DrinkRow {
   /** With a search: name, riff, line, description or bar; match_text names the classic or the ingredient. */
   match_kind?: string | null;
   match_text?: string | null;
+  /** With p_from_latitude/longitude: metres to the bar. */
+  distance_m?: number | null;
 }
 
 /** Plain JSON for the query cache. `search`: what was searched, for the words on why it matched. */
@@ -121,12 +125,13 @@ export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
     rank: r.rank,
     match,
     why: matchWhy(match, r.description, search),
+    distance: r.distance_m ?? null,
   };
 }
 
 /** discover_list's cursor after a drink. */
-export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank'>) {
-  return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id };
+export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank' | 'distance'>) {
+  return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id, ...(d.distance === null ? {} : { p_after_distance: d.distance }) };
 }
 
 const KM_PER_DEG = 111.045;
