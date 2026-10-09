@@ -98,12 +98,16 @@ describe('bottle catalog', () => {
                              md5(string_agg(id::text || coalesce(generic_id::text, '') || coalesce(made_from_id::text, '') || coalesce(ingredient_role, '') || name, ',' ORDER BY id)) AS h
                         FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL`;
     // One snapshot for the whole check, so another test file adding or removing
-    // its own catalog ingredient meanwhile doesn't count as a change.
+    // its own catalog ingredient meanwhile doesn't count as a change. Measured
+    // against the chain's own first run: later migrations refile some rows on
+    // purpose (taxonomy v2 moves Tequila under Agave Spirit), which a fresh run
+    // of the chain undoes, and a second run must change nothing more.
     await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
     try {
-      const before = await one(snapshot);
       for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
-      assert.deepEqual(await one(snapshot), before);
+      const once = await one(snapshot);
+      for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
+      assert.deepEqual(await one(snapshot), once);
     } finally {
       await db.query('ROLLBACK');
     }
