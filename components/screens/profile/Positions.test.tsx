@@ -61,5 +61,5 @@ test('a bar with only past staff shows no current team heading', async () => {
 test('a job that is not confirmed yet is marked pending (only the two sides can read it)', async () => {
   mockPending = true;
   await renderWithTamagui(<Positions profile={{ id: 'jo', kind: 'person' }} />);
-  expect(screen.getByText('Barback · Pending: waiting for the bar to confirm')).toBeTruthy();
+  expect(screen.getByText('Barback · Not confirmed by the bar')).toBeTruthy();
 });

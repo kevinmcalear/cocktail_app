@@ -1,7 +1,8 @@
 /**
- * Collection: the drinks a home bartender collected from bars, split into the
- * ones still published (their page and spec open) and past drinks, memories
- * of drinks the bar has since made private or deleted.
+ * Collection: the drinks a home bartender saved (the bookmark on a drink, or
+ * Collect on a bar's), split into the ones they can still open (published,
+ * or a drink they can read, like a classic) and past drinks, memories of
+ * drinks a bar has since made private or deleted.
  */
 
 export interface Memory {
@@ -9,6 +10,8 @@ export interface Memory {
   collectedAt: string;
   barName: string | null;
   liveMode: string | null;
+  /** Not published, but theirs to open anyway: a classic, or their own bar's drink. */
+  readable?: boolean;
 }
 
 export interface BarMemories<T> {
@@ -20,15 +23,16 @@ export interface BarMemories<T> {
 export const UNKNOWN_BAR = 'Other bars';
 
 /**
- * Still-published drinks as they come (newest first), and past drinks grouped
+ * Drinks that still open as they come (newest first), and past drinks grouped
  * by bar, the bar you collected from most recently first.
  */
 export function splitCollection<T extends Memory>(drinks: T[]): { live: T[]; past: BarMemories<T>[] } {
-  const live = drinks.filter((d) => d.liveMode !== null);
+  const opens = (d: T) => d.liveMode !== null || !!d.readable;
+  const live = drinks.filter(opens);
   const groups = new Map<string, T[]>();
   const newest = (list: T[]) => Math.max(...list.map((d) => Date.parse(d.collectedAt)));
   for (const d of drinks) {
-    if (d.liveMode !== null) continue;
+    if (opens(d)) continue;
     const bar = d.barName?.trim() || UNKNOWN_BAR;
     groups.set(bar, [...(groups.get(bar) ?? []), d]);
   }

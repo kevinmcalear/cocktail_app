@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { moveHeartsToCollection } from '@/hooks/useFavorites';
 import { fetchPublished, type PublishMode } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 
 /**
- * A home bartender's collection: drinks and releases they collected from
- * bars. Each keeps a memory (name, bar, picture, and for drinks when they had
+ * A home bartender's collection: drinks they saved to make (the bookmark on
+ * any drink they can read) and drinks and releases they collected from bars. Each keeps a memory (name, bar, picture, and for drinks when they had
  * it and a note) that outlives the bar unpublishing it. The spec only ever
  * comes from the live, published drink. Private to the collector; collecting
  * needs a confirmed age (get_my_age_check).
@@ -23,8 +24,10 @@ export interface CollectedDrink {
   imageUrl: string | null;
   hadOn: string | null;
   note: string | null;
-  /** The drink's public mode now, or null when it's no longer published (a memory). */
+  /** The drink's public mode now, or null when it isn't published. */
   liveMode: PublishMode | null;
+  /** Not published, but it still opens for them (a classic): not a memory. */
+  readable: boolean;
 }
 
 export interface CollectedRelease {
@@ -53,6 +56,7 @@ export function useCollection() {
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<Collection> => {
+      await moveHeartsToCollection();
       // ponytail: the whole collection in one page. A person collects dozens,
       // not thousands; page by collected_at if someone gets there.
       const [drinks, releases] = await Promise.all([
@@ -67,7 +71,12 @@ export function useCollection() {
       ]);
       if (drinks.error) throw drinks.error;
       if (releases.error) throw releases.error;
-      const live = await fetchPublished((drinks.data ?? []).map((d) => d.item_id).filter((id): id is string => !!id));
+      const itemIds = (drinks.data ?? []).map((d) => d.item_id).filter((id): id is string => !!id);
+      const live = await fetchPublished(itemIds);
+      const unpublished = itemIds.filter((id) => !live.some((p) => p.id === id));
+      const readable = unpublished.length ? await supabase.from('items').select('id').in('id', unpublished) : { data: [], error: null };
+      if (readable.error) throw readable.error;
+      const opens = new Set((readable.data ?? []).map((r: { id: string }) => r.id));
       return {
         drinks: (drinks.data ?? []).map((d) => ({
           id: d.id,
@@ -80,6 +89,7 @@ export function useCollection() {
           hadOn: d.had_on,
           note: d.note,
           liveMode: live.find((p) => p.id === d.item_id)?.publishMode ?? null,
+          readable: !!d.item_id && opens.has(d.item_id),
         })),
         releases: (releases.data ?? []).map((r) => ({
           id: r.id,

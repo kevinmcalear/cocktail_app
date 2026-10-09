@@ -1,7 +1,6 @@
 import { useBars } from '@/hooks/useBars';
 import { effectiveRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
-import { useAppStore } from '@/store/useAppStore';
 import { useUserId } from '@/ctx/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -51,13 +50,11 @@ export function useViewAs() {
   };
 }
 
-/** Effective role for the selected (or given) venue under view-as. */
-export function useEffectiveRole(barId?: string | null) {
-  const selectedBarId = useAppStore((s) => s.selectedBarId);
+/** Effective role at this venue under view-as (no venue: a guest's). */
+export function useEffectiveRole(barId: string | null) {
   const { data: bars } = useBars();
   const { viewAsRoleLevel } = useViewAs();
-  const id = barId === undefined ? selectedBarId : barId;
-  const real = bars?.find((b) => b.bar_id === id)?.role_level ?? 10;
+  const real = (barId ? bars?.find((b) => b.bar_id === barId)?.role_level : undefined) ?? 10;
   return effectiveRole(real, viewAsRoleLevel);
 }
 

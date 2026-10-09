@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppMode } from '@/store/useAppMode';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { OnboardingScreen } from './OnboardingScreen';
@@ -239,7 +239,7 @@ describe('OnboardingScreen', () => {
     expect(screen.getByText(/^Ada added you\./)).toBeTruthy();
     expect(screen.getByText('Pick ml or oz')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
-    expect(useAppStore.getState().selectedContextIds).toEqual(['venue']);
+    expect(useAppMode.getState()).toMatchObject({ venueId: 'venue', mode: 'venue' });
 
     expect(screen.getByText('Step 1 of 3')).toBeTruthy();
     expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');

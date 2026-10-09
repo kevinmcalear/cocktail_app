@@ -7,6 +7,7 @@
  */
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
+import { matchWhy, toMatch, type DrinkMatch } from './discoverMatch';
 import { kindLabel, SPIRITS, STYLES } from './drinkStyles';
 import { noteDimension } from './flavor';
 import { menuOrder, runDates, searchMenuTag } from './menuEditions';
@@ -74,6 +75,12 @@ export interface DiscoverDrink {
   menu: { onNow: boolean; past: string | null; order: number };
   /** Where it sorts (discover_list's rank): with the name and id, the cursor for the next page. */
   rank: number;
+  /** Why it matched the search (lib/discoverMatch.ts); null with no search. */
+  match: DrinkMatch | null;
+  /** That in words when the name doesn't say it: "Riff on a Martini", "Has Martini Rosso". */
+  why: string | null;
+  /** Sorted by Nearest: metres from where the list was asked from; else null. */
+  distance: number | null;
 }
 
 /** A discover_list row. */
@@ -94,10 +101,16 @@ export interface DrinkRow {
   /** On the first page only. */
   total_drinks: number | null;
   total_bars: number | null;
+  /** With a search: name, riff, line, description or bar; match_text names the classic or the ingredient. */
+  match_kind?: string | null;
+  match_text?: string | null;
+  /** With p_from_latitude/longitude: metres to the bar. */
+  distance_m?: number | null;
 }
 
-/** Plain JSON for the query cache. */
-export function toDiscoverDrink(r: DrinkRow): DiscoverDrink {
+/** Plain JSON for the query cache. `search`: what was searched, for the words on why it matched. */
+export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
+  const match = toMatch(r.match_kind, r.match_text);
   const run = r.menu_run;
   const dates = run ? runDates({ start_year: run[0], start_month: run[1], end_year: run[2], end_month: run[3], is_current: run[4] === 1 }) : null;
   const tag = searchMenuTag(dates);
@@ -110,12 +123,15 @@ export function toDiscoverDrink(r: DrinkRow): DiscoverDrink {
     bar: { name: r.bar_name, handle: r.bar_handle, logo: r.bar_logo, locality: r.bar_locality, city: r.bar_city },
     menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) },
     rank: r.rank,
+    match,
+    why: matchWhy(match, r.description, search),
+    distance: r.distance_m ?? null,
   };
 }
 
 /** discover_list's cursor after a drink. */
-export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank'>) {
-  return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id };
+export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank' | 'distance'>) {
+  return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id, ...(d.distance === null ? {} : { p_after_distance: d.distance }) };
 }
 
 const KM_PER_DEG = 111.045;

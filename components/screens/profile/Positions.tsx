@@ -21,10 +21,11 @@ export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'>) =>
  * profile. With emptyText it fills a tab, with a line when nobody is listed.
  */
 export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' | 'kind'>; emptyText?: string }) {
-  // Filtered here, not in the query, so a persisted cache from before can't show them either.
-  const positions = (useProfilePositions(profile).data ?? []).filter(isShownPosition);
-  if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   const onPerson = profile.kind === 'person';
+  // Filtered here, not in the query, so a persisted cache from before can't show them either.
+  // A job someone added shows on their own page, marked, before the bar confirms it; never on the bar's.
+  const positions = (useProfilePositions(profile).data ?? []).filter((p) => isShownPosition(p) && (onPerson || p.bar_accepted));
+  if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   return (
     <View style={styles.sections}>
       <PositionList heading={onPerson ? 'Works at' : 'Current team'} positions={positions.filter((p) => p.is_current)} onPerson={onPerson} />
@@ -45,7 +46,6 @@ function PositionList({ heading, positions, onPerson }: { heading: string; posit
       <View role="list">
         {positions.map((p) => {
           const other = onPerson ? p.bar : p.person;
-          // Only the two sides and moderators can read a job that isn't confirmed yet.
           const pending = pendingNote(p);
           const title = pending ? `${p.title} · ${pending}` : p.title;
           return (

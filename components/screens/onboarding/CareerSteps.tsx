@@ -76,7 +76,7 @@ export function FindStep({
 }
 
 /** Where they work now, or a bar they used to. Closed bars stay in the search. */
-export function PlaceStep({ personId, isCurrent, onDone }: { personId: string | null; isCurrent: boolean; onDone: () => void }) {
+export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { personId: string | null; isCurrent: boolean; onDone: () => void; listJobs?: boolean }) {
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
   const [barName, setBarName] = useState('');
@@ -112,7 +112,7 @@ export function PlaceStep({ personId, isCurrent, onDone }: { personId: string | 
 
   return (
     <View style={styles.stack}>
-      {!isCurrent && personId ? <PastJobs personId={personId} /> : null}
+      {!isCurrent && personId && listJobs ? <PastJobs personId={personId} /> : null}
       {!isCurrent ? <Caption tone="muted">Add a past job. A closed bar we already know still shows up here.</Caption> : null}
       {!bar && !adding ? (
         <>

@@ -5,6 +5,7 @@
  * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
 import { backbar, space } from '../constants/tokens';
+import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
 import { roundCoord, type Area, type DiscoverRow } from './nearMe';
 
@@ -38,6 +39,8 @@ export interface MapPin {
   matches?: number;
   /** A closed bar: "Closed 2019". */
   closed?: string;
+  /** While searching: its best matching drink, written on the pin in place of the count (lib/discoverMatch.ts namePins). */
+  top?: string;
 }
 
 /** Pins for the rows that have coordinates: ranked first, then early. */
@@ -81,7 +84,7 @@ export function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection<GeoJS
 export function pinDescription(pin: MapPin): string {
   if (pin.closed) return `${pin.name}, ${pin.closed.toLowerCase()}`;
   const count = pin.drinks ?? (pin.score === null ? pin.matches : undefined);
-  if (count) return `${pin.name}, ${count} ${count === 1 ? 'drink' : 'drinks'}`;
+  if (count) return `${pin.name}, ${count} ${count === 1 ? 'drink' : 'drinks'}${pin.top ? `: ${pin.top}` : ''}`;
   return pin.score === null ? `${pin.name}, early` : `${pin.name}, score ${formatScore(pin.score)}`;
 }
 
@@ -91,7 +94,7 @@ export function pinDescription(pin: MapPin): string {
  * selected. A closed bar is muted and faded, so it reads as history, not a plan.
  */
 export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
-  const label = pinLabel(pin);
+  const label = pin.top ? pinName(pin.top, pin.drinks ?? 1) : pinLabel(pin);
   const logoSize = 26;
   // A lone logo needs room for its 2px ring.
   const height = label ? 30 : pin.logo ? logoSize + 4 : 18;
@@ -149,9 +152,16 @@ export function cameraFor(pins: readonly Pick<MapPin, 'latitude' | 'longitude'>[
   return { latitude, longitude, zoom: Math.round(zoom * 10) / 10 };
 }
 
-/** A camera that shows a point area's whole circle; null for a city or anywhere. */
+/**
+ * Near me opens on the person's own neighbourhood (about 2 km across a
+ * phone), not the whole 10 km the list covers; they zoom out for more.
+ */
+const NEAR_ME_ZOOM = 13.5;
+
+/** A camera for an area: near me, the person's neighbourhood; a map area, its whole circle; null for a city or anywhere. */
 export function cameraForArea(area: Area): Camera | null {
   if (area.kind !== 'point') return null;
+  if (area.source === 'me') return { latitude: area.latitude, longitude: area.longitude, zoom: NEAR_ME_ZOOM };
   const dLat = area.radiusKm / KM_PER_DEG;
   return cameraFor([
     { latitude: area.latitude - dLat, longitude: area.longitude },

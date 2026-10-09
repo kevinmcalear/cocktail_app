@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -6,7 +7,9 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 const place = (b: DiscoverDrink['bar']) => [b.locality, b.city].filter(Boolean).join(', ');
@@ -48,7 +51,8 @@ export function scoreWords(drink?: number, bar?: number): string | null {
 /** One drink at its bar: the bar and where it is under the name, the scores (when given) at the end. */
 export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scores?: DrinkScores }) {
   const bar = d.bar;
-  const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
+  const away = d.distance === null || d.distance === undefined ? null : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
+  const caption = [bar.name, away ?? place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
   const barScore = scores?.bars[d.barId]?.score;
   const said = scoreWords(drinkScore, barScore);
@@ -62,10 +66,21 @@ export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scor
       caption={caption}
       logo={{ uri: bar.logo, name: bar.name }}
       tag={d.menu.past ?? undefined}
-      note={d.description ?? undefined}
+      note={(d.why ?? d.description) || undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
-      label={said ? [d.name, caption, d.menu.past, said, d.description].filter(Boolean).join('. ') : undefined}
+      label={said ? [d.name, caption, d.menu.past, said, d.why ?? d.description].filter(Boolean).join('. ') : undefined}
     />
+  );
+}
+
+/** "Also mentions “martini”" over the first drink that matched by its lines, description or bar rather than its name. */
+export function AlsoMentions({ drinks, index, search }: { drinks: readonly DiscoverDrink[]; index: number; search: string }) {
+  const weak = !isStrong(drinks[index].match);
+  if (!weak || (index > 0 && !isStrong(drinks[index - 1].match))) return null;
+  return (
+    <Caption tone="muted" role="heading" style={styles.also}>
+      {`Also mentions “${search.trim()}”`}
+    </Caption>
   );
 }
 
@@ -131,4 +146,5 @@ const styles = StyleSheet.create({
   section: { gap: space.xs },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
   score: { alignItems: 'flex-end' },
+  also: { paddingTop: space.lg },
 });

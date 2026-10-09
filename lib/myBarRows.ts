@@ -11,6 +11,19 @@ export const MAKE_PAGE = 25;
 /** Rows of bottle tiles shown before "Show all", so the shelf never pushes the drinks off the first screen. */
 export const SHELF_FOLDED_ROWS = 2;
 
+/** My Bar's sections, in the order they're listed. */
+export const SHELF_SECTIONS = ['bottles', 'fridge', 'lab', 'preps', 'kit'] as const;
+export type ShelfSection = (typeof SHELF_SECTIONS)[number];
+
+/**
+ * A tap on a section filter: All shows everything again; a section on its own
+ * the first time, then each tap adds or drops one. Dropping the last is All.
+ */
+export function pickSection(shown: readonly ShelfSection[], tapped: ShelfSection | 'all'): ShelfSection[] {
+  if (tapped === 'all') return [];
+  return shown.includes(tapped) ? shown.filter((s) => s !== tapped) : [...shown, tapped];
+}
+
 /** The sections of a search, which covers every tab but Make first and Projects at once. */
 export type Found = 'ready' | 'one' | 'two';
 
@@ -33,10 +46,14 @@ export interface MyBarState<B extends ShelfBottle, D extends Drink, G extends Gr
   sort: ShelfSort;
   query: string;
   shelfOpen: boolean;
+  /** Taking bottles off: no Add tile, so the bottles close up. */
+  editing?: boolean;
   /** Tiles to a row: the bottles are listed a row of tiles at a time. */
   cols: number;
-  /** How much is in the sections past the fridge; an empty one folds to a line. */
-  more?: { lab: number; preps: number; kit: number };
+  /** How much is in the sections past the bottles; an empty one past the fridge folds to a line. */
+  more?: { fridge?: number; lab: number; preps: number; kit: number };
+  /** The sections picked in the filter; none picked shows them all. */
+  show?: readonly ShelfSection[];
   /** What the shelf makes, or null before there's anything on it. */
   /**
    * `first`: house preps to make first; `projects`: what the kit and lab shelf
@@ -61,12 +78,16 @@ export interface MyBarState<B extends ShelfBottle, D extends Drink, G extends Gr
 
 export type MyBarRow<B, D, G> =
   | { kind: 'top'; key: string }
-  /** Shortcuts to each section, once there's more than bottles and the fridge. */
-  | { kind: 'jump'; key: string }
+  /** The section filter, once two sections have something in them. */
+  | { kind: 'filters'; key: string }
   | { kind: 'shelf-head'; key: string }
-  /** One row of bottle tiles. `heading`: the style caption above it, when sorted by style and a style starts here. */
-  | { kind: 'bottles'; key: string; bottles: B[]; heading: string | null }
-  | { kind: 'shelf-foot'; key: string; found: number }
+  /**
+   * One row of bottle tiles. `heading`: the style caption above it, when sorted by style and a style starts here.
+   * `add`: the row opens with the Add tile.
+   */
+  | { kind: 'bottles'; key: string; bottles: B[]; heading: string | null; add?: boolean }
+  /** `foldable`: there are more bottles than the folded shelf shows, so it offers Show all / Show fewer. */
+  | { kind: 'shelf-foot'; key: string; found: number; foldable: boolean }
   | { kind: 'pantry'; key: string }
   | { kind: 'lab'; key: string }
   | { kind: 'preps'; key: string }
@@ -91,9 +112,6 @@ export type MyBarRow<B, D, G> =
 export function makeTab(picked: MakeTab | null, make: { canMake: unknown[]; oneAway: unknown[]; twoAway: unknown[] }): MakeTab {
   return picked ?? (make.canMake.length ? 'ready' : make.oneAway.length ? 'one' : make.twoAway.length ? 'two' : 'ready');
 }
-
-/** The row a section shortcut scrolls to. */
-export const JUMP_ROW = { bottles: 'shelf-head', fridge: 'pantry', lab: 'lab', preps: 'preps', kit: 'kit' } as const;
 
 export const groupKey = (g: { bottles: { id: string }[] }) => `g:${g.bottles.map((b) => b.id).join('+')}`;
 
@@ -155,34 +173,45 @@ function searchRows<B, D extends Drink, G extends Group<D>>(make: NonNullable<My
 export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Group<D>>(s: MyBarState<B, D, G>): MyBarRow<B, D, G>[] {
   const rows: MyBarRow<B, D, G>[] = [{ kind: 'top', key: 'top' }];
   const more = s.more ?? { lab: 0, preps: 0, kit: 0 };
-  const extras = (['lab', 'preps', 'kit'] as const).filter((k) => more[k] > 0);
-  if (extras.length) rows.push({ kind: 'jump', key: 'jump' });
-  if (s.bottles.length) {
+  const sizes: Record<ShelfSection, number> = { bottles: s.bottles.length, fridge: more.fridge ?? 0, lab: more.lab, preps: more.preps, kit: more.kit };
+  // A pick whose section has since emptied is dropped; nothing left picked is everything.
+  const picked = (s.show ?? []).filter((k) => sizes[k] > 0);
+  const on = (k: ShelfSection) => !picked.length || picked.includes(k);
+  if (SHELF_SECTIONS.filter((k) => sizes[k] > 0).length > 1) rows.push({ kind: 'filters', key: 'filters' });
+  const extras = (['lab', 'preps', 'kit'] as const).filter((k) => more[k] > 0 && on(k));
+  if (s.bottles.length && on('bottles')) {
     const arranged = arrangeShelf(s.bottles, s.sort, s.query);
     const cols = Math.max(1, s.cols);
-    const shown = s.shelfOpen || s.query.trim() ? arranged : arranged.slice(0, SHELF_FOLDED_ROWS * cols);
+    const searching = !!s.query.trim();
+    // The Add tile takes the first place, except under a search or while editing; by style it gets a row of its own.
+    const add = !searching && !s.editing;
+    const fold = SHELF_FOLDED_ROWS * cols - (add && s.sort !== 'style' ? 1 : 0);
+    // Picking Bottles in the filter is asking for the whole shelf.
+    const shown = s.shelfOpen || searching || picked.length ? arranged : arranged.slice(0, fold);
     rows.push({ kind: 'shelf-head', key: 'shelf-head' });
     // A row is full, or ends where the next style starts.
     let row: B[] = [];
     let heading: string | null = null;
+    let first = add;
     const flush = () => {
-      if (row.length) rows.push({ kind: 'bottles', key: `b:${row[0].id}`, bottles: row, heading });
+      if (row.length || first) rows.push({ kind: 'bottles', key: first ? 'b:add' : `b:${row[0].id}`, bottles: row, heading, ...(first ? { add: true } : {}) });
       row = [];
       heading = null;
+      first = false;
     };
     shown.forEach((b, i) => {
       const starts = s.sort === 'style' && (i === 0 || b.kind !== shown[i - 1].kind);
-      if (starts || row.length === cols) flush();
+      if (starts || row.length === cols - (first ? 1 : 0)) flush();
       if (starts) heading = b.kind ?? 'Other';
       row.push(b);
     });
     flush();
-    rows.push({ kind: 'shelf-foot', key: 'shelf-foot', found: arranged.length });
+    rows.push({ kind: 'shelf-foot', key: 'shelf-foot', found: arranged.length, foldable: !searching && !picked.length && arranged.length > fold });
   }
-  rows.push({ kind: 'pantry', key: 'pantry' });
+  if (on('fridge')) rows.push({ kind: 'pantry', key: 'pantry' });
   for (const k of extras) rows.push({ kind: k, key: k });
   const empty = (['lab', 'preps', 'kit'] as const).filter((k) => !more[k]);
-  if (empty.length) rows.push({ kind: 'folds', key: 'folds', empty });
+  if (empty.length && !picked.length) rows.push({ kind: 'folds', key: 'folds', empty });
   if (s.make?.query?.trim()) {
     rows.push(...searchRows<B, D, G>(s.make, s.make.query));
   } else if (s.make) {

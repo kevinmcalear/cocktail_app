@@ -15,6 +15,7 @@ export interface AnalyticsEvents {
   age_check_passed: undefined;
   drink_ranked: { rerank: boolean; at_bar: boolean };
   drink_collected: { kind: 'drink' | 'release' };
+  drink_made: { compared: 'better' | 'same' | 'worse' | 'none'; swaps: number };
   drink_created: { at_bar: boolean; on_menu: boolean };
   invite_sent: undefined;
   claim_started: { method: BarClaimMethod; approved: boolean };
