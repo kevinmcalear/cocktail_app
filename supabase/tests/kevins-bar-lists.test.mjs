@@ -70,9 +70,12 @@ describe("Kevin's bar lists", () => {
   });
 
   test("menus hold only their own bar's drinks, and no drink queued a flavour job", async () => {
+    // A drink whose empty spec was later filled from its classic
+    // (20261010640000_classic_fill.sql) is meant to queue one.
     const { rows } = await db.query(
       `SELECT count(*) FILTER (WHERE i.origin_bar_profile_id <> e.profile_id)::int AS foreign_drinks,
-              count(*) FILTER (WHERE EXISTS (SELECT 1 FROM private.item_flavor_jobs j WHERE j.item_id = i.id))::int AS jobs
+              count(*) FILTER (WHERE i.spec_source IS DISTINCT FROM 'classic'
+                               AND EXISTS (SELECT 1 FROM private.item_flavor_jobs j WHERE j.item_id = i.id))::int AS jobs
        FROM public.profile_menu_edition_drinks d
        JOIN public.profile_menu_editions e ON e.id = d.edition_id
        JOIN public.profiles p ON p.id = e.profile_id
