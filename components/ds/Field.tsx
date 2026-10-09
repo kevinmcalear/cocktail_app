@@ -9,6 +9,8 @@ import { useDs } from './theme';
 interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
   ref?: Ref<ComponentRef<typeof TextInput>>;
   label: string;
+  /** Keeps the label for screen readers only, for a search box whose placeholder says what it is. */
+  hideLabel?: boolean;
   /** Shown under the field; errors say what's wrong and how to fix it. */
   hint?: string;
   error?: string;
@@ -17,11 +19,11 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
 }
 
 /** A labelled text input in the Back Bar style. */
-export function Field({ label, hint, error, minLines, ...input }: FieldProps) {
+export function Field({ label, hideLabel, hint, error, minLines, ...input }: FieldProps) {
   const ds = useDs();
   return (
     <View style={styles.field}>
-      <Caption tone="muted">{label}</Caption>
+      {hideLabel ? null : <Caption tone="muted">{label}</Caption>}
       <TextInput
         {...input}
         multiline={minLines ? true : input.multiline}

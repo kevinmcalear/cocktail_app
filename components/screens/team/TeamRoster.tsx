@@ -41,7 +41,17 @@ function problem(error: unknown): string | null {
  * look-up, invites, and a sheet per person to change their role or remove
  * them. The database decides who may; this only hides the controls.
  */
-export function TeamRoster({ barId, barName, role }: { barId: string; barName: string; role: number }) {
+export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
+  barId: string;
+  barName: string;
+  role: number;
+  /**
+   * My team puts Invite in its title row and opens the sheet from there. Left
+   * out (venue settings), the roster shows its own Invite button.
+   */
+  inviting?: boolean;
+  onCloseInvite?: () => void;
+}) {
   const myId = useUserId();
   const manage = canManageTeam(role);
   const members = useBarMembers(barId);
@@ -51,7 +61,8 @@ export function TeamRoster({ barId, barName, role }: { barId: string; barName: s
   const cancel = useRemoveInvite(barId);
   const send = useSendInviteEmail(barId);
   const [query, setQuery] = useState('');
-  const [inviting, setInviting] = useState(false);
+  const [ownInviting, setOwnInviting] = useState(false);
+  const ownButton = !onCloseInvite;
   const [note, setNote] = useState<InviteNote | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
@@ -99,13 +110,14 @@ export function TeamRoster({ barId, barName, role }: { barId: string; barName: s
   return (
     <View style={styles.roster}>
       <View style={styles.section}>
-        <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
+        {/* Only worth a heading when the invites below make it one list of two. */}
+        {invites.length > 0 ? <SectionHeading>{`Team · ${all.length}`}</SectionHeading> : null}
         {manage ? (
           <View style={styles.toolbar}>
             <View style={styles.search}>
-              <Field label="Look up" value={query} onChangeText={setQuery} placeholder="Name or email" autoCapitalize="none" autoCorrect={false} />
+              <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
             </View>
-            <Button label="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} disabled={busy} />
+            {ownButton ? <Button label="Invite someone" icon="person.badge.plus" onPress={() => setOwnInviting(true)} disabled={busy} /> : null}
           </View>
         ) : null}
         {note ? (
@@ -160,7 +172,7 @@ export function TeamRoster({ barId, barName, role }: { barId: string; barName: s
 
       {manage ? (
         <>
-          <InviteSheet visible={inviting} onClose={() => setInviting(false)} barId={barId} barName={barName} ceiling={role} onDone={setNote} />
+          <InviteSheet visible={ownButton ? ownInviting : !!inviting} onClose={onCloseInvite ?? (() => setOwnInviting(false))} barId={barId} barName={barName} ceiling={role} onDone={setNote} />
           <MemberSheet member={open} barName={barName} ceiling={role} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
         </>
       ) : null}
@@ -234,7 +246,7 @@ function InviteRow({ name, email, roleLevel, busy, onResend, onCancel }: {
 
 const styles = StyleSheet.create({
   roster: { gap: space.xl },
-  toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', gap: space.md },
+  toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   search: { flexGrow: 1, flexBasis: 240 },
   section: { gap: space.md },
   card: { paddingVertical: space.xs, gap: 0 },

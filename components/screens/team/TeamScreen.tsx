@@ -1,14 +1,14 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Display, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Display, useDs, useGutter } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { canSeeTeam } from '@/lib/team';
+import { canManageTeam, canSeeTeam } from '@/lib/team';
 
 import { TeamRoster } from './TeamRoster';
 
@@ -25,11 +25,12 @@ export function TeamScreen() {
   const { active } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const visible = !home && !!active && canSeeTeam(role);
+  const [inviting, setInviting] = useState(false);
 
   let body: ReactNode;
   if (home || !active) body = <Body tone="muted">My team is part of a venue. Switch to your bar to see it.</Body>;
   else if (!visible) body = <Body tone="muted">My team opens at Employee.</Body>;
-  else body = <TeamRoster barId={active.id} barName={active.name} role={role} />;
+  else body = <TeamRoster barId={active.id} barName={active.name} role={role} inviting={inviting} onCloseInvite={() => setInviting(false)} />;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -40,9 +41,10 @@ export function TeamScreen() {
           { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl },
         ]}
       >
+        {/* The venue is already in the sidebar and the chip, so no subtitle. */}
         <View style={styles.head}>
           <Display>My team</Display>
-          {active && visible ? <Caption tone="muted">{active.name}</Caption> : null}
+          {visible && canManageTeam(role) ? <Button label="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} /> : null}
         </View>
         {body}
       </ScrollView>
@@ -53,5 +55,5 @@ export function TeamScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: space.xl, maxWidth: 760, width: '100%', alignSelf: 'center' },
-  head: { gap: space.xs },
+  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.md },
 });
