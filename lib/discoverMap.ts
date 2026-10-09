@@ -152,9 +152,16 @@ export function cameraFor(pins: readonly Pick<MapPin, 'latitude' | 'longitude'>[
   return { latitude, longitude, zoom: Math.round(zoom * 10) / 10 };
 }
 
-/** A camera that shows a point area's whole circle; null for a city or anywhere. */
+/**
+ * Near me opens on the person's own neighbourhood (about 2 km across a
+ * phone), not the whole 10 km the list covers; they zoom out for more.
+ */
+const NEAR_ME_ZOOM = 13.5;
+
+/** A camera for an area: near me, the person's neighbourhood; a map area, its whole circle; null for a city or anywhere. */
 export function cameraForArea(area: Area): Camera | null {
   if (area.kind !== 'point') return null;
+  if (area.source === 'me') return { latitude: area.latitude, longitude: area.longitude, zoom: NEAR_ME_ZOOM };
   const dLat = area.radiusKm / KM_PER_DEG;
   return cameraFor([
     { latitude: area.latitude - dLat, longitude: area.longitude },
