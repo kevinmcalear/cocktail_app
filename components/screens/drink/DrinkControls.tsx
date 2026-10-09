@@ -22,6 +22,8 @@ interface DrinkControlsProps {
   onToggleStudyPile: () => void;
   canEdit: boolean;
   onEdit: () => void;
+  /** What the edit button says to a screen reader; the ingredient page reuses these controls. */
+  editLabel?: string;
 }
 
 /**
@@ -30,7 +32,7 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink' }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -67,7 +69,7 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, isFavorit
           {FEATURES.study ? (
             <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} scheme={right} onPress={onToggleStudyPile} />
           ) : null}
-          {canEdit ? <GlassButton accessibilityLabel="Edit drink" icon="pencil" scheme={right} onPress={onEdit} /> : null}
+          {canEdit ? <GlassButton accessibilityLabel={editLabel} icon="pencil" scheme={right} onPress={onEdit} /> : null}
         </View>
       </View>
     </>

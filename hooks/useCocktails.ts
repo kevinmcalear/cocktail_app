@@ -143,6 +143,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                             id,
                             name,
                             abv,
+                            ingredient_role,
                             item_images (
                                 angle,
                                 sort_order,

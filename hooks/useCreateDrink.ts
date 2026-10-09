@@ -182,7 +182,12 @@ export function useCreateDrink() {
       // The drawing the wizard showed stays the drink's: the worker won't
       // repaint it until the drink changes (20261009750000_maker_drawings).
       // Decorative, so a failure only means the worker draws it as usual.
-      if (sketch) await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: sketch });
+      // No glass drawing picked goes without "variant": the database stores
+      // the default drawing that way and refuses a null one.
+      if (sketch) {
+        const { variant, ...rest } = sketch;
+        await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? sketch : rest });
+      }
 
       if (draft.publish) {
         const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
