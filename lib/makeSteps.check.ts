@@ -39,6 +39,9 @@ assert.equal(timerFromText('Cool, bottle, label.'), null);
 assert.equal(timerFromText('Use 2 limes'), null, 'a number without a time unit is not a timer');
 assert.equal(timerFromText('Leave 3 days in the fridge'), null, 'over a day is a reminder, not a countdown');
 assert.equal(timerFromText('Infuse 5-10 minutes'), 300, 'a range starts at its low end');
+assert.equal(timerFromText('1 day'), 86400, 'a timer typed as words');
+assert.equal(timerFromText('4 h'), 14400);
+assert.equal(timerFromText('24 h'), 86400);
 
 // Dates and initials for the label.
 const made = new Date(2026, 9, 9, 12);
