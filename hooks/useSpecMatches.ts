@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { versionLabel, type SpecNote } from '@/lib/servedAt';
 import { supabase } from '@/lib/supabase';
@@ -102,4 +102,18 @@ export function useBarVersionLabels(classicId: string | undefined, profileIds: s
     },
   });
   return data ?? {};
+}
+
+/** An editor's call on their drink: "same" as the classic, "variation", or null to go back to the worked-out verdict. */
+export function useSetSpecMatch() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemId, specMatch }: { itemId: string; specMatch: 'same' | 'variation' | null }) => {
+      const { error } = await supabase.rpc('set_spec_match', { p_item_id: itemId, p_spec_match: specMatch });
+      if (error) throw error;
+    },
+    onSettled: () => {
+      for (const key of ['spec-match', 'spec-matches', 'bar-version-labels', 'home-bar']) void client.invalidateQueries({ queryKey: [key] });
+    },
+  });
 }
