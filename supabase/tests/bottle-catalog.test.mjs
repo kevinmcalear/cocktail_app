@@ -52,7 +52,8 @@ describe('bottle catalog', () => {
   test('the styles bartenders ask about list real bottles', async () => {
     const expected = {
       'Sweet Vermouth': ['Carpano Antica Formula'],
-      'Dry Vermouth': ['Dolin Dry Vermouth'],
+      // Its label name since 20261011153000 (the old name is an alias).
+      'Dry Vermouth': ['Dolin Vermouth Dry'],
       'Bourbon': ['Buffalo Trace'],
       'Rhum Agricole': [],
     };
