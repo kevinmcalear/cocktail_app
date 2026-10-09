@@ -10,7 +10,7 @@
  * its name and description.
  */
 import { foldName } from './discover';
-import { NOTE_KINDS, noteKind, noteLabel, noteWord } from './flavor';
+import { NOTE_KINDS, noteDimension, noteKind, noteLabel, noteWord } from './flavor';
 
 export interface DrinkFacts {
   name: string;
@@ -141,11 +141,13 @@ const NOTES: readonly Kind[] = NOTE_KINDS.map((d) => ({ id: noteKind(d), label: 
 /**
  * Styles and spirits with a label word, or a classic's name, starting with
  * the search: "gin" finds Gin, "marg" Margaritas, "boulevardier" Negronis.
+ * Notes also answer to their stored name, so "spicy" still finds Heat.
  */
 export function findKinds(search: string): Kind[] {
   const q = fold(search);
   if (q.length < 2) return [];
   const wordStarts = (s: string) => fold(s).split(/[\s&]+/).some((w) => w.startsWith(q));
   const classicStarts = (id: string) => STYLES.find((s) => s.id === id)?.classics.some((c) => fold(c).startsWith(q)) ?? false;
-  return [...KINDS, ...NOTES].filter((k) => wordStarts(k.label) || classicStarts(k.id));
+  const noteStarts = (id: string) => !!noteDimension(id)?.startsWith(q);
+  return [...KINDS, ...NOTES].filter((k) => wordStarts(k.label) || classicStarts(k.id) || noteStarts(k.id));
 }
