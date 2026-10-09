@@ -6,7 +6,6 @@ import { Field } from '@/components/ds';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useMode } from '@/hooks/useMode';
 import type { useBarEditor } from '@/hooks/useBarEditor';
 
 type Editor = ReturnType<typeof useBarEditor>;
@@ -19,12 +18,10 @@ const LOGO = 32;
  */
 export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }) {
   const router = useRouter();
-  const { setActive } = useActiveVenue();
-  const { setMode } = useMode();
+  const { enterVenue } = useActiveVenue();
   const drinks = `${editor.drinkCount} ${editor.drinkCount === 1 ? 'drink' : 'drinks'}`;
   const openLibrary = () => {
-    setActive(barId);
-    setMode('venue');
+    enterVenue(barId);
     router.navigate('/library' as Href);
   };
   return (

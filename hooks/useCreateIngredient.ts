@@ -79,10 +79,11 @@ export function useCreateIngredient() {
 
 /**
  * The ingredient a recipe line means: the picked one, else the existing one
- * by name or alias, else a new one. ponytail: the add-drink wizard's save
- * (useCreateDrink) has the same lookup inline; share it when a third caller needs it.
+ * by name or alias, else a new one. Also turns a note into recipe lines
+ * (usePrepCard's useAdoptNoteRecipe). ponytail: the add-drink wizard's save
+ * (useCreateDrink) still has the same lookup inline, with its own bookkeeping.
  */
-async function ensureIngredient(pick: WizardPick, barId: string | null, made: Map<string, string>): Promise<string> {
+export async function ensureIngredient(pick: WizardPick, barId: string | null, made: Map<string, string>): Promise<string> {
   if (pick.id) return pick.id;
   const key = pick.name.trim().replace(/\s+/g, ' ').toLowerCase();
   const known = made.get(key);

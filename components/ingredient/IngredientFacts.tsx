@@ -20,6 +20,8 @@ interface Props {
     madeFrom?: Link | null;
   };
   bottles: IngredientBottle[];
+  /** The page already says what it is (a house prep's tags): only the links and bottles show. */
+  hideRole?: boolean;
 }
 
 const FIRST = 12;
@@ -46,9 +48,9 @@ export function IngredientFacts(props: Props) {
   );
 }
 
-function Facts({ ingredient, bottles }: Props) {
+function Facts({ ingredient, bottles, hideRole }: Props) {
   const [all, setAll] = useState(false);
-  const role = ingredient.ingredient_role ?? null;
+  const role = hideRole ? null : (ingredient.ingredient_role ?? null);
   const facts = role === 'product' ? bottleFacts(ingredient) : '';
   if (!role && !ingredient.generic && !ingredient.madeFrom && !bottles.length) return null;
   const shown = all ? bottles : bottles.slice(0, FIRST);

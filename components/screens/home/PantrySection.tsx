@@ -3,10 +3,11 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Button, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
+import { SECTIONS } from '@/lib/barSections';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 
 import { SectionActions, SectionHead, ShelfTile } from './BarSections';
-import { BarTile, TileGrid } from './BarTile';
+import { AddTile, BarTile, TileGrid } from './BarTile';
 
 interface PantrySectionProps {
   /** The staples the catalog has, by ingredient name (usePantryItems). */
@@ -47,19 +48,20 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
   return (
     <View style={[styles.section, style]}>
       <SectionHead section="fridge" count={count}>
-        <SectionActions section="fridge" editing={editing} onEdit={onEdit} onAdd={onMore} canEdit={count > 0} />
+        <SectionActions section="fridge" editing={editing} onEdit={onEdit} canEdit={count > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
+        {editing ? null : <AddTile label={SECTIONS.fridge.add} onPress={onMore} />}
         {have.map((s) => {
           const item = byId.get(s.id);
           return item ? (
-            <ShelfTile key={s.id} item={{ ...item, name: s.label }} editing={editing} onRemove={onRemove} />
+            <ShelfTile key={s.id} item={{ ...item, name: s.label }} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
           ) : (
             <BarTile key={s.id} name={s.label} picture={<IngredientDrawing id={s.id} name={s.name} />} role="button" accessibilityLabel={`Take ${s.label} off your bar`} badge={editing ? 'remove' : null} onPress={() => onRemove(s.id)} />
           );
         })}
         {extras.map((x) => (
-          <ShelfTile key={x.id} item={x} editing={editing} onRemove={onRemove} />
+          <ShelfTile key={x.id} item={x} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
         ))}
         {editing
           ? null

@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { after, before, describe, test } from 'node:test';
 
 import pg from 'pg';
@@ -21,6 +21,16 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 
 const db = new pg.Client({ connectionString: status.DB_URL });
 const MIGRATION = new URL('../migrations/20261008900100_bottle_catalog.sql', import.meta.url);
+// The catalog fills after it correct some of its styles, so it is re-run with
+// them, in order (those this branch has). Found by name, since a migration is
+// renumbered to land after production's latest.
+const MIGRATIONS = [
+  MIGRATION,
+  ...readdirSync(new URL('../migrations/', import.meta.url))
+    .filter((f) => /^\d{14}_ingredient_tree_fill(_\d+)?\.sql$/.test(f))
+    .sort()
+    .map((f) => new URL(`../migrations/${f}`, import.meta.url)),
+];
 
 before(() => db.connect());
 after(() => db.end());
@@ -87,10 +97,12 @@ describe('bottle catalog', () => {
     const snapshot = `SELECT count(*)::int AS n, count(*) FILTER (WHERE ingredient_role = 'product')::int AS bottles,
                              md5(string_agg(id::text || coalesce(generic_id::text, '') || coalesce(made_from_id::text, '') || coalesce(ingredient_role, '') || name, ',' ORDER BY id)) AS h
                         FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL`;
-    const before = await one(snapshot);
-    await db.query('BEGIN');
+    // One snapshot for the whole check, so another test file adding or removing
+    // its own catalog ingredient meanwhile doesn't count as a change.
+    await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
     try {
-      await db.query(readFileSync(MIGRATION, 'utf8'));
+      const before = await one(snapshot);
+      for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
       assert.deepEqual(await one(snapshot), before);
     } finally {
       await db.query('ROLLBACK');

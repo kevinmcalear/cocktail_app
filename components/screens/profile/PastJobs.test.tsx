@@ -37,6 +37,6 @@ test('the current job always shows; each past job has its own switch, off to sta
 test("a job the bar hasn't confirmed says so; one waiting on the person is left to Jobs waiting", async () => {
   await renderWithTamagui(<PastJobs personId="jo" />);
   expect(screen.getByText('Bar manager, Attaboy')).toBeTruthy();
-  expect(screen.getByText('Pending: shows once the bar confirms it')).toBeTruthy();
+  expect(screen.getByText('Not confirmed by the bar yet. It shows marked that way.')).toBeTruthy();
   expect(screen.queryByText('Barback, Dante')).toBeNull();
 });

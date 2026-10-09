@@ -48,6 +48,8 @@ assert.equal(shelfLifeLabel(24 * 7), '7 days');
 assert.equal(shelfLifeLabel(24 * 21), '3 weeks');
 assert.equal(leadTimeLabel(20, null), '20 min');
 assert.equal(leadTimeLabel(120, null), '2 h');
+assert.equal(leadTimeLabel(24 * 60, null), '24 h');
+assert.equal(leadTimeLabel(3 * 24 * 60, null), '3 days');
 assert.equal(leadTimeLabel(1440, '24 h drip'), '24 h drip');
 assert.equal(leadTimeLabel(null, null), null);
 assert.equal(timerLabel(45), '45 s');

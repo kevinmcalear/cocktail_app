@@ -102,6 +102,7 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
+            houseMade={l.houseMade}
             note={l.note ?? undefined}
             detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}

@@ -2,7 +2,9 @@ import { renderHook } from '@testing-library/react-native';
 
 import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
-import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { EMPTY_DRAFT, sketchLook, type WizardDraft } from '@/lib/drinkWizard';
+import { startPrep } from '@/lib/prepKinds';
+import { draftSketchInputs } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 const mockSetQueryData = jest.fn();
@@ -19,7 +21,11 @@ jest.mock('@/lib/analytics', () => ({ track: jest.fn() }));
 
 const mockSaveSpec = jest.fn();
 const mockSavePrepCard = jest.fn();
-jest.mock('@/hooks/usePrepCard', () => ({ savePrepCard: (...args: unknown[]) => mockSavePrepCard(...args) }));
+const mockSavePrepRecipe = jest.fn();
+jest.mock('@/hooks/usePrepCard', () => ({
+  savePrepCard: (...args: unknown[]) => mockSavePrepCard(...args),
+  savePrepRecipe: (...args: unknown[]) => mockSavePrepRecipe(...args),
+}));
 jest.mock('@/hooks/useVersions', () => ({ saveDrinkSpec: (...args: unknown[]) => mockSaveSpec(...args) }));
 
 // Rows that exist; 'gone' was merged away (deleted) after the draft picked it.
@@ -77,12 +83,25 @@ test('a picked ingredient merged away since is saved by its name, not its old id
 test('the drink is saved under its draft id and shows the wizard\'s drawing at once', async () => {
   mockInserts.length = 0;
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
-  const sketch = { glass: 'coupe' } as unknown as SketchInputs;
+  const sketch = { glass: 'coupe', variant: 'coupe_nick' } as unknown as SketchInputs;
   const { id } = await result.current.mutationFn({ draft: { ...EMPTY_DRAFT, id: 'draft-1', name: 'Sour', creator: 'nobody' }, barId: null, myProfileId: null, sketch });
   expect(id).toBe('draft-1');
   expect(mockInserts.map((r) => r.id)).toEqual(['draft-1']);
   expect(mockSetQueryData).toHaveBeenCalledWith(['item-sketch', 'draft-1'], sketch);
   expect(mockRpcs).toContainEqual(['save_maker_sketch', { p_item_id: 'draft-1', p_inputs: sketch }]);
+});
+
+// valid_sketch_inputs refuses "variant": null (supabase/tests/maker-drawings.test.mjs), and most drinks pick no glass drawing.
+test('a drawing with no glass variant is saved without one', async () => {
+  mockRpcs.length = 0;
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const draft: WizardDraft = { ...EMPTY_DRAFT, id: 'draft-3', name: 'Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Lime juice', amount: '30', unit: 'ml' }] };
+  const sketch = draftSketchInputs(sketchLook(draft, []));
+  expect(sketch.variant).toBeNull();
+  await result.current.mutationFn({ draft, barId: null, myProfileId: null, sketch });
+  const [, args] = mockRpcs.find(([fn]) => fn === 'save_maker_sketch')!;
+  expect(args.p_inputs).not.toHaveProperty('variant');
+  expect(args.p_inputs).toEqual(Object.fromEntries(Object.entries(sketch).filter(([k]) => k !== 'variant')));
 });
 
 test('an id the database already has saves under one of its own', async () => {
@@ -108,4 +127,22 @@ test('a new house prep made by a technique gets its prep card; one already on th
   expect(itemId).toBe('new-row');
   expect(card.prep.actions).toEqual(['Clarify']);
   expect(card.steps[0].body).toBe('For 375 g juice: 125 g water, 1 g agar.');
+});
+
+test('a house prep made in the wizard is saved with its own recipe, not a technique card', async () => {
+  mockSavePrepCard.mockClear();
+  mockSavePrepRecipe.mockClear();
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const prep = startPrep('shrub', 'Pineapple chili shrub');
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, name: 'Pineapple Heat', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pineapple chili shrub', amount: '20', unit: 'ml', prep }] },
+    barId: null,
+    myProfileId: null,
+  });
+  expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
+  const [id, saved, ensure] = mockSavePrepRecipe.mock.calls[0];
+  expect(id).toBe('new-row');
+  expect(saved).toBe(prep);
+  expect(typeof ensure).toBe('function');
+  expect(mockSavePrepCard).not.toHaveBeenCalled();
 });

@@ -51,7 +51,7 @@ const ENTRY_COLUMNS = `
  * so the embedded drink comes back empty. Fill its name and picture from
  * published_items. One the bar has since unpublished stays empty.
  */
-async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
+export async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
   const missing = [...new Set(rows.filter((r) => !r.item).map((r) => r.item_id))];
   if (!missing.length) return rows;
   const published = await fetchPublished(missing);
@@ -114,9 +114,9 @@ export function useMyHadDrinks() {
 }
 
 /**
- * The drinks someone else has had, from their public profile. Empty unless
- * they've chosen to show them (profiles.shares_rankings) and you're signed
- * in; the server leaves out anything that isn't public (get_profile_drinks).
+ * The drinks someone else has had, from their public profile: the ones they
+ * show (profiles.had_mode and each drink's pick), when you're signed in. The
+ * server leaves out anything that isn't public (get_profile_drinks).
  */
 export function useProfileDrinks(profileId: string | null | undefined, enabled: boolean) {
   const userId = useUserId();
@@ -133,9 +133,9 @@ export function useProfileDrinks(profileId: string | null | undefined, enabled: 
 
 /**
  * The bars someone has had drinks at, with their average at each, from their
- * public profile. Empty unless they show bars (profiles.shares_bars) and you're
- * signed in; the best drink at each is named only when they show drinks too
- * (get_profile_bars).
+ * public profile: the ones they show (profiles.bars_mode and each bar's pick),
+ * when you're signed in. The best drink at each is named only when they show
+ * that drink too (get_profile_bars).
  */
 export function useProfileBars(profileId: string | null | undefined, enabled: boolean) {
   const userId = useUserId();
@@ -147,6 +147,51 @@ export function useProfileBars(profileId: string | null | undefined, enabled: bo
       if (error) throw error;
       return ((data ?? []) as SharedBarRow[]).map(fromSharedBarRow);
     },
+  });
+}
+
+/** Your pick for one drink you've had: shown, hidden or following the mode (null), and its top-four place. */
+export interface HadPick {
+  onProfile: boolean | null;
+  pin: number | null;
+}
+
+/** Your picks for the drinks you've had, by rank entry id. Plain JSON. */
+export function useMyHadPicks() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['my-had-picks', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Record<string, HadPick>> => {
+      const { data, error } = await supabase.from('rank_entries').select('id, on_profile, profile_pin').eq('user_id', userId!).limit(2000);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r) => [r.id as string, { onProfile: r.on_profile as boolean | null, pin: r.profile_pin as number | null }]));
+    },
+  });
+}
+
+/**
+ * Shows, hides or pins one drink you've had on your profile. A pinned drink
+ * is a shown one (rank_entries_pin_shown), so hiding unpins it.
+ */
+export function useSetHadPick() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, onProfile, pin }: { id: string; onProfile: boolean; pin: number | null }) => {
+      const { data, error } = await supabase
+        .from('rank_entries')
+        .update({ on_profile: onProfile, profile_pin: onProfile ? pin : null })
+        .eq('id', id)
+        .select('id');
+      if (error?.code === '23505') throw new Error('That spot in your top four is taken. Unpin a drink first.');
+      if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-had-picks'] });
+      qc.invalidateQueries({ queryKey: ['profile-drinks'] });
+      qc.invalidateQueries({ queryKey: ['profile-bars'] });
+    },
+    onError: () => {},
   });
 }
 

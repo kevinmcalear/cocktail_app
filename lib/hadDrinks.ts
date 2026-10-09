@@ -34,7 +34,10 @@ export interface HadDrink {
   sentiment: Sentiment;
   score: number;
   hadOn: string | null;
+  /** Empty when they don't show when they had their drinks. */
   createdAt: string;
+  /** 1 to 4: its place in their top four. */
+  pin?: number | null;
 }
 
 /** A rank_entry_scores row with its drink, list and bar embedded. */
@@ -95,8 +98,10 @@ export interface SharedHadRow {
   venue_city: string | null;
   sentiment: Sentiment;
   score: number | string;
+  /** Both null when they don't show when they had their drinks. */
   had_on: string | null;
-  created_at: string;
+  created_at: string | null;
+  pin: number | null;
 }
 
 export function fromSharedRow(row: SharedHadRow): HadDrink {
@@ -120,9 +125,17 @@ export function fromSharedRow(row: SharedHadRow): HadDrink {
     sentiment: row.sentiment,
     score: Number(row.score),
     hadOn: row.had_on,
-    createdAt: row.created_at,
+    createdAt: row.created_at ?? '',
+    pin: row.pin,
   };
 }
+
+/** Their top four, in their order. */
+export const topFour = (drinks: readonly HadDrink[]): HadDrink[] =>
+  drinks.filter((d) => d.pin).sort((a, b) => (a.pin ?? 0) - (b.pin ?? 0)).slice(0, 4);
+
+/** Whether any drink says when it was had (they may not show dates). */
+export const hasDates = (drinks: readonly HadDrink[]) => drinks.some((d) => d.hadOn || d.createdAt);
 
 export type HadSort = 'score' | 'recent';
 

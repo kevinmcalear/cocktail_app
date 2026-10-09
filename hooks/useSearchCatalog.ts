@@ -9,7 +9,6 @@ import { draftMethodIds } from '@/lib/drinkMethods';
 import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize } from '@/lib/stringUtils';
-import { useAppStore } from '@/store/useAppStore';
 import { useMemo } from 'react';
 
 const DRAFT_CATEGORY: Record<string, SearchItem['category']> = {
@@ -33,6 +32,7 @@ export function toCocktailSearchItem(c: any): SearchItem {
     name: c.name,
     description: c.description,
     category: 'Cocktail',
+    serviceStyle: c.service_style ?? null,
     recipes: c.recipes,
     item_images: c.item_images,
     ...searchImage(c.item_images),
@@ -61,23 +61,15 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
 }
 
 /**
- * Unified catalog for home + search popover. Filters by the sidebar's selected
- * contexts unless `contextIds` is given (the redesign's Library passes the
- * active venue). Pass a stable array, since it's a memo dependency.
+ * Unified catalog for the Library and search, filtered to `contextIds` (the
+ * active venue, or personal at home; see venueContextIds and useSearchMine).
+ * Pass a stable array, since it's a memo dependency.
  */
-export function useSearchCatalog(contextIds?: string[]) {
-  const storeContextIds = useAppStore((s) => s.selectedContextIds);
-  const selectedContextIds = contextIds ?? storeContextIds;
+export function useSearchCatalog(selectedContextIds: string[]) {
   // ponytail: fetch all contexts once, filter client-side so venue toggles are instant
-  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails({
-    allContexts: true,
-  });
-  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers({
-    allContexts: true,
-  });
-  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines({
-    allContexts: true,
-  });
+  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails();
+  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers();
+  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines();
   const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
     useAllIngredients();
   const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
