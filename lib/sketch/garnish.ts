@@ -1,7 +1,7 @@
 // Garnishes: a small wash of colour with a pencil outline, placed by the rim,
 // in the drink, or on top of the ice.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 import { ell, hw, type Pt } from './geometry';
 import type { Painter } from './painter';
 import { gauss } from './random';

@@ -1,7 +1,7 @@
 // The house hands for drawn sketches. Graphite and wash is the default.
 // Distances are in scene units (a 512 square), like the browser prototype.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 
 export interface SketchStyle {
   ink: string;
