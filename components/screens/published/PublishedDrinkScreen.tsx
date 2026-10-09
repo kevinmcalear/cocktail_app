@@ -16,6 +16,7 @@ import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
 import { PublicMissing, PublicShell } from './PublicShell';
+import { PublicSpecChanges } from './PublicSpecChanges';
 import { SignInCard } from './SignInCard';
 
 /** The bar a public page is credited to, opening its profile. */
@@ -99,6 +100,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
               <Body tone="muted">{`${who} shares this drink’s menu description, not its spec.`}</Body>
             )}
           </View>
+          {drink.publishMode === 'spec' ? <PublicSpecChanges itemId={id} who={who} /> : null}
         </>
       ) : (
         <SignInCard text={`Sign in to see how ${drink.name} is made, its glass and ice, and what people think of it.`} />

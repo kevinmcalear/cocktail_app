@@ -29,6 +29,23 @@ export function useItemVersions(itemId: string | null | undefined, enabled = tru
   });
 }
 
+/**
+ * A drink's versions as someone outside its venue sees them, newest first:
+ * only when the bar shows spec changes and the drink's spec is public, cut
+ * down to what the public spec shows (no notes, no names). Empty otherwise.
+ */
+export function usePublicSpecChanges(itemId: string | null | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['public-spec-changes', itemId],
+    enabled: !!itemId && enabled,
+    queryFn: async (): Promise<ItemVersion[]> => {
+      const { data, error } = await supabase.rpc('public_spec_changes', { p_item: itemId! });
+      if (error) throw error;
+      return ((data ?? []) as { version: number; snapshot: Snapshot; created_at: string }[]).map((v) => ({ ...v, note: null, created_by: null, created_by_name: null }));
+    },
+  });
+}
+
 /** Put an old version back as a new one. */
 export function useRestoreVersion(itemId: string) {
   const queryClient = useQueryClient();
