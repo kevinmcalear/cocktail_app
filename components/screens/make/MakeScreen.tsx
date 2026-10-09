@@ -136,15 +136,15 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
     screen = <MakeDone label={label} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} />;
   }
 
-  // Gather, each step, then done: the bar along the top.
+  // Gather, each step, then done: the bar along the top (nothing lit on "How much?").
   const total = n + 2;
-  const progress = Math.max(0, at + 2);
+  const progress = at + 1;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
       <View style={[styles.top, { paddingHorizontal: gutter }]}>
         <GlassButton accessibilityLabel={at === n ? 'Close' : 'Stop making'} icon="xmark" onPress={close} />
-        <View style={styles.bars} aria-label={`Part ${progress + 1} of ${total}`}>
+        <View style={styles.bars} aria-label={progress < 0 ? `${total} parts to go` : `Part ${progress + 1} of ${total}`}>
           {Array.from({ length: total }, (_, i) => (
             <View key={i} style={[styles.bar, { backgroundColor: i <= progress ? ds.c.ink : ds.c.lineStrong }]} />
           ))}
