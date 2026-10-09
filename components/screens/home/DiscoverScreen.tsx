@@ -1,9 +1,10 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
+import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
@@ -28,6 +29,7 @@ import { areaFromViewport, type Viewport } from '@/lib/discoverMap';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaLabel, type Area } from '@/lib/nearMe';
 import type { SearchScope } from '@/lib/searchScope';
+import { withAlpha } from '@/lib/color';
 import { useDiscoverView } from '@/store/useDiscoverView';
 import { useLastPlace } from '@/store/useLastPlace';
 
@@ -57,6 +59,7 @@ export function DiscoverScreen() {
   const [scope, setScope] = useState<SearchScope>('area');
   const mine = useSearchMine();
   const [sheet, setSheet] = useState<'search' | 'filters' | 'area' | 'add' | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const viewport = useRef<Viewport | null>(null);
   const onViewport = useCallback((v: Viewport | null) => {
     viewport.current = v;
@@ -141,13 +144,10 @@ export function DiscoverScreen() {
     overlay = <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} />;
   }
 
-  // Phones: the map fills the screen, with the results in a sheet over it.
+  // Phones: the map fills the screen, under the header as it is under the tab bar, with the results in a sheet over it.
   if (phoneMap) {
     return (
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-        <View style={{ paddingHorizontal: gutter }}>
-          <ScreenHeaderSpacer />
-        </View>
         <DiscoverMapPane
           mode="sheet"
           area={shownArea}
@@ -157,6 +157,7 @@ export function DiscoverScreen() {
           results={mapResults}
           onViewport={onViewport}
           bottomInset={bottom}
+          topInset={headerHeight}
           top={
             <>
               {controls}
@@ -169,6 +170,11 @@ export function DiscoverScreen() {
             </>
           }
         />
+        <View pointerEvents="box-none" style={styles.mapHeader} onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+          {/* A fade from the ground keeps the status bar and the venue name readable over the map. */}
+          <LinearGradient pointerEvents="none" colors={[withAlpha(ds.c.ground, 0.9), withAlpha(ds.c.ground, 0)]} style={styles.mapFade} />
+          <ScreenHeader />
+        </View>
         {overlay}
       </View>
     );
@@ -240,6 +246,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   mapSide: { borderLeftWidth: StyleSheet.hairlineWidth },
+  mapHeader: { position: 'absolute', top: 0, left: 0, right: 0 },
+  // Runs past the header so the fade ends softly over the map.
+  mapFade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: -space.xl },
   mapNote: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
   controls: { gap: space.sm },
   sticky: { paddingVertical: space.md },
