@@ -1,8 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, GlassButton, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Body, Caption, Chip, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
 
 /** What the area chip says: "Near me", "London", "This area", "Anywhere". */
@@ -20,7 +20,7 @@ export function SearchPill({ query, placeholder, onOpen, onClear }: { query: str
   const ds = useDs();
   const q = query.trim();
   return (
-    <View style={[styles.pill, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+    <GlassSurface interactive style={styles.pill}>
       <PressableScale
         role="button"
         accessibilityLabel={q ? `Search: ${q}. Change the search` : placeholder}
@@ -37,7 +37,7 @@ export function SearchPill({ query, placeholder, onOpen, onClear }: { query: str
           <IconSymbol name="xmark.circle.fill" size={20} color={ds.c.muted} />
         </PressableScale>
       ) : null}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -45,15 +45,13 @@ function RowButton({ icon, label, a11y, active, onPress }: { icon: IconName; lab
   const ds = useDs();
   const ink = active ? ds.c.ground : ds.c.ink;
   return (
-    <PressableScale
-      accessibilityLabel={a11y}
-      onPress={onPress}
-      style={[styles.button, { backgroundColor: active ? ds.c.ink : ds.c.raised, borderColor: active ? ds.c.ink : ds.c.line }]}
-    >
-      <IconSymbol name={icon} size={16} color={ink} />
-      <Caption numberOfLines={1} color={ink} style={styles.shrink}>
-        {label}
-      </Caption>
+    <PressableScale accessibilityLabel={a11y} onPress={onPress} style={styles.buttonWrap}>
+      <GlassSurface interactive tint={active ? ds.c.ink : undefined} style={styles.button}>
+        <IconSymbol name={icon} size={16} color={ink} />
+        <Caption numberOfLines={1} color={ink} style={styles.shrink}>
+          {label}
+        </Caption>
+      </GlassSurface>
     </PressableScale>
   );
 }
@@ -140,21 +138,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: layout.minTapTarget,
-    borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
     paddingRight: space.sm,
   },
   pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.lg },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs,
-    minHeight: layout.minTapTarget,
-    maxWidth: 200,
-    paddingHorizontal: space.md,
-    borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
+  buttonWrap: { maxWidth: 200 },
+  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md },
 });

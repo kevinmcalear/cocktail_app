@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Caption, GlassButton, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Caption, GlassButton, sheetFrame, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 
 interface Props {
@@ -27,8 +27,8 @@ function Body({ onClose, eyebrow, title, children }: Props) {
   const ds = useDs();
   return (
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+      <View style={[styles.avoider, sheetFrame.scrim]} pointerEvents="box-none">
+        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <View style={styles.head}>
               <View style={styles.flex}>

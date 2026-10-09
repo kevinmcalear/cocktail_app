@@ -3,7 +3,7 @@ import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View } from '
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Caption, Chip, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, Chip, sheetIsDialog, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { radius, space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
@@ -30,9 +30,9 @@ interface DiscoverOverlayProps {
 
 /**
  * A sheet over Discover: the whole screen or a bottom sheet on phones, a card
- * near the top on wide screens (like ⌘K). It sits inside the screen rather
- * than in a Modal, so a result can open its page on top and coming back finds
- * it as it was. Android back, Escape on the web, and the scrim close it.
+ * near the top on wide screens (like ⌘K), and never a bottom sheet on the web.
+ * It sits inside the screen rather than in a Modal, so a result can open its
+ * page on top and coming back finds it as it was. Android back, Escape on the web, and the scrim close it.
  */
 export function DiscoverOverlay({ label, onClose, full, action, head, footer, children }: DiscoverOverlayProps) {
   const ds = useDs();
@@ -41,6 +41,7 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
   const bottom = useTabBarInset();
   const wide = useBreakpoint() !== 'phone';
   const page = full && !wide;
+  const card = wide || (sheetIsDialog && !page);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -53,8 +54,8 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const frame = wide
-    ? [styles.card, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]
+  const frame = card
+    ? [styles.card, !wide && styles.narrowCard, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]
     : page
       ? [styles.flex, { paddingTop: insets.top + space.lg, backgroundColor: ds.c.ground }]
       : [styles.sheet, { marginTop: insets.top + space.xxxl, borderColor: ds.c.line, backgroundColor: ds.c.surface }];
@@ -62,7 +63,7 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
     <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[StyleSheet.absoluteFill, styles.layer]}>
       {page ? null : <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />}
       <View role="dialog" aria-modal aria-label={label} style={frame}>
-        {wide || page ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
+        {card || page ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
         <View style={[styles.gap, { paddingHorizontal: gutter, paddingBottom: space.md }]}>
           {head ?? (
             <View style={styles.head}>
@@ -75,12 +76,12 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
         </View>
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          style={wide ? styles.shrink : styles.flex}
-          contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : wide ? space.xl : bottom }]}
+          style={card ? styles.shrink : styles.flex}
+          contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : card ? space.xl : bottom }]}
         >
           {children}
         </ScrollView>
-        {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: wide ? space.lg : bottom }}>{footer}</View> : null}
+        {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: card ? space.lg : bottom }}>{footer}</View> : null}
       </View>
     </Animated.View>
   );
@@ -200,6 +201,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  // Phone-width web: the card keeps a margin to the window's edges.
+  narrowCard: { width: 'auto', alignSelf: 'stretch', marginHorizontal: space.lg },
   sheet: {
     flex: 1,
     borderTopLeftRadius: radius.sheet,

@@ -1,10 +1,10 @@
 import * as Device from 'expo-device';
 import { Image } from 'expo-image';
 import { useEffect, useRef } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, sheetAnimation, sheetFrame, sheetIsDialog, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { pickBottlePhoto, takeBottlePhoto, type BottlePhoto, type BottleReading } from '@/lib/readBottle';
 
@@ -55,46 +55,52 @@ export function BottlePhotoSheet({ visible, target, onClose, readings }: BottleP
     onClose();
   };
 
+  // A page sheet on phones; on the web a dialog over a scrim (components/ds/sheetFrame).
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
-      <View style={[styles.sheet, { backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
-        <View style={[styles.head, { paddingHorizontal: gutter }]}>
-          <Title>{readings?.length ? 'Check the bottles' : 'Snap a bottle'}</Title>
-          <Button label="Done" variant="secondary" onPress={close} />
-        </View>
-        <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
-          {flow.photo ? (
-            <View style={styles.top}>
-              <View style={[styles.thumb, { backgroundColor: ds.c.raised }]}>
-                <Image source={{ uri: flow.photo.uri }} contentFit="cover" style={styles.fill} accessible accessibilityLabel="Your bottle photo" />
+    <Modal visible={visible} transparent={sheetIsDialog} animationType={sheetAnimation} presentationStyle={sheetIsDialog ? undefined : 'pageSheet'} onRequestClose={close}>
+      <View style={[styles.screen, sheetFrame.scrim, sheetIsDialog && { backgroundColor: ds.c.scrim }]}>
+        {sheetIsDialog ? <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} /> : null}
+        <View role="dialog" aria-modal aria-label="Snap a bottle" style={[styles.sheet, sheetFrame.panel, sheetIsDialog && styles.dialog, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
+          <View style={[styles.head, { paddingHorizontal: gutter }]}>
+            <Title>{readings?.length ? 'Check the bottles' : 'Snap a bottle'}</Title>
+            <Button label="Done" variant="secondary" onPress={close} />
+          </View>
+          <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
+            {flow.photo ? (
+              <View style={styles.top}>
+                <View style={[styles.thumb, { backgroundColor: ds.c.raised }]}>
+                  <Image source={{ uri: flow.photo.uri }} contentFit="cover" style={styles.fill} accessible accessibilityLabel="Your bottle photo" />
+                </View>
+                <Body tone="muted" style={styles.flex}>
+                  {flow.reading ? 'Reading the label…' : flow.rows.length ? `Found ${flow.rows.length === 1 ? 'a bottle' : `${flow.rows.length} bottles`}.` : ''}
+                </Body>
               </View>
-              <Body tone="muted" style={styles.flex}>
-                {flow.reading ? 'Reading the label…' : flow.rows.length ? `Found ${flow.rows.length === 1 ? 'a bottle' : `${flow.rows.length} bottles`}.` : ''}
-              </Body>
+            ) : (
+              !flow.rows.length ? <Caption tone="muted">{`Take a photo of the front labels, a few bottles side by side is fine. You check what we found before anything goes into ${where}.`}</Caption> : null
+            )}
+            {flow.error ? <Body tone="accent">{flow.error}</Body> : null}
+            {flow.error && flow.photo && !flow.reading ? <Button label="Try again" variant="secondary" onPress={flow.retry} style={styles.start} /> : null}
+            <View>
+              {flow.rows.map((row, i) => (
+                <BottleResultRow key={`${row.reading.name}-${i}`} row={row} target={target} onChoose={(chosen) => flow.choose(i, chosen)} onUndo={() => flow.undo(i)} />
+              ))}
             </View>
-          ) : (
-            !flow.rows.length ? <Caption tone="muted">{`Take a photo of the front labels, a few bottles side by side is fine. You check what we found before anything goes into ${where}.`}</Caption> : null
-          )}
-          {flow.error ? <Body tone="accent">{flow.error}</Body> : null}
-          {flow.error && flow.photo && !flow.reading ? <Button label="Try again" variant="secondary" onPress={flow.retry} style={styles.start} /> : null}
-          <View>
-            {flow.rows.map((row, i) => (
-              <BottleResultRow key={`${row.reading.name}-${i}`} row={row} target={target} onChoose={(chosen) => flow.choose(i, chosen)} onUndo={() => flow.undo(i)} />
-            ))}
-          </View>
-          {flow.ready ? <Button label={flow.adding ? 'Adding…' : `Add ${flow.ready} to ${where}`} size="lg" disabled={flow.adding} onPress={flow.addAll} /> : null}
-          <View style={styles.buttons}>
-            {camera ? <Button label={flow.photo ? 'Take another' : 'Take a photo'} icon="camera.fill" variant={flow.photo ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(takeBottlePhoto)} /> : null}
-            <Button label={flow.photo || flow.rows.length ? 'Choose another' : 'Choose a photo'} icon="photo" variant={camera || flow.photo || flow.rows.length ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(pickBottlePhoto)} />
-          </View>
-        </ScrollView>
+            {flow.ready ? <Button label={flow.adding ? 'Adding…' : `Add ${flow.ready} to ${where}`} size="lg" disabled={flow.adding} onPress={flow.addAll} /> : null}
+            <View style={styles.buttons}>
+              {camera ? <Button label={flow.photo ? 'Take another' : 'Take a photo'} icon="camera.fill" variant={flow.photo ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(takeBottlePhoto)} /> : null}
+              <Button label={flow.photo || flow.rows.length ? 'Choose another' : 'Choose a photo'} icon="photo" variant={camera || flow.photo || flow.rows.length ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(pickBottlePhoto)} />
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   sheet: { flex: 1, gap: space.md },
+  dialog: { flex: 0, flexShrink: 1, maxWidth: 560, maxHeight: '86%' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   body: { gap: space.md, width: '100%', maxWidth: 640, alignSelf: 'center' },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
