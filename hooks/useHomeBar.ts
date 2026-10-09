@@ -21,6 +21,8 @@ export interface BarItem {
   glass: string | null;
   /** For a drink you can make: the shelf rows it uses (my_bar_drinks). */
   shelfUses?: string[];
+  /** The bar a drink is from, so a classic's many bar versions tell apart. */
+  from?: { name: string; logo: string | null };
 }
 
 /** A house prep the shelf can make but doesn't have, and every drink that leans on it (my_bar_preps). */
@@ -247,7 +249,7 @@ export function useBarDrinks() {
   const matches = useMatches();
   const glass = useGlassIcons();
   return useMemo(() => {
-    const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id), shelfUses: r.uses ?? undefined });
+    const drink = (r: MatchRow): BarItem => ({ id: r.id, name: r.name, type: 'cocktail', imageUrl: r.image_url, glass: glass(r.glassware_id), shelfUses: r.uses ?? undefined, from: r.from_name ? { name: r.from_name, logo: r.from_logo ?? null } : undefined });
     const sorted = sortMatches(matches.data ?? [], drink);
     const bottle = (b: { id: string; name: string }): BarItem => ({ id: b.id, name: b.name, type: 'ingredient', imageUrl: null, glass: null });
     return {
