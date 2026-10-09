@@ -9,50 +9,91 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { drinkCount, type DiscoverDrink } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
+import { barSearchHref } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
 import { peopleCount } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 import { BarTopDrinks } from './BarTopDrinks';
+import { DrinkHero } from './DrinkHero';
 
 /** How many of a bar's drinks the pin card shows before "Show all". */
 const PREVIEW_DRINKS = 3;
 
-export /**
- * The bar a pin stands for, the drinks there on the drinks layers (scored on
- * "Best Martini"), and a way in. `onShowAll`: "Show all" hands the full list
- * to somewhere roomier (the phone sheet) instead of growing the card.
+interface SelectedBarProps {
+  pin: MapPin;
+  drinks: DiscoverDrink[];
+  scores?: DrinkScores;
+  /** What was searched: the bar's page opens on it. */
+  query?: string;
+  /** Searching or filtering: the best matching drink leads, big, and the bar follows it. */
+  lead?: boolean;
+  /** card: floats over the wide map, with its drinks and Close. sheet: the top of the phone sheet, whose list holds the rest. */
+  variant?: 'card' | 'sheet';
+  onClose: () => void;
+}
+
+/**
+ * A tapped pin. Searching, the drink that matched comes first (DrinkHero)
+ * and the bar is where it is; otherwise the bar, its top drinks and the
+ * drinks there (scored on "Best Martini"). Open bar carries the search, so
+ * the bar's page opens on its matches.
  */
-function SelectedBar({ pin, drinks, scores, onClose, onShowAll }: { pin: MapPin; drinks: DiscoverDrink[]; scores?: DrinkScores; onClose: () => void; onShowAll?: () => void }) {
+export function SelectedBar({ pin, drinks, scores, query = '', lead = false, variant = 'card', onClose }: SelectedBarProps) {
   const router = useRouter();
   const [all, setAll] = useState(false);
-  const shown = all ? drinks : drinks.slice(0, PREVIEW_DRINKS);
+  const hero = lead && !pin.closed ? drinks[0] : undefined;
+  const rest = hero ? drinks.slice(1) : drinks;
+  const shown = all ? rest : rest.slice(0, PREVIEW_DRINKS);
+  const openBar = <Button label="Open bar" variant={variant === 'sheet' || hero ? 'secondary' : 'primary'} onPress={() => router.push(barSearchHref(pin.handle || pin.id, query) as never)} />;
+  const bar = (
+    <View style={styles.cardRow} accessible accessibilityLabel={`${hero ? 'At ' : ''}${pin.name}, ${pin.place}. ${pin.closed ? pin.closed : pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
+      <UserAvatar uri={pin.logo} name={pin.name} size={hero ? 40 : 48} />
+      <View style={styles.flex}>
+        {hero ? <Caption tone="muted">At</Caption> : null}
+        <Headline numberOfLines={1}>{pin.name}</Headline>
+        <Caption tone="muted" numberOfLines={1}>
+          {pin.place || 'Bar'}
+        </Caption>
+      </View>
+      {pin.closed ? (
+        <Tag label={pin.closed} />
+      ) : pin.drinks ? (
+        <Caption tone="muted">{drinkCount(pin.drinks)}</Caption>
+      ) : pin.score === null ? (
+        <Caption tone="muted">{pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
+      ) : (
+        <View style={styles.score}>
+          <Spec>{formatScore(pin.score)}</Spec>
+          {pin.rankers ? <Caption tone="muted">{peopleCount(pin.rankers)}</Caption> : null}
+        </View>
+      )}
+    </View>
+  );
+
+  if (variant === 'sheet') {
+    return (
+      <View style={styles.card}>
+        <View style={styles.sheetActions}>
+          <Button label="All results" icon="chevron.left" variant="ghost" onPress={onClose} />
+          {openBar}
+        </View>
+        {hero ? <DrinkHero drink={hero} /> : null}
+        {bar}
+        <BarTopDrinks barId={pin.id} />
+        {rest.length ? <Caption tone="muted" role="heading">{hero ? `More here for “${query.trim() || 'this'}”` : `${drinkCount(rest.length)} here`}</Caption> : null}
+      </View>
+    );
+  }
+
   return (
     <Surface raised style={styles.card}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${pin.place}. ${pin.closed ? pin.closed : pin.drinks ? drinkCount(pin.drinks) : pin.score === null ? (pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet') : `Score ${formatScore(pin.score)}, ${peopleCount(pin.rankers)}`}`}>
-        <UserAvatar uri={pin.logo} name={pin.name} size={48} />
-        <View style={styles.flex}>
-          <Headline numberOfLines={1}>{pin.name}</Headline>
-          <Caption tone="muted" numberOfLines={1}>
-            {pin.place || 'Bar'}
-          </Caption>
-        </View>
-        {pin.closed ? (
-          <Tag label={pin.closed} />
-        ) : pin.drinks ? (
-          <Caption tone="muted">{drinkCount(pin.drinks)}</Caption>
-        ) : pin.score === null ? (
-          <Caption tone="muted">{pin.matches ? drinkCount(pin.matches) : pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
-        ) : (
-          <View style={styles.score}>
-            <Spec>{formatScore(pin.score)}</Spec>
-            {pin.rankers ? <Caption tone="muted">{peopleCount(pin.rankers)}</Caption> : null}
-          </View>
-        )}
-      </View>
+      {hero ? <DrinkHero drink={hero} /> : null}
+      {bar}
       <BarTopDrinks barId={pin.id} />
       {shown.map((d) => {
         const said = scoreWords(scores?.drinks[d.id]);
+        const note = (d.why ?? d.description) || undefined;
         return (
           <DrinkRow
             key={d.id}
@@ -61,16 +102,16 @@ function SelectedBar({ pin, drinks, scores, onClose, onShowAll }: { pin: MapPin;
             href={itemHref('Cocktail', d.id)}
             imageUrl={d.imageUrl}
             glass={null}
-            note={d.description ?? undefined}
+            note={note}
             trailing={<DrinkScore drink={scores?.drinks[d.id]} />}
-            label={said ? [d.name, said, d.description].filter(Boolean).join('. ') : undefined}
+            label={said ? [d.name, said, note].filter(Boolean).join('. ') : undefined}
           />
         );
       })}
-      {drinks.length > shown.length ? <Button label={`Show all ${drinks.length}`} variant="ghost" onPress={onShowAll ?? (() => setAll(true))} /> : null}
+      {rest.length > shown.length ? <Button label={`Show all ${rest.length}`} variant="ghost" onPress={() => setAll(true)} /> : null}
       <View style={styles.cardActions}>
         <Button label="Close" variant="ghost" onPress={onClose} />
-        <Button label="Open bar" onPress={() => router.push(`/p/${pin.handle || pin.id}`)} />
+        {openBar}
       </View>
     </Surface>
   );
@@ -81,5 +122,6 @@ const styles = StyleSheet.create({
   card: { gap: space.sm },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   cardActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
+  sheetActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   score: { alignItems: 'flex-end' },
 });

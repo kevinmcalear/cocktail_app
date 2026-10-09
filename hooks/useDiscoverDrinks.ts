@@ -71,7 +71,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
       if (error) throw error;
       const rows = (data ?? []) as DrinkRow[];
       const first = rows[0];
-      return { drinks: rows.map(toDiscoverDrink), totals: first && first.total_drinks !== null ? { drinks: first.total_drinks, bars: first.total_bars ?? 0 } : pageParam ? null : { drinks: 0, bars: 0 } };
+      return { drinks: rows.map((r) => toDiscoverDrink(r, search)), totals: first && first.total_drinks !== null ? { drinks: first.total_drinks, bars: first.total_bars ?? 0 } : pageParam ? null : { drinks: 0, bars: 0 } };
     },
   });
   const pages = query.data?.pages;

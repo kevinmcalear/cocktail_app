@@ -20,6 +20,7 @@ import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarClassics } from './BarClassics';
+import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
@@ -172,6 +173,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       ) : (
         <BarStats profile={profile} originals={originals.length} />
       )}
+
+      {profile.kind === 'bar' ? <BarMatches barProfileId={profile.id} /> : null}
 
       {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 

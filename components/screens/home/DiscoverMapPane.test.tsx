@@ -42,10 +42,10 @@ jest.mock('./DiscoverMap', () => {
   const { Pressable } = require('react-native');
   return {
     mapAvailable: true,
-    DiscoverMap: ({ pins, onSelect }: { pins: { id: string; name: string }[]; onSelect: (id: string) => void }) => (
+    DiscoverMap: ({ pins, onSelect }: { pins: { id: string; name: string; top?: string }[]; onSelect: (id: string) => void }) => (
       <>
         {pins.map((p) => (
-          <Pressable key={p.id} role="button" accessibilityLabel={`pin ${p.name}`} onPress={() => onSelect(p.id)} />
+          <Pressable key={p.id} role="button" accessibilityLabel={`pin ${p.name}${p.top ? ` (${p.top})` : ''}`} onPress={() => onSelect(p.id)} />
         ))}
       </>
     ),
@@ -68,7 +68,7 @@ const bar: DiscoverBar = {
   drinks: 0,
 };
 
-function drink(id: string, name: string, styles: string[] = []): DiscoverDrink {
+function drink(id: string, name: string, styles: string[] = [], match: DiscoverDrink['match'] = null, why: string | null = null): DiscoverDrink {
   if (styles.includes('martini')) mockMartinis.add(id);
   return {
     id,
@@ -79,12 +79,14 @@ function drink(id: string, name: string, styles: string[] = []): DiscoverDrink {
     bar: { name: bar.name, handle: bar.handle, logo: null, locality: bar.locality, city: bar.city },
     menu: { onNow: false, past: null, order: 1 },
     rank: 6,
+    match,
+    why,
   };
 }
 
 const more = { total: null, hasMore: false, loadMore: () => {}, loading: false };
 
-function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side') {
+function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '') {
   mockDrinks = drinks;
   mockBars = [{ ...bar, drinks: drinks.length }];
   return renderWithTamagui(
@@ -93,7 +95,7 @@ function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } 
       area={area}
       onArea={() => {}}
       drink={pick}
-      filter={{ kinds: [], search: '', area }}
+      filter={{ kinds: [], search, area }}
       results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
     />
   );
@@ -119,19 +121,54 @@ test('a drinks pin lists those cocktails in the card', async () => {
   expect(screen.getByText('Martini No. 4')).toBeTruthy();
 });
 
-test("on phones the card previews the bar's drinks and Show all opens the sheet", async () => {
+test('on phones a tapped bar opens the sheet on it, not a card over the map', async () => {
   const drinks = [drink('d1', 'House Martini'), drink('d2', 'Bamboo'), drink('d3', 'Vesper'), drink('d4', 'Martini No. 4')];
   await renderPane(drinks, null, 'sheet');
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
-  // The card and the sheet's list both show the first ones; only the sheet has the fourth.
-  expect(screen.getAllByText('House Martini')).toHaveLength(2);
-  expect(screen.getAllByText('Martini No. 4')).toHaveLength(1);
-
-  await fireEvent.press(screen.getByRole('button', { name: 'Show all 4' }));
-  expect(mockSnap).toHaveBeenLastCalledWith(2);
-  await fireEvent.press(screen.getByRole('button', { name: 'Show the list' }));
+  // Halfway up, every drink there once (no floating card repeating them), no search so no drink leads.
   expect(mockSnap).toHaveBeenLastCalledWith(1);
+  expect(screen.getAllByText('House Martini')).toHaveLength(1);
+  expect(screen.getAllByText('Martini No. 4')).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'All results' }));
+  expect(screen.getByRole('button', { name: 'Show the list' })).toBeTruthy();
+});
+
+test('searching, pins name the best match and a tapped bar leads with the drink, then the bar', async () => {
+  mockTopDrinks = [];
+  const drinks = [
+    drink('d1', 'Dirty Martini', [], { kind: 'name', text: null }),
+    drink('d2', 'Gibson', [], { kind: 'riff', text: 'Martini' }, 'Riff on a Martini'),
+    drink('d3', 'Sbagliato', [], { kind: 'line', text: 'Martini Rosso' }, 'Has Martini Rosso'),
+  ];
+  await renderPane(drinks, { id: 'martini', name: 'Martini' }, 'sheet', 'martini');
+
+  // The layers read as a sort while searching.
+  expect(screen.getByRole('radio', { name: 'Best match' })).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Top rated' })).toBeTruthy();
+  expect(screen.queryByRole('radio', { name: 'Top bars' })).toBeNull();
+  // The weaker match sits under its own heading, saying why.
+  expect(screen.getByText('Also mentions “martini”')).toBeTruthy();
+  expect(screen.getByText('Has Martini Rosso')).toBeTruthy();
+
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
+  expect(screen.getByRole('heading', { name: 'Dirty Martini' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
+  expect(screen.getByText('At')).toBeTruthy();
+  expect(screen.getByText('More here for “martini”')).toBeTruthy();
+  expect(screen.getByText('Riff on a Martini')).toBeTruthy();
+});
+
+test('on wide screens the card leads with the matching drink too', async () => {
+  mockTopDrinks = [];
+  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null }), drink('d2', 'Bamboo')], null, 'side', 'martini');
+  await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
+  expect(screen.getByRole('heading', { name: 'Dirty Martini' })).toBeTruthy();
+  expect(screen.getByText('Bamboo')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Open bar' })).toBeTruthy();
 });
 
 test("the card shows the bar's top drinks once they have scores", async () => {
