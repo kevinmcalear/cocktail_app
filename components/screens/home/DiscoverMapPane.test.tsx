@@ -27,6 +27,7 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
     page(!o.enabled ? [] : f.kinds.includes('martini') ? mockDrinks.filter((d) => mockMartinis.has(d.id)) : o.barId ? mockDrinks.filter((d) => d.barId === o.barId) : mockDrinks),
 }));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
+jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersionLabels: () => ({}) }));
 // The phone sheet: its content shows, and snapping is recorded.
 const mockSnap = jest.fn();
 jest.mock('@gorhom/bottom-sheet', () => {
