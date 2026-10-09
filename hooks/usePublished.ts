@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { isUuid } from '@/lib/menuPreview';
 import type { PresentationRecipe } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
 
@@ -211,7 +212,9 @@ export function usePublishedDrink(id: string | null | undefined) {
     meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<PublishedDrinkPage | null> => {
-      const [drink] = await fetchPublished([id!]);
+      // A mangled link is Not available, not a failed load.
+      if (!isUuid(id)) return null;
+      const [drink] = await fetchPublished([id]);
       if (!drink) return null;
       const refIds = [drink.glasswareId, drink.iceId, drink.familyId].filter((x): x is string => !!x);
       const [refs, bar, recipes] = await Promise.all([
@@ -259,7 +262,8 @@ export function useRelease(id: string | null | undefined) {
     meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<ReleasePage | null> => {
-      const { data, error } = await supabase.from('releases').select(RELEASE_COLUMNS).eq('id', id!).lte('published_at', new Date().toISOString()).maybeSingle();
+      if (!isUuid(id)) return null;
+      const { data, error } = await supabase.from('releases').select(RELEASE_COLUMNS).eq('id', id).lte('published_at', new Date().toISOString()).maybeSingle();
       if (error) throw error;
       if (!data) return null;
       const release = toRelease(data as ReleaseRow);

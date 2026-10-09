@@ -15,7 +15,7 @@ import { RankActions } from '../rank/RankActions';
 import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
-import { PublicMissing, PublicShell } from './PublicShell';
+import { loadFailure, PublicMissing, PublicShell } from './PublicShell';
 import { SignInCard } from './SignInCard';
 
 /** The bar a public page is credited to, opening its profile. */
@@ -53,10 +53,11 @@ export function MemoryCard({ memory, onEdit }: { memory: CollectedDrink; onEdit:
 export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?: string | null }) {
   const wide = useBreakpoint() !== 'phone';
   const signedIn = useSignedIn();
-  const { data, isPending } = usePublishedDrink(id);
+  const query = usePublishedDrink(id);
+  const { data, isPending } = query;
   const { data: collection } = useCollection();
   const [editing, setEditing] = useState(false);
-  if (!data) return <PublicMissing loading={isPending} what="drink" />;
+  if (!data) return <PublicMissing loading={isPending} what="drink" failed={loadFailure(query)} />;
 
   const { drink, bar } = data;
   const mine = collection?.drinks.find((d) => d.itemId === id);
