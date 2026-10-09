@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { after, before, describe, test } from 'node:test';
 
 import pg from 'pg';
@@ -22,10 +22,15 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 const db = new pg.Client({ connectionString: status.DB_URL });
 const MIGRATION = new URL('../migrations/20261008900100_bottle_catalog.sql', import.meta.url);
 // The catalog fills after it correct some of its styles, so it is re-run with
-// them, in order (those this branch has).
-const MIGRATIONS = [MIGRATION, ...['20261010600000_ingredient_tree_fill.sql', '20261010630000_ingredient_tree_fill_2.sql']
-  .map((f) => new URL(`../migrations/${f}`, import.meta.url))
-  .filter((u) => existsSync(u))];
+// them, in order (those this branch has). Found by name, since a migration is
+// renumbered to land after production's latest.
+const MIGRATIONS = [
+  MIGRATION,
+  ...readdirSync(new URL('../migrations/', import.meta.url))
+    .filter((f) => /^\d{14}_ingredient_tree_fill(_\d+)?\.sql$/.test(f))
+    .sort()
+    .map((f) => new URL(`../migrations/${f}`, import.meta.url)),
+];
 
 before(() => db.connect());
 after(() => db.end());
