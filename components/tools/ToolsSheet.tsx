@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, sheetFrame, Spec, Title, useDs } from '@/components/ds';
 import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -100,9 +100,9 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount, prepN
   }
 
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Caption tone="muted">Tools</Caption>
             <Title>{TOOLS.find((t) => t.value === tool)?.label}</Title>

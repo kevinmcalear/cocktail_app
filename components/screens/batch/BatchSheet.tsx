@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, LockedSection, Segmented, Spec, Tag, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, LockedSection, Segmented, sheetFrame, Spec, Tag, Title, useDs } from '@/components/ds';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { radius, space } from '@/constants/tokens';
 import {
@@ -186,9 +186,9 @@ function Sheet({ onClose, name, lines, methodNames, lockedUntil, initialServes =
   );
 
   return (
-    <Pressable accessibilityLabel="Close batch" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+    <Pressable accessibilityLabel="Close batch" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground, maxHeight }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground, maxHeight }]} onPress={(e) => e.stopPropagation()}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <View style={styles.head}>
               <View style={styles.flex}>
