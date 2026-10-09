@@ -4,8 +4,10 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Chip } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
 import type { SearchMine } from '@/hooks/useSearchMine';
+import { belongsHere } from '@/lib/barContextFilter';
 import { timeAgo } from '@/lib/commandSearchGrid';
 import { fallbackGlass } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
@@ -87,7 +89,8 @@ const JUMPS = [
 function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine; onJump?: () => void }) {
   const router = useRouter();
   const all = useRecentActivityStore((s) => s.items);
-  const recent = scope === 'mine' ? all.filter((r) => recentMatchesContext(r, mine.contextIds)) : all;
+  const myVenueIds = useActiveVenue().venues.map((v) => v.id);
+  const recent = all.filter((r) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId)));
   const open = (r: RecentActivity) => router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as never);
   const caption = (r: RecentActivity) => `${r.isDraft ? 'Draft' : KIND_LABEL[r.kind]} · ${timeAgo(r.at)} ago`;
   const drink = (k: RecentActivity['kind']) => k === 'cocktail' || k === 'beer' || k === 'wine';
