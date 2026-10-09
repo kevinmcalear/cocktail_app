@@ -13,11 +13,13 @@ import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { usePublicIngredientSearch } from '@/hooks/useIngredients';
 import { usePublicPeople } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
+import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { findDrinks } from '@/lib/discover';
 import { barInArea, findBars, type DiscoverBar } from '@/lib/discoverDrinks';
 import { findKinds } from '@/lib/drinkStyles';
 import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel, type Area } from '@/lib/nearMe';
+import { foldIntoClassics, servedCaption, versionLabel } from '@/lib/servedAt';
 
 import { BarResultRow, ResultGroup, ResultRow } from './ResultRows';
 
@@ -72,7 +74,13 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
   }, [signedIn, area, results.bars, publicBars, q]);
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
-  const found = results.drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length;
+  // A bar's copy of a classic in these results folds into it: "Classic · Served at The Gold Room +2".
+  const { data: matches } = useSpecMatches(signedIn && q ? `search:${q}` : undefined, results.drinks.map((d) => d.id));
+  const { drinks, servedBy } = useMemo(
+    () => foldIntoClassics(results.drinks, new Set(classics.map((c) => c.id)), (id) => matches?.[id]),
+    [results.drinks, classics, matches]
+  );
+  const found = drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length;
   const named = onKind ? findKinds(q) : [];
 
   return (
@@ -87,7 +95,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
       <ResultGroup
         label={`Drinks ${area ? where : 'at bars'}`}
-        items={results.drinks}
+        items={drinks}
         render={(d) => {
           const bar = d.bar;
           return (
@@ -98,7 +106,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
               itemId={d.id}
               imageUrl={d.imageUrl}
               glass={null}
-              caption={[bar.name, place([bar.locality, bar.city]), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ')}
+              caption={[bar.name, place([bar.locality, bar.city]), versionLabel(matches?.[d.id]), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ')}
               logo={{ uri: bar.logo, name: bar.name }}
               tag={d.menu.past ?? undefined}
             />
@@ -118,7 +126,11 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere }:
       <ResultGroup
         label="Classics"
         items={classics}
-        render={(d) => <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} itemId={d.id} imageUrl={d.imageUrl} glass={null} caption="Classic" />}
+        render={(d) => {
+          const served = servedBy[d.id];
+          const caption = ['Classic', served ? servedCaption(served.length, served) : null].filter(Boolean).join(' · ');
+          return <DrinkRow key={d.id} name={d.name} href={itemHref('Cocktail', d.id)} itemId={d.id} imageUrl={d.imageUrl} glass={null} caption={caption} />;
+        }}
       />
       <ResultGroup label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
       {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}

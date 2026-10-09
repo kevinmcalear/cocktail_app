@@ -5,6 +5,7 @@ import { Button, Caption, Headline, Spec } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
+import { useVersionLabel } from '@/hooks/useSpecMatches';
 import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatScore } from '@/lib/ranking';
@@ -45,10 +46,15 @@ export function scoreWords(drink?: number, bar?: number): string | null {
   return words.length ? words.join(', ') : null;
 }
 
-/** One drink at its bar: the bar and where it is under the name, the scores (when given) at the end. */
+/**
+ * One drink at its bar: the bar and where it is under the name, what it is to
+ * its classic ("the classic spec", or what its variation changes), the scores
+ * (when given) at the end.
+ */
 export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scores?: DrinkScores }) {
   const bar = d.bar;
-  const caption = [bar.name, place(bar), d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
+  const version = useVersionLabel(d.id);
+  const caption = [bar.name, place(bar), version, d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
   const barScore = scores?.bars[d.barId]?.score;
   const said = scoreWords(drinkScore, barScore);
