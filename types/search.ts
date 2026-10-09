@@ -10,8 +10,12 @@ export interface SearchItem {
   /** How far a draft has got, for its badge. */
   draftProgress?: { percentage: number; color: string; label: string; badgeBg: string; badgeText: string };
   price?: string | null;
+  /** A drink's service style (lib/service.ts): bottled, batched and so on. */
+  serviceStyle?: string | null;
   recipes?: {
     display_ingredient_id?: string | null;
+    unit?: string | null;
+    preparation_notes?: string | null;
     ingredient_item_id?: string;
     ingredient?: {
       name: string;
