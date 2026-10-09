@@ -2,7 +2,8 @@
 // (supabase/migrations/20261008340000_my_bar_rpc.sql, and the kind-of tree,
 // two away and uses from 20261009950000_my_bar_kinds.sql, garnishes from
 // 20261009960000_my_bar_garnish.sql, the preps behind them from
-// 20261010400000_my_bar_preps.sql), and the kit list from
+// 20261010400000_my_bar_preps.sql, only drinks with a spec from
+// 20261010510000_my_bar_ready_specs.sql), and the kit list from
 // 20261010410000_home_kit.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
@@ -146,14 +147,22 @@ before(async () => {
   await recipe('a', [['b']]);
   await recipe('b', [['a']]);
   await recipe('loop', [['a']]);
+  // Specs: names with no amounts aren't one; a line with no amount (top with water) never hides a drink.
+  const noAmount = { amount: null, unit: null };
+  for (const name of ['no-amounts', 'topped']) await item(name, { name, item_type: 'cocktail' });
+  await recipe('no-amounts', [['rye', null, false, noAmount], ['lemon', null, false, noAmount]]);
+  await recipe('topped', [['mezcal'], ['water', null, false, noAmount]]);
 
-  // A bar keeping a gin-and-Campari drink to its staff, and one its members (role 20) see with the brand masked.
-  ids.bar = (await serviceInsert('bars', { name: `My Bar Test ${run}` })).id;
+  // A bar keeping a gin-and-Campari drink to its staff, one its members (role 20) see with the brand masked,
+  // and one whose measurements are above them: names, no spec.
+  ids.bar = (await serviceInsert('bars', { name: `My Bar Test ${run}`, default_measurement_level: 20 })).id;
   await serviceInsert('user_bars', { user_id: users.member.id, bar_id: ids.bar, role_level: 20 });
   await item('staffOnly', { name: 'Staff Only', item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40 });
   await recipe('staffOnly', [['gin'], ['campari']]);
   await item('house', { name: 'House Negroni', item_type: 'cocktail', bar_id: ids.bar });
   await recipe('house', [['tanqueray', 'gin'], ['campari']]);
+  await item('namesOnly', { name: 'Names Only', item_type: 'cocktail', bar_id: ids.bar, override_measurement_level: 30 });
+  await recipe('namesOnly', [['mezcal'], ['lemon']]);
 });
 
 after(async () => {
@@ -244,6 +253,21 @@ describe('my_bar_drinks', () => {
     const r = await myBar('home');
     assert.ok(r.canMake.includes('garnished-sour'), 'the twist and the cherry are garnishes');
     assert.equal(r.away['peel-sour'], 'peel', 'the syrup needs its peel');
+  });
+
+  test('only drinks with a spec to follow: at least one amount the caller can see', async () => {
+    await shelve('home', ['rye', 'lemon', 'mezcal', 'water']);
+    const r = await myBar('home');
+    assert.ok(r.canMake.includes('topped'), 'a line with no amount never hides a drink');
+    assert.ok(!r.canMake.includes('no-amounts'), 'ingredient names with no amounts are not a spec');
+    await shelve('home', []);
+    const two = await myBar('home', { p_two_away: true });
+    assert.ok(!('no-amounts' in two.away) && !('no-amounts' in two.two), 'nor one or two away');
+    await shelve('member', ['gin']);
+    const m = await myBar('member');
+    assert.equal(m.away.house, 'campari', 'the member sees this one\'s amounts');
+    await shelve('member', ['mezcal']);
+    assert.ok(!('namesOnly' in (await myBar('member')).away), 'but not these: the bar keeps measurements above their role');
   });
 
   test('two away only when asked, so older apps see the same rows', async () => {
