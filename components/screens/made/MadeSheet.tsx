@@ -86,7 +86,9 @@ export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
       await log.mutateAsync({ item_id: item.id, made_on: madeOn, compared, swaps: cleanSwaps(swaps), note: note.trim() || null, rank_entry_id: rankEntryId });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t save that. Try again.');
+      // Supabase errors are plain objects, not Errors: say what went wrong either way.
+      const message = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : null;
+      setError(message ? `Couldn’t save that: ${message}` : 'Couldn’t save that. Try again.');
     }
   };
 
