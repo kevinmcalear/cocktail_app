@@ -11,20 +11,40 @@ import { specNoteText, splitVersions } from '@/lib/servedAt';
 
 const drinkHref = (id: string) => `/cocktail/${id}` as Href;
 
+type Version = LineageDrink & { barId?: string };
+export type VersionGroups = { served: Version[]; variations: Version[]; riffs: Version[]; noteFor: (id: string) => string | null };
+
 /**
  * A classic's bar versions, sorted by Kevin's rules (2026-10-09): the bars that
  * pour it as it is ("Served at": the same spec, or none to tell), the bars'
  * variations with what each changes, and riffs under other names. Until the
  * verdicts load, or on a server without them, every version reads as a riff,
- * as "Bars' versions" did.
+ * as "Bars' versions" did. `classicId` null (not a classic) skips the lookup.
  */
-export function BarVersions({ classicId, versions }: { classicId: string; versions: LineageDrink[] }) {
-  const { data: matches } = useSpecMatches(classicId, versions.map((v) => v.id));
+export function useVersionGroups(classicId: string | null, versions: LineageDrink[]): VersionGroups {
+  const { data: matches } = useSpecMatches(classicId ?? undefined, classicId ? versions.map((v) => v.id) : []);
   // One row per bar for the classic itself: a bar with two copies is still one place.
-  const { served, variations, riffs } = splitVersions(
+  const groups = splitVersions(
     versions.map((v) => ({ ...v, barId: v.origin_bar?.id })),
     (id) => matches?.[id]?.spec_match
   );
+  return { ...groups, noteFor: (id) => specNoteText(matches?.[id]?.notes) ?? null };
+}
+
+/** "Served at 12 · 30 variations · 58 riffs", leaving out the empty ones. */
+export function versionCounts({ served, variations, riffs }: VersionGroups): string {
+  return [
+    served.length ? `Served at ${served.length}` : null,
+    variations.length ? `${variations.length} variation${variations.length === 1 ? '' : 's'}` : null,
+    riffs.length ? `${riffs.length} riff${riffs.length === 1 ? '' : 's'}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/** The grouped list, shown when the Backstory row opens. */
+export function BarVersions({ groups }: { groups: VersionGroups }) {
+  const { served, variations, riffs, noteFor } = groups;
   return (
     <>
       {served.length ? (
@@ -37,7 +57,7 @@ export function BarVersions({ classicId, versions }: { classicId: string; versio
       {variations.length ? (
         <Section title="Variations">
           {variations.map((v) => (
-            <VersionRow key={v.id} d={v} title={v.origin_bar?.display_name ?? v.name} note={specNoteText(matches?.[v.id]?.notes) ?? 'A variation of the classic'} />
+            <VersionRow key={v.id} d={v} title={v.origin_bar?.display_name ?? v.name} note={noteFor(v.id) ?? 'A variation of the classic'} />
           ))}
         </Section>
       ) : null}

@@ -8,7 +8,7 @@ import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
-import type { CreditProfile, CreditStatus, LineageDrink } from '@/lib/lineage';
+import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange, type ShareMode, type ShareSection } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
@@ -16,7 +16,7 @@ import type { MenuDrink } from '@/types/menus';
 
 export interface Profile {
   id: string;
-  kind: 'person' | 'bar';
+  kind: ProfileKind;
   handle: string;
   display_name: string;
   bio: string | null;
@@ -47,9 +47,15 @@ export interface Profile {
   tagline: string | null;
   /** Or one of their jobs, shown while the bar has confirmed it (profileLine). */
   headline_position_id: string | null;
+  /** A maker's: what it makes (bottles, ice, glassware...). Empty for bars and people. */
+  makes: string[];
+  /** A maker's: the cities it delivers to. */
+  serves: string[];
+  /** A maker's group (Tanqueray is part of Diageo), set by moderators. */
+  part_of_profile_id: string | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, had_mode, bars_mode, made_mode, page_visibility, tagline, headline_position_id';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, had_mode, bars_mode, made_mode, page_visibility, tagline, headline_position_id, makes, serves, part_of_profile_id';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 
@@ -172,6 +178,13 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
       return missing.length ? [...rows, ...missing].sort((a, b) => a.name.localeCompare(b.name)) : rows;
     },
   });
+}
+
+/** Credited drinks by id, for a signed-in viewer (items RLS decides which come back). */
+export async function originalsByIds(ids: string[]): Promise<Original[]> {
+  const { data, error } = await supabase.from('items').select(ORIGINAL_COLUMNS).in('id', ids).order('name').limit(100);
+  if (error) throw error;
+  return (data ?? []) as unknown as Original[];
 }
 
 /**
@@ -383,7 +396,7 @@ export function useClaimProfile() {
 /** What a moderator checks a claim against: the page as it stands. */
 export interface ClaimPage {
   id: string;
-  kind: 'person' | 'bar';
+  kind: ProfileKind;
   handle: string;
   display_name: string;
   website: string | null;

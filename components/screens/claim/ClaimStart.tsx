@@ -9,6 +9,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useStartBarClaim } from '@/hooks/useBarClaims';
 import type { Profile, ProfileClaim } from '@/hooks/useProfiles';
 import {
+  claimPlace,
   BAR_CLAIM_METHODS,
   METHOD_COPY,
   REVIEW_REASON,
@@ -26,13 +27,14 @@ const NEW_VENUE = 'new';
 /** Each way of checking, with whether it works for this page and this person, in words. */
 function methodDetails(profile: Profile, email: string | null | undefined) {
   const check = emailCheck(email, profile.website, profile.is_closed);
+  const place = claimPlace(profile.kind);
   const handle = pageInstagram(profile);
   return {
     email: {
       available: check.ok !== false,
       detail:
         check.ok === 'instant'
-          ? `You signed in with an address at ${check.domain}, the bar’s own website.`
+          ? `You signed in with an address at ${check.domain}, the ${place}’s own website.`
           : check.ok === 'review'
             ? `You signed in at ${check.domain}. A moderator checks it, because ${REVIEW_REASON[check.reason]}.`
             : emailUnavailable(check),
@@ -45,13 +47,13 @@ function methodDetails(profile: Profile, email: string | null | undefined) {
     },
     phone: {
       available: true,
-      detail: 'We ring the bar on a number we look up ourselves and ask for a six-digit code. The slowest way.',
+      detail: `We ring the ${place} on a number we look up ourselves and ask for a six-digit code. The slowest way.`,
       instant: false,
     },
   } satisfies Record<BarClaimMethod, { available: boolean; detail: string; instant: boolean }>;
 }
 
-/** Picking how we check it's your bar, and starting the claim. */
+/** Picking how we check it's your bar (or company), and starting the claim. */
 export function ClaimStart({ profile, declined }: { profile: Profile; declined: ProfileClaim | null }) {
   const ds = useDs();
   const { user } = useAuth();
@@ -77,7 +79,11 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
           Claim this page
         </Caption>
         <Title>{`Claim ${name}`}</Title>
-        <Body tone="muted">Show us you work here and the page is yours: you run its drinks, its team, and who sees its specs.</Body>
+        <Body tone="muted">
+          {profile.kind === 'bar'
+            ? 'Show us you work here and the page is yours: you run its drinks, its team, and who sees its specs.'
+            : 'Show us you work here and the page is yours: you run it and its team.'}
+        </Body>
       </View>
 
       {declined ? (
@@ -92,11 +98,11 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
         <Caption tone="muted" style={styles.eyebrow}>
           How we check
         </Caption>
-        <View role="radiogroup" accessibilityLabel="How we check it’s your bar" style={styles.group}>
+        <View role="radiogroup" accessibilityLabel={`How we check it’s your ${claimPlace(profile.kind)}`} style={styles.group}>
           {BAR_CLAIM_METHODS.map((m) => (
             <Choice
               key={m}
-              label={details[m].instant ? `${METHOD_COPY[m].label} (instant)` : METHOD_COPY[m].label}
+              label={`${m === 'phone' ? `A call to the ${claimPlace(profile.kind)}` : METHOD_COPY[m].label}${details[m].instant ? ' (instant)' : ''}`}
               detail={details[m].detail}
               selected={method === m}
               disabled={!details[m].available || start.isPending}
@@ -142,7 +148,9 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
         disabled={start.isPending || !details[method].available}
         onPress={submit}
       />
-      <Caption tone="muted">Your page starts Locked: guests see the bar, its awards, team and drink names. You choose when to share more.</Caption>
+      {profile.kind === 'bar' ? (
+        <Caption tone="muted">Your page starts Locked: guests see the bar, its awards, team and drink names. You choose when to share more.</Caption>
+      ) : null}
     </View>
   );
 }

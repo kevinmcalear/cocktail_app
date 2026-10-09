@@ -32,6 +32,8 @@ interface Options {
   specLocked?: boolean;
   /** This viewer may see the spec's amounts. Without them no ml or grams show (serve, ice, glass room). */
   measures: boolean;
+  /** Who cut the ice and made the glass, once the maker has confirmed it. */
+  makers?: { makes: string; confirmed_at: string | null; maker: { display_name: string } | null }[];
 }
 
 /**
@@ -40,7 +42,7 @@ interface Options {
  * dropdown items. Strength comes from the server's figures for every role;
  * the line-by-line sheet needs the amounts.
  */
-export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked, measures }: Options) {
+export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked, measures, makers = [] }: Options) {
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -57,11 +59,15 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
   const fit = glass && measures ? glassFit(item.serve_ml, glass, hasIce(ice?.name)) : null;
   const glassHint = openGlass && measures ? 'Opens the glass size and the ice per serve' : undefined;
+  const madeBy = (makes: string) => makers.find((c) => c.makes === makes && c.confirmed_at)?.maker?.display_name;
+  const iceBy = madeBy('ice');
+  const glassBy = madeBy('glassware');
+  const icePerServe = item.ice_per_serve_g && measures ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined;
 
   const facts = (
     [
-      glass && { label: 'Glass', value: glass.name, sub: fit?.label, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      ice && { label: 'Ice', value: ice.name, sub: item.ice_per_serve_g && measures ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      glass && { label: 'Glass', value: glass.name, sub: [glassBy ? `by ${glassBy}` : null, fit?.label].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      ice && { label: 'Ice', value: ice.name, sub: [iceBy ? `cut by ${iceBy}` : null, icePerServe].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       family && { label: 'Family', value: family.name },
       abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: strengthPress, accessibilityHint: strengthHint } : null,
       item.serve_ml != null && measures

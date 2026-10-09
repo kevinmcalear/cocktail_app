@@ -101,10 +101,13 @@ export function emailUnavailable(check: Extract<EmailCheck, { ok: false }>): str
 /** '482913' -> '482 913', easier to read out. */
 export const spacedCode = (code: string) => code.replace(/^(\d{3})(\d{3})$/, '$1 $2');
 
+/** What a claim calls the place behind the page: a bar, or a maker's company. */
+export const claimPlace = (kind: string | null | undefined) => (kind === 'maker' ? 'company' : 'bar');
+
 /** Errors from starting or reviewing a claim, in words. The database's own messages (P0001) are written for people. */
 export function claimProblem(error: unknown): string {
   const e = error as { code?: string; message?: string } | null;
-  if (e?.code === '23505') return 'You already have a claim waiting on this bar.';
+  if (e?.code === '23505') return e.message?.startsWith('You already have a claim') ? e.message : 'You already have a claim waiting on this bar.';
   if ((e?.code === 'P0001' || e?.code === '42501' || e?.code === '22023' || e instanceof Error) && e?.message) return e.message;
   return "Couldn't send that. Check your connection and try again.";
 }

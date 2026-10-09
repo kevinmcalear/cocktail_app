@@ -52,13 +52,25 @@ export interface BarPublishing {
   barDefault: PublishMode;
   /** Who outside the venue sees its page: Locked, names and descriptions, or Open. */
   pageVisibility: PageVisibility;
+  /** Whether people outside the venue see how its published specs changed. Off by default. */
+  showSpecChanges: boolean;
   /** The venue's public page, which has to exist before anything goes public. */
-  profile: { id: string; handle: string | null; instagram: string | null } | null;
+  profile: PublishingProfile | null;
   menus: { id: string; name: string; publish_mode: PublishMode | null }[];
   /** Drinks (not ingredients) by what the public sees. */
   counts: Record<PublishMode, number>;
   /** The venue's drinks by name, with what the public sees of each. */
   drinks: { id: string; name: string; mode: PublishMode }[];
+}
+
+/** The venue's public page; makes and serves are a maker page's own. */
+export interface PublishingProfile {
+  id: string;
+  handle: string | null;
+  instagram: string | null;
+  kind: string;
+  makes: string[] | null;
+  serves: string[] | null;
 }
 
 interface BarItem {
@@ -75,13 +87,17 @@ export function useBarPublishing(barId: string) {
     staleTime: 0,
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items] = await Promise.all([
-        supabase.from('bars').select('default_publish_mode, page_visibility').eq('id', barId).single(),
-        supabase.from('profiles').select('id, handle, instagram').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
+        supabase.from('bars').select('default_publish_mode, page_visibility, show_spec_changes').eq('id', barId).single(),
+        supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
         supabase.from('menus').select('id, name, publish_mode, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
         supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
       ]);
       for (const r of [bar, profile, menus, items]) if (r.error) throw r.error;
-      const { default_publish_mode: barDefault, page_visibility: pageVisibility } = bar.data as { default_publish_mode: PublishMode; page_visibility: PageVisibility };
+      const { default_publish_mode: barDefault, page_visibility: pageVisibility, show_spec_changes: showSpecChanges } = bar.data as {
+        default_publish_mode: PublishMode;
+        page_visibility: PageVisibility;
+        show_spec_changes: boolean;
+      };
       const menuRows = (menus.data ?? []) as { id: string; name: string; publish_mode: PublishMode | null; menu_drinks: { item_id: string }[] }[];
       const menusOf = new Map<string, (PublishMode | null)[]>();
       for (const m of menuRows) for (const d of m.menu_drinks) menusOf.set(d.item_id, [...(menusOf.get(d.item_id) ?? []), m.publish_mode]);
@@ -93,7 +109,8 @@ export function useBarPublishing(barId: string) {
       return {
         barDefault,
         pageVisibility,
-        profile: (profile.data as { id: string; handle: string | null; instagram: string | null } | null) ?? null,
+        showSpecChanges,
+        profile: (profile.data as PublishingProfile | null) ?? null,
         menus: menuRows.map(({ id, name, publish_mode }) => ({ id, name, publish_mode })),
         counts,
         drinks,
@@ -110,10 +127,16 @@ export function useSetPublish(barId: string | null) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (
-      change: { level: 'bar'; mode: PublishMode } | { level: 'page'; visibility: PageVisibility } | { level: 'menu' | 'item'; id: string; mode: PublishMode | null },
+      change:
+        | { level: 'bar'; mode: PublishMode }
+        | { level: 'page'; visibility: PageVisibility }
+        | { level: 'changes'; show: boolean }
+        | { level: 'menu' | 'item'; id: string; mode: PublishMode | null },
     ) => {
       const { error } =
-        change.level === 'page'
+        change.level === 'changes'
+          ? await supabase.from('bars').update({ show_spec_changes: change.show }).eq('id', barId!)
+          : change.level === 'page'
           ? await supabase.from('bars').update({ page_visibility: change.visibility }).eq('id', barId!)
           : change.level === 'bar'
           ? await supabase.from('bars').update({ default_publish_mode: change.mode }).eq('id', barId!)
@@ -128,6 +151,7 @@ export function useSetPublish(barId: string | null) {
       // The bar's page and its drinks' locks follow the page setting.
       if (barId) client.invalidateQueries(changedProfiles({ barId }));
       client.invalidateQueries({ queryKey: ['spec-lock'] });
+      client.invalidateQueries({ queryKey: ['public-spec-changes'] });
     },
   });
 }
