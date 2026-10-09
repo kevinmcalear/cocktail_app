@@ -1,15 +1,13 @@
-import { memo, useEffect, useId, type ReactNode } from 'react';
-import { Platform } from 'react-native';
-import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
-import Svg, { Defs, G, Rect } from 'react-native-svg';
+import { memo, useEffect, useId, useState, type ComponentProps } from 'react';
+import { PixelRatio, StyleSheet, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
+import Svg, { Defs } from 'react-native-svg';
 
-import { GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
+import { boundsOf, GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
 import type { SketchInputs } from '@/lib/sketch/types';
 
-import { defsFor, draw, sceneFor, type SketchDetail } from './SketchDrawing';
+import { defsFor, draw, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
 import { useDs } from './theme';
-
-const AnimatedG = Animated.createAnimatedComponent(G);
 
 type Stage = Extract<SceneEl, { k: 'stage' }>;
 type Move = 'fade' | 'draw' | 'spread' | 'rise' | 'drop' | 'land' | 'fizz';
@@ -36,14 +34,10 @@ const BAND_SHARE = 0.25;
 const BUBBLE_MS = 1500;
 const BUBBLE_LOOPS = 3;
 
-type Matrix = [number, number, number, number, number, number];
-interface StageProps {
-  opacity: number;
-  matrix?: Matrix;
-  transform?: Matrix;
-}
-// Native SVG groups take a 6-number matrix; react-native-svg on web reads it from transform.
-const ON_WEB = Platform.OS === 'web';
+// Each part is its own native layer, painted once; the clock only moves and
+// fades the layers. Animating the SVG's own groups made iOS repaint the whole
+// drawing (hundreds of pencil paths) on the main thread every frame, which
+// stalled scrolling for the length of the animation.
 
 function cubicOut(t: number) {
   'worklet';
@@ -56,6 +50,13 @@ function backOut(t: number, s: number) {
   return 1 + (s + 1) * u * u * u + s * u * u;
 }
 
+/** Scene units to points in the frame: the drawing sits in a centred square (preserveAspectRatio meet). */
+interface Place {
+  k: number;
+  x: number;
+  y: number;
+}
+
 interface LayerProps {
   beat: Beat;
   ox: number;
@@ -63,22 +64,46 @@ interface LayerProps {
   size: number;
   t: SharedValue<number>;
   bubble: SharedValue<number>;
-  children: ReactNode;
+  place: Place;
+  u: string;
+  els: SceneEl[];
 }
 
-function Layer({ beat, ox, oy, size, t, bubble, children }: LayerProps) {
+/** Part of the drawing, in a view no bigger than what it covers (each view is a bitmap). */
+function Piece({ els, u, place, size, style }: { els: SceneEl[]; u: string; place: Place; size: number; style?: ComponentProps<typeof Animated.View>['style'] }) {
+  const [x0, y0, x1, y1] = boundsOf(els) ?? [0, 0, size, size];
+  // Edges on whole device pixels, and the view box read back from them: the
+  // strokes land on exactly the pixels the still drawing puts them on.
+  const px = PixelRatio.get();
+  const edge = (v: number, out: (n: number) => number) => out(v * px) / px;
+  const [l, t, r, b] = [edge(place.x + x0 * place.k, Math.floor), edge(place.y + y0 * place.k, Math.floor), edge(place.x + x1 * place.k, Math.ceil), edge(place.y + y1 * place.k, Math.ceil)];
+  const [vx, vy] = [(l - place.x) / place.k, (t - place.y) / place.k];
+  return (
+    <Animated.View style={[{ position: 'absolute', left: l, top: t, width: r - l, height: b - t }, style]}>
+      <Svg width="100%" height="100%" viewBox={`${vx} ${vy} ${(r - l) / place.k} ${(b - t) / place.k}`}>
+        <Defs>{defsFor(els, u, [])}</Defs>
+        {els.map((c, j) => draw(c, j, u))}
+      </Svg>
+    </Animated.View>
+  );
+}
+
+function Layer({ beat, ox, oy, size, t, bubble, place, u, els }: LayerProps) {
   const { at, dur, move } = beat;
-  const props = useAnimatedProps((): StageProps => {
+  const [x0, y0, x1, y1] = boundsOf(els) ?? [0, 0, size, size];
+  // The stage's anchor from the view's centre (where views scale about), in points.
+  const ax = (ox - (x0 + x1) / 2) * place.k;
+  const ay = (oy - (y0 + y1) / 2) * place.k;
+  const { k } = place;
+  const style = useAnimatedStyle(() => {
     const p = Math.min(1, Math.max(0, (t.get() * TOTAL - at) / dur));
-    const shown = (k: number) => Math.min(1, p * k);
-    // Scale (sx, sy) about the stage's anchor, then move down by dy.
-    const at2 = (sx: number, sy: number, dy: number) => {
-      const m: Matrix = [sx, 0, 0, sy, ox * (1 - sx), oy * (1 - sy) + dy];
-      return ON_WEB ? { transform: m } : { matrix: m };
-    };
+    const shown = (n: number) => Math.min(1, p * n);
+    // Scale (sx, sy) about the anchor, then move down by dy (scene units).
+    const at2 = (sx: number, sy: number, dy: number) => ({
+      transform: [{ translateX: ax }, { translateY: ay + dy * k }, { scaleX: sx }, { scaleY: sy }, { translateX: -ax }, { translateY: -ay }],
+    });
     switch (move) {
       case 'fade':
-        return { opacity: p };
       case 'draw':
         // Pencil lines carry their own broken dash, so a band is drawn by appearing, not by a dash sweep.
         return { opacity: p };
@@ -103,17 +128,16 @@ function Layer({ beat, ox, oy, size, t, bubble, children }: LayerProps) {
       }
     }
   });
-  return (
-    <AnimatedG animatedProps={props}>{children}</AnimatedG>
-  );
+  return <Piece els={els} u={u} place={place} size={size} style={style} />;
 }
 
-function StageLayer({ el, u, ...rest }: Omit<LayerProps, 'beat' | 'ox' | 'oy' | 'children'> & { el: Stage; u: string }) {
+type StageLayerProps = Omit<LayerProps, 'beat' | 'ox' | 'oy' | 'els'> & { el: Stage };
+
+function StageLayer({ el, ...rest }: StageLayerProps) {
   const beat = BEATS[el.name];
   const banded = el.children.some((c) => c.k === 'stroke' && c.band !== undefined);
-  if (beat.move !== 'draw' || !banded) {
-    return <Layer beat={beat} ox={el.ox} oy={el.oy} {...rest}>{el.children.map((c, j) => draw(c, j, u))}</Layer>;
-  }
+  if (!el.children.length) return null;
+  if (beat.move !== 'draw' || !banded) return <Layer beat={beat} ox={el.ox} oy={el.oy} els={el.children} {...rest} />;
   // The pencil goes round the glass from the rim down: each band of strokes
   // starts a little after the one above. Shading and clipped hatching fade in
   // underneath; pencil over pencil looks the same in any order.
@@ -125,14 +149,18 @@ function StageLayer({ el, u, ...rest }: Omit<LayerProps, 'beat' | 'ox' | 'oy' | 
   const step = bands.length > 1 ? (beat.dur * (1 - BAND_SHARE)) / (bands.length - 1) : 0;
   return (
     <>
-      <Layer beat={{ at: beat.at, dur: beat.dur, move: 'fade' }} ox={el.ox} oy={el.oy} {...rest}>{under.map((c, j) => draw(c, j, u))}</Layer>
+      {under.length ? <Layer beat={{ at: beat.at, dur: beat.dur, move: 'fade' }} ox={el.ox} oy={el.oy} els={under} {...rest} /> : null}
       {bands.map((els, i) => (
-        <Layer key={i} beat={{ at: beat.at + i * step, dur: beat.dur * BAND_SHARE, move: 'draw' }} ox={el.ox} oy={el.oy} {...rest}>
-          {els.map((c, j) => draw(c, j, u))}
-        </Layer>
+        <Layer key={i} beat={{ at: beat.at + i * step, dur: beat.dur * BAND_SHARE, move: 'draw' }} ox={el.ox} oy={el.oy} els={els} {...rest} />
       ))}
     </>
   );
+}
+
+/** How long a scene moves for, from the pencil's start: bubbles keep climbing after the drawing is done. */
+function lengthOf(scene: Scene) {
+  const fizzy = scene.els.some((el) => el.k === 'stage' && el.name === 'fizz');
+  return fizzy ? Math.max(TOTAL, BEATS.fizz.at + BEATS.fizz.dur + BUBBLE_MS * BUBBLE_LOOPS) : TOTAL;
 }
 
 const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scene: Scene; play: number; delay: number }) {
@@ -141,12 +169,12 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scen
   const reduceMotion = useReducedMotion();
   const t = useSharedValue(reduceMotion ? 1 : 0);
   const bubble = useSharedValue(0);
+  // The layers are placed in points, so they wait for the frame's size: blank paper is the first frame anyway.
+  const [frame, setFrame] = useState<{ w: number; h: number } | null>(null);
+  // The way out if a layout never comes: the still drawing once the animation would have ended.
+  const [settled, setSettled] = useState<{ scene: Scene; play: number } | null>(null);
   useEffect(() => {
-    if (reduceMotion) {
-      t.set(1);
-      bubble.set(0);
-      return;
-    }
+    if (reduceMotion) return;
     t.set(0);
     t.set(withDelay(delay, withTiming(1, { duration: TOTAL, easing: Easing.linear })));
     bubble.set(0);
@@ -155,13 +183,18 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scen
       withRepeat(withTiming(1, { duration: BUBBLE_MS, easing: Easing.out(Easing.quad) }), BUBBLE_LOOPS, false),
       withTiming(0, { duration: 0 }),
     ));
+    const done = setTimeout(() => setSettled({ scene, play }), delay + lengthOf(scene) + 100);
+    return () => clearTimeout(done);
   }, [scene, play, delay, reduceMotion, t, bubble]);
+  const side = frame ? Math.min(frame.w, frame.h) : 0;
+  const place: Place | null = frame && side ? { k: side / scene.size, x: (frame.w - side) / 2, y: (frame.h - side) / 2 } : null;
+  if (reduceMotion || (!place && settled?.scene === scene && settled.play === play)) return <SceneSvg scene={scene} />;
+  const flat = scene.els.filter((el) => el.k !== 'stage');
   return (
-    <Svg width="100%" height="100%" viewBox={`0 0 ${scene.size} ${scene.size}`} preserveAspectRatio="xMidYMid meet" style={{ backgroundColor: ds.c.paper }} aria-hidden>
-      <Rect x={0} y={0} width={scene.size} height={scene.size} fill={ds.c.paper} />
-      <Defs>{defsFor(scene.els, u, [])}</Defs>
-      {scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} u={u} /> : draw(el, i, u)))}
-    </Svg>
+    <View style={[styles.fill, { backgroundColor: ds.c.paper }]} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} aria-hidden>
+      {place && flat.length ? <Piece els={flat} u={u} place={place} size={scene.size} /> : null}
+      {place ? scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} place={place} u={u} /> : null)) : null}
+    </View>
   );
 });
 
@@ -184,4 +217,8 @@ export interface AnimatedSketchProps {
  */
 export const AnimatedSketch = memo(function AnimatedSketch({ inputs, seed, detail = 'full', play = 0, delay = 0 }: AnimatedSketchProps) {
   return <AnimatedScene scene={sceneFor(inputs, seed, detail, true)} play={play} delay={delay} />;
+});
+
+const styles = StyleSheet.create({
+  fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
 });

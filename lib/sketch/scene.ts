@@ -166,3 +166,78 @@ export class SceneBuilder {
     return { size: SCENE_SIZE, els: this.root };
   }
 }
+
+export type Bounds = [x0: number, y0: number, x1: number, y1: number];
+
+const grow = (b: Bounds, x: number, y: number, rx: number, ry: number) => {
+  b[0] = Math.min(b[0], x - rx);
+  b[1] = Math.min(b[1], y - ry);
+  b[2] = Math.max(b[2], x + rx);
+  b[3] = Math.max(b[3], y + ry);
+};
+
+/** Grows `b` to take in path `d` (the M/L/Z paths and relative-arc dots the builder writes), padded by `pad`. False on anything else. */
+function addPath(b: Bounds, d: string, pad: number): boolean {
+  const tokens = d.match(/[A-Za-z]|-?\d*\.?\d+(?:e-?\d+)?/g) ?? [];
+  let cmd = '';
+  let x = 0;
+  let y = 0;
+  for (let i = 0; i < tokens.length; ) {
+    if (/[A-Za-z]/.test(tokens[i])) {
+      cmd = tokens[i++];
+      continue;
+    }
+    const n = (j: number) => Number(tokens[i + j]);
+    if (cmd === 'M' || cmd === 'L') {
+      x = n(0);
+      y = n(1);
+      grow(b, x, y, pad, pad);
+      i += 2;
+    } else if (cmd === 'a') {
+      // rx ry rotation large sweep dx dy: the arc stays within its radius of either end.
+      const r = Math.max(n(0), n(1)) + pad;
+      grow(b, x, y, r, r);
+      x += n(5);
+      y += n(6);
+      grow(b, x, y, r, r);
+      i += 7;
+    } else return false;
+  }
+  return true;
+}
+
+const EMPTY = (): Bounds => [Infinity, Infinity, -Infinity, -Infinity];
+
+/**
+ * The area these elements cover, in scene units, or null when there's
+ * nothing (or a path it can't read). AnimatedSketch sizes each moving layer
+ * to it: every layer is a bitmap, and a band of pencil needs only its strip.
+ */
+export function boundsOf(els: SceneEl[]): Bounds | null {
+  const walk = (list: SceneEl[], b: Bounds): boolean => {
+    for (const el of list) {
+      if (el.k === 'fill') {
+        if (!addPath(b, el.d, 1)) return false;
+      } else if (el.k === 'stroke') {
+        if (!addPath(b, el.d, el.w / 2 + 1)) return false;
+      } else if (el.k === 'wash') {
+        if (!el.ds.every((d) => addPath(b, d, el.edgeW / 2 + 1))) return false;
+      } else if (el.k === 'soft') {
+        // A turned ellipse's half-width and half-height.
+        const [c, s] = [Math.cos(el.rot), Math.sin(el.rot)];
+        grow(b, el.cx, el.cy, Math.hypot(el.rx * c, el.ry * s) + 1, Math.hypot(el.rx * s, el.ry * c) + 1);
+      } else if (el.k === 'group') {
+        // Only what shows through the clip.
+        const [inner, clip] = [EMPTY(), EMPTY()];
+        if (!walk(el.children, inner) || !addPath(clip, el.clip, 0)) return false;
+        if (inner[0] > inner[2]) continue;
+        grow(b, Math.max(inner[0], clip[0]), Math.max(inner[1], clip[1]), 0, 0);
+        grow(b, Math.min(inner[2], clip[2]), Math.min(inner[3], clip[3]), 0, 0);
+      } else if (!walk(el.children, b)) return false;
+    }
+    return true;
+  };
+  const b = EMPTY();
+  if (!walk(els, b) || b[0] > b[2]) return null;
+  return [Math.floor(b[0]), Math.floor(b[1]), Math.ceil(b[2]), Math.ceil(b[3])];
+}

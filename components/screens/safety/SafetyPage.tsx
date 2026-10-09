@@ -16,7 +16,7 @@ interface SafetyPageProps {
   /** Hide the back button (the age check after sign-up has its own way on). */
   noBack?: boolean;
   /** Where Back goes when there's no history (a link opened cold). */
-  backTo?: '/settings' | '/';
+  backTo?: '/settings' | '/settings/profile' | '/';
 }
 
 /** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */

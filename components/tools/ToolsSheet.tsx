@@ -5,7 +5,7 @@ import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Spec, 
 import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useHereVenue } from '@/hooks/useMode';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { ethanolIn, formatMl, readings, spiritToProof, waterToDilute } from '@/lib/calculators';
 import { priceForTarget } from '@/lib/costing';
@@ -45,11 +45,11 @@ export interface ToolsSheetProps {
  * its question comes up; this holds them all for the odd job.
  */
 export function ToolsSheet(props: ToolsSheetProps) {
-  const { active } = useActiveVenue();
+  const here = useHereVenue();
   return (
     <Modal visible={props.visible} transparent animationType="fade" onRequestClose={props.onClose}>
       <BackbarTheme scheme={props.scheme ?? 'light'}>
-        <BrandProvider accent={active?.accent ?? undefined}>
+        <BrandProvider accent={here?.accent ?? undefined}>
           <Sheet {...props} />
         </BrandProvider>
       </BackbarTheme>
@@ -62,8 +62,9 @@ const pct = (n: number) => `${Number(n.toFixed(1))}%`;
 
 function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount, prepName, onPrepApply, applying }: ToolsSheetProps) {
   const ds = useDs();
-  const { active } = useActiveVenue();
-  const { data: pricing } = usePricingSettings(active?.id);
+  // At home, the venue's currency, tax and margin aren't yours.
+  const here = useHereVenue();
+  const { data: pricing } = usePricingSettings(here?.id);
   const [tool, setTool] = useState<Tool>(initial);
   const [volume, setVolume] = useState(volumeMl ? String(Math.round(volumeMl)) : '');
   const [have, setHave] = useState(abv != null ? String(Number(abv.toFixed(1))) : '');

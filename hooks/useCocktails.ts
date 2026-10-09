@@ -19,6 +19,7 @@ export const COCKTAIL_LIST_COLUMNS = `
     name,
     description,
     bar_id,
+    service_style,
     glassware_id,
     family_id,
     ice_id,

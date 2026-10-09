@@ -50,7 +50,7 @@ test('the person accepts a job a bar listed them in, and sees what waits on the 
   await renderWithTamagui(<MyJobRequests personId="jo" />);
   expect(screen.getByText('Barback, Dante')).toBeTruthy();
   expect(screen.getByText('Bartender, Attaboy')).toBeTruthy();
-  expect(screen.getByText(/once the bar confirms it/)).toBeTruthy();
+  expect(screen.getByText(/marked not confirmed, until the bar says yes/)).toBeTruthy();
   expect(screen.queryByText('Owner, Lyaness')).toBeNull();
   await fireEvent.press(screen.getByLabelText('Accept'));
   expect(mockAnswer).toHaveBeenCalledWith({ id: 'asked', accept: true });

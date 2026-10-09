@@ -217,6 +217,55 @@ describe('discover_list', () => {
     const { error } = await near(users.viewer.client, { p_after_id: ids.sour });
     assert.ok(error, 'a cursor needs all three parts');
   });
+
+  test('Nearest: the closest bar first, in metres, paging on the distance', async () => {
+    // Standing at Date Line, across the antimeridian from Open Shed (about 1.6 km).
+    const from = { p_from_latitude: HERE.lat, p_from_longitude: -179.995 };
+    const { data, error } = await near(users.viewer.client, from);
+    assert.ifError(error);
+    const rows = mine(data);
+    assert.deepEqual(rows.map((r) => [r.id, r.distance_m === 0]).slice(0, 1), [[ids.lineMartini, true]]);
+    assert.ok(rows.slice(1).every((r) => r.distance_m > 1000 && r.distance_m < 2000), JSON.stringify(rows.map((r) => r.distance_m)));
+    const pages = [];
+    let cursor = {};
+    for (;;) {
+      const { data: page, error: pageError } = await near(users.viewer.client, { ...from, p_limit: 1, ...cursor });
+      assert.ifError(pageError);
+      if (!page.length) break;
+      pages.push(...page);
+      const last = page[page.length - 1];
+      cursor = { p_after_rank: last.rank, p_after_name: last.name, p_after_id: last.id, p_after_distance: last.distance_m };
+    }
+    assert.deepEqual(pages.map((r) => r.id), data.map((r) => r.id));
+    const first = rows[0];
+    const { error: noDistance } = await near(users.viewer.client, { ...from, p_after_rank: first.rank, p_after_name: first.name, p_after_id: first.id });
+    assert.ok(noDistance, 'a nearest cursor needs its distance');
+    const { data: plain } = await near(users.viewer.client);
+    assert.ok(plain.every((r) => r.distance_m === null), 'no distance without Nearest');
+  });
+
+  test('says why each drink matched: name, then the classic it riffs on, then lines, description or bar', async () => {
+    const why = async (q) => Object.fromEntries(mine((await near(users.viewer.client, { p_query: q })).data).map((r) => [r.id, [r.match_kind, r.match_text]]));
+    assert.deepEqual((await why(`martini ${run}`))[ids.martini], ['name', null]);
+    const lines = await why(`plymouth ${run}`);
+    assert.equal(lines[ids.sour][0], 'line');
+    assert.equal(lines[ids.sour][1].toLowerCase(), `plymouth gin ${run}`, 'the ingredient, as written');
+    assert.deepEqual((await why('bright and sharp'))[ids.sour], ['description', null]);
+    assert.deepEqual((await why(`open shed ${run}`))[ids.martini], ['bar', null]);
+    const { data: plain } = await near(users.viewer.client, { p_query: null });
+    assert.ok(mine(plain).every((r) => r.match_kind === null && r.match_text === null), 'no search, no reason');
+
+    // A riff of Gimlet beats a drink that only mentions one, though that one is on a menu with a picture.
+    const classic = await item({ name: 'Gimlet', item_type: 'cocktail' });
+    await db.query('UPDATE public.items SET riff_of_id = $1 WHERE id = $2', [classic, ids.lineMartini]);
+    await db.query("UPDATE public.items SET description = 'Never a gimlet' WHERE id = $1", [ids.martini]);
+    await settle();
+    const { data } = await near(users.viewer.client, { p_query: 'gimlet' });
+    assert.deepEqual(mine(data).map((r) => [r.id, r.match_kind, r.match_text]), [
+      [ids.lineMartini, 'riff', `Gimlet ${run}`],
+      [ids.martini, 'description', null],
+    ]);
+  });
 });
 
 describe('discover_bars', () => {

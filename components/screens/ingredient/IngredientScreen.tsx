@@ -18,18 +18,22 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import type { IngredientBottle } from '@/hooks/useIngredients';
+import { useMode } from '@/hooks/useMode';
 import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { toQuantity } from '@/lib/quantity';
+import { readNoteRecipe } from '@/lib/noteRecipe';
 import { leadTimeLabel } from '@/lib/scale';
 
 import { DrinkControls } from '../drink/DrinkControls';
 import { DrinkFacts } from '../drink/DrinkFacts';
 import type { ShownPicture } from '../drink/PictureViewer';
 import { IngredientHero, IngredientTags, MakeBar, prepFacts } from './IngredientBits';
+import { NoteRecipe } from './NoteRecipe';
 import { PrepMethod } from './PrepMethod';
 import { PrepRecipe, type PrepLine } from './PrepRecipe';
 import { PrepUsedIn } from './PrepUsedIn';
+import { PrepVersionSheet } from './PrepVersionSheet';
 
 type Link = { id: string; name: string };
 
@@ -95,11 +99,17 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
   const [factor, setFactor] = useState(1);
   const make = (mode?: 'have') => router.push(`/ingredient/${ingredient.id}/make?factor=${factor}${mode ? `&mode=${mode}` : ''}` as never);
   const [editingPrep, setEditingPrep] = useState(false);
+  // Before changing a prep other drinks use, or to make your own: 'edit' or 'copy'.
+  const [version, setVersion] = useState<'edit' | 'copy' | null>(null);
+  const { active } = useActiveVenue();
+  const home = useMode().mode === 'home';
   const [proofing, setProofing] = useState(false);
 
   const prep = card?.prep ?? null;
   const steps = card?.steps ?? [];
-  const isPrep = lines.length > 0 || ingredient.ingredient_role === 'prep' || !!prep || steps.length > 0;
+  // A recipe still written as a note: it's a prep, and whoever can edit it can turn it into lines.
+  const noteRead = lines.length ? null : readNoteRecipe(ingredient.description);
+  const isPrep = lines.length > 0 || ingredient.ingredient_role === 'prep' || !!prep || steps.length > 0 || !!noteRead;
   const showRecipe = canViewDetails && lines.length > 0;
   const facts = canViewDetails ? prepFacts(prep) : [];
   const yieldQ = toQuantity(prep?.yield_amount, prep?.yield_unit);
@@ -123,10 +133,15 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
       <IngredientTags isPrep={isPrep} actions={prep?.actions ?? []} venueName={venueName} shared={!ingredient.bar_id} mine={!!userId && ingredient.created_by === userId} role={ingredient.ingredient_role ?? null} />
       <Display>{ingredient.name}</Display>
-      {ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
+      {noteRead && canEditPrep && canViewDetails && ingredient.description ? (
+        <NoteRecipe itemId={ingredient.id} barId={ingredient.bar_id} note={ingredient.description} read={noteRead} card={card} />
+      ) : ingredient.description ? (
+        <Body tone="muted">{ingredient.description}</Body>
+      ) : null}
       <View style={styles.actions}>
         {showRecipe && wide ? <Button label="Make" icon="flask" onPress={() => make()} /> : null}
         {isPrep && canViewDetails ? <GlassButton accessibilityLabel="Proof: work out the strength" label="Proof" icon="percent" onPress={() => setProofing(true)} /> : null}
+        {showRecipe && userId && !canEdit ? <GlassButton accessibilityLabel="Make your own version of this prep" label="Make your own" icon="plus.square" onPress={() => setVersion('copy')} /> : null}
       </View>
       <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
       {showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onFactor={setFactor} onFromWhatIHave={() => make('have')} /> : null}
@@ -169,12 +184,22 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
         heroHeight={heroHeight}
         scrollY={scrollY}
         wide={wide}
-        isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
+        saved={isFavorite} onToggleSaved={onToggleFavorite} saveAs="favourite"
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
-        canEdit={canEdit} onEdit={onEdit} editLabel="Edit ingredient"
+        canEdit={canEdit} onEdit={isPrep && drinks.length > 1 ? () => setVersion('edit') : onEdit} editLabel="Edit ingredient"
       />
       {pinned ? <MakeBar bottom={insets.bottom} onMake={() => make()} drinks={drinks.length} onDrinks={toDrinks} /> : null}
       {editingPrep && card ? <PrepEditSheet visible onClose={() => setEditingPrep(false)} itemId={ingredient.id} itemName={ingredient.name} current={card} /> : null}
+      {version ? (
+        <PrepVersionSheet
+          visible
+          onClose={() => setVersion(null)}
+          source={{ id: ingredient.id, name: ingredient.name, description: ingredient.description, abv: ingredient.abv, lines, card }}
+          drinks={drinks.length}
+          venue={!home && active ? { id: active.id, name: active.name } : null}
+          onEditAll={version === 'edit' ? onEdit : undefined}
+        />
+      ) : null}
       {proofing ? <ToolsSheet visible onClose={() => setProofing(false)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
     </View>
   );
