@@ -113,6 +113,10 @@ export interface DatabaseItem {
     ice_id: string | null;
     notes: string | null;
     origin: string | null;
+    /** ISO 3166-1 alpha-2 country it comes from ("GB"); origin keeps the free text. */
+    origin_country?: string | null;
+    /** The protected name it carries, as labelled ("Cognac"), when it has one. */
+    gi?: string | null;
     price: string | null;
     status: string | null;
     brand_maker: string | null;
