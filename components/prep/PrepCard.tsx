@@ -6,6 +6,7 @@ import { Body, Button, Caption, PressableScale, Spec, Surface, Tag, useDs } from
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useHereVenue } from '@/hooks/useMode';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { gramsPer100ml, leadTimeLabel, shelfLifeLabel, timerLabel, totals, totalsLine, type RecipeLine } from '@/lib/scale';
@@ -42,7 +43,8 @@ export function PrepCard(props: PrepCardProps) {
 function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
   const ds = useDs();
   const router = useRouter();
-  const { active, venues } = useActiveVenue();
+  const { venues } = useActiveVenue();
+  const here = useHereVenue();
   const { data: capabilities } = useCapabilities(barId);
   const { data: card, isPending } = useItemPrep(itemId);
   const { data: used } = usePrepUsedIn(itemId);
@@ -51,7 +53,7 @@ function Card({ itemId, itemName, barId, recipe, canEditItem }: PrepCardProps) {
   const [proofing, setProofing] = useState(false);
   const [editing, setEditing] = useState(false);
   const canEdit = barId ? !!capabilities?.includes('prep') || canEditItem : canEditItem;
-  const accent = venues.find((v) => v.id === barId)?.accent ?? active?.accent ?? undefined;
+  const accent = venues.find((v) => v.id === barId)?.accent ?? here?.accent ?? undefined;
   if (isPending || !card) return null;
   // A bought ingredient with nothing to prep stays a plain page, unless it's a
   // garnish an editor can give a recipe, steps and a yield.

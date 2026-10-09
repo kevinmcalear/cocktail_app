@@ -19,3 +19,12 @@ export function inSelectedContext(
   if (!barId) return selectedContextIds.includes(PERSONAL_CONTEXT);
   return selectedContextIds.includes(barId);
 }
+
+/**
+ * Whether something seen belongs where you are now (`hereId`: the venue, or
+ * null at home). Your other venues' things stay at those venues; your own and
+ * other bars' public drinks show anywhere.
+ */
+export function belongsHere(barId: string | null | undefined, myVenueIds: string[], hereId: string | null) {
+  return !barId || barId === hereId || !myVenueIds.includes(barId);
+}
