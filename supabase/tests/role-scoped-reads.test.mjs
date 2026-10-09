@@ -431,7 +431,8 @@ describe('get_bar_members', () => {
 
   test('teammates see a Settings photo from the member\'s own avatars folder, never any other URL', async () => {
     const own = `${status.API_URL}/storage/v1/object/public/avatars/${users.bartender.id}/me.jpg`;
-    const elsewhere = `https://example.com/storage/v1/object/public/avatars/${users.employee.id}.jpg`;
+    // Their own folder, but on another site.
+    const elsewhere = `https://example.com/storage/v1/object/public/avatars/${users.employee.id}/me.jpg`;
     for (const [label, avatar_url] of [['bartender', own], ['employee', elsewhere]]) {
       const { error } = await service.auth.admin.updateUserById(users[label].id, { user_metadata: { avatar_url } });
       assert.ifError(error);

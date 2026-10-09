@@ -128,6 +128,17 @@ describe('the photo', () => {
     assert.ok(error);
   });
 
+  test('a lookalike URL on another site, or one written straight into the profile, never shows', async () => {
+    const before = await avatar(ids.jo);
+    const lookalike = `https://example.com/storage/v1/object/public/avatars/${users.jo.id}/1.jpeg`;
+    await service.auth.admin.updateUserById(users.jo.id, { user_metadata: { avatar_url: lookalike } });
+    assert.ifError((await users.jo.client.rpc('refresh_my_profile_photo')).error);
+    assert.equal(await avatar(ids.jo), before);
+    assert.ifError((await users.jo.client.from('profiles').update({ avatar_url: 'https://example.com/me.png' }).eq('id', ids.jo)).error);
+    assert.equal(await avatar(ids.jo), before);
+    await service.auth.admin.updateUserById(users.jo.id, { user_metadata: { avatar_url: before } });
+  });
+
   test('hiding it from someone else’s profile is not possible', async () => {
     const { data } = await users.sam.client.from('profiles').update({ shows_photo: false }).eq('id', ids.jo).select('id');
     assert.deepEqual(data, []);
