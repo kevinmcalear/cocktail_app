@@ -307,13 +307,15 @@ GRANT EXECUTE ON FUNCTION "private"."spec_match_refresh_all"() TO "service_role"
 --                "adds": [{"name": "Mezcal", "house": false}], "drops": ["Campari"],
 --                "measures": true}, names as the caller sees them; {} when
 --                the caller can't see what changed.
-CREATE FUNCTION "public"."spec_matches"("p_item_ids" "uuid"[])
+-- private.spec_matches_seen has no cap, for other server functions that run
+-- as the caller (My Bar's "served at"); public.spec_matches caps it at 500.
+CREATE FUNCTION "private"."spec_matches_seen"("p_item_ids" "uuid"[])
 RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "notes" "jsonb")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
   WITH asked AS (
-    SELECT DISTINCT x AS id FROM unnest(p_item_ids[1:500]) AS x
+    SELECT DISTINCT x AS id FROM unnest(p_item_ids) AS x
   ), found AS (
     SELECT m.*, coalesce(m.override, m.verdict) AS said
       FROM asked a
@@ -361,6 +363,16 @@ RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "notes
     FROM found r JOIN named n ON n.item_id = r.item_id;
 $$;
 
+CREATE FUNCTION "public"."spec_matches"("p_item_ids" "uuid"[])
+RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "notes" "jsonb")
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT * FROM private.spec_matches_seen(p_item_ids[1:500]);
+$$;
+
+REVOKE ALL ON FUNCTION "private"."spec_matches_seen"("uuid"[]) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."spec_matches_seen"("uuid"[]) TO "authenticated", "service_role";
 REVOKE ALL ON FUNCTION "public"."spec_matches"("uuid"[]) FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "public"."spec_matches"("uuid"[]) TO "authenticated", "service_role";
 
