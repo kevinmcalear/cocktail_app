@@ -29,9 +29,9 @@ export function IngredientHero({ id, name, pictures, height, fade }: { id: strin
 }
 
 /** House prep, how it's made, and whose recipe it is; or for a bottle, its role. */
-export function IngredientTags({ isPrep, actions, venueName, shared, role }: { isPrep: boolean; actions: string[]; venueName: string | null; shared: boolean; role: string | null }) {
+export function IngredientTags({ isPrep, actions, venueName, shared, mine, role }: { isPrep: boolean; actions: string[]; venueName: string | null; shared: boolean; mine: boolean; role: string | null }) {
   const tags: { label: string; accent?: boolean }[] = isPrep
-    ? [{ label: 'House prep', accent: true }, ...actions.map((a) => ({ label: a })), ...(shared ? [{ label: 'Shared recipe' }] : venueName ? [{ label: venueName }] : [])]
+    ? [{ label: 'House prep', accent: true }, ...actions.map((a) => ({ label: a })), ...(venueName ? [{ label: venueName }] : mine ? [{ label: 'Your recipe' }] : shared ? [{ label: 'Shared recipe' }] : [])]
     : [role === 'product' ? 'Bottle' : role === 'generic' ? 'Style' : null, venueName].filter((t): t is string => !!t).map((label) => ({ label }));
   if (!tags.length) return null;
   return (

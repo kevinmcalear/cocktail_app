@@ -14,6 +14,7 @@ import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { PublishSection } from '@/components/screens/publishing/PublishSection';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { layout, radius, space } from '@/constants/tokens';
+import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import type { IngredientBottle } from '@/hooks/useIngredients';
@@ -38,6 +39,7 @@ export interface IngredientScreenProps {
     name: string;
     description: string | null;
     bar_id: string | null;
+    created_by?: string | null;
     ingredient_role?: string | null;
     brand_maker?: string | null;
     abv?: number | null;
@@ -75,6 +77,7 @@ export function IngredientScreen(props: IngredientScreenProps) {
 
 function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit, venueName, accent }: IngredientScreenProps & { venueName: string | null; accent: string | undefined }) {
   const ds = useDs();
+  const userId = useUserId();
   const insets = useSafeAreaInsets();
   // A modal: an iOS page sheet starts below the status bar, but the insets still count it.
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
@@ -116,7 +119,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, isFavori
 
   const body = (
     <View style={[styles.body, { paddingHorizontal: gutter }]}>
-      <IngredientTags isPrep={isPrep} actions={prep?.actions ?? []} venueName={venueName} shared={!ingredient.bar_id} role={ingredient.ingredient_role ?? null} />
+      <IngredientTags isPrep={isPrep} actions={prep?.actions ?? []} venueName={venueName} shared={!ingredient.bar_id} mine={!!userId && ingredient.created_by === userId} role={ingredient.ingredient_role ?? null} />
       <Display>{ingredient.name}</Display>
       {ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
       <View style={styles.actions}>
