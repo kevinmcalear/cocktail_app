@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
@@ -70,8 +70,6 @@ function EditorPhone({ editor }: { editor: LayoutEditor }) {
       <FormScrollContainer contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingHorizontal: gutter, paddingBottom: barHeight + space.xl, gap: space.md }}>
         <View style={styles.top}>
           <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={editor.leave} />
-          <Caption tone="muted">{editor.changed ? 'Unsaved changes' : 'Saved'}</Caption>
-          <View style={styles.spacer} />
         </View>
         <MenuCoverEdit editor={editor} height={112} />
         <MenuNameInput editor={editor} />
@@ -121,6 +119,7 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
           onClose={() => editor.setSheet(null)}
           onSave={(rule) => editor.updateSection(section.key, rule)}
           onMove={(by) => editor.moveSection(section.key, by)}
+          onPaste={() => editor.setSheet({ kind: 'paste', key: section.key })}
           onRemove={() => editor.removeSection(section.key)}
         />
       ) : null}
@@ -140,7 +139,6 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   message: { gap: space.lg },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  spacer: { width: 44 },
+  top: { flexDirection: 'row', alignItems: 'center' },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
 });
