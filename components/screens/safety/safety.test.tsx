@@ -6,7 +6,7 @@ import { renderWithTamagui } from '@/jest.setup';
 import { useAgeGate } from './AgeGate';
 import { DrinkingAgeGate } from './DrinkingAgeGate';
 import { MyReportsScreen } from './MyReportsScreen';
-import { NotAvailable } from './NotAvailable';
+import { CouldNotLoad, NotAvailable } from './NotAvailable';
 import { ReportSheet } from './ReportSheet';
 
 let mockUser: { id: string } | null = { id: 'me' };
@@ -16,6 +16,8 @@ let mockExisting: { id: string; created_at: string } | null = null;
 let mockReports: unknown[] = [];
 const mockStore = new Map<string, string>();
 
+let mockOnline = true;
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: mockOnline }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: mockUser, loading: false })));
 jest.mock('@/hooks/useSafety', () => ({
@@ -216,5 +218,23 @@ describe('NotAvailable', () => {
     expect(screen.getByText(/The bar may not have published it yet/)).toBeTruthy();
     expect(screen.queryByText(/blocked/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in to find more' })).toBeTruthy();
+  });
+});
+
+describe('CouldNotLoad', () => {
+  test('a failed request says so and retries, never "Not available"', async () => {
+    const retry = jest.fn();
+    await renderWithTamagui(<CouldNotLoad what="menu" failed={{ retry }} />);
+    expect(screen.getByText('Couldn’t load this menu')).toBeTruthy();
+    expect(screen.queryByText('Not available')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  test('offline: says so', async () => {
+    mockOnline = false;
+    await renderWithTamagui(<CouldNotLoad what="drink" failed={{ retry: jest.fn() }} />);
+    expect(screen.getByText(/You’re offline/)).toBeTruthy();
+    mockOnline = true;
   });
 });

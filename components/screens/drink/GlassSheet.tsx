@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, sheetFrame, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useSetGlassSize, useSetIcePerServe } from '@/hooks/useGlassIce';
 import { useCanEditItem } from '@/hooks/useViewAs';
@@ -76,9 +76,9 @@ function Sheet({ onClose, itemId, name, glass, iceName, serveMl, icePerServeG, c
   return (
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
-      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.keyboard} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.keyboard, sheetFrame.scrim]} pointerEvents="box-none">
         <View style={styles.avoider} pointerEvents="box-none">
-          <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
             <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <Caption tone="muted">Glass and ice</Caption>
               <Title>{name}</Title>

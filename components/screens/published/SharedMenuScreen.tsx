@@ -12,7 +12,7 @@ import type { MenuDrink } from '@/types/menus';
 
 import { MenuSections } from '../menus/MenuSections';
 import { ReportAction } from '../safety/ReportSheet';
-import { PublicMissing, PublicShell } from './PublicShell';
+import { loadFailure, PublicMissing, PublicShell } from './PublicShell';
 
 const PRIVATE = 'private:';
 
@@ -35,9 +35,10 @@ const privateDrink = (sectionId: string, index: number): MenuDrink => ({
  */
 export function SharedMenuScreen({ id }: { id: string }) {
   const router = useRouter();
-  const { data, isPending } = useSharedMenu(id);
+  const query = useSharedMenu(id);
+  const { data, isPending } = query;
   const [now] = useState(() => Date.now());
-  if (!data) return <PublicMissing loading={isPending} what="menu" />;
+  if (!data) return <PublicMissing loading={isPending} what="menu" failed={loadFailure(query)} />;
 
   const { owner } = data;
   const drinks = data.sections.flatMap((s) => s.drinks);
