@@ -5,7 +5,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
-import { missingKit, type Grade, type Source, type Technique } from '@/lib/techniques';
+import { missingKit, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
 
 const GRADE: Record<Grade, { label: string; long: string }> = {
   A: { label: 'Well tested', long: 'A primary or tested source' },
@@ -79,6 +79,21 @@ export function SourceList({ sources }: { sources: Source[] }) {
         <PressableScale key={s.url} role="link" accessibilityLabel={`${s.name}, ${GRADE[s.grade].label}. Opens the source`} onPress={() => void Linking.openURL(s.url)} style={[styles.source, { borderBottomColor: ds.c.line }]}>
           <Body style={styles.flex}>{s.name}</Body>
           <GradeTag grade={s.grade} />
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+/** Where to buy a piece of kit, opening the shop's page. */
+export function BuyList({ links }: { links: BuyLink[] }) {
+  const ds = useDs();
+  return (
+    <View>
+      {links.map((l) => (
+        <PressableScale key={l.url} role="link" accessibilityLabel={`${l.name}. Opens the shop`} onPress={() => void Linking.openURL(l.url)} style={[styles.source, { borderBottomColor: ds.c.line }]}>
+          <Body style={styles.flex}>{l.name}</Body>
+          <IconSymbol name="link" size={16} color={ds.c.muted} />
         </PressableScale>
       ))}
     </View>
