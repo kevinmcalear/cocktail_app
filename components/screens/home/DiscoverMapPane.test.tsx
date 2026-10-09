@@ -79,34 +79,16 @@ jest.mock('./DiscoverMap', () => {
 
 const area: Area = { kind: 'anywhere' };
 const bar: DiscoverBar = {
-  id: 'b1',
-  handle: 'caretakers',
-  name: "Caretaker's Cottage",
-  logo: null,
-  locality: 'Melbourne CBD',
-  city: 'Melbourne',
-  countryCode: 'AU',
-  latitude: -37.81,
-  longitude: 144.96,
-  closed: false,
-  closedYear: null,
-  drinks: 0,
+  id: 'b1', handle: 'caretakers', name: "Caretaker's Cottage", logo: null, locality: 'Melbourne CBD', city: 'Melbourne', countryCode: 'AU',
+  latitude: -37.81, longitude: 144.96, closed: false, closedYear: null, drinks: 0,
 };
 
 function drink(id: string, name: string, styles: string[] = [], match: DiscoverDrink['match'] = null, why: string | null = null): DiscoverDrink {
   if (styles.includes('martini')) mockMartinis.add(id);
   return {
-    id,
-    name,
-    description: `${name} note`,
-    imageUrl: null,
-    barId: bar.id,
+    id, name, description: `${name} note`, imageUrl: null, barId: bar.id,
     bar: { name: bar.name, handle: bar.handle, logo: null, locality: bar.locality, city: bar.city },
-    menu: { onNow: false, past: null, order: 1 },
-    rank: 6,
-    match,
-    why,
-    distance: null,
+    menu: { onNow: false, past: null, order: 1 }, rank: 6, match, why, distance: null,
   };
 }
 
