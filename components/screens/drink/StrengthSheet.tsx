@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, sheetFrame, Spec, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useSetDilution } from '@/hooks/useDrinkMath';
 import type { BatchMethod } from '@/lib/batch';
@@ -66,9 +66,9 @@ function Sheet({ onClose, itemId, name, strength, method, dilutionPct, canEdit, 
   return (
     <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
-      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={styles.keyboard} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.keyboard, sheetFrame.scrim]} pointerEvents="box-none">
         <View style={styles.avoider} pointerEvents="box-none">
-          <Pressable style={[styles.sheet, { backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
             <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <Caption tone="muted">Strength</Caption>
               <Title>{name}</Title>

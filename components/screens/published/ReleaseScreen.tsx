@@ -11,7 +11,7 @@ import { plural } from '@/lib/menus';
 import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { BarLink } from './PublishedDrinkScreen';
-import { PublicMissing, PublicShell } from './PublicShell';
+import { loadFailure, PublicMissing, PublicShell } from './PublicShell';
 
 /**
  * A bar's release ("Autumn release"), as anyone sees it: its cover, the date
@@ -19,9 +19,10 @@ import { PublicMissing, PublicShell } from './PublicShell';
  * public page. Collect keeps the release.
  */
 export function ReleaseScreen({ id }: { id: string }) {
-  const { data, isPending } = useRelease(id);
+  const query = useRelease(id);
+  const { data, isPending } = query;
   const [now] = useState(() => Date.now());
-  if (!data) return <PublicMissing loading={isPending} what="release" />;
+  if (!data) return <PublicMissing loading={isPending} what="release" failed={loadFailure(query)} />;
 
   const { release, bar, drinks } = data;
   const cover = release.coverUrl ?? drinks.find((d) => d.imageUrl && !d.imageIsGenerated)?.imageUrl ?? null;

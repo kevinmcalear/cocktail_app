@@ -1,7 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, sheetFrame, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { topDrinkCaption, type BarTopDrink } from '@/lib/barTopDrinks';
 
@@ -30,11 +30,11 @@ function Sheet({ barName, drinks, onPick, onClose }: Omit<RankPickSheetProps, 'v
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
+    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
       <Pressable
         role="dialog"
         aria-label="Rank a drink"
-        style={[styles.sheet, { backgroundColor: ds.c.surface, paddingBottom: insets.bottom + space.lg }]}
+        style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface, paddingBottom: insets.bottom + space.lg }]}
         onPress={(e) => e.stopPropagation()}
       >
         <ScrollView contentContainerStyle={styles.body}>
