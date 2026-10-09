@@ -15,7 +15,7 @@
 --     one bottle; Cinzano Rosso stays separate). 104 of them are bottles the
 --     check found already in the catalog under another spelling. Folded names
 --     stay as aliases, so typing one finds the bottle.
---   * 374 rows take their proper label name, brand first ("Cinzano
+--   * 372 rows take their proper label name, brand first ("Cinzano
 --     Bianco", "Caffè Borghetti", "Elijah Craig Small Batch"); the old name
 --     stays an alias.
 --   * 350 kept bottles get a corrected or more specific style.
@@ -686,7 +686,6 @@ INSERT INTO rename_in VALUES
 ($q$Ancho Reyes Original Chile Liqueur$q$, $q$Ancho Reyes Original$q$),
 ($q$Angel's Envy Rye$q$, $q$Angel's Envy Rye Finished in Caribbean Rum Casks$q$),
 ($q$Angostura 7 Year$q$, $q$Angostura 7 Year Old$q$),
-($q$Angostura Bitters$q$, $q$Angostura Aromatic Bitters$q$),
 ($q$Angostura Orange$q$, $q$Angostura Orange Bitters$q$),
 ($q$Apple Pucker$q$, $q$DeKuyper Sour Apple Pucker$q$),
 ($q$Appleton Estate 12 Year Old Rare Casks Rum$q$, $q$Appleton Estate 12 Year Old Rare Casks$q$),
@@ -1016,7 +1015,6 @@ INSERT INTO rename_in VALUES
 ($q$Tropical Red Bull$q$, $q$Red Bull Tropical Edition$q$),
 ($q$Tsuruume Mikan$q$, $q$Tsuru Ume Natsu Mikan$q$),
 ($q$Tumugi Koji Spirit$q$, $q$Wapirits Tumugi$q$),
-($q$Twist$q$, $q$Citrus Twist$q$),
 ($q$Valdespino Amontillado "Tio Diego"$q$, $q$Valdespino Tío Diego Amontillado$q$),
 ($q$Valdespino Don Gonzalo Oloroso Sherry$q$, $q$Valdespino Don Gonzalo Oloroso VOS$q$),
 ($q$Valdespino Fino "Inocente"$q$, $q$Valdespino Inocente Fino$q$),
@@ -5985,6 +5983,11 @@ INSERT INTO restyle_in VALUES
 ($q$Yuzu Kosho$q$, $q$Chili Paste$q$),
 ($q$Zucca Rabarbaro$q$, $q$Rabarbaro$q$);
 
+CREATE TEMP TABLE alias_add_in (name text PRIMARY KEY, alias text NOT NULL);
+INSERT INTO alias_add_in VALUES
+($q$Angostura Bitters$q$, $q$Angostura Aromatic Bitters$q$),
+($q$Twist$q$, $q$Citrus Twist$q$);
+
 CREATE TEMP TABLE made_from_in (name text PRIMARY KEY, made_from text NOT NULL);
 INSERT INTO made_from_in VALUES
 ($q$Absolut Tabasco$q$, $q$Absolut Vodka$q$),
@@ -6225,6 +6228,15 @@ SELECT public.ingredient_key(r.old_name), r.id FROM renamed r
 ON CONFLICT (key) DO UPDATE SET item_id = EXCLUDED.item_id;
 RESET "app.ingredient_merge";
 
+-- Names the app itself uses keep them; the label name finds them too.
+INSERT INTO public.ingredient_aliases (key, item_id)
+SELECT public.ingredient_key(a.alias), pg_temp.shared(a.name)
+  FROM alias_add_in a
+ WHERE pg_temp.shared(a.name) IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM public.items o WHERE o.item_type = 'ingredient' AND o.bar_id IS NULL
+                    AND public.ingredient_key(o.name) = public.ingredient_key(a.alias))
+ON CONFLICT (key) DO NOTHING;
+
 -- No loops ("A is a kind of B is a kind of A"): drop a non-core link in each.
 DO $$
 DECLARE
@@ -6256,7 +6268,7 @@ FROM "flavor_jobs_before" o
 WHERE j.item_id = o.item_id AND j.revision <> o.revision;
 DROP TABLE "flavor_jobs_before";
 
-DROP TABLE "made_now", "renamed", "generic_in", "merge_in", "rename_in", "role_in", "parent_in", "restyle_in", "made_from_in";
+DROP TABLE "made_now", "renamed", "alias_add_in", "generic_in", "merge_in", "rename_in", "role_in", "parent_in", "restyle_in", "made_from_in";
 DROP FUNCTION pg_temp.shared(text);
 DROP FUNCTION pg_temp.own(text);
 RESET "app.image_worker";
