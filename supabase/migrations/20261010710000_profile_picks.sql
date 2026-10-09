@@ -1,5 +1,3 @@
--- DRAFT. Local stack only. Not applied to production; needs Kevin's review first.
---
 -- What a person's public profile shows, section by section and item by item.
 -- Each section (drinks they've had, bars they've been to, drinks they've
 -- made) has a mode:
