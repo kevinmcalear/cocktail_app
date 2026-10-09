@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { ingredientLine } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
@@ -127,10 +128,7 @@ export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
   const glass = one(item.glass);
   const line =
     kind === 'cocktail'
-      ? sortRecipesByOrder(item.recipes ?? [])
-          .map((r) => one(r.display_ingredient)?.name)
-          .filter((n): n is string => !!n)
-          .join(', ') || (item.description ?? '')
+      ? ingredientLine(sortRecipesByOrder(item.recipes ?? []).map((r) => one(r.display_ingredient)?.name)) || (item.description ?? '')
       : [item.brand_maker, item.origin].filter(Boolean).join(' · ') || (item.description ?? '');
   return {
     id: item.id,

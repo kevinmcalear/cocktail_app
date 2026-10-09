@@ -1,8 +1,10 @@
 import { useSegments } from 'expo-router';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { AppState, StyleSheet } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
-import { GlassButton } from '@/components/ds';
+import { GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { eightBall, layout } from '@/constants/tokens';
 import { canListenForShakes, listenForShakes } from '@/lib/shake';
 
 import { EightBall } from './EightBall';
@@ -41,15 +43,38 @@ export function EightBallProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** "Pick for me": the eight ball without shaking. */
+/** A little eight ball: the black ball, its white circle and the 8. Decorative; the button names it. */
+function EightBallGlyph() {
+  const ds = useDs();
+  return (
+    // Fills most of the glass circle; the muted rim keeps a black ball visible on a dark ground.
+    <Svg width={32} height={32} viewBox="0 0 24 24" aria-hidden>
+      <Circle cx={12} cy={12} r={11.2} fill={eightBall.body} stroke={ds.c.muted} strokeOpacity={0.6} strokeWidth={0.8} />
+      <Circle cx={7.6} cy={7} r={2.6} fill={eightBall.shine} />
+      <Circle cx={12} cy={10.4} r={5.4} fill={ds.c.paper} />
+      <Circle cx={12} cy={8.7} r={1.45} fill="none" stroke={eightBall.body} strokeWidth={1.2} />
+      <Circle cx={12} cy={11.9} r={1.8} fill="none" stroke={eightBall.body} strokeWidth={1.2} />
+    </Svg>
+  );
+}
+
+/** The eight ball without shaking: a round glass button with the ball in it. */
 export function EightBallButton() {
   const open = useContext(OpenEightBall);
   return (
-    <GlassButton
-      icon="sparkles"
-      label="Pick for me"
-      accessibilityLabel={canListenForShakes() ? 'Pick a random drink. You can also shake your phone.' : 'Pick a random drink'}
+    <PressableScale
+      role="button"
       onPress={open}
-    />
+      accessibilityLabel={canListenForShakes() ? 'Pick a random drink. You can also shake your phone.' : 'Pick a random drink'}
+      hitSlop={4}
+    >
+      <GlassSurface interactive style={styles.circle}>
+        <EightBallGlyph />
+      </GlassSurface>
+    </PressableScale>
   );
 }
+
+const styles = StyleSheet.create({
+  circle: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+});

@@ -3,8 +3,8 @@
 // a sprig of herbs, a dish of spice or beans, eggs, a flower, chocolate,
 // mushrooms, roots and truffles, onions and garlic, seaweed, a wedge of cheese.
 
-import { PANTRY } from '@/constants/pantry';
-import { SKETCH } from '@/constants/sketch';
+import { PANTRY } from '../../constants/pantry';
+import { SKETCH } from '../../constants/sketch';
 import { drawBottle, handFor } from './bottle';
 import { ell, GLASS_SHAPES, type Pt } from './geometry';
 import { makePainter, type Painter } from './painter';

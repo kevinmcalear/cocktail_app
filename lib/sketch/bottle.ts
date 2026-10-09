@@ -3,7 +3,7 @@
 // label with pencil lettering, a dark cap, and the graphite line on top.
 // Deterministic: the same ingredient and seed always draw the same way.
 
-import { SKETCH } from '@/constants/sketch';
+import { SKETCH } from '../../constants/sketch';
 import { band, ell, hw, type GlassShape, type Pt } from './geometry';
 import { makePainter, type LineOpts, type Painter, type Place } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
