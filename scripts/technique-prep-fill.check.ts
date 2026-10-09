@@ -60,7 +60,7 @@ const generated = spawnSync(process.execPath, ['scripts/technique-prep-fill.mjs'
 assert.equal(generated.status, 0, generated.stderr);
 const file = readFileSync('supabase/migrations/20261012420000_technique_prep_fill.sql', 'utf8');
 assert.equal(generated.stdout, file, 'run: node scripts/technique-prep-fill.mjs');
-assert.doesNotMatch(file + sheet, /—|–/);
+assert.doesNotMatch(file + sheet, /\u2014|\u2013/);
 assert.match(file, /\$q\$Peanut Butter-Washed Bulleit Bourbon\$q\$, ARRAY\[\$q\$Fat wash\$q\$\]::text\[\], \$q\$Bulleit Bourbon\$q\$, NULL, \$q\$Peanut Butter\$q\$\)/);
 
 console.log('technique-prep-fill.check: ok');
