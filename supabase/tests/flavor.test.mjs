@@ -313,8 +313,8 @@ describe('flavor worker', { skip: workerSkip }, () => {
     assert.equal(row.source, 'rules');
     assert.equal(row.coverage, 1);
     assert.ok(row.bitter > 0.8 && row.strong > 0.7, `bitter ${row.bitter}, strong ${row.strong}`);
-    assert.ok(row.botanical > 0.35 && row.herbal < 0.15, `gin is botanical, not herbal: ${row.botanical}, ${row.herbal}`);
-    assert.equal(row.rules_version, 2);
+    assert.ok(row.botanical > 0.35 && row.herbal > 0.15, `gin is juniper, the vermouth herbal: ${row.botanical}, ${row.herbal}`);
+    assert.equal(row.rules_version, 3);
     const { rows } = await db.query('SELECT private.item_flavor_fingerprint($1) AS fp', [id]);
     assert.equal(row.spec_fingerprint, rows[0].fp);
     assert.equal(await jobFor(id), null);
@@ -355,7 +355,7 @@ describe('flavor worker', { skip: workerSkip }, () => {
     assert.equal(row.coverage, 1);
     assert.equal(await usage(bar), 1);
     const { rows } = await db.query('SELECT flavor FROM private.ingredient_flavors WHERE item_id = $1', [secret]);
-    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0, v: 2, look: { color: '#c0392b', tint: 0.8, foam: null } });
+    assert.deepEqual(rows[0].flavor, { taste: { sweet: 0.5, fruity: 0.5 }, abv: 0, v: 3, look: { color: '#c0392b', tint: 0.8, foam: null } });
 
     const second = await drink('Tinctured Again', [[ids.rum, 45], [secret, 15]], { bar_id: bar, glassware_id: glass });
     await work(second);
@@ -376,7 +376,7 @@ describe('flavor worker', { skip: workerSkip }, () => {
     const id = await drink('Refreshed', [[ids.gin, 45], [old, 15]], { bar_id: bar, glassware_id: glass });
     await work(id);
     const { rows } = await db.query('SELECT flavor FROM private.ingredient_flavors WHERE item_id = $1', [old]);
-    assert.equal(rows[0].flavor.v, 2, 'asked again under the current dimensions');
+    assert.equal(rows[0].flavor.v, 3, 'asked again under the current dimensions');
     assert.equal(rows[0].flavor.taste.herbal, undefined, 'the old answer is replaced');
     assert.equal(await usage(bar), 0, 'a refresh is not billed to the venue');
     assert.equal((await flavorRow(id)).source, 'ai');
