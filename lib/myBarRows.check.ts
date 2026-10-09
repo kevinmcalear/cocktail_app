@@ -43,6 +43,9 @@ assert.equal(new Set(ready.map((r) => r.key)).size, ready.length);
 assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'one' } })).slice(3), ['make-head', 'group', 'make-foot']);
 assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'two' } })).slice(3), ['make-head', 'make-empty', 'make-foot']);
 
+// Make first is one row too.
+assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, first: 3, tab: 'first' } })).slice(3), ['make-head', 'first', 'make-foot']);
+
 // Projects are one row, with no "Show more"; none says so.
 const projects = myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, projects: 12, tab: 'projects' } });
 assert.deepEqual(kinds(projects).slice(3), ['make-head', 'projects', 'make-foot']);

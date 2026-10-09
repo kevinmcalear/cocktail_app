@@ -6,7 +6,7 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
-import { useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
+import { useMadePreps, useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { JUMP_ROW, MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
 import { PANTRY_WATER, type ShelfSort } from '@/lib/pantry';
@@ -16,6 +16,7 @@ import { useKitStore } from '@/store/useKitStore';
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { KitSection, LabSection, MoreSections, PrepsSection, SectionJump, type Jumpable } from './BarSections';
+import { MakeFirst } from './MakeFirst';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
 import { BottleRow, ShelfFoot, ShelfHead } from './ShelfSection';
@@ -70,14 +71,32 @@ export function MyBarScreen() {
     const profile = profiles.data?.[id];
     return profile ? <PalateFlower values={profile} size={28} rings={false} /> : null;
   };
+  // Make first: preps the shelf covers but you haven't made, kept to the ready drinks that need them.
+  const made = useMadePreps();
+  const toMake = (made.data ?? [])
+    .map((p) => {
+      const needs = new Set(p.drinks);
+      return { id: p.id, name: p.name, drinks: bar.canMake.filter((d) => needs.has(d.id)) };
+    })
+    .filter((p) => p.drinks.length)
+    .sort((a, b) => b.drinks.length - a.drinks.length);
+  // Under a ready drink: the prep to make first, else the house prep of yours it uses.
+  const notes = new Map<string, string>();
+  for (const p of toMake) for (const d of p.drinks) if (!notes.has(d.id)) notes.set(d.id, `Make the ${p.name} first`);
+  const prepNames = new Map(preps.map((p) => [p.id, p.name]));
+  for (const d of bar.canMake) {
+    const mine = d.shelfUses?.find((id) => prepNames.has(id));
+    if (mine && !notes.has(d.id)) notes.set(d.id, `With your ${prepNames.get(mine)}`);
+  }
   const matchFor = (id: string) => {
     const profile = scored && profiles.data?.[id];
-    return profile ? `${matchPercent(scored, profile)}% match` : undefined;
+    return [profile ? `${matchPercent(scored, profile)}% match` : null, notes.get(id)].filter(Boolean).join(' · ') || undefined;
   };
 
   // Projects need kit or a lab shelf to mean anything; until then the tab isn't offered.
   const projects = owned.length || lab.length ? projectsFor(new Set(owned), labFromNames(lab.map((l) => l.name))) : null;
-  const tab = makeTab(picked === 'projects' && !projects ? null : picked, bar);
+  const gone = (picked === 'projects' && !projects) || (picked === 'first' && !toMake.length);
+  const tab = makeTab(gone ? null : picked, bar);
   const pick = (t: MakeTab) => {
     setPicked(t);
     setShown(MAKE_PAGE);
@@ -88,7 +107,7 @@ export function MyBarScreen() {
     query,
     shelfOpen,
     more: { lab: lab.length, preps: preps.length, kit: owned.length },
-    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
+    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
   });
 
   const jump = (section: Jumpable) => {
@@ -155,7 +174,7 @@ export function MyBarScreen() {
       case 'make-head':
         return (
           <View style={styles.section}>
-            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} />
+            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} />
           </View>
         );
       case 'drink':
@@ -173,6 +192,8 @@ export function MyBarScreen() {
             style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null}
           />
         );
+      case 'first':
+        return <MakeFirst preps={toMake} onMade={addIds} />;
       case 'projects':
         return projects ? <Projects ready={projects.ready} away={projects.away} onKit={toggleKit} onLab={() => setAdding('lab')} /> : null;
       case 'make-empty':

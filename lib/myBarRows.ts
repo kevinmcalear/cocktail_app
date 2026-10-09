@@ -4,7 +4,7 @@
 
 import { arrangeShelf, type ShelfBottle, type ShelfSort } from './pantry';
 
-export type MakeTab = 'ready' | 'one' | 'two' | 'projects';
+export type MakeTab = 'ready' | 'first' | 'one' | 'two' | 'projects';
 /** Drinks and bottle groups listed before "Show more"; a big shelf can make hundreds. */
 export const MAKE_PAGE = 25;
 /** Bottles shown before "Show all", so the shelf never pushes the drinks off the first screen. */
@@ -23,8 +23,11 @@ export interface MyBarState<B extends ShelfBottle, D extends { id: string }, G e
   /** How much is in the sections past the fridge; an empty one folds to a line. */
   more?: { lab: number; preps: number; kit: number };
   /** What the shelf makes, or null before there's anything on it. */
-  /** `projects`: how many techniques the kit and lab shelf allow, listed whole in one row. */
-  make: { canMake: D[]; oneAway: G[]; twoAway: G[]; projects?: number; tab: MakeTab; shown: number } | null;
+  /**
+   * `first`: house preps to make first; `projects`: what the kit and lab shelf
+   * allow. Each is a short list, shown whole in one row.
+   */
+  make: { canMake: D[]; oneAway: G[]; twoAway: G[]; first?: number; projects?: number; tab: MakeTab; shown: number } | null;
 }
 
 export type MyBarRow<B, D, G> =
@@ -43,6 +46,7 @@ export type MyBarRow<B, D, G> =
   | { kind: 'make-head'; key: string }
   | { kind: 'drink'; key: string; drink: D }
   | { kind: 'group'; key: string; group: G }
+  | { kind: 'first'; key: string }
   | { kind: 'projects'; key: string }
   | { kind: 'make-empty'; key: string }
   | { kind: 'make-foot'; key: string; more: number };
@@ -79,16 +83,17 @@ export function myBarRows<B extends ShelfBottle, D extends { id: string }, G ext
   if (s.make) {
     const { tab, shown } = s.make;
     rows.push({ kind: 'make-head', key: 'make-head' });
-    if (tab === 'projects') {
-      if (s.make.projects) rows.push({ kind: 'projects', key: 'projects' });
+    const whole = tab === 'first' || tab === 'projects';
+    if (whole) {
+      if (s.make[tab]) rows.push({ kind: tab, key: tab });
     } else if (tab === 'ready') {
       for (const d of s.make.canMake.slice(0, shown)) rows.push({ kind: 'drink', key: `d:${d.id}`, drink: d });
     } else {
       for (const g of (tab === 'one' ? s.make.oneAway : s.make.twoAway).slice(0, shown)) rows.push({ kind: 'group', key: groupKey(g), group: g });
     }
-    const total = tab === 'projects' ? (s.make.projects ?? 0) : tab === 'ready' ? s.make.canMake.length : (tab === 'one' ? s.make.oneAway : s.make.twoAway).length;
+    const total = whole ? (s.make[tab] ?? 0) : tab === 'ready' ? s.make.canMake.length : (tab === 'one' ? s.make.oneAway : s.make.twoAway).length;
     if (!total) rows.push({ kind: 'make-empty', key: 'make-empty' });
-    rows.push({ kind: 'make-foot', key: 'make-foot', more: tab === 'projects' ? 0 : Math.max(0, total - shown) });
+    rows.push({ kind: 'make-foot', key: 'make-foot', more: whole ? 0 : Math.max(0, total - shown) });
   }
   return rows;
 }
