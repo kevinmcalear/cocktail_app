@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PalateFlower, useDs, useGutter } from '@/components/ds';
@@ -8,11 +8,13 @@ import { space } from '@/constants/tokens';
 import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
 import { useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
-import { MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
-import type { ShelfSort } from '@/lib/pantry';
+import { JUMP_ROW, MAKE_PAGE, makeTab, myBarRows, type MakeTab, type MyBarRow } from '@/lib/myBarRows';
+import { PANTRY_WATER, type ShelfSort } from '@/lib/pantry';
+import { useKitStore } from '@/store/useKitStore';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
-import { AddBottlesSheet } from './AddBottlesSheet';
+import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
+import { KitSection, LabSection, MoreSections, PrepsSection, SectionJump, type Jumpable } from './BarSections';
 import { PantrySection } from './PantrySection';
 import { BottleRow, ShelfFoot, ShelfHead } from './ShelfSection';
 import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, type AwayGroup } from './WhatToMake';
@@ -36,7 +38,10 @@ export function MyBarScreen() {
   // mutate is stable where the mutation objects aren't, so the rows' props stay equal between renders.
   const addIds = add.mutate;
   const removeId = remove.mutate;
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState<AddFilter | null>(null);
+  const owned = useKitStore((s) => s.owned);
+  const toggleKit = useKitStore((s) => s.toggle);
+  const listRef = useRef<FlatList<Row>>(null);
   const [snapping, setSnapping] = useState(false);
   const [sort, setSort] = useState<ShelfSort>('newest');
   const [query, setQuery] = useState('');
@@ -46,9 +51,13 @@ export function MyBarScreen() {
   const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
   const openGroup = (key: string) => setOpenGroups((open) => new Set(open).add(key));
 
-  // Staples live on the shelf too, but are listed under Fridge & pantry, not as bottles.
+  // Staples live on the shelf too, but are listed as Fridge & pantry chips; the rest go by section.
   const staples = new Set((pantry.data ?? []).map((p) => p.id));
-  const bottles = bar.shelf.filter((b) => !staples.has(b.id));
+  const listed = bar.shelf.filter((b) => !staples.has(b.id));
+  const bottles = listed.filter((b) => b.section === 'bottles');
+  const fridge = listed.filter((b) => b.section === 'fridge');
+  const lab = listed.filter((b) => b.section === 'lab');
+  const preps = listed.filter((b) => b.section === 'preps');
   const empty = !bar.isLoading && bottles.length === 0;
 
   const { data: me } = useMyTaste();
@@ -74,8 +83,23 @@ export function MyBarScreen() {
     sort,
     query,
     shelfOpen,
+    more: { lab: lab.length, preps: preps.length, kit: owned.length },
     make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, tab, shown } : null,
   });
+
+  const jump = (section: Jumpable) => {
+    const index = rows.findIndex((r) => r.key === JUMP_ROW[section]);
+    if (index >= 0) listRef.current?.scrollToIndex({ index, animated: true });
+  };
+  // Water comes with the staples but is never shown, so it isn't counted.
+  const fridgeCount = (pantry.data ?? []).filter((p) => p.name !== PANTRY_WATER && bar.shelfIds.has(p.id)).length + fridge.length;
+  const counts: [Jumpable, number][] = [
+    ['bottles', bottles.length],
+    ['fridge', fridgeCount],
+    ['lab', lab.length],
+    ['preps', preps.length],
+    ['kit', owned.length],
+  ];
 
   const renderRow = ({ item, index }: { item: Row; index: number }) => {
     switch (item.kind) {
@@ -96,12 +120,14 @@ export function MyBarScreen() {
               </View>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
               <View style={styles.actions}>
-                <Button label={empty ? 'Add your bottles' : 'Add bottles'} icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding(true)} style={styles.grow} />
+                <Button label="Add to your bar" icon="plus" variant={empty ? 'primary' : 'secondary'} onPress={() => setAdding('all')} style={styles.grow} />
                 <Button label="Snap" accessibilityLabel="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
               </View>
             </View>
           </View>
         );
+      case 'jump':
+        return <SectionJump counts={counts.filter(([, n]) => n > 0)} onJump={jump} />;
       case 'shelf-head':
         return (
           <View style={styles.section}>
@@ -113,7 +139,15 @@ export function MyBarScreen() {
       case 'shelf-foot':
         return <ShelfFoot found={item.found} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
       case 'pantry':
-        return <PantrySection items={pantry.data ?? []} onShelf={bar.shelfIds} onAdd={addIds} onRemove={removeId} style={styles.section} />;
+        return <PantrySection items={pantry.data ?? []} extras={fridge} onShelf={bar.shelfIds} onAdd={addIds} onRemove={removeId} onMore={() => setAdding('fridge')} style={styles.section} />;
+      case 'lab':
+        return <LabSection items={lab} onRemove={removeId} style={styles.section} />;
+      case 'preps':
+        return <PrepsSection items={preps} onRemove={removeId} style={styles.section} />;
+      case 'kit':
+        return <KitSection owned={owned} onToggle={toggleKit} onAdd={() => setAdding('kit')} style={styles.section} />;
+      case 'folds':
+        return <MoreSections empty={item.empty} onOpen={setAdding} style={styles.section} />;
       case 'make-head':
         return (
           <View style={styles.section}>
@@ -145,18 +179,26 @@ export function MyBarScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <FlatList
+        ref={listRef}
         data={rows}
         keyExtractor={(r) => r.key}
         renderItem={renderRow}
         // Two screens either side: a sort or tab change re-renders every mounted row.
         windowSize={5}
+        // A section shortcut past what's mounted: get close, then land on it once it renders.
+        onScrollToIndexFailed={(info) => {
+          listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
+          setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 50);
+        }}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
       />
-      <AddBottlesSheet
-        visible={adding}
+      <AddToBarSheet
+        visible={adding !== null}
+        filter={adding ?? 'all'}
+        onFilter={setAdding}
         onShelf={bar.shelfIds}
         onToggle={(item, on) => (on ? addIds(item.id) : removeId(item.id))}
-        onClose={() => setAdding(false)}
+        onClose={() => setAdding(null)}
       />
       <BottlePhotoSheet visible={snapping} target={{ kind: 'home' }} onClose={() => setSnapping(false)} />
     </View>

@@ -6,14 +6,20 @@ const drink = (i: number) => ({ id: `d${i}` });
 const group = (i: number) => ({ bottles: [{ id: `x${i}` }], drinks: [drink(i)] });
 const kinds = (rows: { kind: string }[]) => rows.map((r) => r.kind);
 
-// An empty shelf: the top, the pantry, nothing to make yet.
-assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: null })), ['top', 'pantry']);
+// An empty shelf: the top, the pantry, the other sections folded, nothing to make yet.
+assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: null })), ['top', 'pantry', 'folds']);
+
+// A serious bar: shortcuts at the top, each filled section in turn, only the empty one folded.
+const full = myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, more: { lab: 3, preps: 0, kit: 2 }, make: null });
+assert.deepEqual(kinds(full), ['top', 'jump', 'shelf-head', 'bottle', 'shelf-foot', 'pantry', 'lab', 'kit', 'folds']);
+assert.deepEqual(full.at(-1), { kind: 'folds', key: 'folds', empty: ['preps'] });
+assert.equal(new Set(full.map((r) => r.key)).size, full.length);
 
 // A long shelf folds to five until opened; a search shows every match.
 const bottles = Array.from({ length: 40 }, (_, i) => bottle(i));
 const folded = myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: false, make: null });
 assert.equal(folded.filter((r) => r.kind === 'bottle').length, SHELF_FOLDED);
-assert.deepEqual(folded.at(-2), { kind: 'shelf-foot', key: 'shelf-foot', found: 40 });
+assert.deepEqual(folded.at(-3), { kind: 'shelf-foot', key: 'shelf-foot', found: 40 });
 assert.equal(myBarRows({ bottles, sort: 'newest', query: '', shelfOpen: true, make: null }).filter((r) => r.kind === 'bottle').length, 40);
 assert.equal(myBarRows({ bottles, sort: 'newest', query: 'Bottle 1', shelfOpen: false, make: null }).filter((r) => r.kind === 'bottle').length, 11);
 
@@ -34,8 +40,8 @@ assert.deepEqual(ready.at(-1), { kind: 'make-foot', key: 'make-foot', more: 60 -
 assert.equal(new Set(ready.map((r) => r.key)).size, ready.length);
 
 // The other tabs list bottle groups; an empty tab says so.
-assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'one' } })).slice(2), ['make-head', 'group', 'make-foot']);
-assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'two' } })).slice(2), ['make-head', 'make-empty', 'make-foot']);
+assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'one' } })).slice(3), ['make-head', 'group', 'make-foot']);
+assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelfOpen: false, make: { ...make, tab: 'two' } })).slice(3), ['make-head', 'make-empty', 'make-foot']);
 
 // The tab opens on what you can make, else on what's closest.
 assert.equal(makeTab(null, { canMake: [], oneAway: [], twoAway: [1] }), 'two');

@@ -5,9 +5,11 @@ import { useDebounced } from '@/hooks/useDiscover';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
+import { barSection, type BarSection } from '@/lib/barSections';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
+import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -28,6 +30,8 @@ interface ItemRow {
   brand_maker?: string | null;
   abv?: number | null;
   generic_id?: string | null;
+  ingredient_role?: string | null;
+  recipes?: { id: string }[] | null;
 }
 
 /** A bottle on the shelf, with what the shelf list says about it. */
@@ -38,12 +42,23 @@ export interface ShelfItem extends BarItem {
   kind: string | null;
   /** How many drinks you can make with it. */
   uses: number;
+  role?: string | null;
+  hasRecipe?: boolean;
+  /** When it went on the shelf (for a house prep: when you made it). */
+  addedAt?: string | null;
+  /** Where My Bar lists it. */
+  section: BarSection;
+}
+
+/** A search result for the add sheet, with the section it goes in. */
+export interface FoundItem extends BarItem {
+  section: BarSection;
 }
 
 const SHELF_KEY = ['home-bar'];
 const NONE: string[] = [];
 const ITEM_SELECT = 'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url))';
-const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id`;
+const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id, ingredient_role, recipes:app_recipe_presentation!recipe_item_id(id)`;
 
 /** The bottles on the signed-in person's shelf (item ids, newest first). */
 export function useShelf() {
@@ -61,41 +76,59 @@ export function useShelf() {
 }
 
 /**
- * Bottles whose name has the text in it, best first, searched on the server
- * so the add sheet never waits on the whole catalog. House-made preps are
- * left out: the shelf works those out from their recipes.
+ * Ingredients whose name has the text in it, best first, searched on the
+ * server so the add sheet never waits on the whole catalog. Each says which
+ * My Bar section it goes in; house preps come too, for "I have some".
  */
-export function useBottleSearch(text: string) {
+export function useBarSearch(text: string) {
   const query = useDebounced(text.trim(), 200);
   return useQuery({
-    queryKey: ['bottle-search', query],
+    queryKey: ['bar-search', query],
     enabled: query.length > 0,
     placeholderData: keepPreviousData,
     meta: { persist: false },
-    queryFn: async (): Promise<BarItem[]> => {
+    queryFn: async (): Promise<FoundItem[]> => {
       // Names that start with it, and any that have it: "Gin" can't sort out of reach behind "Aged gin…".
       const read = (pattern: string, limit: number) =>
         supabase
           .from('app_item_presentation')
-          .select('id, name, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+          .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
           .eq('item_type', 'ingredient')
-          .is('recipes', null)
           .ilike('name', pattern)
           .order('name')
           .order('id')
           .limit(limit);
       const like = likeExactly(query);
-      const [starts, has] = await Promise.all([read(`${like}%`, 50), read(`%${like}%`, 150)]);
+      // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
+      const q = query.toLowerCase();
+      const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
+      const [starts, has, also] = await Promise.all([
+        read(`${like}%`, 50),
+        read(`%${like}%`, 150),
+        aliases.length
+          ? supabase
+              .from('app_item_presentation')
+              .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+              .eq('item_type', 'ingredient')
+              .or(aliases.map((n) => `name.ilike.${likeExactly(n)}`).join(','))
+              .limit(10)
+          : { data: [], error: null },
+      ]);
       if (starts.error) throw starts.error;
       if (has.error) throw has.error;
+      if (also.error) throw also.error;
       const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
-      const rows = [...byId.values()] as unknown as Pick<ItemRow, 'id' | 'name' | 'item_images'>[];
-      return searchByName(query, rows, 40).map((r) => ({
+      const rows = [...byId.values()] as unknown as ItemRow[];
+      // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
+      const named = (also.data ?? []) as unknown as ItemRow[];
+      const found = [...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))];
+      return found.map((r) => ({
         id: r.id,
         name: r.name,
         type: 'ingredient' as const,
         imageUrl: heroPicture(r.item_images)?.url ?? null,
         glass: null,
+        section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
       }));
     },
   });
@@ -205,8 +238,13 @@ export function useBarDrinks() {
 }
 
 /** The shelf's bottles with what each is a kind of: the bottles, then the kinds' names. */
-async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses'>[]> {
-  const rows = await readItems(ids, SHELF_SELECT);
+async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'section'>[]> {
+  const [rows, added] = await Promise.all([
+    readItems(ids, SHELF_SELECT),
+    supabase.from('home_bar_items').select('item_id, added_at'),
+  ]);
+  if (added.error) throw added.error;
+  const addedAt = new Map((added.data ?? []).map((r: { item_id: string; added_at: string }) => [r.item_id, r.added_at]));
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
   const kinds = new Map((kindIds.length ? await readItems(kindIds, 'id, name') : []).map((k) => [k.id, k.name]));
   return rows.map((r) => ({
@@ -218,6 +256,9 @@ async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses'>[]> {
     maker: r.brand_maker ?? null,
     abv: r.abv ?? null,
     kind: (r.generic_id && kinds.get(r.generic_id)) || null,
+    role: r.ingredient_role ?? null,
+    hasRecipe: !!r.recipes?.length,
+    addedAt: addedAt.get(r.id) ?? null,
   }));
 }
 
@@ -239,7 +280,8 @@ export function useMyBar() {
     // The shelf in the order it was filled, as far as the person can still see it.
     const onShelf = ids.flatMap((id) => {
       const r = byId.get(id);
-      return r ? [{ ...r, uses: drinks.usedIn[id] ?? 0 }] : [];
+      // Worked out here, not saved, so a saved shelf from an older app still gets sorted.
+      return r ? [{ ...r, uses: drinks.usedIn[id] ?? 0, section: barSection(r) }] : [];
     });
     return {
       shelf: onShelf,

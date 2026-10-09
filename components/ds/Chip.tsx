@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { layout, radius, space } from '@/constants/tokens';
@@ -14,8 +15,9 @@ import { useDs } from './theme';
  * `multi` makes it a checkbox, for a group where several can be on (role="group").
  * `disabled` dims it and ignores presses, for a choice the person can see but not change.
  * `accessibilityLabel` names it when the label alone is ambiguous in a list ("I have it" beside each tool).
+ * `leading` sits before the label: a small decorative picture (an ingredient drawing).
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode }) {
   const ds = useDs();
   return (
     <PressableScale
@@ -27,10 +29,12 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
       onPress={onPress}
       style={[
         styles.chip,
+        leading ? styles.withLeading : null,
         quiet ? { borderWidth: StyleSheet.hairlineWidth, borderColor: selected ? ds.c.ink : ds.c.lineStrong } : null,
         { backgroundColor: selected ? ds.c.ink : quiet ? 'transparent' : ds.c.raised, opacity: disabled ? 0.45 : 1 },
       ]}
     >
+      {leading}
       <Caption color={selected ? ds.c.ground : ds.c.ink}>{label}</Caption>
     </PressableScale>
   );
@@ -38,4 +42,5 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
 
 const styles = StyleSheet.create({
   chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center' },
+  withLeading: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingLeft: space.xs },
 });
