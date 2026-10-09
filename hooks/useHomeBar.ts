@@ -145,6 +145,44 @@ export function useBarSearch(text: string) {
   });
 }
 
+/**
+ * The shared catalog's items with these names (any case), in the order given,
+ * with the section each goes in: the ideas Add to your bar offers before
+ * anything is typed. Names the catalog doesn't have are left out.
+ */
+export function useBarIdeas(names: readonly string[]) {
+  return useQuery({
+    queryKey: ['bar-ideas', names],
+    enabled: names.length > 0,
+    staleTime: 24 * 60 * 60 * 1000,
+    queryFn: async (): Promise<FoundItem[]> => {
+      const { data, error } = await supabase
+        .from('app_item_presentation')
+        .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+        .eq('item_type', 'ingredient')
+        .is('bar_id', null)
+        .or(names.map((n) => `name.ilike."${likeExactly(n).replace(/"/g, '\\"')}"`).join(','))
+        .order('id');
+      if (error) throw error;
+      // One per name, the first by id, as the pantry staples are picked.
+      const byName = new Map<string, ItemRow>();
+      for (const r of (data ?? []) as unknown as ItemRow[]) if (!byName.has(r.name.toLowerCase())) byName.set(r.name.toLowerCase(), r);
+      return names.flatMap((n) => {
+        const r = byName.get(n.toLowerCase());
+        if (!r) return [];
+        return [{
+          id: r.id,
+          name: r.name,
+          type: 'ingredient' as const,
+          imageUrl: heroPicture(r.item_images)?.url ?? null,
+          glass: null,
+          section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
+        }];
+      });
+    },
+  });
+}
+
 /** Add or remove a bottle. The row's owner defaults to the caller. */
 export function useShelfEdit() {
   const client = useQueryClient();

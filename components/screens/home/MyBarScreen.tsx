@@ -15,11 +15,12 @@ import { labFromNames, projectsFor } from '@/lib/techniques/projects';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
+import { useTileCols } from './BarTile';
 import { KitSection, LabSection, MoreSections, PrepsSection, SectionJump, type Jumpable } from './BarSections';
 import { MakeFirst } from './MakeFirst';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
-import { BottleRow, ShelfFoot, ShelfHead } from './ShelfSection';
+import { BottleTiles, ShelfFoot, ShelfHead } from './ShelfSection';
 import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, type AwayGroup } from './WhatToMake';
 
 type Row = MyBarRow<ShelfItem, BarItem, AwayGroup>;
@@ -49,6 +50,10 @@ export function MyBarScreen() {
   const [sort, setSort] = useState<ShelfSort>('newest');
   const [query, setQuery] = useState('');
   const [shelfOpen, setShelfOpen] = useState(false);
+  const cols = useTileCols();
+  // One section at a time takes things off on a tap.
+  const [editing, setEditing] = useState<Jumpable | null>(null);
+  const edit = (section: Jumpable) => (on: boolean) => setEditing(on ? section : null);
   const [picked, setPicked] = useState<MakeTab | null>(null);
   const [shown, setShown] = useState(MAKE_PAGE);
   const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
@@ -106,6 +111,7 @@ export function MyBarScreen() {
     sort,
     query,
     shelfOpen,
+    cols,
     more: { lab: lab.length, preps: preps.length, kit: owned.length },
     make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
   });
@@ -157,21 +163,21 @@ export function MyBarScreen() {
       case 'shelf-head':
         return (
           <View style={styles.section}>
-            <ShelfHead count={bottles.length} sort={sort} onSort={setSort} query={query} onQuery={setQuery} />
+            <ShelfHead count={bottles.length} sort={sort} onSort={setSort} query={query} onQuery={setQuery} editing={editing === 'bottles'} onEdit={edit('bottles')} onAdd={() => setAdding('bottles')} />
           </View>
         );
-      case 'bottle':
-        return <BottleRow item={item.bottle} heading={item.heading} onRemove={removeId} />;
+      case 'bottles':
+        return <BottleTiles bottles={item.bottles} heading={item.heading} cols={cols} editing={editing === 'bottles'} onRemove={removeId} />;
       case 'shelf-foot':
-        return <ShelfFoot found={item.found} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
+        return <ShelfFoot found={item.found} cols={cols} sort={sort} query={query} open={shelfOpen} onOpen={setShelfOpen} />;
       case 'pantry':
-        return <PantrySection items={pantry.data ?? []} extras={fridge} onShelf={bar.shelfIds} onAdd={addIds} onRemove={removeId} onMore={() => setAdding('fridge')} style={styles.section} />;
+        return <PantrySection items={pantry.data ?? []} extras={fridge} shelf={bar.shelf} onShelf={bar.shelfIds} cols={cols} editing={editing === 'fridge'} onEdit={edit('fridge')} onAdd={addIds} onRemove={removeId} onMore={() => setAdding('fridge')} style={styles.section} />;
       case 'lab':
-        return <LabSection items={lab} onRemove={removeId} style={styles.section} />;
+        return <LabSection items={lab} cols={cols} editing={editing === 'lab'} onEdit={edit('lab')} onAdd={() => setAdding('lab')} onRemove={removeId} style={styles.section} />;
       case 'preps':
-        return <PrepsSection items={preps} onRemove={removeId} style={styles.section} />;
+        return <PrepsSection items={preps} cols={cols} editing={editing === 'preps'} onEdit={edit('preps')} onAdd={() => setAdding('preps')} onRemove={removeId} style={styles.section} />;
       case 'kit':
-        return <KitSection owned={owned} onToggle={toggleKit} onAdd={() => setAdding('kit')} style={styles.section} />;
+        return <KitSection owned={owned} cols={cols} editing={editing === 'kit'} onEdit={edit('kit')} onToggle={toggleKit} onAdd={() => setAdding('kit')} style={styles.section} />;
       case 'folds':
         return <MoreSections empty={item.empty} onOpen={setAdding} style={styles.section} />;
       case 'make-head':
@@ -247,6 +253,7 @@ export function MyBarScreen() {
         filter={adding ?? 'all'}
         onFilter={setAdding}
         onShelf={bar.shelfIds}
+        counts={Object.fromEntries(counts)}
         onToggle={(item, on) => (on ? addIds(item.id) : removeId(item.id))}
         onClose={() => setAdding(null)}
       />

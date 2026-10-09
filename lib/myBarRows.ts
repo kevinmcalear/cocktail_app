@@ -7,8 +7,8 @@ import { arrangeShelf, type ShelfBottle, type ShelfSort } from './pantry';
 export type MakeTab = 'ready' | 'first' | 'one' | 'two' | 'projects';
 /** Drinks and bottle groups listed before "Show more"; a big shelf can make hundreds. */
 export const MAKE_PAGE = 25;
-/** Bottles shown before "Show all", so the shelf never pushes the drinks off the first screen. */
-export const SHELF_FOLDED = 5;
+/** Rows of bottle tiles shown before "Show all", so the shelf never pushes the drinks off the first screen. */
+export const SHELF_FOLDED_ROWS = 2;
 
 interface Group {
   bottles: { id: string }[];
@@ -20,6 +20,8 @@ export interface MyBarState<B extends ShelfBottle, D extends { id: string }, G e
   sort: ShelfSort;
   query: string;
   shelfOpen: boolean;
+  /** Tiles to a row: the bottles are listed a row of tiles at a time. */
+  cols: number;
   /** How much is in the sections past the fridge; an empty one folds to a line. */
   more?: { lab: number; preps: number; kit: number };
   /** What the shelf makes, or null before there's anything on it. */
@@ -35,8 +37,8 @@ export type MyBarRow<B, D, G> =
   /** Shortcuts to each section, once there's more than bottles and the fridge. */
   | { kind: 'jump'; key: string }
   | { kind: 'shelf-head'; key: string }
-  /** `heading`: the style caption above the first bottle of each style, when sorted by style. */
-  | { kind: 'bottle'; key: string; bottle: B; heading: string | null }
+  /** One row of bottle tiles. `heading`: the style caption above it, when sorted by style and a style starts here. */
+  | { kind: 'bottles'; key: string; bottles: B[]; heading: string | null }
   | { kind: 'shelf-foot'; key: string; found: number }
   | { kind: 'pantry'; key: string }
   | { kind: 'lab'; key: string }
@@ -68,12 +70,24 @@ export function myBarRows<B extends ShelfBottle, D extends { id: string }, G ext
   if (extras.length) rows.push({ kind: 'jump', key: 'jump' });
   if (s.bottles.length) {
     const arranged = arrangeShelf(s.bottles, s.sort, s.query);
-    const shown = s.shelfOpen || s.query.trim() ? arranged : arranged.slice(0, SHELF_FOLDED);
+    const cols = Math.max(1, s.cols);
+    const shown = s.shelfOpen || s.query.trim() ? arranged : arranged.slice(0, SHELF_FOLDED_ROWS * cols);
     rows.push({ kind: 'shelf-head', key: 'shelf-head' });
+    // A row is full, or ends where the next style starts.
+    let row: B[] = [];
+    let heading: string | null = null;
+    const flush = () => {
+      if (row.length) rows.push({ kind: 'bottles', key: `b:${row[0].id}`, bottles: row, heading });
+      row = [];
+      heading = null;
+    };
     shown.forEach((b, i) => {
-      const heading = s.sort === 'style' && b.kind !== shown[i - 1]?.kind ? (b.kind ?? 'Other') : null;
-      rows.push({ kind: 'bottle', key: `b:${b.id}`, bottle: b, heading });
+      const starts = s.sort === 'style' && (i === 0 || b.kind !== shown[i - 1].kind);
+      if (starts || row.length === cols) flush();
+      if (starts) heading = b.kind ?? 'Other';
+      row.push(b);
     });
+    flush();
     rows.push({ kind: 'shelf-foot', key: 'shelf-foot', found: arranged.length });
   }
   rows.push({ kind: 'pantry', key: 'pantry' });

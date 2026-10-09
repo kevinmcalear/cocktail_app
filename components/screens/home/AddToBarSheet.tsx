@@ -2,59 +2,66 @@ import { useRouter } from 'expo-router';
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, EquipmentDrawing, Field, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space } from '@/constants/tokens';
-import { useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
+import { layout, space } from '@/constants/tokens';
+import { useBarIdeas, useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
 import { useKit } from '@/hooks/useKit';
 import { SECTIONS, type BarSection } from '@/lib/barSections';
-import { COMMON_INGREDIENTS } from '@/lib/drinkWizard';
 import { itemHref } from '@/lib/itemRoutes';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
-import { EQUIPMENT, TECHNICAL_INGREDIENTS } from '@/lib/techniques';
+import { EQUIPMENT, EQUIPMENT_KINDS, TECHNICAL_INGREDIENTS } from '@/lib/techniques';
+
+import { BarTile, TileGrid, useTileCols } from './BarTile';
 
 export type AddFilter = 'all' | BarSection | 'kit';
 
-const FILTERS: { value: AddFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'bottles', label: 'Bottles' },
-  { value: 'fridge', label: 'Fridge' },
-  { value: 'lab', label: 'Lab' },
-  { value: 'preps', label: 'Preps' },
-  { value: 'kit', label: 'Kit' },
+const TABS: { value: AddFilter; label: string; blurb: string }[] = [
+  { value: 'all', label: 'All', blurb: 'Tap what you keep. It goes in the right section of My Bar.' },
+  { value: 'bottles', label: 'Bottles', blurb: SECTIONS.bottles.blurb },
+  { value: 'fridge', label: 'Fridge', blurb: 'Fruit, sugar, eggs and mixers. Most drinks need a few of these.' },
+  { value: 'lab', label: 'Lab', blurb: SECTIONS.lab.blurb },
+  { value: 'preps', label: 'Preps', blurb: 'Syrups and cordials you make. Tap the ones in your fridge now, or open a recipe to make one.' },
+  { value: 'kit', label: 'Kit', blurb: SECTIONS.kit.blurb },
 ];
 const ORDER: BarSection[] = ['bottles', 'fridge', 'lab', 'preps'];
 
-/** Ideas to tap before typing, for each filter. */
+/** What each tab offers before anything is typed, by catalog name. */
 const IDEAS: Record<Exclude<AddFilter, 'kit'>, readonly string[]> = {
-  all: COMMON_INGREDIENTS,
-  bottles: COMMON_INGREDIENTS.filter((n) => !/juice|syrup|soda|egg/i.test(n)),
-  fridge: ['Whole milk', 'Heavy cream', 'Pineapple', 'Coffee', 'Ginger', 'Cucumber', 'Grapefruit', 'Coconut cream', 'Tonic water'],
+  all: ['Gin', 'Lemon', 'Simple Syrup', 'Campari', 'Lime', 'Sweet Vermouth', 'Angostura Bitters', 'Sugar', 'Rye Whiskey', 'Egg', 'Soda Water', 'Mezcal'],
+  bottles: ['Gin', 'Campari', 'Sweet Vermouth', 'Angostura Bitters', 'Rye Whiskey', 'Bourbon', 'White Rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry Vermouth', 'Aperol'],
+  fridge: ['Lemon', 'Lime', 'Orange', 'Grapefruit', 'Sugar', 'Honey', 'Egg', 'Soda Water', 'Mint', 'Tonic Water', 'Heavy Cream', 'Pineapple'],
   lab: TECHNICAL_INGREDIENTS.map((t) => t.name.replace(/ \(.*\)$/, '')),
-  preps: ['Simple syrup', 'Saline', 'Lime cordial', 'Oleo saccharum', 'Orgeat', 'Grenadine', 'Honey syrup', 'Acid solution'],
+  preps: ['Simple Syrup', 'Rich Simple Syrup', 'Saline', 'Lime Cordial', 'Oleo Saccharum', 'Orgeat', 'Grenadine', 'Honey Syrup'],
 };
 
 interface AddToBarSheetProps {
   visible: boolean;
-  /** The filter it opens on, when a section's "Add" opened it. */
+  /** The tab it opens on, when a section's Add opened it. */
   filter: AddFilter;
   onFilter: (filter: AddFilter) => void;
   onShelf: Set<string>;
+  /** How much of each section is on the bar, for the tabs. */
+  counts: Partial<Record<AddFilter, number>>;
   onToggle: (item: FoundItem, add: boolean) => void;
   onClose: () => void;
 }
 
 /**
  * One search for everything on your bar: bottles, fridge, lab, house preps
- * and kit. Each result is listed under the section it goes in.
+ * and kit. The sections are tabs (text, underlined), so they never look like
+ * what's in them; what's in them is picture tiles you tick, the same tiles
+ * as My Bar. Typed results are listed under the section each goes in.
  */
-export function AddToBarSheet({ visible, filter, onFilter, onShelf, onToggle, onClose }: AddToBarSheetProps) {
+export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onToggle, onClose }: AddToBarSheetProps) {
   const router = useRouter();
+  const cols = useTileCols();
   const [query, setQuery] = useState('');
   const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
   const typed = query.trim();
   const found = useBarSearch(filter === 'kit' ? '' : query);
+  const ideas = useBarIdeas(filter === 'kit' ? [] : IDEAS[filter]);
   // Results for older text stay up while the new search runs, so only an empty list waits.
   const rows = typed ? (found.data ?? []).filter((r) => filter === 'all' || r.section === filter) : [];
   const groups = ORDER.flatMap((section) => {
@@ -65,6 +72,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, onToggle, on
     onClose();
     router.push(itemHref('Ingredient', id) as never);
   };
+  const tab = TABS.find((t) => t.value === filter) ?? TABS[0];
 
   return (
     <MenuSheet
@@ -79,47 +87,60 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, onToggle, on
         label="Search everything"
         value={query}
         onChangeText={setQuery}
-        placeholder="Gin, lemons, malic acid, lime cordial…"
+        placeholder="Gin, lemons, malic acid, a shaker…"
         autoCorrect={false}
         autoCapitalize="none"
         autoFocus={MODAL_AUTOFOCUS}
         returnKeyType="search"
       />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-        <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
-          {FILTERS.map((f) => (
-            <Chip key={f.value} label={f.label} quiet selected={filter === f.value} onPress={() => onFilter(f.value)} />
-          ))}
-        </View>
-      </ScrollView>
+      <Tabs value={filter} onChange={onFilter} counts={counts} />
       <View style={styles.results}>
+        <Caption tone="muted">{tab.blurb}</Caption>
         {filter === 'kit' ? (
-          <KitResults query={typed} />
+          <KitResults query={typed} cols={cols} />
         ) : !typed ? (
-          <View role="group" accessibilityLabel="Ideas" style={styles.chips}>
-            {IDEAS[filter].map((name) => (
-              <Chip key={name} label={name} selected={false} quiet onPress={() => setQuery(name)} />
-            ))}
+          <View style={styles.group}>
+            <Caption tone="muted" style={styles.heading}>
+              {filter === 'all' ? 'Most used in drinks' : `Common ${tab.label.toLowerCase()}`}
+            </Caption>
+            <TileGrid cols={cols}>
+              {(ideas.data ?? []).map((item) => {
+                const has = onShelf.has(item.id);
+                const tile = <IdeaTile key={item.id} item={item} has={has} onToggle={onToggle} />;
+                return item.section === 'preps' ? (
+                  <View key={item.id} style={styles.withLink}>
+                    {tile}
+                    <RecipeLink name={item.name} onPress={() => openRecipe(item.id)} />
+                  </View>
+                ) : (
+                  tile
+                );
+              })}
+            </TileGrid>
           </View>
         ) : found.error && !rows.length ? (
           <Body tone="muted">Couldn’t search right now. Check your connection and try again.</Body>
         ) : !rows.length ? (
-          <Body tone="muted">{found.isFetching || found.isPending ? 'Looking…' : `Nothing called “${typed}” yet.`}</Body>
+          <Body tone="muted">{found.isFetching || found.isPending ? 'Looking…' : `Nothing called “${typed}” yet. Try All, or snap the bottle.`}</Body>
         ) : (
           groups.map((g) => (
             <View key={g.section}>
               {filter === 'all' ? (
-                <Caption tone="muted" style={styles.group}>
+                <Caption tone="muted" style={styles.heading}>
                   {SECTIONS[g.section].title}
                 </Caption>
               ) : null}
-              {g.items.map((item) =>
-                item.section === 'preps' ? (
-                  <PrepResult key={item.id} item={item} has={onShelf.has(item.id)} onToggle={onToggle} onRecipe={openRecipe} />
-                ) : (
-                  <Result key={item.id} name={item.name} thumb={<IngredientThumb id={item.id} name={item.name} />} has={onShelf.has(item.id)} onToggle={(on) => onToggle(item, on)} />
-                )
-              )}
+              {g.items.map((item) => (
+                <Result
+                  key={item.id}
+                  name={item.name}
+                  sub={item.section === 'preps' ? (onShelf.has(item.id) ? 'In your fridge' : 'House-made') : undefined}
+                  thumb={<IngredientThumb id={item.id} name={item.name} size={48} />}
+                  has={onShelf.has(item.id)}
+                  onToggle={(on) => onToggle(item, on)}
+                  extra={item.section === 'preps' ? <RecipeLink name={item.name} onPress={() => openRecipe(item.id)} /> : null}
+                />
+              ))}
             </View>
           ))
         )}
@@ -128,79 +149,123 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, onToggle, on
   );
 }
 
-/** A row you tick to have: the drawing, the name, and a check or a plus. */
-function Result({ name, sub, thumb, has, onToggle }: { name: string; sub?: string; thumb?: ReactNode; has: boolean; onToggle: (on: boolean) => void }) {
+/** The sections, as underlined text with how many of each you have. */
+function Tabs({ value, onChange, counts }: { value: AddFilter; onChange: (filter: AddFilter) => void; counts: Partial<Record<AddFilter, number>> }) {
   const ds = useDs();
   return (
-    <PressableScale
-      role="checkbox"
-      aria-checked={has}
-      accessibilityLabel={name}
-      accessibilityHint={has ? 'Takes it off your bar' : 'Puts it on your bar'}
-      onPress={() => onToggle(!has)}
-      style={[styles.row, { borderBottomColor: ds.c.line }]}
-    >
-      {thumb}
-      <View style={styles.name}>
-        <Headline numberOfLines={1}>{name}</Headline>
-        {sub ? (
-          <Caption tone="muted" numberOfLines={2}>
-            {sub}
-          </Caption>
-        ) : null}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.tabsScroll, { borderBottomColor: ds.c.line }]} contentContainerStyle={styles.tabs}>
+      <View role="tablist" accessibilityLabel="Sections" style={styles.tabs}>
+        {TABS.map((t) => {
+          const on = t.value === value;
+          const n = counts[t.value];
+          return (
+            <PressableScale key={t.value} role="tab" aria-selected={on} accessibilityLabel={n ? `${t.label}, ${n} on your bar` : t.label} onPress={() => onChange(t.value)} style={[styles.tab, { borderBottomColor: on ? ds.accentText : 'transparent' }]}>
+              <Body tone={on ? 'ink' : 'muted'}>{t.label}</Body>
+              {n ? <Caption tone={on ? 'accent' : 'muted'}>{n}</Caption> : null}
+            </PressableScale>
+          );
+        })}
       </View>
-      <IconSymbol name={has ? 'checkmark.circle.fill' : 'plus.circle'} size={26} color={has ? ds.accentText : ds.c.muted} />
+    </ScrollView>
+  );
+}
+
+/** A house prep's recipe, to make it. */
+function RecipeLink({ name, onPress }: { name: string; onPress: () => void }) {
+  return (
+    <PressableScale role="link" accessibilityLabel={`${name} recipe`} onPress={onPress} style={styles.recipe}>
+      <Caption tone="accent">Recipe</Caption>
     </PressableScale>
   );
 }
 
-/** A house prep: say you have some, or open its recipe to make it. */
-function PrepResult({ item, has, onToggle, onRecipe }: { item: FoundItem; has: boolean; onToggle: AddToBarSheetProps['onToggle']; onRecipe: (id: string) => void }) {
+/** An idea to tick: on your bar shows a ring and a check. */
+function IdeaTile({ item, has, onToggle }: { item: FoundItem; has: boolean; onToggle: AddToBarSheetProps['onToggle'] }) {
+  const onLine = item.section === 'preps' ? 'In your fridge' : 'On your bar';
+  return (
+    <BarTile
+      name={item.name}
+      meta={has ? onLine : item.section === 'preps' ? 'House-made' : null}
+      metaTone={has ? 'accent' : 'muted'}
+      picture={<IngredientDrawing id={item.id} name={item.name} />}
+      role="checkbox"
+      checked={has}
+      accessibilityLabel={item.name}
+      accessibilityHint={has ? 'Takes it off your bar' : 'Puts it on your bar'}
+      badge={has ? 'check' : 'plus'}
+      onPress={() => onToggle(item, !has)}
+    />
+  );
+}
+
+/** A typed result you tick to have: the drawing, the name, and a check or a plus. */
+function Result({ name, sub, thumb, has, onToggle, extra }: { name: string; sub?: string; thumb?: ReactNode; has: boolean; onToggle: (on: boolean) => void; extra?: ReactNode }) {
   const ds = useDs();
   return (
-    <View style={[styles.row, styles.prep, { borderBottomColor: ds.c.line }]}>
-      <IngredientThumb id={item.id} name={item.name} />
-      <View style={[styles.name, styles.prepBody]}>
-        <View>
-          <Headline numberOfLines={1}>{item.name}</Headline>
-          <Caption tone={has ? 'accent' : 'muted'}>{has ? 'In your fridge' : 'House-made'}</Caption>
+    <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+      <PressableScale role="checkbox" aria-checked={has} accessibilityLabel={name} accessibilityHint={has ? 'Takes it off your bar' : 'Puts it on your bar'} onPress={() => onToggle(!has)} style={styles.rowMain}>
+        {thumb}
+        <View style={styles.name}>
+          <Headline numberOfLines={1}>{name}</Headline>
+          {sub ? <Caption tone={has ? 'accent' : 'muted'}>{sub}</Caption> : null}
         </View>
-        <View style={styles.prepActions}>
-          <Button label={has ? 'Used it up' : 'I have some'} variant="secondary" onPress={() => onToggle(item, !has)} />
-          <Button label="Recipe" variant="ghost" onPress={() => onRecipe(item.id)} />
-        </View>
-      </View>
+        <IconSymbol name={has ? 'checkmark.circle.fill' : 'plus.circle'} size={26} color={has ? ds.accentText : ds.c.muted} />
+      </PressableScale>
+      {extra}
     </View>
   );
 }
 
-/** The equipment list, searched by name: what you tick here is your kit. */
-function KitResults({ query }: { query: string }) {
+/** The equipment list as tiles by kind, searched by name: what you tick here is your kit. */
+function KitResults({ query, cols }: { query: string; cols: number }) {
   const { owned, toggle } = useKit();
   const q = query.toLowerCase();
   const list = q ? EQUIPMENT.filter((e) => `${e.name} ${e.what}`.toLowerCase().includes(q)) : EQUIPMENT;
   if (!list.length) return <Body tone="muted">{`No kit called “${query}”.`}</Body>;
-  return list.map((e) => (
-    <Result key={e.id} name={e.name} sub={e.what} has={owned.includes(e.id)} onToggle={() => toggle(e.id)} />
-  ));
+  return EQUIPMENT_KINDS.flatMap((kind) => {
+    const pieces = list.filter((e) => e.kind === kind.id);
+    if (!pieces.length) return [];
+    return [
+      <View key={kind.id} style={styles.group}>
+        <Caption tone="muted" style={styles.heading}>
+          {kind.name}
+        </Caption>
+        <TileGrid cols={cols}>
+          {pieces.map((e) => {
+            const has = owned.includes(e.id);
+            return (
+              <BarTile
+                key={e.id}
+                name={e.name}
+                meta={has ? 'You have it' : null}
+                metaTone="accent"
+                picture={<EquipmentDrawing id={e.id} />}
+                role="checkbox"
+                checked={has}
+                accessibilityLabel={e.name}
+                accessibilityHint={e.what}
+                badge={has ? 'check' : 'plus'}
+                onPress={() => toggle(e.id)}
+              />
+            );
+          })}
+        </TileGrid>
+      </View>,
+    ];
+  });
 }
 
 const styles = StyleSheet.create({
   // Holds the sheet's height steady while results come and go.
-  results: { minHeight: 320 },
-  filters: { flexDirection: 'row', gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  group: { paddingTop: space.lg, paddingBottom: space.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    minHeight: 56,
-    paddingVertical: space.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  results: { minHeight: 320, gap: space.md },
+  tabsScroll: { flexGrow: 0, borderBottomWidth: StyleSheet.hairlineWidth, marginHorizontal: -space.xs },
+  tabs: { flexDirection: 'row', gap: 2 },
+  tab: { flexDirection: 'row', alignItems: 'baseline', gap: 3, minHeight: layout.minTapTarget, paddingHorizontal: space.xs + 1, paddingTop: space.md, paddingBottom: space.sm, borderBottomWidth: 2 },
+  group: { gap: space.sm },
+  heading: { paddingTop: space.md },
+  withLink: { gap: 0 },
+  recipe: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
+  row: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
+  rowMain: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm },
   name: { flex: 1, gap: 2 },
-  prep: { alignItems: 'flex-start' },
-  prepBody: { gap: space.sm },
-  prepActions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
 });
