@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { WebSideNav } from '@/components/nav/WebSideNav';
 import { renderWithTamagui } from '@/jest.setup';
@@ -21,6 +21,9 @@ jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({
 jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 const mockPush = jest.fn();
+
+// The keyboard test lends the sidebar a document; take it back once every render has unmounted.
+afterAll(() => delete (globalThis as { document?: unknown }).document);
 
 const links = () => screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
 
@@ -106,3 +109,17 @@ test('New opens the create sheet with the draft count, and each choice goes wher
   expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 });
 
+
+test('N toggles the create sheet, but not while typing in a field', async () => {
+  // Jest runs without a DOM, so hand the sidebar a document that keeps its key listener.
+  let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
+  (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
+  const press = (target: { tagName: string }) => act(() => onKey({ key: 'n', target: target as unknown as EventTarget, preventDefault: () => {} }));
+  await renderWithTamagui(<WebSideNav />);
+  await press({ tagName: 'INPUT' });
+  expect(screen.queryByText('2')).toBeNull();
+  await press({ tagName: 'BODY' });
+  expect(screen.getByText('2')).toBeTruthy();
+  await press({ tagName: 'BODY' });
+  expect(screen.queryByText('2')).toBeNull();
+});
