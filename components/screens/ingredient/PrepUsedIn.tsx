@@ -36,7 +36,9 @@ export function PrepUsedIn({ name, drinks, used, yieldAmount, yieldUnit }: PrepU
           <View role="list" aria-label={`Drinks with ${name}`}>
             {shown.map((d) => {
               const q = toQuantity(pours[d.id]?.amount, pours[d.id]?.unit);
-              return <Row key={d.id} id={d.id} kind="cocktail" name={d.name} amount={q ? formatQuantity(q) : ''} />;
+              // ½ oz reads as 15 ml, not 14.8.
+              const pour = q && q.kind === 'ml' && q.value >= 5 ? { ...q, value: Math.round(q.value) } : q;
+              return <Row key={d.id} id={d.id} kind="cocktail" name={d.name} amount={pour ? formatQuantity(pour) : ''} />;
             })}
           </View>
           {drinks.length > FIRST ? <TextLink label={all ? 'Show fewer' : `See all ${drinks.length}`} onPress={() => setAll(!all)} /> : null}

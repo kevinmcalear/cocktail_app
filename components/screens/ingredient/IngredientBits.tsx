@@ -20,7 +20,7 @@ export function IngredientHero({ id, name, pictures, height, fade }: { id: strin
   // The drawing is square; on a phone it sits low, clear of the controls, with the page pulled up over its foot.
   const size = Math.min(height - (fade ? space.xxl : 0) - space.xxxl, 360);
   return (
-    <View style={[styles.hero, { height, backgroundColor: ds.c.paper, paddingBottom: fade ? space.xxl : space.xl }]} accessibilityLabel={`Drawing of ${name}`}>
+    <View style={[styles.hero, { height, backgroundColor: ds.c.paper, paddingBottom: fade ? space.xxl : 0, justifyContent: fade ? 'flex-end' : 'center' }]} accessibilityLabel={`Drawing of ${name}`}>
       <View style={{ width: size, height: size }}>
         <IngredientDrawing id={id} name={name} />
       </View>
@@ -67,7 +67,7 @@ export function MakeBar({ bottom, onMake, drinks, onDrinks }: { bottom: number; 
 }
 
 const styles = StyleSheet.create({
-  hero: { width: '100%', alignItems: 'center', justifyContent: 'flex-end' },
+  hero: { width: '100%', alignItems: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   make: { flex: 1 },
