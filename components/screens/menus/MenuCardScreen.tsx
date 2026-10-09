@@ -1,19 +1,26 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Display, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
 import { menuAsText } from '@/lib/menus';
 
-import { MenuSections } from './MenuSections';
+import { MenuSections, type CardPictures } from './MenuSections';
+
+const PICTURES: { value: CardPictures; label: string }[] = [
+  { value: 'above', label: 'Above' },
+  { value: 'beside', label: 'Beside' },
+  { value: 'none', label: 'None' },
+];
 
 /**
- * The guest menu: the same menu, typeset on paper, to print or share.
- * Always the light theme, whatever the app is in.
+ * The guest menu: the same menu, typeset on paper with each drink's photo or
+ * sketch, to print or share. Always the light theme, whatever the app is in.
  */
 export function MenuCardScreen({ menuId }: { menuId: string }) {
   const { venues } = useActiveVenue();
@@ -49,6 +56,8 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
   const gutter = useGutter();
   const { data: menu, isLoading } = useMenu(menuId);
   const web = Platform.OS === 'web';
+  // ponytail: the picture choice lasts while the card is open. Saving it per menu needs a column on menus.
+  const [pictures, setPictures] = useState<CardPictures>('above');
 
   const share = () => {
     if (!menu) return;
@@ -60,11 +69,20 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
   const from = menu?.startsAt ? new Date(menu.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null;
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    // Paper, the sketches' own ground, so they sit on the page instead of in boxes.
+    <View style={[styles.screen, { backgroundColor: ds.c.paper }]}>
       {web ? <style>{'@media print { #menu-card-controls { display: none !important; } }'}</style> : null}
       <View nativeID="menu-card-controls" style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to the menu" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`))} />
-        <Button label={web ? 'Print or save as PDF' : 'Share'} icon={web ? undefined : 'square.and.arrow.up'} onPress={share} disabled={!menu} />
+        <View style={styles.controlsEnd}>
+          <View role="radiogroup" accessibilityLabel="Pictures" style={styles.pictures}>
+            <Caption tone="muted">Pictures</Caption>
+            {PICTURES.map((p) => (
+              <Chip key={p.value} label={p.label} accessibilityLabel={`Pictures ${p.label.toLowerCase()}`} quiet selected={pictures === p.value} onPress={() => setPictures(p.value)} />
+            ))}
+          </View>
+          <Button label={web ? 'Print or save as PDF' : 'Share'} icon={web ? undefined : 'square.and.arrow.up'} onPress={share} disabled={!menu} />
+        </View>
       </View>
       <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         {!menu ? (
@@ -81,7 +99,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
             {from ? <Caption tone="muted">From {from}</Caption> : null}
             <View style={[styles.rule, { backgroundColor: ds.c.lineStrong }]} />
             <View style={styles.sections}>
-              <MenuSections sections={menu.sections} variant="card" />
+              <MenuSections sections={menu.sections} variant="card" pictures={pictures} />
             </View>
           </View>
         )}
@@ -92,9 +110,11 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.md },
+  controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
+  controlsEnd: { flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap-reverse', justifyContent: 'flex-end', alignItems: 'center', gap: space.md },
+  pictures: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   page: { alignItems: 'center', paddingTop: space.xl },
-  card: { width: '100%', maxWidth: 520, alignItems: 'center', gap: space.sm },
+  card: { width: '100%', maxWidth: 640, alignItems: 'center', gap: space.sm },
   mark: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   rule: { width: 48, height: 1, marginVertical: space.lg },
   sections: { width: '100%' },
