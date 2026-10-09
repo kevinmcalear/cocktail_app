@@ -3,11 +3,13 @@ import { readFileSync } from 'node:fs';
 
 import { DIMENSIONS as APP_DIMENSIONS, MIN_COVERAGE } from '../lib/flavor';
 import {
+  AI_FLAVOR_VERSION,
   DIMENSIONS,
   parseAiFlavors,
   partWeight,
   profileFromSpec,
   ruleFor,
+  staleAiFlavor,
   type Dimension,
   type SpecPart,
 } from '../supabase/functions/_shared/flavor';
@@ -18,6 +20,8 @@ import {
 // should read, in the app's words: 0 barely, 1 a little, 2 fairly, 3 very,
 // 4 intensely. "botanical>=3" means at least very botanical. Agreed with
 // Kevin on 2026-10-08; change a line here when a bartender disagrees.
+// Since rules v3, botanical (shown as "juniper") is gin only and vermouth
+// is herbal: drinkers call a Martini herbal, never botanical.
 
 type Line = Omit<SpecPart, 'id'>;
 const classics = JSON.parse(readFileSync(new URL('./data/flavor-classics.json', import.meta.url), 'utf8')) as { name: string; lines: Line[] }[];
@@ -44,16 +48,16 @@ const EXPECT: Record<string, string> = {
   Cosmopolitan: 'sour>=4 fruity>=3',
   'Cuba Libre': 'sweet>=3',
   Daiquiri: 'sour>=4 sweet>=3 herbal<=0',
-  'Dirty Martini': 'savory>=2 herbal<=0 botanical>=3',
+  'Dirty Martini': 'savory>=2 herbal<=1 botanical>=3',
   'Espresso Martini': 'bitter>=3 sweet>=2',
   'French 75': 'sour<=2',
-  Gibson: 'botanical>=4 herbal<=0',
+  Gibson: 'botanical>=3 herbal<=1',
   Gimlet: 'herbal<=0 sour>=4',
-  'Gin and Tonic': 'bitter>=3 botanical>=2 sweet<=2',
+  'Gin and Tonic': 'bitter>=3 botanical>=1 sweet<=2',
   'Gin Basil Smash': 'herbal>=4',
   'Gin Fizz': 'sour>=3',
   Grasshopper: 'creamy>=4 herbal>=3',
-  'Hanky Panky': 'bitter>=2 botanical>=3',
+  'Hanky Panky': 'bitter>=2 botanical>=2 herbal>=2',
   Hurricane: 'fruity>=4 sour>=4',
   'Irish Coffee': 'bitter<=2 creamy>=2',
   'Jack Rose': 'fruity>=3 sour>=4',
@@ -64,8 +68,8 @@ const EXPECT: Record<string, string> = {
   'Mai Tai': 'sour>=4 sweet>=4',
   Manhattan: 'strong>=4 spiced<=2 spicy<=0',
   Margarita: 'sour>=4 savory>=1',
-  Martinez: 'sweet>=3 botanical>=2 herbal<=0',
-  Martini: 'botanical>=4 herbal<=0 sweet<=0 sour<=0 strong>=4',
+  Martinez: 'sweet>=3 botanical>=2 herbal<=2',
+  Martini: 'botanical>=4 herbal>=1 herbal<=1 sweet<=0 sour<=0 strong>=4',
   'Mezcal Margarita': 'smoky>=4',
   Mimosa: 'sour<=2 fruity>=4',
   'Mint Julep': 'herbal>=4 strong>=4',
@@ -93,7 +97,7 @@ const EXPECT: Record<string, string> = {
   Vesper: 'botanical>=3 herbal<=0',
   'Vieux Carré': 'strong>=4 bitter<=2',
   'Whiskey Sour': 'sour>=3 sweet>=3 creamy>=1',
-  'White Negroni': 'bitter>=4 botanical>=3',
+  'White Negroni': 'bitter>=4 botanical>=2 herbal>=2',
   'White Russian': 'creamy>=4',
   Zombie: 'strong>=4 spiced>=2',
 };
@@ -118,7 +122,8 @@ for (const [name, p] of Object.entries(profiles)) {
 }
 
 const P = (name: string) => profiles[name].profile;
-assert.ok(P('Mojito').herbal > P('Martini').herbal && P('Last Word').herbal > P('Martini').herbal, 'mint and Chartreuse are herbal, gin is not');
+assert.ok(P('Mojito').herbal > P('Martini').herbal && P('Last Word').herbal > P('Martini').herbal, 'mint and Chartreuse are more herbal than a splash of vermouth');
+assert.ok(P('Bamboo').botanical === 0 && P('Manhattan').botanical === 0 && P('Americano').botanical === 0, 'juniper is gin: vermouth alone is herbal');
 assert.ok(P('Martini').botanical > P('Mojito').botanical, 'gin is botanical');
 assert.ok(P('Moscow Mule').spicy > P('Old Fashioned').spicy, 'ginger is heat, bitters are spice');
 assert.ok(P('Mojito').strong < P('Daiquiri').strong, 'soda makes a Mojito lighter than a Daiquiri');
@@ -173,6 +178,15 @@ assert.deepEqual(parsed.get('a'), { taste: { sweet: 0.7, smoky: 1 }, abv: 0.2 })
 assert.deepEqual(parsed.get('b'), { taste: {}, abv: 0 });
 assert.equal(parsed.has('not-asked'), false);
 assert.equal(parseAiFlavors('not json', ['a']).size, 0);
+
+// AI answers asked before botanical meant juniper only (v2) read their botanical as herbal, unless the line is a gin.
+const tincture = (ai: SpecPart['ai']) => profileFromSpec(spec([[45, 'ml', 'Gin'], [15, 'ml', 'House Gentian Tincture']]).map((p, i) => (i === 1 ? { ...p, ai } : p)));
+const oldGin = profileFromSpec(spec([[45, 'ml', 'House Juniper Gin']]).map((p) => ({ ...p, ai: { taste: { botanical: 0.8 }, abv: 0.4, v: 2 } })));
+assert.deepEqual(tincture({ taste: { botanical: 0.8 }, abv: 0.3, v: 2 }).profile, tincture({ taste: { herbal: 0.8 }, abv: 0.3, v: AI_FLAVOR_VERSION }).profile, 'an old root answer reads as herbal');
+assert.ok(oldGin.profile.botanical > 0.5 && oldGin.profile.herbal === 0, 'an old gin answer stays juniper');
+assert.equal(staleAiFlavor({ taste: {}, abv: 0, v: 2 }), false, 'v2 answers are remapped, not asked again');
+assert.equal(staleAiFlavor({ taste: {}, abv: 0 }), true);
+assert.equal(staleAiFlavor({ taste: {}, abv: 0, v: AI_FLAVOR_VERSION }), false);
 
 // The app, the worker and the database agree on the dimensions and the coverage floor.
 assert.deepEqual([...APP_DIMENSIONS], [...DIMENSIONS]);

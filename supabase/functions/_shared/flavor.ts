@@ -6,8 +6,9 @@
  *
  * A profile is twelve dimensions, each 0 to 1:
  *   sweet, sour, bitter: the tastes;
- *   botanical: juniper, roots, barks and peels (gin, vermouth, aquavit);
- *   herbal: green herbs and anise (mint, basil, Chartreuse, absinthe, amari);
+ *   botanical: juniper, shown as "juniper" (gin, genever, Old Tom only);
+ *   herbal: herbs, roots, barks and anise (mint, basil, vermouth, Chartreuse,
+ *     absinthe, amari, gentian, aquavit);
  *   fruity;
  *   spiced: warm baking spice (aromatic bitters, rye, cinnamon, allspice);
  *   spicy: heat (ginger, chili, pepper);
@@ -56,17 +57,29 @@ export type TasteDimension = Exclude<Dimension, 'strong'>;
 export const TASTE_DIMENSIONS = DIMENSIONS.filter((d): d is TasteDimension => d !== 'strong');
 export type Profile = Record<Dimension, number>;
 
-export const RULES_VERSION = 2;
+export const RULES_VERSION = 3;
 
 /**
  * The dimensions a cached AI answer was asked about. Answers from before the
  * twelve dimensions (no v) filed juniper under herbal and bitters under spicy,
- * so the worker asks about those ingredients again.
+ * so the worker asks about those ingredients again. Version 2 answers used
+ * botanical for roots, barks and peels as well as juniper; they're read with
+ * that taste moved to herbal (aiFlavor) instead of being asked again.
  */
-export const AI_FLAVOR_VERSION = 2;
+export const AI_FLAVOR_VERSION = 3;
+const BOTANICAL_WAS_BROAD = 2;
 
 /** Whether a cached AI answer predates the current dimensions. */
-export const staleAiFlavor = (ai: IngredientFlavor | null | undefined): boolean => !!ai && ai.v !== AI_FLAVOR_VERSION;
+export const staleAiFlavor = (ai: IngredientFlavor | null | undefined): boolean =>
+  !!ai && ai.v !== AI_FLAVOR_VERSION && ai.v !== BOTANICAL_WAS_BROAD;
+
+/** A line's AI answer in today's dimensions: a version 2 botanical is herbal unless the line is a gin. */
+export function aiFlavor(part: Pick<SpecPart, 'name' | 'ai'>): IngredientFlavor | null {
+  const ai = part.ai;
+  if (!ai || ai.v !== BOTANICAL_WAS_BROAD || !ai.taste.botanical || /juniper|\bgin\b|genever/i.test(part.name)) return ai ?? null;
+  const { botanical, ...taste } = ai.taste;
+  return { ...ai, taste: { ...taste, herbal: Math.max(taste.herbal ?? 0, botanical) } };
+}
 
 /** An ingredient's own taste, 0 to 1 per dimension, and its alcohol by volume (0.4 = 40%). */
 export interface IngredientFlavor {
@@ -94,27 +107,27 @@ export const RULES: readonly Rule[] = [
   r(/^(water|still water|ice|soda|soda water|club soda|seltzer|sparkling water)$/, 0, {}),
 
   // --- bitters and aperitivi ---
-  r(/orange bitters/, 0.4, { bitter: 0.6, fruity: 0.6, spiced: 0.3, botanical: 0.2 }, 4),
+  r(/orange bitters/, 0.4, { bitter: 0.6, fruity: 0.6, spiced: 0.3 }, 4),
   r(/peychaud/, 0.35, { bitter: 0.5, herbal: 0.5, fruity: 0.4, sweet: 0.2, spiced: 0.2 }, 4),
   r(/celery bitters/, 0.4, { bitter: 0.5, herbal: 0.6, savory: 0.4 }, 4),
   r(/angostura|aromatic bitters|\bbitters\b/, 0.45, { bitter: 0.8, spiced: 0.7, herbal: 0.1 }, 4),
   r(/campari|bitter aperitivo|red bitter/, 0.25, { bitter: 1, sweet: 0.25, fruity: 0.2 }, 1.3),
   r(/aperol/, 0.11, { bitter: 0.5, sweet: 0.5, fruity: 0.7 }),
-  r(/fernet|branca menta/, 0.39, { bitter: 1, herbal: 0.9, spiced: 0.1, botanical: 0.2 }, 3),
+  r(/fernet|branca menta/, 0.39, { bitter: 1, herbal: 0.9, spiced: 0.1 }, 3),
   r(/cynar|carciofo|artichoke/, 0.165, { bitter: 0.8, herbal: 0.5, sweet: 0.3 }),
-  r(/suze|gentian|salers|aveze/, 0.2, { bitter: 0.9, botanical: 0.5, sweet: 0.3 }),
+  r(/suze|gentian|salers|aveze/, 0.2, { bitter: 0.9, herbal: 0.4, sweet: 0.3 }),
   r(/rabarbaro|zucca/, 0.16, { bitter: 0.8, smoky: 0.4, sweet: 0.3 }),
-  r(/amaro|averna|montenegro|nonino|ramazzotti|braulio|lucano|meletti|cardamaro|alpine amaro|amaro & bitter/, 0.28, { bitter: 0.8, sweet: 0.4, herbal: 0.5, botanical: 0.2, spiced: 0.2 }),
+  r(/amaro|averna|montenegro|nonino|ramazzotti|braulio|lucano|meletti|cardamaro|alpine amaro|amaro & bitter/, 0.28, { bitter: 0.8, sweet: 0.4, herbal: 0.5, spiced: 0.2 }),
 
   // --- vermouth and aromatised wine ---
-  r(/dry vermouth|extra dry|dolin dry|noilly/, 0.17, { botanical: 0.5, herbal: 0.1, bitter: 0.2, sweet: 0.05, fruity: 0.1 }),
-  r(/blanc vermouth|bianco|blanc \/ bianco/, 0.16, { sweet: 0.4, botanical: 0.4, fruity: 0.2 }),
-  r(/sweet vermouth|rosso|red vermouth|carpano|antica formula|punt e mes|cocchi di torino|vermouth di torino/, 0.16, { sweet: 0.35, bitter: 0.3, botanical: 0.4, fruity: 0.2, spiced: 0.1 }),
-  r(/vermouth/, 0.16, { sweet: 0.25, bitter: 0.2, botanical: 0.4 }),
-  r(/lillet|cocchi americano|kina|quinquina|aperitif wine|byrrh/, 0.17, { sweet: 0.35, fruity: 0.4, bitter: 0.2, botanical: 0.3 }),
+  r(/dry vermouth|extra dry|dolin dry|noilly/, 0.17, { herbal: 0.35, bitter: 0.2, sweet: 0.05, fruity: 0.1 }),
+  r(/blanc vermouth|bianco|blanc \/ bianco/, 0.16, { sweet: 0.4, herbal: 0.3, fruity: 0.2 }),
+  r(/sweet vermouth|rosso|red vermouth|carpano|antica formula|punt e mes|cocchi di torino|vermouth di torino/, 0.16, { sweet: 0.35, bitter: 0.3, herbal: 0.3, fruity: 0.2, spiced: 0.1 }),
+  r(/vermouth/, 0.16, { sweet: 0.25, bitter: 0.2, herbal: 0.3 }),
+  r(/lillet|cocchi americano|kina|quinquina|aperitif wine|byrrh/, 0.17, { sweet: 0.35, fruity: 0.4, bitter: 0.2, herbal: 0.15 }),
 
   // --- liqueurs (named) ---
-  r(/yellow chartreuse/, 0.4, { herbal: 0.8, sweet: 0.6, botanical: 0.2 }),
+  r(/yellow chartreuse/, 0.4, { herbal: 0.8, sweet: 0.6 }),
   r(/chartreuse/, 0.55, { herbal: 1, sweet: 0.4, spiced: 0.2 }),
   r(/b[ée]n[ée]dictine|drambuie|galliano|strega|herbal \/ monastic|herbal liqueur/, 0.4, { herbal: 0.6, sweet: 0.7, spiced: 0.3 }),
   r(/absinthe|pastis|pernod|ricard|anis|ouzo|sambuca|herbsaint/, 0.55, { herbal: 1, bitter: 0.2, sweet: 0.1 }, 2),
@@ -124,14 +137,14 @@ export const RULES: readonly Rule[] = [
   r(/cr[eè]me de menthe|mint liqueur/, 0.25, { sweet: 0.8, herbal: 0.8 }),
   r(/cr[eè]me de (cassis|m[uû]re|framboise|p[eê]che)|chambord|cassis/, 0.16, { sweet: 0.8, fruity: 1 }),
   r(/cr[eè]me de violette|violette|parfait amour/, 0.2, { sweet: 0.8, fruity: 0.3, herbal: 0.1 }),
-  r(/maraschino|luxardo/, 0.32, { sweet: 0.5, fruity: 0.4, botanical: 0.1 }),
+  r(/maraschino|luxardo/, 0.32, { sweet: 0.5, fruity: 0.4 }),
   r(/st[- .]*germain|elderflower/, 0.2, { sweet: 0.6, fruity: 0.5, herbal: 0.1 }),
   r(/cointreau|triple sec|cura[cç]ao|grand marnier|orange liqueur|combier/, 0.38, { sweet: 0.5, fruity: 0.8, bitter: 0.05 }),
   r(/amaretto|disaronno|frangelico|nocino|nut\/seed liqueur|nut liqueur/, 0.25, { sweet: 0.8, creamy: 0.2, bitter: 0.1 }),
   r(/limoncello/, 0.3, { sweet: 0.7, sour: 0.2, fruity: 0.5 }),
   r(/falernum/, 0.11, { sweet: 0.7, spiced: 0.6, fruity: 0.2 }),
   r(/allspice dram|pimento dram/, 0.3, { spiced: 1, sweet: 0.5 }),
-  r(/pimm'?s/, 0.25, { sweet: 0.4, fruity: 0.5, bitter: 0.2, herbal: 0.2, botanical: 0.2 }),
+  r(/pimm'?s/, 0.25, { sweet: 0.4, fruity: 0.5, bitter: 0.2, herbal: 0.3 }),
   r(/sloe gin/, 0.26, { sweet: 0.5, fruity: 0.8, sour: 0.2 }),
   r(/(apricot|peach|banana|cherry|pear|apple|melon|passion ?fruit|raspberry|blackberry|fruit) liqueur|midori|heering|fruit liqueur/, 0.2, { sweet: 0.7, fruity: 0.9 }),
   r(/ginger liqueur|domaine de canton/, 0.2, { sweet: 0.6, spicy: 0.5, spiced: 0.2 }),
@@ -139,7 +152,7 @@ export const RULES: readonly Rule[] = [
 
   // --- fortified wine, wine and beer ---
   r(/pedro xim[eé]nez|\bpx\b|cream sherry/, 0.17, { sweet: 1, fruity: 0.4 }),
-  r(/fino|manzanilla/, 0.15, { savory: 0.25, fruity: 0.1, botanical: 0.1 }),
+  r(/fino|manzanilla/, 0.15, { savory: 0.25, fruity: 0.1 }),
   r(/amontillado|oloroso|palo cortado|sherry/, 0.18, { fruity: 0.2, sweet: 0.1, savory: 0.1 }),
   r(/\bport\b|madeira|marsala|fortified|dessert/, 0.19, { sweet: 0.6, fruity: 0.6 }),
   r(/champagne|prosecco|cava|cr[eé]mant|sparkling wine|sparkling|\bsekt\b/, 0.12, { fruity: 0.3, sour: 0.1, sweet: 0.05 }),
@@ -167,7 +180,7 @@ export const RULES: readonly Rule[] = [
   r(/\brum\b|\bron\b|\brhum\b|sugarcane/, 0.4, { sweet: 0.15, fruity: 0.15 }),
   r(/cognac|armagnac|brandy|calvados|applejack|grappa|eau-de-vie|eau de vie|pisco/, 0.4, { fruity: 0.4, sweet: 0.1 }),
   r(/vodka/, 0.4, {}),
-  r(/aquavit|akvavit/, 0.42, { botanical: 0.5, spiced: 0.4, herbal: 0.2 }),
+  r(/aquavit|akvavit/, 0.42, { herbal: 0.5, spiced: 0.4 }),
   r(/shochu|soju|baijiu|awamori|arrack|sake/, 0.25, { fruity: 0.1, herbal: 0.1 }),
 
   // --- coffee, tea, chocolate ---
@@ -222,14 +235,14 @@ export const RULES: readonly Rule[] = [
   r(/sugar cube|\bsugar\b(?! syrup)/, 0, { sweet: 1 }, 1.3, 4.5),
   r(/agave (syrup|nectar)|simple syrup|gomme|\bsyrup\b/, 0, { sweet: 1 }),
   r(/cola/, 0, { sweet: 0.8, spiced: 0.15 }),
-  r(/tonic/, 0, { bitter: 0.4, sweet: 0.3, botanical: 0.2 }),
+  r(/tonic/, 0, { bitter: 0.4, sweet: 0.3 }),
   r(/lemonade|lemon soda|lime soda/, 0, { sweet: 0.6, sour: 0.4, fruity: 0.3 }),
   r(/orange (blossom|flower) water|rose ?water/, 0, { fruity: 0.4, sweet: 0.1 }, 3),
 
   // --- garnishes and herbs ---
   r(/\bmint\b|basil|sage|rosemary|thyme|shiso/, 0, { herbal: 1 }, 3),
   r(/cucumber|celery/, 0, { herbal: 0.7 }, 3),
-  r(/(lemon|orange|grapefruit|lime) (peel|twist|zest|wheel|wedge|slice)|citrus peel|twist|zest/, 0, { fruity: 0.6, bitter: 0.2, botanical: 0.1 }),
+  r(/(lemon|orange|grapefruit|lime) (peel|twist|zest|wheel|wedge|slice)|citrus peel|twist|zest/, 0, { fruity: 0.6, bitter: 0.2 }),
   r(/olive|brine/, 0, { savory: 0.9, herbal: 0.1 }),
   r(/onion/, 0, { savory: 0.8, sour: 0.3 }),
   r(/cherry|cherries/, 0, { sweet: 0.3, fruity: 0.3 }),
@@ -243,7 +256,8 @@ export const SCALE: Record<TasteDimension, number> = {
   sweet: 2.6,
   sour: 3.6,
   bitter: 2.2,
-  botanical: 1.4,
+  // Gin is the only source since RULES_VERSION 3, so a Martini still reads about 0.9.
+  botanical: 1.6,
   herbal: 3,
   fruity: 2,
   spiced: 2.4,
@@ -345,7 +359,7 @@ export function profileFromSpec(parts: readonly SpecPart[]): SpecProfile {
     const unit = (part.unit ?? '').trim().toLowerCase();
     // A whole lime or a counted sugar tastes of more than a garnish.
     const whole = rule?.each && WHOLE_UNIT.test(unit) ? (part.amount ?? 1) * rule.each * (unit.startsWith('hal') ? 0.5 : 1) : null;
-    const flavor: IngredientFlavor | null = rule ?? part.ai ?? null;
+    const flavor: IngredientFlavor | null = rule ?? aiFlavor(part);
     // Water and soda: a quarter, so a top lightens the drink without washing out its tastes.
     const plain = !!flavor && flavor.abv <= 0 && !TASTE_DIMENSIONS.some((d) => (flavor.taste[d] ?? 0) > 0);
     const tasted = (whole ?? weight.flavor) * (plain ? NEUTRAL_SHARE : 1);
@@ -407,7 +421,7 @@ export function aiPrompt(parts: readonly SpecPart[], extra: readonly string[] = 
     'You are a bartender describing cocktail ingredients by taste.',
     'For each ingredient below, say how it tastes neat, each dimension from 0 (none) to 1 (as much as any ingredient has):',
     `${TASTE_DIMENSIONS.join(', ')}; and abv, its alcohol by volume from 0 to 1 (0.4 for a 40% spirit, 0 for a syrup).`,
-    'botanical is juniper, roots, barks and peels (gin, vermouth); herbal is green herbs and anise (mint, basil, Chartreuse, absinthe);',
+    'botanical is juniper only (gin, genever); herbal is herbs, roots, barks and anise (mint, basil, vermouth, Chartreuse, absinthe, gentian);',
     'spiced is warm baking spice (cinnamon, clove, aromatic bitters); spicy is heat (chili, ginger, pepper); savory is salt, brine and umami.',
     'House-made ingredients are often syrups, cordials, infusions or tinctures: judge from the name.',
     'Answer with JSON only: {"ingredients": [{"id": "...", "abv": 0, "sweet": 0, ...}]}, one entry per id, numbers only.',
