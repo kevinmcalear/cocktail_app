@@ -7,8 +7,9 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkScore, scoreWords, type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
+import { useBestDrink } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
-import { drinkCount, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { byScore, drinkCount, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
 import { barSearchHref } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
@@ -118,16 +119,25 @@ export function SelectedBar({ pin, drinks, scores, query = '', lead = false, var
   );
 }
 
+interface PickedBarProps {
+  pin: MapPin;
+  filter: DrinkFilter;
+  /** On "Best Martini" / "Top rated": that drink, so the bar's ones show scored, best first, as on the map. */
+  best: { id: string; name: string } | null;
+  onClose: () => void;
+}
+
 /**
  * Wide screens: the tapped pin at the top of Discover's list, its matching
- * drink first, rather than a card over the map.
- * ponytail: the drinks layer's matches, so "Top rated" scores don't show
- * here; lift the pane's scores if that's missed.
+ * drink first, rather than a card over the map. Its drinks and scores come
+ * from the same cached queries as the map's.
  */
-export function PickedBar({ pin, filter, onClose }: { pin: MapPin; filter: DrinkFilter; onClose: () => void }) {
-  const atBar = useDiscoverList(filter, { barId: pin.id, enabled: !pin.closed, pageSize: 100 });
+export function PickedBar({ pin, filter, best, onClose }: PickedBarProps) {
+  const atBar = useDiscoverList(filter, { barId: pin.id, enabled: !best && !pin.closed, pageSize: 100 });
+  const { picked, scores } = useBestDrink(best, filter, { load: !!best, active: !!best });
+  const drinks = scores ? byScore(picked.filter((d) => d.barId === pin.id), scores.drinks) : atBar.drinks;
   const lead = !!filter.search.trim() || filter.kinds.length > 0;
-  return <SelectedBar pin={pin} drinks={atBar.drinks} query={filter.search} lead={lead} onClose={onClose} />;
+  return <SelectedBar pin={pin} drinks={drinks} scores={scores} query={filter.search} lead={lead} onClose={onClose} />;
 }
 
 const styles = StyleSheet.create({

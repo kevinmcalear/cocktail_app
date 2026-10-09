@@ -9,7 +9,7 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { ClosedBars } from '@/components/screens/home/ClosedBars';
-import { areaChipLabel, FilterRow, SearchPill } from '@/components/screens/home/DiscoverControls';
+import { areaChipLabel, FilterRow, SearchPill, type MapLayer } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
@@ -63,6 +63,8 @@ export function DiscoverScreen() {
   const [headerHeight, setHeaderHeight] = useState(0);
   // Wide screens: the tapped pin, shown at the top of the list.
   const [picked, setPicked] = useState<MapPin | null>(null);
+  // Which layer the wide map shows, so its tapped bar's card shows the same scores.
+  const [mapLayer, setMapLayer] = useState<MapLayer>('drinks');
   const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const onPick = (pin: MapPin | null) => {
     setPicked(pin);
@@ -202,7 +204,7 @@ export function DiscoverScreen() {
       <ScreenHeaderSpacer title={<Display>Discover</Display>} actions={<EightBallButton />} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
-        {split && picked ? <PickedBar key={picked.id} pin={picked} filter={filter} onClose={() => setPicked(null)} /> : null}
+        {split && picked ? <PickedBar key={picked.id} pin={picked} filter={filter} best={mapLayer === 'best' ? drink : null} onClose={() => setPicked(null)} /> : null}
         {note ? (
           <Caption tone="muted" role="status">
             {note}
@@ -239,7 +241,7 @@ export function DiscoverScreen() {
       {list}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} pick={{ id: picked?.id ?? null, onPick }} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} pick={{ id: picked?.id ?? null, onPick, onLayer: setMapLayer }} />
         </View>
       ) : null}
       {overlay}

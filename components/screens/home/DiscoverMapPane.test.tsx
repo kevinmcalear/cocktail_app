@@ -5,6 +5,7 @@ import type { DiscoverBar, DiscoverDrink, DrinkFilter } from '@/lib/discoverDrin
 import type { Area } from '@/lib/nearMe';
 
 import { DiscoverMapPane } from './DiscoverMapPane';
+import { PickedBar } from './SelectedBar';
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useDiscover', () => ({
@@ -108,7 +109,7 @@ const more = { total: null, hasMore: false, loadMore: () => {}, loading: false }
 
 interface Extra {
   from?: { latitude: number; longitude: number } | null;
-  pick?: { id: string | null; onPick: (pin: unknown) => void };
+  pick?: { id: string | null; onPick: (pin: unknown) => void; onLayer: (layer: string) => void };
 }
 
 function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', extra: Extra = {}) {
@@ -256,7 +257,11 @@ test('no Nearest without a search, or without somewhere to count from', async ()
 
 test('on wide screens a tapped pin goes to the list, not a card over the map', async () => {
   const onPick = jest.fn();
-  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], null, 'side', 'martini', { pick: { id: null, onPick } });
+  const onLayer = jest.fn();
+  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], { id: 'martini', name: 'Martini' }, 'side', 'martini', { pick: { id: null, onPick, onLayer } });
+  await fireEvent.press(screen.getByRole('radio', { name: 'Top rated' }));
+  expect(onLayer).toHaveBeenLastCalledWith('best');
+  await fireEvent.press(screen.getByRole('radio', { name: 'Best match' }));
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
   expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ id: bar.id }));
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
@@ -269,4 +274,16 @@ test("the drink that leads can be opened, collected and ranked", async () => {
   expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
   expect(screen.getByText('Collect')).toBeTruthy();
   expect(screen.getByRole('button', { name: "Rank Dirty Martini against others you've had" })).toBeTruthy();
+});
+
+test("the wide list's tapped bar shows Top rated scores, as the map does", async () => {
+  mockTopDrinks = [];
+  mockScores = { d2: 9.2 };
+  mockDrinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
+  const pin = { id: bar.id, handle: bar.handle, name: bar.name, logo: null, place: 'Melbourne', latitude: bar.latitude!, longitude: bar.longitude!, score: null, position: null, rankers: 0 };
+  await renderWithTamagui(<PickedBar pin={pin} filter={{ kinds: [], search: '', area }} best={{ id: 'martini', name: 'Martini' }} onClose={() => {}} />);
+  // The scored martini leads; the bar's other drinks aren't martinis.
+  const rows = screen.getAllByRole('button', { name: /, open$/ }).map((b) => b.props.accessibilityLabel);
+  expect(rows).toEqual(['Gibson. score 9.2. Gibson note, open', 'House Martini. House Martini note, open']);
+  expect(screen.queryByText('Bamboo')).toBeNull();
 });

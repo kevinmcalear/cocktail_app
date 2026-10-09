@@ -4,12 +4,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Caption, GlassSurface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
-import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type DrinkScores, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
+import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
-import { useDebounced, useDiscoverRankings, useTopBars } from '@/hooks/useDiscover';
+import { useBestDrink } from '@/hooks/useBestDrink';
+import { useDebounced, useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
-import { useItemScores } from '@/hooks/useFlavor';
-import { barPins, barScoresFor, byScore, closedPins, pickFilter, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { barPins, byScore, closedPins, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
@@ -46,13 +46,11 @@ interface DiscoverMapPaneProps {
   /** Nearest (phones, searching): where distances count from, the person else the area's middle. */
   from?: { latitude: number; longitude: number } | null;
   /** Wide screens: the tapped pin is the screen's, shown in its list rather than over the map. */
-  pick?: { id: string | null; onPick: (pin: MapPin | null) => void };
+  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; onLayer: (layer: MapLayer) => void };
 }
 
 /** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
 const NO_DRINKS: DiscoverDrink[] = [];
-const NO_ROWS: never[] = [];
-const NO_SCORES: Readonly<Record<string, number>> = {};
 const drinkKey = (d: DiscoverDrink) => d.id;
 /** How long after the drinks land before the other layers load behind them. */
 const PREFETCH_AFTER_MS = 2000;
@@ -74,7 +72,11 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const sheetRef = useRef<BottomSheet>(null);
   // Searching, the layers read as a sort of what was found, pins name the best drinks, and a tapped bar leads with its best match (as filtering does).
   const searching = !!filter.search.trim();
-  const [chosen, setLayer] = useState<MapLayer>('drinks');
+  const [chosen, setChosen] = useState<MapLayer>('drinks');
+  const setLayer = (next: MapLayer) => {
+    setChosen(next);
+    pick?.onLayer(next);
+  };
   const canNear = searching && mode === 'sheet' && !!from;
   const layer = chosen === 'nearest' && !canNear ? 'drinks' : chosen;
   const nearest = layer === 'nearest';
@@ -88,7 +90,6 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     const t = setTimeout(() => setWarm(true), PREFETCH_AFTER_MS);
     return () => clearTimeout(t);
   }, [results.isLoading, warm]);
-  const drinkRows = useDiscoverRankings(drink?.id, area, byDrink || warm);
   const barRows = useTopBars(area, layer === 'bars' || warm);
   // Pins on the drinks layer: the area's bars with matching drinks first, then, once the person
   // moves the map, the bars in view a tile at a time (anywhere already has every bar).
@@ -99,17 +100,14 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : settled, filter, byDrinks);
   // "Best Martini": every martini here, scored where people have ranked it, best first.
-  const pickedList = useDiscoverList(drink ? pickFilter(filter, drink.name) : filter, { enabled: !!drink && (byDrink || warm), pageSize: 300 });
-  const picked = byDrink ? pickedList.drinks : NO_DRINKS;
+  const { picked, scores, isLoading: pickedLoading } = useBestDrink(drink, filter, { load: byDrink || warm, active: byDrink });
   // Nearest: the same matches, closest first.
   const near = useDiscoverList(filter, { from, enabled: nearest });
   const rows = byDrinks
     ? { data: undefined, isLoading: (nearest ? near.isLoading : results.isLoading) || areaBars.isPending }
     : byDrink
-      ? { data: undefined, isLoading: pickedList.isLoading }
+      ? { data: undefined, isLoading: pickedLoading }
       : barRows;
-  const drinkScores = useItemScores(drink ? pickedList.drinks.map((d) => d.id) : NO_ROWS).data ?? NO_SCORES;
-  const scores: DrinkScores | undefined = byDrink ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, drinkRows.data?.ranked ?? NO_ROWS) } : undefined;
   const drinks = scores ? byScore(picked, scores.drinks) : nearest ? near.drinks : results.drinks;
   const pins = [
     ...(byDrinks ? barPins([...(areaBars.data ?? []), ...tileBars.bars]) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
