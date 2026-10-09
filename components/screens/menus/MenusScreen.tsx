@@ -3,12 +3,12 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Display, GlassButton, LockedSection, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, LockedSection, useDs } from '@/components/ds';
+import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { groupMenus, plural } from '@/lib/menus';
@@ -37,9 +37,7 @@ export function MenusScreen() {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
-  const sidebar = useIsWideWeb();
+  const column = usePageColumn();
   const userId = useUserId();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
@@ -56,8 +54,8 @@ export function MenusScreen() {
 
   const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
   const mine = barId ? [] : menus.filter((m) => m.barId === null && m.createdBy === userId);
+  // Not the venue's name: the sidebar and the chip already say it.
   const summary = [
-    barId ? active?.name : null,
     venue.on.length ? `${venue.on.length} on now` : null,
     venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
   ]
@@ -66,26 +64,14 @@ export function MenusScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl, maxWidth: wide ? 760 : undefined },
-        ]}
-      >
-        <View style={styles.top}>
-          {sidebar ? <View /> : (
-            <GlassButton
-              icon="chevron.left"
-              accessibilityLabel={barId ? 'Back to Tonight' : 'Back'}
-              onPress={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
-            />
-          )}
-          {canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
-        </View>
-        <View style={styles.title}>
-          <Display>Menus</Display>
-          {summary ? <Caption tone="muted">{summary}</Caption> : null}
-        </View>
+      <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: insets.bottom + space.xxxl }]}>
+        <PageHeader
+          title="Menus"
+          subtitle={summary}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
+          backLabel={barId ? 'Back to Tonight' : 'Back'}
+          action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
+        />
 
         {error ? <Body tone="muted">Couldn’t load the menus. Pull down or come back in a moment.</Body> : null}
         {!isLoading && !venuesLoading && !error && menus.length === 0 ? (
@@ -147,9 +133,7 @@ export function MenusScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { width: '100%', alignSelf: 'center', gap: space.lg },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { gap: space.xs },
+  content: { gap: space.lg },
   group: { gap: space.sm },
   groupTitle: { letterSpacing: 1.5 },
 });

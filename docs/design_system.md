@@ -100,6 +100,7 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 
 - Wrap it in `BackbarTheme` (fonts, the Back Bar colours, and the Tamagui sub-theme). Tab screens already sit inside `VenueBrandProvider`. A drink page passes that venue's `BrandProvider`.
 - Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `ReviewRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
+- A page starts with `PageHeader` inside a `usePageColumn()` column (`components/nav/Page.tsx`): title, a subtitle only when it says something new (never the venue's name, the sidebar has it), the main action on the right. On wide web the column sits left, next to the sidebar: 760 for lists and forms, 1240 for plans, full width for grids. Never centre a page.
 - Accessibility props: use `role` and `aria-*` (`aria-selected`, `aria-disabled`). The legacy `accessibilityRole`/`accessibilityState` props don't reach the DOM on web.
 - A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both are contrast-checked by `lib/color.ts`.
 

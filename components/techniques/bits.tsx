@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Segmented, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
-import { missingKit, type Grade, type Source, type Technique } from '@/lib/techniques';
+import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
+import { useAppMode } from '@/store/useAppMode';
 
 const GRADE: Record<Grade, { label: string; long: string }> = {
   A: { label: 'Well tested', long: 'A primary or tested source' },
@@ -81,6 +82,37 @@ export function SourceList({ sources }: { sources: Source[] }) {
           <GradeTag grade={s.grade} />
         </PressableScale>
       ))}
+    </View>
+  );
+}
+
+const AUDIENCES = [
+  { value: 'home', label: 'For home' },
+  { value: 'bar', label: 'For a bar' },
+] as const;
+
+/**
+ * Where to buy, opening the shop's page. When there are home and bar picks
+ * (small sizes and home kit, or bulk and commercial), tabs switch between
+ * them, starting on the mode the app is in.
+ */
+export function BuyList({ links }: { links: BuyLink[] }) {
+  const ds = useDs();
+  const appMode = useAppMode((s) => s.known);
+  const [audience, setAudience] = useState<BuyAudience>(appMode === 'home' ? 'home' : 'bar');
+  const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
+  const shown = split ? links.filter((l) => !l.audience || l.audience === audience) : links;
+  return (
+    <View style={styles.notes}>
+      {split ? <Segmented options={AUDIENCES} value={audience} onChange={setAudience} accessibilityLabel="Buy for home or for a bar" /> : null}
+      <View>
+        {shown.map((l) => (
+          <PressableScale key={`${l.url} ${l.name}`} role="link" accessibilityLabel={`${l.name}. Opens the shop`} onPress={() => void Linking.openURL(l.url)} style={[styles.source, { borderBottomColor: ds.c.line }]}>
+            <Body style={styles.flex}>{l.name}</Body>
+            <IconSymbol name="link" size={16} color={ds.c.muted} />
+          </PressableScale>
+        ))}
+      </View>
     </View>
   );
 }

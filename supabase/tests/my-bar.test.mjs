@@ -1,7 +1,9 @@
-// My Bar's "can make" and an ingredient's "Used in" in SQL
+// My Bar's "can make", "make first" and an ingredient's "Used in" in SQL
 // (supabase/migrations/20261008340000_my_bar_rpc.sql, and the kind-of tree,
 // two away and uses from 20261009950000_my_bar_kinds.sql, garnishes from
-// 20261009960000_my_bar_garnish.sql). The can-make cases are
+// 20261009960000_my_bar_garnish.sql, the preps behind them from
+// 20261010400000_my_bar_preps.sql), and the kit list from
+// 20261010410000_home_kit.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -90,6 +92,14 @@ async function myBar(user, args = {}) {
   };
 }
 
+/** This run's made preps in my_bar_preps: { prep key: [drink keys] }. */
+async function myPreps(user) {
+  const { data, error } = await users[user].client.rpc('my_bar_preps');
+  assert.ifError(error);
+  const key = Object.fromEntries(Object.entries(ids).map(([k, v]) => [v, k]));
+  return Object.fromEntries(data.filter((r) => key[r.id]).map((r) => [key[r.id], r.drinks.map((d) => key[d]).filter(Boolean).sort()]));
+}
+
 before(async () => {
   await db.connect();
   for (const label of ['home', 'other', 'member']) users[label] = await makeUser(label);
@@ -126,6 +136,12 @@ before(async () => {
   await recipe('bees-knees', [['gin'], ['lemon'], ['honey-syrup']]);
   await recipe('old-pal', [['rye'], ['dry-vermouth'], ['campari']]);
   await recipe('honey-syrup', [['honey'], ['water']]);
+  // A prep made from a prep: honey cordial is honey syrup and lemon.
+  await item('mezcal', { name: 'mezcal', item_type: 'ingredient' });
+  await item('honey-cordial', { name: 'honey cordial', item_type: 'ingredient' });
+  await item('cordial-fizz', { name: 'cordial fizz', item_type: 'cocktail' });
+  await recipe('honey-cordial', [['honey-syrup'], ['lemon']]);
+  await recipe('cordial-fizz', [['mezcal'], ['honey-cordial']]);
   // A recipe cycle: a needs b, b needs a. The loop drink needs a.
   await recipe('a', [['b']]);
   await recipe('b', [['a']]);
@@ -143,6 +159,7 @@ before(async () => {
 after(async () => {
   const like = `%${run}%`;
   for (const user of Object.values(users)) await db.query('DELETE FROM public.home_bar_items WHERE user_id = $1', [user.id]);
+  for (const user of Object.values(users)) await db.query('DELETE FROM public.home_kit_items WHERE user_id = $1', [user.id]);
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
@@ -245,6 +262,56 @@ describe('my_bar_drinks', () => {
     assert.deepEqual(first.map((r) => r.id), all.slice(0, 2).map((r) => r.id));
     const { data: next } = await users.home.client.rpc('my_bar_drinks', { p_after_name: first[1].name, p_after_id: first[1].id, p_limit: 2 });
     assert.deepEqual(next.map((r) => r.id), all.slice(2, 4).map((r) => r.id));
+  });
+});
+
+describe('my_bar_preps', () => {
+  test('is for signed-in people only', async () => {
+    assert.ok((await anon.rpc('my_bar_preps')).error);
+  });
+
+  test('the preps the shelf makes, with every drink that leans on them, through other preps too', async () => {
+    await shelve('home', ['honey', 'water', 'lemon', 'mezcal', 'gin']);
+    const preps = await myPreps('home');
+    assert.deepEqual(preps['honey-syrup'], ['bees-knees', 'cordial-fizz', 'gold-rush']);
+    assert.deepEqual(preps['honey-cordial'], ['cordial-fizz']);
+    // It agrees with my_bar_drinks: the drinks those preps make ready are ready there.
+    const r = await myBar('home');
+    assert.ok(r.canMake.includes('bees-knees') && r.canMake.includes('cordial-fizz'));
+    assert.equal(r.away['gold-rush'], 'bourbon');
+  });
+
+  test('a prep on the shelf is bought or already made, so it is not listed', async () => {
+    await shelve('home', ['honey-syrup', 'lemon', 'mezcal']);
+    const preps = await myPreps('home');
+    assert.ok(!('honey-syrup' in preps));
+    assert.deepEqual(preps['honey-cordial'], ['cordial-fizz']);
+  });
+
+  test('nothing made from an empty shelf, and a recipe cycle stops', async () => {
+    await shelve('home', []);
+    assert.deepEqual(await myPreps('home'), {});
+  });
+});
+
+describe('home_kit_items', () => {
+  test('a kit is private to its owner, and signed-out callers get nothing', async () => {
+    const { error } = await users.home.client.from('home_kit_items').insert({ equipment_id: 'scale-fine' });
+    assert.ifError(error);
+    const mine = await users.home.client.from('home_kit_items').select('equipment_id');
+    assert.deepEqual(mine.data.map((r) => r.equipment_id), ['scale-fine']);
+    assert.deepEqual((await users.other.client.from('home_kit_items').select('equipment_id')).data, []);
+    const { data: anonRows, error: anonError } = await anon.from('home_kit_items').select('equipment_id');
+    assert.ok(anonError || !anonRows.length, 'anon reads nothing');
+  });
+
+  test('nobody writes into someone else\'s kit, and ids are short equipment ids', async () => {
+    assert.ok((await users.other.client.from('home_kit_items').insert({ user_id: users.home.id, equipment_id: 'whipper' })).error);
+    assert.ok((await users.home.client.from('home_kit_items').insert({ equipment_id: 'Not An Id!' })).error);
+    assert.ok((await anon.from('home_kit_items').insert({ equipment_id: 'whipper' })).error);
+    await users.other.client.from('home_kit_items').delete().eq('equipment_id', 'scale-fine');
+    const { count } = await db.query("SELECT count(*)::int AS count FROM public.home_kit_items WHERE user_id = $1 AND equipment_id = 'scale-fine'", [users.home.id]).then((r) => r.rows[0]);
+    assert.equal(count, 1, 'another person\'s delete takes nothing');
   });
 });
 

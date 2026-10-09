@@ -6,17 +6,17 @@ import { Section } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { space } from '@/constants/tokens';
 import { canMake, EQUIPMENT, EQUIPMENT_KINDS, TECHNIQUES, techniquesUsing, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
-import { useKit, useKitStore } from '@/store/useKitStore';
+import { useKit } from '@/hooks/useKit';
 
 /** The bar's equipment: what each piece is for, roughly what it costs, and which you have. What you have filters the technique library. */
 export function EquipmentScreen() {
-  const kit = useKit();
+  const { kit, toggle } = useKit();
   const can = TECHNIQUES.filter((t) => canMake(t, kit)).length;
   return (
     <TechniquePage
       eyebrow="Techniques"
       title="Equipment"
-      intro={<Body tone="muted">Mark what you have. Pots, jars, strainers, coffee filters, a fridge and a freezer are taken as given.</Body>}
+      intro={<Body tone="muted">Mark what you have. Pots, jars, fine strainers, coffee filters, a fridge and a freezer are taken as given.</Body>}
     >
       <Surface style={styles.summary}>
         <Spec>{`${can} of ${TECHNIQUES.length}`}</Spec>
@@ -25,7 +25,7 @@ export function EquipmentScreen() {
       {EQUIPMENT_KINDS.map((k) => (
         <Section key={k.id} title={k.name}>
           {EQUIPMENT.filter((e) => e.kind === k.id).map((e) => (
-            <EquipmentRow key={e.id} e={e} kit={kit} />
+            <EquipmentRow key={e.id} e={e} kit={kit} onToggle={toggle} />
           ))}
         </Section>
       ))}
@@ -33,22 +33,21 @@ export function EquipmentScreen() {
   );
 }
 
-function EquipmentRow({ e, kit }: { e: Equipment; kit: ReadonlySet<string> }) {
+function EquipmentRow({ e, kit, onToggle }: { e: Equipment; kit: ReadonlySet<string>; onToggle: (id: string) => void }) {
   const ds = useDs();
   const router = useRouter();
-  const toggle = useKitStore((s) => s.toggle);
   const have = kit.has(e.id);
   const n = unlocks(e.id, kit);
   const used = techniquesUsing(e.id);
-  const opens = n ? `${have ? 'Opens' : 'Would open'} ${n} ${n === 1 ? 'technique' : 'techniques'}` : used.needs.length + used.helps.length ? 'Helps with techniques' : 'Garnish and service';
+  const opens = n ? `${have ? 'Opens' : 'Would open'} ${n} ${n === 1 ? 'technique' : 'techniques'}` : used.needs.length + used.helps.length ? 'Helps with techniques' : null;
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <PressableScale role="link" accessibilityLabel={`${e.name}. ${e.what}`} onPress={() => router.push(`/equipment/${e.id}` as never)} style={styles.flex}>
         <Headline>{e.name}</Headline>
         <Body tone="muted">{e.what}</Body>
-        <Caption tone="muted">{`${e.price ?? TIER_LABEL[e.tier]} · ${opens}`}</Caption>
+        <Caption tone="muted">{[e.price ?? TIER_LABEL[e.tier], opens].filter(Boolean).join(' · ')}</Caption>
       </PressableScale>
-      <Chip label="I have it" accessibilityLabel={`I have it: ${e.name}`} multi selected={have} onPress={() => toggle(e.id)} />
+      <Chip label="I have it" accessibilityLabel={`I have it: ${e.name}`} multi selected={have} onPress={() => onToggle(e.id)} />
     </View>
   );
 }

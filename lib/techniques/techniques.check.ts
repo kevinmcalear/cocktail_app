@@ -29,6 +29,15 @@ for (const i of TECHNICAL_INGREDIENTS) for (const t of i.techniques) assert.ok(t
 const text = JSON.stringify([TECHNIQUES, EQUIPMENT, TECHNICAL_INGREDIENTS]);
 assert.ok(!text.includes('\u2014'), 'no em dashes in the library');
 for (const t of [...TECHNIQUES, ...TECHNICAL_INGREDIENTS]) for (const s of t.sources) assert.match(s.url, /^https?:\/\//);
+for (const e of [...EQUIPMENT, ...TECHNICAL_INGREDIENTS]) {
+  if (e.id !== 'aquafaba') assert.ok(e.buy?.length, `${e.id} says where to buy it`); // aquafaba comes from a tin of chickpeas
+  for (const b of e.buy ?? []) assert.ok(/^https:\/\/[^?#]+$/.test(b.url), `${e.id} buy link is https with no tracking query: ${b.url}`);
+}
+// Ingredients come in a home size and a bar (bulk) size; both tabs need something.
+for (const i of TECHNICAL_INGREDIENTS) {
+  if (!i.buy) continue;
+  for (const a of ['home', 'bar'] as const) assert.ok(i.buy.some((b) => !b.audience || b.audience === a), `${i.id} has a ${a} pick`);
+}
 
 // Prep card tags lead somewhere for every action that is a technique.
 for (const a of ['Clarify', 'Fat wash', 'Infuse', 'Carbonate', 'Ferment', 'Sous vide', 'Milk wash', 'Foam']) assert.ok(groupForAction(a), a);
@@ -62,6 +71,7 @@ assert.ok(unlocks('whipper', new Set(['scale-fine'])) >= 2, 'a whipper opens sip
 assert.equal(technicalIngredientFor('Xanthan Gum')?.id, 'xanthan');
 assert.equal(technicalIngredientFor('  agar-agar ')?.id, 'agar');
 assert.equal(technicalIngredientFor('Xanthan gum syrup'), undefined);
+assert.equal(technicalIngredientFor('Sucrose esters')?.id, 'sucro', 'the foam picker’s sucrose esters has a card');
 
 // Foam from anything.
 const veganSour = pickFoam({ kind: 'shaken', fat: false, strong: false, diet: 'vegan' });

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { memo, type ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -29,20 +29,21 @@ type GlyphFor = (id: string) => ReactNode;
  * else is in Search. This is the heading and the tabs; the drinks and groups
  * are rows of My Bar's list (MakeDrink, BottleGroup), then MakeFoot.
  */
-export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: MakeTab) => void; counts: Record<MakeTab, number> }) {
+export function MakeHead({ tab, onTab, counts }: { tab: MakeTab; onTab: (tab: MakeTab) => void; counts: { ready: number; first: number; one: number; two: number; projects?: number } }) {
+  const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
+  if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
+  options.push(
+    { value: 'one', label: `One away · ${counts.one}` },
+    { value: 'two', label: `Two away · ${counts.two}` },
+  );
+  // Projects only once there's kit or a lab shelf: a beginner's tabs stay three.
+  if (counts.projects !== undefined) options.push({ value: 'projects', label: `Projects · ${counts.projects}` });
   return (
     <View style={styles.section}>
       <Headline role="heading">What to make</Headline>
-      <Segmented
-        accessibilityLabel="What to make"
-        value={tab}
-        onChange={onTab}
-        options={[
-          { value: 'ready', label: `Ready · ${counts.ready}` },
-          { value: 'one', label: `One away · ${counts.one}` },
-          { value: 'two', label: `Two away · ${counts.two}` },
-        ]}
-      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+      </ScrollView>
     </View>
   );
 }
@@ -60,7 +61,11 @@ export function MakeEmpty({ tab, oneAway }: { tab: MakeTab; oneAway: number }) {
         ? `Nothing yet. ${oneAway ? 'See what one more bottle would open.' : 'Add a few bottles and what’s in your kitchen.'}`
         : tab === 'one'
           ? 'No drink is one bottle away yet.'
-          : 'No drink is two bottles away yet.'}
+          : tab === 'two'
+            ? 'No drink is two bottles away yet.'
+            : tab === 'first'
+              ? 'Nothing to make first: every drink you can make uses what’s on your bar.'
+              : 'No technique fits your kit and lab shelf yet. Add what you have.'}
     </Body>
   );
 }

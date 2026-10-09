@@ -157,6 +157,11 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /**
+   * How wide a page's column grows. Pages sit left, next to the sidebar
+   * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
+   */
+  page: { text: 760, wide: 1240 },
   /** Screens and components past this many lines get split (enforced by check:design). */
   maxScreenLines: 300,
 } as const;

@@ -23,12 +23,13 @@ export function ScreenHeader({ you = true }: { you?: boolean }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
+  // Wide web has the chip, New and You in the sidebar (WebSideNav), so the row
+  // is only space, and every page's title starts at the same height.
+  if (wide && you) return <View style={styles.wide} />;
   return (
     <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
-      {/* Wide web has the chip in the sidebar (WebSideNav). */}
       {wide ? <View /> : <VenueSwitcher />}
       <View style={styles.end}>
-        {/* Wide web has New in the sidebar. */}
         {wide ? null : <CreateButton />}
         {you ? (
           // Home mode has You as a tab; venue mode opens it over the tabs.
@@ -45,6 +46,7 @@ export function ScreenHeader({ you = true }: { you?: boolean }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  wide: { height: space.xxl },
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   avatar: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });

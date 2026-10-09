@@ -155,7 +155,8 @@ function You({ inTabs }: { inTabs?: boolean }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.xl, width: '100%', maxWidth: 960, alignSelf: 'center' },
+  // Left, next to the sidebar, like every page (components/nav/Page.tsx); wider than text for the drink grids.
+  body: { gap: space.xl, width: '100%', maxWidth: 960 },
   underHeader: { paddingTop: space.lg },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   header: { alignItems: 'center', gap: space.sm },

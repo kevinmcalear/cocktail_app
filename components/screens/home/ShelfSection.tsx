@@ -22,14 +22,14 @@ const SORTS: { value: ShelfSort; label: string }[] = [
 const SEARCH_FROM = 9;
 
 /**
- * The top of "Your shelf": its count, a search box for a long shelf, and the
+ * The top of Bottles: its count, a search box for a long shelf, and the
  * sorts. The bottles are rows of My Bar's list (BottleRow), then ShelfFoot.
  */
 export function ShelfHead({ count, sort, onSort, query, onQuery }: { count: number; sort: ShelfSort; onSort: (sort: ShelfSort) => void; query: string; onQuery: (query: string) => void }) {
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <Headline role="heading">Your shelf</Headline>
+        <Headline role="heading">Bottles</Headline>
         <Caption tone="muted">
           {count} {count === 1 ? 'bottle' : 'bottles'}
         </Caption>
