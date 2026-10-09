@@ -4,8 +4,11 @@
 -- pours its own version (fourteen Boulevardiers), and the list showed only
 -- the name. my_bar_drinks now also returns the bar a drink is from: the
 -- bar credited with it, else the venue that owns it. Catalog drinks return
--- none, so the classic reads as the plain one. Only the page's rows are
--- looked up, after the matching, so the speed of 20261010300000 holds.
+-- none, so the classic reads as the plain one, and it comes first among
+-- drinks of the same name: pages run A to Z by name, then catalog first,
+-- then id. The page after a row works out that row's place from its id, so
+-- the signature stays the same. Bar names are looked up for the page's rows
+-- only, after the matching, so the speed of 20261010300000 holds.
 --
 -- Adding columns changes the return type, so DROP and CREATE, and grant again.
 
@@ -52,6 +55,8 @@ DECLARE
     v_m_drink uuid[];
     v_m_buy uuid[];
     v_m_buy2 uuid[];
+    -- Where the page after p_after_id starts among drinks of its name: 0 catalog, 1 the rest, -1 all of them.
+    v_after_rank integer := coalesce((SELECT CASE WHEN it.is_catalog THEN 0 ELSE 1 END FROM public.items it WHERE it.id = p_after_id), -1);
 BEGIN
     IF (SELECT auth.uid()) IS NULL THEN
         RETURN;
@@ -175,15 +180,20 @@ BEGIN
 
     RETURN QUERY
     WITH RECURSIVE page AS (
-        SELECT i.id, i.name, i.glassware_id, i.bar_id, i.origin_bar_profile_id, m.buy, b.name AS buy_name, m.buy2, b2.name AS buy2_name
+        SELECT i.id, i.name, i.glassware_id, i.bar_id, i.origin_bar_profile_id, coalesce(it.is_catalog, false) AS is_catalog,
+               CASE WHEN coalesce(it.is_catalog, false) THEN 0 ELSE 1 END AS rank,
+               m.buy, b.name AS buy_name, m.buy2, b2.name AS buy2_name
         FROM unnest(v_m_drink, v_m_buy, v_m_buy2) AS m(drink, buy, buy2)
         JOIN public.app_item_presentation i ON i.id = m.drink
+        LEFT JOIN public.items it ON it.id = m.drink
         LEFT JOIN public.app_item_presentation b ON b.id = m.buy
         LEFT JOIN public.app_item_presentation b2 ON b2.id = m.buy2
         WHERE (m.buy IS NULL OR b.id IS NOT NULL)
           AND (m.buy2 IS NULL OR b2.id IS NOT NULL)
-          AND (p_after_name IS NULL OR (i.name, i.id) > (p_after_name, coalesce(p_after_id, '00000000-0000-0000-0000-000000000000'::uuid)))
-        ORDER BY i.name, i.id
+          AND (p_after_name IS NULL OR (i.name, CASE WHEN coalesce(it.is_catalog, false) THEN 0 ELSE 1 END, i.id)
+               > (p_after_name, v_after_rank, coalesce(p_after_id, '00000000-0000-0000-0000-000000000000'::uuid)))
+        -- A classic before the bars' versions of it.
+        ORDER BY i.name, rank, i.id
         LIMIT v_limit
     ), shelf_kinds AS MATERIALIZED (
         -- Each shelf row, its style (covers a line's ingredient or style), and the kinds further up (ingredient only).
@@ -213,15 +223,14 @@ BEGIN
     )
     SELECT p.id, p.name, h.url, p.glassware_id, p.buy, p.buy_name, p.buy2, p.buy2_name, coalesce(u.items, '{}'),
            -- Where it's from: the bar credited with it, else the venue that owns it. Not for catalog drinks.
-           CASE WHEN NOT coalesce(it.is_catalog, false) THEN coalesce(o.display_name, v.name) END,
-           CASE WHEN NOT coalesce(it.is_catalog, false) THEN CASE WHEN o.id IS NOT NULL THEN o.avatar_url ELSE v.logo_url END END
+           CASE WHEN NOT p.is_catalog THEN coalesce(o.display_name, v.name) END,
+           CASE WHEN NOT p.is_catalog THEN CASE WHEN o.id IS NOT NULL THEN o.avatar_url ELSE v.logo_url END END
     FROM page p
     LEFT JOIN heroes h ON h.item_id = p.id
     LEFT JOIN uses u ON u.drink = p.id
-    LEFT JOIN public.items it ON it.id = p.id
     LEFT JOIN public.profiles o ON o.id = p.origin_bar_profile_id
     LEFT JOIN public.bars v ON v.id = p.bar_id
-    ORDER BY p.name, p.id;
+    ORDER BY p.name, p.rank, p.id;
 END;
 $$;
 

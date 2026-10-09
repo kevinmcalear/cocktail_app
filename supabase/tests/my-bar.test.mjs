@@ -281,6 +281,14 @@ describe('my_bar_drinks', () => {
     assert.equal(row('barMartini').from_logo, 'https://example.test/logo.png');
     assert.equal(row('classic').from_name, null);
     await shelve('member', ['gin']);
+    // Same name: the classic first, then the bars' versions, and paging after the classic keeps the rest.
+    await item('sameName', { name: 'classic martini', item_type: 'cocktail', origin_bar_profile_id: bar.id });
+    await recipe('sameName', [['mezcal']]);
+    const { data: all } = await users.home.client.rpc('my_bar_drinks');
+    const named = all.filter((r) => r.name === `classic martini ${run}`).map((r) => r.id);
+    assert.deepEqual(named, [ids.classic, ids.sameName]);
+    const { data: after } = await users.home.client.rpc('my_bar_drinks', { p_after_name: `classic martini ${run}`, p_after_id: ids.classic, p_limit: 1 });
+    assert.deepEqual(after.map((r) => r.id), [ids.sameName]);
     const house = (await myBar('member')).rows.find((r) => r.id === ids.house);
     assert.equal(house.from_name, `My Bar Test ${run}`);
   });
