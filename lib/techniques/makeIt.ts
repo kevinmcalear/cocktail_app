@@ -57,6 +57,7 @@ export function waysToMake(name: string): Technique[] {
 const BY_ID: Record<string, PrepAction> = {
   centrifuge: 'Centrifuge', 'milk-wash': 'Milk wash', 'vegan-wash': 'Milk wash', 'fat-wash': 'Fat wash',
   'sous-vide-infusion': 'Sous vide', 'dehydrated-citrus': 'Dehydrate', 'quick-pickle': 'Mix', 'blender-syrup': 'Blend',
+  smoke: 'Smoke', tincture: 'Tincture', 'infused-oil': 'Oil',
 };
 const BY_GROUP: Record<TechniqueGroup, PrepAction> = {
   foam: 'Foam', clarify: 'Clarify', wash: 'Fat wash', infuse: 'Infuse', syrup: 'Syrup', texture: 'Mix',
