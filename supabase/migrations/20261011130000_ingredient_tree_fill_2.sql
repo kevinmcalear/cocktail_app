@@ -504,7 +504,7 @@ INSERT INTO rename_in VALUES
 ($q$Bloody Shiraz Gin$q$, $q$Four Pillars Bloody Shiraz Gin$q$),
 ($q$Blue Note Juke Joint Uncut Straight Bourbon$q$, $q$Blue Note Juke Joint Uncut$q$),
 ($q$Blume Marillen Apricot Eau-de-Vie$q$, $q$Blume Marillen Apricot Eau de Vie$q$),
-($q$Boiron Passion Fruit Puree$q$, $q$Les vergers Boiron Passion Fruit Purée$q$),
+($q$Boiron Passion Fruit Puree$q$, $q$Boiron Passion Fruit Purée$q$),
 ($q$Bombay Original Dry Gin$q$, $q$Bombay Original London Dry Gin$q$),
 ($q$Bordiga Extra Dry Vermouth$q$, $q$Bordiga Extra Dry$q$),
 ($q$Borghetti Coffee Liqueur$q$, $q$Caffè Borghetti$q$),
