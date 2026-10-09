@@ -307,60 +307,85 @@ GRANT EXECUTE ON FUNCTION "private"."spec_match_refresh_all"() TO "service_role"
 --                "adds": [{"name": "Mezcal", "house": false}], "drops": ["Campari"],
 --                "measures": true}, names as the caller sees them; {} when
 --                the caller can't see what changed.
--- private.spec_matches_seen has no cap, for other server functions that run
--- as the caller (My Bar's "served at"); public.spec_matches caps it at 500.
+-- The verdicts alone, for server functions that run as the caller and only
+-- need to know what folds (My Bar's served-at list): no names, no cap. With
+-- p_notes false, same and unlisted aren't told apart (both fold) and only
+-- variations are checked against the caller's view of the spec. p_visible
+-- says the caller already read the ids through items' row level security
+-- (my_bar_drinks runs as the caller), which skips can_view_item per drink.
+CREATE FUNCTION "private"."spec_verdicts_seen"("p_item_ids" "uuid"[], "p_notes" boolean DEFAULT false, "p_visible" boolean DEFAULT false)
+RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "spec_seen" boolean, "amounts_seen" boolean)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  WITH found AS (
+    SELECT m.*, coalesce(m.override, m.verdict) AS said
+      FROM private.item_spec_matches m
+     WHERE m.item_id = ANY (p_item_ids)
+       AND (p_visible OR private.can_view_item(m.item_id))
+  ), looked AS (
+    -- Only a variation, a riff or a drink whose notes are wanted needs the
+    -- masked spec: masking only ever turns a verdict into unlisted, so same
+    -- and unlisted read the same whatever the caller sees.
+    SELECT f.item_id FROM found f WHERE p_notes OR f.said = 'variation' OR f.override IS NOT NULL
+  ), seen AS (
+    -- What the caller can see of each spec, through the same masking as the
+    -- drink page: every line, its ingredient, its amount. One grouped pass
+    -- over each, not a lookup per drink.
+    SELECT f.item_id,
+           coalesce(rl.lines, 0) = coalesce(pl.shown, 0) AS spec_seen,
+           coalesce(rl.amounts, 0) = coalesce(pl.amounts_shown, 0) AS amounts_seen
+      FROM found f
+      LEFT JOIN (
+        SELECT x.recipe_item_id, count(*) FILTER (WHERE x.ingredient_item_id IS NOT NULL) AS lines,
+               count(*) FILTER (WHERE x.amount IS NOT NULL) AS amounts
+          FROM public.recipes x WHERE x.recipe_item_id IN (SELECT item_id FROM looked)
+         GROUP BY x.recipe_item_id
+      ) rl ON rl.recipe_item_id = f.item_id
+      LEFT JOIN (
+        SELECT p.recipe_item_id, count(*) FILTER (WHERE p.display_ingredient_id IS NOT NULL) AS shown,
+               count(*) FILTER (WHERE p.amount IS NOT NULL) AS amounts_shown
+          FROM public.app_recipe_presentation p WHERE p.recipe_item_id IN (SELECT item_id FROM looked)
+         GROUP BY p.recipe_item_id
+      ) pl ON pl.recipe_item_id = f.item_id
+  )
+  SELECT f.item_id, f.classic_id,
+         CASE
+           WHEN f.said = 'riff' THEN 'riff'
+           WHEN f.override IS NOT NULL THEN f.override
+           WHEN NOT s.spec_seen THEN 'unlisted'
+           WHEN f.said = 'same' AND f.has_amounts AND NOT s.amounts_seen THEN 'unlisted'
+           -- With amounts hidden, a change only in measures can't be told.
+           WHEN f.said = 'variation' AND NOT s.amounts_seen AND NOT (f.diff ?| ARRAY['swaps', 'adds', 'drops']) THEN 'unlisted'
+           ELSE f.said
+         END,
+         s.spec_seen, s.amounts_seen
+    FROM found f JOIN seen s ON s.item_id = f.item_id;
+$$;
+
+-- With what changed, named as the caller sees each line. No cap, for other
+-- server functions; public.spec_matches caps it at 500.
 CREATE FUNCTION "private"."spec_matches_seen"("p_item_ids" "uuid"[])
 RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "notes" "jsonb")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
-  WITH asked AS (
-    SELECT DISTINCT x AS id FROM unnest(p_item_ids) AS x
-  ), found AS (
-    SELECT m.*, coalesce(m.override, m.verdict) AS said
-      FROM asked a
-      JOIN private.item_spec_matches m ON m.item_id = a.id
-     WHERE private.can_view_item(a.id)
-  ), seen AS (
-    -- What the caller can see of each spec, through the same masking as the
-    -- drink page: every line, its ingredient, its amount.
-    SELECT r.item_id,
-           (SELECT count(*) FROM public.recipes x WHERE x.recipe_item_id = r.item_id AND x.ingredient_item_id IS NOT NULL) AS lines,
-           (SELECT count(*) FROM public.app_recipe_presentation p WHERE p.recipe_item_id = r.item_id AND p.display_ingredient_id IS NOT NULL) AS shown,
-           (SELECT count(*) FROM public.recipes x WHERE x.recipe_item_id = r.item_id AND x.amount IS NOT NULL) AS amounts,
-           (SELECT count(*) FROM public.app_recipe_presentation p WHERE p.recipe_item_id = r.item_id AND p.amount IS NOT NULL) AS amounts_shown
-      FROM found r
-  ), named AS (
-    SELECT r.item_id,
-           s.lines = s.shown AS spec_seen,
-           s.amounts = s.amounts_shown AS amounts_seen,
-           (SELECT jsonb_agg(jsonb_build_object('to', d.name, 'from', e->>'from', 'base', (e->>'base')::boolean))
-              FROM jsonb_array_elements(r.diff->'swaps') e
-              JOIN public.app_recipe_presentation p ON p.id = (e->>'line')::uuid
-              JOIN public.items d ON d.id = p.display_ingredient_id) AS swaps,
-           (SELECT jsonb_agg(jsonb_build_object('name', d.name, 'house', (e->>'house')::boolean))
-              FROM jsonb_array_elements(r.diff->'adds') e
-              JOIN public.app_recipe_presentation p ON p.id = (e->>'line')::uuid
-              JOIN public.items d ON d.id = p.display_ingredient_id) AS adds,
-           r.diff->'drops' AS drops,
-           jsonb_array_length(coalesce(r.diff->'measures', '[]'::jsonb)) > 0 AS measures
-      FROM found r JOIN seen s ON s.item_id = r.item_id
-  )
-  SELECT r.item_id, r.classic_id,
-         CASE
-           WHEN r.said = 'riff' THEN 'riff'
-           WHEN r.override IS NOT NULL THEN r.override
-           WHEN NOT n.spec_seen THEN 'unlisted'
-           WHEN r.said = 'same' AND r.has_amounts AND NOT n.amounts_seen THEN 'unlisted'
-           WHEN r.said = 'variation' AND NOT n.amounts_seen AND n.swaps IS NULL AND n.adds IS NULL AND n.drops IS NULL THEN 'unlisted'
-           ELSE r.said
-         END,
-         CASE WHEN NOT n.spec_seen THEN '{}'::jsonb
+  SELECT v.item_id, v.classic_id, v.spec_match,
+         CASE WHEN NOT v.spec_seen OR v.spec_match NOT IN ('variation', 'riff') THEN '{}'::jsonb
               ELSE jsonb_strip_nulls(jsonb_build_object(
-                     'swaps', n.swaps, 'adds', n.adds, 'drops', n.drops,
-                     'measures', CASE WHEN n.measures AND n.amounts_seen THEN true END))
+                'swaps', (SELECT jsonb_agg(jsonb_build_object('to', d.name, 'from', e->>'from', 'base', (e->>'base')::boolean))
+                            FROM jsonb_array_elements(m.diff->'swaps') e
+                            JOIN public.app_recipe_presentation p ON p.id = (e->>'line')::uuid AND p.recipe_item_id = v.item_id
+                            JOIN public.items d ON d.id = p.display_ingredient_id),
+                'adds', (SELECT jsonb_agg(jsonb_build_object('name', d.name, 'house', (e->>'house')::boolean))
+                           FROM jsonb_array_elements(m.diff->'adds') e
+                           JOIN public.app_recipe_presentation p ON p.id = (e->>'line')::uuid AND p.recipe_item_id = v.item_id
+                           JOIN public.items d ON d.id = p.display_ingredient_id),
+                'drops', m.diff->'drops',
+                'measures', CASE WHEN jsonb_array_length(coalesce(m.diff->'measures', '[]'::jsonb)) > 0 AND v.amounts_seen THEN true END))
          END
-    FROM found r JOIN named n ON n.item_id = r.item_id;
+    FROM private.spec_verdicts_seen(p_item_ids, true, false) v
+    JOIN private.item_spec_matches m ON m.item_id = v.item_id;
 $$;
 
 CREATE FUNCTION "public"."spec_matches"("p_item_ids" "uuid"[])
@@ -371,6 +396,8 @@ RETURNS TABLE("item_id" "uuid", "classic_id" "uuid", "spec_match" "text", "notes
   SELECT * FROM private.spec_matches_seen(p_item_ids[1:500]);
 $$;
 
+REVOKE ALL ON FUNCTION "private"."spec_verdicts_seen"("uuid"[], boolean, boolean) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."spec_verdicts_seen"("uuid"[], boolean, boolean) TO "authenticated", "service_role";
 REVOKE ALL ON FUNCTION "private"."spec_matches_seen"("uuid"[]) FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."spec_matches_seen"("uuid"[]) TO "authenticated", "service_role";
 REVOKE ALL ON FUNCTION "public"."spec_matches"("uuid"[]) FROM PUBLIC, "anon";
