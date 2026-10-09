@@ -97,9 +97,11 @@ describe('bottle catalog', () => {
     const snapshot = `SELECT count(*)::int AS n, count(*) FILTER (WHERE ingredient_role = 'product')::int AS bottles,
                              md5(string_agg(id::text || coalesce(generic_id::text, '') || coalesce(made_from_id::text, '') || coalesce(ingredient_role, '') || name, ',' ORDER BY id)) AS h
                         FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL`;
-    const before = await one(snapshot);
-    await db.query('BEGIN');
+    // One snapshot for the whole check, so another test file adding or removing
+    // its own catalog ingredient meanwhile doesn't count as a change.
+    await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
     try {
+      const before = await one(snapshot);
       for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
       assert.deepEqual(await one(snapshot), before);
     } finally {
