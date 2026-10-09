@@ -10,7 +10,7 @@ import { useLineage } from '@/hooks/useLineage';
 import { historyFor } from '@/lib/drinkHistory';
 import { creditSentence, creditText, joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
 
-import { BarVersions } from './BarVersions';
+import { BarVersions, useVersionGroups, versionCounts } from './BarVersions';
 import { CreditTag } from './DrinkCredit';
 import { FactRow } from './FactRow';
 import { FirstInPrint } from './FirstInPrint';
@@ -95,6 +95,10 @@ export function Backstory({ itemId }: { itemId: string }) {
     ...lineStyles.map((s) => ({ key: s.id, name: s.name, year: yearLabel(s.year, s.year_approx), isStyle: true })),
     ...ancestors.map((d) => ({ key: d.id, name: d.name, year: yearLabel(d.origin_year, d.origin_year_approx), isStyle: false })),
   ];
+  const versions = useVersionGroups(drink?.is_catalog ? drink.id : null, riffs);
+  // The hook reads the best 100, so a count at the cap says so.
+  const capped = riffs.length >= 100;
+  const versionLine = `${versionCounts(versions)}${capped ? ' in the first 100' : ''}`;
   if (!steps.length && !drink?.lineage_note && !found && !classics.length && !riffs.length) return null;
   const focus = drink?.is_catalog ? drink.id : ancestors.findLast((a) => a.is_catalog)?.id;
   const inTree = !!drink && (!!focus || lineStyles.length > 0);
@@ -144,27 +148,29 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
 
-        {riffs.length && !drink?.is_catalog ? (
+        {riffs.length ? (
           <FactRow
-            label="Riffs on this"
-            // The hook reads the best 100.
-            mark={riffs.length >= 100 ? '100+' : String(riffs.length)}
-            accessibilityLabel={`Riffs on this: ${makersLine(riffs)}`}
-            more={riffs.map((r) => (
-              <DrinkRow key={r.id} d={r} onPress={() => router.push(drinkHref(r.id))} />
-            ))}
+            label={drink?.is_catalog ? "Bars' versions" : 'Riffs on this'}
+            mark={capped ? '100+' : String(riffs.length)}
+            accessibilityLabel={`${drink?.is_catalog ? "Bars' versions" : 'Riffs on this'}: ${drink?.is_catalog ? versionLine : makersLine(riffs)}`}
+            more={
+              drink?.is_catalog ? (
+                // Served at, variations and riffs, by spec match.
+                <BarVersions groups={versions} />
+              ) : (
+                riffs.map((r) => <DrinkRow key={r.id} d={r} onPress={() => router.push(drinkHref(r.id))} />)
+              )
+            }
           >
             <View style={styles.riffLine}>
               <Faces drinks={riffs} />
               <Body numberOfLines={2} style={styles.flex}>
-                {makersLine(riffs)}
+                {drink?.is_catalog ? versionLine : makersLine(riffs)}
               </Body>
             </View>
           </FactRow>
         ) : null}
       </View>
-      {/* A classic's bar versions: served at, variations and riffs, by spec match. */}
-      {riffs.length && drink?.is_catalog ? <BarVersions classicId={drink.id} versions={riffs} /> : null}
     </View>
   );
 }
