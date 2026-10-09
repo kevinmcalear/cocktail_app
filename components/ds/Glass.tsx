@@ -18,22 +18,35 @@ const LIQUID_GLASS = isLiquidGlassAvailable();
  * content in glass. Real Liquid Glass on iOS 26+, a blur on web and older iOS,
  * and a solid raised surface on Android (expo-blur can't blur it cleanly there).
  */
-export function GlassSurface({ children, style, interactive, scheme }: { children: ReactNode; style?: StyleProp<ViewStyle>; interactive?: boolean; scheme?: BackbarScheme }) {
+export function GlassSurface({
+  children,
+  style,
+  interactive,
+  scheme,
+  tint,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  interactive?: boolean;
+  scheme?: BackbarScheme;
+  /** Fills the glass with a colour, for a selected control. */
+  tint?: string;
+}) {
   const ds = useDs();
   const s = scheme ?? ds.scheme;
   const c = backbar[s];
   if (LIQUID_GLASS) {
     return (
-      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme={s} style={[styles.clip, style]}>
+      <GlassView glassEffectStyle="regular" isInteractive={interactive} colorScheme={s} tintColor={tint} style={[styles.clip, style]}>
         {children}
       </GlassView>
     );
   }
   if (Platform.OS === 'android') {
-    return <View style={[styles.clip, { backgroundColor: c.raised, borderColor: c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
+    return <View style={[styles.clip, { backgroundColor: tint ?? c.raised, borderColor: tint ?? c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
   }
   return (
-    <BlurView intensity={60} tint={s} style={[styles.clip, { backgroundColor: c.glass, borderColor: c.glassBorder, borderWidth: 1 }, style]}>
+    <BlurView intensity={60} tint={s} style={[styles.clip, { backgroundColor: tint ?? c.glass, borderColor: tint ?? c.glassBorder, borderWidth: 1 }, style]}>
       {children}
     </BlurView>
   );

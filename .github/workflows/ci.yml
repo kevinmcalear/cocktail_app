@@ -37,7 +37,9 @@ jobs:
   database:
     name: Migrations and security tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Rebuilding the database now replays several large catalog data
+    # migrations; busy runs passed 20 minutes and were cut off mid-suite.
+    timeout-minutes: 30
     # Supabase's images come from public.ecr.aws by default, which rate limits
     # anonymous pulls ("toomanyrequests: Rate exceeded") when several PRs run
     # at once. The same images are on GitHub's registry, where this job's own
