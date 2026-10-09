@@ -92,4 +92,8 @@ export interface BuyLink {
   /** The product and the shop: "Thermapen ONE, ThermoWorks". */
   name: string;
   url: string;
+  /** Home size or home-grade; bar is bulk or commercial. Left out, it suits both. */
+  audience?: BuyAudience;
 }
+
+export type BuyAudience = 'home' | 'bar';

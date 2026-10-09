@@ -38,7 +38,12 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Slimy when overdosed.'],
     techniques: ['body-syrup', 'suspension', 'siphon-foam', 'vegan-siphon-foam'],
     sources: [src('khymos', 'A'), src('specialSuspension', 'B')],
-    buy: [{ name: 'Xanthan gum, Modernist Pantry', url: 'https://modernistpantry.com/products/xanthan-gum.html' }, { name: 'Perfected xanthan (disperses easier), Modernist Pantry', url: 'https://modernistpantry.com/products/perfected-xanthan-gum.html' }],
+    buy: [
+      { name: 'Xanthan gum 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/xanthan-gum.html', audience: 'home' },
+      { name: 'Perfected xanthan 50 g (disperses easier), Modernist Pantry', url: 'https://modernistpantry.com/products/perfected-xanthan-gum.html', audience: 'home' },
+      { name: 'Xanthan gum 1 lb, WebstaurantStore', url: 'https://www.webstaurantstore.com/1-lb-xanthan-gum/999991852.html', audience: 'bar' },
+      { name: 'Xanthan gum 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/xanthan-gum.html', audience: 'bar' },
+    ],
   },
   {
     id: 'agar', name: 'Agar', names: ['agar', 'agar agar', 'agar-agar'], vegan: true, perTsp: 2.4,
@@ -53,7 +58,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Sets at 35 to 45 °C in minutes.', 'EU rules ban seaweed gels in jelly mini-cups (jelly shots).'],
     techniques: ['agar-quick', 'agar-freeze-thaw'],
     sources: [src('khymos', 'A'), src('arnoldAgar', 'A')],
-    buy: [{ name: 'Super Agar, Modernist Pantry', url: 'https://modernistpantry.com/products/super-agar.html' }],
+    buy: [
+      { name: 'Super Agar 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/super-agar.html', audience: 'home' },
+      { name: 'Sosa agar 500 g, WebstaurantStore', url: 'https://www.webstaurantstore.com/gelling-agent-agar-powder-sosa-500g/104SAGARPWDR.html', audience: 'bar' },
+      { name: 'Super Agar 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/super-agar.html', audience: 'bar' },
+    ],
   },
   {
     id: 'gelatin', name: 'Gelatin', names: ['gelatin', 'gelatine', 'leaf gelatin', 'gelatin sheets'], vegan: false,
@@ -68,7 +77,12 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Fresh pineapple, kiwi, papaya, mango and ginger stop it setting.'],
     techniques: ['gelatin-freeze-thaw', 'siphon-foam'],
     sources: [src('khymos', 'A'), src('arnoldClarify', 'A')],
-    buy: [{ name: 'PerfectaGel Silver sheets, 170 bloom, Modernist Pantry', url: 'https://modernistpantry.com/products/perfectagel-silver.html' }, { name: 'Beef gelatin powder, 250 bloom, Modernist Pantry', url: 'https://modernistpantry.com/products/beef-gelatin-powder-250-bloom.html' }],
+    buy: [
+      { name: 'PerfectaGel Silver sheets, 170 bloom, 20 sheets, Modernist Pantry', url: 'https://modernistpantry.com/products/perfectagel-silver.html', audience: 'home' },
+      { name: 'Beef gelatin powder, 250 bloom, 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/beef-gelatin-powder-250-bloom.html', audience: 'home' },
+      { name: 'Pastry 1 Silver sheets, 400 count, Pastry Depot', url: 'https://www.pastrydepot.com/pastry-1-gelatin-sheets-silver-400ct.html', audience: 'bar' },
+      { name: 'PerfectaGel Silver sheets 1 kg, Modernist Pantry', url: 'https://modernistpantry.com/products/perfectagel-silver.html', audience: 'bar' },
+    ],
   },
   {
     id: 'methylcellulose', name: 'Methylcellulose', names: ['methylcellulose', 'methyl cellulose', 'methocel', 'methocel f50', 'methylcellulose f50'], vegan: true, perTsp: 1.3,
@@ -82,7 +96,10 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['It sets when hot and loosens when cold: the opposite of gelatin.', '"MC 40" isn’t a real grade; check the letter and number (F50, A4C).'],
     techniques: ['sour-syrup', 'vegan-siphon-foam'],
     sources: [src('punchSourSyrup', 'B'), src('tylopur', 'A')],
-    buy: [{ name: 'Methocel F50, Modernist Pantry', url: 'https://modernistpantry.com/products/methocel-f50-food-grade.html' }],
+    buy: [
+      { name: 'Methocel F50 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/methocel-f50-food-grade.html', audience: 'home' },
+      { name: 'Methocel F50 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/methocel-f50-food-grade.html', audience: 'bar' },
+    ],
   },
   {
     id: 'gellan', name: 'Gellan', names: ['gellan', 'gellan gum', 'low acyl gellan', 'high acyl gellan', 'gellan f'], vegan: true, perTsp: 1.9,
@@ -95,7 +112,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Heat to 90 to 95 °C with 0.1 to 0.3% sodium citrate; shear as it cools for a fluid gel.',
     techniques: ['suspension'],
     sources: [src('patentGellan', 'A'), src('khymos', 'A')],
-    buy: [{ name: 'Gellan Gum F (low acyl), Modernist Pantry', url: 'https://modernistpantry.com/products/gellan-gum-f-low-acyl-gellan-gum.html' }, { name: 'Gellan LT100 (high acyl), Modernist Pantry', url: 'https://modernistpantry.com/products/gellan-gum-lt100-high-acyl-gellan-gum.html' }],
+    buy: [
+      { name: 'Gellan Gum F (low acyl) 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/gellan-gum-f-low-acyl-gellan-gum.html', audience: 'home' },
+      { name: 'Gellan LT100 (high acyl) 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/gellan-gum-lt100-high-acyl-gellan-gum.html', audience: 'home' },
+      { name: 'Gellan Gum F (low acyl) 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/gellan-gum-f-low-acyl-gellan-gum.html', audience: 'bar' },
+    ],
   },
   {
     id: 'alginate', name: 'Sodium alginate', names: ['sodium alginate', 'alginate'], vegan: true, perTsp: 3.5,
@@ -108,7 +129,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Fails below about pH 3.65: use reverse spheres for acidic or boozy liquids.'],
     techniques: ['reverse-spheres'],
     sources: [src('khymos', 'A'), src('mpSpheres', 'A')],
-    buy: [{ name: 'Sodium alginate, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-alginate.html' }],
+    buy: [
+      { name: 'Sodium alginate 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-alginate.html', audience: 'home' },
+      { name: 'Sodium alginate 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-alginate.html', audience: 'bar' },
+      { name: 'Sodium alginate 1 lb or 5 lb, Cape Crystal', url: 'https://www.capecrystalbrands.com/products/sodium-alginate', audience: 'bar' },
+    ],
   },
   {
     id: 'calcium', name: 'Calcium lactate', names: ['calcium lactate', 'calcium chloride', 'calcium lactate gluconate'], vegan: true,
@@ -117,7 +142,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Dissolves easily. 0.5% chloride sets like about 1% lactate, which tastes cleaner.',
     techniques: ['reverse-spheres'],
     sources: [src('khymos', 'A')],
-    buy: [{ name: 'Calcium lactate, Modernist Pantry', url: 'https://modernistpantry.com/products/calcium-lactate.html' }],
+    buy: [
+      { name: 'Calcium lactate 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/calcium-lactate.html', audience: 'home' },
+      { name: 'Calcium lactate 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/calcium-lactate.html', audience: 'bar' },
+      { name: 'Calcium lactate 5 lb, Cape Crystal', url: 'https://www.capecrystalbrands.com/products/calcium-lactate', audience: 'bar' },
+    ],
   },
   {
     id: 'lecithin', name: 'Soy lecithin', names: ['soy lecithin', 'lecithin', 'sunflower lecithin'], vegan: true, allergens: ['Soy (sunflower avoids it)'],
@@ -127,7 +156,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Whisk in, then blend at the surface.',
     techniques: ['lecithin-air'],
     sources: [src('afmeLecithin', 'A')],
-    buy: [{ name: 'Soy lecithin powder, Modernist Pantry', url: 'https://modernistpantry.com/products/soy-lecithin-powder.html' }, { name: 'Organic sunflower lecithin, Modernist Pantry', url: 'https://modernistpantry.com/products/organic-sunflower-lecithin-powder.html' }],
+    buy: [
+      { name: 'Soy lecithin powder 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/soy-lecithin-powder.html', audience: 'home' },
+      { name: 'Organic sunflower lecithin 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/organic-sunflower-lecithin-powder.html', audience: 'home' },
+      { name: 'Soy lecithin powder 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/soy-lecithin-powder.html', audience: 'bar' },
+    ],
   },
   {
     id: 'versawhip', name: 'Versawhip', names: ['versawhip', 'versawhip 600k'], vegan: true, allergens: ['Soy'],
@@ -141,7 +174,10 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Fat stops it foaming.'],
     techniques: ['siphon-foam'],
     sources: [src('mpFoams', 'B')],
-    buy: [{ name: 'Versawhip 600K, Modernist Pantry', url: 'https://modernistpantry.com/products/versawhip-600k.html' }],
+    buy: [
+      { name: 'Versawhip 600K 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/versawhip-600k.html', audience: 'home' },
+      { name: 'Versawhip 600K 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/versawhip-600k.html', audience: 'bar' },
+    ],
   },
   {
     id: 'aquafaba', name: 'Aquafaba', names: ['aquafaba', 'chickpea water'], vegan: true, allergens: ['Chickpea'],
@@ -161,7 +197,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Too much affects the aroma.', 'Fee Foam is polysorbate 80, not quillaja.'],
     techniques: ['reverse-dry-shake'],
     sources: [src('punchFoamers', 'B')],
-    buy: [{ name: 'Wonderfoam (quillaja), Boston General Store', url: 'https://www.bostongeneralstore.com/products/wonderfoam-cocktail-foam' }, { name: 'Fee Foam (polysorbate, not quillaja), WebstaurantStore', url: 'https://www.webstaurantstore.com/fee-brothers-5-fl-oz-cocktail-fee-foam/115BITFBFOAM.html' }],
+    buy: [
+      { name: 'Wonderfoam (quillaja), Boston General Store', url: 'https://www.bostongeneralstore.com/products/wonderfoam-cocktail-foam', audience: 'home' },
+      { name: 'Fee Foam (polysorbate, not quillaja), WebstaurantStore', url: 'https://www.webstaurantstore.com/fee-brothers-5-fl-oz-cocktail-fee-foam/115BITFBFOAM.html', audience: 'home' },
+      { name: 'Fee Foam, case of 12 (polysorbate, not quillaja), WebstaurantStore', url: 'https://www.webstaurantstore.com/fee-brothers-5-fl-oz-cocktail-fee-foam-case/115BITFBFOAKT.html', audience: 'bar' },
+    ],
   },
   {
     id: 'gum-arabic', name: 'Gum arabic', names: ['gum arabic', 'acacia gum', 'gum acacia'], vegan: true,
@@ -171,7 +211,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Soak in water up to 48 hours before adding to hot syrup.',
     techniques: ['gomme'],
     sources: [src('imbibeGomme', 'B')],
-    buy: [{ name: 'Gum arabic, Modernist Pantry', url: 'https://modernistpantry.com/products/arabic-gum-acacia-gum.html' }],
+    buy: [
+      { name: 'Gum arabic 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/arabic-gum-acacia-gum.html', audience: 'home' },
+      { name: 'Gum arabic 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/arabic-gum-acacia-gum.html', audience: 'bar' },
+      { name: 'Gum arabic 5 lb, Cape Crystal', url: 'https://www.capecrystalbrands.com/products/gum-arabic-acacia', audience: 'bar' },
+    ],
   },
   {
     id: 'pectinase', name: 'Pectinex Ultra SP-L', names: ['pectinex', 'pectinex ultra sp-l', 'pectinase', 'pectic enzyme'], vegan: true,
@@ -181,7 +225,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Lime and lemon are too acidic for it alone; add kieselsol and chitosan.', 'Generic home-brew pectinase isn’t a substitute.'],
     techniques: ['centrifuge'],
     sources: [src('arnoldClarify', 'A'), src('mpKit', 'B')],
-    buy: [{ name: 'Pectinex Ultra SP-L, Modernist Pantry', url: 'https://modernistpantry.com/products/pectinex-ultra-sp-l.html' }, { name: 'Pectinex Ultra SP-L, Special Ingredients (EU)', url: 'https://specialingredients.it/en/products/pectinex-ultra-sp-l-1-l' }],
+    buy: [
+      { name: 'Pectinex Ultra SP-L 60 ml, Modernist Pantry', url: 'https://modernistpantry.com/products/pectinex-ultra-sp-l.html', audience: 'home' },
+      { name: 'Pectinex Ultra SP-L 1 L, Modernist Pantry', url: 'https://modernistpantry.com/products/pectinex-ultra-sp-l.html', audience: 'bar' },
+      { name: 'Pectinex Ultra SP-L 1 L, Special Ingredients (EU)', url: 'https://specialingredients.it/en/products/pectinex-ultra-sp-l-1-l', audience: 'bar' },
+    ],
   },
   {
     id: 'maltodextrin', name: 'Tapioca maltodextrin', names: ['tapioca maltodextrin', 'n-zorbit', 'maltodextrin'], vegan: true,
@@ -190,7 +238,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Whisk into melted fat, then sieve.',
     techniques: ['fat-powder'],
     sources: [src('mpPowders', 'B')],
-    buy: [{ name: 'N-Zorbit M, Modernist Pantry', url: 'https://modernistpantry.com/products/n-zorbit-m-tapioca-maltodextrin.html' }],
+    buy: [
+      { name: 'N-Zorbit M 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/n-zorbit-m-tapioca-maltodextrin.html', audience: 'home' },
+      { name: 'N-Zorbit M 400 g or 5 kg, Modernist Pantry', url: 'https://modernistpantry.com/products/n-zorbit-m-tapioca-maltodextrin.html', audience: 'bar' },
+      { name: 'Tapioca maltodextrin 1.5 lb, Pastry Depot', url: 'https://www.pastrydepot.com/cuisine-tech-cuisine-tech-tapioca-maltodextrin-15l.html', audience: 'bar' },
+    ],
   },
   {
     id: 'citric', name: 'Citric acid', names: ['citric acid'], vegan: true,
@@ -202,7 +254,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Dissolves straight into juice or water.',
     techniques: ['acid-adjust'],
     sources: [src('mpAcid', 'B'), src('campariAcid', 'B')],
-    buy: [{ name: 'Citric acid, Modernist Pantry', url: 'https://modernistpantry.com/products/citric-acid.html' }],
+    buy: [
+      { name: 'Citric acid 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/citric-acid.html', audience: 'home' },
+      { name: 'Citric acid 8 lb, Bulk Apothecary', url: 'https://www.bulkapothecary.com/citric-acid/', audience: 'bar' },
+      { name: 'Citric acid 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/citric-acid.html', audience: 'bar' },
+    ],
   },
   {
     id: 'malic', name: 'Malic acid', names: ['malic acid'], vegan: true,
@@ -211,7 +267,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Dissolves straight into juice or water.',
     techniques: ['acid-adjust'],
     sources: [src('mpAcid', 'B')],
-    buy: [{ name: 'Malic acid, Modernist Pantry', url: 'https://modernistpantry.com/products/malic-acid.html' }],
+    buy: [
+      { name: 'Malic acid 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/malic-acid.html', audience: 'home' },
+      { name: 'Malic acid 1 lb or 5 lb, MoreBeer', url: 'https://morebeer.com/products/malic-acid', audience: 'bar' },
+      { name: 'Malic acid 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/malic-acid.html', audience: 'bar' },
+    ],
   },
   {
     id: 'sodium-citrate', name: 'Sodium citrate', names: ['sodium citrate', 'trisodium citrate'], vegan: true,
@@ -220,7 +280,10 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Dissolve with the gum.',
     techniques: ['suspension'],
     sources: [src('khymos', 'A')],
-    buy: [{ name: 'Sodium citrate, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-citrate.html' }],
+    buy: [
+      { name: 'Sodium citrate 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-citrate.html', audience: 'home' },
+      { name: 'Sodium citrate 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sodium-citrate.html', audience: 'bar' },
+    ],
   },
   {
     id: 'glycerin', name: 'Glycerin', names: ['glycerin', 'glycerine', 'glycerol', 'vegetable glycerin'], vegan: true,
@@ -230,7 +293,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['EFSA set a 2026 limit of 125 mg per kg of body weight per drinking occasion (about 7.5 g for 60 kg).'],
     techniques: ['body-syrup'],
     sources: [src('brewhausGlycerin', 'C'), src('efsaGlycerol', 'A')],
-    buy: [{ name: 'Vegetable glycerin USP, Bulk Apothecary', url: 'https://www.bulkapothecary.com/glycerin/' }],
+    buy: [
+      { name: 'Vegetable glycerin USP 16 oz, Bulk Apothecary', url: 'https://www.bulkapothecary.com/glycerin/', audience: 'home' },
+      { name: 'Vegetable glycerin USP 10 lb, Bulk Apothecary', url: 'https://www.bulkapothecary.com/glycerin/', audience: 'bar' },
+      { name: 'Sosa glycerin 1.3 kg, Pastry Depot', url: 'https://www.pastrydepot.com/sosa-glycerin-13kg-48679.html', audience: 'bar' },
+    ],
   },
   {
     id: 'sucro', name: 'Sucrose esters', names: ['sucrose esters', 'sucrose ester', 'sucro', 'sucro emul'], vegan: true,
@@ -243,7 +310,11 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     mix: 'Dissolve it in the water part first (warm is faster), then blend in the rest. It won’t dissolve in fat.',
     techniques: ['lecithin-air'],
     sources: [src('sosaSucro', 'B'), src('siAlcoholFoam', 'B')],
-    buy: [{ name: 'Sucrose esters, Modernist Pantry', url: 'https://modernistpantry.com/products/sucrose-esters.html' }, { name: 'Sucro, Special Ingredients (EU)', url: 'https://specialingredients.it/en/products/sucro-100g' }],
+    buy: [
+      { name: 'Sucrose esters 50 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sucrose-esters.html', audience: 'home' },
+      { name: 'Sucro 100 g, Special Ingredients (EU)', url: 'https://specialingredients.it/en/products/sucro-100g', audience: 'home' },
+      { name: 'Sucrose esters 400 g, Modernist Pantry', url: 'https://modernistpantry.com/products/sucrose-esters.html', audience: 'bar' },
+    ],
   },
   {
     id: 'kieselsol-chitosan', name: 'Kieselsol and chitosan', names: ['kieselsol', 'chitosan', 'kieselsol and chitosan', 'super-kleer', 'super kleer'], vegan: true, allergens: ['Shellfish (in most chitosan; fungal chitosan avoids it)'],
@@ -253,7 +324,14 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     watch: ['Kieselsol must not freeze.', 'Shellfish chitosan isn’t vegan; Modernist Pantry’s is from a fungus.'],
     techniques: ['centrifuge'],
     sources: [src('mpKit', 'B')],
-    buy: [{ name: 'Kieselsol, Modernist Pantry', url: 'https://modernistpantry.com/products/kieselsol.html' }, { name: 'Chitosan (plant-based), Modernist Pantry', url: 'https://modernistpantry.com/products/chitosan-plant-based.html' }, { name: 'Super-Kleer KC (shellfish chitosan), Northern Brewer', url: 'https://www.northernbrewer.com/products/super-kleer-kc-finings' }],
+    buy: [
+      { name: 'Kieselsol 500 ml, Modernist Pantry', url: 'https://modernistpantry.com/products/kieselsol.html', audience: 'home' },
+      { name: 'Chitosan (plant-based) 5 g, Modernist Pantry', url: 'https://modernistpantry.com/products/chitosan-plant-based.html', audience: 'home' },
+      { name: 'Super-Kleer KC kit (shellfish chitosan), Northern Brewer', url: 'https://www.northernbrewer.com/products/super-kleer-kc-finings', audience: 'home' },
+      { name: 'Kieselsol 1 L, Modernist Pantry', url: 'https://modernistpantry.com/products/kieselsol.html', audience: 'bar' },
+      { name: 'Chitosan (plant-based) 25 g, Modernist Pantry', url: 'https://modernistpantry.com/products/chitosan-plant-based.html', audience: 'bar' },
+      { name: 'Liquid chitosan 1 L (shellfish), Northern Brewer', url: 'https://www.northernbrewer.com/products/lq-chitosan', audience: 'bar' },
+    ],
   },
 ];
 
