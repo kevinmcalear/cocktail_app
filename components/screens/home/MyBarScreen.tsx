@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, PalateFlower, useDs, useGutter } from '@/components/ds';
-import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
+import { Body, Button, Caption, Display, PalateFlower, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
@@ -44,6 +44,7 @@ export function MyBarScreen() {
   const [adding, setAdding] = useState<AddFilter | null>(null);
   const { owned, toggle: toggleKit } = useKit();
   const listRef = useRef<FlatList<Row>>(null);
+  const wide = useBreakpoint() === 'desktop';
   const [snapping, setSnapping] = useState(false);
   const [sort, setSort] = useState<ShelfSort>('newest');
   const [query, setQuery] = useState('');
@@ -109,6 +110,9 @@ export function MyBarScreen() {
     make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown } : null,
   });
 
+  // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own, under one header.
+  const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
+
   const jump = (section: Jumpable) => {
     const index = rows.findIndex((r) => r.key === JUMP_ROW[section]);
     if (index >= 0) listRef.current?.scrollToIndex({ index, animated: true });
@@ -128,7 +132,7 @@ export function MyBarScreen() {
       case 'top':
         return (
           <View>
-            <ScreenHeaderSpacer />
+            {cut > 0 ? null : <ScreenHeaderSpacer />}
             <View style={styles.top}>
               <View>
                 <Display>My Bar</Display>
@@ -202,22 +206,42 @@ export function MyBarScreen() {
     }
   };
 
+  const shelfList = (
+    <FlatList
+      ref={listRef}
+      data={cut > 0 ? rows.slice(0, cut) : rows}
+      keyExtractor={(r) => r.key}
+      renderItem={renderRow}
+      // Two screens either side: a sort or tab change re-renders every mounted row.
+      windowSize={5}
+      // A section shortcut past what's mounted: get close, then land on it once it renders.
+      onScrollToIndexFailed={(info) => {
+        listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
+        setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 50);
+      }}
+      style={cut > 0 ? styles.shelfColumn : null}
+      contentContainerStyle={cut > 0 ? { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom } : { paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
+    />
+  );
+
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FlatList
-        ref={listRef}
-        data={rows}
-        keyExtractor={(r) => r.key}
-        renderItem={renderRow}
-        // Two screens either side: a sort or tab change re-renders every mounted row.
-        windowSize={5}
-        // A section shortcut past what's mounted: get close, then land on it once it renders.
-        onScrollToIndexFailed={(info) => {
-          listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
-          setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 50);
-        }}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
-      />
+      {cut > 0 ? <ScreenHeader /> : null}
+      {cut > 0 ? (
+        <View style={styles.columns}>
+          {shelfList}
+          <FlatList
+            data={rows.slice(cut)}
+            keyExtractor={(r) => r.key}
+            renderItem={({ item, index }) => renderRow({ item, index: index + cut })}
+            windowSize={5}
+            style={styles.makeColumn}
+            contentContainerStyle={{ paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom }}
+          />
+        </View>
+      ) : (
+        shelfList
+      )}
       <AddToBarSheet
         visible={adding !== null}
         filter={adding ?? 'all'}
@@ -239,4 +263,7 @@ const styles = StyleSheet.create({
   nextGroup: { marginTop: space.md },
   actions: { flexDirection: 'row', gap: space.sm },
   grow: { flex: 1 },
+  columns: { flex: 1, flexDirection: 'row' },
+  shelfColumn: { flex: 4, maxWidth: 560 },
+  makeColumn: { flex: 5, maxWidth: 760 },
 });
