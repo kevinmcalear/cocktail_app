@@ -16,8 +16,9 @@ import { useDs } from './theme';
  * `disabled` dims it and ignores presses, for a choice the person can see but not change.
  * `accessibilityLabel` names it when the label alone is ambiguous in a list ("I have it" beside each tool).
  * `leading` sits before the label: a small decorative picture (an ingredient drawing).
+ * `count` follows the label, quieter: how many are in it ("Bottles 12").
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number }) {
   const ds = useDs();
   return (
     <PressableScale
@@ -25,22 +26,30 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
       aria-checked={selected}
       aria-disabled={disabled}
       disabled={disabled}
-      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityLabel={accessibilityLabel ?? (count ? `${label}, ${count}` : label)}
       onPress={onPress}
       style={[
         styles.chip,
-        leading ? styles.withLeading : null,
+        leading || count ? styles.withLeading : null,
+        leading ? styles.leadingPad : null,
         quiet ? { borderWidth: StyleSheet.hairlineWidth, borderColor: selected ? ds.c.ink : ds.c.lineStrong } : null,
         { backgroundColor: selected ? ds.c.ink : quiet ? 'transparent' : ds.c.raised, opacity: disabled ? 0.45 : 1 },
       ]}
     >
       {leading}
       <Caption color={selected ? ds.c.ground : ds.c.ink}>{label}</Caption>
+      {count ? (
+        <Caption color={selected ? ds.c.ground : ds.c.muted} style={selected ? styles.quietCount : null}>
+          {count}
+        </Caption>
+      ) : null}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center' },
-  withLeading: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingLeft: space.xs },
+  withLeading: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  leadingPad: { paddingLeft: space.xs },
+  quietCount: { opacity: 0.7 },
 });

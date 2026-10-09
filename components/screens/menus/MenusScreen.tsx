@@ -118,6 +118,13 @@ export function MenusScreen() {
             ))}
           </Group>
         ) : null}
+        {venue.rnd.length && barId && canBuild ? (
+          <Group title="R&D">
+            {venue.rnd.map((m) => (
+              <MenuListRow key={m.id} menu={m} now={now} />
+            ))}
+          </Group>
+        ) : null}
         {mine.length ? (
           <Group title="Your menus">
             {mine.map((m) => (
@@ -126,7 +133,7 @@ export function MenusScreen() {
           </Group>
         ) : null}
       </ScrollView>
-      {creating ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
+      {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>
   );
 }

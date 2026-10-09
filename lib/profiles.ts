@@ -71,42 +71,92 @@ export interface ProfileDraft {
   /** What they typed: @name, a bare name, or an instagram.com link. */
   instagram: string;
   isPublic: boolean;
-  /** Show the drinks you've had, with your scores, on the public profile. */
-  sharesRankings: boolean;
-  /** Show the bars you've had drinks at, with your average at each. */
-  sharesBars: boolean;
-  /** Show the drinks you've made (Originals and menu credits). */
-  sharesMade: boolean;
+  /** What you do with drinks, in your words, under your name. Blank: nothing. */
+  tagline: string;
+  /** Or one of your confirmed jobs there instead. */
+  headlinePositionId: string | null;
+  /** People see your account photo; off, your initials. */
+  showsPhoto: boolean;
 }
 
-/** What a new profile shows: the drinks you've made, and nothing you've had. */
-export const DEFAULT_SHARING = { sharesRankings: false, sharesBars: false, sharesMade: true } as const;
+/** Ready-made lines for under your name. Anything else is "in your own words". */
+export const TAGLINES = ['Drinks lover', 'Home bartender', 'Bartender', 'Bar manager', 'Bar owner', 'Drinks writer', 'Distiller', 'Brand rep'] as const;
 
-/** What a public profile shows besides who you are, in a few sentences for the settings form. */
-export function sharingSummary(draft: Pick<ProfileDraft, 'sharesRankings' | 'sharesBars' | 'sharesMade'>): string {
-  const shown = [
-    draft.sharesRankings ? 'your score for every drink you’ve ranked' : null,
-    draft.sharesBars ? 'your average at each bar you’ve had drinks at' : null,
-    draft.sharesMade ? 'the drinks you’ve made' : null,
-  ].filter((x): x is string => !!x);
-  const lines = [
-    shown.length
-      ? `Your profile shows ${shown.length > 2 ? `${shown.slice(0, -1).join(', ')}, and ${shown.at(-1)}` : shown.join(' and ')}.`
-      : 'Your profile shows who you are and where you work, nothing more.',
-  ];
-  if (draft.sharesRankings || draft.sharesBars) lines.push('Only people signed in to the app see what you’ve had, and drinks a bar hasn’t published stay out.');
-  if (draft.sharesRankings && !draft.sharesBars) lines.push('A drink you had at a bar says “At a bar”, not which one.');
-  if (!draft.sharesMade) lines.push('Your credits still show on each drink’s own page.');
-  if (!draft.sharesRankings && !draft.sharesBars) lines.push('Your scores still count, without your name, towards each bar’s score.');
-  return lines.join(' ');
+/** What's wrong with the line under your name, or nothing. Matches profiles_tagline_shape. */
+export function taglineProblem(raw: string): string | undefined {
+  const line = raw.trim();
+  if (line.length > 40) return 'Keep it to 40 characters.';
+  if (/\p{Cc}/u.test(line)) return 'Keep it to one line.';
 }
 
 /**
- * The tabs a person's profile shows a reader, in order: only what they share,
- * or everything to the owner (who gets a note on a tab others don't see).
+ * The line under a person's name: the job they picked, while the bar has
+ * confirmed it and it's on their page, else what they said they do, else
+ * nothing. Never a label the app made up.
  */
-export function personTabs(p: { shares_rankings: boolean; shares_bars: boolean; shares_made: boolean }, mine: boolean): ('had' | 'bars' | 'originals')[] {
-  const shows = { had: p.shares_rankings, bars: p.shares_bars, originals: p.shares_made };
+export function profileLine(
+  p: { tagline: string | null; headline_position_id: string | null },
+  positions: { id: string; title: string; is_current: boolean; is_shown: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } }[]
+): string | null {
+  const job = positions.find((j) => j.id === p.headline_position_id && j.person_accepted && j.bar_accepted && (j.is_current || j.is_shown));
+  if (job) return `${job.title} ${job.is_current ? 'at' : 'formerly at'} ${job.bar.display_name}`;
+  return p.tagline?.trim() || null;
+}
+
+/** A new profile's line under the name (none) and photo (shown). */
+export const DEFAULT_IDENTITY = { tagline: '', headlinePositionId: null, showsPhoto: true } as const;
+
+/**
+ * How much of one section a public profile shows (profiles.had_mode,
+ * bars_mode, made_mode): everything, new ones too, but single ones can be
+ * hidden; only the ones picked; or nothing (the picks are kept).
+ */
+export type ShareMode = 'all' | 'picked' | 'none';
+/** The three sections: drinks they've had, bars they've been to, drinks they made. */
+export type ShareSection = 'had' | 'bars' | 'originals';
+
+export const SHARE_MODES: { value: ShareMode; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'picked', label: 'Picked' },
+  { value: 'none', label: 'None' },
+];
+
+/** A new profile's: nothing they've had until they pick it; what they've made. */
+export const DEFAULT_SHARING: Record<ShareSection, ShareMode> = { had: 'picked', bars: 'picked', originals: 'all' };
+
+/**
+ * Whether one drink, bar or original shows: by its section's mode and their
+ * pick for it (true, false, or none yet). Same rule as private.picked_shown.
+ */
+export function pickedShown(mode: ShareMode, pick: boolean | null | undefined): boolean {
+  if (mode === 'all') return pick !== false;
+  if (mode === 'picked') return pick === true;
+  return false;
+}
+
+const SECTION_NOTE: Record<ShareSection, string> = {
+  had: 'Only people signed in see them, with your scores, and drinks a bar hasn’t published stay out.',
+  bars: 'A bar you hide is never named, even beside a drink. Your scores still count, without your name, towards each bar’s score.',
+  originals: 'Credits still show on each drink’s own page.',
+};
+
+/** A line under a section's mode in settings: what it means, then the section's own note. */
+export function modeSummary(section: ShareSection, mode: ShareMode): string {
+  const what =
+    mode === 'all'
+      ? 'All of them show, new ones too. Hide any one from Choose.'
+      : mode === 'picked'
+        ? 'Only the ones you pick show. New ones stay private.'
+        : 'None show. Your picks are kept for when you turn it back on.';
+  return mode === 'none' && section !== 'originals' ? what : `${what} ${SECTION_NOTE[section]}`;
+}
+
+/**
+ * The tabs a person's profile shows a reader, in order: only sections they
+ * show, or every one to the owner (who gets a note on a tab others don't see).
+ */
+export function personTabs(p: { had_mode: ShareMode; bars_mode: ShareMode; made_mode: ShareMode }, mine: boolean): ShareSection[] {
+  const shows = { had: p.had_mode !== 'none', bars: p.bars_mode !== 'none', originals: p.made_mode !== 'none' };
   return (['had', 'bars', 'originals'] as const).filter((t) => mine || shows[t]);
 }
 
@@ -183,8 +233,8 @@ export function handleFromName(name: string): string {
  * What's wrong with a draft, field by field, in the same limits as the
  * profiles table's CHECKs. An empty object means it can be saved.
  */
-export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string; instagram?: string } {
-  const errors: { name?: string; handle?: string; bio?: string; instagram?: string } = {};
+export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: string; bio?: string; instagram?: string; tagline?: string } {
+  const errors: { name?: string; handle?: string; bio?: string; instagram?: string; tagline?: string } = {};
   const name = d.name.trim();
   if (!name) errors.name = 'Add the name people will see.';
   else if (name.length > 80) errors.name = 'Keep your name to 80 characters.';
@@ -194,6 +244,8 @@ export function profileDraftErrors(d: ProfileDraft): { name?: string; handle?: s
   if (d.bio.trim().length > 500) errors.bio = 'Keep your bio to 500 characters.';
   const instagram = instagramProblem(d.instagram);
   if (instagram) errors.instagram = instagram;
+  const tagline = taglineProblem(d.tagline);
+  if (tagline) errors.tagline = tagline;
   return errors;
 }
 

@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
 import { tidyAmount } from '@/lib/specDefaults';
@@ -39,6 +40,8 @@ export interface WizardLine extends WizardPick {
   unit: string;
   /** A new house prep made by this technique (lib/techniques): it gets a prep card when the drink is saved. */
   technique?: string;
+  /** A new house prep's own recipe and method (lib/prepKinds), made in the wizard: saved with the drink. */
+  prep?: PrepDraft;
 }
 
 export interface WizardDraft {

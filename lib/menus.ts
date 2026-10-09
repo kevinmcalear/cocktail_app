@@ -21,17 +21,21 @@ export interface MenuGroups<T> {
   upcoming: T[];
   draft: T[];
   previous: T[];
+  /** R&D collections: never on, filed on their own. */
+  rnd: T[];
 }
 
 const time = (iso: string | null) => (iso ? Date.parse(iso) : 0);
 
 /**
  * The Menus list: on now (newest first), coming up (soonest first), drafts
- * (newest first), previous (most recently ended first).
+ * (newest first), previous (most recently ended first), and R&D collections
+ * (by name) apart from all of them.
  */
 export function groupMenus<T extends MenuSummary>(menus: T[], now: number): MenuGroups<T> {
-  const groups: MenuGroups<T> = { on: [], upcoming: [], draft: [], previous: [] };
-  for (const m of menus) groups[menuStatus(m, now)].push(m);
+  const groups: MenuGroups<T> = { on: [], upcoming: [], draft: [], previous: [], rnd: [] };
+  for (const m of menus) groups[m.kind === 'rnd' ? 'rnd' : menuStatus(m, now)].push(m);
+  groups.rnd.sort((a, b) => a.name.localeCompare(b.name));
   groups.on.sort((a, b) => time(b.startsAt) - time(a.startsAt));
   groups.upcoming.sort((a, b) => time(a.startsAt) - time(b.startsAt));
   groups.draft.sort((a, b) => time(b.createdAt) - time(a.createdAt));

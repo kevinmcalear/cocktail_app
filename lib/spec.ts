@@ -32,6 +32,8 @@ interface PresentationIngredient {
   name?: string;
   abv?: number | null;
   density_g_ml?: number | null;
+  /** 'prep' for a house-made one (a syrup, a shrub, a batch). */
+  ingredient_role?: string | null;
   image_url?: string | null;
   item_images?: ItemImageLink[] | null;
 }
@@ -56,6 +58,8 @@ export interface SpecLine {
   abv: number | null;
   /** The ingredient's own density, when set. */
   density: number | null;
+  /** Made in house from its own recipe. */
+  houseMade?: boolean;
 }
 
 // Grams convert to ml through the ingredient's density (lib/drinkMath.ts).
@@ -79,6 +83,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       atService: typeof r.at_service === 'boolean' ? r.at_service : null,
       abv: typeof resolved?.abv === 'number' ? resolved.abv : null,
       density: typeof resolved?.density_g_ml === 'number' ? resolved.density_g_ml : null,
+      houseMade: resolved?.ingredient_role === 'prep',
     };
   });
 }

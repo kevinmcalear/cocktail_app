@@ -12,7 +12,7 @@ import { useVenueMenus } from '@/hooks/useMenus';
 const SHOWN = 3;
 
 /**
- * Your own menus (no venue) at the top of Collection, each saying how many of
+ * Your own menus (no venue), on Collection's Menus, each saying how many of
  * its drinks you can make from your shelf. The full list and the builder are
  * the same screens venues use.
  */
@@ -27,7 +27,7 @@ export function CollectionMenus({ canMakeIds }: { canMakeIds: Set<string> }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Headline role="heading">Menus</Headline>
+        <Headline role="heading">Your menus</Headline>
         <Button label="New menu" icon="plus" variant="secondary" onPress={() => setCreating(true)} />
       </View>
       {!isLoading && !mine.length ? <Body tone="muted">Plan a night in: pick the drinks, then share the menu with your guests.</Body> : null}
@@ -45,7 +45,7 @@ export function CollectionMenus({ canMakeIds }: { canMakeIds: Set<string> }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm, paddingTop: space.lg },
+  wrap: { gap: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   all: { alignSelf: 'flex-start' },
 });

@@ -33,7 +33,7 @@ export function PastJobs({ personId }: { personId: string }) {
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
         {!p.bar_accepted ? (
-          <Caption tone="muted">Pending: shows once the bar confirms it</Caption>
+          <Caption tone="muted">Not confirmed by the bar yet. It shows marked that way.</Caption>
         ) : p.is_current ? (
           <Caption tone="muted">Always shown</Caption>
         ) : null}

@@ -138,6 +138,14 @@ export function kindLabel(id: string): string {
 
 const NOTES: readonly Kind[] = NOTE_KINDS.map((d) => ({ id: noteKind(d), label: noteWord(d) }));
 
+/** What picking a kind from a search means: "The style: Martini, Vesper, Tuxedo and their riffs", "Every drink made with gin". */
+export function kindCaption(id: string): string {
+  const style = STYLES.find((s) => s.id === id);
+  if (style) return `The style: ${style.classics.slice(0, 3).join(', ')} and their riffs`;
+  if (KIND_BY_ID.has(id)) return `Every drink made with ${kindLabel(id).toLowerCase()}`;
+  return `Tasting note: ${kindLabel(id).toLowerCase()}`;
+}
+
 /**
  * Styles and spirits with a label word, or a classic's name, starting with
  * the search: "gin" finds Gin, "marg" Margaritas, "boulevardier" Negronis.
