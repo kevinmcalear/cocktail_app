@@ -82,3 +82,34 @@ export function usePairNote(a: string | null, b: string | null) {
     },
   });
 }
+
+export interface IngredientName {
+  id: string;
+  name: string;
+}
+
+/** The core ingredients (a few hundred: id and name), which the flavor map starts from. */
+export function useCoreIngredients() {
+  return useQuery({
+    queryKey: ['core-ingredients'],
+    queryFn: async (): Promise<IngredientName[]> => {
+      const { data, error } = await supabase.from('items').select('id, name').eq('is_core', true).order('name').range(0, 1999);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** Names for a few ingredient ids (the flavor map's ?with=), in one small request. */
+export function useIngredientNames(ids: readonly string[]) {
+  const asked = [...new Set(ids)].sort();
+  return useQuery({
+    queryKey: ['ingredient-names', asked],
+    enabled: asked.length > 0,
+    queryFn: async (): Promise<IngredientName[]> => {
+      const { data, error } = await supabase.from('app_item_presentation').select('id, name').in('id', asked);
+      if (error) throw error;
+      return (data ?? []).filter((i): i is IngredientName => !!i.id && !!i.name);
+    },
+  });
+}

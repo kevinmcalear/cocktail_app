@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { addPick, groupByRing, labelPos, layoutLabels, MAP_SIZE, mapSizeFor, placePairs, RINGS } from './flavorMap';
+import { addPick, centreLines, groupByRing, labelPos, layoutLabels, MAP_SIZE, mapSizeFor, placePairs, RINGS } from './flavorMap';
 
 const pairs = Array.from({ length: 25 }, (_, i) => ({ id: `p${i}`, name: `Pair ${i}`, score: 25 - i, together: [25 - i] }));
 const placed = placePairs(pairs);
@@ -71,5 +71,21 @@ assert.deepEqual(groupByRing(pairs.slice(0, 5)).map((g) => g.ring.label), ['Clos
 assert.deepEqual(addPick(['a'], 'b'), ['a', 'b']);
 assert.deepEqual(addPick(['a', 'b', 'c'], 'd'), ['b', 'c', 'd']);
 assert.deepEqual(addPick(['a', 'b'], 'a'), ['a', 'b']);
+
+// The middle: names fit across the circle, narrower away from its middle.
+const fitsCircle = (lines: { text: string; dy: number }[], r: number) =>
+  lines.every((l) => l.text.length * 6.4 <= 2 * Math.sqrt(r * r - (Math.abs(l.dy) + 6.5) ** 2) - 8);
+// A phone's circle (r 40): a lone long name breaks at a space; two names are cut short.
+const one = centreLines(['Añejo Tequila'], 40, 13);
+assert.deepEqual(one.map((l) => l.text), ['Añejo', 'Tequila']);
+assert.ok(fitsCircle(one, 40));
+const two = centreLines(['Añejo Tequila', 'Sweet Vermouth'], 40, 13);
+assert.deepEqual(two.map((l) => l.text), ['Añejo Teq…', 'Sweet Ver…']);
+assert.ok(fitsCircle(two, 40) && two[0].dy < 0 && two[1].dy > 0);
+const three = centreLines(['Añejo Tequila', 'Sweet Vermouth', 'Campari'], 40, 13);
+assert.ok(fitsCircle(three, 40) && three[1].dy === 0 && three[2].text === 'Campari');
+// A desktop circle (r 62) keeps them whole; a short name never changes.
+assert.deepEqual(centreLines(['Añejo Tequila', 'Sweet Vermouth'], 62, 13).map((l) => l.text), ['Añejo Tequila', 'Sweet Vermouth']);
+assert.deepEqual(centreLines(['Gin'], 40, 13), [{ text: 'Gin', dy: 0 }]);
 
 console.log('flavorMap checks passed');
