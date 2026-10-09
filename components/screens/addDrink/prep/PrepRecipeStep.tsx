@@ -6,8 +6,10 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { partsText, prepAmounts, prepYield, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
+import { listAllergens } from '@/lib/allergens';
+import { partsText, prepAmounts, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
+import { prepFacts } from '@/lib/techniques/template';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 
@@ -22,12 +24,14 @@ const VIEWS = [
   { value: 'parts', label: 'Parts' },
   { value: 'amounts', label: 'Amounts' },
 ] as const;
-const UNITS = ['g', 'ml', 'each', ''] as const;
+const UNITS = ['g', 'ml', 'tsp', 'drop', 'each', ''] as const;
 
 /**
  * New prep, the recipe: parts of one base line, which carries the amount
  * (step it up or down and the rest follows). Lines can be swapped, removed
- * or added; a line with its own amount (2 chilies) stays as typed.
+ * or added; a line with its own amount (2 chilies) stays as typed. A
+ * stand-in from a technique ("Spirit") shows as "Pick the spirit" and has to
+ * be picked or taken out before the prep can be added.
  */
 export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeStepProps) {
   const ds = useDs();
@@ -36,6 +40,8 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
   const amounts = prepAmounts(draft);
   const base = draft.lines.find((l) => l.key === draft.baseKey);
   const makes = prepYield(draft);
+  const waiting = slotMessage(draft);
+  const facts = prepFacts(draft.lines.filter((l) => !l.slot).map((l) => l.name));
   const change = (key: string, c: Partial<PrepDraftLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (l: PrepDraftLine) => {
     const lines = draft.lines.filter((x) => x.key !== l.key);
@@ -59,16 +65,16 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
           const shown = amount !== null ? formatQuantity(toQuantity(amount, l.unit) ?? { kind: 'count', value: amount, unit: l.unit || 'each' }) : '';
           return l.key === swapKey ? (
             <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
-              <IngredientSearch {...search} label={`Swap ${l.name} for…`} autoFocus onCancel={() => setSwapKey(null)} onPick={(p) => { change(l.key, { id: p.id, name: p.name }); setSwapKey(null); }} />
+              <IngredientSearch {...search} label={l.slot ? `Pick the ${l.slot}` : `Swap ${l.name} for…`} autoFocus onCancel={() => setSwapKey(null)} onPick={(p) => { change(l.key, { id: p.id, name: p.name, slot: undefined }); setSwapKey(null); }} />
             </View>
           ) : (
             <View key={l.key} role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
               <IngredientThumb id={l.id} name={l.name} size={36} />
-              <PressableScale accessibilityLabel={`${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.name}>
-                <Body numberOfLines={1}>{l.name}</Body>
-                {isBase ? <Caption tone="accent">The base</Caption> : view === 'parts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
+              <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.name}>
+                <Body numberOfLines={1} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
+                {isBase ? <Caption tone="accent">The base</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'parts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
               </PressableScale>
-              {isBase ? (
+              {isBase && l.parts !== null ? (
                 <View style={[styles.box, { backgroundColor: ds.c.raised }]}>
                   <PressableScale accessibilityLabel={`Less ${l.name}`} onPress={() => set({ baseAmount: Math.max(step, draft.baseAmount - step) })} style={styles.tap}>
                     <IconSymbol name="minus" size={16} color={ds.c.ink} />
@@ -97,12 +103,19 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
           );
         })}
       </View>
+      {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
       <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: 'g', amount: '' }] })} />
       <View style={styles.facts}>
         <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>
           <Caption tone="muted">Makes about</Caption>
           <Body>{makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'}</Body>
         </View>
+        {facts.allergens.length || facts.contains.length ? (
+          <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>
+            <Caption tone="muted">Contains</Caption>
+            <Body>{[listAllergens(facts.allergens), ...facts.contains.map((c) => c.toLowerCase())].filter(Boolean).join(', ')}</Body>
+          </View>
+        ) : null}
       </View>
       <Caption tone="muted">“Makes about” is a guess from the weights. Your first batch in Make mode sets the real number.</Caption>
     </View>

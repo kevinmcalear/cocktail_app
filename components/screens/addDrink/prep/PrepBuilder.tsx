@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Modal } from 'react-native';
 
 import { IngredientDrawing } from '@/components/ds';
-import { guessKind, prepFromTechnique, startPrep, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
+import { guessKind, openSlots, prepFromTechnique, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { prepCardFor } from '@/lib/techniques/makeIt';
+import { prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
 
 import type { CatalogIngredient } from '../IngredientSearch';
@@ -26,6 +26,8 @@ export interface PrepBuilderProps {
   drinkName: string;
   /** Editing one already in the drink: opens on its recipe. */
   initial?: PrepDraft | null;
+  /** Make it house from a line: the bottle it changes, and the "with what" if known. */
+  picked?: { base?: PrepPick | null; adjunct?: PrepPick | null };
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
   onDone: (draft: PrepDraft) => void;
@@ -47,22 +49,31 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-function Builder({ name, drinkName, initial, ingredients, aliases, onDone, onClose }: PrepBuilderProps & { name: string }) {
+/** A new prep's first draft: the kind its name says, else the technique that most likely makes it, else blank. */
+function firstDraft(name: string, picked: PrepBuilderProps['picked']): PrepDraft {
+  const kind = guessKind(name);
+  const way = kind ? null : waysToMake(name)[0];
+  return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
+}
+
+function Builder({ name, drinkName, initial, picked, ingredients, aliases, onDone, onClose }: PrepBuilderProps & { name: string }) {
   const [step, setStep] = useState<Step>(initial ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [draft, setDraft] = useState<PrepDraft>(() => initial ?? startPrep(guessKind(name) ?? 'other', name));
+  const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked));
   const at = STEPS.indexOf(step);
   const go = (to: Step) => {
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);
     setStep(to);
   };
   const back = () => (at > 0 ? go(STEPS[at - 1]) : onClose());
-  const next = () => (step === 'method' ? onDone(draft) : go(STEPS[at + 1]));
+  const next = () => (step === 'method' ? onDone(withFacts(draft)) : go(STEPS[at + 1]));
+  // A stand-in line ("Spirit") is never saved: pick it or take it out first.
+  const ready = draft.lines.some((l) => l.name.trim()) && (step === 'kind' || !openSlots(draft).length);
   const pickKind = (kind: PrepKindId, hot = false) => setDraft(startPrep(kind, name, hot));
   const pickTechnique = (id: string) => {
     const t = techniqueById(id);
     if (!t) return;
-    setDraft(prepFromTechnique(t, name, prepCardFor(t)));
+    setDraft(prepFromTechnique(t, name, prepCardFor(t), picked));
   };
 
   return (
@@ -94,9 +105,9 @@ function Builder({ name, drinkName, initial, ingredients, aliases, onDone, onClo
         <WizardFooter
           nextLabel={step === 'kind' ? 'Next: recipe' : step === 'recipe' ? 'Next: method' : `Add it to ${drinkName || 'the drink'}`}
           optional={step === 'kind'}
-          canNext={draft.lines.some((l) => l.name.trim())}
+          canNext={ready}
           saving={false}
-          onSkip={() => onDone(draft)}
+          onSkip={() => go('recipe')}
           onNext={next}
         />
       }
