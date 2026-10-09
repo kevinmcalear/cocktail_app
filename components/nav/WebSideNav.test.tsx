@@ -20,6 +20,7 @@ jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
 jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
+jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true }) }));
 const mockPush = jest.fn();
 
 const links = () => screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
@@ -99,7 +100,8 @@ test('New opens the create sheet with the draft count, and each choice goes wher
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   expect(screen.getByText('2')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Ingredient. A bottle, or something made in house' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/add-ingredient');
+  // Made at the venue you're in, not your home bar.
+  expect(mockPush).toHaveBeenLastCalledWith('/add-ingredient?barId=caretakers');
 
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));

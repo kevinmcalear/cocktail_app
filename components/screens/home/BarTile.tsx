@@ -29,13 +29,15 @@ interface BarTileProps {
   ghost?: boolean;
   /** The corner mark: picked, can be added, or taken off on a tap. */
   badge?: Badge | null;
+  /** A long press: My Bar's tiles start taking things off, like a home screen. */
+  onLongPress?: () => void;
 }
 
 /**
  * One thing on your bar, the same everywhere on My Bar and in Add to your
  * bar: its drawing on the house paper, the name, and a line about it.
  */
-export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge }: BarTileProps) {
+export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge, onLongPress }: BarTileProps) {
   const ds = useDs();
   return (
     <PressableScale
@@ -44,6 +46,7 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={styles.tile}
     >
       <View style={[styles.square, ghost ? [styles.ghost, { borderColor: ds.c.lineStrong }] : null, checked ? { borderColor: ds.accentText } : null]}>
@@ -62,6 +65,15 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
       </View>
     </PressableScale>
   );
+}
+
+/**
+ * The way to add to a section, as the first tile in its grid: where the next
+ * thing will go, dashed so it never reads as something you have.
+ */
+export function AddTile({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  return <BarTile name={label} picture={<View style={styles.plus}><IconSymbol name="plus" size={28} color={ds.c.ink} /></View>} role="button" accessibilityLabel={label} ghost onPress={onPress} />;
 }
 
 function TileBadge({ badge }: { badge: Badge }) {
@@ -96,6 +108,7 @@ const styles = StyleSheet.create({
   faded: { opacity: 0.4 },
   badge: { position: 'absolute', top: space.sm, right: space.sm, width: 26, height: 26, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   text: { gap: 2 },
+  plus: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -half, rowGap: space.lg },
   cell: { paddingHorizontal: half },
 });
