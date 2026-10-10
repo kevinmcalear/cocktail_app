@@ -47,7 +47,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { session, user, loading, passwordRecovery } = useAuth();
+  const { session, user, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
@@ -67,23 +67,19 @@ function RootLayoutNav() {
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
     const authScreen = segments.at(1);
-    // stay on recovery / email-link routes while session is established
-    const stayInAuth =
-      authScreen === 'reset-password' ||
-      authScreen === 'callback' ||
-      passwordRecovery;
+    // stay on the email-link route while the session is established
+    const stayInAuth = authScreen === 'callback';
 
     const to = authRedirect({
       hasSession: !!session,
       inAuthGroup,
       authScreen,
       stayInAuth,
-      passwordRecovery,
       segment: segments[0],
       needsOnboarding: needsOnboarding(session?.user.user_metadata),
     });
     if (to) router.replace(to);
-  }, [session, loading, segments, pathname, passwordRecovery]);
+  }, [session, loading, segments, pathname]);
 
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).

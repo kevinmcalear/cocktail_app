@@ -16,7 +16,6 @@ const mockSaveMenu = jest.fn();
 const mockSaveDrink = jest.fn();
 const mockAccept = jest.fn();
 const mockDecline = jest.fn();
-const mockUpdatePassword = jest.fn();
 const mockSaveTaste = jest.fn();
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
 let mockInvitedAt: string | undefined;
@@ -28,7 +27,7 @@ let mockBars: { id: string; display_name: string; locality: string | null; postc
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updatePassword: mockUpdatePassword }),
+  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false }),
 }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useMyInvites: () => ({ data: mockInvites, isLoading: false }),
@@ -67,8 +66,6 @@ beforeEach(() => {
   mockInvites = [];
   mockAccept.mockReset();
   mockDecline.mockReset();
-  mockUpdatePassword.mockReset();
-  mockUpdatePassword.mockResolvedValue({ error: null });
   mockPeople = [];
   mockBars = [attaboy];
   mockReplace.mockClear();
@@ -229,7 +226,7 @@ describe('OnboardingScreen', () => {
     expect(mockCreateBar).toHaveBeenCalledWith('Little Rye', expect.anything());
   });
 
-  test('an invitee accepts, names themselves with a password, picks units, and their job is saved', async () => {
+  test('an invitee accepts, names themselves (no password), picks units, and their job is saved', async () => {
     mockInvitedAt = '2026-10-07T00:00:00Z';
     mockInvites = [caretakers];
     mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
@@ -243,11 +240,8 @@ describe('OnboardingScreen', () => {
 
     expect(screen.getByText('Step 1 of 3')).toBeTruthy();
     expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
+    expect(screen.queryByLabelText('Password')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.getByText('Use at least 6 characters.')).toBeTruthy();
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'local-pass');
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(mockUpdatePassword).toHaveBeenCalledWith('local-pass');
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
     expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender' }, expect.anything());
 
