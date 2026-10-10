@@ -6,6 +6,7 @@ import { Body, Caption, Headline, LockedSection, SpecRow, useDs } from '@/compon
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
+import { HouseMadeSheet } from './HouseMadeSheet';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
@@ -67,6 +68,8 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
   const unit: SpecUnit = specUnit;
   const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
+  // A house-made line opens in place (board drink-sheet-housemade); anything else goes to its page.
+  const [houseLine, setHouseLine] = useState<(typeof lines)[number] | null>(null);
   const opensAt = (level: number | undefined) => (level ? roleLabel(level) : 'a higher role');
 
   if (!lines.length) {
@@ -118,11 +121,12 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
             detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
-            onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
+            onPress={l.ingredientId && !preview ? () => (l.houseMade ? setHouseLine(l) : router.push(`/ingredient/${l.ingredientId}` as never)) : undefined}
           />
         ))}
       </View>
       {children}
+      {houseLine ? <HouseMadeSheet line={houseLine} onClose={() => setHouseLine(null)} /> : null}
       {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}
       {!access.prep && levels ? (
         <LockedSection title="Prep notes" unlocked={false} opensAt={opensAt(levels.prep)}>

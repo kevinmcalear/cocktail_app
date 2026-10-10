@@ -32,3 +32,22 @@ export async function shareLink(url: string, title: string): Promise<void> {
     showMessage("Couldn't share the link", url);
   }
 }
+
+/** Share some text (a batch to make): the share sheet, or the clipboard on the web. */
+export async function shareText(text: string, title: string): Promise<void> {
+  try {
+    if (Platform.OS !== 'web') {
+      await Share.share({ message: text, title });
+      return;
+    }
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      await navigator.share({ text, title });
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    Burnt.toast({ title: 'Copied', preset: 'done', duration: 2 });
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return;
+    showMessage("Couldn't share it", text);
+  }
+}

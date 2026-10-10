@@ -8,6 +8,7 @@ import { BackbarTheme, BrandProvider, GlassButton, useBreakpoint, useDs, useGutt
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
@@ -15,6 +16,7 @@ import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
+import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
@@ -98,6 +100,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const staff = !home && (teamRole !== null || !!preview);
   const viewingAs = teamRole !== null && role < teamRole;
   const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
+  // The batch sheet's header names the spec: the house spec and its version at a venue.
+  const caps = useCapabilities(staff && !preview ? item.bar_id : null).data ?? [];
+  const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
   const { facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
@@ -121,7 +126,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     scrollY.value = e.contentOffset.y;
   });
   const glassKey = glass?.icon_key || glass?.name || null;
-  const actions = useDrinkActions(item, heroPic, lines.flatMap((l) => (l.ingredient ? [l.ingredient] : [])));
+  const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
   const share = () => void shareLink(drinkUrl(item.id), item.name);
   const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
 
@@ -219,6 +224,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
           serviceStyle={item.service_style ?? null}
           canEdit={canEdit}
           accent={venue?.accent ?? undefined}
+          specLabel={item.bar_id ? `House spec${version ? ` · version ${version}` : ''}` : method === 'stirred' ? 'For the freezer' : item.name}
+          barId={staff ? item.bar_id : null}
+          canPrep={caps.includes('house_made')}
         />
       ) : null}
       {strength ? (
