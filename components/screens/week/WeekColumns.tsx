@@ -16,8 +16,8 @@ interface DayProps {
   onAdd?: (day: string) => void;
 }
 
-/** Desktop: the week as seven columns of cards, today first and underlined in the accent. */
-export function WeekColumns({ days, from, member, onAdd }: DayProps) {
+/** Desktop: the week as seven columns of cards, today first and underlined in the accent. `bar` names each card's bar, for home. */
+export function WeekColumns({ days, from, member, onAdd, bar }: DayProps & { bar?: boolean }) {
   const ds = useDs();
   return (
     <View style={styles.grid}>
@@ -32,7 +32,7 @@ export function WeekColumns({ days, from, member, onAdd }: DayProps) {
               </DsText>
             </View>
             {items.map((item) => (
-              <WeekCard key={`${item.kind}-${item.id}`} item={item} member={member} />
+              <WeekCard key={`${item.kind}-${item.id}`} item={item} member={member} bar={bar} />
             ))}
             {onAdd ? <AddButton day={h.date} onPress={() => onAdd(day)} /> : null}
           </View>
@@ -69,11 +69,11 @@ export function WeekAgenda({ days, from, member, onAdd, bar }: DayProps & { bar?
   );
 }
 
-function WeekCard({ item, member }: { item: WeekItem; member: boolean }) {
+function WeekCard({ item, member, bar }: { item: WeekItem; member: boolean; bar?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const color = useDotColor()(item);
-  const detail = detailLine(item);
+  const detail = [bar ? item.barName : null, detailLine(item)].filter(Boolean).join(' · ');
   const teamOnly = item.kind === 'event' && !item.isPublic;
   return (
     <PressableScale
