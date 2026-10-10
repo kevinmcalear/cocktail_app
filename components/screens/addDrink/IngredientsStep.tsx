@@ -14,7 +14,7 @@ import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
-import { BalanceCard, GoesWith } from './GoesWith';
+import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
@@ -68,6 +68,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
+  // A bottle compares as its generic (Del Maguey Vida is Mezcal) when matching classics.
+  const genericId = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? id;
   // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
   const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
   const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
@@ -195,6 +197,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onClose={() => setHouseKey(null)}
       />
 
+      {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
+      {forDrink && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith
@@ -207,11 +211,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 ))}
               </View>
             }
+            after={<CloseToClassic ids={draft.lines.flatMap((l) => (l.id ? [genericId(l.id)] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
           />
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>
       )}
-      {forDrink ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
     </View>
   );
 }

@@ -3,20 +3,30 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Field, PressableScale, useDs } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
+import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople } from '@/hooks/useProfiles';
 import { suggestClassic } from '@/lib/classics';
+import { withArticle } from '@/lib/closestClassic';
 import { searchByName, type StepProps } from '@/lib/drinkWizard';
 
+import type { CatalogIngredient } from './IngredientSearch';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
+interface CreditsStepProps extends StepProps {
+  /** The venue it's added at ("Little Rye"), credited too; null at home. */
+  venueName: string | null;
+  ingredients: readonly CatalogIngredient[];
+}
 
 /**
  * Who made it (you by default, someone with a profile, or nobody yet), who
- * made it with them, and the classic it's a riff on. A venue's drink is credited to the venue too.
+ * made it with them, and the classic it's a riff on: the one the spec is
+ * closest to (as on the ingredients step), else the one its name says. A
+ * venue's drink is credited to the venue too.
  */
-export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: boolean }) {
+export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepProps) {
   const me = useMyProfile().data ?? null;
   const [who, setWho] = useState('');
   const people = usePublicPeople(who).data ?? [];
@@ -24,7 +34,9 @@ export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: bool
   const [also, setAlso] = useState('');
   const alsoPeople = usePublicPeople(also).data ?? [];
   const [riff, setRiff] = useState('');
-  const suggested = draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined;
+  const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? id;
+  const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [generic(l.id)] : []))).data ?? null;
+  const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
   const riffResults = searchByName(riff, classics, 5);
   const other = typeof draft.creator === 'object' ? draft.creator : null;
   const mine = !!me && (draft.creator === 'me' || draft.creator === null);
@@ -51,7 +63,7 @@ export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: bool
             }}
           />
         ) : null}
-        {atVenue ? <Caption tone="muted">It’s credited to the venue too.</Caption> : null}
+        {venueName ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
       </View>
 
       <View style={styles.section}>
@@ -97,6 +109,11 @@ export function CreditsStep({ draft, set, atVenue }: StepProps & { atVenue: bool
               setRiff('');
             }}
           />
+        ) : null}
+        {close ? (
+          <Caption tone="muted">
+            {draft.riffOf?.id === close.id ? `Picked from the ingredients step: it’s close to ${withArticle(close.name)}.` : `From the ingredients step: it’s close to ${withArticle(close.name)}.`}
+          </Caption>
         ) : null}
       </View>
     </View>

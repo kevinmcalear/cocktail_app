@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { fixesFor, balanceOf } from './balance';
-import { serveGuess, suggestAmount, tidyAmount } from './specDefaults';
+import { iceWhy, serveGuess, suggestAmount, tidyAmount } from './specDefaults';
 import { capitalizeFirsts } from './stringUtils';
 
 const l = (name: string) => ({ name });
@@ -65,3 +65,8 @@ assert.equal(named.why, null);
 // Names from a catalog or label keep their own capitals.
 assert.equal(capitalizeFirsts(' brewDog punk IPA '), 'BrewDog Punk IPA');
 assert.equal(capitalizeFirsts('st-germain'), 'St-Germain');
+
+// The ice step says why: a shaken sour is served up; a picked ice has no reason to give.
+const sourLook = { name: 'House special', lines: [{ name: 'Gin', amount: 60, unit: 'ml' }, { name: 'Lemon Juice', amount: 22.5, unit: 'ml' }, { name: 'Simple Syrup', amount: 22.5, unit: 'ml' }] };
+assert.equal(iceWhy(sourLook), 'it’s shaken and served up, so no ice in the glass');
+assert.equal(iceWhy({ ...sourLook, ice: 'Cubes' }), null);

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { useDrafts } from '@/hooks/useDrafts';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
@@ -10,6 +11,7 @@ import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
+import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
@@ -233,6 +235,17 @@ export function useCreateDrink() {
         const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
+
+      // Photos picked on the review: the hero and the service angles. One that
+      // fails is said, not fatal: the drink is saved and photos can follow.
+      let photosMissed = 0;
+      for (const [angle, uri] of Object.entries(draft.photos ?? {}) as [ImageAngle, string][]) {
+        const image = await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null);
+        const linked = image ? await supabase.from('item_images').insert({ item_id: id, image_id: image.id, angle, sort_order: 0 }) : null;
+        if (!image || linked?.error) photosMissed += 1;
+      }
+      if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
+      if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
 
       // A prep made here: its recipe, method and keeping, on the row this save made.
       for (const p of ownPreps) {

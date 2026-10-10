@@ -7,7 +7,7 @@ import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space, springs } from '@/constants/tokens';
 
-import { Eyebrow } from './WizardChrome';
+import { Eyebrow, FooterInline } from './WizardChrome';
 
 /** Where the paper band sits, for the band to lay itself out. */
 export interface BandPlace {
@@ -39,9 +39,11 @@ export interface WizardFrameProps {
 
 /**
  * The screen every add wizard shares: the paper band with its drawing on
- * top (beside the step on a desktop browser), one step at a time sliding
- * in, and the footer pinned above the keyboard. On a phone the band folds
- * to its controls while typing, so the field and the keyboard both fit.
+ * top, one step at a time sliding in, and the footer pinned above the
+ * keyboard. On a phone the band folds to its controls while typing, so the
+ * field and the keyboard both fit. A desktop browser has one 760 column
+ * that scrolls as a page: the band as a rounded card, the step, then Skip
+ * and Next at its end.
  */
 export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direction, eyebrow, title, intro, footer, onHardwareBack, children }: WizardFrameProps) {
   const ds = useDs();
@@ -69,7 +71,7 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
 
   // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
   const column = breakpoint !== 'phone' || !!embedded;
-  const sideBySide = breakpoint === 'desktop' && !embedded;
+  const page = breakpoint === 'desktop' && !embedded;
   // On iOS the screen is a page sheet that starts below the status bar. Its gap
   // to the window's top is both the inset it doesn't need and what
   // KeyboardAvoidingView (which assumes it starts at the top) must add.
@@ -92,42 +94,41 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
       </WebHead>
       {/* iOS: after the first layout, so a first field's autofocus meets the right keyboard offset. */}
       {Platform.OS === 'ios' && !height ? null : (
-        <View
-          style={[
-            styles.column,
-            sideBySide && styles.wideColumn,
-            column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter },
-            { paddingBottom: bottom },
-          ]}
-        >
-          {/* A desktop browser keeps the drawing beside the step, big; elsewhere it's a band on top. */}
-          <View style={sideBySide ? styles.row : styles.flex}>
-            <View style={sideBySide && styles.aside}>
-              {band({
-                top: column ? space.lg : statusBar + space.sm,
-                side: column ? space.lg : gutter,
-                rounded: column,
-                folded: typing && !column,
-                size: sideBySide ? 300 : undefined,
-              })}
-            </View>
-            <View style={styles.flex}>
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }, sideBySide && styles.sideScroll]}>
+        <View style={[styles.column, page && styles.pageColumn, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, { paddingBottom: page ? 0 : bottom }]}>
+          {page ? (
+            <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
+              {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
+              <SlideIn key={stepKey} direction={direction}>
+                <Heading eyebrow={eyebrow} title={title} intro={intro} />
+                {children}
+                <FooterInline.Provider value>{footer}</FooterInline.Provider>
+              </SlideIn>
+            </ScrollView>
+          ) : (
+            <>
+              {band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
+              <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
                 <SlideIn key={stepKey} direction={direction}>
-                  <View style={styles.heading}>
-                    <Eyebrow>{eyebrow}</Eyebrow>
-                    <Title role="heading">{title}</Title>
-                    {intro ? <Body tone="muted">{intro}</Body> : null}
-                  </View>
+                  <Heading eyebrow={eyebrow} title={title} intro={intro} />
                   {children}
                 </SlideIn>
               </ScrollView>
               <View style={{ paddingHorizontal: side }}>{footer}</View>
-            </View>
-          </View>
+            </>
+          )}
         </View>
       )}
     </KeyboardAvoidingView>
+  );
+}
+
+function Heading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
+  return (
+    <View style={styles.heading}>
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <Title role="heading">{title}</Title>
+      {intro ? <Body tone="muted">{intro}</Body> : null}
+    </View>
   );
 }
 
@@ -150,12 +151,11 @@ function SlideIn({ direction, children }: { direction: 1 | -1; children: ReactNo
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' },
-  wideColumn: { maxWidth: 1080 },
-  row: { flex: 1, flexDirection: 'row', gap: space.xxl },
-  aside: { width: 380 },
+  // ponytail: centred like every wizard today; b07 (pages sit left, with crumbs) is the shell's to place.
+  pageColumn: { maxWidth: 760 + 2 * space.xxl },
   flex: { flex: 1 },
   scroll: { paddingTop: space.lg, paddingBottom: space.xl },
-  sideScroll: { paddingTop: 0 },
+  page: { gap: space.lg, paddingTop: space.xxl, paddingBottom: space.xxxl },
   body: { gap: space.lg },
   heading: { gap: space.xs },
 });

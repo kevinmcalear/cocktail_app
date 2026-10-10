@@ -8,6 +8,7 @@ import { IngredientsStep } from './IngredientsStep';
 
 // Pairings come from the database; these tests are about the field.
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));

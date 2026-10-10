@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
@@ -22,7 +23,7 @@ export const STEP_COPY: Record<WizardStep, { title: string; short: string; intro
   glass: { title: 'What glass?', short: 'Glass', optional: true },
   ice: { title: 'What ice?', short: 'Ice', optional: true },
   // The id stays 'garnish' so drafts kept on a device still open here.
-  garnish: { title: 'How’s it finished?', short: 'Finish', optional: true },
+  garnish: { title: 'Any garnish?', short: 'Garnish', optional: true },
   credits: { title: 'Who made it?', short: 'Credits', optional: true },
   notes: { title: 'Anything to add?', short: 'Notes', optional: true },
   publish: { title: 'Who can see it?', short: 'Who sees it', optional: true },
@@ -74,6 +75,14 @@ export interface WizardDraft {
   notes: string;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
+  /**
+   * Photos picked on the review, by angle (a local file, or a blob: URL on
+   * the web), uploaded once the drink is saved. An empty slot shows a sketch.
+   * ponytail: a web blob: URL dies with the tab, so a draft kept across a
+   * reload loses its photos (the slots go back to sketches); upload on pick
+   * if that bites.
+   */
+  photos?: Partial<Record<ImageAngle, string>>;
 }
 
 export const EMPTY_DRAFT: WizardDraft = {
@@ -195,7 +204,32 @@ export const COMMON_INGREDIENTS = [
   'Gin', 'Lime juice', 'Lemon juice', 'Simple syrup', 'Sweet vermouth', 'Campari', 'Angostura bitters', 'Rye whiskey',
   'Bourbon', 'White rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry vermouth', 'Soda water', 'Egg white',
 ] as const;
-export const COMMON_METHODS = ['Shake', 'Stir', 'Build', 'Throw', 'Blend', 'Swizzle', 'Dry shake', 'Muddle'] as const;
+/** The method step's chips, in its three groups, all shown. */
+export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
+  { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Blend', 'Muddle'] },
+  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Top with foam'] },
+  { label: 'Finish', methods: ['Float', 'Mist', 'Smoke', 'Carbonate'] },
+];
+export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
+/** What a picked method's step card says under its name. */
+const METHOD_DETAIL: Record<string, string> = {
+  shake: 'with ice',
+  stir: 'with ice, until cold',
+  build: 'in the glass',
+  throw: 'between two tins',
+  swizzle: 'on crushed ice',
+  blend: 'with ice',
+  muddle: 'in the tin first',
+  'dry shake': '15 s, no ice',
+  'reverse dry shake': 'with ice, then again without',
+  'whip (isi)': 'in a charged siphon',
+  'top with foam': 'spooned on last',
+  float: 'over the back of a spoon',
+  mist: 'over the top',
+  smoke: 'the glass first',
+  carbonate: 'chilled, then charged',
+};
+export const methodDetail = (name: string): string | null => METHOD_DETAIL[norm(name)] ?? null;
 export const COMMON_GLASSES = ['Coupe', 'Nick & Nora', 'Martini', 'Rocks', 'Highball', 'Collins', 'Flute', 'Wine', 'Julep cup', 'Mug', 'Tiki'] as const;
 export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble', 'Spear', 'Sphere'] as const;
 
