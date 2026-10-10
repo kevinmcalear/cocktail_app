@@ -71,7 +71,7 @@ export function WeekScreen() {
           title="This week"
           subtitle={hydrated ? subtitle : null}
           width={wide ? 'wide' : 'text'}
-          onBack={router.canGoBack() ? () => router.back() : undefined}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
           action={canAdd ? <Button label="Add event" icon="plus" onPress={() => setAddingOn(toDay(from))} /> : null}
         />
         {venue ? (
