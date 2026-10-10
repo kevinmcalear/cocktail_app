@@ -20,7 +20,7 @@ import { usePublicBars } from '@/hooks/useRankings';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
-import { findDrinks } from '@/lib/discover';
+import { findDrinks, foldName } from '@/lib/discover';
 import { barInArea, distanceKm, findBars, type DiscoverBar } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { findKinds, kindCaption, STYLES } from '@/lib/drinkStyles';
@@ -191,7 +191,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       {onKind && style ? (
         <StyleCard label={style.label} count={strong.length} where={where} takesIn={styleTakesIn(style.id)} drawingId={pick?.id} onPress={() => onKind(style.id)} />
       ) : everywhere ? (
-        <BrowseChips style={style} ingredient={ingredients[0]} />
+        <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
       ) : null}
       {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
       <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
