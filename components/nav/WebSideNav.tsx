@@ -7,6 +7,8 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { isDesktopShell } from '@/lib/desktopShell';
+import { isEightBallKey } from '@/lib/eightBallKey';
 import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 import { currentProps } from '@/lib/a11yState';
@@ -79,17 +81,17 @@ function SideNavBody() {
   const searching = useSearchPalette((s) => s.open);
   const setSearching = useSearchPalette((s) => s.setOpen);
 
-  // ponytail: ⌘K, ⌘8 and N live on the always-mounted sidebar. ⌘K toggles the search over this page; N toggles New.
-  // Browsers keep ⌘N for a new window, so New is a bare N, ignored while typing in a field.
-  // ⌘8 (Ctrl+8 off Apple) opens the eight ball, the hidden Easter egg phones get with a shake. Digit8 so layouts
-  // with 8 on a shifted key work too.
+  // ponytail: ⌘K, the eight ball key and N live on the always-mounted sidebar. ⌘K toggles the search over this page;
+  // N toggles New. Browsers keep ⌘N for a new window, so New is a bare N, ignored while typing in a field.
+  // The eight ball, the hidden Easter egg phones get with a shake, is ⌘8 in the desktop app and ⇧⌘8 in a browser,
+  // which keeps ⌘8 for its eighth tab (lib/eightBallKey.ts).
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearching(!useSearchPalette.getState().open);
-      } else if ((e.metaKey || e.ctrlKey) && (e.key === '8' || e.code === 'Digit8')) {
+      } else if (isEightBallKey(e, !isDesktopShell())) {
         e.preventDefault();
         setSearching(false);
         useEightBallStore.getState().setOpen(true);

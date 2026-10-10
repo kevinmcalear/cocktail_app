@@ -13,7 +13,7 @@ import { EightBall } from './EightBall';
  * anywhere. Shake the phone on any main tab to open it; shake again while it's
  * open for another drink. Listens only while the app is in front and a tab is
  * showing, so a drink page, sheet route or the background never pick up a
- * shake. Wide web opens it with ⌘8 (WebSideNav) or "Pick for me" in the ⌘K
+ * shake. Wide web opens it with ⇧⌘8 (⌘8 in the desktop app; WebSideNav) or "Pick for me" in the ⌘K
  * search (SearchPaletteCard), through useEightBallStore. Mounted once, in the
  * root layout, so it opens over any page.
  */
