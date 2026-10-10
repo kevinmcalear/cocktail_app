@@ -56,7 +56,8 @@ export function WeekScreen() {
   // Dates come from the device's clock, which the static web build doesn't have.
   const hydrated = useIsHydrated();
 
-  const all = (venue ? barWeek.data : myWeek.data) ?? [];
+  const week = venue ? barWeek : myWeek;
+  const all = week.data ?? [];
   const items = filterWeek(all, filter);
   const days = byDay(items, from);
   const on = upcoming(all, from);
@@ -82,14 +83,21 @@ export function WeekScreen() {
           </View>
         ) : null}
         {!hydrated ? null : wide ? (
-          <WeekColumns days={days} from={from} member={venue} onAdd={canAdd ? setAddingOn : undefined} />
+          <WeekColumns days={days} from={from} member={venue} bar={!venue} onAdd={canAdd ? setAddingOn : undefined} />
         ) : (
           <>
             <WeekRibbon days={days} today={toDay(from)} />
             <WeekAgenda days={days} from={from} member={venue} bar={!venue} onAdd={canAdd ? setAddingOn : undefined} />
           </>
         )}
-        {!on.length && !(venue ? barWeek.isLoading : myWeek.isLoading) ? <EmptyWeek venue={venue} canAdd={canAdd} /> : null}
+        {week.isError ? (
+          <View style={styles.empty}>
+            <Body tone="muted">Couldn’t load the week.</Body>
+            <Button label="Try again" variant="secondary" onPress={() => week.refetch()} style={styles.retry} />
+          </View>
+        ) : !on.length && !week.isLoading ? (
+          <EmptyWeek venue={venue} canAdd={canAdd} />
+        ) : null}
         <View style={[styles.lower, wide && styles.lowerWide]}>
           <NewDrinks drinks={fresh} from={from} venue={venue} barName={active?.name} />
           {venue ? <GuestView items={on.filter((i) => i.isPublic)} from={from} barName={active?.name} /> : null}
@@ -169,6 +177,7 @@ const styles = StyleSheet.create({
   body: { gap: space.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   empty: { gap: space.sm, paddingVertical: space.md },
+  retry: { alignSelf: 'flex-start' },
   lower: { gap: space.xl, marginTop: space.md },
   lowerWide: { flexDirection: 'row', alignItems: 'flex-start' },
   flexPanel: { flex: 1, minWidth: 0 },
