@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -53,7 +53,9 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const breakpoint = useBreakpoint();
   const { area, onArea, preferNear, near, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
-  const [kinds, setKinds] = useState<string[]>([]);
+  // Search's Browse chips open Discover on a style (/discover?kind=negroni).
+  const { kind } = useLocalSearchParams<{ kind?: string }>();
+  const [kinds, setKinds] = useState<string[]>(() => (typeof kind === 'string' && kind ? [kind] : []));
   const [showClosed, setShowClosed] = useState(false);
   const [search, setSearch] = useState('');
   const [scope, setScope] = useState<SearchScope>('area');
