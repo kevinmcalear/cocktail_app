@@ -14,10 +14,10 @@ export function useIngredientUse(ingredientId: string | null | undefined) {
     staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<number> => {
       const { count, error } = await supabase
-        .from('recipes')
-        .select('recipe_item_id, drink:items!new_recipes_recipe_item_id_fkey!inner(item_type)', { count: 'exact', head: true })
-        .eq('ingredient_item_id', ingredientId!)
-        .eq('drink.item_type', 'cocktail');
+        .from('items')
+        .select('id, recipes:app_recipe_presentation!recipe_item_id!inner(id)', { count: 'exact', head: true })
+        .eq('item_type', 'cocktail')
+        .eq('recipes.ingredient_item_id', ingredientId!);
       if (error) throw error;
       return count ?? 0;
     },
