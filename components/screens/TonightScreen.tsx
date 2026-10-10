@@ -5,7 +5,6 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Body, Button, GlassButton, Headline, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { MenuCard } from '@/components/screens/menus/MenuRows';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -58,12 +57,7 @@ export function TonightScreen() {
             <PageHeader
               title="Tonight"
               subtitle={today()}
-              action={
-                <>
-                  <EightBallButton />
-                  {active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
-                </>
-              }
+              action={active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
             />
             {onNow.map((m) => (
               <MenuCard key={m.id} menu={m} now={now} />

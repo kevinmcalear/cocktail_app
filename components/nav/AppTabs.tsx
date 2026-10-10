@@ -1,12 +1,13 @@
 import { NativeTabs } from 'expo-router/native-tabs';
+import type { SFSymbol } from 'expo-symbols';
 import { View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { FEATURES } from '@/constants/features';
 import { useMode } from '@/hooks/useMode';
+import { useServiceDay } from '@/hooks/useServiceDay';
 
-import { EightBallProvider } from '@/components/screens/eightball/EightBallProvider';
-
+import { calendarDayImage, hasNumberedCalendarSymbols } from './tabCalendar';
 import { VenueBrandProvider } from './VenueBrandProvider';
 
 /**
@@ -15,13 +16,12 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * AppTabs.web.tsx. Venue mode: Tonight, Library, Discover. Home mode:
  * Discover, My Bar, Collection, You. Prep and Study are switched off in
  * constants/features.ts. Menus stay a route, opened from Tonight and Library.
+ * Tonight is a calendar page showing the date, which turns over at 6am.
  */
 export function AppTabs() {
   return (
     <VenueBrandProvider>
-      <EightBallProvider>
-        <Tabs />
-      </EightBallProvider>
+      <Tabs />
     </VenueBrandProvider>
   );
 }
@@ -30,6 +30,7 @@ function Tabs() {
   const ds = useDs();
   const { mode, ready } = useMode();
   const home = mode === 'home';
+  const day = useServiceDay() ?? 1;
   // Venue and home have different tabs, and switching remounts them all:
   // wait for the mode (a moment, on a first launch) rather than open the wrong set.
   if (!ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
@@ -39,11 +40,16 @@ function Tabs() {
   return (
     <NativeTabs tintColor={ds.accentText} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="index" hidden={home}>
-        <NativeTabs.Trigger.Icon sf={{ default: 'moon.stars', selected: 'moon.stars.fill' }} md="nightlife" />
+        {/* No filled variant of a dated calendar: the tint marks the selected tab. */}
+        <NativeTabs.Trigger.Icon
+          sf={hasNumberedCalendarSymbols ? (`${day}.calendar` as SFSymbol) : undefined}
+          src={calendarDayImage(day)}
+          renderingMode="template"
+        />
         <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="library" hidden={home}>
-        <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="grid_view" />
+        <NativeTabs.Trigger.Icon sf={{ default: 'book', selected: 'book.fill' }} md="menu_book" />
         <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="prep" hidden={home || !FEATURES.prep}>

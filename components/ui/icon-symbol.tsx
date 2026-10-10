@@ -108,7 +108,6 @@ const MAPPING = {
   'flag': 'outlined-flag',
   'gearshape': 'settings',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
-  'moon.stars': 'nightlife',
   'rectangle.stack': 'style',
 } satisfies IconMapping;
 
