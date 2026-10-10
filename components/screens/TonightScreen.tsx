@@ -7,6 +7,7 @@ import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { MenuCard } from '@/components/screens/menus/MenuRows';
+import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -65,6 +66,7 @@ export function TonightScreen() {
                 </>
               }
             />
+            {active ? <TonightWeek barId={active.id} /> : null}
             {onNow.map((m) => (
               <MenuCard key={m.id} menu={m} now={now} />
             ))}

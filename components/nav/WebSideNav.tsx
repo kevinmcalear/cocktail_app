@@ -15,6 +15,8 @@ import { withAlpha } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { canSeeTeam } from '@/lib/team';
 
+import { WeekNav } from '@/components/screens/week/WeekNav';
+
 import { CreateSheet } from './CreateSheet';
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { VenueSwitcher } from './VenueSwitcher';
@@ -55,7 +57,7 @@ function NavRow({ label, icon, current, hint, role = 'link', onPress }: { label:
 /**
  * The redesign's sidebar for wide web, where the tab bar is hidden: the venue
  * chip, New, search, the current mode's tabs (the same ones as the phone bar),
- * and You, so pages need no header row of their own.
+ * This week, and You, so pages need no header row of their own.
  */
 export function WebSideNav() {
   return (
@@ -128,6 +130,7 @@ function SideNavBody() {
           </View>
         ) : null}
       </View>
+      <WeekNav />
       {/* Home mode has You as a tab; venue mode keeps it at the foot, where the phone has the avatar. */}
       {mode === 'venue' ? (
         <View style={styles.you}>

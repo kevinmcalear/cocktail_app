@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Segmented, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { BarWeek } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -188,6 +189,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       ) : (
         <BarStats profile={profile} originals={originals.length} />
       )}
+
+      {profile.kind === 'bar' ? <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} /> : null}
 
       {profile.kind === 'bar' ? <BarMatches barProfileId={profile.id} /> : null}
 
