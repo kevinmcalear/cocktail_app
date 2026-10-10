@@ -14,6 +14,8 @@ export interface BarGlass {
   variant: string | null;
   name: string | null;
   maker: string | null;
+  /** The maker's page, when the glass names one (20261012430000). */
+  maker_page: { handle: string; display_name: string } | null;
   designer: string | null;
   series: string | null;
   shape_note: string | null;
@@ -33,7 +35,9 @@ export function useBarGlassware(barId: string | null | undefined) {
     queryFn: async (): Promise<BarGlass[]> => {
       const { data, error } = await supabase
         .from('bar_glassware')
-        .select('id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default, profiles!inner(bar_id, display_name)')
+        .select(
+          'id, glass, variant, name, maker, designer, series, shape_note, source_urls, is_default, profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)'
+        )
         .eq('profiles.bar_id', barId!)
         .order('sort_order')
         .order('created_at');

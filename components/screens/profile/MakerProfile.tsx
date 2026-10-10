@@ -12,6 +12,7 @@ import { makesLine, servesLine } from '@/lib/makers';
 
 import { Awards } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
+import { MakerGlassBars } from './MakerGlassBars';
 import { ProfileLinks } from './ProfileLinks';
 import { BarHeader, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
@@ -89,6 +90,8 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
           )}
         </View>
       ) : null}
+
+      {signedIn ? <MakerGlassBars profileId={profile.id} name={profile.display_name} /> : null}
     </View>
   );
 }
