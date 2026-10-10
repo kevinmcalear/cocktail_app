@@ -39,6 +39,14 @@
       "destination": "/cocktail/[id]/batch"
     },
     {
+      "source": "/cocktail/:id/service",
+      "destination": "/cocktail/[id]/service"
+    },
+    {
+      "source": "/cocktail/:id/photos",
+      "destination": "/cocktail/[id]/photos"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
@@ -27,6 +27,14 @@ interface SpecSectionProps {
   recipes: PresentationRecipe[] | null | undefined;
   /** /dev/drink only: a simulated role and levels instead of the real ones. */
   preview?: { role: number; levels: SpecLevels };
+  /** "At home" at home (board drink-phone-home); "Spec" everywhere else. */
+  heading?: string;
+  /** Beside the heading: "You have 4 of 5", "With Little Rye's bottles". */
+  caption?: string | null;
+  /** Spec line keys your shelf doesn't have: marked "Not on your shelf". */
+  missing?: readonly string[];
+  /** Under the lines, inside the section: the method at home, what to do about a missing bottle. */
+  children?: ReactNode;
 }
 
 /** The spec's proportions at a glance. Decorative: the rows carry the numbers. */
@@ -45,7 +53,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * The spec, showing exactly what this role can see. Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
@@ -64,7 +72,7 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
   if (!lines.length) {
     return (
       <View style={styles.section}>
-        <Headline role="heading">Spec</Headline>
+        <Headline role="heading">{heading}</Headline>
         <Body tone="muted">No spec yet.</Body>
       </View>
     );
@@ -72,7 +80,7 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
 
   if (!access.names) {
     return (
-      <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)}>
+      <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)} note="Method and prep notes open with it.">
         {null}
       </LockedSection>
     );
@@ -83,7 +91,10 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <Headline role="heading">Spec</Headline>
+        <View style={styles.title}>
+          <Headline role="heading">{heading}</Headline>
+          {caption ? <Caption tone="muted">{caption}</Caption> : null}
+        </View>
         {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
       </View>
       {shares ? <RatioBar shares={shares} /> : null}
@@ -104,12 +115,14 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
             optional={l.optional}
             houseMade={l.houseMade}
             note={l.note ?? undefined}
+            flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
             detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             onPress={l.ingredientId && !preview ? () => router.push(`/ingredient/${l.ingredientId}` as never) : undefined}
           />
         ))}
       </View>
+      {children}
       {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}
       {!access.prep && levels ? (
         <LockedSection title="Prep notes" unlocked={false} opensAt={opensAt(levels.prep)}>
@@ -123,6 +136,7 @@ export function SpecSection({ itemId, barId, recipes, preview }: SpecSectionProp
 const styles = StyleSheet.create({
   section: { gap: space.md },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
+  title: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

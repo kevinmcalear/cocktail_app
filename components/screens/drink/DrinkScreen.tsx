@@ -1,52 +1,38 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, BrandProvider, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
+import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
-import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
+import { useTeamRole } from '@/hooks/useTeamRole';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
-import { withPastMenuTag } from '@/lib/menuEditions';
-import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
+import { drinkUrl, shareLink } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
 import { BatchSheet } from '../batch/BatchSheet';
-import { PublishSection } from '../publishing/PublishSection';
-import { MadeAction } from '../made/MadeAction';
-import { RankActions } from '../rank/RankActions';
 import { useCollectToggle } from '../published/useCollectToggle';
-import { ReportAction } from '../safety/ReportSheet';
-import { Backstory } from './Backstory';
+import { DrinkActionBar, ACTION_BAR_HEIGHT, type BarAction } from './DrinkActionBar';
+import { DrinkBody } from './DrinkBody';
 import { DrinkControls } from './DrinkControls';
-import { DrinkCredit } from './DrinkCredit';
-import { DrinkFacts, DrinkTags } from './DrinkFacts';
 import { DrinkHero } from './DrinkHero';
-import type { ShownPicture } from './PictureViewer';
-import { AllergensSection } from './AllergensSection';
-import { ClassicLink } from './ClassicLink';
-import { ClassicNote } from './ClassicNote';
-import { CostSection } from './CostSection';
-import { FlavorSection } from './FlavorSection';
-import { ServiceSection } from './ServiceSection';
-import { SpecLockPanel } from './SpecLockPanel';
-import { SpecSection } from './SpecSection';
+import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
-import { HistorySection } from './HistorySection';
-import { MenuRuns } from './MenuRuns';
-import { PeoplePhotos } from './PeoplePhotos';
+import type { ShownPicture } from './PictureViewer';
 import { StrengthSheet } from './StrengthSheet';
+import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
 
 export interface DrinkScreenProps {
@@ -90,7 +76,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
   const home = useMode().mode === 'home';
-  const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  const signedIn = useSignedIn();
+  const { access, amountsOpenAt } = useSpecAccess(item.id, item.bar_id, preview);
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
   const lock = useSpecLock(preview ? null : item).data;
   // The bookmark: To make in Collection (collected_items).
@@ -102,10 +89,13 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
+  const teamRole = useTeamRole(preview ? null : item.bar_id);
+  // The venue's own team sees its staff rows, in venue mode (decision b49). Viewing as a lower role, the app's
+  // banner says so where the board draws it, and Share moves into More (board drink-phone-floor).
+  const staff = !home && (teamRole !== null || !!preview);
+  const viewingAs = teamRole !== null && role < teamRole;
   const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
-  // A bar's drink: when it was on the bar's menus. Ranking and collecting stay open either way.
-  const { data: menuRuns = [] } = useDrinkMenuRuns(preview || item.bar_id ? null : item.id);
 
   const { facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
     lines,
@@ -127,85 +117,47 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
+  const glassKey = glass?.icon_key || glass?.name || null;
+  const actions = useDrinkActions(item, heroPic, lines.flatMap((l) => (l.ingredient ? [l.ingredient] : [])));
+  const share = () => void shareLink(drinkUrl(item.id), item.name);
+  const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
+
+  // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
+  const barActions = (
+    [
+    canBatch ? { key: 'batch', label: 'Batch', icon: 'flask', primary: !home, accessibilityLabel: `Batch: scale this drink ${home ? 'for a party or a bottle' : 'into a bottle'}`, onPress: () => setBatchOpen(true) } : null,
+    preview ? null : { key: 'rank', label: 'Rank it', icon: 'list.number', accessibilityLabel: `Rank ${item.name} against others you've had`, onPress: actions.rank },
+    preview || lock || (home && signedIn) ? null : { key: 'made', label: actions.madeTimes ? `Made ×${actions.madeTimes}` : 'I made it', icon: 'house', accessibilityLabel: `I made ${item.name}`, onPress: actions.made },
+    ] as (BarAction | null)[]
+  ).filter((a): a is BarAction => !!a);
+  const pinned = !wide && barActions.length > 0;
 
   const body = (
-    <View style={[styles.body, { paddingHorizontal: gutter }]}>
-      <DrinkTags tags={withPastMenuTag(tags, menuRuns)} />
-      <Display>{item.name}</Display>
-      {preview ? null : <DrinkCredit itemId={item.id} />}
-      {item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null}
-      {!preview && shown.credit ? (
-        <Caption
-          tone="muted"
-          role={heroPic?.sourceUrl ? 'link' : undefined}
-          onPress={heroPic?.sourceUrl ? () => void Linking.openURL(heroPic.sourceUrl!) : undefined}
-        >
-          {shown.credit}
-        </Caption>
-      ) : null}
-      <MenuRuns runs={menuRuns} />
-      <View style={styles.actions}>
-        {canBatch ? (
-          <GlassButton
-            accessibilityLabel="Batch: scale this drink into a bottle"
-            label="Batch"
-            icon="flask"
-            onPress={() => setBatchOpen(true)}
-          />
-        ) : null}
-        {preview ? null : <RankActions item={item} picture={heroPic} />}
-        {preview || lock ? null : <MadeAction item={item} ingredients={lines.flatMap((l) => (l.ingredient ? [l.ingredient] : []))} />}
-        {preview || canEdit ? null : <ReportAction subject={item.name} targets={[{ label: item.name, target: { kind: 'item', itemId: item.id } }]} />}
-      </View>
-      <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
-      <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />
-      {home && !preview ? <FlavorSection itemId={item.id} /> : null}
-      {preview ? null : <ClassicNote itemId={item.id} />}
-      {lock ? (
-        <SpecLockPanel
-          note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
-          action={
-            <Button
-              label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'}
-              variant="secondary"
-              onPress={() => router.push(`/p/${lock.bar.handle}` as Href)}
-            />
-          }
-        />
-      ) : (
-        <SpecSection itemId={item.id} barId={item.bar_id} recipes={item.recipes as PresentationRecipe[] | undefined} preview={preview} />
-      )}
-      {item.notes && !lock ? (
-        <View style={styles.notes}>
-          <Headline role="heading">Bartender notes</Headline>
-          <Body>{item.notes}</Body>
-        </View>
-      ) : null}
-      {preview ? null : <PeoplePhotos itemId={item.id} name={item.name} glass={glass?.icon_key || glass?.name || null} wide={wide} />}
-      {home ? null : (
-        <ServiceSection
-          itemId={item.id}
-          barId={item.bar_id}
-          name={item.name}
-          links={links}
-          canEdit={canEdit}
-          glass={glass?.icon_key || glass?.name || null}
-          wide={wide}
-          lines={access.names ? lines : []}
-          showLines={access.amounts}
-          serviceStyle={item.service_style}
-          preview={preview}
-        />
-      )}
-      {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
-      {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
-      {preview ? null : <Backstory itemId={item.id} />}
-      {preview || !canEdit ? null : <ClassicLink item={item} />}
-      {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
-    </View>
+    <DrinkBody
+      item={item}
+      preview={preview}
+      home={home}
+      wide={wide}
+      canEdit={canEdit}
+      staff={staff}
+      lock={lock}
+      access={access}
+      amountsOpenAt={amountsOpenAt}
+      lines={lines}
+      facts={facts}
+      tags={tags}
+      glass={glassKey}
+      photoCredit={shown.credit ? { text: shown.credit, url: heroPic?.sourceUrl ?? null } : null}
+      toMake={toMake}
+      actions={actions}
+      onRiff={onRiff}
+      venueName={teamRole !== null ? (venue?.name ?? null) : null}
+      inlineActions={wide ? <DrinkActionBar actions={barActions} pinned={false} /> : null}
+    />
   );
 
-  const hero = <DrinkHero name={item.name} pictures={pictures} glass={glass?.icon_key || glass?.name || null} itemId={item.id} height={heroHeight} fade={!wide} />;
+  const hero = <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={heroHeight} fade={!wide} />;
+  const heroScheme = pictures[0] && !pictures[0].isSketch ? 'dark' : 'light';
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -213,17 +165,18 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         <View style={styles.row}>
           <View style={styles.heroColumn}>{hero}</View>
           <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: top + layout.minTapTarget + space.xl, paddingBottom: space.xxxl }}>
-            <View style={styles.readable}>{body}</View>
+            <View style={[styles.readable, { paddingHorizontal: gutter }]}>{body}</View>
           </ScrollView>
         </View>
       ) : (
-        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
+        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + (pinned ? ACTION_BAR_HEIGHT : 0) + space.xxxl }}>
           {hero}
-          <View style={{ marginTop: -space.xxl }}>{body}</View>
+          <View style={{ marginTop: -space.xxl, paddingHorizontal: gutter }}>{body}</View>
         </Animated.ScrollView>
       )}
+      {pinned ? <DrinkActionBar actions={barActions} pinned /> : null}
       <DrinkControls
-        media={pictures[0] && !pictures[0].isSketch ? 'photo' : 'paper'}
+        media={heroScheme === 'dark' ? 'photo' : 'paper'}
         top={top}
         heroHeight={heroHeight}
         scrollY={scrollY}
@@ -231,21 +184,13 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         saved={toMake.saved} onToggleSaved={preview ? () => {} : toMake.toggle}
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit}
+        onShare={preview || viewingAs ? undefined : share}
+        more={preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />}
       />
       {toMake.sheet}
+      {actions.sheets}
       {glassOpen ? (
-        <GlassSheet
-          visible
-          onClose={() => setGlassOpen(false)}
-          itemId={item.id}
-          name={item.name}
-          glass={glass}
-          iceName={ice?.name ?? null}
-          serveMl={item.serve_ml ?? null}
-          icePerServeG={item.ice_per_serve_g ?? null}
-          canEditDrink={canEdit}
-          accent={venue?.accent ?? undefined}
-        />
+        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} canEditDrink={canEdit} accent={venue?.accent ?? undefined} />
       ) : null}
       {canBatch && batchOpen ? (
         <BatchSheet
@@ -286,7 +231,4 @@ const styles = StyleSheet.create({
   row: { flex: 1, flexDirection: 'row' },
   heroColumn: { width: '42%' },
   readable: { maxWidth: 720, width: '100%' },
-  body: { gap: space.lg },
-  notes: { gap: space.sm },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

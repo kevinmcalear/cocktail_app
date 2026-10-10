@@ -22,6 +22,8 @@ export interface SpecRowProps {
   houseMade?: boolean;
   optional?: boolean;
   note?: string;
+  /** A word about this line for this person, as a tag: "Not on your shelf". */
+  flag?: string;
   /** A small line under the name, e.g. the ingredient's "40% ABV". */
   detail?: string;
   /** Service mode reads bigger (1.25). */
@@ -43,12 +45,12 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
-  const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note].filter(Boolean).join(', ');
+  const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
 
   const text = (
@@ -56,10 +58,11 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
       <Body style={big(type.body)}>{ingredient}</Body>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
       {note ? <Caption tone="muted">{note}</Caption> : null}
-      {houseMade || optional ? (
+      {houseMade || optional || flag ? (
         <View style={styles.tags}>
           {houseMade ? <Tag label="House-made" tone="accent" /> : null}
           {optional ? <Tag label="Optional" /> : null}
+          {flag ? <Tag label={flag} /> : null}
         </View>
       ) : null}
     </>

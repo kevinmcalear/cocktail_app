@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
@@ -27,15 +27,19 @@ interface DrinkControlsProps {
   editLabel?: string;
   /** Ingredients keep a favourites heart on the device; drinks go to To make. */
   saveAs?: 'toMake' | 'favourite';
+  /** The drink page: Share as its own button (left out while viewing as another role, when More holds it). */
+  onShare?: () => void;
+  /** The drink page's More button. On phones it holds Edit, so the pencil goes; wide screens show a labelled Edit beside it. */
+  more?: ReactNode;
 }
 
 /**
- * Close, To make and edit, pinned to the top of the drink page. Over the
+ * Close, To make, Share and More (or edit), pinned to the top of the drink page. Over the
  * hero they take the picture's colours: dark glass on a photo, light glass on
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake', onShare, more }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -77,7 +81,11 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, on
           {FEATURES.study ? (
             <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} scheme={right} onPress={onToggleStudyPile} />
           ) : null}
-          {canEdit ? <GlassButton accessibilityLabel={editLabel} icon="pencil" scheme={right} onPress={onEdit} /> : null}
+          {onShare ? <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" scheme={right} onPress={onShare} /> : null}
+          {canEdit && (!more || wide) ? (
+            <GlassButton accessibilityLabel={editLabel} icon="pencil" label={more ? 'Edit' : undefined} scheme={right} onPress={onEdit} />
+          ) : null}
+          {more}
         </View>
       </View>
     </>
@@ -86,6 +94,6 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, on
 
 const styles = StyleSheet.create({
   bar: { position: 'absolute', top: 0, left: 0, right: 0, borderBottomWidth: StyleSheet.hairlineWidth, pointerEvents: 'none' },
-  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
+  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
 });

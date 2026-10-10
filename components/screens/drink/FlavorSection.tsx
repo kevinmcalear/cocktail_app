@@ -14,11 +14,11 @@ const SHOWN_FROM = 0.15;
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
- * Home mode's flavor on the drink page: a small flower and the drink's top
- * tastes (or how well it fits you) in one row. Tapping it opens the full
- * profile in a sheet.
+ * Flavor on the drink page, in both modes (decision b50): a small flower and
+ * the drink's top tastes (or how well it fits you) in one row. Tapping it
+ * opens the full profile in a sheet.
  */
-export function FlavorSection({ itemId }: { itemId: string }) {
+export function FlavorSection({ itemId, name }: { itemId: string; name: string }) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
   const { data: flavor } = useItemFlavor(itemId);
@@ -48,7 +48,7 @@ export function FlavorSection({ itemId }: { itemId: string }) {
       </PressableScale>
       <Sheet visible={open} onClose={() => setOpen(false)} accessibilityLabel="Flavor" ground>
         <BackbarTheme>
-          <FlavorSheet profile={profile} />
+          <FlavorSheet profile={profile} name={name} />
         </BackbarTheme>
       </Sheet>
     </>
@@ -63,7 +63,7 @@ const shownWords = (profile: Profile) => DIMENSIONS.filter((d) => profile[d] >= 
  * would claim more precision than a profile from the spec has). Without a
  * taste yet, the drink's own flower.
  */
-function FlavorSheet({ profile }: { profile: Profile }) {
+function FlavorSheet({ profile, name }: { profile: Profile; name: string }) {
   const ds = useDs();
   const [width, setWidth] = useState(0);
   const { data: me } = useMyTaste();
@@ -79,7 +79,10 @@ function FlavorSheet({ profile }: { profile: Profile }) {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
       <View style={styles.head}>
-        <Headline role="heading">Flavor</Headline>
+        <View>
+          <Caption tone="muted">{name}</Caption>
+          <Headline role="heading">Flavor</Headline>
+        </View>
         {scored !== null ? (
           <View style={styles.match}>
             <Spec color={ds.accentText}>{`${scored}%`}</Spec>
@@ -117,6 +120,7 @@ function FlavorSheet({ profile }: { profile: Profile }) {
           </View>
         ))}
       </View>
+      <Caption tone="muted">Words, not numbers: a profile from the spec is a guide, not a measurement.</Caption>
     </ScrollView>
   );
 }
@@ -135,7 +139,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, minWidth: 0, gap: 2 },
   scroll: { flexShrink: 1 },
   body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.md },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   match: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   center: { alignItems: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
