@@ -119,6 +119,8 @@ function RootLayoutNav() {
             <Stack.Screen name="d/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="week" options={{ headerShown: false }} />
             <Stack.Screen
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
