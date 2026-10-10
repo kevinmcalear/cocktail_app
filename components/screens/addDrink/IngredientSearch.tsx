@@ -28,6 +28,8 @@ export interface IngredientSearchProps {
   allowNew?: boolean;
   /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string) => void;
+  /** A name that sounds made (an oil, a cordial) offers making it before any bottle: the finish, where drops of oil are nearly always house-made. */
+  makeFirst?: boolean;
 }
 
 /**
@@ -35,7 +37,7 @@ export interface IngredientSearchProps {
  * ingredient, by another spelling or alias, offers that one and not a copy;
  * a likely misspelling asks "Did you mean…?" first. Return takes the top hit.
  */
-export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake }: IngredientSearchProps) {
+export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, makeFirst }: IngredientSearchProps) {
   const ds = useDs();
   const [query, setQueryState] = useState('');
   const setQuery = (q: string) => {
@@ -58,6 +60,8 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
       }}
     />
   ) : null;
+
+  const lead = makeFirst && prepLike && !exact && !loading;
 
   const pick = (p: WizardPick) => {
     onPick(p);
@@ -93,6 +97,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
 
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
+          {lead ? makeRow : null}
           {near && !results.includes(near) ? (
             <ResultRow id={near.id} label={`Did you mean ${near.name}?`} onPress={() => pick({ id: near.id, name: near.name ?? query })} />
           ) : null}
@@ -107,7 +112,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
             makeRow
           ) : !allowNew ? null : (
             <>
-              {makeRow && prepLike ? makeRow : null}
+              {makeRow && prepLike && !lead ? makeRow : null}
               <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => pick({ id: null, name: query.trim() })} />
               {makeRow && !prepLike ? makeRow : null}
             </>

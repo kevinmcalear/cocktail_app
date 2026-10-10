@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
-  newDraftId,
+  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -56,6 +56,31 @@ assert.equal(stepAmount('5', 'ml', -1), '', 'below the smallest is unmeasured');
 assert.equal(stepAmount('120', 'ml', 1), '150', 'past the ladder it keeps the last step');
 assert.equal(stepAmount('2', 'dash', 1), '3');
 assert.equal(stepAmount('', 'each', -1), '');
+assert.equal(stepAmount('3', 'drop', 1), '4', 'drops count one at a time');
+assert.equal(stepAmount('1', 'drop', -1), '');
+assert.equal(stepAmount('', 'spray', 1), '2');
+assert.equal(stepAmount('4', 'spray', 1), '5');
+
+// The finish: drops, a mist, a rinse, a float and the garnishes, each a recipe unit.
+assert.equal(STEP_COPY.garnish.title, 'How’s it finished?');
+assert.equal(STEP_COPY.garnish.short, 'Finish');
+for (const u of FINISH_UNITS) assert.ok(RECIPE_UNITS.some((r) => r.value === u), `${u} is a recipe unit`);
+for (const c of FINISH_CHIPS) assert.ok((FINISH_UNITS as readonly string[]).includes(c.unit), `${c.label}: ${c.unit} is a finish unit`);
+for (const c of FINISH_CHIPS) assert.ok(!!c.name !== !!c.ask, `${c.label} is either a whole line or asks of what`);
+// Oils go on in drops, three; saline and tinctures in two; bitters dashed; absinthe rinsed.
+assert.deepEqual(finishStart('Mint oil'), { unit: 'drop', amount: '3' });
+assert.deepEqual(finishStart('Basil Oil'), { unit: 'drop', amount: '3' });
+assert.deepEqual(finishStart('Saline solution'), { unit: 'drop', amount: '2' });
+assert.deepEqual(finishStart('Gentian tincture'), { unit: 'drop', amount: '2' });
+assert.deepEqual(finishStart('Angostura bitters'), { unit: 'dash', amount: '2' });
+assert.deepEqual(finishStart('Absinthe'), { unit: 'rinse', amount: '1' });
+assert.deepEqual(finishStart('Edible flower'), { unit: 'each', amount: '1' });
+assert.equal(finishLabel({ name: 'Mint oil', amount: '3', unit: 'drop' }), '3 drops Mint oil');
+assert.equal(finishLabel({ name: 'Absinthe', amount: '1', unit: 'rinse' }), 'Absinthe rinse');
+assert.equal(finishLabel({ name: 'Orange', amount: '1', unit: 'peel' }), 'Orange peel');
+assert.equal(finishLabel({ name: 'Coffee beans', amount: '3', unit: 'each' }), '3 Coffee beans');
+assert.equal(finishLabel({ name: 'Olive', amount: '1', unit: 'each' }), 'Olive');
+assert.equal(finishLabel({ name: 'Mezcal', amount: '', unit: 'spray' }), 'Mezcal, spray');
 
 // Only the name is required; empty optional steps can be skipped.
 assert.equal(canSave(EMPTY_DRAFT), false);
@@ -126,6 +151,7 @@ console.log('drink wizard: ok');
         { amount: 30, unit: 'ml', ingredient: { id: 'gin', name: 'Gin' } },
         { amount: 30, unit: 'ml', ingredient: { id: 'campari', name: 'Campari' } },
         { amount: 1, unit: 'peel', ingredient: { id: 'orange', name: 'Orange' } },
+        { amount: 1, unit: 'rinse', ingredient: { id: 'absinthe', name: 'Absinthe' } },
         { amount: null, unit: null, ingredient: null },
       ],
       item_methods: [{ method_item_id: 'm-stir', sort_order: 1, method: { name: 'Stir' } }, { method_item_id: 'm-build', sort_order: 0, method: { name: 'Build' } }],
@@ -135,7 +161,7 @@ console.log('drink wizard: ok');
     'oz'
   );
   assert.deepEqual(negroni.lines?.map((l) => [l.name, l.amount, l.unit]), [['Gin', '1', 'oz'], ['Campari', '1', 'oz']]);
-  assert.deepEqual(negroni.garnishes?.map((l) => [l.name, l.amount, l.unit]), [['Orange', '1', 'peel']]);
+  assert.deepEqual(negroni.garnishes?.map((l) => [l.name, l.amount, l.unit]), [['Orange', '1', 'peel'], ['Absinthe', '1', 'rinse']], 'a rinse is part of the finish');
   assert.deepEqual(negroni.methods?.map((m) => m.name), ['Build', 'Stir'], 'methods in their order');
   assert.deepEqual(negroni.riffOf, { id: 'c-negroni', name: 'Negroni' });
   assert.equal(negroni.ice, null);

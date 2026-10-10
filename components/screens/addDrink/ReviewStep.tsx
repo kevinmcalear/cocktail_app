@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
-import { amountLabel, STEP_COPY, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { amountLabel, finishLabel, STEP_COPY, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { PUBLISH_COPY } from '@/lib/publishing';
 
 function credits(d: WizardDraft, hasProfile: boolean): string {
@@ -21,7 +21,7 @@ export function ReviewStep({ draft, onJump, atVenue, hasProfile }: { draft: Wiza
     ['method', draft.methods.map((m) => m.name).join(', then ')],
     ['glass', draft.glass?.name ?? ''],
     ['ice', draft.ice?.name ?? ''],
-    ['garnish', draft.garnishes.map((g) => g.name + (g.unit === 'each' ? '' : ` ${g.unit}`)).join(', ')],
+    ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
     ['notes', [draft.description.trim(), draft.notes.trim()].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : atVenue ? 'Same as the venue' : 'Private'],

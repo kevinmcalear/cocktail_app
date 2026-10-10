@@ -10,7 +10,7 @@ export type ReadKind = "menu" | "recipes" | "bottles";
 export const READ_KINDS: ReadKind[] = ["menu", "recipes", "bottles"];
 
 /** Units a spec line can use: lib/units.ts RECIPE_UNITS values. */
-export const RECIPE_UNIT_VALUES = ["ml", "cl", "oz", "dash", "drop", "bsp", "tsp", "tbsp", "splash", "top", "g", "kg", "each", "pinch", "sprig", "leaf", "peel", "twist", "wheel", "slice", "wedge", "cube", "rim"];
+export const RECIPE_UNIT_VALUES = ["ml", "cl", "oz", "dash", "drop", "bsp", "tsp", "tbsp", "splash", "top", "spray", "rinse", "float", "g", "kg", "each", "pinch", "sprig", "leaf", "peel", "twist", "wheel", "slice", "wedge", "cube", "rim"];
 
 export interface RecipeReadLine {
   /** Null when no amount is written ("Top with soda", "A pinch of salt"). */

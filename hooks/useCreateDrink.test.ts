@@ -192,3 +192,27 @@ test('at a venue, a taken name stays the same: the venue’s own version', async
     ['Cupuacu', TAKEN_ID, 'bar-1'],
   ]);
 });
+
+test('a house prep made for the finish is saved like an ingredient’s: its own row and recipe, as 3 drops after the pours', async () => {
+  mockSaveSpec.mockClear();
+  mockSavePrepRecipe.mockClear();
+  mockIngredientInserts.length = 0;
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const prep = startPrep('other', 'Mint oil');
+  await result.current.mutationFn({
+    draft: {
+      ...EMPTY_DRAFT,
+      name: 'Coconut Fat-Washed Daiquiri',
+      creator: 'nobody',
+      lines: [{ key: 'a', id: 'lime', name: 'Lime', amount: '30', unit: 'ml' }],
+      garnishes: [{ key: 'f', id: null, name: 'Mint oil', amount: '3', unit: 'drop', prep, technique: 'infused-oil' }],
+    },
+    barId: null,
+    myProfileId: null,
+  });
+  expect(mockIngredientInserts.map((r) => [r.name, r.ingredient_role])).toEqual([['Mint Oil', 'prep']]);
+  expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
+  expect(mockSavePrepRecipe.mock.calls[0][1]).toBe(prep);
+  const [, lines] = mockSaveSpec.mock.calls[0];
+  expect(lines.map((l: { ingredient_item_id: string; amount: number; unit: string }) => [l.ingredient_item_id, l.amount, l.unit])).toEqual([['lime', 30, 'ml'], ['new-row', 3, 'drop']]);
+});

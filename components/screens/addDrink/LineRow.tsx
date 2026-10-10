@@ -21,6 +21,8 @@ interface LineRowProps {
   onEditPrep?: () => void;
   /** A bottle already in the drink: say what you did to it (a fat wash, an infusion). */
   onMakeHouse?: () => void;
+  /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
+  units?: readonly string[];
 }
 
 /**
@@ -29,7 +31,7 @@ interface LineRowProps {
  * (tap to change) and remove. On a phone the controls sit under the name; on
  * a wider screen they share its line.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS }: LineRowProps) {
   const ds = useDs();
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
@@ -135,7 +137,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
       ) : null}
       {units ? (
         <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={styles.units}>
-          {QUICK_UNITS.map((u) => (
+          {unitList.map((u) => (
             <WizardChip
               key={u}
               label={u}
