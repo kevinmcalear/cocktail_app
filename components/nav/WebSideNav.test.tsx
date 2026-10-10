@@ -127,7 +127,7 @@ test('N toggles the create sheet, but not while typing in a field', async () => 
   expect(screen.queryByText('2')).toBeNull();
 });
 
-test('⌘8 opens the eight ball over the page, closing the search', async () => {
+test('⇧⌘8 opens the eight ball over the page on the web, closing the search', async () => {
   let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
   (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
   const preventDefault = jest.fn();
@@ -137,7 +137,10 @@ test('⌘8 opens the eight ball over the page, closing the search', async () => 
   // A bare 8 is typing, not the shortcut.
   await act(() => onKey({ key: '8', code: 'Digit8', target: { tagName: 'BODY' } as unknown as EventTarget, preventDefault }));
   expect(useEightBallStore.getState().open).toBe(false);
+  // Plain ⌘8 stays the browser's eighth tab.
   await act(() => onKey({ key: '8', code: 'Digit8', metaKey: true, preventDefault }));
+  expect(useEightBallStore.getState().open).toBe(false);
+  await act(() => onKey({ key: '*', code: 'Digit8', metaKey: true, shiftKey: true, preventDefault }));
   expect(useEightBallStore.getState().open).toBe(true);
   expect(useSearchPalette.getState().open).toBe(false);
   expect(preventDefault).toHaveBeenCalledTimes(1);
