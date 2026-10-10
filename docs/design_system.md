@@ -1,6 +1,6 @@
 # Design system: Back Bar
 
-The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf). When the brief and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
+The written rules behind the Back Bar look. What each screen should be is drawn on the source of truth canvas, "Cocktail: the whole app" (https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe); the original Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is background. When the canvas and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
 
 ## Principles
 
