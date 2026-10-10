@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 import { currentProps } from '@/lib/a11yState';
 import { isEditable } from '@/lib/bringInAnywhere';
@@ -18,7 +18,7 @@ import { canSeeTeam } from '@/lib/team';
 import { CreateSheet } from './CreateSheet';
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { VenueSwitcher } from './VenueSwitcher';
-import { HOME_TABS, VENUE_TABS } from './WebTabBar';
+import { HOME_TABS, TabIcon, VENUE_TABS } from './WebTabBar';
 
 /** How wide the side nav is on wide web. */
 export const WEB_SIDEBAR_WIDTH = 240;
@@ -35,7 +35,7 @@ function NavRow({ label, icon, current, hint, role = 'link', onPress }: { label:
       onPress={onPress}
       style={[styles.row, current && { backgroundColor: withAlpha(ds.accentText, 0.16) }]}
     >
-      <IconSymbol name={icon} size={18} color={current ? ds.accentText : ds.c.muted} />
+      <TabIcon name={icon} size={18} color={current ? ds.accentText : ds.c.muted} />
       <DsText
         color={current ? ds.c.ink : ds.c.muted}
         numberOfLines={1}
@@ -79,14 +79,20 @@ function SideNavBody() {
   const searching = useSearchPalette((s) => s.open);
   const setSearching = useSearchPalette((s) => s.setOpen);
 
-  // ponytail: ⌘K and N live on the always-mounted sidebar. ⌘K toggles the search over this page; N toggles New.
+  // ponytail: ⌘K, ⌘8 and N live on the always-mounted sidebar. ⌘K toggles the search over this page; N toggles New.
   // Browsers keep ⌘N for a new window, so New is a bare N, ignored while typing in a field.
+  // ⌘8 (Ctrl+8 off Apple) opens the eight ball, the hidden Easter egg phones get with a shake. Digit8 so layouts
+  // with 8 on a shifted key work too.
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearching(!useSearchPalette.getState().open);
+      } else if ((e.metaKey || e.ctrlKey) && (e.key === '8' || e.code === 'Digit8')) {
+        e.preventDefault();
+        setSearching(false);
+        useEightBallStore.getState().setOpen(true);
       } else if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat && !isEditable(e.target as HTMLElement | null)) {
         e.preventDefault();
         setCreating((open) => !open);

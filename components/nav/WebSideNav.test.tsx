@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { WebSideNav } from '@/components/nav/WebSideNav';
 import { renderWithTamagui } from '@/jest.setup';
+import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 
 const mockNavigate = jest.fn();
@@ -124,4 +125,21 @@ test('N toggles the create sheet, but not while typing in a field', async () => 
   expect(screen.getByText('2')).toBeTruthy();
   await press({ tagName: 'BODY' });
   expect(screen.queryByText('2')).toBeNull();
+});
+
+test('⌘8 opens the eight ball over the page, closing the search', async () => {
+  let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
+  (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
+  const preventDefault = jest.fn();
+  useSearchPalette.setState({ open: true });
+  useEightBallStore.setState({ open: false });
+  await renderWithTamagui(<WebSideNav />);
+  // A bare 8 is typing, not the shortcut.
+  await act(() => onKey({ key: '8', code: 'Digit8', target: { tagName: 'BODY' } as unknown as EventTarget, preventDefault }));
+  expect(useEightBallStore.getState().open).toBe(false);
+  await act(() => onKey({ key: '8', code: 'Digit8', metaKey: true, preventDefault }));
+  expect(useEightBallStore.getState().open).toBe(true);
+  expect(useSearchPalette.getState().open).toBe(false);
+  expect(preventDefault).toHaveBeenCalledTimes(1);
+  expect(mockNavigate).not.toHaveBeenCalled();
 });

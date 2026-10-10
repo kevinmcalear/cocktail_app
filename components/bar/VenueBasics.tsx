@@ -38,7 +38,7 @@ export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }
         onPress={() => router.push(`/settings/bar/${barId}/brand` as Href)}
       />
       <RowDivider />
-      <SettingsRow label="View in Library" detail={drinks} icon="square.grid.2x2" onPress={openLibrary} />
+      <SettingsRow label="View in Library" detail={drinks} icon="book" onPress={openLibrary} />
     </SettingsSection>
   );
 }
