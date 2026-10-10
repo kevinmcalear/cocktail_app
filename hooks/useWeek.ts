@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { viewerScoped } from '@/lib/authCache';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
 import { toWeekItem, WEEK_DAYS, weekStart, type EventKind, type WeekItem, type WeekRow } from '@/lib/week';
 
@@ -120,3 +121,80 @@ export function useDeleteEvent() {
   });
 }
 
+// --- Calendar links (20261012610000_calendar_sources.sql, the sync-calendar function) ---
+
+export interface CalendarSource {
+  id: string;
+  url: string;
+  starts_public: boolean;
+  last_synced_at: string | null;
+  last_error: string | null;
+}
+
+export interface FoundEvent {
+  uid: string;
+  name: string;
+  starts_at: string;
+  ends_at: string | null;
+  kind: EventKind;
+  /** Looks like a staff thing (or private): left out, or kept with the team. */
+  internal: boolean;
+  ticket_url: string | null;
+}
+
+/** webcal:// is https:// for us. */
+export const calendarUrl = (raw: string) => raw.trim().replace(/^webcals?:\/\//i, 'https://');
+
+export function useCalendarSources(barId: string | null | undefined) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['week', 'calendars', barId, userId],
+    enabled: !!barId && !!userId,
+    queryFn: async (): Promise<CalendarSource[]> => {
+      const { data, error } = await supabase
+        .from('calendar_sources')
+        .select('id, url, starts_public, last_synced_at, last_error')
+        .eq('bar_id', barId!)
+        .order('created_at');
+      if (error) throw error;
+      return (data ?? []) as CalendarSource[];
+    },
+  });
+}
+
+/** What a calendar link holds over the next month, nothing saved. */
+export function usePreviewCalendar() {
+  return useMutation({
+    mutationFn: async ({ barId, url }: { barId: string; url: string }) =>
+      (await invokeFunction<{ events: FoundEvent[] }>('sync-calendar', { bar_id: barId, url: calendarUrl(url), preview: true })).events,
+  });
+}
+
+/** Keeps the link and brings its events in now; the server checks it every few hours after that. */
+export function useAddCalendar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ barId, url, startsPublic, skipped }: { barId: string; url: string; startsPublic: boolean; skipped: string[] }) => {
+      const { data, error } = await supabase
+        .from('calendar_sources')
+        .insert({ bar_id: barId, url: calendarUrl(url), starts_public: startsPublic, skipped_uids: skipped })
+        .select('id')
+        .single();
+      if (error) throw error;
+      return invokeFunction<{ added: number }>('sync-calendar', { source_id: (data as { id: string }).id });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['week'] }),
+  });
+}
+
+/** Stops bringing a calendar in, and takes its events out of the week. */
+export function useRemoveCalendar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('calendar_sources').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['week'] }),
+  });
+}
