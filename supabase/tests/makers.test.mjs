@@ -69,6 +69,7 @@ before(async () => {
   await page('Stillhouse', { kind: 'maker', makes: ['bottles'] });
   await page('Group', { kind: 'maker', makes: ['bottles'] });
   await page('Pub', { kind: 'bar', city: CITY });
+  await page('Glassworks', { kind: 'maker', makes: ['glassware'] });
 });
 
 after(async () => {
@@ -148,6 +149,35 @@ describe('maker pages', () => {
     assert.match(claim.error?.message ?? '', /doesn't say it makes ice/, 'a bar page is credited for ice on its own venue\'s drinks only');
     const { rows } = await db.query('SELECT count(*)::int AS n FROM public.item_maker_credits WHERE item_id = $1', [ids.homeDrink]);
     assert.equal(rows[0].n, 0);
+  });
+
+  test("a bar's glass names its maker's page, only one that makes glassware (20261012430000)", async () => {
+    const glass = (
+      await db.query(`INSERT INTO public.bar_glassware (profile_id, glass, name, maker) VALUES ($1, 'coupe', $2, $3) RETURNING id`, [
+        pages.Pub,
+        `Leopold coupe ${run}`,
+        `Glassworks ${run}`,
+      ])
+    ).rows[0].id;
+    await assert.rejects(db.query('UPDATE public.bar_glassware SET maker_profile_id = $1 WHERE id = $2', [pages.Clearcut, glass]), /makes glassware/, 'an ice maker');
+    await assert.rejects(db.query('UPDATE public.bar_glassware SET maker_profile_id = $1 WHERE id = $2', [pages.Pub, glass]), /makes glassware/, "a bar's page");
+    await db.query('UPDATE public.bar_glassware SET maker_profile_id = $1 WHERE id = $2', [pages.Glassworks, glass]);
+    const { data, error } = await users.stranger.client
+      .from('bar_glassware')
+      .select('name, bar:profiles!bar_glassware_profile_id_fkey(id), maker_page:profiles!bar_glassware_maker_profile_id_fkey(id)')
+      .eq('maker_profile_id', pages.Glassworks);
+    assert.equal(error, null);
+    assert.deepEqual(data, [{ name: `Leopold coupe ${run}`, bar: { id: pages.Pub }, maker_page: { id: pages.Glassworks } }], "signed-in people see which bars use the maker's glasses");
+    // The migration's link by name: a glass whose maker text is the page's name.
+    const second = (
+      await db.query(`INSERT INTO public.bar_glassware (profile_id, glass, maker) VALUES ($1, 'nick', $2) RETURNING id`, [pages.Pub, `glassworks ${run}`])
+    ).rows[0].id;
+    await db.query(`UPDATE public.bar_glassware g SET maker_profile_id = p.id FROM public.profiles p
+                     WHERE g.id = $1 AND g.maker_profile_id IS NULL AND p.kind = 'maker' AND 'glassware' = ANY (p.makes)
+                       AND public.ingredient_key(p.display_name) = public.ingredient_key(g.maker)`, [second]);
+    const { rows } = await db.query('SELECT maker_profile_id FROM public.bar_glassware WHERE id = $1', [second]);
+    assert.equal(rows[0].maker_profile_id, pages.Glassworks, 'matched by name, ignoring case');
+    await db.query('DELETE FROM public.bar_glassware WHERE id = ANY($1::uuid[])', [[glass, second]]);
   });
 
   test('makers stay out of Discover and the map', async () => {

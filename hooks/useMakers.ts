@@ -60,6 +60,41 @@ export function useMakerDrinks(profileId: string | null | undefined) {
   });
 }
 
+export interface MakerGlassBar {
+  /** The bar's page. */
+  id: string;
+  handle: string;
+  display_name: string;
+  /** Its glasses by this maker, by name ("Leopold coupe"). */
+  glasses: string[];
+}
+
+/** The bars that pour into a glass maker's glasses (bar_glassware.maker_profile_id). */
+export function useMakerGlassBars(profileId: string | null | undefined) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['maker-glass-bars', profileId, userId],
+    enabled: !!profileId && !!userId,
+    queryFn: async (): Promise<MakerGlassBar[]> => {
+      const { data, error } = await supabase
+        .from('bar_glassware')
+        .select('name, glass, bar:profiles!bar_glassware_profile_id_fkey(id, handle, display_name)')
+        .eq('maker_profile_id', profileId!)
+        .limit(200);
+      if (error) throw error;
+      type Row = { name: string | null; glass: string; bar: { id: string; handle: string; display_name: string } | null };
+      const bars = new Map<string, MakerGlassBar>();
+      for (const r of (data ?? []) as unknown as Row[]) {
+        if (!r.bar) continue;
+        const bar = bars.get(r.bar.id) ?? { ...r.bar, glasses: [] };
+        bar.glasses.push(r.name ?? r.glass);
+        bars.set(r.bar.id, bar);
+      }
+      return [...bars.values()].sort((a, b) => a.display_name.localeCompare(b.display_name));
+    },
+  });
+}
+
 export interface MakerRef {
   id: string;
   handle: string;
