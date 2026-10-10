@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal } from 'react-native';
 
 import { IngredientDrawing } from '@/components/ds';
-import { guessKind, openSlots, prepFromTechnique, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { guessKind, openSlots, prepFromTechnique, prepPhrase, recipeEyebrow, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
@@ -33,6 +33,8 @@ export interface PrepBuilderProps {
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
   onDone: (draft: PrepDraft) => void;
+  /** Leave the recipe for later: the drink gets the name now, and a reminder. Without it, the first step's Skip goes on to the recipe. */
+  onLater?: () => void;
   /** Back out: the drink keeps going without it. */
   onClose: () => void;
 }
@@ -60,7 +62,7 @@ function firstDraft(name: string, picked: PrepBuilderProps['picked'], technique:
   return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
 }
 
-function Builder({ name, drinkName, initial, picked, technique, ingredients, aliases, onDone, onClose }: PrepBuilderProps & { name: string }) {
+function Builder({ name, drinkName, initial, picked, technique, ingredients, aliases, onDone, onLater, onClose }: PrepBuilderProps & { name: string }) {
   const [step, setStep] = useState<Step>(initial || technique ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
@@ -73,21 +75,25 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
   const next = () => (step === 'method' ? onDone(withFacts(draft)) : go(STEPS[at + 1]));
   // A stand-in line ("Spirit") is never saved: pick it or take it out first.
   const ready = draft.lines.some((l) => l.name.trim()) && (step === 'kind' || !openSlots(draft).length);
-  const pickKind = (kind: PrepKindId, hot = false) => setDraft(startPrep(kind, name, hot));
+  const pickKind = (kind: PrepKindId, way?: string) => setDraft(startPrep(kind, name, way));
   const pickTechnique = (id: string) => {
     const t = techniqueById(id);
     if (!t) return;
     setDraft(prepFromTechnique(t, name, prepCardFor(t), picked));
   };
 
+  const drink = drinkName || 'your drink';
+  const phrase = prepPhrase(draft);
+  const timers = 'Drag a step by its grip to move it; times you write become timers.';
   return (
     <WizardFrame
       testID="add-prep"
       pageTitle={`New prep: ${name}`}
       band={(place) => (
         <PaperBand
-          progress={{ now: at + 1, of: STEPS.length, label: `New prep · ${at + 1} of ${STEPS.length}` }}
+          progress={{ now: at + 1, of: STEPS.length, label: at === 0 ? `New prep · 1 of ${STEPS.length}` : `${drink} › New prep · ${at + 1} of ${STEPS.length}` }}
           first={at === 0}
+          backTo={drink}
           onBack={back}
           art={<IngredientDrawing name={name} />}
           artKey={name}
@@ -99,8 +105,9 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
       )}
       stepKey={step}
       direction={direction}
-      eyebrow={name}
+      eyebrow={(step === 'recipe' && recipeEyebrow(draft)) || name}
       title={TITLES[step]}
+      intro={step === 'method' ? `${phrase ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, filled in from the recipe.` : 'Filled in from the recipe.'} ${timers}` : undefined}
       onHardwareBack={() => {
         back();
         return true;
@@ -109,19 +116,20 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
         <WizardFooter
           nextLabel={step === 'kind' ? 'Next: recipe' : step === 'recipe' ? 'Next: method' : `Add it to ${drinkName || 'the drink'}`}
           optional={step === 'kind'}
+          skipLabel={onLater ? 'Later' : 'Skip'}
           canNext={ready}
           saving={false}
-          onSkip={() => go('recipe')}
+          onSkip={onLater ?? (() => go('recipe'))}
           onNext={next}
         />
       }
     >
       {step === 'kind' ? (
-        <PrepKindStep name={name} draft={draft} onKind={pickKind} onTechnique={pickTechnique} />
+        <PrepKindStep name={name} draft={draft} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} />
       ) : step === 'recipe' ? (
         <PrepRecipeStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} />
       ) : (
-        <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} />
+        <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}
     </WizardFrame>
   );

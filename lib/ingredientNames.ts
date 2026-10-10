@@ -111,6 +111,36 @@ export function searchIngredients<T extends IngredientRow>(
   return [...(same ? [same] : []), ...scored.map((x) => x.r)].slice(0, limit);
 }
 
+// Words a made thing's name ends on: they say what it is, not what's in it.
+const KIND_WORD = /^(shrub|syrup|cordial|oleo|infusion|infused|tincture|bitters|foam|oil|juice|soda|water|batch|mix|cream|liqueur|of|and|with|the|house)$/;
+
+/**
+ * The ingredients closest to a name nothing matches ("pineapple chili shrub"
+ * → Pineapple juice): those sharing the most of its flavour words, core ones
+ * first, then shorter names. Hidden rows and rows in `skip` are left out.
+ */
+export function closestIngredients<T extends IngredientRow>(
+  query: string,
+  rows: readonly T[],
+  opts: { coreIds?: ReadonlySet<string>; skip?: readonly T[]; limit?: number } = {}
+): T[] {
+  const { coreIds = new Set<string>(), skip = [], limit = 3 } = opts;
+  const words = ingredientKey(query).split(' ').filter((w) => w.length >= 3 && !KIND_WORD.test(w));
+  if (!words.length) return [];
+  const scored: { r: T; shared: number }[] = [];
+  for (const r of rows) {
+    if (r.hide_from_search || skip.includes(r)) continue;
+    const own = new Set(ingredientKey(r.name).split(' '));
+    const shared = words.filter((w) => own.has(w)).length;
+    if (shared) scored.push({ r, shared });
+  }
+  scored.sort(
+    (a, b) =>
+      b.shared - a.shared || Number(coreIds.has(b.r.id)) - Number(coreIds.has(a.r.id)) || (a.r.name ?? '').length - (b.r.name ?? '').length
+  );
+  return scored.slice(0, limit).map((x) => x.r);
+}
+
 /** The id the database pointed at when it refused a copy (its hint), if any. */
 export function existingIngredientId(error: unknown): string | null {
   const e = error as { code?: string; hint?: string | null } | null;

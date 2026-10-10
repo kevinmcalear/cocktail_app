@@ -6,6 +6,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useDrinkLists } from '@/hooks/useDiscover';
+import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { suggestClassic } from '@/lib/classics';
 import { plainDbMessage } from '@/lib/dbError';
@@ -71,6 +72,7 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
   const create = useCreateDrink();
   const barGlasses = useBarGlassware(barId).data;
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
+  const shelfIds = useShelf().data;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
 
   const set = (change: Partial<WizardDraft>) => patch(place, change);
@@ -91,10 +93,13 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
     create.mutate(
       { draft, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
       {
-        onSuccess: ({ id, warnings }) => {
+        onSuccess: ({ id, warnings, later = [] }) => {
           clear(place);
           toastDone('Drink saved', draft.name.trim());
-          if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
+          // The reminder "Just add the name" promised: the preps whose recipes are still to write.
+          const one = later.length === 1;
+          const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
+          if (warnings.length || remind) Alert.alert(warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', [...warnings, ...(remind ? [remind] : [])].join('\n\n'));
           onSaved(id);
         },
         onError: (e) => Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
@@ -134,7 +139,17 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
           </>
         );
       case 'ingredients':
-        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
+        return (
+          <IngredientsStep
+            draft={draft}
+            set={set}
+            ingredients={ingredients}
+            loading={!dropdowns?.ingredients}
+            aliases={dropdowns?.ingredientAliases}
+            coreIds={coreIds}
+            shelf={barId ? undefined : new Set(shelfIds ?? [])}
+          />
+        );
       case 'method':
         return (
           <>

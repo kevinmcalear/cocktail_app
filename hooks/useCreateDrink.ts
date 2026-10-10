@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
-import { useDrafts } from '@/hooks/useDrafts';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
@@ -37,6 +36,8 @@ export interface CreateDrinkResult {
   id: string;
   /** Saved, but these parts didn't stick (said the way a person would want to hear it). */
   warnings: string[];
+  /** House preps added by name only ("Just add the name", Later): their recipes are still to write. */
+  later: string[];
 }
 
 type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
@@ -152,11 +153,14 @@ export function useCreateDrink() {
       const preps: { id: string; technique: string }[] = [];
       // New house preps with their own recipe (made in the wizard), saved once the drink is in.
       const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
+      const later: string[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
-        const ownPrep = !!line.prep && !(line.id && live.has(line.id));
+        // A prep added by name only is still a house prep of its own, its recipe to come.
+        const ownPrep = (!!line.prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
+        if (line.later && !line.prep && isNew) later.push(capitalize(line.name));
         if (line.prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep: line.prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         lines.push({
@@ -250,7 +254,7 @@ export function useCreateDrink() {
       // A prep made here: its recipe, method and keeping, on the row this save made.
       for (const p of ownPreps) {
         try {
-          await savePrepRecipe(p.id, p.prep, ensure);
+          await savePrepRecipe(p.id, p.prep, ensure, barId);
         } catch (e) {
           warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
         }
@@ -284,7 +288,7 @@ export function useCreateDrink() {
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
-      return { id, warnings };
+      return { id, warnings, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),
     // The wizard says what went wrong itself, and keeps the draft.

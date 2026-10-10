@@ -60,6 +60,8 @@ interface FooterProps {
   nextLabel: string;
   /** An optional step offers Skip beside Next. */
   optional: boolean;
+  /** What Skip says ("Later": leave the recipe for later). */
+  skipLabel?: string;
   canNext: boolean;
   saving: boolean;
   onSkip: () => void;
@@ -71,12 +73,12 @@ interface FooterProps {
  * on the review). On a desktop browser it ends the step instead, Next a
  * compact pill.
  */
-export function WizardFooter({ nextLabel, optional, canNext, saving, onSkip, onNext }: FooterProps) {
+export function WizardFooter({ nextLabel, optional, skipLabel = 'Skip', canNext, saving, onSkip, onNext }: FooterProps) {
   const ds = useDs();
   const inline = useContext(FooterInline);
   return (
     <View style={[styles.footer, !inline && { backgroundColor: ds.c.ground }]}>
-      {optional ? <Button label="Skip" variant="secondary" size="lg" onPress={onSkip} /> : null}
+      {optional ? <Button label={skipLabel} variant="secondary" size="lg" onPress={onSkip} /> : null}
       <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={inline ? styles.compact : styles.flex} />
     </View>
   );

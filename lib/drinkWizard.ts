@@ -47,6 +47,8 @@ export interface WizardLine extends WizardPick {
   prep?: PrepDraft;
   /** A note on the spec line ("the bar uses Bacardí Heritage"). */
   note?: string;
+  /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
+  later?: boolean;
 }
 
 export interface WizardDraft {
