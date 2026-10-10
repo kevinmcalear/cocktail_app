@@ -1,10 +1,8 @@
-import { useSheetBackHandler } from "@/hooks/useSheetBackHandler";
 import { CategoryTree } from "@/components/CategoryTree";
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { MenuSheet } from "@/components/screens/menus/MenuSheet";
 import * as Haptics from "expo-haptics";
-import React, { forwardRef, useCallback, useMemo } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "tamagui";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
+import { Platform } from "react-native";
 import { useDropdowns } from "@/hooks/useDropdowns";
 import { DatabaseCategory } from "@/types/types";
 
@@ -14,66 +12,38 @@ interface CategoryPickerModalProps {
     onToggleCategory: (category: DatabaseCategory) => void;
 }
 
-export const CategoryPickerModal = forwardRef<BottomSheetModal, CategoryPickerModalProps>(
+/** Opens and closes the picker from the field that shows the chosen categories. */
+export interface CategoryPickerHandle {
+    present: () => void;
+    dismiss: () => void;
+}
+
+/**
+ * The category picker: the app's sheet (springs up on phones, a dialog in the
+ * middle of the window on the web), opened through a present/dismiss ref.
+ */
+export const CategoryPickerModal = forwardRef<CategoryPickerHandle, CategoryPickerModalProps>(
     ({ domains, selectedCategoryIds, onToggleCategory }, ref) => {
-        const theme = useTheme();
-        const insets = useSafeAreaInsets();
+        const [open, setOpen] = useState(false);
+        useImperativeHandle(ref, () => ({ present: () => setOpen(true), dismiss: () => setOpen(false) }), []);
 
         const { data: dropdowns } = useDropdowns();
         const allCategories = (dropdowns?.categories || []).filter(
-            (c) => c.domain && domains.includes(c.domain as any)
+            (c) => c.domain && (domains as string[]).includes(c.domain)
         );
-
-        const renderBackdrop = useCallback(
-            (props: any) => (
-                <BottomSheetBackdrop
-                    {...props}
-                    disappearsOnIndex={-1}
-                    appearsOnIndex={0}
-                    opacity={0.5}
-                />
-            ),
-            []
-        );
-
-        const snapPoints = useMemo(() => ['80%'], []);
-        const trackSheetForBack = useSheetBackHandler(() => {
-            if (ref && typeof ref === 'object') ref.current?.dismiss();
-        });
 
         return (
-            <BottomSheetModal
-                ref={ref}
-                index={0}
-                onChange={trackSheetForBack}
-                snapPoints={snapPoints}
-                backdropComponent={renderBackdrop}
-                backgroundStyle={{
-                    backgroundColor: theme.background?.get() as string,
-                    borderTopLeftRadius: 48,
-                    borderTopRightRadius: 48,
-                    borderCurve: 'continuous' as any,
-                }}
-                handleIndicatorStyle={{ backgroundColor: theme.borderColor?.get() as string }}
-            >
-                <BottomSheetScrollView
-                    contentContainerStyle={{
-                        paddingTop: 24,
-                        paddingHorizontal: 24,
-                        paddingBottom: insets.bottom + 40,
+            <MenuSheet visible={open} onClose={() => setOpen(false)} title="Categories">
+                <CategoryTree
+                    categories={allCategories}
+                    selectedIds={selectedCategoryIds}
+                    onToggle={(id) => {
+                        if (Platform.OS !== 'web') Haptics.selectionAsync();
+                        const cat = allCategories.find((c) => c.id === id);
+                        if (cat) onToggleCategory(cat);
                     }}
-                >
-                    <CategoryTree
-                        categories={allCategories}
-                        selectedIds={selectedCategoryIds}
-                        onToggle={(id) => {
-                            Haptics.selectionAsync();
-                            const cat = allCategories.find((c) => c.id === id);
-                            if (cat) onToggleCategory(cat);
-                        }}
-                    />
-                </BottomSheetScrollView>
-            </BottomSheetModal>
+                />
+            </MenuSheet>
         );
     }
 );

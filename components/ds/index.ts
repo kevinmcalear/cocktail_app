@@ -22,4 +22,5 @@ export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
 export { IngredientDrawing } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
-export { sheetAnimation, sheetFrame, sheetIsDialog } from './sheetFrame';
+export { sheetFrame, sheetIsDialog } from './sheetFrame';
+export { Sheet, useSheetClose, type SheetProps } from './Sheet';

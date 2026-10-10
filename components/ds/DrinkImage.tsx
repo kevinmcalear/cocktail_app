@@ -3,19 +3,18 @@ import { useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CustomIcon } from '@/components/ui/CustomIcons';
-import { radius as radii, space } from '@/constants/tokens';
+import { radius as radii } from '@/constants/tokens';
 import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
 import type { SketchDetail } from './SketchDrawing';
 import { IngredientDrawing } from './IngredientDrawing';
-import { Tag } from './Tag';
 import { useDs } from './theme';
 
 export interface DrinkImageProps {
   /** A URL, or a bundled image (require). */
   source?: string | number | null;
-  /** Drawn by the image generator, not photographed. Always tagged "Sketch". */
+  /** Drawn by the image generator, not photographed. Screen readers hear "sketch"; there's no visible tag (drawings are obviously drawings). */
   generated?: boolean;
   /** Glassware icon key (CustomIcons) drawn on paper when there's no image and no drawing yet. */
   glass?: string | null;
@@ -25,8 +24,6 @@ export interface DrinkImageProps {
   accessibilityLabel: string;
   aspectRatio?: number;
   radius?: keyof typeof radii | 0;
-  /** Hide the Sketch tag on tiny thumbnails; the drink page still shows it. */
-  hideTag?: boolean;
   style?: StyleProp<ViewStyle>;
   /** An ingredient instead of a drink: always its drawing (lib/sketch/ingredientArt.ts), never a photo. */
   ingredient?: { id: string | null; name: string } | null;
@@ -50,7 +47,7 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', hideTag, style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
@@ -98,7 +95,6 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       ) : (
         glassIcon
       )}
-      {uri && generated && !hideTag ? <Tag label="Sketch" tone="sketch" style={styles.tag} /> : null}
     </View>
   );
 }
@@ -109,5 +105,4 @@ const styles = StyleSheet.create({
   // size itself from it under RN 0.86 (blank images in the gallery).
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   empty: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', opacity: 0.8 },
-  tag: { position: 'absolute', right: space.sm, bottom: space.sm },
 });

@@ -44,16 +44,19 @@ export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
 
 /**
  * A menu in a list: coming up (with its date), a draft (dashed, still being
- * built), previous (its dates), or an R&D collection (solid, never dated). `note` adds a line of its own, like how
- * many of the drinks you can make at home.
+ * built: a venue menu with no dates, or a home menu with no night), previous
+ * (its dates), or an R&D collection (solid, never dated). `note` adds a line
+ * of its own, like how many of the drinks you can make at home.
  */
 export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
   const router = useRouter();
   const status = menu.kind === 'rnd' ? 'rnd' : menuStatus(menu, now);
-  const start = status === 'upcoming' ? new Date(menu.event?.startsAt ?? menu.startsAt!) : null;
+  const startsAt = menu.event?.startsAt ?? menu.startsAt;
+  // A home menu's night is a day (2026-10-04), not an instant: read it as local midnight.
+  const start = status !== 'upcoming' ? null : startsAt ? new Date(startsAt) : menu.menuDate ? new Date(`${menu.menuDate}T00:00:00`) : null;
   // With the date block showing, the caption doesn't repeat the date.
-  const meta = start ? plural(menu.itemIds.length, 'drink') : metaLine(menu, now);
+  const meta = start ? [menu.guestCount ? plural(menu.guestCount, 'guest') : null, plural(menu.itemIds.length, 'drink')].filter(Boolean).join(' · ') : metaLine(menu, now);
   const label = [menu.event?.name, meta, note].filter(Boolean).join(' · ');
   return (
     <PressableScale

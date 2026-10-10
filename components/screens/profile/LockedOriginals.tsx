@@ -78,7 +78,6 @@ export function LockedOriginals({
                     itemId={d.id}
                     accessibilityLabel={d.name}
                     radius="control"
-                    hideTag
                   />
                 </View>
               ) : null}
