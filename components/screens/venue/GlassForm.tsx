@@ -96,10 +96,12 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
       <View style={styles.stack}>
         <Caption tone="muted">Who makes it</Caption>
         {makerPage && !picking ? (
-          <View style={styles.row}>
-            <Body style={styles.flex}>{`Maker’s page: ${makerPage.display_name}`}</Body>
-            <Button label="Change" variant="ghost" onPress={() => setPicking(true)} />
-            <Button label="Remove" variant="ghost" onPress={() => setMakerPage(null)} />
+          <View style={styles.stack}>
+            <Body>{`Maker’s page: ${makerPage.display_name}`}</Body>
+            <View style={styles.actions}>
+              <Button label="Change" variant="secondary" onPress={() => setPicking(true)} />
+              <Button label="Remove" variant="ghost" onPress={() => setMakerPage(null)} />
+            </View>
           </View>
         ) : picking ? (
           <View style={styles.stack}>
@@ -161,8 +163,6 @@ const styles = StyleSheet.create({
   form: { gap: space.lg },
   stack: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
-  flex: { flex: 1, minWidth: 160 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   start: { alignSelf: 'flex-start' },
 });
