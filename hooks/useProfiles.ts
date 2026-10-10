@@ -87,9 +87,11 @@ export interface Original extends LineageDrink {
   description: string | null;
   glass: { icon_key: string | null } | null;
   item_images: ItemImageLink[] | null;
+  /** How many drinks name it as their classic (riffs and bar versions you can see): "riffed 12×". */
+  versions?: { count: number }[] | null;
 }
 
-const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url))`;
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!riff_of_id(count)`;
 
 /** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators. */
 async function creditedTo(profileId: string): Promise<string[]> {
