@@ -68,6 +68,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
+  // Its generic's id (Mezcal's is Agave Spirit), for matching classics.
+  const genericOf = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
   // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
   const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
   const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
@@ -209,7 +211,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 ))}
               </View>
             }
-            after={<CloseToClassic ingredients={draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
+            after={<CloseToClassic ingredients={draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
           />
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>
