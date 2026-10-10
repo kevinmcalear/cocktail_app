@@ -11,6 +11,7 @@ import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { sourceLabel } from '@/lib/bringInBatch';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
+import { askToNudge } from '@/lib/readyNudge';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -82,7 +83,11 @@ export function BringInFlow() {
     );
   }
   if (job.status !== 'ready' || (!checking && !job.local)) {
-    return <ReadingScreen job={job} onClose={cancel} onBackground={leave} onReady={() => setCheckedId(job.id)} />;
+    const background = () => {
+      void askToNudge();
+      leave();
+    };
+    return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} />;
   }
   if (!data || !job.reading) {
     return (

@@ -10,7 +10,7 @@ import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { useLastBringIn } from '@/hooks/useBringInBatches';
 import { isCleanText, isLink, localReading } from '@/lib/bringIn';
 import { lastTimeLine } from '@/lib/bringInBatch';
-import { peekClipboard } from '@/lib/clipboardPeek';
+import { peekClipboard, readClipboard, UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { withAlpha } from '@/lib/color';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn } from '@/store/useBringIn';
@@ -73,7 +73,7 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     let live = true;
-    void peekClipboard().then((value) => live && setClip(value && value.length > 12 ? value : null));
+    void peekClipboard().then((value) => live && setClip(value && (value === UNREAD_CLIP || value.length > 12) ? value : null));
     return () => {
       live = false;
     };
@@ -120,17 +120,17 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
       </View>
       <View style={styles.tiles}>
         {camera ? <Tile icon="camera" label="Snap" sub="Pages or a shelf" onPress={() => void fromFiles(snapReadFiles)} /> : null}
-        <Tile icon="photo" label="Photos, files" sub={Platform.OS === 'web' ? 'PDF, screenshots' : 'Screenshots, photos'} onPress={() => void fromFiles(pickReadFiles)} />
+        <Tile icon="photo" label="Photos, files" sub="PDF, screenshots" onPress={() => void fromFiles(pickReadFiles)} />
         <Tile icon="doc.on.clipboard" label="Paste" sub="Text or a link" onPress={() => setPasting(true)} />
       </View>
       {clip ? (
         <View style={[styles.clip, { borderColor: withAlpha(ds.accentText, 0.55), backgroundColor: withAlpha(ds.accentText, 0.06) }]}>
           <View style={styles.clipHead}>
             <Caption style={styles.mono}>ON YOUR CLIPBOARD</Caption>
-            <Caption tone="muted">{looksLikeText(clip)}</Caption>
+            {clip !== UNREAD_CLIP ? <Caption tone="muted">{looksLikeText(clip)}</Caption> : null}
           </View>
-          <Spec numberOfLines={3}>{clip}</Spec>
-          <Button label="Use it" onPress={() => fromText(clip)} style={styles.end} />
+          {clip === UNREAD_CLIP ? <Body tone="muted">Something you copied. Use it to bring it in.</Body> : <Spec numberOfLines={3}>{clip}</Spec>}
+          <Button label="Use it" onPress={() => void (clip === UNREAD_CLIP ? readClipboard().then((t) => t && fromText(t)) : Promise.resolve(fromText(clip)))} style={styles.end} />
         </View>
       ) : null}
       {error ? <Caption tone="accent">{error}</Caption> : null}

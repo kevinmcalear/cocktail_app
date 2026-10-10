@@ -14,3 +14,10 @@ export async function peekClipboard(): Promise<string | null> {
     return null;
   }
 }
+
+/** Native only (iOS reads on tap); on the web the card already has the text. */
+export const UNREAD_CLIP = '\u0000unread';
+
+export async function readClipboard(): Promise<string | null> {
+  return peekClipboard();
+}
