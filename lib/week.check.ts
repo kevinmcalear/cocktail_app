@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byDay, cleanTicketUrl, filterWeek, weekRange, detailLine, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, upcoming, weekDays, weekStart, type WeekItem } from './week';
+import { byDay, cleanTicketUrl, dayHeading, filterWeek, weekRange, detailLine, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, upcoming, weekDays, weekStart, type WeekItem } from './week';
 
 const local = (y: number, m: number, d: number, h = 0, min = 0) => new Date(y, m - 1, d, h, min).getTime();
 const item = (over: Partial<WeekItem>): WeekItem => ({
@@ -73,4 +73,7 @@ assert.equal(cleanTicketUrl('localhost'), null);
 assert.deepEqual(filterWeek(items, 'events').map((i) => i.id), ['takeover', 'staff', 'lastnight']);
 assert.deepEqual(filterWeek(items, 'public').map((i) => i.id).includes('staff'), false);
 assert.equal(weekRange(from, 7, 'en-GB'), 'Sat 10 to Fri 16 Oct');
+// US English puts the date first on its own; the label doesn't.
+assert.equal(weekRange(from, 7, 'en-US'), 'Sat 10 to Fri 16 Oct');
+assert.equal(dayHeading('2026-10-11', from, 'en-US').date, 'Sun 11');
 assert.equal(weekRange(weekStart(local(2026, 10, 28, 12)), 7, 'en-GB'), 'Wed 28 Oct to Tue 3 Nov');

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
 import { byDay, kindLabel, timeLine, upcoming, type WeekItem } from '@/lib/week';
@@ -21,10 +22,13 @@ export function TonightWeek({ barId }: { barId: string }) {
   const router = useRouter();
   const from = useWeekStart();
   const { data: items = [] } = useBarWeek(barId);
+  const hydrated = useIsHydrated();
   const today = toDay(from);
   const days = byDay(items, from);
   const tonight = days[0].items.filter((i) => i.kind === 'event');
   const later = upcoming(items, from).filter((i) => !tonight.includes(i)).slice(0, NEXT);
+  // The days come from the device's clock, which the static web build doesn't have.
+  if (!hydrated) return null;
   return (
     <View style={styles.wrap}>
       {tonight.map((event) => (

@@ -9,6 +9,7 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { backbar, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
@@ -52,6 +53,8 @@ export function WeekScreen() {
   const [now] = useState(() => Date.now());
   const [filter, setFilter] = useState<WeekFilter>('all');
   const [addingOn, setAddingOn] = useState<string | null>(null);
+  // Dates come from the device's clock, which the static web build doesn't have.
+  const hydrated = useIsHydrated();
 
   const all = (venue ? barWeek.data : myWeek.data) ?? [];
   const items = filterWeek(all, filter);
@@ -66,7 +69,7 @@ export function WeekScreen() {
       <ScrollView contentContainerStyle={[column, styles.body, { paddingBottom: bottom + space.xl }]}>
         <PageHeader
           title="This week"
-          subtitle={subtitle}
+          subtitle={hydrated ? subtitle : null}
           width={wide ? 'wide' : 'text'}
           onBack={router.canGoBack() ? () => router.back() : undefined}
           action={canAdd ? <Button label="Add event" icon="plus" onPress={() => setAddingOn(toDay(from))} /> : null}
@@ -78,7 +81,7 @@ export function WeekScreen() {
             ))}
           </View>
         ) : null}
-        {wide ? (
+        {!hydrated ? null : wide ? (
           <WeekColumns days={days} from={from} member={venue} onAdd={canAdd ? setAddingOn : undefined} />
         ) : (
           <>
