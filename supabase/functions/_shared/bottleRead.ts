@@ -1,6 +1,8 @@
 // Reading the label on a photographed bottle. Plain TypeScript (no Deno APIs)
 // so scripts/bottleRead.check.ts can run it under Node too.
 
+import { cleanPlace, type ReadPlace } from "./readPlace.ts";
+
 /** One bottle as its label reads. lib/match.ts finds it in the catalog. */
 export interface BottleReading {
   /** The maker or brand ("Tanqueray", "Carpano"), or null when no brand is printed. */
@@ -11,6 +13,10 @@ export interface BottleReading {
   kind: string | null;
   /** Alcohol by volume, in percent, when it's printed. */
   abv: number | null;
+  /** Where it stands in the photo (read-anything only). */
+  at?: ReadPlace | null;
+  /** What couldn't be told from the label ("Can't see the label colour"), read-anything only. */
+  doubt?: string | null;
 }
 
 export interface BottlesReading {
@@ -69,7 +75,7 @@ export function cleanAbv(value: unknown): number | null {
  * The model's reply, made safe to hand to the app: trimmed, capped, with
  * nameless bottles and repeats dropped. Anything not shaped right is skipped.
  */
-export function cleanBottlesReading(raw: unknown): BottlesReading {
+export function cleanBottlesReading(raw: unknown, files = 0): BottlesReading {
   const reply = (raw && typeof raw === "object" ? raw : {}) as { bottles?: unknown };
   const bottles: BottleReading[] = [];
   const seen = new Set<string>();
@@ -80,7 +86,13 @@ export function cleanBottlesReading(raw: unknown): BottlesReading {
     const key = name.toLowerCase();
     if (!name || seen.has(key)) continue;
     seen.add(key);
-    bottles.push({ brand: clean(bottle.brand, 60) || null, name, kind: clean(bottle.kind, 60) || null, abv: cleanAbv(bottle.abv) });
+    const read: BottleReading = { brand: clean(bottle.brand, 60) || null, name, kind: clean(bottle.kind, 60) || null, abv: cleanAbv(bottle.abv) };
+    // Positions and doubts only come back from read-anything, which passes how many files it read.
+    if (files) {
+      read.at = cleanPlace(bottle.page, bottle.box, files);
+      read.doubt = clean(bottle.doubt, 80) || null;
+    }
+    bottles.push(read);
   }
   return { bottles };
 }

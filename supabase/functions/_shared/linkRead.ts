@@ -170,8 +170,14 @@ async function readCapped(res: Response): Promise<Uint8Array> {
   return out;
 }
 
+export interface FetchOptions {
+  /** The body as it came (CSV, JSON, a page's HTML), not the page's readable text. Share links use this. */
+  plain?: boolean;
+  headers?: Record<string, string>;
+}
+
 /** Fetches the link, checking every hop, and returns its text (web page) or the file it is (photo, PDF). */
-export async function fetchLink(raw: string, deps: LinkDeps): Promise<LinkContent> {
+export async function fetchLink(raw: string, deps: LinkDeps, options: FetchOptions = {}): Promise<LinkContent> {
   let url = checkLinkUrl(raw);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const addresses = await deps.resolve(url.hostname);
@@ -182,9 +188,11 @@ export async function fetchLink(raw: string, deps: LinkDeps): Promise<LinkConten
       res = await deps.fetch(url.toString(), {
         redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; CocktailBringIn/1.0)", Accept: "text/html,application/xhtml+xml,text/plain,image/*,application/pdf;q=0.9,*/*;q=0.1" },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CocktailBringIn/1.0)", Accept: "text/html,application/xhtml+xml,text/plain,image/*,application/pdf;q=0.9,*/*;q=0.1", ...options.headers },
       });
-    } catch {
+    } catch (err) {
+      // A share link's own refusal (a hop off its hosts) says why.
+      if (err instanceof LinkError) throw err;
       throw new LinkError("That link didn't open. Try copying the recipe's text instead.");
     }
     if (res.status >= 300 && res.status < 400) {
@@ -200,6 +208,9 @@ export async function fetchLink(raw: string, deps: LinkDeps): Promise<LinkConten
     }
     const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
     if (FILE_TYPES.includes(type)) return { file: { bytes: await readCapped(res), mimeType: type } };
+    if (options.plain && (type.startsWith("text/") || type === "application/json" || type === "application/csv" || !type)) {
+      return { text: new TextDecoder().decode(await readCapped(res)) };
+    }
     if (type === "text/html" || type === "application/xhtml+xml" || type === "text/plain" || !type) {
       const raw = new TextDecoder().decode(await readCapped(res));
       const text = type === "text/plain" ? raw.slice(0, MAX_TEXT) : pageText(raw);
