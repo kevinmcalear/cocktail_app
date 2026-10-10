@@ -179,11 +179,13 @@ export function shortDay(day: string, from: Date, locale?: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: 'short' });
 }
 
-/** A column or group heading: "Today · Fri 10", "Sat 11". */
+/** "Sat 10": the weekday then the date, whatever order the locale would put them in. */
+const weekdayDate = (d: Date, locale?: string) => `${d.toLocaleDateString(locale, { weekday: 'short' })} ${d.getDate()}`;
+
+/** A column or group heading: "Today · Sat 10", "Sun 11". */
 export function dayHeading(day: string, from: Date, locale?: string): { lead: string | null; date: string } {
   const [y, m, d] = day.split('-').map(Number);
-  const date = new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: 'short', day: 'numeric' });
-  return { lead: day === toDay(from) ? 'Today' : null, date };
+  return { lead: day === toDay(from) ? 'Today' : null, date: weekdayDate(new Date(y, m - 1, d), locale) };
 }
 
 /** "7 pm to late", "3 to 5 pm", "8 pm to midnight". Locale times, so 24-hour places get "19:00 to late". */
@@ -237,6 +239,7 @@ export function filterWeek(items: WeekItem[], filter: WeekFilter): WeekItem[] {
 /** "Fri 10 to Thu 16 Oct". */
 export function weekRange(from: Date, days = WEEK_DAYS, locale?: string): string {
   const last = new Date(from.getFullYear(), from.getMonth(), from.getDate() + days - 1);
-  const first = from.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', ...(last.getMonth() === from.getMonth() ? {} : { month: 'short' }) });
-  return `${first} to ${last.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}`;
+  const month = (d: Date) => d.toLocaleDateString(locale, { month: 'short' });
+  const first = `${weekdayDate(from, locale)}${last.getMonth() === from.getMonth() ? '' : ` ${month(from)}`}`;
+  return `${first} to ${weekdayDate(last, locale)} ${month(last)}`;
 }
