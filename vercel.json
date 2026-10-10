@@ -47,6 +47,10 @@
       "destination": "/cocktail/[id]/photos"
     },
     {
+      "source": "/cocktail/:id/roles",
+      "destination": "/cocktail/[id]/roles"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },

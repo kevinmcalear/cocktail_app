@@ -31,6 +31,8 @@ interface DrinkControlsProps {
   onShare?: () => void;
   /** The drink page's More button. On phones it holds Edit, so the pencil goes; wide screens show a labelled Edit beside it. */
   more?: ReactNode;
+  /** Wide drink page: the rest sit on its hero card (DrinkHeroActions), so only back here. */
+  backOnly?: boolean;
 }
 
 /**
@@ -39,7 +41,7 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake', onShare, more }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake', onShare, more, backOnly }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -71,6 +73,7 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, on
           scheme={left}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         />
+        {backOnly ? null : (
         <View style={styles.right}>
           <GlassButton
             accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
@@ -87,6 +90,7 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, on
           ) : null}
           {more}
         </View>
+        )}
       </View>
     </>
   );

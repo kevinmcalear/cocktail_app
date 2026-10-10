@@ -1,3 +1,4 @@
+import { useRouter, type Href } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -33,6 +34,7 @@ interface DrinkMoreMenuProps {
  * isn't its own button. Nothing when there's nothing to put in it.
  */
 export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, teamRole, scheme }: DrinkMoreMenuProps) {
+  const router = useRouter();
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
   // What to open once the menu has gone: two sheets never stack. A ref, since the sheet's close was made before the tap.
@@ -66,6 +68,9 @@ export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, te
           {onShare ? <Row icon="square.and.arrow.up" label="Share" onPick={() => (then.current = onShare)} /> : null}
           {edit ? <Row icon="pencil" label="Edit drink" onPick={() => (then.current = onEdit)} /> : null}
           {viewAs ? <ViewAs realRole={teamRole!} /> : null}
+          {viewAs ? (
+            <Row icon="info.circle" label="What each role opens" onPick={() => (then.current = () => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href))} />
+          ) : null}
           {report ? <Row icon="flag" label={`Report ${name}`} onPick={() => (then.current = () => setReporting(true))} /> : null}
         </ScrollView>
       </Sheet>

@@ -1,11 +1,11 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { BackbarTheme, BrandProvider, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
@@ -26,7 +26,10 @@ import { BatchSheet } from '../batch/BatchSheet';
 import { useCollectToggle } from '../published/useCollectToggle';
 import { DrinkActionBar, ACTION_BAR_HEIGHT, type BarAction } from './DrinkActionBar';
 import { DrinkBody } from './DrinkBody';
+import { useDrinkSections } from './DrinkSections';
 import { DrinkControls } from './DrinkControls';
+import { DrinkDesktop } from './DrinkDesktop';
+import { DrinkInspector } from './DrinkInspector';
 import { DrinkHero } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
@@ -132,46 +135,56 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   ).filter((a): a is BarAction => !!a);
   const pinned = !wide && barActions.length > 0;
 
-  const body = (
-    <DrinkBody
-      item={item}
-      preview={preview}
-      home={home}
-      wide={wide}
-      canEdit={canEdit}
-      staff={staff}
-      lock={lock}
-      access={access}
-      amountsOpenAt={amountsOpenAt}
-      lines={lines}
-      facts={facts}
-      tags={tags}
-      glass={glassKey}
-      photoCredit={shown.credit ? { text: shown.credit, url: heroPic?.sourceUrl ?? null } : null}
-      toMake={toMake}
-      actions={actions}
-      onRiff={onRiff}
-      venueName={teamRole !== null ? (venue?.name ?? null) : null}
-      inlineActions={wide ? <DrinkActionBar actions={barActions} pinned={false} /> : null}
-    />
-  );
-
-  const hero = <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={heroHeight} fade={!wide} />;
+  const bodyProps = {
+    item,
+    preview,
+    home,
+    wide,
+    canEdit,
+    staff,
+    lock,
+    access,
+    amountsOpenAt,
+    lines,
+    facts,
+    tags,
+    glass: glassKey,
+    photoCredit: shown.credit ? { text: shown.credit, url: heroPic?.sourceUrl ?? null } : null,
+    toMake,
+    actions,
+    onRiff,
+    venueName: teamRole !== null ? (venue?.name ?? null) : null,
+  };
+  const sections = useDrinkSections(bodyProps);
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
+  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
   const heroScheme = pictures[0] && !pictures[0].isSketch ? 'dark' : 'light';
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {wide ? (
-        <View style={styles.row}>
-          <View style={styles.heroColumn}>{hero}</View>
-          <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: top + layout.minTapTarget + space.xl, paddingBottom: space.xxxl }}>
-            <View style={[styles.readable, { paddingHorizontal: gutter }]}>{body}</View>
-          </ScrollView>
-        </View>
+        <DrinkDesktop
+          sections={sections}
+          hero={hero}
+          top={top}
+          staff={staff}
+          actions={<DrinkActionBar actions={barActions} pinned={false} />}
+          heroActions={
+            <>
+              <GlassButton accessibilityLabel={toMake.saved ? 'Remove from To make' : 'Add to To make'} icon={toMake.saved ? 'bookmark.fill' : 'bookmark'} onMedia onPress={preview ? () => {} : toMake.toggle} />
+              {preview || viewingAs ? null : <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" onMedia onPress={share} />}
+              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" icon="pencil" onMedia onPress={onEdit} /> : null}
+              {more}
+            </>
+          }
+          inspector={preview ? null : <DrinkInspector itemId={item.id} barId={item.bar_id} name={item.name} links={links} lines={lines} glass={glass} teamRole={teamRole} />}
+        />
       ) : (
         <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + (pinned ? ACTION_BAR_HEIGHT : 0) + space.xxxl }}>
-          {hero}
-          <View style={{ marginTop: -space.xxl, paddingHorizontal: gutter }}>{body}</View>
+          {hero(heroHeight)}
+          <View style={{ marginTop: -space.xxl, paddingHorizontal: gutter }}>
+            <DrinkBody sections={sections} home={home} />
+          </View>
         </Animated.ScrollView>
       )}
       {pinned ? <DrinkActionBar actions={barActions} pinned /> : null}
@@ -185,7 +198,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit}
         onShare={preview || viewingAs ? undefined : share}
-        more={preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />}
+        more={more}
+        backOnly={wide}
       />
       {toMake.sheet}
       {actions.sheets}
@@ -228,7 +242,4 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   flex: { flex: 1 },
-  row: { flex: 1, flexDirection: 'row' },
-  heroColumn: { width: '42%' },
-  readable: { maxWidth: 720, width: '100%' },
 });
