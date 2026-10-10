@@ -71,7 +71,10 @@ const ML_PER_OZ = 29.5735;
 
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
-const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'wheel', 'slice', 'cube', 'wedge', 'rim']);
+// A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
+const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float']);
+// Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
+const OIL = /\boil\b/i;
 const PLURAL: Record<string, string> = { dash: 'dashes', pinch: 'pinches', leaf: 'leaves', each: 'each' };
 
 // Name matching, so it's English-only and misses house names like "Sour mix".
@@ -99,7 +102,7 @@ export function isGarnishUnit(unit: string | null | undefined): boolean {
 
 /** The guess from the name and unit, for lines nobody has decided yet. */
 export function guessLeaveOut(name: string, unit: string): LeaveOut | null {
-  if (GARNISH_UNITS.has(unit)) return 'garnish';
+  if (GARNISH_UNITS.has(unit) || (DASH_UNITS.has(unit) && OIL.test(name))) return 'garnish';
   if (unit === 'top' || BUBBLES.test(name)) return 'bubbles';
   if (DAIRY.test(name)) return 'dairy';
   if (CITRUS.test(name) && !NOT_CITRUS.test(name)) return 'citrus';

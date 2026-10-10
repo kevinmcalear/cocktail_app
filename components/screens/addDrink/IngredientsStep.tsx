@@ -4,14 +4,20 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount } from '@/lib/specDefaults';
+import { capitalize } from '@/lib/stringUtils';
+import type { Technique } from '@/lib/techniques';
+import { startsFrom } from '@/lib/techniques/makeIt';
+import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { BalanceCard, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
+import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
 import { WizardChip } from './WizardChrome';
@@ -41,14 +47,34 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ line: WizardLine; at: number } | null>(null);
-  /** A new house prep being made, or one in the drink being edited (its line's key). */
-  const [making, setMaking] = useState<{ name: string; key?: string } | null>(null);
+  /**
+   * A house prep being made: a new line, the recipe of a line in the drink
+   * (its key), or a line swapped for one (its key, `replace`). Make it house
+   * on a bottle also brings the technique and the bottle as its base.
+   */
+  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean; technique?: string; base?: WizardPick } | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;
+  const replacing = !!making?.replace;
+  const makingTechnique = making?.technique ?? null;
+  const makingBase = making?.base ?? null;
+  /** The bottle line "What did you do to it?" is open for. */
+  const [houseKey, setHouseKey] = useState<string | null>(null);
+  const [nudgeOff, setNudgeOff] = useState(false);
+  // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
+  const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
+  };
+  // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
+  const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
+  const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
+  const houseLine = houseKey ? draft.lines.find((l) => l.key === houseKey) ?? null : null;
+  const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null) => {
+    setHouseKey(null);
+    setMaking({ name: nameFor(t, { base: line.name, adjunct }), key: line.key, replace: true, technique: t.id, base: { id: line.id, name: line.name } });
   };
 
   useEffect(() => {
@@ -92,15 +118,48 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                   autoFocus
                   onCancel={() => setSwapKey(null)}
                   onPick={(p) => {
-                    change(l.key, { id: p.id, name: p.name });
+                    // A different ingredient isn't the house prep that was here.
+                    change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
                     setSwapKey(null);
                   }}
+                  onMake={
+                    forDrink
+                      ? (name) => {
+                          make(name, l.key);
+                          setSwapKey(null);
+                        }
+                      : undefined
+                  }
                 />
               </View>
             ) : (
-              <LineRow key={l.key} line={l} onChange={(c) => change(l.key, c)} onRemove={() => remove(l)} onSwap={() => setSwapKey(l.key)} onEditPrep={() => setMaking({ name: l.name, key: l.key })} />
+              <LineRow
+                key={l.key}
+                line={l}
+                onChange={(c) => change(l.key, c)}
+                onRemove={() => remove(l)}
+                onSwap={() => setSwapKey(l.key)}
+                onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
+              />
             )
           )}
+        </View>
+      ) : null}
+
+      {nudge ? (
+        <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
+          <Body>{`The name says ${nudge.phrase}. Make the ${draft.lines.find((l) => l.key === nudge.key)?.name} that way?`}</Body>
+          <View style={styles.nudgeButtons}>
+            <Button
+              label="Make it house"
+              onPress={() => {
+                const line = draft.lines.find((l) => l.key === nudge.key);
+                if (line) makeHouse(line, nudge.technique, nudge.adjunct);
+              }}
+            />
+            <Button label="Not now" variant="secondary" onPress={() => setNudgeOff(true)} />
+          </View>
         </View>
       ) : null}
 
@@ -111,19 +170,29 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => setMaking({ name }) : undefined} />
+      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => make(name) : undefined} />
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}
-        initial={editingKey ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
+        initial={editingKey && !replacing ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
+        technique={makingTechnique}
+        picked={makingBase ? { base: makingBase } : undefined}
         ingredients={ingredients}
         aliases={aliases}
         onClose={() => setMaking(null)}
         onDone={(prep) => {
-          if (editingKey) change(editingKey, { prep, technique: prep.technique });
+          if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique });
+          else if (editingKey) change(editingKey, { prep, technique: prep.technique });
           else if (makingName) add({ id: null, name: makingName }, prep);
           setMaking(null);
         }}
+      />
+      <MakeItHouseSheet
+        bottle={houseLine?.name ?? null}
+        ways={houseLine ? houseWays(houseLine.name, generic(houseLine.id)) : []}
+        nudge={nudge && nudge.key === houseKey ? nudge : null}
+        onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
+        onClose={() => setHouseKey(null)}
       />
 
       {typing || !forDrink ? null : (
@@ -150,6 +219,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  nudge: { gap: space.md, borderRadius: radius.control, padding: space.lg },
+  nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

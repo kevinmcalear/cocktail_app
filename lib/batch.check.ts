@@ -87,6 +87,16 @@ assert.deepEqual(s.lines.map((l) => l.leaveOut), [null, null, 'garnish', 'dairy'
 assert.deepEqual(s.lines.map((l) => l.amount), ['12 oz', '4 oz', '6 each', '4 oz', '6 twists', '']);
 assert.equal(Math.round(s.totalMl), Math.round(12 * 29.57 + 120), 'only bottled volume counts');
 
+// A finish stays out of the bottle: drops of oil, a mist, a rinse and a float go on each serve; saline drops go in.
+const finished = buildBatch(
+  specLines([row('rum', 'White rum', 60, 'ml'), row('sal', 'Saline', 2, 'drop'), row('oil', 'Mint oil', 3, 'drop'), row('ab', 'Absinthe', 1, 'rinse'), row('m', 'Mezcal', 2, 'spray'), row('f', 'Red wine', 1, 'float')]),
+  ['Stir'],
+  4
+);
+assert.deepEqual(finished.lines.map((l) => l.leaveOut), [null, null, 'garnish', 'garnish', 'garnish', 'garnish']);
+assert.deepEqual(finished.lines.map((l) => l.amount).slice(2), ['12 drops', '4 rinses', '8 sprays', '4 floats']);
+assert.equal(finished.lines[1].amount, '8 drops');
+
 // The bar's decision beats the guess (recipes.at_service): lime in the bottle
 // for a pre-diluted bottled daiquiri, and a syrup added at the station.
 const decided = specLines([

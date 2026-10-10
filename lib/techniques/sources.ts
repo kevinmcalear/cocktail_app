@@ -66,6 +66,11 @@ const S = {
   coldBrew: { name: 'My Coffee Explorer: cold brew ratios', url: 'https://mycoffeeexplorer.com/reference/cold-brew-ratios' },
   efsaGlycerol: { name: 'EFSA: glycerol in drinks (PubMed)', url: 'https://pubmed.ncbi.nlm.nih.gov/42095189/' },
   brewhausGlycerin: { name: 'Brewhaus: glycerin', url: 'https://old.brewhaus.com/glycerin-4oz' },
+  chilledFoam: { name: 'Chilled: methylcellulose foam stock', url: 'https://chilledmagazine.com/?p=56937' },
+  gbcHerbOil: { name: 'Great British Chefs: herb oil', url: 'https://www.greatbritishchefs.com/how-to-cook/how-to-make-herb-oil' },
+  ricardoHerbOil: { name: 'Ricardo: basil oil', url: 'https://www.ricardocuisine.com/en/recipes/11204-basil-oil' },
+  dailyPourShrub: { name: 'The Daily Pour: shrubs', url: 'https://thedailypour.com/?p=111930' },
+  ediblenmShrub: { name: 'Edible New Mexico: making shrubs', url: 'https://www.ediblenm.com/making-shrubs/' },
   pacojet: { name: 'Pacojet: Campari sorbet', url: 'https://pacojet.com/en-GB/Recipes/Ice-cream-and-sorbet/Campari-Sorbet/' },
 } as const;
 

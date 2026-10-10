@@ -18,9 +18,9 @@ import { toastDone } from '@/lib/toast';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
-import { GarnishStep } from './GarnishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
+import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
@@ -145,7 +145,7 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
       case 'ice':
         return <PickStep label="Ice" ownLabel="Other ice" options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} suggested={guess.ice} />;
       case 'garnish':
-        return <GarnishStep draft={draft} set={set} ingredients={ingredients} />;
+        return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
         return <CreditsStep draft={draft} set={set} atVenue={!!barId} />;
       case 'notes':

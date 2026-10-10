@@ -22,6 +22,29 @@ for (const t of TECHNIQUES) {
   assert.ok(t.steps.length, `${t.id} has steps`);
   if (t.parts) assert.ok(t.base, `${t.id} has parts, so it needs a base to scale from`);
 }
+// Every technique that makes something is a template: what it starts from, the word for its
+// name, and how long it keeps and where (or why nobody can say).
+for (const t of TECHNIQUES) {
+  if (t.method) {
+    assert.equal(t.starts, undefined, `${t.id} is a method: it starts from nothing on the shelf`);
+    continue;
+  }
+  assert.ok(t.starts, `${t.id} says what it starts from`);
+  assert.ok(t.word && t.nameAs, `${t.id} has a name word and a name pattern`);
+  assert.ok(t.keepsHours !== undefined, `${t.id} has keepsHours, or null`);
+  if (t.keepsHours === null) assert.ok(t.keepsWhy, `${t.id} says why there's no keep`);
+  else assert.ok(t.keepsHours! > 0 && t.storage, `${t.id} keeps a while, somewhere`);
+  if (t.base?.slot || t.parts?.some((p) => p.generic)) assert.ok(t.starts !== 'none', `${t.id}: a stand-in needs something to start from`);
+  for (const p of t.parts ?? []) if (p.generic) assert.ok(p.slot, `${t.id}: ${p.name} is a stand-in for a "with what"`);
+}
+// The safer keep: herbs in oil 4 days, never the chefs' 2 weeks; an air in minutes; a tincture a year.
+assert.equal(techniqueById('infused-oil')!.keepsHours, 4 * 24);
+assert.equal(techniqueById('infused-oil')!.gate, 'safety');
+assert.ok(techniqueById('lecithin-air')!.keepsHours! < 1);
+assert.equal(techniqueById('tincture')!.keepsHours, 365 * 24);
+assert.equal(techniqueById('dehydrated-citrus')!.storage, 'airtight');
+assert.ok(techniqueById('centrifuge')!.allergens?.some((a) => /shellfish/i.test(a)), 'chitosan is shellfish');
+for (const t of TECHNIQUES) for (const v of t.variants ?? []) if (v.keepsHours && t.keepsHours && !v.parts) assert.ok(v.keepsHours <= t.keepsHours, `${t.id}: a "with what" only ever shortens the keep`);
 for (const g of GROUPS) assert.ok(TECHNIQUES.some((t) => t.group === g.id), `${g.id} has techniques`);
 for (const i of TECHNICAL_INGREDIENTS) for (const t of i.techniques) assert.ok(techniqueById(t), `${i.id} links to unknown ${t}`);
 

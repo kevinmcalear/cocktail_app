@@ -34,6 +34,10 @@ const LIVE = ['lime', 'shake'];
 const mockInserts: Record<string, unknown>[] = [];
 const mockRpcs: [string, Record<string, unknown>][] = [];
 const mockTaken = new Set<string>();
+// Shared ingredient names already taken (the name guard answers with the one to use), and every ingredient insert.
+const TAKEN_ID = '11111111-2222-3333-4444-555555555555';
+const mockTakenNames = new Set<string>();
+const mockIngredientInserts: Record<string, unknown>[] = [];
 jest.mock('@/lib/supabase', () => {
   const chain = (result: () => unknown) => {
     const q: Record<string, unknown> = {};
@@ -53,6 +57,10 @@ jest.mock('@/lib/supabase', () => {
       from: (table: string) => ({
         ...chain(() => ({ data: null, error: null })),
         insert: (row: Record<string, unknown>) => {
+          if (table === 'items' && row.item_type === 'ingredient') {
+            mockIngredientInserts.push(row);
+            if (mockTakenNames.has(row.name as string)) return chain(() => ({ data: null, error: { code: 'P0001', message: 'taken', hint: TAKEN_ID } }));
+          }
           if (table !== 'items' || row.item_type !== 'cocktail') return chain(() => ({ data: { id: 'new-row' }, error: null }));
           mockInserts.push(row);
           const id = row.id as string | undefined;
@@ -145,4 +153,66 @@ test('a house prep made in the wizard is saved with its own recipe, not a techni
   expect(saved).toBe(prep);
   expect(typeof ensure).toBe('function');
   expect(mockSavePrepCard).not.toHaveBeenCalled();
+});
+
+test('a prep made in the wizard is never swapped for a same-named one: at home it becomes "My …", your version of it', async () => {
+  mockSavePrepRecipe.mockClear();
+  mockIngredientInserts.length = 0;
+  mockTakenNames.add('Cupuacu');
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const prep = startPrep('other', 'Cupuacu');
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, name: 'Cupuacu Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'cupuacu', amount: '20', unit: 'ml', prep }] },
+    barId: null,
+    myProfileId: null,
+  });
+  mockTakenNames.clear();
+  // No lookup by name: "Cupuacu" resolves to an existing row, which would drop the recipe.
+  expect(mockRpcs.some(([fn, args]) => fn === 'resolve_ingredient' && args.p_name === 'cupuacu')).toBe(false);
+  expect(mockIngredientInserts.map((r) => [r.name, r.generic_id, r.ingredient_role])).toEqual([
+    ['Cupuacu', undefined, 'prep'],
+    ['My Cupuacu', TAKEN_ID, 'prep'],
+  ]);
+  expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
+  expect(mockSavePrepRecipe.mock.calls[0][0]).toBe('new-row');
+});
+
+test('at a venue, a taken name stays the same: the venue’s own version', async () => {
+  mockIngredientInserts.length = 0;
+  mockTakenNames.add('Cupuacu');
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, name: 'Cupuacu Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Cupuacu', amount: '20', unit: 'ml', prep: startPrep('other', 'Cupuacu') }] },
+    barId: 'bar-1',
+    myProfileId: null,
+  });
+  mockTakenNames.clear();
+  expect(mockIngredientInserts.map((r) => [r.name, r.generic_id, r.bar_id])).toEqual([
+    ['Cupuacu', undefined, 'bar-1'],
+    ['Cupuacu', TAKEN_ID, 'bar-1'],
+  ]);
+});
+
+test('a house prep made for the finish is saved like an ingredient’s: its own row and recipe, as 3 drops after the pours', async () => {
+  mockSaveSpec.mockClear();
+  mockSavePrepRecipe.mockClear();
+  mockIngredientInserts.length = 0;
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const prep = startPrep('other', 'Mint oil');
+  await result.current.mutationFn({
+    draft: {
+      ...EMPTY_DRAFT,
+      name: 'Coconut Fat-Washed Daiquiri',
+      creator: 'nobody',
+      lines: [{ key: 'a', id: 'lime', name: 'Lime', amount: '30', unit: 'ml' }],
+      garnishes: [{ key: 'f', id: null, name: 'Mint oil', amount: '3', unit: 'drop', prep, technique: 'infused-oil' }],
+    },
+    barId: null,
+    myProfileId: null,
+  });
+  expect(mockIngredientInserts.map((r) => [r.name, r.ingredient_role])).toEqual([['Mint Oil', 'prep']]);
+  expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
+  expect(mockSavePrepRecipe.mock.calls[0][1]).toBe(prep);
+  const [, lines] = mockSaveSpec.mock.calls[0];
+  expect(lines.map((l: { ingredient_item_id: string; amount: number; unit: string }) => [l.ingredient_item_id, l.amount, l.unit])).toEqual([['lime', 30, 'ml'], ['new-row', 3, 'drop']]);
 });

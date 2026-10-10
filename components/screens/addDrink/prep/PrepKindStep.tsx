@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { GradeTag } from '@/components/techniques/bits';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { guessKind, PREP_KINDS, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
@@ -16,9 +17,10 @@ interface PrepKindStepProps {
 }
 
 /**
- * New prep, first step: what kind it is (each with its ratio), the one its
- * name suggests marked, and for a shrub, cold or hot. A name a library
- * technique makes ("Clarified grapefruit") lists those ways too.
+ * New prep, first step: a name a library technique makes ("Clarified
+ * grapefruit") lists those ways first, most likely on top; then what kind it
+ * is (each with its ratio), the one its name suggests marked, and for a
+ * shrub, cold or hot.
  */
 export function PrepKindStep({ name, draft, onKind, onTechnique }: PrepKindStepProps) {
   const ds = useDs();
@@ -30,6 +32,34 @@ export function PrepKindStep({ name, draft, onKind, onTechnique }: PrepKindStepP
 
   return (
     <View style={styles.stack}>
+      {ways.length ? (
+        <View style={styles.stack}>
+          <Caption tone="muted">Ways to make it</Caption>
+          <View role="radiogroup" accessibilityLabel="Technique" style={styles.stack}>
+            {ways.map((t) => {
+              const missing = kit.size ? missingKit(t, kit) : [];
+              const on = draft.technique === t.id;
+              return (
+                <PressableScale
+                  key={t.id}
+                  role="radio"
+                  aria-checked={on}
+                  accessibilityLabel={`${t.name}. ${t.summary} ${t.time}`}
+                  onPress={() => onTechnique(t.id)}
+                  style={[styles.way, { backgroundColor: on ? ds.c.raised : ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
+                >
+                  <View style={styles.flex}>
+                    <Body>{t.name}</Body>
+                    <Caption tone={missing.length ? 'accent' : 'muted'}>{[t.time, missing.length ? `Needs ${missing.join(', ')}` : null].filter(Boolean).join(' · ')}</Caption>
+                  </View>
+                  {on ? <IconSymbol name="checkmark.circle.fill" size={20} color={ds.accentText} /> : <GradeTag grade={t.grade} />}
+                </PressableScale>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+      {ways.length ? <Caption tone="muted">Or a kind of prep</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Kind of prep" style={styles.grid}>
         {PREP_KINDS.map((k) => {
           const on = k.id === picked;
@@ -79,33 +109,6 @@ export function PrepKindStep({ name, draft, onKind, onTechnique }: PrepKindStepP
         </View>
       ) : null}
 
-      {ways.length ? (
-        <View style={styles.stack}>
-          <Caption tone="muted">Or one of the techniques that makes it</Caption>
-          <View role="radiogroup" accessibilityLabel="Technique">
-            {ways.map((t) => {
-              const missing = kit.size ? missingKit(t, kit) : [];
-              const on = draft.technique === t.id;
-              return (
-                <PressableScale
-                  key={t.id}
-                  role="radio"
-                  aria-checked={on}
-                  accessibilityLabel={`${t.name}. ${t.summary} ${t.time}`}
-                  onPress={() => onTechnique(t.id)}
-                  style={[styles.way, { borderBottomColor: ds.c.line, backgroundColor: on ? ds.c.raised : 'transparent' }]}
-                >
-                  <View style={styles.flex}>
-                    <Body>{t.name}</Body>
-                    <Caption tone={missing.length ? 'accent' : 'muted'}>{[t.time, missing.length ? `Needs ${missing.join(', ')}` : null].filter(Boolean).join(' · ')}</Caption>
-                  </View>
-                  <GradeTag grade={t.grade} />
-                </PressableScale>
-              );
-            })}
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -116,5 +119,5 @@ const styles = StyleSheet.create({
   kind: { minHeight: layout.minTapTarget + space.lg, borderRadius: radius.control, borderWidth: 2, paddingHorizontal: space.md, paddingVertical: space.sm, justifyContent: 'center', gap: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   flex: { flex: 1 },
-  way: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  way: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.control, borderWidth: 2 },
 });

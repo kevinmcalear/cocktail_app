@@ -5,8 +5,8 @@ import { Button, Caption, Chip, Field, PressableScale, useDs } from '@/component
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { timerFromText } from '@/lib/makeSteps';
-import { leadText, type PrepDraft } from '@/lib/prepKinds';
-import { shelfLifeLabel, timerLabel } from '@/lib/scale';
+import { keepsText, leadText, STORES, type PrepDraft } from '@/lib/prepKinds';
+import { timerLabel } from '@/lib/scale';
 
 interface StepRow {
   key: string;
@@ -18,13 +18,13 @@ let rowKey = 0;
 const row = (body: string, seconds: number | null): StepRow => ({ key: `r${rowKey++}`, body, timer: seconds ? (seconds === 86400 ? '1 day' : timerLabel(seconds)) : '' });
 
 const KEEPS = [3 * 24, 7 * 24, 14 * 24, 28 * 24, 56 * 24, 26 * 7 * 24];
-const STORES = ['Fridge, sealed bottle', 'Freezer', 'Ambient, dark'];
 const LEADS = [20, 60, 24 * 60, 3 * 24 * 60, 7 * 24 * 60];
 
 /**
  * New prep, the method: the kind's steps to change, add to or remove (a
  * timer in minutes on any of them), and how long it keeps, where, and how
- * far ahead to start it.
+ * far ahead to start it. A technique's own keep (5 minutes for an air, a
+ * year for a tincture) and its safety notes come with it.
  */
 export function PrepMethodStep({ draft, set }: { draft: PrepDraft; set: (change: Partial<PrepDraft>) => void }) {
   const ds = useDs();
@@ -36,10 +36,19 @@ export function PrepMethodStep({ draft, set }: { draft: PrepDraft; set: (change:
   };
   const update = (key: string, patch: Partial<StepRow>) => changeSteps(steps.map((s) => (s.key === key ? { ...s, ...patch } : s)));
   const keeps = KEEPS.includes(draft.keepsHours ?? -1) || draft.keepsHours === null ? KEEPS : [...KEEPS, draft.keepsHours].sort((a, b) => a - b);
+  const stores: string[] = STORES.includes(draft.storage as (typeof STORES)[number]) || !draft.storage ? [...STORES] : [...STORES, draft.storage];
   const leads = LEADS.includes(draft.leadMinutes ?? -1) || draft.leadMinutes === null ? LEADS : [...LEADS, draft.leadMinutes].sort((a, b) => a - b);
 
   return (
     <View style={styles.stack}>
+      {draft.watch?.length ? (
+        <View style={[styles.watch, { backgroundColor: ds.c.raised }]}>
+          <Caption tone={draft.gate ? 'accent' : 'muted'}>{draft.gate === 'legal' ? 'Check the law first' : draft.gate === 'safety' ? 'Safety first' : 'Watch for'}</Caption>
+          {draft.watch.map((w) => (
+            <Caption key={w}>{w}</Caption>
+          ))}
+        </View>
+      ) : null}
       <View style={styles.steps}>
         {steps.map((s, i) => (
           <View key={s.key} style={[styles.step, { borderBottomColor: ds.c.line }]}>
@@ -62,12 +71,13 @@ export function PrepMethodStep({ draft, set }: { draft: PrepDraft; set: (change:
         <Button label="Add a step" variant="secondary" icon="plus" onPress={() => changeSteps([...steps, row('', null)])} style={styles.add} />
       </View>
       <Group label="Keeps">
+        {draft.keepsMinutes ? <Chip label={keepsText({ keepsHours: null, keepsMinutes: draft.keepsMinutes }) ?? ''} selected onPress={() => set({ keepsMinutes: null })} /> : null}
         {keeps.map((h) => (
-          <Chip key={h} label={shelfLifeLabel(h) ?? ''} selected={draft.keepsHours === h} onPress={() => set({ keepsHours: draft.keepsHours === h ? null : h })} />
+          <Chip key={h} label={keepsText({ keepsHours: h }) ?? ''} selected={draft.keepsHours === h} onPress={() => set({ keepsHours: draft.keepsHours === h ? null : h, keepsMinutes: null })} />
         ))}
       </Group>
       <Group label="Store">
-        {STORES.map((s) => (
+        {stores.map((s) => (
           <Chip key={s} label={s} selected={draft.storage === s} onPress={() => set({ storage: s })} />
         ))}
       </Group>
@@ -104,4 +114,5 @@ const styles = StyleSheet.create({
   add: { alignSelf: 'flex-start' },
   group: { gap: space.xs },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  watch: { borderRadius: radius.control, padding: space.md, gap: space.xs },
 });

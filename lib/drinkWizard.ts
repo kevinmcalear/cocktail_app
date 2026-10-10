@@ -8,6 +8,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
 import { tidyAmount } from '@/lib/specDefaults';
+import { amountText } from '@/lib/units';
 
 export const WIZARD_STEPS = ['name', 'ingredients', 'method', 'glass', 'ice', 'garnish', 'credits', 'notes', 'publish', 'review'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
@@ -20,7 +21,8 @@ export const STEP_COPY: Record<WizardStep, { title: string; short: string; intro
   method: { title: 'How’s it made?', short: 'Method', intro: 'One, or a few in order.', optional: true },
   glass: { title: 'What glass?', short: 'Glass', optional: true },
   ice: { title: 'What ice?', short: 'Ice', optional: true },
-  garnish: { title: 'Any garnish?', short: 'Garnish', optional: true },
+  // The id stays 'garnish' so drafts kept on a device still open here.
+  garnish: { title: 'How’s it finished?', short: 'Finish', optional: true },
   credits: { title: 'Who made it?', short: 'Credits', optional: true },
   notes: { title: 'Anything to add?', short: 'Notes', optional: true },
   publish: { title: 'Who can see it?', short: 'Who sees it', optional: true },
@@ -42,6 +44,8 @@ export interface WizardLine extends WizardPick {
   technique?: string;
   /** A new house prep's own recipe and method (lib/prepKinds), made in the wizard: saved with the drink. */
   prep?: PrepDraft;
+  /** A note on the spec line ("the bar uses Bacardí Heritage"). */
+  note?: string;
 }
 
 export interface WizardDraft {
@@ -59,7 +63,7 @@ export interface WizardDraft {
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
   ice: WizardPick | null;
-  /** Saved as spec lines with a count unit (peel, twist, wheel), the way specs already write them. */
+  /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
   creator: 'me' | 'nobody' | WizardPick | null;
@@ -221,6 +225,55 @@ export const GARNISH_CHIPS: readonly GarnishChip[] = [
   g('Edible flower', 'Edible flower', 'each'),
 ];
 
+/**
+ * A finish chip: drops, a mist, a rinse, a float. With a name it's a whole
+ * line (Absinthe rinse); without one it asks "of what?" and the search fills
+ * it in, in this unit.
+ */
+export interface FinishChip {
+  label: string;
+  unit: string;
+  amount: string;
+  name?: string;
+  /** The search's label while it asks. */
+  ask?: string;
+}
+export const FINISH_CHIPS: readonly FinishChip[] = [
+  { label: 'Drops of oil', unit: 'drop', amount: '3', ask: 'Drops of what oil?' },
+  { label: 'Saline, 2 drops', unit: 'drop', amount: '2', name: 'Saline solution' },
+  { label: 'Bitters, dashed', unit: 'dash', amount: '2', ask: 'Dashes of which bitters?' },
+  { label: 'Absinthe rinse', unit: 'rinse', amount: '1', name: 'Absinthe' },
+  { label: 'Mist', unit: 'spray', amount: '2', ask: 'A mist of what?' },
+  { label: 'Float', unit: 'float', amount: '1', ask: 'Float what?' },
+];
+
+/** The units a finish line offers: on top first, then on the glass. */
+export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
+
+/**
+ * How a finish line starts, from its name: oils in drops (three), saline and
+ * tinctures in drops (two), bitters dashed, absinthe as a rinse, else one.
+ */
+export function finishStart(name: string): { unit: string; amount: string } {
+  const n = name.toLowerCase();
+  if (/\boil\b/.test(n)) return { unit: 'drop', amount: '3' };
+  if (/saline|salt solution|tincture/.test(n)) return { unit: 'drop', amount: '2' };
+  if (/bitters/.test(n)) return { unit: 'dash', amount: '2' };
+  if (/absinthe|pastis|herbsaint|pernod/.test(n)) return { unit: 'rinse', amount: '1' };
+  if (/\b(mist|spray|atomi[sz]ed)\b/.test(n)) return { unit: 'spray', amount: '2' };
+  return { unit: 'each', amount: '1' };
+}
+
+const ON_GLASS = /^(peel|twist|wheel|slice|sprig|leaf|wedge|rim|pinch|rinse|float)$/;
+
+/** A finish line in words: "Orange peel", "Absinthe rinse", "3 drops Mint oil", "3 Coffee beans". */
+export function finishLabel(l: Pick<WizardLine, 'name' | 'amount' | 'unit'>): string {
+  const a = tidyAmount(l.amount);
+  if (ON_GLASS.test(l.unit)) return `${l.name} ${l.unit}`;
+  if (l.unit === 'each' || !l.unit) return a && a !== '1' ? `${a} ${l.name}` : l.name;
+  return a ? `${amountText(a, l.unit)} ${l.name}` : `${l.name}, ${l.unit}`;
+}
+
 // The amounts a stepper walks through, by unit: the measures bartenders pour.
 const LADDERS: Record<string, number[]> = {
   ml: [5, 7.5, 10, 15, 20, 22.5, 25, 30, 35, 40, 45, 50, 60, 75, 90, 120],
@@ -230,9 +283,11 @@ const LADDERS: Record<string, number[]> = {
   tsp: [0.5, 1, 1.5, 2, 3],
   tbsp: [0.5, 1, 1.5, 2, 3],
   g: [1, 2, 5, 10, 15, 20, 25, 30, 40, 50],
+  drop: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  spray: [1, 2, 3, 4, 5],
 };
 // The first tap of + on an empty line.
-const START: Record<string, number> = { ml: 30, cl: 3, oz: 1, dash: 2, drop: 2, g: 10 };
+const START: Record<string, number> = { ml: 30, cl: 3, oz: 1, dash: 2, drop: 2, spray: 2, g: 10 };
 const COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
 const fmt = (n: number) => String(Math.round(n * 100) / 100);
 
@@ -250,7 +305,7 @@ export function stepAmount(amount: string, unit: string, dir: 1 | -1): string {
 }
 
 /** The units a line can cycle through with one tap, in the order a bartender reaches for them. */
-export const QUICK_UNITS = ['ml', 'oz', 'cl', 'dash', 'bsp', 'top', 'each', 'g'] as const;
+export const QUICK_UNITS = ['ml', 'oz', 'cl', 'dash', 'drop', 'bsp', 'tsp', 'top', 'each', 'g'] as const;
 
 export function nextUnit(unit: string): string {
   const i = (QUICK_UNITS as readonly string[]).indexOf(unit);
@@ -283,7 +338,7 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = []):
   };
 }
 
-/** The spec lines to save: ingredients, then garnishes. */
+/** The spec lines to save: ingredients, then the finish. */
 export function specLines(d: WizardDraft): { line: WizardLine; amount: number | null }[] {
   return [...d.lines, ...d.garnishes].map((line) => ({ line, amount: amountOf(line.amount) }));
 }
@@ -322,7 +377,7 @@ export interface SourceSpec {
   ice?: { id: string; name: string } | null;
 }
 
-const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rim|pinch)s?$/;
+const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch)s?$/;
 const GARNISH_EACH = /cherr|olive|coffee bean|flower|petal|nutmeg|onion|mint|berry|berries/;
 const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
 const OZ_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];

@@ -6,8 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { WizardPick } from '@/lib/drinkWizard';
 import { nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
-import { guessKind } from '@/lib/prepKinds';
-import { waysToMake } from '@/lib/techniques/makeIt';
+import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 
 // The generated view types call `images` a list; it's one row per link.
 export type CatalogIngredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null; generic_id?: string | null; item_images?: unknown };
@@ -27,8 +26,10 @@ export interface IngredientSearchProps {
   onTyping?: (typing: boolean) => void;
   /** Off: only existing ingredients can be picked (a kind of must exist). */
   allowNew?: boolean;
-  /** A new name: offers to make it in house, with its own recipe. */
+  /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string) => void;
+  /** A name that sounds made (an oil, a cordial) offers making it before any bottle: the finish, where drops of oil are nearly always house-made. */
+  makeFirst?: boolean;
 }
 
 /**
@@ -36,7 +37,7 @@ export interface IngredientSearchProps {
  * ingredient, by another spelling or alias, offers that one and not a copy;
  * a likely misspelling asks "Did you mean…?" first. Return takes the top hit.
  */
-export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake }: IngredientSearchProps) {
+export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, makeFirst }: IngredientSearchProps) {
   const ds = useDs();
   const [query, setQueryState] = useState('');
   const setQuery = (q: string) => {
@@ -47,11 +48,11 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === query.trim().toLowerCase());
   const near = exact ? null : nearIngredient(query, ingredients, aliases);
 
-  // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice) offers it first.
-  const prepLike = !!guessKind(query) || waysToMake(query).length > 0;
+  // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice), not a bought bottle, offers it first.
+  const prepLike = looksMadeInHouse(query);
   const makeRow = onMake ? (
     <ResultRow
-      label={`Make “${query.trim()}” in house`}
+      label={exact ? `Make your own “${query.trim()}”` : `Make “${query.trim()}” in house`}
       isNew
       onPress={() => {
         onMake(query.trim());
@@ -59,6 +60,8 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
       }}
     />
   ) : null;
+
+  const lead = makeFirst && prepLike && !exact && !loading;
 
   const pick = (p: WizardPick) => {
     onPick(p);
@@ -94,6 +97,7 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
 
       {query.trim() ? (
         <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
+          {lead ? makeRow : null}
           {near && !results.includes(near) ? (
             <ResultRow id={near.id} label={`Did you mean ${near.name}?`} onPress={() => pick({ id: near.id, name: near.name ?? query })} />
           ) : null}
@@ -104,9 +108,11 @@ export function IngredientSearch({ ingredients, aliases = [], coreIds, loading, 
             <Body tone="muted" style={styles.loading}>
               Loading ingredients…
             </Body>
-          ) : exact || !allowNew ? null : (
+          ) : exact ? (
+            makeRow
+          ) : !allowNew ? null : (
             <>
-              {makeRow && prepLike ? makeRow : null}
+              {makeRow && prepLike && !lead ? makeRow : null}
               <ResultRow label={`Add “${query.trim()}” as new`} isNew onPress={() => pick({ id: null, name: query.trim() })} />
               {makeRow && !prepLike ? makeRow : null}
             </>

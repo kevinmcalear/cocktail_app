@@ -134,19 +134,31 @@ export function useLearnYield(itemId: string) {
  * A house prep made in the add-drink wizard (lib/prepKinds): marks the new row
  * as a prep, writes its recipe lines (typed names become ingredients through
  * `ensure`, the drink save's own resolver) and its card: yield, keeps,
- * storage, lead time, actions and steps.
+ * storage, lead time, actions and steps. A base line that's a bottle (a fat
+ * wash of Bacardí) is what the prep is made from.
  */
 export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
+  let baseId: string | null = null;
   for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
-    if (!line.name.trim()) continue;
-    rows.push({ recipe_item_id: itemId, ingredient_item_id: await ensure({ id: line.id, name: line.name }, 'ingredient'), amount, unit: line.unit || null, sort_order: i });
+    // A stand-in nobody filled ("Spirit") is never an ingredient.
+    if (!line.name.trim() || line.slot) continue;
+    const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
+    if (line.key === prep.baseKey) baseId = id;
+    rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, sort_order: i });
   }
   if (rows.length) {
     const added = await supabase.from('recipes').insert(rows);
     if (added.error) throw added.error;
+  }
+  // Made it house from a bottle in the drink, or a base line that's a bottle.
+  const madeFrom = prep.madeFrom?.id ?? null;
+  const fromBase = !madeFrom && baseId ? (await supabase.from('items').select('ingredient_role').eq('id', baseId).maybeSingle()).data?.ingredient_role === 'product' : false;
+  if (madeFrom || fromBase) {
+    const from = await supabase.from('items').update({ made_from_id: madeFrom ?? baseId }).eq('id', itemId);
+    if (from.error) throw from.error;
   }
   const made = prepYield(prep);
   await savePrepCard(itemId, {

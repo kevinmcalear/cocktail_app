@@ -19,6 +19,10 @@ interface LineRowProps {
   onSwap: () => void;
   /** A new house prep made here: open its recipe again. */
   onEditPrep?: () => void;
+  /** A bottle already in the drink: say what you did to it (a fat wash, an infusion). */
+  onMakeHouse?: () => void;
+  /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
+  units?: readonly string[];
 }
 
 /**
@@ -27,9 +31,11 @@ interface LineRowProps {
  * (tap to change) and remove. On a phone the controls sit under the name; on
  * a wider screen they share its line.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS }: LineRowProps) {
   const ds = useDs();
   const [units, setUnits] = useState(false);
+  const [noting, setNoting] = useState(!!line.note);
+  const from = line.prep?.madeFrom ?? null;
   const top = line.unit === 'top';
   const amountLabel = top ? 'Top' : line.amount ? `${line.amount} ${line.unit}` : `no amount, ${line.unit}`;
   return (
@@ -49,6 +55,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRo
             {line.id ? null : line.prep ? (
               <View style={styles.prepNote}>
                 <Tag label="House-made" tone="accent" />
+                {from ? <Caption tone="muted">{`from ${from.name}`}</Caption> : null}
                 <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
               </View>
             ) : line.technique ? (
@@ -57,11 +64,18 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRo
               <Caption tone="muted">New, added when you save</Caption>
             )}
           </PressableScale>
-          {line.prep && onEditPrep ? (
-            <PressableScale onPress={onEditPrep} role="button" accessibilityLabel={`Edit the recipe for ${line.name}`} style={styles.editPrep}>
-              <Caption tone="accent">Edit the recipe</Caption>
-            </PressableScale>
-          ) : null}
+          <View style={styles.links}>
+            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
+            {from ? (
+              <TextAction
+                label={`Back to ${from.name}`}
+                a11y={`Back to plain ${from.name}`}
+                onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })}
+              />
+            ) : null}
+            {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
+            {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => setNoting(true)} />}
+          </View>
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
               {top ? (
@@ -109,9 +123,21 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRo
           <IconSymbol name="xmark" size={16} color={ds.c.muted} />
         </PressableScale>
       </View>
+      {noting ? (
+        <TextInput
+          value={line.note ?? ''}
+          onChangeText={(note) => onChange({ note })}
+          placeholder="A note on the spec: which bottle, how it's cut"
+          placeholderTextColor={ds.c.muted}
+          aria-label={`Note on ${line.name}`}
+          autoFocus={!line.note}
+          maxLength={120}
+          style={[styles.note, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
+        />
+      ) : null}
       {units ? (
         <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={styles.units}>
-          {QUICK_UNITS.map((u) => (
+          {unitList.map((u) => (
             <WizardChip
               key={u}
               label={u}
@@ -131,6 +157,15 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep }: LineRo
   );
 }
 
+/** A small text button under the name: Edit the recipe, Make it house, Note. */
+function TextAction({ label, a11y, onPress }: { label: string; a11y: string; onPress: () => void }) {
+  return (
+    <PressableScale onPress={onPress} role="button" accessibilityLabel={a11y} style={styles.link}>
+      <Caption tone="accent">{label}</Caption>
+    </PressableScale>
+  );
+}
+
 function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string; onPress: () => void }) {
   const ds = useDs();
   return (
@@ -142,7 +177,9 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 
 const styles = StyleSheet.create({
   prepNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap', paddingTop: 2 },
-  editPrep: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
+  links: { flexBasis: '100%', flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
+  link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
+  note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   // Name and controls wrap: two lines on a phone, one on a wide screen.
