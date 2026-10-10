@@ -8,7 +8,7 @@ import { layout, radius, space } from '@/constants/tokens';
 import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { usePairings } from '@/hooks/usePairings';
 import { balanceOf, fixesFor } from '@/lib/balance';
-import { withArticle } from '@/lib/closestClassic';
+import { withArticle, type SpecIngredient } from '@/lib/closestClassic';
 import { amountOf, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 
 import { PairChip } from '../pairings/PairChip';
@@ -70,11 +70,11 @@ export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly Wi
 
 /**
  * "Close to a Mezcal Margarita. Make it a riff?": the catalog classic the
- * spec is closest to by what goes in (ids, generics where known). The riff
+ * spec is closest to by what goes in (ids, then generics). The riff
  * is picked up again on Credits.
  */
-export function CloseToClassic({ ids, riffOf, onRiff }: { ids: readonly string[]; riffOf: WizardPick | null; onRiff: (classic: WizardPick) => void }) {
-  const { data: classic } = useClosestClassic(ids);
+export function CloseToClassic({ ingredients, riffOf, onRiff }: { ingredients: readonly SpecIngredient[]; riffOf: WizardPick | null; onRiff: (classic: WizardPick) => void }) {
+  const { data: classic } = useClosestClassic(ingredients);
   if (!classic) return null;
   const close = `Close to ${withArticle(classic.name)}.`;
   if (riffOf?.id === classic.id) return <Body tone="muted">{`${close} It’s down as a riff on it.`}</Body>;

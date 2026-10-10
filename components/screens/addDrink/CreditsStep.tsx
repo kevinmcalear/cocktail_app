@@ -34,8 +34,8 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
   const [also, setAlso] = useState('');
   const alsoPeople = usePublicPeople(also).data ?? [];
   const [riff, setRiff] = useState('');
-  const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? id;
-  const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [generic(l.id)] : []))).data ?? null;
+  const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
+  const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))).data ?? null;
   const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
   const riffResults = searchByName(riff, classics, 5);
   const other = typeof draft.creator === 'object' ? draft.creator : null;
