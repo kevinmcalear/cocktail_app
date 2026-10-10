@@ -19,7 +19,7 @@ type Props = {
   ready: boolean;
   children: ReactNode;
   /** Where to send people who need a fresh email */
-  retryHref: '/auth/forgot-password' | '/auth/sign-up' | '/auth/login';
+  retryHref: '/auth/login';
   retryLabel: string;
   waitingTitle?: string;
   waitingSubtitle?: string;

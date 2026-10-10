@@ -15,7 +15,7 @@ export function getAuthSite() {
   return SITE_URL;
 }
 
-/** Redirect target for signup confirm + password recovery emails. */
-export function getAuthRedirectTo(path: '/auth/reset-password' | '/auth/callback' = '/auth/callback') {
+/** Where the sign-in email's link lands. */
+export function getAuthRedirectTo(path: '/auth/callback' = '/auth/callback') {
   return `${getAuthSite()}${path}`;
 }

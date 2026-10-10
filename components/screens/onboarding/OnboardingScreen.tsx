@@ -60,7 +60,7 @@ const HOME_BRING = {
  */
 export function OnboardingScreen() {
   const router = useRouter();
-  const { user, loading, updatePassword } = useAuth();
+  const { user, loading } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
   const finish = useFinishOnboarding();
@@ -69,8 +69,6 @@ export function OnboardingScreen() {
   const enterVenue = useAppMode((s) => s.enterVenue);
   const [chosen, setStep] = useState<OnboardingStep | null>(null);
   const [joined, setJoined] = useState<MyInvite | null>(null);
-  const [passwordSaved, setPasswordSaved] = useState(false);
-  const [passwordProblem, setPasswordProblem] = useState<string | null>(null);
   const invite = invites.data?.[0] ?? null;
   const step: OnboardingStep = chosen ?? (invite ? 'invite' : 'name');
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -117,23 +115,12 @@ export function OnboardingScreen() {
     );
   };
 
-  // An account made from an invite email has no password yet.
-  const askPassword = !!joined && !!user?.invited_at && !passwordSaved;
-  const saveName = async (name: string, handle: string, password: string) => {
+  const saveName = (name: string, handle: string) => {
     setDraft({ name, handle });
     setHandleTaken(false);
     if (!joined) {
       go('name');
       return;
-    }
-    if (askPassword) {
-      setPasswordProblem(null);
-      const { error } = await updatePassword(password);
-      if (error) {
-        setPasswordProblem(error.message);
-        return;
-      }
-      setPasswordSaved(true);
     }
     // Their job at the venue, when it has a public bar profile. A failure here
     // isn't worth stopping setup for: they can add it on their profile.
@@ -192,8 +179,6 @@ export function OnboardingScreen() {
           key={handleTaken ? 'handle' : 'name'}
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
-          askPassword={askPassword}
-          passwordProblem={passwordProblem}
           pendingFinish={finish.isPending || saveProfile.isPending}
           onSaved={saveName}
           onSkip={() => finish.mutate()}

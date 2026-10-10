@@ -20,7 +20,7 @@ export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'find' | 'work'
 /** What the person picked on a step that branches. */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new';
 
-export type AuthTarget = '/auth/reset-password' | '/auth/login' | '/age-check' | '/onboarding' | '/(tabs)';
+export type AuthTarget = '/auth/login' | '/age-check' | '/onboarding' | '/(tabs)';
 
 /** GoTrue may hand the flag back as a boolean or the string it stored. */
 export function needsOnboarding(metadata: unknown): boolean {
@@ -87,12 +87,6 @@ export function inviteJobTitle(roleLevel: number): string {
 /** "a Bartender", "an Admin": the welcome's "Join <bar> as …". */
 export function withArticle(word: string): string {
   return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${word}`;
-}
-
-/** A password for an account made from an invite (Auth's minimum is 6). */
-export function passwordError(password: string): string | null {
-  if (password.length < 6) return 'Use at least 6 characters.';
-  return null;
 }
 
 /** "Attaboy, New York" and ", closed" when the bar has shut. Closed bars stay pickable. */
@@ -171,15 +165,13 @@ export function authRedirect(input: {
   inAuthGroup: boolean;
   authScreen: string | undefined;
   stayInAuth: boolean;
-  passwordRecovery: boolean;
   segment: string | undefined;
   needsOnboarding: boolean;
 }): AuthTarget | null {
-  if (input.passwordRecovery && input.authScreen !== 'reset-password') return '/auth/reset-password';
   if (!input.hasSession && !input.inAuthGroup) return '/auth/login';
   if (input.hasSession && input.inAuthGroup && !input.stayInAuth) {
-    if (input.authScreen === 'sign-up') return '/age-check';
-    return input.needsOnboarding ? '/onboarding' : '/(tabs)';
+    // A new account (the emailed code just made it) does the age check, then setup.
+    return input.needsOnboarding ? '/age-check' : '/(tabs)';
   }
   if (
     input.hasSession &&

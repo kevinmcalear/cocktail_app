@@ -2,9 +2,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { PasswordField } from '@/components/auth/PasswordField';
-import { Button, Caption, Field, Headline, useDs } from '@/components/ds';
-import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { Body, Button, Caption, Field, Headline, useDs } from '@/components/ds';
+import { RowDivider, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
@@ -25,9 +24,9 @@ function namesFrom(meta: Record<string, unknown> | undefined): [string, string] 
 }
 
 /**
- * Your photo, name and password. A new photo saves as soon as it's picked; the
- * name saves with its button; the password has its own panel, since changing
- * it is a different job from fixing a name.
+ * Your photo, name and the email you sign in with. A new photo saves as soon
+ * as it's picked; the name saves with its button. There's no password: sign-in
+ * codes go to that email.
  */
 export function ProfileSection() {
   const ds = useDs();
@@ -41,10 +40,6 @@ export function ProfileSection() {
   const setLastName = (v: string) => setDraft([firstName, v]);
   const [savingName, setSavingName] = useState(false);
   const uploading = photo.isPending;
-  const [pwOpen, setPwOpen] = useState(false);
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [savingPw, setSavingPw] = useState(false);
 
   const avatarUrl: string | null = user?.user_metadata?.avatar_url ?? null;
   const fullName = [firstName, lastName].map((n) => n.trim()).filter(Boolean).join(' ');
@@ -68,19 +63,6 @@ export function ProfileSection() {
     setSavingName(false);
     if (error) showMessage('Your name didn’t save', error.message);
     else setDraft(null);
-  };
-
-  const savePassword = async () => {
-    if (password.length < 6) return showMessage('Password too short', 'Use at least 6 characters.');
-    if (password !== confirm) return showMessage('Passwords don’t match', 'Type the same new password twice.');
-    setSavingPw(true);
-    const { error } = await updateProfile({ password });
-    setSavingPw(false);
-    if (error) return showMessage('Your password didn’t change', error.message);
-    setPassword('');
-    setConfirm('');
-    setPwOpen(false);
-    showMessage('Password changed', 'Use it next time you sign in.');
   };
 
   return (
@@ -114,16 +96,15 @@ export function ProfileSection() {
       ) : null}
 
       <RowDivider />
-      <SettingsRow label="Password" detail={pwOpen ? undefined : 'Change the password you sign in with'} icon="key.fill" role="button" expanded={pwOpen} onPress={() => setPwOpen(!pwOpen)} />
-      {pwOpen ? (
-        <View style={styles.password}>
-          <PasswordField label="New password" value={password} onChangeText={setPassword} placeholder="At least 6 characters" autoComplete="new-password" textContentType="newPassword" />
-          <PasswordField label="Confirm password" value={confirm} onChangeText={setConfirm} placeholder="Type it again" autoComplete="new-password" textContentType="newPassword" />
-          <View style={styles.actions}>
-            <Button label={savingPw ? 'Changing…' : 'Change password'} onPress={() => void savePassword()} disabled={savingPw || !password} />
-          </View>
+      <View style={styles.signIn} accessible aria-label={`Sign-in email, ${user?.email ?? ''}. Your sign-in codes go here.`}>
+        <IconSymbol name="envelope" size={20} color={ds.c.ink} />
+        <View style={styles.whoText}>
+          <Body>Sign-in email</Body>
+          <Caption tone="muted" numberOfLines={1}>
+            {user?.email ? `${user.email} · your sign-in codes go here` : 'Your sign-in codes go here'}
+          </Caption>
         </View>
-      ) : null}
+      </View>
     </SettingsSection>
   );
 }
@@ -145,5 +126,5 @@ const styles = StyleSheet.create({
   names: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, paddingBottom: space.md },
   name: { flex: 1, minWidth: 160 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm, paddingBottom: space.md },
-  password: { gap: space.md, paddingBottom: space.sm },
+  signIn: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
 });
