@@ -79,7 +79,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 | 768 to 1199 | Icon rail | Two panes. Service mode can fill the screen on a station iPad. |
 | 1200 and up | Branded sidebar with ⌘K search | Content plus an inspector (photos, locations, "view as") |
 
-**Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Use `MenuSheet`; a sheet built by hand takes its placement from `components/ds/sheetFrame.ts` (`npm run test:unit` fails without it).
+**Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Every sheet is the one `Sheet` (`components/ds/Sheet.tsx`), or `MenuSheet` for a titled one: a plain dark backdrop fades in on its own (about 200 ms, easing out) and never moves with the sheet, which springs up on the glide spring with a grabber and a 36 radius top; drag the grabber or header down to close it; Reduce Motion fades it instead. Its X and Cancel buttons close it with `useSheetClose()`, so it slides away first. Don't hand-build a sheet on a `Modal` (`npm run test:unit` fails on one).
 
 Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
 
