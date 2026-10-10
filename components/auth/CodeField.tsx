@@ -68,8 +68,8 @@ export function CodeField({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.sm },
-  cell: { flex: 1, maxWidth: 56, height: 60, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
+  cell: { flex: 1, height: 60, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   digit: { ...type.headline, fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
   // Invisible but still focusable and fillable (opacity 0 stops some autofill).
-  input: { color: 'transparent', backgroundColor: 'transparent', opacity: 0.02 },
+  input: { color: 'transparent', backgroundColor: 'transparent', borderWidth: 0, opacity: 0.02 },
 });
