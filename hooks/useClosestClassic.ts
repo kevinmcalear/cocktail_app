@@ -1,21 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { closestClassic, type ClassicSpec, type SpecIngredient } from '@/lib/closestClassic';
+import { closestClassic, type SpecIngredient } from '@/lib/closestClassic';
 import { supabase } from '@/lib/supabase';
 
 /** How many catalog drinks sharing the most ingredients are compared in full. */
 const CANDIDATES = 30;
 
-type UseRow = { recipe_item_id: string; ingredient_item_id: string; drink: { name: string } | null; ingredient?: { generic_id: string | null } | null };
-type LineRow = { recipe_item_id: string; ingredient_item_id: string; ingredient: { generic_id: string | null } | null };
+type Touch = { id: string; name: string; recipes: { ingredient_item_id: string }[] };
+type Spec = { id: string; name: string; recipes: { ingredient_item_id: string; ingredient: { generic_id: string | null } | null }[] };
 
 /**
  * The catalog classic a spec is closest to (lib/closestClassic), from its
- * ingredients (ids and generics). Two small reads: the catalog drinks using
- * any of them, then the full specs of those sharing the most.
- * ponytail: the first read stops at 1,000 recipe lines (PostgREST's cap);
- * a spec of common bottles (lime, sugar) may miss a few candidates. An RPC
- * that scores in SQL is the upgrade if that ever matters.
+ * ingredients (ids and generics). Two small reads of the catalog (a few
+ * hundred drinks): those using any of them, then the full specs of the ones
+ * sharing at least two.
+ * ponytail: a brand line only finds classics through its generic's own
+ * row (a classic that names "Agave Spirit"); one naming "Mezcal" still
+ * counts once found through the spec's other lines. A server-side score is
+ * the upgrade if that misses real matches.
  */
 export function useClosestClassic(ingredients: readonly SpecIngredient[]) {
   const mine = [...new Map(ingredients.map((i) => [i.id, { id: i.id, generic: i.generic ?? null }])).values()].sort((a, b) => a.id.localeCompare(b.id));
@@ -24,42 +26,33 @@ export function useClosestClassic(ingredients: readonly SpecIngredient[]) {
     enabled: mine.length >= 2,
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<{ id: string; name: string } | null> => {
-      const ids = mine.map((i) => i.id);
-      const generics = [...new Set(mine.flatMap((i) => (i.generic ? [i.generic] : [])))];
-      // Catalog drinks using any of the same bottles, and any of the same kind of bottle.
-      const catalog = (select: string) => supabase.from('recipes').select(select).eq('drink.is_catalog', true).eq('drink.item_type', 'cocktail').limit(1000);
-      const [same, kind] = await Promise.all([
-        catalog('recipe_item_id, ingredient_item_id, drink:items!new_recipes_recipe_item_id_fkey!inner(name)').in('ingredient_item_id', ids),
-        generics.length
-          ? catalog('recipe_item_id, ingredient_item_id, drink:items!new_recipes_recipe_item_id_fkey!inner(name), ingredient:items!new_recipes_ingredient_item_id_fkey!inner(generic_id)').in('ingredient.generic_id', generics)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-      if (same.error) throw same.error;
-      if (kind.error) throw kind.error;
-      const rows = [...((same.data ?? []) as unknown as UseRow[]), ...((kind.data ?? []) as unknown as UseRow[])];
-      // Which of mine each drink touches, by id or by generic.
-      const touched = new Map<string, Set<string>>();
-      for (const r of rows) {
-        const hit = mine.find((m) => m.id === r.ingredient_item_id || (!!m.generic && m.generic === r.ingredient?.generic_id));
-        if (!hit) continue;
-        touched.set(r.recipe_item_id, (touched.get(r.recipe_item_id) ?? new Set()).add(hit.id));
-      }
-      const candidates = [...touched].filter(([, t]) => t.size >= 2).sort((a, b) => b[1].size - a[1].size).slice(0, CANDIDATES).map(([id]) => id);
+      const ids = [...new Set(mine.flatMap((i) => (i.generic ? [i.id, i.generic] : [i.id])))];
+      const touch = await supabase
+        .from('items')
+        .select('id, name, recipes:app_recipe_presentation!recipe_item_id!inner(ingredient_item_id)')
+        .eq('is_catalog', true)
+        .eq('item_type', 'cocktail')
+        .in('recipes.ingredient_item_id', ids);
+      if (touch.error) throw touch.error;
+      // How many of mine each drink uses (a line, or its generic's own row, counts once).
+      const shared = (d: Touch) => new Set(d.recipes.map((r) => mine.find((m) => m.id === r.ingredient_item_id || m.generic === r.ingredient_item_id)?.id).filter(Boolean)).size;
+      const candidates = ((touch.data ?? []) as unknown as Touch[])
+        .map((d) => ({ id: d.id, n: shared(d) }))
+        .filter((d) => d.n >= 2)
+        .sort((a, b) => b.n - a.n)
+        .slice(0, CANDIDATES)
+        .map((d) => d.id);
       if (!candidates.length) return null;
-      const names = new Map(rows.map((r) => [r.recipe_item_id, r.drink?.name ?? '']));
 
-      const lines = await supabase
-        .from('recipes')
-        .select('recipe_item_id, ingredient_item_id, ingredient:items!new_recipes_ingredient_item_id_fkey(generic_id)')
-        .in('recipe_item_id', candidates);
-      if (lines.error) throw lines.error;
-      const specs = new Map<string, ClassicSpec & { ingredients: SpecIngredient[] }>();
-      for (const l of (lines.data ?? []) as unknown as LineRow[]) {
-        const spec = specs.get(l.recipe_item_id) ?? { id: l.recipe_item_id, name: names.get(l.recipe_item_id) ?? '', ingredients: [] };
-        spec.ingredients.push({ id: l.ingredient_item_id, generic: l.ingredient?.generic_id ?? null });
-        specs.set(spec.id, spec);
-      }
-      const best = closestClassic(mine, [...specs.values()]);
+      const specs = await supabase
+        .from('items')
+        .select('id, name, recipes:app_recipe_presentation!recipe_item_id(ingredient_item_id, ingredient:display_ingredient(generic_id))')
+        .in('id', candidates);
+      if (specs.error) throw specs.error;
+      const best = closestClassic(
+        mine,
+        ((specs.data ?? []) as unknown as Spec[]).map((s) => ({ id: s.id, name: s.name, ingredients: s.recipes.map((r) => ({ id: r.ingredient_item_id, generic: r.ingredient?.generic_id ?? null })) }))
+      );
       return best ? { id: best.id, name: best.name } : null;
     },
   });
