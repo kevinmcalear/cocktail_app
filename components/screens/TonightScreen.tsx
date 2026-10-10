@@ -10,13 +10,12 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useServiceDate } from '@/hooks/useServiceDay';
 import { useTonight } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { groupMenus } from '@/lib/menus';
 
-function today(): string {
-  return new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-}
+const longDate = (date: Date) => date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
 /**
  * Tonight: what's pouring at this venue, in running order. Replaces Home in
@@ -31,6 +30,9 @@ export function TonightScreen() {
   const { drinks, isLoading } = useTonight(active?.id ?? null);
   const { data: venueMenus = [] } = useVenueMenus(active?.id);
   const [now] = useState(() => Date.now());
+  // The service day, as on the tab: until 6am it's still last night. On web it waits for
+  // hydration (the build's date isn't the device's); a blank line keeps the header's height.
+  const date = useServiceDate();
   const onNow = groupMenus(venueMenus.filter((m) => m.barId === active?.id), now).on;
   const openMenus = () => router.push('/menus/all');
 
@@ -56,7 +58,7 @@ export function TonightScreen() {
           <View style={styles.header}>
             <PageHeader
               title="Tonight"
-              subtitle={today()}
+              subtitle={date ? longDate(date) : '\u00a0'}
               action={active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
             />
             {onNow.map((m) => (
