@@ -6,10 +6,9 @@ import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import type { CatalogItem } from '@/lib/match';
-import type { BringWrite, NamedItem } from '@/lib/paste';
+import type { NamedItem } from '@/lib/paste';
 import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { readAnything } from '@/lib/readAnything';
-import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 
 /** After a bulk write: the lists it touches, the pages of the drinks it changed, and the ingredients it added or removed. */
@@ -174,55 +173,6 @@ export function useUndoSwap() {
       }
     },
     onSuccess: (_data, undone) => void refresh({ drinkIds: undone.map((row) => row.itemId) }),
-  });
-}
-
-/** Creates the new bottles, then the drinks, each spec saved as a version. */
-export function useBringIn(barId: string | null) {
-  const refresh = useRefreshSpecs();
-  return useMutation({
-    mutationFn: async (write: BringWrite): Promise<{ added: number; error: string | null; bottleIds: string[] }> => {
-      const ids = new Map<string, string>();
-      let added = 0;
-      try {
-        for (const create of write.creates) {
-          const { data, error } = await supabase
-            .from('items')
-            .insert({ name: capitalize(create.name), item_type: 'ingredient', bar_id: barId, generic_id: create.genericId })
-            .select('id')
-            .single();
-          if (error) throw error;
-          ids.set(create.key, data.id);
-          added += 1;
-        }
-        for (const item of write.items) {
-          const { data, error } = await supabase
-            .from('items')
-            .insert({
-              name: capitalize(item.name),
-              item_type: item.kind,
-              bar_id: barId,
-              notes: item.notes,
-              glassware_id: item.glassId,
-            })
-            .select('id')
-            .single();
-          if (error) throw error;
-          const lines = item.lines.map((line) => {
-            const ingredientId = line.ingredientKey.startsWith('new:') ? ids.get(line.ingredientKey.slice(4)) : line.ingredientKey.slice(3);
-            if (!ingredientId) throw new Error(`Couldn’t find ${line.ingredientKey}.`);
-            return { ingredient_item_id: ingredientId, amount: line.amount, unit: line.unit, preparation_notes: null, is_optional: false };
-          });
-          await saveDrinkSpec(data.id, lines, item.methodId ? [item.methodId] : [], 'Brought in');
-          added += 1;
-        }
-        return { added, error: null, bottleIds: [...ids.values()] };
-      } catch (error) {
-        const message = plainDbMessage(error) ?? 'Couldn’t bring that in.';
-        return { added, error: added ? `Brought in ${added}, then stopped. ${message}` : message, bottleIds: [...ids.values()] };
-      }
-    },
-    onSuccess: (result) => void refresh({ ingredientIds: result.bottleIds }),
   });
 }
 

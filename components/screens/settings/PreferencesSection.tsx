@@ -1,4 +1,7 @@
-import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { useEffect, useState } from 'react';
+
+import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import { DEFAULT_UNIT_OPTIONS, THEME_MODES, useSettingsStore } from '@/store/useSettingsStore';
@@ -9,6 +12,11 @@ export function PreferencesSection() {
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
   const viewAsChoices = viewAsOptions(maxRealRole);
+  // "We ask once. Change it any time in Settings." (Bring in's AI OK.)
+  const [ai, setAi] = useState(false);
+  useEffect(() => {
+    void hasAiConsent().then(setAi);
+  }, []);
 
   return (
     <SettingsSection title="Preferences">
@@ -19,6 +27,16 @@ export function PreferencesSection() {
       <ControlRow label="Default unit" detail="For new recipe ingredients">
         <ChoiceChips label="Default unit" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
       </ControlRow>
+      <RowDivider />
+      <SwitchRow
+        label="Read with AI"
+        detail="Photos, PDFs and links you bring in are read by Google’s Gemini. Off, we ask again before the next one."
+        value={ai}
+        onValueChange={(on) => {
+          setAi(on);
+          void setAiConsent(on);
+        }}
+      />
       {viewAsChoices.length > 0 ? (
         <>
           <RowDivider />

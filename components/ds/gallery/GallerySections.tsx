@@ -131,10 +131,10 @@ export function GallerySections() {
       </Section>
 
       <Section title="Review rows">
-        <ReviewRow state="have" amount="30 ml" title="Campari" detail="In the library" />
+        <ReviewRow state="have" amount="30 ml" title="Campari" detail="In your bar" onPress={() => {}} />
         <ReviewRow state="pick" amount="15 ml" title="Pear liqueur" detail="Which one?" choices={[{ id: 'a', label: 'Rothman & Winter' }, { id: 'b', label: 'Any pear liqueur' }]} chosen={pick} onChoose={setPick} />
-        <ReviewRow state="new" title="Rye & Fig Old Fashioned" detail="New · Rye, fig syrup, walnut bitters" action={{ label: 'Finish', onPress: () => {} }} />
-        <ReviewRow state="skip" title="Smoke Break" detail="Already on this menu" />
+        <ReviewRow state="new" title="Rye & Fig Old Fashioned" detail="New drink · Rye whiskey, Fig syrup, Walnut bitters" />
+        <ReviewRow state="skip" title="Smoke Break" detail="Skipped" action={{ label: "Bring back", onPress: () => {} }} />
       </Section>
 
       <Section title="Images">

@@ -11,12 +11,12 @@ import { useMode } from '@/hooks/useMode';
 import { withAlpha } from '@/lib/color';
 import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
 import { groupMenus, homeMenuLine, homeNight, plural } from '@/lib/menus';
-import { stageMenuPhotos } from '@/lib/menuPhotoHandoff';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 import type { MenuPhoto } from '@/lib/readMenu';
 import type { MenuSummary } from '@/types/menus';
 
 import { Eyebrow } from '../addDrink/WizardChrome';
+import { useStartBringIn } from '../bringin/useStartBringIn';
 import { EMPTY_NIGHT, HomeNightFields } from './HomeNight';
 import { MenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
@@ -42,11 +42,12 @@ const BUILDS_MENUS = 35;
  * A new menu, a short wizard like adding a drink: its name (and whose it is),
  * what it starts from (a copy of another menu, a saved layout, photos of a
  * printed menu, or one empty section), and for a home menu its night. A card
- * on paper fills in as you answer. Photos go to a review of what was read
- * (/menus/from-photo), which makes the menu.
+ * on paper fills in as you answer. Photos go to Bring in, read as a menu and
+ * checked there, which makes the menu.
  */
 export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
   const router = useRouter();
+  const bringIn = useStartBringIn();
   const { venues, active } = useActiveVenue();
   // Home mode is like another account: a menu made there is always your own.
   const home = useMode().mode === 'home';
@@ -102,9 +103,9 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
         setStep('start');
         return setError('Add a photo of the menu first.');
       }
-      stageMenuPhotos({ photos, barId, name: name.trim(), night: when ?? undefined });
       onClose();
-      return router.push('/menus/from-photo');
+      // Read and checked by Bring in, as a menu, then made with the drinks it needs.
+      return bringIn([{ files: photos, text: null, url: null }], { as: 'menu', barId, menu: { name: name.trim(), night: when ?? null } });
     }
     if (start.kind === 'copy') {
       if (!source) return setError('Still loading that menu. Try again in a moment.');

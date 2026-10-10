@@ -109,6 +109,10 @@ const MAPPING = {
   'gearshape': 'settings',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
   'rectangle.stack': 'style',
+  'camera': 'photo-camera',
+  'doc.on.clipboard': 'content-paste',
+  'arrow.uturn.backward': 'undo',
+  'square.and.arrow.down': 'file-download',
 } satisfies IconMapping;
 
 /**
