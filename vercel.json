@@ -83,6 +83,10 @@
       "destination": "/settings/bar/[id]/dilution"
     },
     {
+      "source": "/settings/bar/:id/glassware",
+      "destination": "/settings/bar/[id]/glassware"
+    },
+    {
       "source": "/settings/bar/:id/pricing",
       "destination": "/settings/bar/[id]/pricing"
     },
