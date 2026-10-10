@@ -68,7 +68,7 @@ export function EditorRow({ drink, index: i, count, home, active, drag, onRemove
           <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
         </PressableScale>
         <View style={styles.thumb}>
-          <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" hideTag />
+          <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" />
         </View>
         <View style={styles.text}>
           <DsText variant="headline" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>

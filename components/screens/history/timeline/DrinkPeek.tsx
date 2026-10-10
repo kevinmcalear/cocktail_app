@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, PressableScale, sheetFrame, sheetIsDialog, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, PressableScale, Sheet, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -82,32 +82,15 @@ export function DrinkDetail({ node, from, kids, threadOn, onThread }: PeekProps)
 
 /** The phone's peek: DrinkDetail in a sheet over the timeline. */
 export function PeekSheet({ onClose, ...props }: PeekProps & { onClose: () => void }) {
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <BackbarTheme>
-        <Sheet onClose={onClose} {...props} />
-      </BackbarTheme>
-    </Modal>
-  );
-}
-
-function Sheet({ onClose, ...props }: PeekProps & { onClose: () => void }) {
-  const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <Pressable
-        role="dialog"
-        accessibilityLabel={props.node.name}
-        style={[styles.sheet, sheetFrame.panel, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong, paddingBottom: insets.bottom + space.lg }]}
-        onPress={(e) => e.stopPropagation()}
-      >
-        {sheetIsDialog ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
+    <BackbarTheme>
+      <Sheet visible onClose={onClose} accessibilityLabel={props.node.name} style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
         <ScrollView contentContainerStyle={styles.body}>
           <DrinkDetail {...props} />
         </ScrollView>
-      </Pressable>
-    </Pressable>
+      </Sheet>
+    </BackbarTheme>
   );
 }
 
@@ -120,8 +103,6 @@ const styles = StyleSheet.create({
   dest: { flexGrow: 1, flexBasis: 150, minHeight: layout.minTapTarget + space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
   destName: { fontFamily: fontFamilies.bodySemiBold },
   barMark: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
-  scrim: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { width: '100%', maxWidth: 560, alignSelf: 'center', maxHeight: '75%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm },
-  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: radius.pill, marginBottom: space.sm },
-  body: { paddingHorizontal: space.lg, paddingBottom: space.sm },
+  sheet: { maxHeight: '75%' },
+  body: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
 });

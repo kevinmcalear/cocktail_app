@@ -214,7 +214,6 @@ export function LibraryScreen() {
                   ingredient={category === 'Ingredient' ? { id: item.id, name: item.name } : null}
                   glass={fallbackGlass(category)}
                   accessibilityLabel={item.name}
-                  hideTag
                 />
                 <Body numberOfLines={2}>{item.name}</Body>
               </PressableScale>

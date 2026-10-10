@@ -28,7 +28,10 @@ export interface PaperBandProps {
   artKey: string;
   /** What the drawing is: "Sketch of the drink so far". */
   artLabel: string;
-  /** The tag under the drawing ("Sketch") and its note ("Updates as you go"). */
+  /**
+   * Under the drawing: what's being added, if it needs saying ("House prep"),
+   * and a note ("Updates as you go"). Never "Sketch": a drawing is obviously a drawing.
+   */
   tag?: string;
   note?: string;
 }
@@ -37,7 +40,7 @@ export interface PaperBandProps {
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag = 'Sketch', note = 'Updates as you go' }: PaperBandProps) {
+export function PaperBand({ progress, first, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go' }: PaperBandProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
@@ -91,7 +94,7 @@ export function PaperBand({ progress, first, onBack, top, side, rounded, folded,
             </Layer>
           </Animated.View>
           <View style={styles.foot}>
-            <Tag label={tag} tone="sketch" />
+            {tag ? <Tag label={tag} tone="paper" /> : null}
             <Caption color={ink} style={styles.mono}>
               {note}
             </Caption>

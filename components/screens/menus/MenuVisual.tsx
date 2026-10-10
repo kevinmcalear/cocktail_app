@@ -2,8 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
-import { DrinkImage, Tag, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { DrinkImage, useDs } from '@/components/ds';
 import { withAlpha } from '@/lib/color';
 import type { MenuPicture } from '@/types/menus';
 
@@ -45,14 +44,12 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
               itemId={p.id}
               accessibilityLabel={p.name}
               radius={0}
-              hideTag
               style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])}
             />
           </View>
         ))
       )}
       {fade ? <LinearGradient colors={[withAlpha(ds.c.ground, 0.35), withAlpha(ds.c.ground, 0), ds.c.ground]} locations={[0, 0.4, 1]} style={styles.fill} /> : null}
-      {sketched ? <Tag label="Sketch" tone="sketch" style={fade ? styles.tagOnPage : styles.tag} /> : null}
     </View>
   );
 }
@@ -61,8 +58,4 @@ const styles = StyleSheet.create({
   frame: { flexDirection: 'row', overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' },
   tile: { flex: 1 },
-  // Bottom left: the editor's cover buttons sit bottom right.
-  tag: { position: 'absolute', left: space.sm, bottom: space.sm },
-  // On the menu page: right, above the page body that overlaps the hero's last 84 points.
-  tagOnPage: { position: 'absolute', right: space.lg, bottom: 84 + space.xl },
 });
