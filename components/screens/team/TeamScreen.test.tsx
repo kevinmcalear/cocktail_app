@@ -14,7 +14,7 @@ jest.mock('@/components/screens/profile/JobRequests', () => ({ JobRequests: () =
 jest.mock('@/components/maker/MakerCreditRequests', () => ({ MakerCreditRequests: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
-jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true }));
+jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true, useWebNavWidth: () => 240 }));
 jest.mock('@/hooks/useActiveVenue', () => ({
   useActiveVenue: () => ({ active: { id: 'bar', name: 'Caretakers' }, isLoading: false }),
 }));
