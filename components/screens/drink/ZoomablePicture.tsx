@@ -10,7 +10,7 @@ import { springs } from '@/constants/tokens';
 const MAX_SCALE = 4;
 const TAP_SCALE = 2;
 
-interface ZoomablePictureProps {
+export interface ZoomablePictureProps {
   source: string | number;
   accessibilityLabel: string;
   width: number;

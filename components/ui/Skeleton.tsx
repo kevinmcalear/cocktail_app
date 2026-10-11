@@ -1,13 +1,7 @@
-import { useEffect } from 'react';
 import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { useTheme } from 'tamagui';
+
+import { Pulse } from '@/components/ds/Pulse';
 
 /**
  * A placeholder block in the shape of content that is still loading. Pulses
@@ -25,22 +19,7 @@ export function Skeleton({
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useTheme();
-  const reduceMotion = useReducedMotion();
-  const opacity = useSharedValue(1);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    opacity.value = withRepeat(withTiming(0.45, { duration: 900 }), -1, true);
-  }, [reduceMotion, opacity]);
-
-  const pulse = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  return (
-    <Animated.View
-      aria-hidden
-      style={[{ width, height, borderRadius: radius, backgroundColor: theme.color4?.get() as string }, pulse, style]}
-    />
-  );
+  return <Pulse style={[{ width, height, borderRadius: radius, backgroundColor: theme.color4?.get() as string }, style]} />;
 }
 
 /** Lines of text still loading; the last line is shorter, like a paragraph. */

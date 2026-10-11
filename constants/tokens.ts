@@ -189,4 +189,7 @@ export const springs = {
   pour: { damping: 12, stiffness: 120, mass: 1 },
 } as const;
 
+/** How deep and slow a loading placeholder breathes (components/ds/Pulse). */
+export const pulse = { low: 0.45, ms: 900 } as const;
+
 export type SpringName = keyof typeof springs;

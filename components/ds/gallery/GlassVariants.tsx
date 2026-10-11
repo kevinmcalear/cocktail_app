@@ -7,7 +7,7 @@ import { SKETCH_SAMPLES } from '@/constants/sketch';
 import { GLASS_VARIANTS } from '@/lib/sketch/geometry';
 import type { SketchGlass, SketchInputs } from '@/lib/sketch/types';
 
-import { AnimatedSketch } from '../AnimatedSketch';
+import { AnimatedSketch } from '../AnimatedSketchLazy';
 import { Button } from '../Button';
 import { GlassVariantPicker } from '../GlassVariantPicker';
 import { Caption } from '../Text';

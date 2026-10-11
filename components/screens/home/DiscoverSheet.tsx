@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Caption, Chip, sheetIsDialog, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Appear } from '@/components/ds/Appear';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { radius, space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
@@ -60,7 +60,7 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
       ? [styles.flex, { paddingTop: insets.top + space.lg, backgroundColor: ds.c.ground }]
       : [styles.sheet, { marginTop: insets.top + space.xxxl, borderColor: ds.c.line, backgroundColor: ds.c.surface }];
   return (
-    <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[StyleSheet.absoluteFill, styles.layer]}>
+    <Appear kind="fade" duration={160} leave={120} style={[StyleSheet.absoluteFill, styles.layer]}>
       {page ? null : <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />}
       <View role="dialog" aria-modal aria-label={label} style={frame}>
         {card || page ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
@@ -83,7 +83,7 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
         </ScrollView>
         {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: card ? space.lg : bottom }}>{footer}</View> : null}
       </View>
-    </Animated.View>
+    </Appear>
   );
 }
 

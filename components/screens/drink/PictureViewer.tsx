@@ -1,16 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Modal, Platform, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, GlassButton, Tag, Title, useDs } from '@/components/ds';
+import { GestureRoot } from '@/components/ds/GestureRoot';
 import { space } from '@/constants/tokens';
 import { pictureLabel, pictureTag, type ItemPicture } from '@/lib/itemImages';
 
 import { PicturePager } from './PicturePager';
-import { ZoomablePicture } from './ZoomablePicture';
+import { ZoomablePicture } from './ZoomablePictureLazy';
 
 /** An item picture, or a bundled image (require) on /dev/drink. */
 // Credits are optional: a bundled preview or a menu cover has none.
@@ -42,11 +42,11 @@ export function PictureViewer({ pictures, name, open, startIndex, onClose }: Pic
       onRequestClose={onClose}
       supportedOrientations={['portrait', 'landscape']}
     >
-      <GestureHandlerRootView style={styles.flex}>
+      <GestureRoot style={styles.flex}>
         <BackbarTheme scheme="dark">
           {open ? <Viewer pictures={pictures} name={name} startIndex={Math.min(startIndex, pictures.length - 1)} onClose={onClose} /> : null}
         </BackbarTheme>
-      </GestureHandlerRootView>
+      </GestureRoot>
     </Modal>
   );
 }

@@ -1,4 +1,3 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
     DarkTheme,
     DefaultTheme,
@@ -10,10 +9,10 @@ import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureRoot } from '@/components/ds/GestureRoot';
 import { lazy, Suspense, useEffect } from "react";
 import { palette } from "@/constants/palette";
-import "react-native-reanimated";
+import '@/lib/reanimatedSetup';
 import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
@@ -270,19 +269,17 @@ export default function RootLayout() {
           client={queryClient}
           persistOptions={persistOptions}
         >
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <BottomSheetModalProvider>
-              <AuthProvider>
-                <ObservabilityProvider>
-                  <OfflineBanner />
-                  <ViewAsBanner />
-                  <RootLayoutNav />
-                </ObservabilityProvider>
-              </AuthProvider>
-              <DialogHost />
-              {Platform.OS === 'web' ? <Toaster /> : null}
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
+          <GestureRoot style={{ flex: 1 }}>
+            <AuthProvider>
+              <ObservabilityProvider>
+                <OfflineBanner />
+                <ViewAsBanner />
+                <RootLayoutNav />
+              </ObservabilityProvider>
+            </AuthProvider>
+            <DialogHost />
+            {Platform.OS === 'web' ? <Toaster /> : null}
+          </GestureRoot>
         </PersistQueryClientProvider>
       </Theme>
     </TamaguiProvider>

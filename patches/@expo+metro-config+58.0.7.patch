@@ -12,7 +12,7 @@ index 088b0a8..341d802 100644
      }
  });
  function _bundleToString() {
-@@ -612,25 +615,39 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -612,25 +615,42 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -20,7 +20,7 @@ index 088b0a8..341d802 100644
 +// that two async chunks share into the common chunk, which every page loads, so
 +// each page carried code only other routes use. Now a module goes there when the
 +// root layout's chunk (also on every page) uses it, or at least
-+// COMMON_CHUNK_MIN_USERS async chunks do; otherwise each chunk keeps its own copy.
++// COMMON_CHUNK_MIN_USERS route chunks do (lazy imports don't count: they load on demand); otherwise each chunk keeps its own copy.
 +// Metro's define() skips a module id it already has, so a copy loaded twice runs
 +// once. Checked by scripts/commonChunk.check.ts.
 +const COMMON_CHUNK_MIN_USERS = 20; // about a fifth of the routes: rarer modules ship with their routes, which are prefetched after the first screen's data (lib/prefetchRoutes.web.ts)
@@ -48,12 +48,15 @@ index 088b0a8..341d802 100644
 +    const isRootLayout = (chunk)=>rootLayout != null && [
 +            ...chunk.entries
 +        ].some((m)=>m.path.replace(/\.[cm]?[jt]sx?$/, '') === rootLayout);
++    const isRoute = (chunk)=>typeof routerRoot === 'string' && [
++            ...chunk.entries
++        ].some((m)=>m.path.startsWith(_path().default.join(options.projectRoot, decodeURI(routerRoot)) + _path().default.sep));
 +    const users = new Map();
 +    const onEveryPage = new Set();
 +    for (const chunk of asyncChunks){
 +        const root = isRootLayout(chunk);
 +        for (const dep of chunk.deps){
-+            users.set(dep, (users.get(dep) ?? 0) + 1);
++            if (isRoute(chunk)) users.set(dep, (users.get(dep) ?? 0) + 1);
 +            if (root) onEveryPage.add(dep);
          }
      }

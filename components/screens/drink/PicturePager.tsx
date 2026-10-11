@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import { GlassButton } from '@/components/ds';
 import { space } from '@/constants/tokens';

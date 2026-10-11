@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -11,7 +11,6 @@ import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsN
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
-import { StaffList } from '@/components/screens/library/StaffList';
 import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { fontFamilies, radius, space } from '@/constants/tokens';
@@ -29,6 +28,10 @@ import type { SearchScope } from '@/lib/searchScope';
 import { BATCHED_STYLES, DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, SHELF_FILTERS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { useVenueShelves } from '@/hooks/useVenueShelves';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+
+// The staff list drags to reorder, with gesture and animation code the rest of the
+// Library doesn't need: it loads when the Staff list is picked.
+const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 
@@ -195,7 +198,9 @@ export function LibraryScreen() {
         <LibraryPanes items={shown} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
-        <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
+        <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
+          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
+        </Suspense>
       ) : (
         <FlatList
           key={columns}

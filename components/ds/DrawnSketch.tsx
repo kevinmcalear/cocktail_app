@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { usePeopleHero } from '@/hooks/usePeopleHero';
 
-import { AnimatedSketch } from './AnimatedSketch';
+import { AnimatedSketch } from './AnimatedSketchLazy';
 import { SketchDrawing, type SketchDetail } from './SketchDrawing';
 
 interface DrawnSketchProps {

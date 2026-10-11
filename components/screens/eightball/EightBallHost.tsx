@@ -1,12 +1,14 @@
 import { useSegments } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { listenForShakes } from '@/lib/shake';
 import { useEightBallStore } from '@/store/useEightBallStore';
 
-import { EightBall } from './EightBall';
+
+// The ball (and the animation code it runs on) loads on the first shake, not with every page.
+const EightBall = lazy(() => import('./EightBall').then((m) => ({ default: m.EightBall })));
 
 /**
  * The magic eight ball (issue #18), a hidden Easter egg with no button
@@ -38,7 +40,9 @@ export function EightBallHost() {
   if (!open) return null;
   return (
     <VenueBrandProvider>
-      <EightBall onClose={() => setOpen(false)} rollRef={rollRef} />
+      <Suspense fallback={null}>
+        <EightBall onClose={() => setOpen(false)} rollRef={rollRef} />
+      </Suspense>
     </VenueBrandProvider>
   );
 }
