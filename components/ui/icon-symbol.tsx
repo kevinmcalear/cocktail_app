@@ -30,6 +30,7 @@ const MAPPING = {
   'trash': 'delete',
   'xmark': 'close',
   'arrow.clockwise': 'refresh',
+  'clock.arrow.circlepath': 'history',
   'pencil': 'edit',
   'heart': 'favorite-border',
   'heart.fill': 'favorite',

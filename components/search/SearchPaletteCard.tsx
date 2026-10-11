@@ -6,6 +6,8 @@ import { Caption } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { useSearchMine } from '@/hooks/useSearchMine';
+import { isDesktopShell } from '@/lib/desktopShell';
+import { eightBallLabel } from '@/lib/eightBallKey';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { space } from '@/constants/tokens';
 import { scopeOptions, type SearchScope } from '@/lib/searchScope';
@@ -43,11 +45,11 @@ function Palette() {
   const [picked, setScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
   const close = () => setOpen(false);
-  // The eight ball, the Easter egg phones open with a shake. Here it's a command, and ⌘8 anywhere (WebSideNav).
+  // The eight ball, the Easter egg phones open with a shake. Here it's a command, plus its key anywhere (WebSideNav).
   const pick = (
     <ResultRow
       title="Pick for me"
-      caption={`The magic eight ball picks a drink · ${isApplePlatform() ? '⌘8' : 'Ctrl 8'}`}
+      caption={`The magic eight ball picks a drink · ${eightBallLabel({ shift: !isDesktopShell(), apple: isApplePlatform() })}`}
       icon="sparkles"
       onPress={() => {
         close();
