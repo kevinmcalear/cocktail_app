@@ -5,10 +5,12 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { useWebNav } from '@/hooks/useIsWideWeb';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
+import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { StaffList } from '@/components/screens/library/StaffList';
 import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
@@ -78,6 +80,8 @@ export function LibraryScreen() {
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const bottom = useTabBarInset();
+  // A tablet beside the rail: the list and the picked drink side by side.
+  const panes = useWebNav() === 'rail';
   // The venue in the header, not the old sidebar's multi-select contexts.
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
@@ -187,7 +191,9 @@ export function LibraryScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {staffView && activeId ? (
+      {panes && !staffView ? (
+        <LibraryPanes items={shown} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
+      ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
       ) : (
