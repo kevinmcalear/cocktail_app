@@ -12,18 +12,20 @@ interface Props {
   /** Said under the title. */
   intro?: ReactNode;
   children: ReactNode;
+  /** Pinned under the scroll (the library's My kit bar). */
+  footer?: ReactNode;
 }
 
-/** The frame every technique and equipment screen shares: a back button, a title, a readable column. */
+/** The frame every technique and equipment screen shares: a back button, a title, a readable column. Drawn light, like Make. */
 export function TechniquePage(props: Props) {
   return (
-    <BackbarTheme>
+    <BackbarTheme scheme="light">
       <Frame {...props} />
     </BackbarTheme>
   );
 }
 
-function Frame({ eyebrow, title, intro, children }: Props) {
+function Frame({ eyebrow, title, intro, children, footer }: Props) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -32,7 +34,7 @@ function Frame({ eyebrow, title, intro, children }: Props) {
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }]}
+        contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: (footer ? space.xl : insets.bottom) + space.xxxl, paddingHorizontal: gutter }]}
       >
         <View style={styles.header}>
           {eyebrow ? (
@@ -45,6 +47,7 @@ function Frame({ eyebrow, title, intro, children }: Props) {
         </View>
         {children}
       </ScrollView>
+      {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm, paddingHorizontal: gutter, borderTopColor: ds.c.line, backgroundColor: ds.c.ground }]}>{footer}</View> : null}
       <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
@@ -62,4 +65,5 @@ const styles = StyleSheet.create({
   header: { gap: space.sm },
   eyebrow: { letterSpacing: 1 },
   back: { position: 'absolute' },
+  footer: { paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
 });
