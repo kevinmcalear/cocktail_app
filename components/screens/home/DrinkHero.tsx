@@ -2,11 +2,13 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, PressableScale, Tag, Title } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, MatchText, PressableScale, RowScore, Tag, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useDrinkRank } from '@/hooks/useBestDrink';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
+import type { Area } from '@/lib/nearMe';
 
 import { CollectButton } from '../published/CollectButton';
 import { RankFlow } from '../rank/RankActions';
@@ -15,9 +17,10 @@ import { useAgeGate } from '../safety/AgeGate';
 /**
  * The drink a search found at a tapped bar, first and big: its picture,
  * name, whether it's on the menu, why it matched when the name doesn't say,
- * and the way into it, keeping it, or ranking it. The bar comes after it (SelectedBar).
+ * its score and where it ranks in the area (the way to its rankings), and
+ * the way into it, keeping it, or ranking it. The bar comes after it (SelectedBar).
  */
-export function DrinkHero({ drink }: { drink: DiscoverDrink }) {
+export function DrinkHero({ drink, query = '', area }: { drink: DiscoverDrink; query?: string; area?: Area }) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const [ranking, setRanking] = useState(false);
@@ -28,20 +31,33 @@ export function DrinkHero({ drink }: { drink: DiscoverDrink }) {
   const menu = drink.menu.onNow ? 'On the menu now' : drink.menu.past;
   // A description match already shows the description, around the word.
   const note = drink.match?.kind === 'description' ? null : drink.description;
+  const rank = useDrinkRank(drink, query, area ?? { kind: 'anywhere' });
   return (
     <View style={styles.hero}>
       <PressableScale role="link" accessibilityLabel={`${drink.name}, open`} onPress={open}>
         <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={null} accessibilityLabel={drink.name} aspectRatio={2} thumb />
       </PressableScale>
-      <Title role="heading" numberOfLines={2}>
-        {drink.name}
-      </Title>
+      <View style={styles.titleRow}>
+        <Title role="heading" numberOfLines={2} style={styles.flex}>
+          <MatchText text={drink.name} query={query} look="tint" />
+        </Title>
+        <RowScore score={rank.score} />
+      </View>
+      {rank.caption ? (
+        <PressableScale role="link" accessibilityLabel={`${rank.caption}. See the rankings`} onPress={() => router.push(`/rankings/${drink.id}` as never)}>
+          <Caption tone="muted">{rank.caption}</Caption>
+        </PressableScale>
+      ) : null}
       {menu ? (
         <View style={styles.tags}>
           <Tag label={menu} />
         </View>
       ) : null}
-      {drink.why ? <Body>{drink.why}</Body> : null}
+      {drink.why ? (
+        <Body>
+          <MatchText text={drink.why} query={query} look="tint" />
+        </Body>
+      ) : null}
       {note ? (
         <Caption tone="muted" numberOfLines={2}>
           {note}
@@ -61,6 +77,8 @@ export function DrinkHero({ drink }: { drink: DiscoverDrink }) {
 
 const styles = StyleSheet.create({
   hero: { gap: space.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  flex: { flex: 1, minWidth: 0 },
   tags: { flexDirection: 'row' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.sm },
 });
