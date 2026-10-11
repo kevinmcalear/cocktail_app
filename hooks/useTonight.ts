@@ -32,7 +32,7 @@ const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Be
 /**
  * What's pouring tonight at a venue: its menus on now (oldest first, the
  * running order), each with its sections and their drinks. A drink is new
- * when no menu that has finished had it. `drinks` is every drink, flat, for
+ * when no menu that has finished had it (and there is one to compare with). `drinks` is every drink, flat, for
  * the back bar and Study.
  */
 export function useTonight(venueId: string | null) {
@@ -47,7 +47,8 @@ export function useTonight(venueId: string | null) {
   const blocks = useMemo<TonightBlock[]>(
     () =>
       menus.map((menu) => {
-        const fresh = newDrinkIds(menu.itemIds, previous);
+        // With no finished menu to compare against, nothing is marked new.
+        const fresh = previous.length ? newDrinkIds(menu.itemIds, previous) : new Set<string>();
         const sections = (rows ?? [])
           .filter((s) => s.menu_id === menu.id)
           .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
