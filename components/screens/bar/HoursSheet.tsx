@@ -41,7 +41,7 @@ export function HoursSheet({ visible, facts, onClose }: { visible: boolean; fact
   );
   return (
     <>
-      <Sheet visible={visible && !report} onClose={onClose} accessibilityLabel={`${facts.display_name} hours`} header={header}>
+      <Sheet visible={visible && !report} onClose={onClose} accessibilityLabel={`${facts.display_name} hours`} header={header} style={styles.panel}>
         <View role="list" aria-label={`${facts.display_name} hours this week`}>
           {rows.map((r, i) => (
             <View
@@ -84,6 +84,7 @@ export function HoursSheet({ visible, facts, onClose }: { visible: boolean; fact
 }
 
 const styles = StyleSheet.create({
+  panel: { maxWidth: 480, padding: space.xl, paddingTop: space.sm },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.sm },

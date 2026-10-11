@@ -108,7 +108,7 @@ function DirectionsSheet({ visible, target, onClose }: { visible: boolean; targe
     </Pressable>
   );
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={`Directions to ${target.name}`} header={header} onShow={onShow}>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel={`Directions to ${target.name}`} header={header} style={styles.panel} onShow={onShow}>
       <View role="list" aria-label="Open in">
         {APPS.filter((a) => a.id !== 'waze' || waze).map((a) => row(a.id, a.icon, a.label, a.note, () => pick(a.id)))}
         {target.address ? row('copy', 'doc.on.doc', 'Copy address', target.address, () => void copy(target.address!).then(onClose)) : null}
@@ -125,6 +125,7 @@ function DirectionsSheet({ visible, target, onClose }: { visible: boolean; targe
 }
 
 const styles = StyleSheet.create({
+  panel: { maxWidth: 480, padding: space.xl, paddingTop: space.sm },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: space.sm },
