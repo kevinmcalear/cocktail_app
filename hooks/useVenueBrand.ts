@@ -89,3 +89,17 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   const colors = [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c);
   return { url: upload.imageUrl, colors };
 }
+
+/**
+ * Removes the logo's background and returns the new image's URL, or null when
+ * background removal isn't available.
+ *
+ * ponytail: always null for now. Removing a background well needs an image
+ * service (a paid API and a new key, gated: Kevin decides). When one is
+ * chosen, an edge function like upload-bar-logo takes the logo, calls it,
+ * stores the result and returns its URL here; the brand screen already
+ * handles both answers.
+ */
+export async function removeLogoBackground(_barId: string, _logoUrl: string): Promise<string | null> {
+  return null;
+}

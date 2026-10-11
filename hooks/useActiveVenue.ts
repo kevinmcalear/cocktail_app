@@ -16,6 +16,8 @@ export interface Venue {
   displayFace: DisplayFace;
   /** The dark-mode ground tint, only when text still reads on it. */
   groundTint: string | null;
+  /** The venue's pick for text on accent buttons, or null for automatic. */
+  accentText?: 'cream' | 'ink' | null;
   roleLevel: number;
 }
 
@@ -51,6 +53,7 @@ export function useActiveVenue() {
         accent: isHexColor(bar.primary_color) ? bar.primary_color : null,
         displayFace: faceFromDb(bar.display_face),
         groundTint: usableGroundTint(bar.ground_tint),
+        accentText: bar.accent_text === 'cream' || bar.accent_text === 'ink' ? bar.accent_text : null,
         roleLevel: row.role_level ?? 0,
       });
     }
