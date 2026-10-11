@@ -180,7 +180,7 @@ function ResultRow({ id, label, a11y, sub, caption, icon, onPress }: { id?: stri
         <IngredientThumb id={id} name={label} size={36} />
       )}
       <View style={styles.flex}>
-        <Body numberOfLines={1}>{label}</Body>
+        <Body numberOfLines={icon ? 2 : 1}>{label}</Body>
         {sub ? <Caption tone="muted">{sub}</Caption> : caption}
       </View>
     </PressableScale>

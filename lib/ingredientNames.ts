@@ -116,8 +116,8 @@ const KIND_WORD = /^(shrub|syrup|cordial|oleo|infusion|infused|tincture|bitters|
 
 /**
  * The ingredients closest to a name nothing matches ("pineapple chili shrub"
- * → Pineapple juice): those sharing the most of its flavour words, core ones
- * first, then shorter names. Hidden rows and rows in `skip` are left out.
+ * → Pineapple juice): those sharing the most of its flavour words (the
+ * first, usually the base, weighing most), core ones first, then shorter names. Hidden rows and rows in `skip` are left out.
  */
 export function closestIngredients<T extends IngredientRow>(
   query: string,
@@ -131,7 +131,8 @@ export function closestIngredients<T extends IngredientRow>(
   for (const r of rows) {
     if (r.hide_from_search || skip.includes(r)) continue;
     const own = new Set(ingredientKey(r.name).split(' '));
-    const shared = words.filter((w) => own.has(w)).length;
+    // The first word is usually the base ("pineapple" in a pineapple chili shrub): it weighs most.
+    const shared = words.reduce((n, w, i) => (own.has(w) ? n + words.length - i : n), 0);
     if (shared) scored.push({ r, shared });
   }
   scored.sort(

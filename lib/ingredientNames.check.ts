@@ -63,7 +63,7 @@ const pantry = [
   { id: 'hid', name: 'Pineapple Rum', hide_from_search: true },
   { id: 'ls', name: 'Lime Shrub' },
 ];
-assert.deepEqual(closestIngredients('pineapple chili shrub', pantry).map((r) => r.id), ['cs', 'fr', 'pj']);
+assert.deepEqual(closestIngredients('pineapple chili shrub', pantry).map((r) => r.id), ['cs', 'pj', 'ps']);
 assert.deepEqual(closestIngredients('pineapple shrub', pantry, { coreIds: new Set(['ps']) }).map((r) => r.id), ['ps', 'pj', 'cs']);
 // The kind word alone (shrub) says nothing about what's in it.
 assert.deepEqual(closestIngredients('shrub', pantry), []);
