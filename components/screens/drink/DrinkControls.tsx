@@ -16,6 +16,8 @@ interface DrinkControlsProps {
   /** The page's scroll offset (phones). Wide screens leave it at 0. */
   scrollY: SharedValue<number>;
   wide: boolean;
+  /** In a pane beside a list: nothing to go back to. */
+  noBack?: boolean;
   /** On the To make list in Collection. */
   saved: boolean;
   onToggleSaved: () => void;
@@ -35,7 +37,7 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -61,12 +63,16 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, saved, on
     <>
       {wide ? null : <Animated.View style={[styles.bar, { height: barHeight, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, barStyle]} />}
       <View style={[styles.controls, { top: top + space.sm, left: gutter, right: gutter }]}>
-        <GlassButton
-          accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-          scheme={left}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        />
+        {noBack ? (
+          <View />
+        ) : (
+          <GlassButton
+            accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
+            icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+            scheme={left}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          />
+        )}
         <View style={styles.right}>
           <GlassButton
             accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
