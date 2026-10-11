@@ -25,6 +25,8 @@ export interface DrinkRowProps {
   tag?: string;
   /** A second, longer line: a note of your own. */
   note?: string;
+  /** Under the note: more about the drink (My Bar's "✓ Woodford ✓ lemon" checklist). Say it in `label` too. */
+  below?: ReactNode;
   /** At the end of the row: a score (`RowScore` from components/ds). Say it in `caption` or `label` too, for screen readers. */
   trailing?: ReactNode;
   /** What was searched: its words are lit in the name and the note. */
@@ -41,7 +43,7 @@ export interface DrinkRowProps {
 const LOGO = 18;
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   // A drink page starts loading on press, ahead of the tap.
@@ -87,6 +89,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
             <MatchText text={note} query={query} look={matchLook} />
           </Caption>
         ) : null}
+        {below}
       </View>
       {trailing}
     </PressableScale>

@@ -4,7 +4,7 @@ export { Button, type ButtonProps, type IconName } from './Button';
 export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
 export { DateField } from './DateField';
-export { Field } from './Field';
+export { Field, FieldButton } from './Field';
 export { GlassButton, GlassSurface } from './Glass';
 export { IngredientThumb } from './IngredientThumb';
 export { EquipmentThumb } from './EquipmentThumb';

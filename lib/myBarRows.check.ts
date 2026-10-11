@@ -133,6 +133,11 @@ assert.deepEqual(vermouth.flatMap((r) => (r.kind === 'make-heading' ? [r.section
 const wide = searching('a');
 assert.deepEqual(wide.flatMap((r) => (r.kind === 'make-heading' ? [r.section] : [])), ['ready', 'one', 'two']);
 assert.equal(new Set(wide.map((r) => r.key)).size, wide.length);
+// Two away under a search is drink by drink, each with the pair it needs.
+const aperol = searching('aperol');
+assert.deepEqual(kinds(aperol).slice(3), ['make-head', 'make-heading', 'drink', 'drink', 'make-foot']);
+const firstPair = aperol.find((r) => r.kind === 'drink');
+assert.ok(firstPair?.kind === 'drink' && firstPair.needs?.length === 2 && firstPair.key.startsWith('t:'));
 // Make first and Projects aren't searched, and the tab picked doesn't matter.
 assert.ok(!kinds(wide).some((k) => k === 'first' || k === 'projects' || k === 'make-empty'));
 // A group keeps only the drinks that match, when its bottle doesn't.
@@ -158,7 +163,7 @@ assert.equal(opened.filter((r) => r.kind === 'drink').length, 30);
 assert.ok(!opened.some((r) => r.kind === 'make-more'));
 
 // The caption that replaces the tabs.
-assert.equal(searchCaption(' rye ', { ready: 0, one: 3, two: 1 }), 'Nothing ready with rye. 3 one bottle away, 1 two away.');
+assert.equal(searchCaption(' rye ', { ready: 0, one: 3, two: 1 }), 'Nothing ready with rye. Searching every tab: 3 one bottle away, 1 two away.');
 assert.equal(searchCaption('gin', { ready: 4, one: 2, two: 0 }), '4 ready, 2 one bottle away.');
 assert.equal(searchCaption('gin', { ready: 1, one: 0, two: 0 }), '1 ready.');
 assert.equal(searchCaption('zzz', { ready: 0, one: 0, two: 0 }), null);

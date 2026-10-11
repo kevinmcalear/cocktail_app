@@ -63,6 +63,7 @@ interface ItemRow {
   item_images: ItemImageLink[] | null;
   brand_maker?: string | null;
   abv?: number | null;
+  origin?: string | null;
   generic_id?: string | null;
   ingredient_role?: string | null;
   recipes?: { id: string }[] | null;
@@ -84,15 +85,34 @@ export interface ShelfItem extends BarItem {
   section: BarSection;
 }
 
-/** A search result for the add sheet, with the section it goes in. */
+/** A search result for the add sheet, with the section it goes in and what it is ("Liqueur", "Italy"). */
 export interface FoundItem extends BarItem {
   section: BarSection;
+  kind: string | null;
+  origin: string | null;
 }
 
 const SHELF_KEY = ['home-bar'];
 const NONE: string[] = [];
 const ITEM_SELECT = 'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url))';
 const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id, ingredient_role, recipes:app_recipe_presentation!recipe_item_id(id)`;
+const FOUND_SELECT = 'id, name, abv, origin, generic_id, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)';
+
+/** Add-sheet rows from catalog rows, each with its section and the name of what it's a kind of. */
+async function foundItems(rows: ItemRow[]): Promise<FoundItem[]> {
+  const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
+  const kinds = new Map((kindIds.length ? await readItems(kindIds, 'id, name') : []).map((k) => [k.id, k.name]));
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    type: 'ingredient' as const,
+    imageUrl: heroPicture(r.item_images)?.url ?? null,
+    glass: null,
+    section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
+    kind: (r.generic_id && kinds.get(r.generic_id)) || null,
+    origin: r.origin ?? null,
+  }));
+}
 
 /** The bottles on the signed-in person's shelf (item ids, newest first). */
 export function useShelf() {
@@ -126,7 +146,7 @@ export function useBarSearch(text: string) {
       const read = (pattern: string, limit: number) =>
         supabase
           .from('app_item_presentation')
-          .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+          .select(FOUND_SELECT)
           .eq('item_type', 'ingredient')
           .ilike('name', pattern)
           .order('name')
@@ -142,7 +162,7 @@ export function useBarSearch(text: string) {
         aliases.length
           ? supabase
               .from('app_item_presentation')
-              .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+              .select(FOUND_SELECT)
               .eq('item_type', 'ingredient')
               .or(aliases.map((n) => `name.ilike.${likeExactly(n)}`).join(','))
               .limit(10)
@@ -155,15 +175,7 @@ export function useBarSearch(text: string) {
       const rows = [...byId.values()] as unknown as ItemRow[];
       // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
       const named = (also.data ?? []) as unknown as ItemRow[];
-      const found = [...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))];
-      return found.map((r) => ({
-        id: r.id,
-        name: r.name,
-        type: 'ingredient' as const,
-        imageUrl: heroPicture(r.item_images)?.url ?? null,
-        glass: null,
-        section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
-      }));
+      return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
     },
   });
 }
@@ -181,7 +193,7 @@ export function useBarIdeas(names: readonly string[]) {
     queryFn: async (): Promise<FoundItem[]> => {
       const { data, error } = await supabase
         .from('app_item_presentation')
-        .select('id, name, abv, ingredient_role, item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(id)')
+        .select(FOUND_SELECT)
         .eq('item_type', 'ingredient')
         .is('bar_id', null)
         .or(names.map((n) => `name.ilike."${likeExactly(n).replace(/"/g, '\\"')}"`).join(','))
@@ -190,18 +202,7 @@ export function useBarIdeas(names: readonly string[]) {
       // One per name, the first by id, as the pantry staples are picked.
       const byName = new Map<string, ItemRow>();
       for (const r of (data ?? []) as unknown as ItemRow[]) if (!byName.has(r.name.toLowerCase())) byName.set(r.name.toLowerCase(), r);
-      return names.flatMap((n) => {
-        const r = byName.get(n.toLowerCase());
-        if (!r) return [];
-        return [{
-          id: r.id,
-          name: r.name,
-          type: 'ingredient' as const,
-          imageUrl: heroPicture(r.item_images)?.url ?? null,
-          glass: null,
-          section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
-        }];
-      });
+      return foundItems(names.flatMap((n) => byName.get(n.toLowerCase()) ?? []));
     },
   });
 }
@@ -319,6 +320,75 @@ export function useShortPreps() {
   });
 }
 
+/** A house prep's card facts: how long it keeps and takes, and what goes in it (item_prep, its recipe). */
+export interface PrepDetail {
+  keepsHours: number | null;
+  /** "24 h drip", when the card says. */
+  lead: string | null;
+  /** Its recipe lines, in order: what a "you have" checklist names. */
+  lines: { id: string; name: string; generic: boolean }[];
+}
+
+/**
+ * Card facts for these preps (Make first, One thing short, your house preps'
+ * use-by, what each lab bottle goes into), in URL-sized batches.
+ */
+export function usePrepDetails(prepIds: readonly string[]) {
+  const ids = [...new Set(prepIds)].sort();
+  return useQuery({
+    queryKey: ['prep-details', ids],
+    enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<Record<string, PrepDetail>> => {
+      const out: Record<string, PrepDetail> = Object.fromEntries(ids.map((id) => [id, { keepsHours: null, lead: null, lines: [] }]));
+      await Promise.all(
+        chunk(ids, 150).map(async (batch) => {
+          const [cards, lines] = await Promise.all([
+            supabase.from('item_prep').select('item_id, shelf_life_hours, lead_time_note').in('item_id', batch),
+            supabase
+              .from('app_recipe_presentation')
+              .select('recipe_item_id, display_ingredient_id, is_optional, sort_order, display_ingredient(name, ingredient_role)')
+              .in('recipe_item_id', batch)
+              .order('sort_order'),
+          ]);
+          if (cards.error) throw cards.error;
+          if (lines.error) throw lines.error;
+          for (const c of (cards.data ?? []) as { item_id: string; shelf_life_hours: number | null; lead_time_note: string | null }[]) {
+            out[c.item_id] = { ...out[c.item_id], keepsHours: c.shelf_life_hours, lead: c.lead_time_note };
+          }
+          type Line = { recipe_item_id: string; display_ingredient_id: string | null; is_optional: boolean | null; display_ingredient: { name: string; ingredient_role: string | null } | null };
+          for (const l of (lines.data ?? []) as unknown as Line[]) {
+            if (!l.display_ingredient_id || !l.display_ingredient || l.is_optional) continue;
+            out[l.recipe_item_id].lines.push({ id: l.display_ingredient_id, name: l.display_ingredient.name, generic: l.display_ingredient.ingredient_role === 'generic' });
+          }
+        })
+      );
+      return out;
+    },
+  });
+}
+
+/** What the bottle sheet says a bottle is: where it's from, and what its kind is a kind of ("Fernet, a kind of amaro"). */
+export function useBottleFacts(itemId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['bottle-facts', itemId],
+    enabled: !!itemId,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<{ origin: string | null; kindOf: string | null }> => {
+      const up = async (id: string) => {
+        const { data, error } = await supabase.from('app_item_presentation').select('name, origin, generic_id').eq('id', id).maybeSingle();
+        if (error) throw error;
+        return data as { name: string; origin: string | null; generic_id: string | null } | null;
+      };
+      const item = await up(itemId!);
+      const kind = item?.generic_id && item.generic_id !== itemId ? await up(item.generic_id) : null;
+      const parent = kind?.generic_id && kind.generic_id !== item?.generic_id ? await up(kind.generic_id) : null;
+      return { origin: item?.origin ?? null, kindOf: parent?.name ?? null };
+    },
+  });
+}
+
 /** Missing table or function: a database without 20261013200000. */
 const notThereYet = (code?: string) => code === 'PGRST202' || code === 'PGRST205' || code === '42P01';
 
@@ -347,6 +417,12 @@ export function useFinishBottle() {
   return useMutation({
     mutationFn: async (itemId: string) => {
       const { error } = await supabase.rpc('finish_bar_item', { p_item_id: itemId });
+      // ponytail: a database without 20261013200000 keeps no history; just take it off the shelf. Drop once it's in production.
+      if (error?.code === 'PGRST202') {
+        const { error: removeError } = await supabase.from('home_bar_items').delete().eq('item_id', itemId);
+        if (removeError) throw removeError;
+        return;
+      }
       if (error) throw error;
     },
     onMutate: (itemId) => {

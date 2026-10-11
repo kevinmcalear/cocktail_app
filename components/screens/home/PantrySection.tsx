@@ -51,7 +51,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
         <SectionActions section="fridge" editing={editing} onEdit={onEdit} canEdit={count > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
-        {editing ? null : <AddTile label={SECTIONS.fridge.add} onPress={onMore} />}
+        {editing ? null : <AddTile label={SECTIONS.fridge.add} sub={SECTIONS.fridge.addSub} onPress={onMore} />}
         {have.map((s) => {
           const item = byId.get(s.id);
           return item ? (
