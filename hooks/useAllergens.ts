@@ -52,6 +52,26 @@ export function useItemAllergens(itemId: string | null | undefined, barId: strin
 }
 
 /**
+ * Replaces an ingredient's declared allergens for a bar (or the catalogue)
+ * and stamps the check: the body of useSetItemAllergens, also used when the
+ * add-drink wizard saves a new prep whose allergens were set by hand.
+ */
+export async function saveItemAllergens(itemId: string, barId: string | null, allergens: Allergen[]) {
+  const rows = supabase.from('item_allergens').delete().eq('item_id', itemId);
+  const gone = await (barId ? rows.eq('bar_id', barId) : rows.is('bar_id', null));
+  if (gone.error) throw gone.error;
+  if (allergens.length) {
+    const added = await supabase.from('item_allergens').insert(allergens.map((allergen) => ({ item_id: itemId, bar_id: barId, allergen })));
+    if (added.error) throw added.error;
+  }
+  const checks = supabase.from('item_allergen_checks').delete().eq('item_id', itemId);
+  const oldCheck = await (barId ? checks.eq('bar_id', barId) : checks.is('bar_id', null));
+  if (oldCheck.error) throw oldCheck.error;
+  const check = await supabase.from('item_allergen_checks').insert({ item_id: itemId, bar_id: barId });
+  if (check.error) throw check.error;
+}
+
+/**
  * Declare an ingredient's allergens for a bar (or for the catalogue when
  * barId is null). Saving is the check: the whole set is replaced and the
  * check is stamped with this person, now. An empty set means "checked,
@@ -60,20 +80,7 @@ export function useItemAllergens(itemId: string | null | undefined, barId: strin
 export function useSetItemAllergens(itemId: string, barId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (allergens: Allergen[]) => {
-      const rows = supabase.from('item_allergens').delete().eq('item_id', itemId);
-      const gone = await (barId ? rows.eq('bar_id', barId) : rows.is('bar_id', null));
-      if (gone.error) throw gone.error;
-      if (allergens.length) {
-        const added = await supabase.from('item_allergens').insert(allergens.map((allergen) => ({ item_id: itemId, bar_id: barId, allergen })));
-        if (added.error) throw added.error;
-      }
-      const checks = supabase.from('item_allergen_checks').delete().eq('item_id', itemId);
-      const oldCheck = await (barId ? checks.eq('bar_id', barId) : checks.is('bar_id', null));
-      if (oldCheck.error) throw oldCheck.error;
-      const check = await supabase.from('item_allergen_checks').insert({ item_id: itemId, bar_id: barId });
-      if (check.error) throw check.error;
-    },
+    mutationFn: (allergens: Allergen[]) => saveItemAllergens(itemId, barId, allergens),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['item-allergens', itemId] });
       void queryClient.invalidateQueries({ queryKey: ['drink-allergens'] });

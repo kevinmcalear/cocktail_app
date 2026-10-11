@@ -2,9 +2,11 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert } from 'react-native';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useDrinkLists } from '@/hooks/useDiscover';
+import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { suggestClassic } from '@/lib/classics';
 import { plainDbMessage } from '@/lib/dbError';
@@ -13,7 +15,7 @@ import {
   type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
-import { serveGuess } from '@/lib/specDefaults';
+import { iceWhy, serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -22,6 +24,7 @@ import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
+import { MethodStep } from './MethodStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
@@ -72,6 +75,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   const create = useCreateDrink();
   const barGlasses = useBarGlassware(barId).data;
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
+  const shelfIds = useShelf().data;
+  const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
 
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
@@ -100,10 +105,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
     create.mutate(
       { draft, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
       {
-        onSuccess: ({ id, warnings }) => {
+        onSuccess: ({ id, warnings, later = [] }) => {
           clear(place);
           toastDone('Drink saved', draft.name.trim());
-          if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
+          // The reminder "Just add the name" promised: the preps whose recipes are still to write.
+          const one = later.length === 1;
+          const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
+          if (warnings.length || remind) Alert.alert(warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', [...warnings, ...(remind ? [remind] : [])].join('\n\n'));
           onSaved(id);
         },
         onError: (e) => Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
@@ -143,29 +151,55 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
           </>
         );
       case 'ingredients':
-        return <IngredientsStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
+        return (
+          <IngredientsStep
+            draft={draft}
+            set={set}
+            ingredients={ingredients}
+            loading={!dropdowns?.ingredients}
+            aliases={dropdowns?.ingredientAliases}
+            coreIds={coreIds}
+            shelf={barId ? undefined : new Set(shelfIds ?? [])}
+          />
+        );
       case 'method':
         return (
           <>
             {serveCard ? <ServeGuessCard guess={guess} onUse={takeGuess} /> : null}
-            <PickStep label="Method" ownLabel="Your own method" multi options={methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={guess.method} why={serveCard ? null : guess.why} />
-            <FoamerHint draft={draft} set={set} ingredients={ingredients} />
+            <MethodStep
+              options={methods}
+              selected={draft.methods}
+              onChange={(methods) => set({ methods })}
+              suggested={guess.method}
+              why={serveCard ? null : guess.why}
+              hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
+            />
           </>
         );
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <PickStep label="Ice" ownLabel="Other ice" options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null })} suggested={guess.ice} />;
+        return (
+          <PickStep
+            label="Ice"
+            ownLabel="Other ice"
+            options={ices}
+            selected={draft.ice ? [draft.ice] : []}
+            onChange={([ice]) => set({ ice: ice ?? null })}
+            suggested={guess.ice}
+            why={iceWhy(sketchLook(draft, barVariants))}
+          />
+        );
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
-        return <CreditsStep draft={draft} set={set} atVenue={!!barId} />;
+        return <CreditsStep draft={draft} set={set} venueName={barId ? venueName : null} ingredients={ingredients} />;
       case 'notes':
         return <NotesStep draft={draft} set={set} />;
       case 'publish':
         return <PublishStep draft={draft} set={set} barId={barId} />;
       case 'review':
-        return <ReviewStep draft={draft} onJump={go} atVenue={!!barId} hasProfile={!!me} />;
+        return <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} />;
     }
   })();
 
