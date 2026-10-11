@@ -68,6 +68,7 @@ function useVenueLines(venue: Venue): Record<string, string> {
     'back-bar': backBarLine(placed, waiting.length),
     team: members ? teamLine(members.length, invites.length) : 'Who’s on the team',
     brand: 'Logo, colours and type',
+    roles: 'Who sees what, by role',
     'venue-settings': 'Hours, address, units',
     settings: 'Your account and the app',
   };
