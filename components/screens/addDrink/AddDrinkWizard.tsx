@@ -29,6 +29,7 @@ import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
+import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
 
@@ -37,6 +38,8 @@ export interface AddDrinkWizardProps {
   barId?: string | null;
   menuSectionId?: string | null;
   initialName?: string | null;
+  /** "Riff on this" on a drink page: a fresh draft starts from that drink's spec, credited as a version of it. */
+  startFrom?: string | null;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
   onClose: () => void;
@@ -53,7 +56,7 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, onSaved }: AddDrinkWizardProps) {
+function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded, onClose, onSaved }: AddDrinkWizardProps) {
   const place = wizardPlace(barId);
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
@@ -83,6 +86,15 @@ function Wizard({ barId = null, menuSectionId, initialName, embedded, onClose, o
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
     if (initialName?.trim() && !(kept && hasContent(kept))) patch(place, { name: initialName.trim() });
   }, [initialName, place, patch]);
+
+  // Riff on this: the drink's spec fills a fresh draft; one already in progress is never overwritten.
+  const startFromSpec = useStartFromClassic();
+  const startSpec = startFromSpec.mutate;
+  useEffect(() => {
+    const kept = useDrinkWizardStore.getState().kept[place]?.draft;
+    if (!startFrom || (kept && hasContent(kept))) return;
+    startSpec(startFrom, { onSuccess: (change) => patch(place, change) });
+  }, [startFrom, place, patch, startSpec]);
 
   const save = () =>
     create.mutate(
