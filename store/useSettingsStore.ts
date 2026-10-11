@@ -21,11 +21,26 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
     { id: 'g', label: 'g' },
 ];
 
+/**
+ * The one Units setting (Settings › Preferences, decided 10 Oct): new recipe
+ * lines start in it, and drink pages read specs in it. cl has no spec
+ * conversion yet, so specs read in ml then.
+ *
+ * ponytail: two fields kept in step by both setters, so the drink page's
+ * switch and Settings stay one choice without touching the spec reader;
+ * fold them into one `units` field when the spec reader learns cl.
+ */
+export function specUnitFor(unit: string): SpecUnit {
+    return unit === 'g' || unit === 'oz' ? unit : 'ml';
+}
+
 interface SettingsState {
     themeMode: ThemeMode;
+    /** Units: ml, oz, cl or g. New recipe lines start in it. */
     defaultUnit: string;
-    /** How a spec reads on the drink page: as written, or converted to g, ml or oz. */
+    /** How a spec reads on the drink page (Units, with cl read as ml). */
     specUnit: SpecUnit;
+    /** The drink page's switch: changes Units too. */
     setSpecUnit: (unit: SpecUnit) => void;
     /** This device's freezer, in °C, for the Batch sheet's "will it freeze" check. */
     freezerC: number;
@@ -40,11 +55,11 @@ export const useSettingsStore = create<SettingsState>()(
             themeMode: 'system',
             defaultUnit: DEFAULT_UNIT,
             specUnit: 'ml',
-            setSpecUnit: (unit) => set({ specUnit: unit }),
+            setSpecUnit: (unit) => set({ specUnit: unit, defaultUnit: unit }),
             freezerC: -18,
             setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
-            setDefaultUnit: (unit) => set({ defaultUnit: unit }),
+            setDefaultUnit: (unit) => set({ defaultUnit: unit, specUnit: specUnitFor(unit) }),
         }),
         {
             name: 'settings-storage',

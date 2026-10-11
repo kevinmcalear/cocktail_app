@@ -100,6 +100,7 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
           accessibilityHint={reason ? undefined : 'Pick a reason first'}
           onPress={() => reason && file.mutate({ target: picked.target, reason, details })}
         />
+        <Caption tone="muted" align="center">{reason ? 'One report is enough. Moderators see every one.' : 'Pick a reason first.'}</Caption>
       </>
     );
   }

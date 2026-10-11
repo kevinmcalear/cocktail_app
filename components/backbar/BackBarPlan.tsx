@@ -19,8 +19,10 @@ interface BackBarPlanProps {
   onPressPlan?: (x: number, y: number) => void;
   /** Label every zone (the map) or only the highlighted ones (the small card). */
   labels?: 'all' | 'highlighted';
-  /** Per-zone count for the accessible name ("Fridge 2, 4 items"). */
+  /** Per-zone count, shown in the zone on the map and in its accessible name ("Fridge 2, 4 items"). */
   countFor?: (zoneId: string) => number;
+  /** Labels the plan's sides: the working aisle in the middle, the guests along the bottom (the map). */
+  orientation?: boolean;
   accessibilityLabel: string;
 }
 
@@ -46,7 +48,7 @@ export function selectedProps(on: boolean): object {
  * and the web show the same map at any size. Zones that haven't been drawn
  * yet don't appear here; the map lists them underneath.
  */
-export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, onPressPlan, labels = 'all', countFor, accessibilityLabel }: BackBarPlanProps) {
+export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, onPressPlan, labels = 'all', countFor, orientation = false, accessibilityLabel }: BackBarPlanProps) {
   const ds = useDs();
   const [size, setSize] = useState({ w: 0, h: 0 });
   const accent = ds.accentText;
@@ -75,6 +77,16 @@ export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, o
             style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(accent, 0.05) }]}
           />
         ) : null}
+        {orientation ? (
+          <>
+            <View pointerEvents="none" style={[styles.side, styles.aisle]}>
+              <Caption color={ds.c.faint} style={styles.sideText}>WORKING AISLE</Caption>
+            </View>
+            <View pointerEvents="none" style={[styles.side, styles.guests]}>
+              <Caption color={ds.c.faint} style={styles.sideText}>GUESTS</Caption>
+            </View>
+          </>
+        ) : null}
         {drawn.map(({ zone, r }) => {
           const on = highlightIds.includes(zone.id);
           const showLabel = labels === 'all' || on;
@@ -87,14 +99,22 @@ export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, o
             backgroundColor: on ? withAlpha(accent, 0.22) : zone.kind === 'bar_top' ? ds.c.raised : 'transparent',
             borderWidth: on ? 2 : 1,
           } as const;
+          const count = countFor?.(zone.id);
           const label = showLabel ? (
-            <Caption
-              numberOfLines={1}
-              color={on ? accent : ds.c.muted}
-              style={[!narrow && styles.label, { fontFamily: narrow ? fontFamilies.bodyMedium : on ? fontFamilies.monoMedium : fontFamilies.mono }]}
-            >
-              {narrow ? zone.name : zone.name.toUpperCase()}
-            </Caption>
+            <View style={styles.labelRow}>
+              <Caption
+                numberOfLines={1}
+                color={on ? accent : ds.c.muted}
+                style={[styles.name, !narrow && styles.label, { fontFamily: narrow ? fontFamilies.bodyMedium : on ? fontFamilies.monoMedium : fontFamilies.mono }]}
+              >
+                {narrow ? zone.name : zone.name.toUpperCase()}
+              </Caption>
+              {labels === 'all' && count != null ? (
+                <Caption color={on ? accent : ds.c.muted} style={{ fontFamily: fontFamilies.mono }} aria-hidden>
+                  {String(count)}
+                </Caption>
+              ) : null}
+            </View>
           ) : null;
           if (!onPressZone) {
             return (
@@ -103,7 +123,6 @@ export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, o
               </View>
             );
           }
-          const count = countFor?.(zone.id);
           return (
             <PressableScale
               key={zone.id}
@@ -127,4 +146,10 @@ const styles = StyleSheet.create({
   plan: { width: '100%', aspectRatio: PLAN_ASPECT, borderRadius: radius.control, overflow: 'hidden' },
   zone: { position: 'absolute', borderRadius: radius.mark, paddingHorizontal: space.xs, justifyContent: 'center', overflow: 'hidden' },
   label: { letterSpacing: 0.5 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  name: { flexShrink: 1 },
+  side: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  aisle: { top: '46%' },
+  guests: { bottom: space.xs },
+  sideText: { fontFamily: fontFamilies.mono, letterSpacing: 2 },
 });
