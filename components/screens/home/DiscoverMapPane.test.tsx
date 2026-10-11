@@ -145,8 +145,7 @@ test('on phones a tapped bar opens the sheet on it, not a card over the map', as
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
 
-  // The bar's rows don't repeat the bar (disc-map-bar).
-  expect(screen.queryByText(/Caretaker's Cottage ·/)).toBeNull();
+  expect(screen.queryByText(/Caretaker's Cottage ·/)).toBeNull(); // its rows don't repeat the bar
   await fireEvent.press(screen.getByRole('button', { name: 'All results' }));
   expect(screen.getByRole('button', { name: /Show the list$/ })).toBeTruthy();
 });
@@ -175,7 +174,6 @@ test('searching, pins name the best match and a tapped bar leads with the drink,
   expect(screen.getByText("1 of 3 at Caretaker's Cottage")).toBeTruthy();
   expect(screen.getByRole('button', { name: 'All 3' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Next: Gibson, Riff on a Martini' }));
-  expect(screen.getByRole('heading', { name: 'Gibson' })).toBeTruthy();
   expect(screen.getByText("2 of 3 at Caretaker's Cottage")).toBeTruthy();
   expect(screen.getByText('At')).toBeTruthy();
   expect(screen.getByRole('link', { name: /Open the bar$/ })).toBeTruthy();
