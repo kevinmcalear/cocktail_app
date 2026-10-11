@@ -62,22 +62,20 @@ export interface SizeOption {
 }
 
 /**
- * The sizes on a prep page: one batch, half and double, and when the yield is
- * a volume, the bottles people fill (skipping one that's the batch itself).
+ * The sizes on a prep page, as the canvas draws them: one batch, then the
+ * bottles people fill when the yield is a volume (skipping one that's the
+ * batch itself). A weighed or unknown yield gets half and double instead.
  */
 export function sizeOptions(yieldAmount: number | null, yieldUnit: string | null): SizeOption[] {
-  const out: SizeOption[] = [
-    { key: 'batch', label: '1 batch', factor: 1 },
-    { key: 'half', label: '½', factor: 0.5 },
-    { key: 'double', label: '2×', factor: 2 },
-  ];
+  const out: SizeOption[] = [{ key: 'batch', label: '1 batch', factor: 1 }];
   const y = toQuantity(yieldAmount, yieldUnit);
   if (y?.kind === 'ml' && y.value > 0) {
-    for (const [ml, label] of [[500, '500 ml'], [750, 'Fill a 750 ml bottle'], [1000, '1 L']] as const) {
+    for (const [ml, label] of [[500, '500 ml'], [750, 'Fill a 750 ml bottle']] as const) {
       if (Math.abs(ml - y.value) / y.value > 0.05) out.push({ key: `ml${ml}`, label, factor: ml / y.value });
     }
+    return out;
   }
-  return out;
+  return [...out, { key: 'half', label: '½', factor: 0.5 }, { key: 'double', label: '2×', factor: 2 }];
 }
 
 /** "About 75 drinks at 15 ml": how far one batch goes in its most common pour. */
