@@ -2,15 +2,16 @@ import { getLocales } from 'expo-localization';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, Spec } from '@/components/ds';
+import { Button, Caption, Headline, RowScore, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
+import { useRowScores } from '@/hooks/useBestDrink';
 import { useVersionLabel } from '@/hooks/useSpecMatches';
 import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
-import { formatDistance, usesMiles } from '@/lib/nearMe';
+import { formatDistance, usesMiles, type Area } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 const place = (b: DiscoverDrink['bar']) => [b.locality, b.city].filter(Boolean).join(', ');
@@ -32,29 +33,22 @@ export interface DrinkScores {
   bars: Readonly<Record<string, BarScore>>;
 }
 
-/** The scores at the end of a drink row: the drink's, then its bar's under it. Nothing when neither is scored. */
+/** The scores at the end of a drink row: the drink's, then its bar's under it ("Bar 9.1"). Nothing when neither is scored. */
 export function DrinkScore({ drink, bar }: { drink?: number; bar?: number }) {
-  if (drink === undefined && bar === undefined) return null;
-  return (
-    <View style={styles.score}>
-      {drink !== undefined ? <Spec>{formatScore(drink)}</Spec> : null}
-      {bar !== undefined ? <Caption tone="muted">{`Bar ${formatScore(bar)}`}</Caption> : null}
-    </View>
-  );
+  return <RowScore score={drink} detail={bar !== undefined ? `Bar ${formatScore(bar)}` : null} />;
 }
 
 /** What a screen reader hears for those scores. */
 export function scoreWords(drink?: number, bar?: number): string | null {
-  const words = [drink !== undefined ? `score ${formatScore(drink)}` : null, bar !== undefined ? `bar scores ${formatScore(bar)}` : null].filter(Boolean);
-  return words.length ? words.join(', ') : null;
+  return rowScoreWords(drink, bar !== undefined ? `bar scores ${formatScore(bar)}` : null);
 }
 
 /**
  * One drink at its bar: the bar and where it is under the name, what it is to
  * its classic ("the classic spec", or what its variation changes), the scores
- * (when given) at the end.
+ * (when given) at the end, and the searched word lit (tint on Discover).
  */
-export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scores?: DrinkScores }) {
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint' }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look'] }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
   const away = d.distance === null || d.distance === undefined ? null : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
@@ -74,6 +68,8 @@ export function DrinkAtBarRow({ drink: d, scores }: { drink: DiscoverDrink; scor
       tag={d.menu.past ?? undefined}
       note={(d.why ?? d.description) || undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
+      query={query}
+      matchLook={matchLook}
       label={said ? [d.name, caption, d.menu.past, said, d.why ?? d.description].filter(Boolean).join('. ') : undefined}
     />
   );
@@ -130,15 +126,18 @@ interface DrinksHereProps {
   signedIn: boolean;
   /** What to say when nothing matches. */
   empty: string;
+  /** Where: the bars' scores under each drink come from its top bars. */
+  area: Area;
 }
 
 /** "Martinis near you": the drinks at bars that match, with how many bars pour them. */
-export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, empty }: DrinksHereProps) {
+export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, empty, area }: DrinksHereProps) {
+  const scores = useRowScores(drinks, area, signedIn);
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
-  else body = <DrinkAtBarList drinks={drinks} more={more} />;
+  else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} />;
   return (
     <View style={styles.section}>
       <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
@@ -151,6 +150,5 @@ export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, e
 const styles = StyleSheet.create({
   section: { gap: space.xs },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
-  score: { alignItems: 'flex-end' },
   also: { paddingTop: space.lg },
 });

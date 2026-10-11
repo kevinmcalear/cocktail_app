@@ -41,6 +41,8 @@ export interface MapPin {
   closed?: string;
   /** While searching: its best matching drink, written on the pin in place of the count (lib/discoverMatch.ts namePins). */
   top?: string;
+  /** While searching: an unnamed pin says how many of its drinks match (disc-search-pin), unless it has a score. */
+  showCount?: boolean;
 }
 
 /** Pins for the rows that have coordinates: ranked first, then early. */
@@ -62,11 +64,14 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
     }));
 }
 
-/** What's written on a pin: how many drinks match, the score, or nothing while early. */
+/**
+ * What's written on a pin: the bar's score (b02); while searching, how many
+ * of its drinks match; else nothing (a plain dot or its logo).
+ */
 export function pinLabel(pin: MapPin): string {
   if (pin.closed) return 'Closed';
-  if (pin.drinks) return String(pin.drinks);
-  return pin.score === null ? '' : formatScore(pin.score);
+  if (pin.score !== null) return formatScore(pin.score);
+  return pin.showCount && pin.drinks ? String(pin.drinks) : '';
 }
 
 /**
@@ -84,8 +89,9 @@ export function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection<GeoJS
 export function pinDescription(pin: MapPin): string {
   if (pin.closed) return `${pin.name}, ${pin.closed.toLowerCase()}`;
   const count = pin.drinks ?? (pin.score === null ? pin.matches : undefined);
-  if (count) return `${pin.name}, ${count} ${count === 1 ? 'drink' : 'drinks'}${pin.top ? `: ${pin.top}` : ''}`;
-  return pin.score === null ? `${pin.name}, early` : `${pin.name}, score ${formatScore(pin.score)}`;
+  const score = pin.score === null ? null : `score ${formatScore(pin.score)}`;
+  if (count) return [`${pin.name}, ${count} ${count === 1 ? 'drink' : 'drinks'}${pin.top ? `: ${pin.top}` : ''}`, score].filter(Boolean).join(', ');
+  return score ? `${pin.name}, ${score}` : `${pin.name}, early`;
 }
 
 /**

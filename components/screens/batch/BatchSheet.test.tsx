@@ -8,6 +8,9 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { BatchSheet } from './BatchSheet';
 
 jest.mock('@/components/tools/ToolsSheet', () => ({ ToolsSheet: () => null }));
+jest.mock('@/lib/shareLink', () => ({ shareText: jest.fn() }));
+jest.mock('@/hooks/useBatchPrep', () => ({ useShelfLives: () => ({ data: {} }), useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 
 const line = (id: string, name: string, amount: number, unit: string, abv: number | null = null, atService?: boolean) => ({
   id,
@@ -36,8 +39,10 @@ test('splits the bottle from what each serve adds at the station', async () => {
   expect(screen.getByLabelText('720 ml, Blended Scotch')).toBeTruthy();
   expect(screen.getByLabelText('82.5 ml, Penicillin, from the bottle')).toBeTruthy();
   expect(screen.getByLabelText('22.5 ml, Lemon juice, 270 ml for 12, Fresh daily, not in the bottle')).toBeTruthy();
-  expect(screen.getByLabelText('In the bottle: 990 ml, 2 × 750 ml bottles')).toBeTruthy();
-  expect(screen.getByText('Bottle 29% ABV')).toBeTruthy();
+  expect(screen.getByLabelText('In the bottle: 990 ml, 2 × 750 ml bottles, 29% ABV')).toBeTruthy();
+  expect(screen.getByText('2 × 750 ml bottles · bottle 29% ABV')).toBeTruthy();
+  // Shaken to order: the bottle holds no water, and says so (board drink-sheet-batch-venue).
+  expect(screen.getByLabelText('0 ml, Water, the shake dilutes it')).toBeTruthy();
   expect(screen.queryByText('Will slush')).toBeNull();
 });
 
@@ -45,7 +50,7 @@ test('fills a bottle: 12 Penicillins to a litre', async () => {
   await open();
   await fireEvent.press(screen.getByRole('tab', { name: 'Fill a bottle' }));
   await fireEvent.press(screen.getByRole('radio', { name: '1 L' }));
-  expect(screen.getByLabelText('In the bottle: 990 ml, 1 × 1 L bottle')).toBeTruthy();
+  expect(screen.getByLabelText('In the bottle: 990 ml, 1 × 1 L bottle, 29% ABV')).toBeTruthy();
 });
 
 test('starts from what is on the shelf', async () => {
@@ -60,4 +65,12 @@ test('a freezer Martini at 30% slushes at -18 and stays liquid at -12', async ()
   expect(screen.getByText('Will slush')).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: '\u221212\u00a0°C' }));
   expect(screen.getByText('Stays liquid')).toBeTruthy();
+});
+
+test('making it turns the bottle into a checklist', async () => {
+  await renderWithTamagui(<BatchSheet visible onClose={() => {}} name="Penicillin" lines={penicillin} methodNames={["Shake"]} lockedUntil={null} initialServes={12} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Make it, tick as I go' }));
+  const scotch = screen.getByRole('checkbox', { name: '720 ml, Blended Scotch' });
+  await fireEvent.press(scotch);
+  expect(screen.getByRole('checkbox', { name: '720 ml, Blended Scotch', checked: true })).toBeTruthy();
 });

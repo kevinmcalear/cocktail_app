@@ -93,7 +93,7 @@ export function namePins(pins: readonly MapPin[], drinks: readonly { barId: stri
   for (const d of drinks) if (!best.has(d.barId)) best.set(d.barId, d.name);
   const named = new Set([...best.keys()].slice(0, NAMED));
   if (selectedId) named.add(selectedId);
-  return pins.map((p) => (named.has(p.id) && best.has(p.id) && !p.closed ? { ...p, top: best.get(p.id) } : p));
+  return pins.map((p) => (named.has(p.id) && best.has(p.id) && !p.closed ? { ...p, top: best.get(p.id) } : { ...p, showCount: true }));
 }
 
 /** A bar's page, opened on what was searched (`?q=`), so its matches come first there. */

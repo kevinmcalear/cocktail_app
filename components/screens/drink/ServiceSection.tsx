@@ -1,17 +1,21 @@
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, LockedSection, PressableScale, Tag } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Body, Button, Caption, DrinkImage, LockedSection, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space } from '@/constants/tokens';
+import { useServiceNotes } from '@/hooks/useServiceNotes';
 import { useSetLineService, useSetServiceStyle } from '@/hooks/useServiceSpec';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { pictureTag, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
 import { isServiceStyle } from '@/lib/service';
+import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
 import { SERVICE_OPENS_AT, serviceShots, shotCaption, type ServiceShot } from '@/lib/servicePhotos';
 import type { SpecLine } from '@/lib/spec';
 
-import { PhotoViewer, type ViewedPhoto } from './PhotoViewer';
+import { ServiceNotesSheet } from './ServiceNotesSheet';
 import { ServiceSpec } from './ServiceSpec';
 
 interface ServiceSectionProps {
@@ -23,34 +27,65 @@ interface ServiceSectionProps {
   canEdit: boolean;
   /** Glassware icon, drawn when a photo has no subject. */
   glass: string | null;
-  wide: boolean;
   /** The spec as this role sees it, for what's batched and what's added at the station. */
   lines: SpecLine[];
   /** This role sees amounts (and so the batch split). */
   showLines: boolean;
+  /** Who opens the amounts, for the split's lock line. */
+  splitOpensAt: string;
   serviceStyle: string | null | undefined;
   /** /dev/drink only: a simulated role. */
   preview?: { role: number };
 }
 
 /**
- * How the drink goes out: what's poured from the batch and what's added at
- * the station, then any service photos that exist (side, top, garnish,
- * hand-off). Empty angles stay off this page; adding them is edit mode.
- * Venue drinks open the section at Employee; guests see it locked.
+ * How the drink goes out (boards drink-phone-venue and -floor): how the
+ * garnish goes on and the hand-off, what's poured from the batch and what's
+ * added at the station, then every service angle (a sketch until someone
+ * photographs it) and the way into the full-screen service view. Venue drinks
+ * open the section at Employee; the split opens with the amounts.
  */
-export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wide, lines, showLines, serviceStyle, preview }: ServiceSectionProps) {
+export function ServiceSection({ itemId, barId, name, links, canEdit, glass, lines, showLines, splitOpensAt, serviceStyle, preview }: ServiceSectionProps) {
+  const ds = useDs();
+  const router = useRouter();
   const realRole = useEffectiveRole(barId);
   const setLine = useSetLineService(itemId);
   const setStyle = useSetServiceStyle(itemId);
-  const [open, setOpen] = useState<ServiceShot | null>(null);
-  const shots = serviceShots(links).filter((shot) => shot.status === 'photo' || shot.status === 'outdated');
-  const canSetSpec = !preview && canEdit && lines.length > 0;
-  if (!canSetSpec && !lines.length && !shots.length) return null;
   const unlocked = !barId || (preview?.role ?? realRole) >= SERVICE_OPENS_AT;
+  const { data: notes = EMPTY_SERVICE_NOTES } = useServiceNotes(itemId, barId, unlocked && !preview);
+  const [editing, setEditing] = useState(false);
+  const shots = serviceShots(links);
+  const canSetSpec = !preview && canEdit && lines.length > 0;
+  const open = (angle?: string) => router.push({ pathname: '/cocktail/[id]/service', params: { id: itemId, ...(angle ? { angle } : {}) } } as unknown as Href);
 
   return (
     <LockedSection title="Service" unlocked={unlocked} opensAt={roleLabel(SERVICE_OPENS_AT)}>
+      {notes.garnish ? (
+        <View style={styles.group}>
+          <Caption tone="muted" style={styles.eyebrow}>
+            GARNISH
+          </Caption>
+          <Body>{notes.garnish}</Body>
+        </View>
+      ) : null}
+      {notes.handoff.length ? (
+        <View style={styles.group}>
+          <Caption tone="muted" style={styles.eyebrow}>
+            HAND-OFF
+          </Caption>
+          <View role="list">
+            {notes.handoff.map((step, i) => (
+              <View key={`${i}-${step}`} role="listitem" style={styles.step}>
+                <View style={[styles.dot, { backgroundColor: ds.accentText }]} aria-hidden />
+                <Body style={styles.flex}>{step}</Body>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {canEdit && barId && !preview ? (
+        <Button label={notes.garnish || notes.handoff.length ? 'Edit service notes' : 'Add garnish and hand-off notes'} variant="secondary" onPress={() => setEditing(true)} style={styles.edit} />
+      ) : null}
       {lines.length ? (
         <ServiceSpec
           lines={lines}
@@ -62,38 +97,38 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wid
         />
       ) : null}
       {setLine.error || setStyle.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
-      {shots.length ? (
-        <>
-          <Body tone="muted">How it should look when it goes out.</Body>
-          <View style={styles.grid}>
-            {shots.map((shot) => (
-              <ShotTile key={shot.angle} shot={shot} name={name} glass={glass} basis={wide ? '22%' : '40%'} onOpen={() => setOpen(shot)} />
-            ))}
-          </View>
-        </>
+      <Body tone="muted">How it should look when it goes out.</Body>
+      <View style={styles.grid}>
+        {shots.map((shot) => (
+          <ShotTile key={shot.angle} shot={shot} itemId={itemId} name={name} glass={glass} basis="22%" onOpen={() => open(shot.angle)} />
+        ))}
+      </View>
+      {!showLines && lines.length ? (
+        <View style={styles.lock}>
+          <IconSymbol name="lock.fill" size={13} color={ds.c.muted} />
+          <Caption tone="muted">The batch and station split opens at {splitOpensAt}</Caption>
+        </View>
       ) : null}
-      <PhotoViewer photo={open?.picture ? viewed(open) : null} name={name} onClose={() => setOpen(null)} />
+      {preview ? null : <TextLink label="Open the service view" onPress={() => open()} />}
+      {editing && barId ? <ServiceNotesSheet itemId={itemId} barId={barId} name={name} notes={notes} onClose={() => setEditing(false)} /> : null}
     </LockedSection>
   );
 }
 
-/** A service photo as the viewer shows it: its angle, tagged when it's out of date. */
-function viewed(shot: ServiceShot): ViewedPhoto {
+/** One angle: its photo, or the drink's sketch until there is one. Opens the service view at that angle. */
+function ShotTile({ shot, itemId, name, glass, basis, onOpen }: { shot: ServiceShot; itemId: string; name: string; glass: string | null; basis: `${number}%`; onOpen: () => void }) {
   const tag = pictureTag(shot.picture);
-  return { url: shot.picture!.url, title: shot.label, tag: tag ? { label: tag, tone: 'warning' } : null };
-}
-
-function ShotTile({ shot, name, glass, basis, onOpen }: { shot: ServiceShot; name: string; glass: string | null; basis: `${number}%`; onOpen: () => void }) {
-  const tag = pictureTag(shot.picture);
-  if (!shot.picture) return null;
   return (
-    <PressableScale
-      role="button"
-      accessibilityLabel={`${name}, ${shotCaption(shot)}. Open full screen`}
-      onPress={onOpen}
-      style={[styles.tile, { flexBasis: basis }]}
-    >
-      <DrinkImage source={shot.picture.url} generated={shot.picture.isSketch} glass={glass} accessibilityLabel={`${name}, ${shot.label}`} aspectRatio={1} radius="control" />
+    <PressableScale role="link" accessibilityLabel={`${name}, ${shotCaption(shot)}. Open the service view`} onPress={onOpen} style={[styles.tile, { flexBasis: basis }]}>
+      <DrinkImage
+        source={shot.picture?.url ?? null}
+        generated={shot.picture?.isSketch}
+        glass={glass}
+        itemId={shot.picture ? undefined : itemId}
+        accessibilityLabel={`${name}, ${shot.label}`}
+        aspectRatio={1}
+        radius="control"
+      />
       <View style={styles.caption}>
         <Caption>{shot.label}</Caption>
         {tag ? <Tag label={tag} tone="warning" /> : null}
@@ -103,7 +138,14 @@ function ShotTile({ shot, name, glass, basis, onOpen }: { shot: ServiceShot; nam
 }
 
 const styles = StyleSheet.create({
+  group: { gap: space.xs },
+  eyebrow: { letterSpacing: 1.2 },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingVertical: space.xs },
+  dot: { width: 6, height: 6, borderRadius: radius.pill, marginTop: 9 },
+  flex: { flex: 1 },
+  edit: { alignSelf: 'flex-start' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { flexGrow: 1, gap: space.xs },
   caption: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
+  lock: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

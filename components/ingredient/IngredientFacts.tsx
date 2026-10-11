@@ -1,11 +1,14 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
-import { TechnicalIngredientCard } from '@/components/techniques/TechnicalIngredientCard';
+import { Body, Button, Caption, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import type { Fact } from '@/components/screens/drink/DrinkFacts';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import type { IngredientBottle } from '@/hooks/useIngredients';
+import { useItemMaker } from '@/hooks/useMakers';
+import { usePrepRatio } from '@/hooks/usePrepCard';
 
 import { IngredientMaker } from './IngredientMaker';
 
@@ -17,15 +20,14 @@ interface Props {
     bar_id?: string | null;
     name: string;
     ingredient_role?: string | null;
-    brand_maker?: string | null;
-    abv?: number | null;
-    origin?: string | null;
     generic?: Link | null;
     madeFrom?: Link | null;
   };
   bottles: IngredientBottle[];
-  /** The page already says what it is (a house prep's tags): only the links and bottles show. */
-  hideRole?: boolean;
+  /** A house prep: the Kind of row carries its parent's ratio ("1 : 1"). */
+  isPrep?: boolean;
+  /** More rows from elsewhere (Swap for). */
+  extra?: ReactNode;
 }
 
 const FIRST = 12;
@@ -35,89 +37,82 @@ export function bottleFacts(b: { brand_maker?: string | null; abv?: number | nul
   return [b.brand_maker?.trim(), b.abv != null ? `${Number(b.abv)}%` : null, b.origin?.trim()].filter(Boolean).join(' · ');
 }
 
-const ROLE_TITLE: Record<string, string> = { product: 'Bottle', prep: 'Made in house', generic: 'Style' };
-
-/**
- * On an ingredient's page: what it is (a bottle, a house prep, a style), what
- * it's a kind of, the bottle a prep is made from, and the bottles you can buy
- * that are a kind of it; for a technical one (xanthan, agar), how to use it.
- * Nothing shows when there's nothing to say.
- */
-export function IngredientFacts(props: Props) {
-  return (
-    <>
-      <Facts {...props} />
-      <TechnicalIngredientCard name={props.ingredient.name} />
-    </>
-  );
+/** Strength, From, Maker: a bottle's fact tiles under its description (prep-ing-campari). */
+export function useBottleTiles(b: { id: string; ingredient_role?: string | null; brand_maker?: string | null; abv?: number | null; origin?: string | null }): Fact[] {
+  const { data: maker } = useItemMaker(b.ingredient_role === 'product' ? b.id : null);
+  if (b.ingredient_role !== 'product') return [];
+  return [
+    b.abv != null ? { label: 'Strength', value: `${Number(b.abv)}% ABV` } : null,
+    b.origin?.trim() ? { label: 'From', value: b.origin.trim() } : null,
+    maker?.display_name || b.brand_maker?.trim() ? { label: 'Maker', value: maker?.display_name || b.brand_maker!.trim() } : null,
+  ].filter((f): f is Fact => !!f);
 }
 
-function Facts({ ingredient, bottles, hideRole }: Props) {
+/**
+ * "Around it" on an ingredient's page: what it's a kind of (with a prep
+ * parent's ratio), what a prep is made from, who makes a bottle, what to swap
+ * it for, and the bottles you can buy that are a kind of it. Nothing shows
+ * when there's nothing to say.
+ */
+export function AroundIt({ ingredient, bottles, isPrep, extra }: Props) {
   const [all, setAll] = useState(false);
-  const role = hideRole ? null : (ingredient.ingredient_role ?? null);
-  const facts = role === 'product' ? bottleFacts(ingredient) : '';
-  if (!role && !ingredient.generic && !ingredient.madeFrom && !bottles.length) return null;
+  const { data: ratio } = usePrepRatio(isPrep ? ingredient.generic?.id : null);
+  const bottle = ingredient.ingredient_role === 'product' && !!ingredient.id;
+  if (!bottle && !ingredient.generic && !ingredient.madeFrom && !bottles.length && !extra) return null;
   const shown = all ? bottles : bottles.slice(0, FIRST);
 
   return (
-    <Surface style={styles.stack}>
-      {role ? (
-        <View style={styles.head}>
-          <Headline>{ROLE_TITLE[role]}</Headline>
-          {facts ? <Caption tone="muted">{facts}</Caption> : null}
-        </View>
-      ) : null}
-      {role === 'product' && ingredient.id ? <IngredientMaker item={{ id: ingredient.id, bar_id: ingredient.bar_id ?? null }} /> : null}
-      {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
-      {ingredient.generic ? <LinkRow lead="A kind of" item={ingredient.generic} /> : null}
+    <View style={styles.section}>
+      <Headline role="heading">Around it</Headline>
+      <View>
+        {ingredient.generic ? <LinkRow lead="Kind of" item={ingredient.generic} value={ratio ?? undefined} /> : null}
+        {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
+        {extra}
+        {bottle ? <IngredientMaker item={{ id: ingredient.id!, bar_id: ingredient.bar_id ?? null }} /> : null}
+      </View>
       {bottles.length ? (
         <View role="group" aria-label={`Bottles of ${ingredient.name}`} style={styles.list}>
           <Body>Bottles</Body>
           {shown.map((b) => (
             <LinkRow key={b.id} item={b} detail={bottleFacts(b)} />
           ))}
-          {bottles.length > FIRST ? (
-            <Button
-              label={all ? 'Show fewer' : `Show all ${bottles.length}`}
-              variant="secondary"
-              onPress={() => setAll(!all)}
-            />
-          ) : null}
+          {bottles.length > FIRST ? <Button label={all ? 'Show fewer' : `Show all ${bottles.length}`} variant="secondary" onPress={() => setAll(!all)} /> : null}
         </View>
       ) : null}
-    </Surface>
+    </View>
   );
 }
 
-function LinkRow({ lead, item, detail }: { lead?: string; item: Link; detail?: string }) {
+/** A row in Around it: a lead ("Kind of"), the name, an optional value ("1 : 1") and a chevron. */
+export function LinkRow({ lead, item, detail, value, onPress }: { lead?: string; item: Link; detail?: string; value?: string; onPress?: () => void }) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={`${lead ? `${lead} ` : ''}${item.name}, open`}
-      onPress={() => router.push(`/ingredient/${item.id}`)}
-      style={[styles.row, { borderTopColor: ds.c.line }]}
+      accessibilityLabel={`${lead ? `${lead} ` : ''}${item.name}${value ? `, ${value}` : ''}, open`}
+      onPress={onPress ?? (() => router.push(`/ingredient/${item.id}`))}
+      style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      {lead ? <Caption tone="muted">{lead}</Caption> : null}
-      <Body numberOfLines={1} style={styles.rowName}>
-        {item.name}
-      </Body>
-      {detail ? <Caption tone="muted">{detail}</Caption> : null}
+      {lead ? (
+        <Caption tone="muted" style={styles.lead}>
+          {lead}
+        </Caption>
+      ) : null}
+      <View style={styles.rowName}>
+        <Body numberOfLines={1}>{item.name}</Body>
+        {detail ? <Caption tone="muted">{detail}</Caption> : null}
+      </View>
+      {value ? <Spec>{value}</Spec> : null}
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: space.md },
-  head: { gap: space.xs },
+  section: { gap: space.sm },
   list: { gap: space.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    minHeight: layout.minTapTarget,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  lead: { minWidth: 72 },
   rowName: { flex: 1 },
 });

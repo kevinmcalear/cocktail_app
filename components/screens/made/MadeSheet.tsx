@@ -8,7 +8,9 @@ import { useLogMade } from '@/hooks/useMade';
 import { useAddRankEntry, useMyRankList, useRankTarget, useRecordComparisons } from '@/hooks/useRankings';
 import { parseDay, toDay } from '@/lib/collection';
 import { cleanSwaps, placeBeside, SWAP_LIMIT, SWAP_NAME_LIMIT, type Compared, type Swap } from '@/lib/madeIt';
-import { formatScore, rankedAs as rankedAsOf } from '@/lib/ranking';
+import { formatScore, rankedAs as rankedAsOf, rankScore } from '@/lib/ranking';
+import { useShelfCheck } from '@/hooks/useShelfCheck';
+import type { SpecLine } from '@/lib/spec';
 
 const NOTE_LIMIT = 1000;
 const COMPARE: { value: Compared; label: string }[] = [
@@ -21,6 +23,10 @@ interface MadeSheetProps {
   item: { id: string; name: string };
   /** The spec's ingredient names, to say what you swapped. */
   ingredients: string[];
+  /** The spec, to fill in what you changed from your shelf. */
+  lines?: SpecLine[];
+  /** The bar it's from: "Your version of Little Rye's". */
+  barName?: string | null;
   onClose: () => void;
 }
 
@@ -31,7 +37,7 @@ interface MadeSheetProps {
  * score your profile shows if you share rankings. Then what you swapped,
  * when, and a note. Open it after the age check.
  */
-export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
+export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: MadeSheetProps) {
   const { data: target } = useRankTarget(item.id);
   const rankedAs = target ? rankedAsOf(target) : null;
   const { data: list } = useMyRankList(rankedAs?.id);
@@ -47,15 +53,26 @@ export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
   });
   const [date, setDate] = useState(today);
   const [compared, setCompared] = useState<Compared | null>(null);
-  const [swaps, setSwaps] = useState<Swap[]>([]);
+  // What you changed starts from your shelf: the bottle you didn't have, and the one closest to it.
+  const shelf = useShelfCheck(item.id, lines);
+  const fromShelf: Swap[] = shelf.missingName && shelf.closest ? [{ from: shelf.missingName, to: shelf.closest }] : [];
+  const [edited, setSwaps] = useState<Swap[] | null>(null);
+  const swaps = edited ?? fromShelf;
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const saving = addEntry.isPending || record.isPending || log.isPending;
   const names = [...new Set(ingredients.filter(Boolean))];
 
   const toggleSwap = (from: string) =>
-    setSwaps((s) => (s.some((x) => x.from === from) ? s.filter((x) => x.from !== from) : s.length < SWAP_LIMIT ? [...s, { from, to: '' }] : s));
-  const setTo = (from: string, to: string) => setSwaps((s) => s.map((x) => (x.from === from ? { ...x, to: to.slice(0, SWAP_NAME_LIMIT) } : x)));
+    setSwaps(swaps.some((x) => x.from === from) ? swaps.filter((x) => x.from !== from) : swaps.length < SWAP_LIMIT ? [...swaps, { from, to: '' }] : swaps);
+  const setTo = (from: string, to: string) => setSwaps(swaps.map((x) => (x.from === from ? { ...x, to: to.slice(0, SWAP_NAME_LIMIT) } : x)));
+  // Where yours lands, the way ranking works, before you save it.
+  const preview = (() => {
+    if (!barEntry || !compared || !list) return null;
+    const band = list.filter((e) => e.sentiment === barEntry.sentiment && e.id !== homeEntry?.id);
+    const { index } = placeBeside(band.map((e) => e.rank_key), band.indexOf(barEntry), compared);
+    return rankScore(barEntry.sentiment, index, band.length + 1);
+  })();
 
   const submit = async () => {
     const madeOn = parseDay(date);
@@ -97,7 +114,7 @@ export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
       visible
       onClose={onClose}
       title={item.name}
-      subtitle="You made it"
+      subtitle={(barName ?? barEntry?.venue?.display_name) ? `Your version of ${barName ?? barEntry?.venue?.display_name}'s` : 'Your version'}
       footer={<Button label={saving ? 'Saving…' : 'Save'} size="lg" onPress={submit} disabled={saving} />}
     >
       {barEntry ? (
@@ -108,12 +125,13 @@ export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
               <Choice key={c.value} label={c.label} selected={compared === c.value} onPress={() => setCompared(compared === c.value ? null : c.value)} />
             ))}
           </View>
+          {preview !== null ? <Body>{`We place it among your drinks, the way ranking works: ${formatScore(preview)} for now.`}</Body> : null}
         </>
       ) : null}
       {names.length ? (
         <>
-          <Caption tone="muted">What you swapped</Caption>
-          <View role="group" accessibilityLabel="What you swapped" style={styles.wrap}>
+          <Caption tone="muted">What you changed</Caption>
+          <View role="group" accessibilityLabel="What you changed" style={styles.wrap}>
             {names.map((n) => (
               <Choice key={n} kind="checkbox" label={n} selected={swaps.some((s) => s.from === n)} onPress={() => toggleSwap(n)} />
             ))}
@@ -121,6 +139,7 @@ export function MadeSheet({ item, ingredients, onClose }: MadeSheetProps) {
           {swaps.map((s) => (
             <Field key={s.from} label={`Instead of ${s.from}`} value={s.to} onChangeText={(t) => setTo(s.from, t)} placeholder="What you used" />
           ))}
+          {!edited && fromShelf.length ? <Caption tone="muted">{`Filled in from your shelf: you didn't have ${fromShelf[0].from}.`}</Caption> : null}
         </>
       ) : null}
       <Caption tone="muted">When</Caption>

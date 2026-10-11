@@ -35,17 +35,34 @@ export interface ServiceShot {
 
 const rank = (link: ItemImageLink) => (link.is_generated ? 2 : link.outdated_since ? 1 : 0);
 
+/** One angle's best picture: a current photo, then an outdated one, then a sketch. */
+function shotFor<A extends ImageAngle>(usable: ItemImageLink[], angle: A, label: string, brief: string, mine: (link: ItemImageLink) => boolean) {
+  const links = usable.filter(mine);
+  const best = [...links].sort((a, b) => rank(a) - rank(b) || Number(b.sort_order ?? 0) - Number(a.sort_order ?? 0))[0];
+  const picture: ItemPicture | null = best ? toPicture(best) : null;
+  const status: ShotStatus = !picture ? 'missing' : picture.isSketch ? 'sketch' : picture.isOutdated ? 'outdated' : 'photo';
+  const photoLinkIds = links.filter((link) => !link.is_generated && link.id).map((link) => link.id!);
+  return { angle, label, brief, picture, status, photoLinkIds };
+}
+
 /** One shot per service angle, each with its best picture: a current photo, then an outdated one, then a sketch. */
 export function serviceShots(links: ItemImageLink[] | null | undefined): ServiceShot[] {
   const usable = (links ?? []).filter((link) => !!link.images?.url);
-  return SERVICE_ANGLES.map(({ angle, label, brief }) => {
-    const mine = usable.filter((link) => link.angle === angle);
-    const best = [...mine].sort((a, b) => rank(a) - rank(b) || Number(b.sort_order ?? 0) - Number(a.sort_order ?? 0))[0];
-    const picture: ItemPicture | null = best ? toPicture(best) : null;
-    const status: ShotStatus = !picture ? 'missing' : picture.isSketch ? 'sketch' : picture.isOutdated ? 'outdated' : 'photo';
-    const photoLinkIds = mine.filter((link) => !link.is_generated && link.id).map((link) => link.id!);
-    return { angle, label, brief, picture, status, photoLinkIds };
-  });
+  return SERVICE_ANGLES.map(({ angle, label, brief }) => shotFor(usable, angle, label, brief, (link) => link.angle === angle));
+}
+
+/** A drink's whole shot list: the hero (a link with no angle is a hero, as before angles) and the four service angles. */
+export type PhotoShot = Omit<ServiceShot, 'angle'> & { angle: ImageAngle };
+
+export function photoShots(links: ItemImageLink[] | null | undefined): PhotoShot[] {
+  const usable = (links ?? []).filter((link) => !!link.images?.url);
+  const hero = shotFor(usable, 'hero', 'Hero', 'The drink on its own, for its page', (link) => !link.angle || link.angle === 'hero');
+  return [hero, ...serviceShots(links)];
+}
+
+/** "2 of 5": the angles with a real photo, current or not. */
+export function photosTaken(shots: Pick<PhotoShot, 'status'>[]): number {
+  return shots.filter((s) => s.status === 'photo' || s.status === 'outdated').length;
 }
 
 /** The angles still to photograph: missing, sketched or out of date. */
