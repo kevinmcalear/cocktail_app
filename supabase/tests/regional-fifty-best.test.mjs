@@ -45,7 +45,7 @@ describe("Asia's, North America's and Europe's 50 Best Bars 2026", () => {
   test('signed out, anyone sees a new bar and its place', async () => {
     const { data, error } = await anon
       .from('profiles')
-      .select('display_name, profile_awards(award, year, position)')
+      .select('display_name, profile_awards!profile_awards_profile_id_fkey(award, year, position)')
       .eq('handle', 'barkumiko')
       .single();
     assert.ifError(error);
