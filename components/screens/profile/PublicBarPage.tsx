@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, useBreakpoint } from '@/components/ds';
+import { Body, Button, Caption, Headline, useBreakpoint } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -116,7 +116,17 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
 function StaffClassics({ barId, barName }: { barId: string | null; barName: string }) {
   const { data = [] } = usePublicClassics(barId);
   const drinks = data.filter((c) => c.openId).map((c) => ({ id: c.openId!, name: c.name }));
-  return <ClassicsTheyPour drinks={drinks} barName={barName} />;
+  if (drinks.length) return <ClassicsTheyPour drinks={drinks} barName={barName} />;
+  if (!data.length) return null;
+  // None of them has its own page yet: their names, in the bar's order, on one line.
+  const names = data.slice(0, 4).map((c) => c.name);
+  const rest = data.length - names.length;
+  return (
+    <View style={styles.section}>
+      <Kicker>Classics they pour</Kicker>
+      <Body tone="muted">{rest > 0 ? `${names.join(', ')} and ${rest} more` : names.join(', ')}</Body>
+    </View>
+  );
 }
 
 /** Love (asks to sign in), Share and Instagram, under the bar's name; report and block at the end. */
