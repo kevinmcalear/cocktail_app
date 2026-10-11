@@ -41,7 +41,9 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
     ),
 }));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
-jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersionLabels: () => ({}) }));
+jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersionLabels: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
+jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
+jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -120,20 +122,15 @@ beforeEach(() => {
   mockMartinis = new Set();
 });
 
-test('a drinks pin lists those cocktails in the card', async () => {
+test("a drinks pin's card says how many drinks are there, beside its actions (g048)", async () => {
   const drinks = [drink('d1', 'House Martini'), drink('d2', 'Bamboo'), drink('d3', 'Vesper'), drink('d4', 'Martini No. 4')];
   await renderPane(drinks);
-
-  expect(screen.queryByText('House Martini')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
-  expect(screen.getByText('House Martini')).toBeTruthy();
-  expect(screen.getByText('Bamboo')).toBeTruthy();
-  expect(screen.getByText('Vesper')).toBeTruthy();
-  expect(screen.queryByText('Martini No. 4')).toBeNull();
-
-  await fireEvent.press(screen.getByRole('button', { name: 'Show all 4' }));
-  expect(screen.getByText('Martini No. 4')).toBeTruthy();
+  expect(screen.getByText('4 drinks here')).toBeTruthy();
+  expect(screen.queryByText('House Martini')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Open bar' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
 });
 
 test('on phones a tapped bar opens the sheet on it, not a card over the map', async () => {
@@ -148,8 +145,10 @@ test('on phones a tapped bar opens the sheet on it, not a card over the map', as
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
 
+  // The bar's rows don't repeat the bar (disc-map-bar).
+  expect(screen.queryByText(/Caretaker's Cottage ·/)).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'All results' }));
-  expect(screen.getByRole('button', { name: 'Show the list' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Show the list$/ })).toBeTruthy();
 });
 
 test('searching, pins name the best match and a tapped bar leads with the drink, then the bar', async () => {
@@ -167,14 +166,19 @@ test('searching, pins name the best match and a tapped bar leads with the drink,
   expect(screen.queryByRole('radio', { name: 'Top bars' })).toBeNull();
   // The weaker match sits under its own heading, saying why.
   expect(screen.getByText('Also mentions “martini”')).toBeTruthy();
-  expect(screen.getByText('Has Martini Rosso')).toBeTruthy();
+  expect(screen.getByText(/Has Martini Rosso/)).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
   expect(screen.getByRole('heading', { name: 'Dirty Martini' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
+  // The matches page one at a time, the next peeking (disc-search-pin); then the bar, as a link.
+  expect(screen.getByText("1 of 3 at Caretaker's Cottage")).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'All 3' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: Gibson, Riff on a Martini' }));
+  expect(screen.getByRole('heading', { name: 'Gibson' })).toBeTruthy();
+  expect(screen.getByText("2 of 3 at Caretaker's Cottage")).toBeTruthy();
   expect(screen.getByText('At')).toBeTruthy();
-  expect(screen.getByText('More here for “martini”')).toBeTruthy();
-  expect(screen.getByText('Riff on a Martini')).toBeTruthy();
+  expect(screen.getByRole('link', { name: /Open the bar$/ })).toBeTruthy();
 });
 
 test('on wide screens the card leads with the matching drink too', async () => {
@@ -183,7 +187,7 @@ test('on wide screens the card leads with the matching drink too', async () => {
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
   expect(screen.getByRole('heading', { name: 'Dirty Martini' })).toBeTruthy();
   expect(screen.getByText('Bamboo')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Open bar' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: /Open the bar$/ })).toBeTruthy();
 });
 
 test("the card shows the bar's top drinks once they have scores", async () => {
@@ -218,10 +222,9 @@ test('Best Martini lists every martini at the bar, scores beside the scored ones
   await fireEvent.press(screen.getByRole('radio', { name: 'Best Martini' }));
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
-  // The bar's score is its best martini's, with no "ranked by" line; the scored martini leads.
-  expect(screen.getAllByText('9.2')).toHaveLength(2);
-  expect(screen.getByRole('button', { name: 'Gibson. score 9.2. Gibson note, open' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'House Martini. House Martini note, open' })).toBeTruthy();
+  // The bar's score is its best martini's, with no "ranked by" line; the card counts its martinis.
+  expect(screen.getAllByText('9.2')).toHaveLength(1);
+  expect(screen.getByText('2 drinks here')).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
   expect(screen.queryByText('Not ranked yet')).toBeNull();
 });
@@ -247,9 +250,8 @@ test('on wide screens a tapped pin goes to the list, not a card over the map', a
   const onPick = jest.fn();
   const onLayer = jest.fn();
   await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], { id: 'martini', name: 'Martini' }, 'side', 'martini', { pick: { id: null, onPick, onLayer } });
-  await fireEvent.press(screen.getByRole('radio', { name: 'Top rated' }));
-  expect(onLayer).toHaveBeenLastCalledWith('best');
-  await fireEvent.press(screen.getByRole('radio', { name: 'Best match' }));
+  // Searching, the sort chips sit in the list pane (DeskSearchResults), not over the map.
+  expect(screen.queryByRole('radio', { name: 'Top rated' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
   expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ id: bar.id }));
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
@@ -270,9 +272,8 @@ test("the wide list's tapped bar shows Top rated scores, as the map does", async
   mockDrinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
   const pin = { id: bar.id, handle: bar.handle, name: bar.name, logo: null, place: 'Melbourne', latitude: bar.latitude!, longitude: bar.longitude!, score: null, position: null, rankers: 0 };
   await renderWithTamagui(<PickedBar pin={pin} filter={{ kinds: [], search: '', area }} best={{ id: 'martini', name: 'Martini' }} onClose={() => {}} />);
-  // The scored martini leads; the bar's other drinks aren't martinis.
-  const rows = screen.getAllByRole('button', { name: /, open$/ }).map((b) => b.props.accessibilityLabel);
-  expect(rows).toEqual(['Gibson. score 9.2. Gibson note, open', 'House Martini. House Martini note, open']);
+  // Its martinis are counted (the bar's other drinks aren't martinis); the rows stay in the list.
+  expect(screen.getByText('2 drinks here')).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
 });
 

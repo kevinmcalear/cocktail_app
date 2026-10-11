@@ -141,3 +141,16 @@ export function parseHours(value: unknown): WeekHours | null {
   }
   return out;
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Where the hours come from, under them: "From the bar · updated 3 Oct" when
+ * the bar keeps its own page, else "Hours checked 3 Oct · may have changed".
+ */
+export function hoursSource(isClaimed: boolean, updatedAt: string | null | undefined, now: Date = new Date()): string {
+  const d = updatedAt ? new Date(updatedAt) : null;
+  const when = d && !Number.isNaN(d.getTime()) ? `${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : ''}` : null;
+  if (isClaimed) return when ? `From the bar · updated ${when}` : 'From the bar';
+  return when ? `Hours checked ${when} · may have changed` : 'These hours may have changed';
+}
