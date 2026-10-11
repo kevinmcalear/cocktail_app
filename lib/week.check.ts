@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byDay, cleanTicketUrl, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
+import { byDay, cleanTicketUrl, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, weekLine, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
 
 const local = (y: number, m: number, d: number, h = 0, min = 0) => new Date(y, m - 1, d, h, min).getTime();
 const item = (over: Partial<WeekItem>): WeekItem => ({
@@ -115,3 +115,10 @@ assert.equal(directionsUrl(place, true), 'https://maps.apple.com/?q=Little%20Rye
 assert.equal(directionsUrl({ ...place, address_line: null, postcode: null, city: null }, false), 'https://www.google.com/maps/search/?api=1&query=51.5,-0.07');
 assert.equal(directionsUrl({ ...place, address_line: null, postcode: null, city: null, latitude: null, longitude: null }, false), null);
 assert.equal(directionsUrl(null, false), null);
+
+// --- The venue menu's This week line ---
+assert.equal(
+  weekLine([item({ eventKind: 'tasting', isPublic: false, startsAt: new Date(local(2026, 10, 13, 16)).toISOString() }), item({ startsAt: new Date(local(2026, 10, 10, 19)).toISOString() })], from, 'en-GB'),
+  'Takeover tonight · staff tasting Tue',
+);
+assert.equal(weekLine([], from), 'Nothing on yet');

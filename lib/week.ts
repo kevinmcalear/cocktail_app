@@ -222,6 +222,19 @@ export function timeLine(item: Pick<WeekItem, 'kind' | 'startsAt' | 'endsAt'>, l
   return item.endsAt ? `${fmt(item.startsAt)} to ${fmt(item.endsAt)}` : `${fmt(item.startsAt)} to late`;
 }
 
+/** The venue menu's line under This week: "Staff tasting Tue · takeover Sat". */
+export function weekLine(items: WeekItem[], from: Date, locale?: string): string {
+  const next = upcoming(items, from).slice(0, 2);
+  if (!next.length) return 'Nothing on yet';
+  const line = next
+    .map((i) => {
+      const day = shortDay(itemDay(i), from, locale);
+      return `${kindLabel(i).replace(', team only', '').toLowerCase()} ${day === 'Tonight' ? 'tonight' : day}`;
+    })
+    .join(' · ');
+  return line[0].toUpperCase() + line.slice(1);
+}
+
 /** "Eventbrite" from https://www.eventbrite.com/e/...: the site a ticket link goes to. */
 export function ticketHost(url: string | null): string | null {
   if (!url) return null;
