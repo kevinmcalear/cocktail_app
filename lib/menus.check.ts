@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
+import { dotLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -130,3 +130,12 @@ console.log('menus: ok');
 // --- a cocktail's menu line: spec order, each ingredient once ---
 assert.equal(ingredientLine(['Fernet-Branca', 'Heavy Cream', 'Coffee Liqueur', 'heavy cream ', null, '']), 'Fernet-Branca, Heavy Cream, Coffee Liqueur');
 assert.equal(ingredientLine([]), '');
+
+{
+  assert.deepEqual([...newDrinkIds(['a', 'b', 'c'], [{ itemIds: ['b'] }, { itemIds: ['c'] }])], ['a']);
+  const thu = new Date(2025, 8, 25, 19);
+  assert.equal(tonightLine(thu, [{ name: 'Autumn menu' }], 8, 'en-GB'), `${thu.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} · Autumn menu · 8 drinks`);
+  assert.equal(tonightLine(thu, [{ name: 'A' }, { name: 'B' }], 12, 'en-GB').endsWith(' · 2 menus on · 12 drinks'), true);
+  assert.equal(tonightLine(thu, [], 0, 'en-GB').includes('·'), false);
+  assert.equal(dotLine('Gin, dry vermouth, orange bitters'), 'Gin · dry vermouth · orange bitters');
+}

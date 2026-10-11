@@ -58,11 +58,14 @@ function shortDay(iso: string, locale?: string): string {
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-/** "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a draft or a home menu (its night is homeMenuLine). */
-export function menuDateLine(menu: Dated, now: number, locale?: string): string | null {
+/**
+ * "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a
+ * draft or a home menu (its night is homeMenuLine). `short`: "since 1 Sep".
+ */
+export function menuDateLine(menu: Dated, now: number, locale?: string, short = false): string | null {
   if (!menu.startsAt && !menu.endsAt) return null;
   const status = menuStatus(menu, now);
-  if (status === 'on') return `since ${day(menu.startsAt!, locale)}`;
+  if (status === 'on') return `since ${(short ? shortDay : day)(menu.startsAt!, locale)}`;
   if (status === 'upcoming') return `starts ${day(menu.startsAt!, locale)}`;
   if (status === 'previous') {
     return menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt!, locale)}` : `off since ${shortDay(menu.endsAt!, locale)}`;
@@ -158,10 +161,26 @@ export function menuReadiness(menu: { sections: Pick<MenuSectionDetail, 'name' |
   return { short, over, needsPhoto, noPrice, canGoLive: hasDrinks && short.length === 0 && over.length === 0 };
 }
 
-/** Drinks on this menu that weren't on any of the others: new for the team to learn. */
-export function newDrinkCount(itemIds: string[], others: { itemIds: string[] }[]): number {
+/** Drinks on this menu that weren't on any of the others: new for the team to learn (the NEW marker). */
+export function newDrinkIds(itemIds: string[], others: { itemIds: string[] }[]): Set<string> {
   const known = new Set(others.flatMap((m) => m.itemIds));
-  return new Set(itemIds.filter((id) => !known.has(id))).size;
+  return new Set(itemIds.filter((id) => !known.has(id)));
+}
+
+export function newDrinkCount(itemIds: string[], others: { itemIds: string[] }[]): number {
+  return newDrinkIds(itemIds, others).size;
+}
+
+/** Tonight's line: "Thu 25 Sep · Autumn menu · 8 drinks", or "Thu 25 Sep · 2 menus on · 12 drinks". */
+export function tonightLine(date: Date, menus: { name: string }[], drinks: number, locale?: string): string {
+  const day = date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+  if (!menus.length) return day;
+  return [day, menus.length === 1 ? menus[0].name : `${menus.length} menus on`, plural(drinks, 'drink')].join(' · ');
+}
+
+/** "Gin · dry vermouth · orange bitters": a menu line as Tonight's rows read it. */
+export function dotLine(line: string): string {
+  return line.split(/,\s*/).filter(Boolean).join(' · ');
 }
 
 /** "Cocktails · 3 to 5", "Beer · up to 3", "Any drink". */

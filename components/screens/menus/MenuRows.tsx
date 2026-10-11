@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
@@ -38,6 +38,34 @@ export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
         </View>
         {on ? <Tag label="On now" tone="success" /> : null}
       </View>
+    </PressableScale>
+  );
+}
+
+/** Tonight's card for a menu that's on: a small cover, its name, "On now · 8 drinks · since 1 Sep", and a chevron. */
+export function MenuOnRow({ menu, now }: { menu: MenuSummary; now: number }) {
+  const ds = useDs();
+  const router = useRouter();
+  const meta = ['On now', plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now, undefined, true)].filter(Boolean).join(' · ');
+  return (
+    <PressableScale
+      role="link"
+      accessibilityLabel={`${menu.name}, ${meta}`}
+      onPress={() => router.push(menuHref(menu.id))}
+      style={[styles.row, styles.onRow, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
+    >
+      <View style={styles.thumb} aria-hidden>
+        <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={48} />
+      </View>
+      <View style={styles.flex}>
+        <Headline numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+          {menu.name}
+        </Headline>
+        <Caption tone="muted" numberOfLines={1}>
+          {meta}
+        </Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }
@@ -100,5 +128,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderCurve: 'continuous',
   },
+  onRow: { paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderWidth: StyleSheet.hairlineWidth },
+  thumb: { width: 48, height: 48, borderRadius: radius.control, overflow: 'hidden' },
   date: { width: 52, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
 });
