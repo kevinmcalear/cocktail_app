@@ -1,6 +1,6 @@
 # Design system: Back Bar
 
-The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf). When the brief and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
+The written rules behind the Back Bar look. What each screen should be is drawn on the source of truth canvas, "Cocktail: the whole app" (https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe); the original Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is background. When the canvas and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
 
 ## Principles
 
@@ -67,7 +67,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 ## Images
 
 - Every drink has a hero plus four service angles: side, top, garnish, hand-off.
-- Missing images are drawn automatically in the house pencil-sketch style and carry a visible **Sketch** tag everywhere, including the public app. Real photos replace sketches; sketches never replace photos. When a spec changes, photos are flagged "may be out of date" rather than swapped. A drawn sketch uses the drink's own glass: martini, coupe, Nick and Nora, rocks and highball each have a few drawings (`lib/sketch/geometry.ts` GLASS_VARIANTS, side by side in the gallery). A drink takes its bar's glassware (`bar_glassware`) unless its editor picks one.
+- Missing images are drawn automatically in the house pencil-sketch style. They carry no "Sketch" tag (decided 10 Oct 2026: a drawing is obviously a drawing, and on phones the tag read as an edit button). Real photos replace sketches; sketches never replace photos. When a spec changes, photos are flagged "may be out of date" rather than swapped. A drawn sketch uses the drink's own glass: martini, coupe, Nick and Nora, rocks and highball each have a few drawings (`lib/sketch/geometry.ts` GLASS_VARIANTS, side by side in the gallery). A drink takes its bar's glassware (`bar_glassware`) unless its editor picks one.
 - No drink ever falls back to another drink's photo.
 - Photos are lifted from their background and set on a field of the drink's own colour, so different phones look like one shoot.
 
@@ -79,7 +79,7 @@ The written rules behind the Back Bar brief (https://claude.ai/artifact/1ksBAgPL
 | 768 to 1199 | Icon rail | Two panes. Service mode can fill the screen on a station iPad. |
 | 1200 and up | Branded sidebar with ⌘K search | Content plus an inspector (photos, locations, "view as") |
 
-**Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Use `MenuSheet`; a sheet built by hand takes its placement from `components/ds/sheetFrame.ts` (`npm run test:unit` fails without it).
+**Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Every sheet is the one `Sheet` (`components/ds/Sheet.tsx`), or `MenuSheet` for a titled one: a plain dark backdrop fades in on its own (about 200 ms, easing out) and never moves with the sheet, which springs up on the glide spring with a grabber and a 36 radius top; drag the grabber or header down to close it; Reduce Motion fades it instead. Its X and Cancel buttons close it with `useSheetClose()`, so it slides away first. Don't hand-build a sheet on a `Modal` (`npm run test:unit` fails on one).
 
 Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
 

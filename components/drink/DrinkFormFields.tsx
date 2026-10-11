@@ -1,10 +1,9 @@
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useRef, useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Input, Label, Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
-import { CategoryPickerModal } from '@/components/CategoryPickerModal';
+import { CategoryPickerModal, type CategoryPickerHandle } from '@/components/CategoryPickerModal';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import type { DrinkKindConfig } from '@/lib/drinkKinds';
 import { capitalize, handleCapitalizedChange } from '@/lib/stringUtils';
@@ -75,7 +74,7 @@ const inputProps = {
 /** The fields below the photos on the add and edit screens, plus the tag picker. */
 export function DrinkFormFields({ kind, form }: { kind: DrinkKindConfig; form: DrinkFormState }) {
   const { data: dropdowns } = useDropdowns();
-  const categoryPickerRef = useRef<BottomSheetModal>(null);
+  const categoryPickerRef = useRef<CategoryPickerHandle>(null);
   const { selectedCategories, setSelectedCategories } = form;
 
   return (

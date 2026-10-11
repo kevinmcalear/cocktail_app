@@ -4,6 +4,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Headline, Surface, Title, useDs, useGutter } from '@/components/ds';
+import { Crumbs, usePageFrame } from '@/components/nav/PageFrame';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -75,6 +76,7 @@ function PublishingPage({ barId }: { barId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const frame = usePageFrame('text');
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const { data: caps = [] } = useCapabilities(barId);
   const { data, isLoading, error } = useBarPublishing(barId);
@@ -90,8 +92,12 @@ function PublishingPage({ barId }: { barId: string }) {
       <WebHead>
         <title>Publishing</title>
       </WebHead>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
-        <View style={styles.readable}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: frame.wide ? frame.top : insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
+      >
+        <View style={[frame.column, styles.readable]}>
+          {/* Wide web: the trail back instead of a Back button (the sidebar is there). */}
+          {frame.wide ? <Crumbs trail={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]} /> : null}
           <Title>Publishing</Title>
           <Body tone="muted">
             Who outside {venue?.name ?? 'the venue'} can see its drinks. Set a default for the bar, open or close whole menus, and override single drinks
@@ -189,20 +195,22 @@ function PublishingPage({ barId }: { barId: string }) {
           ) : null}
         </View>
       </ScrollView>
-      <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
-        <GlassButton
-          accessibilityLabel="Back"
-          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/settings'))}
-        />
-      </View>
+      {frame.wide ? null : (
+        <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
+          <GlassButton
+            accessibilityLabel="Back"
+            icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/settings'))}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  readable: { width: '100%', maxWidth: 720, alignSelf: 'center', gap: space.lg },
+  readable: { gap: space.lg },
   controls: { position: 'absolute' },
   card: { gap: space.md },
   ig: { gap: space.sm },

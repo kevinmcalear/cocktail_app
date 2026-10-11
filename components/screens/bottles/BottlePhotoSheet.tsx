@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, sheetAnimation, sheetFrame, sheetIsDialog, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, sheetFrame, sheetIsDialog, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { pickBottlePhoto, takeBottlePhoto, type BottlePhoto, type BottleReading } from '@/lib/readBottle';
 
@@ -57,7 +57,7 @@ export function BottlePhotoSheet({ visible, target, onClose, readings }: BottleP
 
   // A page sheet on phones; on the web a dialog over a scrim (components/ds/sheetFrame).
   return (
-    <Modal visible={visible} transparent={sheetIsDialog} animationType={sheetAnimation} presentationStyle={sheetIsDialog ? undefined : 'pageSheet'} onRequestClose={close}>
+    <Modal visible={visible} transparent={sheetIsDialog} animationType={sheetIsDialog ? 'fade' : 'slide'} presentationStyle={sheetIsDialog ? undefined : 'pageSheet'} onRequestClose={close}>
       <View style={[styles.screen, sheetFrame.scrim, sheetIsDialog && { backgroundColor: ds.c.scrim }]}>
         {sheetIsDialog ? <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} /> : null}
         <View role="dialog" aria-modal aria-label="Snap a bottle" style={[styles.sheet, sheetFrame.panel, sheetIsDialog && styles.dialog, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
