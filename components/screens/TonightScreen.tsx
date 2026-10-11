@@ -6,6 +6,7 @@ import { Body, Button, Caption, DsText, GlassButton, Headline, useDs } from '@/c
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { MenuOnRow } from '@/components/screens/menus/MenuRows';
 import { MenuSections } from '@/components/screens/menus/MenuSections';
+import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { displayFaces, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -66,7 +67,8 @@ export function TonightScreen() {
               subtitle={date ? tonightLine(date, menus, drinks.length) : '\u00a0'}
               action={active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
             />
-            {/* The This week strip goes here (PR #491), above the menus that are on. */}
+            {/* The This week strip (and a takeover card when one is on), then the menus that are on. */}
+            {active ? <TonightWeek barId={active.id} /> : null}
             {menus.map((m) => (
               <MenuOnRow key={m.id} menu={m} now={now} />
             ))}
