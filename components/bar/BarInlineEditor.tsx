@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { VenueBasics } from '@/components/bar/VenueBasics';
+import { VenueHoursEditor } from '@/components/bar/VenueHoursEditor';
 import { VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
 import { RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
@@ -95,6 +96,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
             )}
 
             <VenueBasics editor={editor} barId={barId} />
+            <VenueHoursEditor barId={barId} canEdit={editor.canEdit} />
             {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
 
             <SettingsSection title="Who sees what" note="The lowest role that sees each part of a drink, unless the drink sets its own. Only your team: the public is under Publishing.">
