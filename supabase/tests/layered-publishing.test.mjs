@@ -150,12 +150,15 @@ describe('layered publishing', () => {
     assert.equal(await published(anon, 'hiddenDrink'), null);
   });
 
-  test('down to the ingredient: the secret syrup is named in the spec, but its own recipe stays private', async () => {
+  test('down to the ingredient: the secret syrup keeps its line but not its name or recipe', async () => {
     const rows = await specRows(anon, 'openDrink');
     assert.ok(rows.some((r) => r.display_ingredient_id === ids.items.secretSyrup));
-    assert.equal((await published(anon, 'secretSyrup'))?.is_reference, true);
+    // Unnamed on the spec ("House ingredient"): no published_items row
+    // (20261012700000_public_spec_ingredient_names.sql).
+    assert.equal(await published(anon, 'secretSyrup'), null);
     assert.deepEqual(await specRows(anon, 'secretSyrup'), []);
-    // The house syrup follows the bar's default, so its recipe is public.
+    // The house syrup follows the bar's default, so it is named and its recipe is public.
+    assert.equal((await published(anon, 'houseSyrup'))?.is_reference, false);
     assert.equal((await specRows(anon, 'houseSyrup')).length, 1);
   });
 
