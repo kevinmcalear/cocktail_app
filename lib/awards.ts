@@ -6,6 +6,16 @@ export interface Award {
   position: number | null;
   title: string | null;
   source_url: string | null;
+  /** 'pending' while a moderator checks one a person sent ("Not confirmed yet"); others only ever read confirmed ones. */
+  status?: 'confirmed' | 'pending' | 'declined';
+  /** "Finalist" rather than a win. */
+  is_finalist?: boolean;
+  /** The person's show/hide pick, or null to follow their awards mode. */
+  on_profile?: boolean | null;
+  /** Who sent it; null for one we researched. */
+  added_by?: string | null;
+  /** The bar they were at: "at Little Rye". */
+  bar?: { id: string; handle: string; display_name: string } | null;
 }
 
 /**

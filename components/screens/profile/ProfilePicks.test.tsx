@@ -38,7 +38,7 @@ beforeEach(() => {
   mockHadPicks = {};
   mockProfile = {
     id: 'p1', handle: 'jo', displayName: 'Jo', bio: null, instagram: null, isPublic: true, isModerated: false,
-    sharing: { had: 'picked', bars: 'all', originals: 'all' }, showsDates: false, tagline: null, headlinePositionId: null, showsPhoto: true,
+    sharing: { had: 'picked', bars: 'all', originals: 'all' }, showsDates: false, tagline: null, headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null,
   };
 });
 
