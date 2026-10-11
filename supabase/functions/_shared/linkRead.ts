@@ -144,7 +144,7 @@ export interface LinkDeps {
   resolve: (host: string) => Promise<string[]>;
 }
 
-async function readCapped(res: Response): Promise<Uint8Array> {
+export async function readCapped(res: Response): Promise<Uint8Array> {
   const declared = Number(res.headers.get("content-length") ?? 0);
   if (declared > MAX_LINK_BYTES) throw new LinkError("That page is too big to read.");
   const reader = res.body?.getReader();
@@ -170,14 +170,11 @@ async function readCapped(res: Response): Promise<Uint8Array> {
   return out;
 }
 
-export interface FetchOptions {
-  /** The body as it came (CSV, JSON, a page's HTML), not the page's readable text. Share links use this. */
-  plain?: boolean;
-  headers?: Record<string, string>;
-}
-
-/** Fetches the link, checking every hop, and returns its text (web page) or the file it is (photo, PDF). */
-export async function fetchLink(raw: string, deps: LinkDeps, options: FetchOptions = {}): Promise<LinkContent> {
+/**
+ * Opens a link, checking every hop's address, and hands back the final answer
+ * (2xx) with its content type. Callers read the body with readCapped.
+ */
+export async function openLink(raw: string, deps: LinkDeps, accept: string, failHint = "", headers: Record<string, string> = {}): Promise<{ res: Response; type: string }> {
   let url = checkLinkUrl(raw);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const addresses = await deps.resolve(url.hostname);
@@ -188,12 +185,12 @@ export async function fetchLink(raw: string, deps: LinkDeps, options: FetchOptio
       res = await deps.fetch(url.toString(), {
         redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; CocktailBringIn/1.0)", Accept: "text/html,application/xhtml+xml,text/plain,image/*,application/pdf;q=0.9,*/*;q=0.1", ...options.headers },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CocktailBringIn/1.0)", Accept: accept, ...headers },
       });
     } catch (err) {
       // A share link's own refusal (a hop off its hosts) says why.
       if (err instanceof LinkError) throw err;
-      throw new LinkError("That link didn't open. Try copying the recipe's text instead.");
+      throw new LinkError(`That link didn't open.${failHint}`);
     }
     if (res.status >= 300 && res.status < 400) {
       const next = res.headers.get("location");
@@ -204,21 +201,40 @@ export async function fetchLink(raw: string, deps: LinkDeps, options: FetchOptio
     }
     if (!res.ok) {
       await res.body?.cancel();
-      throw new LinkError(`That link didn't open (${res.status}). If it needs a login, copy the recipe's text instead.`);
+      throw new LinkError(`That link didn't open (${res.status}).${failHint}`);
     }
-    const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-    if (FILE_TYPES.includes(type)) return { file: { bytes: await readCapped(res), mimeType: type } };
-    if (options.plain && (type.startsWith("text/") || type === "application/json" || type === "application/csv" || !type)) {
-      return { text: new TextDecoder().decode(await readCapped(res)) };
-    }
-    if (type === "text/html" || type === "application/xhtml+xml" || type === "text/plain" || !type) {
-      const raw = new TextDecoder().decode(await readCapped(res));
-      const text = type === "text/plain" ? raw.slice(0, MAX_TEXT) : pageText(raw);
-      if (!text.trim()) throw new LinkError("That page had nothing to read. Try copying the recipe's text instead.");
-      return { text };
-    }
-    await res.body?.cancel();
-    throw new LinkError("That kind of link can't be read. Try a web page, a photo or a PDF.");
+    return { res, type: (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase() };
   }
   throw new LinkError("That link redirects too many times.");
+}
+
+export interface FetchOptions {
+  /** The body as it came (CSV, JSON, a page's HTML), not the page's readable text. Share links use this. */
+  plain?: boolean;
+  headers?: Record<string, string>;
+}
+
+/** Fetches the link, checking every hop, and returns its text (web page) or the file it is (photo, PDF). */
+export async function fetchLink(raw: string, deps: LinkDeps, options: FetchOptions = {}): Promise<LinkContent> {
+  let opened: { res: Response; type: string };
+  try {
+    opened = await openLink(raw, deps, "text/html,application/xhtml+xml,text/plain,image/*,application/pdf;q=0.9,*/*;q=0.1", "", options.headers);
+  } catch (e) {
+    if (e instanceof LinkError && e.message.startsWith("That link didn't open (")) throw new LinkError(`${e.message.slice(0, -1)}. If it needs a login, copy the recipe's text instead.`);
+    if (e instanceof LinkError && e.message === "That link didn't open.") throw new LinkError("That link didn't open. Try copying the recipe's text instead.");
+    throw e;
+  }
+  const { res, type } = opened;
+  if (FILE_TYPES.includes(type)) return { file: { bytes: await readCapped(res), mimeType: type } };
+  if (options.plain && (type.startsWith("text/") || type === "application/json" || type === "application/csv" || !type)) {
+    return { text: new TextDecoder().decode(await readCapped(res)) };
+  }
+  if (type === "text/html" || type === "application/xhtml+xml" || type === "text/plain" || !type) {
+    const raw = new TextDecoder().decode(await readCapped(res));
+    const text = type === "text/plain" ? raw.slice(0, MAX_TEXT) : pageText(raw);
+    if (!text.trim()) throw new LinkError("That page had nothing to read. Try copying the recipe's text instead.");
+    return { text };
+  }
+  await res.body?.cancel();
+  throw new LinkError("That kind of link can't be read. Try a web page, a photo or a PDF.");
 }
