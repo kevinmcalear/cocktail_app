@@ -1,12 +1,10 @@
-import type { ReactNode } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 
-import { Body, Caption, DsText, useDs } from '@/components/ds';
+import { Caption, DsText, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { backbar, radius, space } from '@/constants/tokens';
+import { backbar, space } from '@/constants/tokens';
 import { useProfilePositions, useShowPosition, type Position } from '@/hooks/useProfiles';
-
-const NOTE = 'Drinks you created at past bars keep your credit either way. This only changes the jobs list.';
+import { jobYears } from '@/lib/onboarding';
 
 /** On a claim: the claimant can't see the hidden past jobs until it's theirs. */
 export const CLAIM_PAST_JOBS =
@@ -22,52 +20,52 @@ export function PastJobs({ personId }: { personId: string }) {
   // Jobs a bar listed them in wait in MyJobRequests until they accept.
   const positions = (useProfilePositions({ id: personId, kind: 'person' }).data ?? []).filter((p) => p.person_accepted);
   const show = useShowPosition();
-  const now = positions.filter((p) => p.is_current);
-  const before = positions.filter((p) => !p.is_current);
+  // Where they work now first, then the past ones.
+  const rows = [...positions.filter((p) => p.is_current), ...positions.filter((p) => !p.is_current)];
   // The switch moves straight away; a failed save puts it back.
   const shown = (p: Position) => (show.isPending && show.variables?.id === p.id ? show.variables.shown : p.is_shown);
 
-  const row = (p: Position, end: ReactNode) => (
-    <View key={p.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
-      <View style={styles.flex}>
-        <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
-        {!p.bar_accepted ? (
-          <Caption tone="muted">Not confirmed by the bar yet. It shows marked that way.</Caption>
-        ) : p.is_current ? (
-          <Caption tone="muted">Always shown</Caption>
-        ) : null}
-      </View>
-      {end}
-    </View>
-  );
-
   return (
     <View style={styles.box}>
-      {now.length ? (
-        <View role="list">
-          <Caption tone="muted" style={styles.cap}>Now</Caption>
-          {now.map((p) => row(p, null))}
-        </View>
-      ) : null}
-      {before.length ? (
-        <View role="list">
-          <Caption tone="muted" style={styles.cap}>Before</Caption>
-          {before.map((p) =>
-            row(
-              p,
-              <Switch
-                value={shown(p)}
-                onValueChange={(on) => show.mutate({ id: p.id, shown: on })}
-                aria-label={`Show ${p.bar.display_name} on my profile`}
-                trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-                // A white thumb on every platform. react-native-web colours the
-                // on thumb from its own activeThumbColor (teal by default).
-                thumbColor={backbar.light.surface}
-                {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
-              />
-            )
-          )}
+      {rows.length ? (
+        <View role="list" accessibilityLabel="Your jobs">
+          {rows.map((p) => {
+            // ponytail: dates arrive with the b09 columns; until then jobYears has none to show.
+            const years = jobYears(p as Position & { start_year?: number | null; end_year?: number | null });
+            return (
+              <View key={p.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
+                <View style={styles.flex}>
+                  <DsText variant="headline" numberOfLines={2}>
+                    {p.title}
+                  </DsText>
+                  <Caption tone="muted" numberOfLines={1}>
+                    {years ? `${p.bar.display_name} · ${years}` : p.bar.display_name}
+                  </Caption>
+                  <Caption tone="muted" numberOfLines={1}>
+                    {p.bar_accepted ? `Confirmed by ${p.bar.display_name}` : 'Not confirmed by the bar yet'}
+                  </Caption>
+                </View>
+                {p.is_current ? (
+                  <Caption tone="muted">Now · always shown</Caption>
+                ) : (
+                  <View style={styles.end}>
+                    <Switch
+                      value={shown(p)}
+                      onValueChange={(on) => show.mutate({ id: p.id, shown: on })}
+                      aria-label={`Show ${p.title} at ${p.bar.display_name} on your profile`}
+                      trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
+                      // A white thumb on every platform. react-native-web colours the
+                      // on thumb from its own activeThumbColor (teal by default).
+                      thumbColor={backbar.light.surface}
+                      {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+                    />
+                    <Caption tone="muted">{shown(p) ? 'Shown' : 'Hidden'}</Caption>
+                  </View>
+                )}
+              </View>
+            );
+          })}
         </View>
       ) : null}
       {show.error ? (
@@ -75,17 +73,13 @@ export function PastJobs({ personId }: { personId: string }) {
           {show.error.message}
         </Caption>
       ) : null}
-      <View style={[styles.note, { backgroundColor: ds.c.raised }]}>
-        <Body tone="muted">{NOTE}</Body>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   box: { gap: space.lg },
-  cap: { letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: space.xs },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  note: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
+  end: { alignItems: 'center', gap: space.xs },
 });

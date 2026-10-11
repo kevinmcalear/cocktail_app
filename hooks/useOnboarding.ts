@@ -81,6 +81,19 @@ export function useSaveWorkedMenu() {
   });
 }
 
+/** Takes a menu off their list (their own profile's row; RLS checks). */
+export function useRemoveWorkedMenu() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('profile_worked_menus').delete().eq('id', id);
+      if (error) throw new Error(SAVED);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-worked-menus'] }),
+    onError: () => {},
+  });
+}
+
 /**
  * A cocktail they made or helped make. A normal shared drink: they are the
  * creator, the credit starts as suggested, and the origin can be a closed bar.
@@ -89,9 +102,9 @@ export function useSaveCareerDrink() {
   const qc = useQueryClient();
   const userId = useUserId();
   return useMutation({
-    mutationFn: async (input: { personId: string; barId: string | null; name: string }) => {
+    mutationFn: async (input: { personId: string; barId: string | null; name: string }): Promise<string> => {
       if (!userId) throw new Error(SAVED);
-      const { error } = await supabase.from('items').insert({
+      const { data, error } = await supabase.from('items').insert({
         name: input.name.trim(),
         item_type: 'cocktail',
         bar_id: null,
@@ -100,8 +113,22 @@ export function useSaveCareerDrink() {
         origin_bar_profile_id: input.barId,
         credit_status: 'suggested',
         publish_mode: 'description',
-      });
+      }).select('id').single();
       if (error) throw savedError(error, "You've already added that cocktail.");
+      return (data as { id: string }).id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-originals'] }),
+    onError: () => {},
+  });
+}
+
+/** Takes back a cocktail they added during setup (theirs alone, so RLS lets them). */
+export function useRemoveCareerDrink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('items').delete().eq('id', id);
+      if (error) throw new Error(SAVED);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-originals'] }),
     onError: () => {},

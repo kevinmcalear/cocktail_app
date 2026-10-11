@@ -22,21 +22,24 @@ jest.mock('@/hooks/useProfiles', () => ({
 
 test('the current job always shows; each past job has its own switch, off to start', async () => {
   await renderWithTamagui(<PastJobs personId="jo" />);
-  expect(screen.getByText('Head bartender, Little Rye')).toBeTruthy();
-  expect(screen.getByText('Always shown')).toBeTruthy();
-  expect(screen.getByText('Bartender, Pale Moth')).toBeTruthy();
-  expect(screen.getByText(/keep your credit either way/)).toBeTruthy();
+  expect(screen.getByText('Head bartender')).toBeTruthy();
+  expect(screen.getByText('Confirmed by Little Rye')).toBeTruthy();
+  expect(screen.getAllByText('Now · always shown')).toHaveLength(2);
+  expect(screen.getByText('Bartender')).toBeTruthy();
+  expect(screen.getByText('Hidden')).toBeTruthy();
+  // The note about credit went: the board's footer copy on the step says it instead.
+  expect(screen.queryByText(/keep your credit either way/)).toBeNull();
 
-  const toggle = screen.getByLabelText('Show Pale Moth on my profile');
+  const toggle = screen.getByLabelText('Show Bartender at Pale Moth on your profile');
   expect(toggle.props.value).toBe(false);
-  expect(screen.queryByLabelText('Show Little Rye on my profile')).toBeNull();
+  expect(screen.queryByLabelText('Show Head bartender at Little Rye on your profile')).toBeNull();
   await fireEvent(toggle, 'valueChange', true);
   expect(mockShow).toHaveBeenCalledWith({ id: 'pm', shown: true });
 });
 
 test("a job the bar hasn't confirmed says so; one waiting on the person is left to Jobs waiting", async () => {
   await renderWithTamagui(<PastJobs personId="jo" />);
-  expect(screen.getByText('Bar manager, Attaboy')).toBeTruthy();
-  expect(screen.getByText('Not confirmed by the bar yet. It shows marked that way.')).toBeTruthy();
-  expect(screen.queryByText('Barback, Dante')).toBeNull();
+  expect(screen.getByText('Bar manager')).toBeTruthy();
+  expect(screen.getByText('Not confirmed by the bar yet')).toBeTruthy();
+  expect(screen.queryByText('Barback')).toBeNull();
 });

@@ -535,6 +535,8 @@ export interface PublicPerson {
   display_name: string;
   city: string | null;
   is_claimed: boolean;
+  /** Where they work now, when a job says so: "Bar Bianca". */
+  current_bar: string | null;
 }
 
 /** Public people by name, so someone can find a profile we already have. */
@@ -546,14 +548,15 @@ export function usePublicPeople(search: string) {
     queryFn: async (): Promise<PublicPerson[]> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, city, is_claimed')
+        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(is_current, bar:profiles!bar_profile_id(display_name))')
         .eq('kind', 'person')
         .eq('is_public', true)
         .ilike('display_name', `%${term}%`)
         .order('display_name')
         .limit(8);
       if (error) throw error;
-      return (data ?? []) as PublicPerson[];
+      type Row = Omit<PublicPerson, 'current_bar'> & { jobs: { is_current: boolean; bar: { display_name: string } | null }[] | null };
+      return ((data ?? []) as unknown as Row[]).map(({ jobs, ...p }) => ({ ...p, current_bar: jobs?.find((j) => j.is_current)?.bar?.display_name ?? null }));
     },
   });
 }
