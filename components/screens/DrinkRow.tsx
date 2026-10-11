@@ -62,7 +62,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <View style={styles.thumb}>
-        <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" hideTag />
+        <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
       </View>
       <View style={styles.text}>
         <Headline numberOfLines={1}>{name}</Headline>

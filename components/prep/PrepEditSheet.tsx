@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, sheetFrame, Title, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, Chip, Field, Sheet, Title } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useSaveItemPrep, type PrepCardData } from '@/hooks/usePrepCard';
 import { PREP_ACTIONS } from '@/lib/scale';
 
@@ -38,7 +38,6 @@ const num = (s: string) => (s.trim() ? Number(s) : null);
  * takes, where it lives, how it's made, and the steps.
  */
 export function PrepEditSheet({ visible, onClose, itemId, itemName, current }: PrepEditSheetProps) {
-  const ds = useDs();
   const save = useSaveItemPrep(itemId);
   const p = current.prep;
   const hours = p?.shelf_life_hours ?? null;
@@ -91,59 +90,50 @@ export function PrepEditSheet({ visible, onClose, itemId, itemName, current }: P
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.avoider, sheetFrame.scrim]}>
-          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <Title>Prep card</Title>
-              <Body tone="muted">{itemName}. What one batch of the recipe makes.</Body>
-              <View style={styles.pair}>
-                <View style={styles.flex}>
-                  <Field label="Yield" value={yieldAmount} onChangeText={setYieldAmount} placeholder="750" keyboardType="decimal-pad" />
-                </View>
-                <Choice label="Yield unit" options={YIELD_UNITS} value={yieldUnit} onChange={setYieldUnit} />
-              </View>
-              <View style={styles.pair}>
-                <View style={styles.flex}>
-                  <Field label="Keeps for" value={keeps} onChangeText={setKeeps} placeholder="7" keyboardType="decimal-pad" />
-                </View>
-                <Choice label="Keeps unit" options={KEEPS_UNITS} value={keepsUnit} onChange={setKeepsUnit} />
-              </View>
-              <View style={styles.pair}>
-                <View style={styles.flex}>
-                  <Field label="Lead time (minutes)" value={leadMinutes} onChangeText={setLeadMinutes} placeholder="30" keyboardType="number-pad" hint="Hands-off time before it's ready, so the prep list can say when to start." />
-                </View>
-                <View style={styles.flex}>
-                  <Field label="Lead time note" value={leadNote} onChangeText={setLeadNote} placeholder="24 h drip" maxLength={60} />
-                </View>
-              </View>
-              <Field label="Storage" value={storage} onChangeText={setStorage} placeholder="Fridge, sealed" maxLength={60} />
-              <Caption tone="muted">{"How it's made"}</Caption>
-              <View role="group" accessibilityLabel="How it's made" style={styles.chips}>
-                {PREP_ACTIONS.map((a) => (
-                  <Chip key={a} label={a} selected={actions.includes(a)} onPress={() => setActions(actions.includes(a) ? actions.filter((x) => x !== a) : [...actions, a])} />
-                ))}
-              </View>
-              <StepsEditor steps={steps} onChange={setSteps} />
-              {error ? <Caption tone="accent">{error}</Caption> : null}
-              <View style={styles.actions}>
-                <Button label="Cancel" variant="ghost" onPress={onClose} />
-                <Button label={save.isPending ? 'Saving…' : 'Save'} onPress={submit} disabled={save.isPending} />
-              </View>
-            </ScrollView>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel="Prep card" keyboard>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <Title>Prep card</Title>
+        <Body tone="muted">{itemName}. What one batch of the recipe makes.</Body>
+        <View style={styles.pair}>
+          <View style={styles.flex}>
+            <Field label="Yield" value={yieldAmount} onChangeText={setYieldAmount} placeholder="750" keyboardType="decimal-pad" />
+          </View>
+          <Choice label="Yield unit" options={YIELD_UNITS} value={yieldUnit} onChange={setYieldUnit} />
+        </View>
+        <View style={styles.pair}>
+          <View style={styles.flex}>
+            <Field label="Keeps for" value={keeps} onChangeText={setKeeps} placeholder="7" keyboardType="decimal-pad" />
+          </View>
+          <Choice label="Keeps unit" options={KEEPS_UNITS} value={keepsUnit} onChange={setKeepsUnit} />
+        </View>
+        <View style={styles.pair}>
+          <View style={styles.flex}>
+            <Field label="Lead time (minutes)" value={leadMinutes} onChangeText={setLeadMinutes} placeholder="30" keyboardType="number-pad" hint="Hands-off time before it's ready, so the prep list can say when to start." />
+          </View>
+          <View style={styles.flex}>
+            <Field label="Lead time note" value={leadNote} onChangeText={setLeadNote} placeholder="24 h drip" maxLength={60} />
+          </View>
+        </View>
+        <Field label="Storage" value={storage} onChangeText={setStorage} placeholder="Fridge, sealed" maxLength={60} />
+        <Caption tone="muted">{"How it's made"}</Caption>
+        <View role="group" accessibilityLabel="How it's made" style={styles.chips}>
+          {PREP_ACTIONS.map((a) => (
+            <Chip key={a} label={a} selected={actions.includes(a)} onPress={() => setActions(actions.includes(a) ? actions.filter((x) => x !== a) : [...actions, a])} />
+          ))}
+        </View>
+        <StepsEditor steps={steps} onChange={setSteps} />
+        {error ? <Caption tone="accent">{error}</Caption> : null}
+        <View style={styles.actions}>
+          <Button label="Cancel" variant="ghost" onPress={onClose} />
+          <Button label={save.isPending ? 'Saving…' : 'Save'} onPress={submit} disabled={save.isPending} />
+        </View>
+      </ScrollView>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1 },
-  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
-  sheet: { width: '100%', maxWidth: 560, maxHeight: '92%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.md },
   pair: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
   flex: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

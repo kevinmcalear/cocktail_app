@@ -1,7 +1,7 @@
 import { useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, DateField, Field, PressableScale, sheetFrame, TimeField, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field, PressableScale, Sheet, TimeField, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
 import { toDay } from '@/lib/collection';
@@ -65,54 +65,44 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). */}
-        <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.avoider, sheetFrame.scrim]}>
-          <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <Title>New event</Title>
-              <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
-              <DateField label="Date" value={date} onChange={setDate} min={today} />
-              <TimeField label="Starts" value={time} onChange={setTime} />
-              <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
-              <Caption tone="muted">Menu</Caption>
-              <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>
-                {menus.length === 0 ? <Body tone="muted">No menus at this venue yet.</Body> : null}
-                {menus.map((m) => {
-                  const selected = m.id === menuId;
-                  return (
-                    <PressableScale
-                      key={m.id}
-                      role="radio"
-                      aria-selected={selected}
-                      accessibilityLabel={m.name}
-                      onPress={() => setMenuId(m.id)}
-                      style={[styles.menu, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}
-                    >
-                      <Caption color={selected ? ds.c.ground : ds.c.ink}>{m.name}</Caption>
-                    </PressableScale>
-                  );
-                })}
-              </View>
-              {error ? <Caption tone="accent">{error}</Caption> : null}
-              <View style={styles.actions}>
-                <Button label="Cancel" variant="ghost" onPress={onClose} />
-                <Button label={create.isPending ? 'Saving…' : 'Create event'} onPress={submit} disabled={create.isPending} />
-              </View>
-            </ScrollView>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel="New event" keyboard onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <Title>New event</Title>
+        <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
+        <DateField label="Date" value={date} onChange={setDate} min={today} />
+        <TimeField label="Starts" value={time} onChange={setTime} />
+        <Field label="Guests expected" value={covers} onChangeText={setCovers} placeholder="140" keyboardType="number-pad" hint="Used to scale the prep list." />
+        <Caption tone="muted">Menu</Caption>
+        <View role="radiogroup" accessibilityLabel="Menu" style={styles.menus}>
+          {menus.length === 0 ? <Body tone="muted">No menus at this venue yet.</Body> : null}
+          {menus.map((m) => {
+            const selected = m.id === menuId;
+            return (
+              <PressableScale
+                key={m.id}
+                role="radio"
+                aria-selected={selected}
+                accessibilityLabel={m.name}
+                onPress={() => setMenuId(m.id)}
+                style={[styles.menu, { backgroundColor: selected ? ds.c.ink : ds.c.raised }]}
+              >
+                <Caption color={selected ? ds.c.ground : ds.c.ink}>{m.name}</Caption>
+              </PressableScale>
+            );
+          })}
+        </View>
+        {error ? <Caption tone="accent">{error}</Caption> : null}
+        <View style={styles.actions}>
+          <Button label="Cancel" variant="ghost" onPress={onClose} />
+          <Button label={create.isPending ? 'Saving…' : 'Create event'} onPress={submit} disabled={create.isPending} />
+        </View>
+      </ScrollView>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1 },
-  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
-  sheet: { width: '100%', maxWidth: 560, maxHeight: '90%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.md },
   menus: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   menu: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, justifyContent: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm, marginTop: space.sm },

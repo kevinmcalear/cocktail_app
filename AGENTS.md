@@ -3,7 +3,9 @@
 A platform for the life of a drink. Bars create, prep, teach and pour their drinks (venue mode). Home bartenders collect and remake them (home mode). Everyone ranks drinks and credits who made them (public layer). One Expo app for iOS, Android, web and desktop, on Supabase. Live with real bar staff; the GitHub repo is **public**.
 
 - Docs index: [llms.txt](llms.txt). How we work: [docs/dev_flow.md](docs/dev_flow.md). Design rules: [docs/design_system.md](docs/design_system.md).
-- The redesign north star is the "Back Bar" brief: https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf (read it with the Artifact tool, not WebFetch).
+- **The source of truth for every screen is the canvas "Cocktail: the whole app": https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe** (approved by Kevin on 10 Oct 2026; read it with the Artifact tool, not WebFetch). It supersedes the older per-feature canvases and the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf), which stays as background.
+  - Build what the board draws, not just its decisions. A PR that touches a screen puts the board beside a screenshot of the real screen and lists every drawn element as built, changed (why) or left out; anything changed or left out needs Kevin's OK first.
+  - Keep it current: when Kevin decides something that changes a screen, update the board in the same piece of work. New screens are drawn there before they are built.
 
 ## Stack
 
@@ -44,7 +46,7 @@ Lazy means efficient, not careless. Before writing code, stop at the first rung 
 ## Code conventions
 
 - **Data:** Supabase queries live in TanStack Query hooks in `hooks/`, never in screens or components. Use the generated types in `types/`. Cursor pagination for long lists. Query results must be plain JSON (arrays and objects, no `Set`, `Map` or `Date`): the query cache is persisted to storage, and anything else comes back broken after a reload.
-- **UI:** new screens build from `components/ds` (tokens in `constants/tokens.ts`, gallery at `/dev/gallery`). Cocktail read pages use `components/screens/drink`. Cocktail edit, and beer and wine detail, still use Tamagui plus `constants/palette.ts` (`ItemDetailLayout`). Do not start a third drink page. Reuse before making new components. No bottom sheets on the web: sheets are `MenuSheet` or placed with `components/ds/sheetFrame.ts`, which makes them a centred dialog there. Use `role`/`aria-*` for accessibility, not the legacy `accessibilityRole`/`accessibilityState` (they don't reach the DOM on web).
+- **UI:** new screens build from `components/ds` (tokens in `constants/tokens.ts`, gallery at `/dev/gallery`). Cocktail read pages use `components/screens/drink`. Cocktail edit, and beer and wine detail, still use Tamagui plus `constants/palette.ts` (`ItemDetailLayout`). Do not start a third drink page. Reuse before making new components. Every sheet builds on `Sheet` (`components/ds/Sheet.tsx`) or `MenuSheet`: a fading backdrop, a spring up, drag to close, and a centred dialog on the web. Use `role`/`aria-*` for accessibility, not the legacy `accessibilityRole`/`accessibilityState` (they don't reach the DOM on web).
 - **Web against local Supabase:** `EXPO_NO_DOTENV=1` and the env from `supabase status`, or the dev server uses `.env` and talks to production. Full recipe in [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Platform differences:** small ones use `Platform.OS` / `Platform.select`; structural ones use `.web.tsx` / `.native.tsx` files.
 - **Native projects:** `ios/` and `android/` are generated (Expo prebuild) and ignored. Native config goes in `app.config.ts` and config plugins.

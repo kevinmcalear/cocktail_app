@@ -18,25 +18,26 @@ const drink = (id: string, name: string, imageUrl: string | null): MenuDrink => 
 const sections = [{ id: 's1', name: 'Drinks', drinks: [drink('d1', 'Americano', 'https://x.test/americano.jpg'), drink('d2', 'Pellican', null)] }];
 const hidden = { includeHiddenElements: true };
 
-test('the guest card shows each drink’s photo, or its sketch drawn from its own id, with one Sketch note', async () => {
+test('the guest card shows each drink’s photo, or its sketch drawn from its own id, with one note and no Sketch tag', async () => {
   await renderWithTamagui(<MenuSections sections={sections} variant="card" pictures="above" />);
   expect(screen.getAllByTestId('photo', hidden)).toHaveLength(1);
   expect(screen.getByTestId('sketch', hidden).props.children).toBe('d2');
-  expect(screen.getByText('Sketch')).toBeTruthy();
+  expect(screen.getByText(/Drawn from each drink/)).toBeTruthy();
+  expect(screen.queryByText('Sketch')).toBeNull();
   expect(screen.getByText('Pellican')).toBeTruthy();
 });
 
-test('beside the names, a card of photos needs no Sketch note', async () => {
+test('beside the names, a card of photos needs no drawings note', async () => {
   const photos = [{ ...sections[0], drinks: [sections[0].drinks[0]] }];
   await renderWithTamagui(<MenuSections sections={photos} variant="card" pictures="beside" />);
   expect(screen.getAllByTestId('photo', hidden)).toHaveLength(1);
-  expect(screen.queryByText('Sketch')).toBeNull();
+  expect(screen.queryByText(/Drawn from each drink/)).toBeNull();
 });
 
 test('with pictures off, the card is names and lines only', async () => {
   await renderWithTamagui(<MenuSections sections={sections} variant="card" pictures="none" />);
   expect(screen.queryByTestId('photo', hidden)).toBeNull();
   expect(screen.queryByTestId('sketch', hidden)).toBeNull();
-  expect(screen.queryByText('Sketch')).toBeNull();
+  expect(screen.queryByText(/Drawn from each drink/)).toBeNull();
   expect(screen.getByText('Americano')).toBeTruthy();
 });

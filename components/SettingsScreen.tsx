@@ -1,21 +1,22 @@
 import { useRouter } from 'expo-router';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, useDs, useGutter } from '@/components/ds';
 import { AccountSection, SignOutSection } from '@/components/screens/settings/AccountSection';
 import { PreferencesSection } from '@/components/screens/settings/PreferencesSection';
 import { ProfileSection } from '@/components/screens/settings/ProfileSection';
 import { VenuesSection } from '@/components/screens/settings/VenuesSection';
-import { layout, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { confirmAsync } from '@/lib/dialogs';
 
 /**
  * Settings: profile, venues, preferences, privacy, and the account. One
  * readable column of grouped rows at every width, like the phone's own
- * Settings; each venue's settings open on a page of their own.
+ * Settings, sitting left beside the sidebar on wide web (680, as drawn);
+ * each venue's settings open on a page of their own.
  */
 export function SettingsScreen() {
   return (
@@ -28,7 +29,7 @@ export function SettingsScreen() {
 function Settings() {
   const ds = useDs();
   const gutter = useGutter();
-  const insets = useSafeAreaInsets();
+  const frame = usePageFrame(680);
   const router = useRouter();
   const tabBarInset = useTabBarInset();
   const { signOut } = useAuth();
@@ -50,21 +51,14 @@ function Settings() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          paddingTop: insets.top + space.sm,
+          paddingTop: frame.top,
           paddingHorizontal: gutter,
           // Room for the floating tab bar on phones and narrow web.
           paddingBottom: Math.max(space.xxxl * 2, tabBarInset),
         }}
       >
-        <View style={styles.page}>
-          <View style={styles.head}>
-            <GlassButton
-              accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-              icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            />
-            <Title>Settings</Title>
-          </View>
+        <View style={[frame.column, styles.page]}>
+          <SubPageHead title="Settings" onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <ProfileSection />
           <VenuesSection />
           <PreferencesSection />
@@ -78,6 +72,5 @@ function Settings() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  page: { width: '100%', maxWidth: 680, alignSelf: 'center', gap: space.xl },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
+  page: { gap: space.xl },
 });

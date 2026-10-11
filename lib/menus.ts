@@ -1,16 +1,23 @@
 import { dayLabel, parseDay, toDay } from '@/lib/collection';
 import type { MenuDetail, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
 
-type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'>;
+type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary, 'menuDate'>>;
 
 /**
- * Where a menu is in its life. Mirrors private.menu_on_now in the database:
- * no dates is a draft, a future start is coming up, a past end is previous.
+ * Where a menu is in its life. A venue's menu mirrors private.menu_on_now in
+ * the database: no dates is a draft, a future start is coming up, a past end
+ * is previous. A home menu has a night (menuDate) instead, and with one it's
+ * a finished menu: on that day, coming up before it, previous after. Only an
+ * undated home menu is still a draft.
  */
 export function menuStatus(menu: Dated, now: number): MenuStatus {
   const start = menu.startsAt ? Date.parse(menu.startsAt) : null;
   const end = menu.endsAt ? Date.parse(menu.endsAt) : null;
   if (end !== null && end <= now) return 'previous';
+  if (start === null && menu.menuDate) {
+    const today = toDay(new Date(now));
+    return menu.menuDate > today ? 'upcoming' : menu.menuDate === today ? 'on' : 'previous';
+  }
   if (start === null) return 'draft';
   if (start > now) return 'upcoming';
   return 'on';
@@ -51,8 +58,9 @@ function shortDay(iso: string, locale?: string): string {
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-/** "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a draft. */
+/** "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a draft or a home menu (its night is homeMenuLine). */
 export function menuDateLine(menu: Dated, now: number, locale?: string): string | null {
+  if (!menu.startsAt && !menu.endsAt) return null;
   const status = menuStatus(menu, now);
   if (status === 'on') return `since ${day(menu.startsAt!, locale)}`;
   if (status === 'upcoming') return `starts ${day(menu.startsAt!, locale)}`;
