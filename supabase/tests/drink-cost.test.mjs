@@ -25,7 +25,7 @@ const clientOptions = { auth: { persistSession: false, autoRefreshToken: false }
 const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
 const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 
-// costs opens at Drink Creator (35) since 20261013020000; a Bartender (30) has neither costs nor prep.
+// costs opens at Drink Creator (35) since 20261014220000; a Bartender (30) has neither costs nor prep.
 const ROLES = { bartender: 30, creator: 35, admin: 40 };
 const users = {};
 const ids = {};

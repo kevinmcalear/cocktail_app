@@ -25,7 +25,7 @@ const PASSWORD = `pw-${randomUUID()}`;
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
 const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
 
-// costs and prep open at Drink Creator (35) by default (costs since 20261013020000).
+// costs and prep open at Drink Creator (35) by default (costs since 20261014220000).
 const ROLES = { employee: 20, creator: 35, admin: 40 };
 const users = {};
 const ids = {};

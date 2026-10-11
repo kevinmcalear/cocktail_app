@@ -1,5 +1,5 @@
 // Garnish, hand-off and talking points on a venue drink
-// (supabase/migrations/20261013010000_drink_service_notes.sql): read from
+// (supabase/migrations/20261014210000_drink_service_notes.sql): read from
 // Employee up at the drink's own venue, written by whoever may edit the
 // drink, stamped by the server, never readable by guests, outsiders or a
 // signed-out visitor. Runs through the real API against the local stack.

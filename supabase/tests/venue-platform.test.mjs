@@ -444,7 +444,7 @@ describe('prep and purchasing', () => {
   });
 
   test('suppliers and pack sizes are for the prep crew and cost handlers', async () => {
-    // The guest bartender's role revokes prep, but a Drink Creator handles costs since 20261013020000.
+    // The guest bartender's role revokes prep, but a Drink Creator handles costs since 20261014220000.
     for (const label of ['barback', 'maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_purchasing', 'item_id', [ids.scotch])).size, 1, label);
       assert.equal((await visible(users[label].client, 'suppliers', 'id', [ids.supplier])).size, 1, label);
@@ -455,7 +455,7 @@ describe('prep and purchasing', () => {
     }
   });
 
-  test('costs open at Drink Creator (20261013020000) and for roles granted costs', async () => {
+  test('costs open at Drink Creator (20261014220000) and for roles granted costs', async () => {
     for (const label of ['maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_costs', 'item_id', [ids.scotch])).size, 1, label);
     }

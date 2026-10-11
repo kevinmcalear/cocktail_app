@@ -1,4 +1,4 @@
-// A venue drink's service notes (item_service_notes, 20261013010000): how
+// A venue drink's service notes (item_service_notes, 20261014210000): how
 // the garnish goes on, the hand-off in steps, and what the floor says about
 // it. Plain JSON, since the query cache is persisted.
 
