@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 
@@ -18,7 +18,8 @@ const COLUMNS = 'id, bar_id, name, starts_at, ends_at, menu_id, covers_estimate,
 /** A venue's events from this morning onwards (takeovers, private events), soonest first. */
 export function useEvents(barId: string | null | undefined) {
   return useQuery({
-    queryKey: ['events', barId],
+    // Under 'week', so adding or changing an event (hooks/useWeek.ts) refreshes Prep's list too.
+    queryKey: ['week', 'events', barId],
     enabled: !!barId,
     queryFn: async (): Promise<VenueEvent[]> => {
       const since = new Date();
@@ -33,25 +34,5 @@ export function useEvents(barId: string | null | undefined) {
       if (error) throw error;
       return (data ?? []) as VenueEvent[];
     },
-  });
-}
-
-export interface NewEvent {
-  bar_id: string;
-  name: string;
-  starts_at: string;
-  menu_id: string | null;
-  covers_estimate: number | null;
-}
-
-export function useCreateEvent() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (event: NewEvent): Promise<VenueEvent> => {
-      const { data, error } = await supabase.from('events').insert(event).select(COLUMNS).single();
-      if (error) throw error;
-      return data as VenueEvent;
-    },
-    onSuccess: (event) => qc.invalidateQueries({ queryKey: ['events', event.bar_id] }),
   });
 }

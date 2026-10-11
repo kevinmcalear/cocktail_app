@@ -137,6 +137,10 @@
     {
       "source": "/m/:id",
       "destination": "/m/[id]"
+    },
+    {
+      "source": "/e/:id",
+      "destination": "/e/[id]"
     }
   ],
   "headers": [

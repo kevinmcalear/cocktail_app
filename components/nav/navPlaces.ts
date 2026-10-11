@@ -21,8 +21,6 @@ const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
  * Where the shell can take you, for the mode you're in: the tabs (the same
  * ones as the phone bar), the venue's working pages (Menus, Back bar), and
  * its Venue section (My team, Brand, Roles and access, Venue settings).
- *
- * ponytail: "This week" comes with PR #491's /week page.
  */
 export function useNavPlaces() {
   const { mode } = useMode();
@@ -50,5 +48,7 @@ export function useNavPlaces() {
       : [];
   // History sits under Discover in the sidebar (decided on the canvas), in both modes.
   const history: Place = { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' };
-  return { home, venue, tabs, work, venuePlaces, history };
+  // This week: the venue's week, or at home the bars you love and your dated menus. The sidebar lists it itself (WeekNav).
+  const week: Place = { key: 'week', label: 'This week', icon: 'calendar', path: '/week' };
+  return { home, venue, tabs, work, venuePlaces, history, week };
 }
