@@ -22,6 +22,7 @@ jest.mock('@/hooks/useBackBar', () => ({ useItemLocations: () => ({ data: new Ar
 jest.mock('@/hooks/useBarDetail', () => ({ useBarMembers: () => ({ data: new Array(9).fill({}) }) }));
 jest.mock('@/hooks/useBarInvites', () => ({ useBarInvites: () => ({ data: [{}, {}] }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c', 'd'] }) }));
+jest.mock('@/hooks/useWeek', () => ({ useBarWeek: () => ({ data: [] }), useMyWeek: () => ({ data: undefined }), useWeekStart: () => new Date(2026, 9, 10) }));
 jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: new Array(12).fill({}) } }) }));
 
 beforeEach(() => {
@@ -41,6 +42,7 @@ test('at a venue: switch rows, then the venue’s places with their counts', asy
     'My team. 9 people · 2 invited',
     'Brand. Logo, colours and type',
     'Venue settings. Hours, address, units',
+    'This week. Nothing on yet',
     'Settings. Your account and the app',
   ]);
   await fireEvent.press(screen.getByRole('link', { name: /^Back bar\./ }));
@@ -51,7 +53,7 @@ test('at a venue: switch rows, then the venue’s places with their counts', asy
   expect(mockNavigate).toHaveBeenLastCalledWith('/');
 });
 
-test('at home: My Bar, Collection, You and Settings', async () => {
+test('at home: My Bar, Collection, You, This week and Settings', async () => {
   mockMode = 'home';
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getByRole('radio', { name: 'Home bar, Your shelf and collection', checked: true })).toBeTruthy();
@@ -60,6 +62,7 @@ test('at home: My Bar, Collection, You and Settings', async () => {
     'My Bar. 4 bottles',
     'Collection. 12 to make · 1 menu',
     'You. Your profile, ranks and taste',
+    'This week. At the bars you love',
     'Settings. Your account and the app',
   ]);
   await fireEvent.press(screen.getByRole('link', { name: /^My Bar\./ }));
