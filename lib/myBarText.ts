@@ -117,8 +117,9 @@ export function lastedLine(boughtAt: string | null, finishedAt: string): { bough
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return { bought: null, lasted: null };
   const sameYear = start.getFullYear() === end.getFullYear();
   const bought = `Bought ${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })}`;
-  const days = Math.max(0, (end.getTime() - start.getTime()) / 86_400_000);
-  const lasted = days < 14 ? plural(Math.max(1, Math.round(days)), 'day') : days < 60 ? `${Math.round(days / 7)} wk` : `${Math.round(days / 30)} mo`;
+  // Calendar days between the two dates, so a daylight-saving hour or the machine's time zone never tips a rounding.
+  const days = Math.max(0, Math.round((Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) - Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) / 86_400_000));
+  const lasted = days < 14 ? plural(Math.max(1, days), 'day') : days < 60 ? `${Math.round(days / 7)} wk` : `${Math.round(days / 30.44)} mo`;
   return { bought, lasted };
 }
 
