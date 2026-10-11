@@ -21,9 +21,9 @@ const host = (url: string) => {
  * The "From a calendar link" side of the new-event sheet: paste the calendar
  * the venue already keeps, see what's in the next month, untick what isn't
  * for This week, and choose how its events start. The calendars already
- * coming in are listed with Remove.
+ * coming in are listed with Remove (unless the page around it lists them).
  */
-export function CalendarImport({ barId, onDone }: { barId: string; onDone: () => void }) {
+export function CalendarImport({ barId, onDone, showSources = true }: { barId: string; onDone: () => void; showSources?: boolean }) {
   const ds = useDs();
   const [url, setUrl] = useState('');
   const [found, setFound] = useState<FoundEvent[] | null>(null);
@@ -98,7 +98,7 @@ export function CalendarImport({ barId, onDone }: { barId: string; onDone: () =>
       ) : null}
       {error ? <Caption tone="accent">{error}</Caption> : null}
       {found?.length ? <Button label={add.isPending ? 'Bringing in…' : `Bring in ${count} ${count === 1 ? 'event' : 'events'}`} onPress={bring} disabled={add.isPending || count === 0} /> : null}
-      {sources.length ? (
+      {showSources && sources.length ? (
         <View style={styles.sources}>
           <Caption tone="muted">Calendars coming in</Caption>
           {sources.map((s) => (
