@@ -119,11 +119,16 @@ export function thenAndNow(printed: readonly Pick<PrintedLine, 'ingredient_text'
   return rows;
 }
 
-/** "Through the years": one line per printing, oldest first; its notes say what changed. */
+/**
+ * "Through the years": one line per printing, oldest first. The first
+ * printing is "Ensslin prints it."; a later one says what changed when its
+ * notes are one short line (long notes are sourcing, not a change).
+ */
 export function throughTheYears(records: readonly PrintedRecipe[]): { key: string; year: string; line: string }[] {
   return byYear(records).map((r) => {
     const who = r.source.author?.split(/[,(]/)[0].trim().split(' ').at(-1) ?? r.source.title;
-    const line = r.notes?.trim() || (r.relation === 'first_print' ? `${who} prints it.` : `${RELATION_LABEL[r.relation]} in ${r.source.title}.`);
+    const note = r.notes?.trim();
+    const line = r.relation === 'first_print' ? `${who} prints it.` : note && note.length <= 100 ? note : `${RELATION_LABEL[r.relation]} in ${r.source.title}.`;
     return { key: r.id, year: r.source.year ? String(r.source.year) : '', line };
   });
 }

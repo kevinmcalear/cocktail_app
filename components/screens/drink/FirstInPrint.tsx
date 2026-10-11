@@ -180,6 +180,6 @@ const styles = StyleSheet.create({
   year: { width: space.xxxl + space.sm },
   eyebrow: { letterSpacing: 1, paddingTop: space.sm },
   cells: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
-  cell: { width: 76, textAlign: 'right' },
+  cell: { width: 96, textAlign: 'right' },
   flex: { flex: 1, minWidth: 0 },
 });

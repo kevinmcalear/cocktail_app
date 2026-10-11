@@ -89,9 +89,11 @@ assert.deepEqual(thenAndNow([{ ingredient_text: 'Rum', amount_text: '1 jigger' }
 // Through the years: the first printing by its author, later ones by their notes.
 const years = throughTheYears([
   { ...savoy, notes: 'The Savoy drops the violette.' },
-  { ...ensslin, source: { ...ensslin.source, author: 'Hugo Ensslin' } },
+  { ...ensslin, notes: 'Sourcing notes that are not a change.', source: { ...ensslin.source, author: 'Hugo Ensslin' } },
+  { ...savoy, id: 'long', source: { ...savoy.source, year: 1931, title: 'Long' }, notes: 'x'.repeat(140) },
 ]);
 assert.deepEqual(years.map((y) => [y.year, y.line]), [
   ['1917', 'Ensslin prints it.'],
   ['1930', 'The Savoy drops the violette.'],
+  ['1931', 'A later version in Long.'],
 ]);
