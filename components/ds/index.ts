@@ -24,3 +24,4 @@ export { IngredientDrawing } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
+export { SheetScrollView } from './useSheetDrag';
