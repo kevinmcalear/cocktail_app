@@ -3,6 +3,7 @@
 // Relative imports only: these run on Vercel, outside the app's bundle.
 
 import { SKETCH } from '../constants/sketch';
+import { radius } from '../constants/tokens';
 import { thumbUrl } from './thumbnails';
 
 const PENCIL = SKETCH.graphite;
@@ -24,7 +25,7 @@ export interface Picture {
 }
 export const img = ({ src, kind }: Picture, size: number): El => ({
   type: 'img',
-  props: { src, width: size, height: size, style: kind === 'photo' ? { objectFit: 'cover', borderRadius: 22 } : { objectFit: 'contain' } },
+  props: { src, width: size, height: size, style: kind === 'photo' ? { objectFit: 'cover', borderRadius: radius.card } : { objectFit: 'contain' } },
 });
 
 /** A Google font, only the glyphs `text` needs, as satori wants it (TTF). */
