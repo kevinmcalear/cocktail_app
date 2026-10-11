@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { menuReadiness, plural } from '@/lib/menus';
@@ -49,11 +49,25 @@ function Paper({ name, when, coverUrl, coverPosition, drinks, onOpenCard }: Card
       </View>
       <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={drinks} height={112} />
       {onOpenCard ? (
-        <View style={styles.cardLink}>
-          <TextLink label="Tap to see the whole card" onPress={onOpenCard} />
-        </View>
+        <PressableScale role="link" accessibilityLabel="Tap to see the whole card" onPress={onOpenCard} style={styles.cardLink}>
+          <Caption color={ds.c.sketchInk} style={styles.mono}>
+            Tap to see the whole card
+          </Caption>
+        </PressableScale>
       ) : null}
     </View>
+  );
+}
+
+/**
+ * A label over a group, in Geist Mono capitals as the menu boards set them:
+ * "READY TO GO ON?", "WHAT GUESTS SEE", "ADD TO STIRRED".
+ */
+export function MonoLabel({ children }: { children: string }) {
+  return (
+    <Caption tone="muted" style={styles.label} numberOfLines={1}>
+      {children.toUpperCase()}
+    </Caption>
   );
 }
 
@@ -137,7 +151,9 @@ const styles = StyleSheet.create({
   paper: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   paperText: { paddingVertical: space.md, paddingHorizontal: space.lg, gap: 2 },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5 },
-  cardLink: { flexDirection: 'row', justifyContent: 'center', paddingVertical: space.xs },
+  cardLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', minHeight: 44 },
+  mono: { fontFamily: fontFamilies.mono },
+  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.5 },
   checkRow: { alignItems: 'center' },
   check: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   checkText: { flex: 1, gap: space.xs },

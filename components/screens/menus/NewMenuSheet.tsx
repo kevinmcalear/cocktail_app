@@ -15,11 +15,11 @@ import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 import type { MenuPhoto } from '@/lib/readMenu';
 import type { MenuSummary } from '@/types/menus';
 
-import { Eyebrow } from '../addDrink/WizardChrome';
 import { EMPTY_NIGHT, HomeNightFields } from './HomeNight';
 import { MenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
 import { DraftCard, StepTrack, VenueDatesFields } from './NewMenuParts';
+import { MonoLabel } from './ReviewParts';
 
 type Start = { kind: 'copy'; menuId: string } | { kind: 'layout'; layoutId: string } | { kind: 'photo' } | { kind: 'paste' } | { kind: 'blank' };
 type Step = 'name' | 'start' | 'night' | 'dates';
@@ -171,7 +171,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       <BackbarTheme scheme="light">
         <DraftCard name={name.trim() || (start.kind === 'photo' ? 'From the photo' : 'Your menu')} lines={[at > 0 ? startLabel : null, nightLine]} />
       </BackbarTheme>
-      <Eyebrow>{QUESTION[step]}</Eyebrow>
+      <MonoLabel>{QUESTION[step]}</MonoLabel>
 
       {step === 'name' ? (
         <>

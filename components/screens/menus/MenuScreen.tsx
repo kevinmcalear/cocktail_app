@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, useGutter, type IconName } from '@/components/ds';
+import { Crumbs } from '@/components/nav/PageFrame';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { FEATURES } from '@/constants/features';
@@ -11,18 +12,21 @@ import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
-import { groupMenus, homeMenuLine, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
+import { cardWhen, groupMenus, homeMenuLine, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
+import { MenuPaperHead } from './MenuPaperHead';
 import { MenuSections } from './MenuSections';
 import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
 const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
-const STATUS_TONE = { on: 'success', upcoming: 'accent', draft: 'default', previous: 'default' } as const;
+// Not the accent for Coming up: Edit is the page's one accent.
+const STATUS_TONE = { on: 'success', upcoming: 'default', draft: 'default', previous: 'default' } as const;
 
 export function MenuAction({ label, icon, onPress, primary }: { label: string; icon: IconName; onPress: () => void; primary?: boolean }) {
   const ds = useDs();
@@ -54,6 +58,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
+  // Wide web: the sidebar is the way around, so crumbs instead of Back, and the page sits left.
+  const sidebar = useIsWideWeb();
   const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
@@ -79,7 +85,9 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
   // Its cover photo, or with none, its first drinks' own pictures (sketches where there's no photo).
   const pictures = menu.sections.flatMap((s) => s.drinks);
-  const hero = !!menu.coverUrl || pictures.length > 0;
+  // A home menu opens on a small paper card (MenuPaperHead), not the venue's picture band.
+  const home = !menu.barId;
+  const hero = !home && (!!menu.coverUrl || pictures.length > 0);
   const go = (href: string) => router.push(href as Href);
   const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
   // NEW: a venue's drinks no menu that has finished had.
@@ -96,17 +104,26 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         ) : hero ? (
           <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
         ) : (
-          <View style={{ height: insets.top + 72 }} />
+          <View style={{ height: sidebar ? space.xxl + space.sm : insets.top + 72 }} />
         )}
-        <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined }]}>
+        <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined, alignSelf: sidebar ? 'flex-start' : 'center' }]}>
+          {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
           {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
           {/* A home menu isn't on a venue's calendar: its night is in the line below. */}
           {menu.barId ? (
             <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
           ) : null}
-          <Display>{menu.name}</Display>
+          {home ? <MenuPaperHead name={menu.name} when={cardWhen(menu)} pictures={pictures} /> : <Display>{menu.name}</Display>}
           <Caption tone="muted">
-            {[venue?.name ?? (menu.barId ? null : menu.sharedAt ? 'Shared with a link' : 'Just yours'), homeMenuLine(menu, now), plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}
+            {[
+              venue?.name ?? (home ? (menu.sharedAt ? 'Shared with a link' : 'Just yours') : null),
+              // The paper card already says the night.
+              home ? (menu.guestCount ? plural(menu.guestCount, 'guest') : null) : homeMenuLine(menu, now),
+              plural(drinkCount, 'drink'),
+              plural(menu.sections.length, 'section'),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Caption>
           <View style={styles.actions}>
             {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
@@ -120,7 +137,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         </View>
       </ScrollView>
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
-        <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={back} onMedia={!!hero} />
+        {sidebar ? <View /> : <GlassButton icon="chevron.left" accessibilityLabel={home ? 'Back' : 'Back to Menus'} onPress={back} onMedia={!!hero} />}
         {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, file under R&D, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
       {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
@@ -134,7 +151,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   missing: { gap: space.lg },
-  body: { width: '100%', alignSelf: 'center', gap: space.sm },
+  body: { width: '100%', gap: space.sm },
   actions: { flexDirection: 'row', gap: space.sm, marginTop: space.md, marginBottom: space.lg },
   action: { flex: 1, minHeight: 64, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', gap: space.xs, borderCurve: 'continuous' },
   topBar: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between' },

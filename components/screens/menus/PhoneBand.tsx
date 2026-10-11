@@ -44,7 +44,7 @@ function Band({ editor }: { editor: LayoutEditor }) {
         <Caption color={ink} style={styles.status} numberOfLines={1}>
           {status.toUpperCase()}
         </Caption>
-        <TextLink label="Guest card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
+        <TextLink tone="ink" label="Guest card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
       </View>
       <Animated.View style={bounce}>
         <MenuCoverEdit editor={editor} height={128} />

@@ -11,10 +11,9 @@ import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail } from '@/types/menus';
 
 import { AnswerRow } from '../addDrink/ReviewStep';
-import { Eyebrow } from '../addDrink/WizardChrome';
 import type { CardPictures } from './MenuSections';
 import { Choice, MenuSheet } from './MenuSheet';
-import { CardHeader } from './ReviewParts';
+import { CardHeader, MonoLabel } from './ReviewParts';
 
 // The server's refusal when you have no public profile yet (guard_menu_share).
 const NEEDS_PROFILE = /public profile/;
@@ -99,7 +98,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
       }
     >
       <CardHeader name={menu.name} when={cardWhen(dated)} coverUrl={menu.coverUrl ?? null} coverPosition={menu.coverPosition} drinks={drinks} onOpenCard={() => go(card)} />
-      <Eyebrow>Ready to share?</Eyebrow>
+      <MonoLabel>Ready to share?</MonoLabel>
       <View role="list">
         <AnswerRow label="Name" value={menu.name} onPress={edit} />
         {drinks.length ? <AnswerRow label="Drinks" value={drinks.map((d) => d.name).join(', ')} onPress={edit} /> : null}

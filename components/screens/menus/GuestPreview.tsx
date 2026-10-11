@@ -8,9 +8,9 @@ import { radius, space, springs } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
 import { cardWhen } from '@/lib/menus';
 
-import { Eyebrow } from '../addDrink/WizardChrome';
 import { GuestCardContent } from './MenuCardScreen';
 import type { LayoutEditor } from './useLayoutEditor';
+import { MonoLabel } from './ReviewParts';
 
 /**
  * What guests see, live: the guest card set from the menu as it stands in
@@ -27,8 +27,8 @@ export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: V
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Eyebrow>What guests see</Eyebrow>
-        <TextLink label="Open the card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
+        <MonoLabel>What guests see</MonoLabel>
+        <TextLink tone="ink" label="Open the card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
       </View>
       <Animated.View style={bounce}>
         <BackbarTheme scheme="light">

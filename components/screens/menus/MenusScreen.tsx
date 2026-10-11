@@ -72,6 +72,7 @@ export function MenusScreen() {
           onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
           backLabel={barId ? 'Back to Tonight' : 'Back'}
           backText={barId ? 'Tonight' : 'Collection'}
+          crumbs={[barId ? { label: 'Tonight', href: '/' } : { label: 'Collection', href: '/collection' }]}
           actionOnTop
           action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
         />
