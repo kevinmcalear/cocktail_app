@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   zone: { position: 'absolute', borderRadius: radius.mark, paddingHorizontal: space.xs, justifyContent: 'center', overflow: 'hidden' },
   label: { letterSpacing: 0.5 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  name: { flexShrink: 1 },
+  name: { flex: 1, minWidth: 0 },
   side: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   aisle: { top: '46%' },
   guests: { bottom: space.xs },
