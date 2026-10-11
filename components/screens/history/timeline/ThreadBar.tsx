@@ -52,7 +52,7 @@ export function ThreadCard({ line, focusKey, onStep, onClose, inspector = false 
               style={styles.step}
             >
               <View style={[styles.dot, { backgroundColor: on ? ds.accentText : ds.c.lineStrong }]} />
-              <Spec tone="muted" style={styles.year}>
+              <Spec tone="muted" numberOfLines={1} style={styles.year}>
                 {shortYear(n)}
               </Spec>
               <View style={styles.flex}>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.sm },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget - space.xs },
   dot: { width: 8, height: 8, borderRadius: radius.pill },
-  year: { width: 52 },
+  year: { width: 68 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   strip: { height: 14, borderRadius: radius.pill, overflow: 'hidden' },
   band: { position: 'absolute', top: 0, bottom: 0, width: StyleSheet.hairlineWidth },
