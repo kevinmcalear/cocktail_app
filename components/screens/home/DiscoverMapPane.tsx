@@ -6,11 +6,11 @@ import { Caption, GlassSurface, Title, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
-import { useBestDrink } from '@/hooks/useBestDrink';
+import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
 import { useMapMoves } from '@/hooks/useMapMoves';
-import { barPins, byScore, closedPins, scorePins, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { barPins, byScore, closedPins, scorePins, venueScores, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
@@ -91,7 +91,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
     const t = setTimeout(() => setWarm(true), PREFETCH_AFTER_MS);
     return () => clearTimeout(t);
   }, [results.isLoading, warm]);
-  const barRows = useTopBars(area, layer === 'bars' || warm);
+  const barRows = useTopBars(area, layer === 'bars' || byDrinks || warm);
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   // Browsing, the list follows the map (a tapped bar stays open); a search, or anywhere, waits for "Search this area".
   const follow = !searching && area.kind !== 'anywhere';
@@ -111,7 +111,8 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       : barRows;
   const drinks = scores ? byScore(picked, scores.drinks) : nearest ? near.drinks : results.drinks;
   const pins = [
-    ...(byDrinks ? barPins([...(areaBars.data ?? []), ...tileBars.bars]) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
+    // The drinks layer's pins carry their bar's score too (b02).
+    ...(byDrinks ? withBarScores(barPins([...(areaBars.data ?? []), ...tileBars.bars]), venueScores(barRows.data?.ranked ?? [])) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
     ...closedPins(results.closed ?? []),
   ];
   const [ownId, setOwnId] = useState<string | null>(null);
@@ -143,6 +144,9 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const lead = drinkLayer && (searching || filter.kinds.length > 0);
   // A tapped bar narrows the drinks to its own.
   const barDrinks = selected ? (byDrinks ? atBar.drinks : drinks.filter((d) => d.barId === selected.id)) : drinks;
+  // The drinks layer's rows carry scores too (b02): each drink's own and its bar's under it.
+  const browse = useRowScores(barDrinks, area, byDrinks);
+  const shown = scores ?? (byDrinks ? browse : undefined);
   const more: MoreDrinks | undefined = selected || !byDrinks ? undefined : nearest ? { total: near.totals?.drinks ?? null, hasMore: near.hasMore, loadMore: near.loadMore, loading: near.isLoadingMore } : results.more;
   const loadingBar = !!selected && byDrinks && atBar.isLoading;
   // The phone sheet's rows; anything else (loading, a note, the ranked lists) shows as its empty state.
@@ -152,7 +156,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   ) : drinkLayer ? (
     // Wide screens list a selected bar's drinks in its card; the phone sheet's list has them (its first in the head).
     selected && (mode === 'side' || barDrinks.length > 0) ? null : barDrinks.length ? (
-      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={scores} more={more} />
+      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={shown} more={more} />
     ) : (
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
@@ -194,7 +198,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
         </View>
         {selected && !pick ? (
           <View pointerEvents="box-none" style={[styles.overlay, styles.overlayBottom]}>
-            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} query={filter.search} lead={lead} onClose={() => setSelectedId(null)} />
+            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} onClose={() => setSelectedId(null)} />
           </View>
         ) : null}
       </View>
@@ -224,15 +228,15 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
             renderItem={({ item, index }: { item: DiscoverDrink; index: number }) => (
               <>
                 {searching ? <AlsoMentions drinks={sheetDrinks} index={index} search={filter.search} /> : null}
-                <DrinkAtBarRow drink={item} scores={scores} />
+                <DrinkAtBarRow drink={item} scores={shown} query={filter.search} />
               </>
             )}
-            extraData={scores}
+            extraData={shown}
             contentContainerStyle={styles.sheet}
             ListHeaderComponent={
               <View style={styles.sheetHead}>
                 {selected && !selected.closed ? (
-                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={scores} query={filter.search} lead={lead} onClose={() => setSelectedId(null)} />
+                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} onClose={() => setSelectedId(null)} />
                 ) : (
                   <>
                     {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}

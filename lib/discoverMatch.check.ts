@@ -47,7 +47,7 @@ assert.equal(pinName('Dirty Martini', 2), 'Dirty Martini +1');
 assert.equal(pinName('Smoked Rosemary Olive Oil Martini', 1), 'Smoked Rosemary O…');
 const accent = { fill: '#c00', text: '#fff' };
 assert.equal(pinLook(named[0], false, accent).label, 'Drink 0 +2');
-assert.equal(pinLook(named[3], false, accent).label, '1', 'unnamed pins keep their count');
+assert.equal(pinLook(named[3], false, accent).label, '1', 'searching, unnamed pins keep their count');
 assert.equal(pinDescription(named[0]), 'a, 3 drinks: Drink 0');
 
 // The bar's page opens on the search.
