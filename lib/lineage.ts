@@ -171,6 +171,31 @@ export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, '
   return parts;
 }
 
+/**
+ * The credit as it reads under a drink's name on its page (boards
+ * drink-phone-venue, -home, -classic): "Created by Sam Ross at Milk & Honey,
+ * New York, 2005", "Riff of Naked and Famous at Little Rye, Brunswick", or for
+ * a classic nobody is credited with, "Classic, about 1916 · at Detroit
+ * Athletic Club". The bar's place always follows its name. The status word
+ * ("· Verified") is the caller's.
+ */
+export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' | 'name'> | null): CreditPart[] {
+  const bar = drink.origin_bar;
+  const withPlace = (parts: CreditPart[]) =>
+    parts.flatMap((p) => (bar?.locality && p.profileId === bar.id && !bar.is_closed ? [p, { text: `, ${bar.locality}` }] : [p]));
+  if (drink.is_catalog && !creators(drink).length) {
+    const year = drink.origin_year ? `, ${drink.origin_year_approx ? 'about ' : ''}${drink.origin_year}` : '';
+    const parts: CreditPart[] = [{ text: `Classic${year}` }];
+    if (bar) parts.push({ text: ' · at ' }, { text: bar.display_name, profileId: bar.id }, ...(bar.is_closed ? [{ text: ' (now closed)' }] : []));
+    return withPlace(parts);
+  }
+  // A classic's parent is in its family row; the line under the name is who made it.
+  const parts = creditSentence(drink, drink.is_catalog ? null : parent);
+  if (parts[0]?.text === 'By ') parts[0] = { text: 'Created by ' };
+  else if (parts[0]?.text === 'At ' && drink.is_catalog) parts[0] = { text: 'Created at ' };
+  return withPlace(parts);
+}
+
 /** The plain-text form of creditSentence, for accessibility labels. */
 export function creditText(parts: CreditPart[]): string {
   return parts.map((p) => p.text).join('');
