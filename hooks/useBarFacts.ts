@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * A bar's facts for its page, the Discover card and venue tools: where it is,
- * how to reach it, when it's open (supabase/migrations/20261013100000_bar_facts.sql).
+ * how to reach it, when it's open (supabase/migrations/20261014300000_bar_facts.sql).
  * Hours are typed by the venue; nothing comes from Google.
  */
 export interface BarFacts {

@@ -1,6 +1,6 @@
 // Venue setup while a bar claim waits: the code shown before sending, page
 // settings kept on the claim, invites held until approval
-// (supabase/migrations/20261013900000_venue_setup_claims.sql).
+// (supabase/migrations/20261014900000_venue_setup_claims.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';

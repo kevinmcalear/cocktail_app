@@ -42,7 +42,7 @@ function Column({ title, wide, children }: { title: string; wide: boolean; child
 function checkText(claim: ClaimForReview, handle: string | null): string {
   const e = claim.evidence;
   if (claim.method === 'instagram') {
-    // Claims since venue setup (20261013900000) come as a message; older ones are in the bio.
+    // Claims since venue setup (20261014900000) come as a message; older ones are in the bio.
     return e?.instagram_dm
       ? `Look in our Instagram messages for one from @${handle} with ${spacedCode(claim.code ?? '')}. Approve once it’s there, and only if it came from that account.`
       : `Open @${handle} and look for ${spacedCode(claim.code ?? '')} in the bio. Approve once it’s there.`;

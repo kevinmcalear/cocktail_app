@@ -17,7 +17,7 @@ export interface ClaimEvidence {
   matches?: boolean;
   auto?: boolean;
   review_reason?: ReviewReason | null;
-  /** An Instagram claim checked by a message from the bar's account, not its bio (20261013900000). */
+  /** An Instagram claim checked by a message from the bar's account, not its bio (20261014900000). */
   instagram_dm?: boolean;
 }
 
