@@ -175,9 +175,11 @@ async function seed() {
 
 const itemIds = () => Object.entries(id).filter(([k]) => k.startsWith('item:')).map(([, v]) => v);
 // Shared drinks with no publish mode, listed as cards since 20261009300000, and the glass only 'shared' uses.
+// The venue's own bottle was a reference until 20261012700000 (spec lines
+// reference shared ingredients only); the stranger test checks it.
 const SHARED_CARDS = ['creditedUnclaimed', 'creditedOpen', 'classic', 'shared'];
 const unchangedIds = () => {
-  const skip = [...SHARED_CARDS, 'glass2'].map((key) => uid(`item:${key}`));
+  const skip = [...SHARED_CARDS, 'glass2', 'bottle'].map((key) => uid(`item:${key}`));
   return itemIds().filter((x) => !skip.includes(x));
 };
 const drinkKeys = [];
@@ -314,6 +316,7 @@ describe('the fixtures cover the branches', () => {
       const refs = await rows('SELECT id::text FROM public.published_items WHERE is_reference AND id = ANY($1)', [itemIds()]);
       for (const key of ['glassware', 'ice', 'family', 'method', 'gin', 'citrus']) assert.ok(refs.includes(uid(`item:${key}`)), key);
       assert.ok(!refs.includes(uid('item:lemon')), 'a line with a parent shows the parent');
+      assert.ok(!refs.includes(uid('item:bottle')), "the venue's own bottle shows as its generic, and is not named itself");
       assert.ok(!refs.includes(uid('item:vermouth')), 'a description-level drink shows no spec');
       assert.ok(refs.includes(uid('item:glass2')), "a shared drink's card names its glass");
       const listed = await rows('SELECT id::text FROM public.published_items WHERE NOT is_reference AND id = ANY($1)', [[uid('item:openPrivate'), uid('item:personalPrivate')]]);
