@@ -121,7 +121,8 @@ function RootLayoutNav() {
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="week" options={{ headerShown: false }} />
+            <Stack.Screen name="week/index" options={{ headerShown: false }} />
+            <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
@@ -198,6 +199,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/publishing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/dilution" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/calendars" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/from-photo" options={{ headerShown: false }} />
