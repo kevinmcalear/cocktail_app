@@ -9,7 +9,7 @@ import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllow
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
 
-const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind';
+const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at';
 
 interface MenuRow {
   id: string;
@@ -25,6 +25,10 @@ interface MenuRow {
   guest_count: number | null;
   shared_at: string | null;
   kind: string | null;
+  updated_at: string | null;
+  description: string | null;
+  planned_starts_at: string | null;
+  planned_ends_at: string | null;
 }
 
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
@@ -44,6 +48,10 @@ function toSummaryBase(row: MenuRow) {
     guestCount: row.guest_count,
     sharedAt: row.shared_at,
     kind: row.kind === 'rnd' ? ('rnd' as const) : ('menu' as const),
+    updatedAt: row.updated_at ?? row.created_at,
+    description: row.description ?? null,
+    plannedStartsAt: row.planned_starts_at ?? null,
+    plannedEndsAt: row.planned_ends_at ?? null,
   };
 }
 
