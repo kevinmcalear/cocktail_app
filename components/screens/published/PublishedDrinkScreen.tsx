@@ -104,6 +104,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const barName = bar?.name ?? venue?.display_name ?? null;
   const credit = createdByLine(more?.creator ?? null, barName ? { name: barName, place: venue?.locality ?? venue?.city } : null, drink.creditStatus);
   const shared = drink.publishMode === 'spec' && data.recipes.length > 0;
+  const classic = !drink.barId && /^(modern )?classic$/i.test(drink.origin?.trim() ?? '');
 
   const pictureColumn = (
     <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
@@ -138,7 +139,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const aside = (
     <View style={[styles.aside, wide && styles.asideWide]}>
       {more ? <PublicWhereToDrink rankedAs={more.rankedAs} venue={venue} /> : null}
-      <PublicSpec page={data} barClaimed={!!venue?.is_claimed} />
+      <PublicSpec page={data} barClaimed={!!venue?.is_claimed} classic={classic} />
     </View>
   );
 
@@ -149,7 +150,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
         {main}
         {aside}
       </View>
-      {!signedIn && !shared ? <SignInBand text="Sign in to save it, rank it, and see your score beside the city’s." /> : null}
+      {!signedIn && !shared && !classic ? <SignInBand text="Sign in to save it, rank it, and see your score beside the city’s." /> : null}
       <View style={styles.report}>
         <ReportAction subject={drink.name} targets={[{ label: drink.name, target: { kind: 'item', itemId: id } }]} />
       </View>

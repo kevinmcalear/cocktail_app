@@ -18,12 +18,33 @@ import { PublicSpecChanges } from './PublicSpecChanges';
  * amounts as blanks, and one "Sign in to see the full spec". A drink whose
  * bar keeps its spec (Locked or Names only) says so either way.
  */
-export function PublicSpec({ page, barClaimed }: { page: PublishedDrinkPage; barClaimed: boolean }) {
+export function PublicSpec({
+  page,
+  barClaimed,
+  classic,
+}: {
+  page: PublishedDrinkPage;
+  barClaimed: boolean;
+  /** A catalog classic: its spec is everyone's, so signing in opens it. */ classic: boolean;
+}) {
+  const router = useRouter();
   const signedIn = useSignedIn();
   const { drink, bar } = page;
   const lines = specLines(page.recipes);
   const shared = drink.publishMode === 'spec' && lines.length > 0;
   const who = bar?.name ?? 'The bar';
+
+  if (!shared && classic) {
+    // ponytail: classics are listed without their spec rows, so signed out there are no names to show yet (needs a listing change, see the PR).
+    if (!signedIn) return <Teaser names={[]} />;
+    return (
+      <View style={styles.section}>
+        <Kicker>The spec</Kicker>
+        <Body tone="muted">A classic: the spec is open to everyone.</Body>
+        <Button label="Open the full spec" variant="secondary" onPress={() => router.push(`/cocktail/${drink.id}`)} style={styles.start} />
+      </View>
+    );
+  }
 
   if (!shared) {
     const note = !bar
@@ -92,14 +113,16 @@ function Teaser({ names }: { names: string[] }) {
   return (
     <View style={styles.section}>
       <Kicker>The spec</Kicker>
-      <View role="list" aria-label="Ingredients. Amounts show when you sign in.">
-        {names.map((name, i) => (
-          <View key={`${name}-${i}`} role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
-            <Body style={styles.flex}>{name}</Body>
-            <View aria-hidden style={[styles.blank, { backgroundColor: ds.c.lineStrong }]} />
-          </View>
-        ))}
-      </View>
+      {names.length ? (
+        <View role="list" aria-label="Ingredients. Amounts show when you sign in.">
+          {names.map((name, i) => (
+            <View key={`${name}-${i}`} role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
+              <Body style={styles.flex}>{name}</Body>
+              <View aria-hidden style={[styles.blank, { backgroundColor: ds.c.lineStrong }]} />
+            </View>
+          ))}
+        </View>
+      ) : null}
       <Surface style={styles.lock}>
         <View style={styles.lockText}>
           <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
@@ -115,6 +138,7 @@ function Teaser({ names }: { names: string[] }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  start: { alignSelf: 'flex-start' },
   section: { gap: space.sm },
   lockedHeading: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   line: {
