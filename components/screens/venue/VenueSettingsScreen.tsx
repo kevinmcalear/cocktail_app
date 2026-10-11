@@ -1,15 +1,15 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, useDs, useGutter } from '@/components/ds';
 import { UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
-import { layout, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 import type { EditorChromeState } from '@/lib/editorChrome';
@@ -29,7 +29,7 @@ export function VenueSettingsScreen({ barId }: { barId: string }) {
 function VenuePage({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const frame = usePageFrame('text');
   const gutter = useGutter();
   const tabBarInset = useTabBarInset();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
@@ -52,21 +52,16 @@ function VenuePage({ barId }: { barId: string }) {
       <ScrollView
         style={styles.screen}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: (dirty ? 0 : tabBarInset) + space.xxxl, paddingHorizontal: gutter }}
+        contentContainerStyle={{ paddingTop: frame.top, paddingBottom: (dirty ? 0 : tabBarInset) + space.xxxl, paddingHorizontal: gutter }}
       >
-        <View style={styles.page}>
-          <View style={styles.head}>
-            <GlassButton
-              accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-              icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-              onPress={() => void back()}
-            />
-            {venue?.logoUrl ? <Image source={{ uri: venue.logoUrl }} style={[styles.logo, { borderColor: ds.c.line }]} contentFit="cover" /> : null}
-            <View style={styles.title}>
-              <Title numberOfLines={1}>{name}</Title>
-              {venue ? <Caption tone="muted">{`Venue settings · You’re ${roleLabel(venue.roleLevel)}`}</Caption> : null}
-            </View>
-          </View>
+        <View style={[frame.column, styles.page]}>
+          {/* On wide web the sidebar's Venue section opens this page, so there's no Back. */}
+          <SubPageHead
+            title={name}
+            subtitle={venue ? `Venue settings · You’re ${roleLabel(venue.roleLevel)}` : undefined}
+            onBack={() => void back()}
+            leading={venue?.logoUrl ? <Image source={{ uri: venue.logoUrl }} style={[styles.logo, { borderColor: ds.c.line }]} contentFit="cover" /> : null}
+          />
           <BarInlineEditor barId={barId} embedded onChromeState={setChrome} />
         </View>
       </ScrollView>
@@ -77,8 +72,6 @@ function VenuePage({ barId }: { barId: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { width: '100%', maxWidth: 680, alignSelf: 'center', gap: space.xl },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
+  page: { gap: space.xl },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.mark, borderWidth: StyleSheet.hairlineWidth },
-  title: { flex: 1, gap: 2, minWidth: 0 },
 });

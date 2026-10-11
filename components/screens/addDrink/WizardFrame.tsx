@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { space, springs } from '@/constants/tokens';
+import { layout, space, springs } from '@/constants/tokens';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { Eyebrow } from './WizardChrome';
 
@@ -48,6 +49,8 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
+  // Beside the side nav on wide web the column sits left, next to it, never centred (b07).
+  const besideNav = useIsWideWeb() && !embedded;
   const windowHeight = useWindowDimensions().height;
   const [height, setHeight] = useState(0);
 
@@ -95,6 +98,7 @@ export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direct
         <View
           style={[
             styles.column,
+            besideNav && styles.left,
             sideBySide && styles.wideColumn,
             column && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter },
             { paddingBottom: bottom },
@@ -151,6 +155,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' },
   wideColumn: { maxWidth: 1080 },
+  // 760 on its own; the drawing-beside-the-step layout keeps its 1080.
+  left: { alignSelf: 'flex-start', maxWidth: layout.page.text },
   row: { flex: 1, flexDirection: 'row', gap: space.xxl },
   aside: { width: 380 },
   flex: { flex: 1 },
