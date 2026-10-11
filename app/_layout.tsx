@@ -9,10 +9,9 @@ import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
-import { BringInAnywhere } from '@/components/nav/BringInAnywhere';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { palette } from "@/constants/palette";
 import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
@@ -23,20 +22,26 @@ import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
-import { WebSideNav } from '@/components/nav/WebSideNav';
-import { EightBallHost } from '@/components/screens/eightball/EightBallHost';
-import { SearchPalette } from '@/components/search/SearchPalette';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useIsWideWeb, WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
 import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
+import { prefetchRoutes } from '@/lib/prefetchRoutes';
+
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
+
+// Not on a phone's first screen (wide web, signed in, or a shake): loaded when
+// first shown, so their code isn't on every page's first load (RAIL load).
+const WebSideNav = lazy(() => import('@/components/nav/WebSideNav').then((m) => ({ default: m.WebSideNav })));
+const SearchPalette = lazy(() => import('@/components/search/SearchPalette').then((m) => ({ default: m.SearchPalette })));
+const EightBallHost = lazy(() => import('@/components/screens/eightball/EightBallHost').then((m) => ({ default: m.EightBallHost })));
+const BringInAnywhere = lazy(() => import('@/components/nav/BringInAnywhere').then((m) => ({ default: m.BringInAnywhere })));
 
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
 
@@ -112,7 +117,11 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? <WebSideNav /> : null}
+        {showWebSidebar ? (
+          <Suspense fallback={<View style={{ width: WEB_SIDEBAR_WIDTH }} />}>
+            <WebSideNav />
+          </Suspense>
+        ) : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -207,9 +216,11 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </View>
-        {showWebSidebar ? <SearchPalette /> : null}
-        {session ? <EightBallHost /> : null}
-        {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
+        <Suspense fallback={null}>
+          {showWebSidebar ? <SearchPalette /> : null}
+          {session ? <EightBallHost /> : null}
+          {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
+        </Suspense>
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
@@ -243,9 +254,13 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // ~0.75 MB of faces the first screen rarely needs: after its data, so a slow
-    // connection fetches that first (RAIL load). Text uses a fallback till then.
-    return afterFirstData(queryClient, () => void loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e)));
+    // ~0.75 MB of faces the first screen rarely needs, and the main screens'
+    // code: after its data, so a slow connection fetches that first (RAIL
+    // load). Text uses a fallback till then.
+    return afterFirstData(queryClient, () => {
+      loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+      void prefetchRoutes();
+    });
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (
