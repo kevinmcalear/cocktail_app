@@ -91,7 +91,7 @@ function RootLayoutNav() {
   const isWideWeb = useIsWideWeb();
   // `user`, not `session`: at launch it can be the saved session's user, whose
   // cached venues paint before auth-js finishes refreshing their token.
-  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup';
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

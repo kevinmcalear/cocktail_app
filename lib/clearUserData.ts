@@ -10,6 +10,7 @@ import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useIngredientWizardStore } from '@/store/useIngredientWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
+import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
  * Forgets everything the signed-out user left on this device: cached query
@@ -30,6 +31,7 @@ export async function clearUserData(): Promise<void> {
   useDrinkWizardStore.setState({ kept: {} });
   useIngredientWizardStore.setState({ kept: {} });
   useBeerWineWizardStore.setState({ kept: {} });
+  useVenueSetup.setState({ runs: {} });
   await Promise.all([
     asyncStoragePersister.removeClient(),
     deviceStore.removeItem(FAVORITES_KEY),

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Field, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
+import { SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SectionHeading, SettingsSection, UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
 import { DEFAULT_ACCENT, GROUND_TINTS, space, type DisplayFace } from '@/constants/tokens';
@@ -31,10 +32,16 @@ function draftFrom(row: VenueBrandRow) {
   };
 }
 
-function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode }) {
+/** Venue setup's Look step (canvas make-venue-look): this editor, saved by the step's Continue. */
+export interface BrandSetupMode {
+  footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean }) => ReactNode;
+}
+
+function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode; setup?: BrandSetupMode }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
+  // In setup the preview sits above the settings at every width.
+  const wide = useBreakpoint() !== 'phone' && !setup;
   const frame = usePageFrame(wide ? 'wide' : 'text');
   const [draft, setDraft] = useState(() => draftFrom(row));
   const set = <K extends keyof typeof draft>(key: K) => (value: (typeof draft)[K]) => setDraft((d) => ({ ...d, [key]: value }));
@@ -127,16 +134,18 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
         </View>
       </SettingsSection>
 
-      <SettingsSection title="Home screen" note="What staff see when they add your staff link to their phone’s home screen.">
-        <View style={styles.fields}>
-          <Field label="Short name" value={draft.shortName} onChangeText={set('shortName')} placeholder={row.name} maxLength={16} error={problems.shortName} hint="Shown under the icon. Up to 12 characters." />
-          <View style={styles.row}>
-            <Button label={busy === 'icon' ? 'Uploading…' : draft.iconUrl ? 'Change icon' : 'Upload an icon'} icon="photo" variant="secondary" disabled={!!busy} onPress={() => void upload('icon')} />
-            {draft.iconUrl ? <Button label="Use the logo" variant="ghost" onPress={() => set('iconUrl')(null)} /> : null}
+      {setup ? null : (
+        <SettingsSection title="Home screen" note="What staff see when they add your staff link to their phone’s home screen.">
+          <View style={styles.fields}>
+            <Field label="Short name" value={draft.shortName} onChangeText={set('shortName')} placeholder={row.name} maxLength={16} error={problems.shortName} hint="Shown under the icon. Up to 12 characters." />
+            <View style={styles.row}>
+              <Button label={busy === 'icon' ? 'Uploading…' : draft.iconUrl ? 'Change icon' : 'Upload an icon'} icon="photo" variant="secondary" disabled={!!busy} onPress={() => void upload('icon')} />
+              {draft.iconUrl ? <Button label="Use the logo" variant="ghost" onPress={() => set('iconUrl')(null)} /> : null}
+            </View>
+            {draft.iconUrl ? null : <Caption tone="muted">Without an icon of its own, the logo is used.</Caption>}
           </View>
-          {draft.iconUrl ? null : <Caption tone="muted">Without an icon of its own, the logo is used.</Caption>}
-        </View>
-      </SettingsSection>
+        </SettingsSection>
+      )}
       {message ? <Caption role="status">{message}</Caption> : null}
     </View>
   );
@@ -149,6 +158,17 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
       </Surface>
     </View>
   );
+
+  if (setup) {
+    const ok = Object.keys(problems).length === 0 && !busy;
+    const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: then, onError: (e) => setMessage(e.message) }) : then());
+    return (
+      <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
+        {preview}
+        {settings}
+      </SetupPage>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -182,6 +202,13 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
       ) : null}
     </View>
   );
+}
+
+/** The Look step of venue setup: the brand editor without the page around it or the home-screen icon (that stays on Brand). */
+export function BrandSetup({ barId, setup }: { barId: string; setup: BrandSetupMode }) {
+  const brand = useVenueBrand(barId);
+  if (!brand.data) return <SetupPage>{brand.error ? <Body tone="muted">Couldn’t load this venue’s brand. Try again in a moment.</Body> : null}</SetupPage>;
+  return <BrandEditor key={brand.data.id} row={brand.data} canEdit header={() => null} setup={setup} />;
 }
 
 /** Brand settings for a venue, with a live preview. Admins edit; others can look. */

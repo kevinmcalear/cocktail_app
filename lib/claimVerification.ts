@@ -87,9 +87,16 @@ export const REVIEW_REASON: Record<ReviewReason, string> = {
 /** The method picker's words. */
 export const METHOD_COPY: Record<BarClaimMethod, { label: string; short: string }> = {
   email: { label: 'Work email', short: 'Email' },
-  instagram: { label: 'A code in the Instagram bio', short: 'Instagram' },
+  instagram: { label: 'Send us a message from the bar’s Instagram', short: 'Instagram' },
   phone: { label: 'A call to the bar', short: 'Phone' },
 };
+
+/**
+ * Our own Instagram account, where bars message their claim code (b19).
+ * ponytail: not named yet; until it is, the copy says "us" and Open
+ * Instagram opens the inbox. Set it here (and check those messages) before launch.
+ */
+export const OUR_INSTAGRAM: string | null = null;
 
 /** Why the email route won't work, in words. */
 export function emailUnavailable(check: Extract<EmailCheck, { ok: false }>): string {

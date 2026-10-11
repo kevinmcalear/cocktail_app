@@ -39,6 +39,8 @@ export interface SafetyPageProps {
   topRight?: ReactNode;
   /** Pinned to the bottom: Continue and Not now on a setup step. */
   footer?: ReactNode;
+  /** Wide web only: a rail to the left of the page (venue setup's steps). */
+  aside?: ReactNode;
 }
 
 /** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */
@@ -65,7 +67,7 @@ export function StepProgress({ at, of, label, name = 'Setup' }: StepProgressValu
   );
 }
 
-function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/settings', onBack, progress, topRight, footer }: SafetyPageProps) {
+function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/settings', onBack, progress, topRight, footer, aside }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -79,7 +81,7 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
   // A setup step: Back, the bar and "Later" share one row at the top.
   const setupBar = !!(onBack || progress || topRight);
   const back = onBack ?? (noBack || sidebar ? null : () => (router.canGoBack() ? router.back() : router.replace(backTo)));
-  return (
+  const page = (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
         <title>{title}</title>
@@ -105,7 +107,7 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         </View>
       </ScrollView>
       {setupBar ? (
-        <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
+        <View style={[styles.topBar, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <View style={[frame.column, styles.topRow]}>
             {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : null}
             <View style={styles.flex}>{progress ? <StepProgress {...progress} /> : null}</View>
@@ -127,15 +129,24 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
       ) : null}
     </View>
   );
+  if (!aside || !frame.wide) return page;
+  return (
+    <View style={[styles.screen, styles.withAside, { backgroundColor: ds.c.ground }]}>
+      {aside}
+      {page}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  withAside: { flexDirection: 'row' },
   readable: { gap: space.md },
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
-  topBar: { position: 'absolute', left: 0, right: 0 },
+  // Opaque, so a long step scrolls under it rather than through it.
+  topBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.sm },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   segments: { flex: 1, flexDirection: 'row', gap: space.xs },

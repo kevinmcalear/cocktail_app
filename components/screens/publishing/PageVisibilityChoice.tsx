@@ -12,6 +12,10 @@ interface PageVisibilityChoiceProps {
   onChange: (value: PageVisibility) => void;
   disabled?: boolean;
   error?: string | null;
+  /** Inside venue setup, whose step title already asks the question. */
+  bare?: boolean;
+  /** The line under the choice: setup says where the page stands today. */
+  note?: string;
 }
 
 /**
@@ -19,12 +23,16 @@ interface PageVisibilityChoiceProps {
  * outside the venue, with what a guest will see. The database keeps the
  * specs back; each drink's own setting still applies below Open.
  */
-export function PageVisibilityChoice({ venueName, value, onChange, disabled, error }: PageVisibilityChoiceProps) {
+export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, bare, note }: PageVisibilityChoiceProps) {
   const ds = useDs();
   return (
     <View style={styles.group}>
-      <Headline role="heading">Who sees your page</Headline>
-      <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption>
+      {bare ? null : (
+        <>
+          <Headline role="heading">Who sees your page</Headline>
+          <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption>
+        </>
+      )}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (
           <Choice key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
@@ -41,7 +49,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
         </Caption>
         <Body>{PAGE_COPY[value].preview}</Body>
       </View>
-      <Caption tone="muted">Any single drink can still be kept private from its own page.</Caption>
+      <Caption tone="muted">{note ?? 'Any single drink can still be kept private from its own page.'}</Caption>
     </View>
   );
 }
