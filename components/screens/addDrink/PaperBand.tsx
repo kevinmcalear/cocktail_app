@@ -13,6 +13,8 @@ export interface PaperBandProps {
   progress: { now: number; of: number; label: string };
   /** On the first step back closes (the draft is kept). */
   first: boolean;
+  /** On the first step, back goes to this instead of closing: a chevron with its name ("Ash Garden"). */
+  backTo?: string;
   onBack: () => void;
   /** Space above the controls (the status bar on a phone). */
   top: number;
@@ -40,7 +42,7 @@ export interface PaperBandProps {
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go' }: PaperBandProps) {
+export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go' }: PaperBandProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
@@ -64,20 +66,34 @@ export function PaperBand({ progress, first, onBack, top, side, rounded, folded,
       {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes. */}
       {Platform.OS === 'android' && !rounded ? <StatusBar style="dark" /> : null}
       <View style={styles.controls}>
-        <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: backbar.light.glass }]}>
-          <IconSymbol name={first ? 'xmark' : 'chevron.left'} size={18} color={ink} />
-        </PressableScale>
-        <View
-          style={[styles.track, { backgroundColor: withAlpha(ink, 0.15) }]}
-          role="progressbar"
-          accessibilityLabel="Progress"
-          aria-valuemin={0}
-          aria-valuemax={progress.of}
-          aria-valuenow={progress.now}
-        >
-          <View style={[styles.fill, { backgroundColor: ink, width: `${(progress.now / progress.of) * 100}%` }]} />
-        </View>
-        <Caption color={ink} style={styles.mono}>
+        {first && backTo ? (
+          <>
+            <PressableScale onPress={onBack} accessibilityLabel={`Back to ${backTo}`} style={[styles.backTo, { backgroundColor: backbar.light.glass }]}>
+              <IconSymbol name="chevron.left" size={18} color={ink} />
+              <Caption color={ink} numberOfLines={1} style={styles.backToLabel}>
+                {backTo}
+              </Caption>
+            </PressableScale>
+            <View style={styles.spacer} />
+          </>
+        ) : (
+          <>
+            <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: backbar.light.glass }]}>
+              <IconSymbol name={first ? 'xmark' : 'chevron.left'} size={18} color={ink} />
+            </PressableScale>
+            <View
+              style={[styles.track, { backgroundColor: withAlpha(ink, 0.15) }]}
+              role="progressbar"
+              accessibilityLabel="Progress"
+              aria-valuemin={0}
+              aria-valuemax={progress.of}
+              aria-valuenow={progress.now}
+            >
+              <View style={[styles.fill, { backgroundColor: ink, width: `${(progress.now / progress.of) * 100}%` }]} />
+            </View>
+          </>
+        )}
+        <Caption color={ink} style={styles.mono} numberOfLines={1}>
           {progress.label}
         </Caption>
       </View>
@@ -120,6 +136,9 @@ const styles = StyleSheet.create({
   rounded: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   controls: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.md },
   back: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  backTo: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingLeft: space.sm, paddingRight: space.md, borderRadius: radius.pill, flexShrink: 1 },
+  backToLabel: { fontFamily: fontFamilies.bodyMedium, flexShrink: 1 },
+  spacer: { flex: 1 },
   track: { flex: 1, height: 4, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: 4, borderRadius: radius.pill },
   mono: { fontFamily: fontFamilies.monoMedium },

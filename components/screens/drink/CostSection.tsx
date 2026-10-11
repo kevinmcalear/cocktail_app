@@ -33,7 +33,7 @@ export function CostSection({ itemId, barId, priceMinor, canEdit }: CostSectionP
   const { data: cost, isPending, error } = useDrinkCost(itemId, barId, unlocked);
   if (!barId) return null;
   return (
-    <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Admin'}>
+    <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Drink Creator'}>
       {error ? <Body tone="muted">Couldn’t work out the cost. Check your connection and try again.</Body> : null}
       {isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
       {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} priceMinor={priceMinor ?? null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targetGp={settings.target_gp} /> : null}

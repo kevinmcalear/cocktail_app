@@ -92,7 +92,8 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
           })}
         </View>
       </GlassSurface>
-      <GlassButton accessibilityLabel="Search" icon="magnifyingglass" onPress={() => go('search')} />
+      {/* While search is open, its circle is the current item: its icon takes the accent. */}
+      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
     </View>
   );
 }

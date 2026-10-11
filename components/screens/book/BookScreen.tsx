@@ -2,9 +2,11 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, RowScore, scoreWords, Tag, Title, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useBook } from '@/hooks/useDrinkHistory';
+import { useDrinkSources } from '@/hooks/useDrinkSources';
+import { useItemScores } from '@/hooks/useFlavor';
 import { RELATION_LABEL, RIGHTS_LABEL, sourceByline } from '@/lib/drinkHistory';
 
 /** One of the old cocktail books (or another source): where to read it, and the drinks printed in it. */
@@ -24,6 +26,11 @@ function BookPage() {
   const { key } = useLocalSearchParams<{ key: string }>();
   const { data, isLoading, error } = useBook(key);
   const source = data?.source;
+  const drinks = data?.drinks ?? [];
+  // Each drink's score and how many bars pour a version of it (b02).
+  const itemIds = drinks.flatMap((d) => (d.item ? [d.item.id] : []));
+  const { data: scores } = useItemScores(itemIds);
+  const { data: sources } = useDrinkSources(itemIds);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -57,27 +64,36 @@ function BookPage() {
             {source.rights === 'facts_only' ? (
               <Caption tone="muted">This book is still in copyright, so we show its ingredients, never its words.</Caption>
             ) : null}
-            <Headline role="heading">Drinks in this book</Headline>
+            <Headline role="heading">{drinks.length ? `Drinks in this book · ${drinks.length} here` : 'Drinks in this book'}</Headline>
             <View role="list">
-              {(data?.drinks ?? []).map((d) => (
-                <PressableScale
-                  key={d.id}
-                  role="link"
-                  disabled={!d.item}
-                  accessibilityLabel={`${d.printed_name ?? d.item?.name ?? ''}. ${RELATION_LABEL[d.relation]}${d.item ? `. Open the ${d.item.name}` : ''}`}
-                  onPress={() => d.item && router.push(`/cocktail/${d.item.id}` as Href)}
-                  style={[styles.row, { borderTopColor: ds.c.line }]}
-                >
-                  <View style={styles.flex}>
-                    <Body>{d.printed_name ?? d.item?.name}</Body>
-                    <Caption tone="muted">
-                      {[RELATION_LABEL[d.relation], d.item && d.printed_name !== d.item.name ? `the ${d.item.name}` : null, d.page_label ? `page ${d.page_label}` : null]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Caption>
-                  </View>
-                </PressableScale>
-              ))}
+              {drinks.map((d) => {
+                const score = d.item ? scores?.[d.item.id] : undefined;
+                const versions = d.item ? (sources?.[d.item.id]?.versions ?? 0) : 0;
+                const caption = [
+                  RELATION_LABEL[d.relation],
+                  d.item && d.printed_name !== d.item.name ? `the ${d.item.name}` : null,
+                  versions ? `${versions} bar ${versions === 1 ? 'version' : 'versions'}` : null,
+                  d.page_label ? `page ${d.page_label}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
+                  <PressableScale
+                    key={d.id}
+                    role="link"
+                    disabled={!d.item}
+                    accessibilityLabel={[d.printed_name ?? d.item?.name ?? '', caption, scoreWords(score), d.item ? `Open the ${d.item.name}` : null].filter(Boolean).join('. ')}
+                    onPress={() => d.item && router.push(`/cocktail/${d.item.id}` as Href)}
+                    style={[styles.row, { borderTopColor: ds.c.line }]}
+                  >
+                    <View style={styles.flex}>
+                      <Body>{d.printed_name ?? d.item?.name}</Body>
+                      <Caption tone="muted">{caption}</Caption>
+                    </View>
+                    <RowScore score={score} />
+                  </PressableScale>
+                );
+              })}
             </View>
           </>
         ) : null}
