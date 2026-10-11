@@ -109,3 +109,20 @@ export function useSetMemberRoleChoice(barId: string | null | undefined) {
     onError: () => {},
   });
 }
+
+/**
+ * The venue's own bar profile id (public or not), where its facts live:
+ * hours, phone, website (hooks/useBarFacts). Null when it has none yet.
+ */
+export function useVenueProfileId(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['venue-profile-id', barId],
+    enabled: !!barId,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.from('profiles').select('id').eq('bar_id', barId!).eq('kind', 'bar').limit(1).maybeSingle();
+      if (error) throw error;
+      return (data as { id: string } | null)?.id ?? null;
+    },
+  });
+}

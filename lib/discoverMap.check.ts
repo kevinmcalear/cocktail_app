@@ -84,6 +84,7 @@ assert.equal(movedFrom({ ...at, longitude: 179.999 }, { ...view, longitude: -179
 console.log('discoverMap: ok');
 
 // --- dots: the map's own layer for pins past the drawn ones, labelled like the pins, closed bars unlabelled ---
-const dots = dotsOf([{ ...pins[0], drinks: 12 }, pins[1], { ...pins[1], id: 'shut', closed: 'Closed 2019' }]);
-assert.deepEqual(dots.features.map((f) => f.properties), [{ id: 'a', label: '12' }, { id: 'b', label: '' }, { id: 'shut', label: '' }]);
+// The drinks layer's pins say the bar's score too (b02), not how many drinks match; an unscored bar is a dot.
+const dots = dotsOf([{ ...pins[0], drinks: 12 }, { ...pins[1], drinks: 3 }, { ...pins[1], id: 'shut', closed: 'Closed 2019' }]);
+assert.deepEqual(dots.features.map((f) => f.properties), [{ id: 'a', label: '9.1' }, { id: 'b', label: '' }, { id: 'shut', label: '' }]);
 assert.deepEqual(dots.features[0].geometry.coordinates, [144.96, -37.8]);

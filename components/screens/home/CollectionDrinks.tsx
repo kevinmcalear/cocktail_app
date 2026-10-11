@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline } from '@/components/ds';
+import { Body, Caption, Headline, RowScore, scoreWords } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { MemorySheet } from '@/components/screens/published/MemorySheet';
 import { space } from '@/constants/tokens';
@@ -48,6 +48,9 @@ export function CollectionDrinks() {
   const tallies = tallyMade(made);
   const madeIds = new Set(tallies.map((t) => t.itemId));
   const toMake = readyFirst(live.filter((d) => !d.itemId || !madeIds.has(d.itemId)), tagOf);
+  // Your own score for a past drink you ranked (b02), the best if you ranked it twice.
+  const yours = new Map<string, number>();
+  for (const h of had) yours.set(h.itemId, Math.max(h.score, yours.get(h.itemId) ?? 0));
   const line = (d: CollectedDrink, withBar: boolean) => [withBar ? d.barName : null, hadOnLine(d.hadOn, now)].filter(Boolean).join(' · ') || undefined;
 
   return (
@@ -95,6 +98,8 @@ export function CollectionDrinks() {
                       glass={null}
                       caption={line(d, false) ?? 'Add when you had it'}
                       note={d.note ?? undefined}
+                      trailing={<RowScore score={d.itemId ? yours.get(d.itemId) : null} />}
+                      label={d.itemId && yours.has(d.itemId) ? [d.name, line(d, false), `your ${scoreWords(yours.get(d.itemId))}`, d.note].filter(Boolean).join('. ') : undefined}
                     />
                   </View>
                 ))}
