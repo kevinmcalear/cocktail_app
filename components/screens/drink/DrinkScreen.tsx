@@ -57,6 +57,8 @@ export interface DrinkScreenProps {
   onEdit: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
+  /** Beside a list (the tablet Library): the narrow layout, a short hero, no Back. */
+  pane?: boolean;
   /** Open with the Batch sheet up (/cocktail/[id]/batch links here). */
   openBatch?: boolean;
   /** /dev/drink only: a bundled hero image and a simulated role. */
@@ -81,13 +83,13 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, openBatch, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, pane, openBatch, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const top = sheet && Platform.OS === 'ios' ? space.sm : insets.top;
+  const top = pane ? 0 : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
+  const wide = useBreakpoint() !== 'phone' && !pane;
   const { width, height } = useWindowDimensions();
   const home = useMode().mode === 'home';
   const { access } = useSpecAccess(item.id, item.bar_id, preview);
@@ -122,7 +124,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
-  const heroHeight = wide ? height - top : Math.min(width, height * 0.42);
+  const heroHeight = pane ? PANE_HERO : wide ? height - top : Math.min(width, height * 0.42);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
@@ -228,6 +230,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         heroHeight={heroHeight}
         scrollY={scrollY}
         wide={wide}
+        noBack={pane}
         saved={toMake.saved} onToggleSaved={preview ? () => {} : toMake.toggle}
         inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
         canEdit={canEdit} onEdit={onEdit}
@@ -279,6 +282,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     </View>
   );
 }
+
+/** The hero's height in the tablet Library's detail pane, as drawn. */
+const PANE_HERO = 220;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
