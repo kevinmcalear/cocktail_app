@@ -79,7 +79,7 @@ describe('Spirited Awards', () => {
   test('signed out, anyone sees a winning bar and its award', async () => {
     const { data, error } = await anon
       .from('profiles')
-      .select('display_name, profile_awards(award, year, title)')
+      .select('display_name, profile_awards!profile_awards_profile_id_fkey(award, year, title)')
       .eq('handle', 'barkumiko')
       .single();
     assert.ifError(error);
