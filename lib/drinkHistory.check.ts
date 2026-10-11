@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byYear, historyFor, leadRecord, readUrl, sourceByline, type PrintedRecipe, type Source } from './drinkHistory';
+import { byYear, historyFor, leadRecord, readUrl, sourceByline, thenAndNow, throughTheYears, type PrintedRecipe, type Source } from './drinkHistory';
 
 const source = (key: string, year: number | null, extra: Partial<Source> = {}): Source => ({
   id: key,
@@ -61,3 +61,37 @@ assert.equal(sourceByline({ author: 'Jerry Thomas', city: 'New York', edition: '
 assert.equal(sourceByline({ author: 'Harry MacElhone', city: 'London', edition: '2nd impression' }), 'Harry MacElhone, London, 2nd impression');
 
 console.log('drinkHistory checks passed');
+
+// Then and now: printed lines meet today's spec on a shared word, accents aside.
+assert.deepEqual(
+  thenAndNow(
+    [
+      { ingredient_text: 'El Bart Gin', amount_text: '2/3' },
+      { ingredient_text: 'Lemon Juice', amount_text: '1/3' },
+      { ingredient_text: 'Creme de Violette', amount_text: '2 dashes' },
+    ],
+    [
+      { ingredient: 'Gin', amount: '60 ml' },
+      { ingredient: 'Lemon juice', amount: '22.5 ml' },
+      { ingredient: 'Maraschino', amount: '15 ml' },
+      { ingredient: 'Crème de violette', amount: '7.5 ml' },
+    ],
+  ),
+  [
+    { name: 'Gin', then: '2/3', now: '60 ml' },
+    { name: 'Lemon juice', then: '1/3', now: '22.5 ml' },
+    { name: 'Crème de violette', then: '2 dashes', now: '7.5 ml' },
+    { name: 'Maraschino', then: null, now: '15 ml' },
+  ],
+);
+assert.deepEqual(thenAndNow([{ ingredient_text: 'Rum', amount_text: '1 jigger' }], []), [{ name: 'Rum', then: '1 jigger', now: null }]);
+
+// Through the years: the first printing by its author, later ones by their notes.
+const years = throughTheYears([
+  { ...savoy, notes: 'The Savoy drops the violette.' },
+  { ...ensslin, source: { ...ensslin.source, author: 'Hugo Ensslin' } },
+]);
+assert.deepEqual(years.map((y) => [y.year, y.line]), [
+  ['1917', 'Ensslin prints it.'],
+  ['1930', 'The Savoy drops the violette.'],
+]);

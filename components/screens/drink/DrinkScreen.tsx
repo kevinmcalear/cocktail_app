@@ -201,7 +201,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
       )}
       {preview ? null : <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={canEdit} />}
       {preview ? null : <HistorySection itemId={item.id} barId={item.bar_id} canEdit={canEdit} />}
-      {preview ? null : <Backstory itemId={item.id} />}
+      {preview ? null : <Backstory itemId={item.id} now={access.amounts && !lock ? lines : undefined} />}
       {preview || !canEdit ? null : <ClassicLink item={item} />}
       {preview ? null : <PublishSection itemId={item.id} barId={item.bar_id} />}
     </View>

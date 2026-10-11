@@ -12,7 +12,7 @@ import type { Jump } from '../tree/TimeTree';
 import { DrinkDetail, PeekSheet } from './DrinkPeek';
 import { EraBar } from './EraBar';
 import { OverviewStrip } from './OverviewStrip';
-import { ThreadBar } from './ThreadBar';
+import { Riffs, ThreadCard, ThreadPick } from './ThreadBar';
 import { TimelineFilters } from './TimelineFilters';
 import { EraHeader, TimelineRowView } from './TimelineRow';
 
@@ -20,9 +20,9 @@ type Loc = { sectionIndex: number; itemIndex: number };
 /** Room above a row we jump to; the list already clears the sticky era header. */
 const JUMP_OFFSET = space.sm;
 const BAR_SPACE = 120;
-/** The phone's era bar and floating thread strip, for leaving room under the list. */
+/** The phone's era bar and the thread's pick card, for leaving room under the list. */
 const ERA_BAR_H = 92;
-const THREAD_H = 110;
+const PICK_H = 120;
 /** Screens of rows kept mounted around the view once every row has been laid out. */
 const SETTLED_WINDOW = 9;
 
@@ -102,6 +102,10 @@ export function TimelineView({
     return maker ? nodes.filter((n) => n.creatorId === maker).length : 0;
   };
   const focused = focusKey ? (byKey.get(focusKey) ?? null) : null;
+  // Desktop's inspector always shows the picked drink's thread and riffs.
+  const focusLine = wide && focused ? thread(nodes, focused.key) : [];
+  const riffs = wide && focused ? nodes.filter((n) => n.parentKey === focused.key && n.kind === 'drink').sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999)) : [];
+  const pick = !wide && line.length && focused ? focused : null;
 
   const scrollTo = (loc: Loc | null, animated = true) => {
     if (!loc) return;
@@ -146,7 +150,8 @@ export function TimelineView({
 
   const press = (key: string) => {
     onSelect(key);
-    if (!wide) setPeekKey(key);
+    // Following a thread, a phone shows the pick at the bottom instead of a sheet.
+    if (!wide && !threadKey) setPeekKey(key);
   };
   const toggleThread = (key: string) => {
     const on = threadKey !== key;
@@ -159,13 +164,18 @@ export function TimelineView({
     <View style={styles.headerBlock}>
       {header}
       <TimelineFilters nodes={nodes} filter={filter} onChange={setFilter} />
-      {wide ? <OverviewStrip nodes={nodes} thread={lit} year={year} onTravel={(y) => scrollTo(locate(sections, y))} /> : null}
+      {wide ? <OverviewStrip nodes={nodes} thread={line.length ? lit : new Set(focusLine.map((n) => n.key))} year={year} onTravel={(y) => scrollTo(locate(sections, y))} /> : null}
     </View>
   );
 
   const undated = undatedCount(nodes, filter);
   return (
     <View style={styles.screen}>
+      {!wide && line.length ? (
+        <View style={{ paddingHorizontal: gutter, paddingBottom: space.sm }}>
+          <ThreadCard line={line} focusKey={focusKey} onStep={step} onClose={() => setThreadKey(null)} />
+        </View>
+      ) : null}
       <View style={[styles.cols, { maxWidth: wide ? 1280 : 820 }]}>
         <SectionList<TimelineRow, TimelineSection>
           ref={list}
@@ -208,23 +218,22 @@ export function TimelineView({
             list.current?.getScrollResponder()?.scrollTo({ y: info.averageItemLength * info.index, animated: false });
             setTimeout(() => pending.current && list.current?.scrollToLocation({ ...pending.current, viewOffset: JUMP_OFFSET, animated: false }), 150);
           }}
-          contentContainerStyle={{ paddingTop: space.sm, paddingHorizontal: gutter, paddingBottom: insets.bottom + (wide ? space.xxxl : BAR_SPACE + (line.length ? THREAD_H : 0)) }}
+          contentContainerStyle={{ paddingTop: space.sm, paddingHorizontal: gutter, paddingBottom: insets.bottom + (wide ? space.xxxl : BAR_SPACE + (pick ? PICK_H : 0)) }}
         />
         {wide ? (
           <ScrollView style={[styles.inspector, { borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
             {focused ? (
-              <DrinkDetail node={focused} from={focused.parentKey ? (byKey.get(focused.parentKey) ?? null) : null} kids={kidsOf(focused.key)} byMaker={byMaker(focused.key)} threadOn={threadKey === focused.key} onThread={() => toggleThread(focused.key)} />
+              <DrinkDetail node={focused} from={focused.parentKey ? (byKey.get(focused.parentKey) ?? null) : null} kids={kidsOf(focused.key)} byMaker={byMaker(focused.key)} threadOn={false} />
             ) : null}
-            {line.length ? <ThreadBar line={line} focusKey={focusKey} onStep={step} onClose={() => setThreadKey(null)} floating={false} /> : null}
+            {focusLine.length > 1 ? <ThreadCard line={focusLine} focusKey={focusKey} onStep={step} inspector /> : null}
+            <Riffs key={focusKey} kids={riffs} onStep={step} />
             {focused ? null : (
               <Caption tone="muted">Pick a drink to see what changed, who made it and where, and its thread back to the punch bowl.</Caption>
             )}
           </ScrollView>
         ) : null}
       </View>
-      {!wide && line.length ? (
-        <ThreadBar line={line} focusKey={focusKey} onStep={step} onClose={() => setThreadKey(null)} floating bottom={insets.bottom + space.lg + ERA_BAR_H + space.sm} />
-      ) : null}
+      {pick ? <ThreadPick node={pick} bottom={insets.bottom + space.lg + ERA_BAR_H + space.sm} /> : null}
       {!wide ? <EraBar counts={counts} year={year} bottom={insets.bottom + space.lg} onTravel={(y) => scrollTo(locate(sections, y), false)} /> : null}
       {!wide && peekKey && byKey.get(peekKey) ? (
         <PeekSheet

@@ -21,7 +21,8 @@ interface PeekProps {
   /** How many drinks on the timeline its maker made ("5 drinks here"). */
   byMaker: number;
   threadOn: boolean;
-  onThread: () => void;
+  /** Show or hide its thread; left out in the desktop inspector, which always shows it. */
+  onThread?: () => void;
 }
 
 /**
@@ -47,7 +48,7 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
         <Caption tone="muted" style={styles.flex}>
           {lineage || 'The first of its line'}
         </Caption>
-        <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} variant="secondary" onPress={onThread} />
+        {onThread ? <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} variant="secondary" onPress={onThread} /> : null}
       </View>
       {style ? null : <Button label={`Open ${node.name}`} onPress={() => router.push(drinkHref(node.id))} />}
       {node.creatorId || node.barId ? (

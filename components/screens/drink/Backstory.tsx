@@ -75,7 +75,7 @@ function Faces({ drinks }: { drinks: LineageDrink[] }) {
  * its first printing, and what came from it. One fact per row, each a tap
  * from the whole story. Hidden when there's nothing to tell.
  */
-export function Backstory({ itemId }: { itemId: string }) {
+export function Backstory({ itemId, now }: { itemId: string; now?: { ingredient: string | null; amount: string | null }[] }) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
@@ -133,7 +133,7 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
 
-        {found ? <FirstInPrint records={found.records} borrowed={borrowed} /> : null}
+        {found ? <FirstInPrint records={found.records} borrowed={borrowed} itemId={itemId} now={now} /> : null}
 
         {classics.length ? (
           <FactRow

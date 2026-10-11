@@ -185,6 +185,21 @@ export function thread(nodes: readonly TreeNode[], key: string): TreeNode[] {
     .filter((n): n is TreeNode => !!n);
 }
 
+/**
+ * "143 years back to Whiskey Sour, 1862": from a thread's drink to its
+ * nearest classic ancestor (a dated drink that isn't a modern classic), else
+ * to the oldest dated step. Null when there's nothing dated to count to.
+ */
+export function threadBack(line: readonly TreeNode[]): string | null {
+  const last = line.at(-1);
+  if (!last || last.year == null) return null;
+  const before = line.slice(0, -1).filter((n) => n.year != null);
+  const to = [...before].reverse().find((n) => n.kind === 'drink' && !n.modern) ?? before[0];
+  if (!to || to.year == null) return null;
+  const years = last.year - to.year;
+  return years > 0 ? `${years} years back to ${to.name}, ${shortYear(to)}` : null;
+}
+
 /** "c. 1880" or "1880" for a row; "c.1880" squeezes into the year column. */
 export function shortYear(n: Pick<TreeNode, 'year' | 'approx'>): string {
   return n.year == null ? '' : `${n.approx ? 'c.' : ''}${n.year}`;

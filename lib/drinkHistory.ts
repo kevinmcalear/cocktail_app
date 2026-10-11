@@ -81,3 +81,49 @@ export const RIGHTS_LABEL: Record<Source['rights'], string> = {
   public_domain: 'Public domain',
   facts_only: 'Still in copyright: ingredients only',
 };
+
+const words = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z ]+/g, ' ')
+    .split(' ')
+    .filter((w) => w.length > 2 && !['de', 'the', 'and', 'juice', 'fresh'].includes(w));
+
+export interface ThenNow {
+  name: string;
+  then: string | null;
+  now: string | null;
+}
+
+/**
+ * "Then and now": each printed line beside today's amount for the same
+ * ingredient ("El Bart Gin" meets "Gin", "Creme de Violette" meets "Crème
+ * de violette"), matched on a shared word. Unmatched lines on either side
+ * keep their own row with the other side empty.
+ */
+export function thenAndNow(printed: readonly Pick<PrintedLine, 'ingredient_text' | 'amount_text'>[], now: readonly { ingredient: string | null; amount: string | null }[]): ThenNow[] {
+  const left = now.filter((n): n is { ingredient: string; amount: string | null } => !!n.ingredient);
+  const used = new Set<number>();
+  const rows: ThenNow[] = printed.map((p) => {
+    const pw = words(p.ingredient_text);
+    const i = left.findIndex((n, j) => !used.has(j) && words(n.ingredient).some((w) => pw.includes(w)));
+    if (i < 0) return { name: p.ingredient_text, then: p.amount_text, now: null };
+    used.add(i);
+    return { name: left[i].ingredient, then: p.amount_text, now: left[i].amount };
+  });
+  left.forEach((n, j) => {
+    if (!used.has(j)) rows.push({ name: n.ingredient, then: null, now: n.amount });
+  });
+  return rows;
+}
+
+/** "Through the years": one line per printing, oldest first; its notes say what changed. */
+export function throughTheYears(records: readonly PrintedRecipe[]): { key: string; year: string; line: string }[] {
+  return byYear(records).map((r) => {
+    const who = r.source.author?.split(/[,(]/)[0].trim().split(' ').at(-1) ?? r.source.title;
+    const line = r.notes?.trim() || (r.relation === 'first_print' ? `${who} prints it.` : `${RELATION_LABEL[r.relation]} in ${r.source.title}.`);
+    return { key: r.id, year: r.source.year ? String(r.source.year) : '', line };
+  });
+}

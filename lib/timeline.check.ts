@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { TreeNode } from './drinkTree';
-import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, placeOptions, thread, timelineSections, undatedCount, yearAt } from './timeline';
+import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, placeOptions, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
 
 const node = (key: string, family: string, parentKey: string | null, year: number | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -90,6 +90,11 @@ assert.equal(locateKey(all, 'd:Undated'), null);
 
 // Thread.
 assert.deepEqual(thread(nodes, 'd:Penicillin').map((n) => n.name), ['Punch', 'Sour', 'Whiskey Sour', 'Gold Rush', 'Penicillin']);
+// Back to the nearest classic: a modern classic in between is skipped; no classic counts to the oldest step.
+const penicillin = thread(nodes, 'd:Penicillin').map((n) => (n.name === 'Gold Rush' ? { ...n, modern: true } : n));
+assert.equal(threadBack(penicillin), '143 years back to Whiskey Sour, 1862');
+assert.equal(threadBack(thread(nodes, 'd:Whiskey Sour')), '230 years back to Punch, 1632');
+assert.equal(threadBack(thread(nodes, 's:Punch')), null);
 
 assert.equal(fromLine({ from: nodes[5] }), 'Riff of Manhattan, 1882');
 assert.equal(fromLine({ from: nodes[1] }), 'From Sour, 1856');
