@@ -27,8 +27,10 @@ interface DrinkControlsProps {
   onEdit: () => void;
   /** What the edit button says to a screen reader; the ingredient page reuses these controls. */
   editLabel?: string;
-  /** Ingredients keep a favourites heart on the device; drinks go to To make. */
-  saveAs?: 'toMake' | 'favourite';
+  /** The ingredient page's More (three dots) holds edit and the rest. */
+  editIcon?: 'pencil' | 'ellipsis';
+  /** Ingredients save to your bar (My Bar); drinks go to To make. */
+  saveAs?: 'toMake' | 'bar';
   /** The drink page: Share as its own button (left out while viewing as another role, when More holds it). */
   onShare?: () => void;
   /** The drink page's More button. On phones it holds Edit, so the pencil goes; wide screens show a labelled Edit beside it. */
@@ -43,7 +45,7 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake', onShare, more, backOnly }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', editIcon = 'pencil', saveAs = 'toMake', onShare, more, backOnly }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -82,8 +84,8 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
         {backOnly ? null : (
         <View style={styles.right}>
           <GlassButton
-            accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
-            icon={`${saveAs === 'favourite' ? 'heart' : 'bookmark'}${saved ? '.fill' : ''}`}
+            accessibilityLabel={saveAs === 'bar' ? (saved ? 'Take off your bar' : 'Save to your bar') : saved ? 'Remove from To make' : 'Add to To make'}
+            icon={saved ? 'bookmark.fill' : 'bookmark'}
             scheme={right}
             onPress={onToggleSaved}
           />
@@ -92,7 +94,7 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
           ) : null}
           {onShare ? <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" scheme={right} onPress={onShare} /> : null}
           {canEdit && (!more || wide) ? (
-            <GlassButton accessibilityLabel={editLabel} icon="pencil" label={more ? 'Edit' : undefined} scheme={right} onPress={onEdit} />
+            <GlassButton accessibilityLabel={editLabel} icon={more ? 'pencil' : editIcon} label={more ? 'Edit' : undefined} scheme={right} onPress={onEdit} />
           ) : null}
           {more}
         </View>
