@@ -36,6 +36,12 @@ export interface TreeNode {
   bar: string | null;
   barId: string | null;
   barClosed: boolean;
+  /** The first bar's city ("Oakland"). */
+  city: string | null;
+  /** A modern classic (items.origin 'Modern Classic'): drawn as a ring. */
+  modern: boolean;
+  /** Its spirits (ids from lib/drinkStyles SPIRITS), read from its ingredient lines. */
+  spirits: string[];
   /** Bars' versions linked to it. */
   versions: number;
 }
