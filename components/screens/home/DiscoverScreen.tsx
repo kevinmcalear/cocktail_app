@@ -223,6 +223,7 @@ export function DiscoverScreen() {
             more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
+            area={area}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}

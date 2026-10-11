@@ -52,6 +52,7 @@ export function TonightScreen() {
             imageUrl={item.imageUrl}
             glass={item.glass}
             caption={item.category !== 'Cocktail' ? item.category : undefined}
+            displayName
           />
         )}
         contentContainerStyle={[column, { paddingBottom: bottom }]}

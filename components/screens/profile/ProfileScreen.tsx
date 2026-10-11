@@ -252,6 +252,8 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
             originals={originals}
             selfId={profile.id}
             columns={columns}
+            layout={profile.kind === 'bar' ? 'rows' : 'tiles'}
+            ownerName={profile.display_name}
             emptyText={profile.kind === 'bar' ? 'No drinks credited to this bar yet.' : 'No drinks credited to them yet.'}
           />
         )
