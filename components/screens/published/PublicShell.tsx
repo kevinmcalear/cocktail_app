@@ -1,80 +1,84 @@
-import { useRouter } from 'expo-router';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { DrinkHero } from '@/components/screens/drink/DrinkHero';
+import { BackbarTheme, Body, DrinkImage, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 
 import { CouldNotLoad, NotAvailable, type LoadFailure } from '../safety/NotAvailable';
+import { PublicFooter, PublicNav } from './PublicChrome';
+
+/**
+ * A public page's frame (ppl-pub-* boards): the site nav on top, the page in
+ * a centred column up to 1240 wide, the footer at the end. Opens signed out.
+ */
+export function PublicPage({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <BackbarTheme>
+      <WebHead>
+        <title>{title}</title>
+      </WebHead>
+      <PageFrame>{children}</PageFrame>
+    </BackbarTheme>
+  );
+}
+
+function PageFrame({ children }: { children: ReactNode }) {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  return (
+    <ScrollView
+      style={[styles.screen, { backgroundColor: ds.c.ground }]}
+      contentContainerStyle={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingHorizontal: gutter,
+      }}
+    >
+      <View style={styles.column}>
+        <PublicNav />
+        <View style={styles.content}>{children}</View>
+        <PublicFooter />
+      </View>
+    </ScrollView>
+  );
+}
 
 interface PublicShellProps {
   title: string;
   imageUrl: string | null;
   generated?: boolean;
   glass?: string | null;
-  /** The drink's id: with no picture, its drawn sketch (signed in; signed out it's the glass). */
+  /** The drink's id: with no picture, its drawn sketch. */
   itemId?: string | null;
   children: ReactNode;
 }
 
 /**
- * The frame of a public page (a published drink, a release): the picture full
- * bleed with the page over it on phones, side by side on wide screens, like
- * the drink page. Opens signed out too.
+ * A public page with one picture (a release cover): the picture card in its
+ * own column beside the page on wide screens, above it on phones.
  */
-export function PublicShell(props: PublicShellProps) {
+export function PublicShell({ title, imageUrl, generated, glass, itemId, children }: PublicShellProps) {
+  const wide = useBreakpoint() !== 'phone';
   return (
-    <BackbarTheme>
-      <WebHead>
-        <title>{props.title}</title>
-      </WebHead>
-      <Frame {...props} />
-    </BackbarTheme>
+    <PublicPage title={title}>
+      <View style={wide ? styles.row : styles.stack}>
+        <View style={wide ? styles.pictureColumn : undefined}>
+          <PublicPicture name={title} imageUrl={imageUrl} generated={generated} glass={glass} itemId={itemId} />
+        </View>
+        <View style={[styles.body, wide && styles.flex]}>{children}</View>
+      </View>
+    </PublicPage>
   );
 }
 
-function Frame({ title, imageUrl, generated, glass, itemId, children }: PublicShellProps) {
-  const ds = useDs();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const gutter = useGutter();
+/** The picture card on the house paper: 380 tall beside a page, 220 above one on a phone. */
+export function PublicPicture({ name, imageUrl, generated, glass, itemId }: { name: string; imageUrl: string | null; generated?: boolean; glass?: string | null; itemId?: string | null }) {
   const wide = useBreakpoint() !== 'phone';
-  const { width, height } = useWindowDimensions();
-  const heroHeight = wide ? height - insets.top : Math.min(width, height * 0.42);
-  // Public pages show one picture: the drink's hero or the release cover.
-  const pictures = imageUrl ? [{ url: imageUrl, isSketch: !!generated, isOutdated: false }] : [];
-  const hero = <DrinkHero name={title} pictures={pictures} glass={glass ?? null} itemId={itemId} height={heroHeight} fade={!wide} />;
-  const body = <View style={[styles.body, { paddingHorizontal: gutter }]}>{children}</View>;
-
-  return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {wide ? (
-        <View style={styles.row}>
-          <View style={styles.heroColumn}>{hero}</View>
-          <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: space.xxxl }}>
-            <View style={styles.readable}>{body}</View>
-          </ScrollView>
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-          {hero}
-          <View style={{ marginTop: -space.xxl }}>{body}</View>
-        </ScrollView>
-      )}
-      <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
-        <GlassButton
-          accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-          onMedia={!!imageUrl}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        />
-      </View>
-    </View>
-  );
+  return <DrinkImage source={imageUrl} generated={generated} glass={glass} itemId={itemId} accessibilityLabel={name} aspectRatio={0} style={{ height: wide ? 380 : 220 }} priority="high" />;
 }
 
 type Loadable = Pick<UseQueryResult, 'isError' | 'refetch'>;
@@ -105,10 +109,11 @@ export function PublicMissing({ loading, what, failed }: { loading: boolean; wha
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  flex: { flex: 1 },
-  row: { flex: 1, flexDirection: 'row' },
-  heroColumn: { width: '42%' },
-  readable: { maxWidth: 720, width: '100%' },
+  flex: { flex: 1, minWidth: 0 },
+  column: { width: '100%', maxWidth: layout.page.wide, alignSelf: 'center' },
+  content: { paddingVertical: space.xl, gap: space.xl },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
+  stack: { gap: space.lg },
+  pictureColumn: { width: 320 },
   body: { gap: space.lg },
-  controls: { position: 'absolute' },
 });
