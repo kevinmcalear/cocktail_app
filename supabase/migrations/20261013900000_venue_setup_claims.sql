@@ -257,7 +257,12 @@ BEGIN
                 RAISE EXCEPTION 'That time zone doesn''t look right.' USING ERRCODE = '22023';
             END IF;
         ELSIF v_key = 'phone' THEN
-            IF jsonb_typeof(v_value) <> 'string' OR NOT ((v_value #>> '{}') ~ '^\+?[0-9][0-9 ().-]{2,30}[0-9]$' AND (v_value #>> '{}') = btrim(v_value #>> '{}')) THEN
+            -- Same as profiles_phone_shape (20261013100000).
+            IF jsonb_typeof(v_value) <> 'string' OR NOT (
+                (v_value #>> '{}') ~ '^\+?[0-9 ().-]{5,29}$'
+                AND (v_value #>> '{}') = btrim(v_value #>> '{}')
+                AND char_length(regexp_replace(v_value #>> '{}', '[^0-9]', '', 'g')) >= 6
+            ) THEN
                 RAISE EXCEPTION 'That phone number doesn''t look right.' USING ERRCODE = '22023';
             END IF;
         ELSIF v_key = 'website' THEN
