@@ -71,6 +71,10 @@ export interface TimelineFilter {
   family: string | null;
   /** Show historic styles (Punch, Sling, Sour) as well as drinks. */
   styles: boolean;
+  /** A spirit id (lib/drinkStyles SPIRITS), or null for any. */
+  spirit?: string | null;
+  /** A city or a bar's name, or null for anywhere. */
+  place?: string | null;
 }
 
 export interface TimelineRow {
@@ -93,8 +97,26 @@ export interface TimelineSection {
 const byYear = (a: TreeNode, b: TreeNode) => (a.year ?? 0) - (b.year ?? 0) || (a.kind === b.kind ? 0 : a.kind === 'style' ? -1 : 1) || a.name.localeCompare(b.name);
 
 function passes(n: TreeNode, filter: TimelineFilter): boolean {
-  if (n.kind === 'style' && !filter.styles) return false;
-  return !filter.family || n.family === filter.family || (n.kind === 'style' && n.family === 'trunk');
+  if (n.kind === 'style') return filter.styles && (!filter.family || n.family === filter.family || n.family === 'trunk');
+  if (filter.family && n.family !== filter.family) return false;
+  if (filter.spirit && !n.spirits.includes(filter.spirit)) return false;
+  return !filter.place || n.city === filter.place || n.bar === filter.place;
+}
+
+/** Cities, then bars, that first poured a drink, most drinks first: the Bar or city menu. */
+export function placeOptions(nodes: readonly TreeNode[]): { kind: 'city' | 'bar'; name: string; count: number }[] {
+  const tally = (pick: (n: TreeNode) => string | null) => {
+    const counts = new Map<string, number>();
+    for (const n of nodes) {
+      const v = n.kind === 'drink' ? pick(n) : null;
+      if (v) counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  };
+  return [
+    ...tally((n) => n.city).map(([name, count]) => ({ kind: 'city' as const, name, count })),
+    ...tally((n) => n.bar).map(([name, count]) => ({ kind: 'bar' as const, name, count })),
+  ];
 }
 
 /** Dated nodes, oldest first, one section per era that has any. Undated ones are left out (see undatedCount). */
