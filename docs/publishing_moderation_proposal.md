@@ -80,7 +80,7 @@ Runs as its owner, like `app_recipe_presentation`, and is readable by `anon` and
 Two kinds of row:
 
 - **Published drinks**: `publish_mode` isn't `private`, no moderation hold, and the bar (or, for a person's own drink, its creator) has a public, unmoderated profile. A person's own drink also drops out when the caller and its creator have blocked each other.
-- **References** (`is_reference = true`): the glass, ice, family and methods those drinks use, and the generic ingredients of `spec` drinks. Name, type and picture only; description and bar are NULL. This is how a stranger's app can say "Rocks glass" and "Honey-ginger syrup" without reading the bar's rows. A house-made syrup's own recipe stays private unless the syrup itself is published with its spec.
+- **References** (`is_reference = true`): the glass, ice, family and methods those drinks use, and the shared-catalog ingredients of `spec` drinks (each line's parent, generic or the ingredient itself, as a stranger reads it). Name, type and picture only; description and bar are NULL. This is how a stranger's app can say "Rocks glass" and "Sweet Vermouth" without reading the bar's rows. A bar's own house-made ingredient is never a reference: it is named only when it is published in its own right (then it is a published row, not a reference), and otherwise the spec shows "House ingredient" (`20261012700000_public_spec_ingredient_names.sql`, the same rule as `public_spec_changes`). Its own recipe stays private unless it is published with its spec.
 
 ### `app_recipe_presentation`
 
@@ -176,7 +176,7 @@ Kevin answered questions 1, 3, 6 and 7. The fifth migration applies the answers 
 **Layered publishing.** A drink's publish mode is the first of: its own setting (`items.publish_mode`, now nullable: NULL inherits), the most open setting among its own bar's menus that set one (`menus.publish_mode`, NULL inherits), the bar's default (`bars.default_publish_mode`, `private` unless set), then `private`.
 
 - A bar can be open by default, publish one menu as descriptions, and keep a single drink private.
-- It reaches down to the ingredient. A bar's house-made ingredient follows the same rule, and its own recipe is public only when its effective mode is `spec`. A drink's published spec still names the ingredient either way.
+- It reaches down to the ingredient. A bar's house-made ingredient follows the same rule, and its own recipe is public only when its effective mode is `spec`. A drink's published spec names it only when it is published (any mode other than `private`); otherwise the line reads "House ingredient". Changed on 2026-10-09: it used to be named either way.
 - A menu only publishes its own bar's drinks. Personal and catalogue drinks have no bar default or menus, so only their own setting counts.
 - Setting a bar default or a menu mode needs the `publish` capability. Opening up needs a public profile, and home menus can't be published.
 - `private.effective_publish_mode(item)` gives the answer to triggers and policies. `published_items` works it out inline, and its `publish_mode` column is now the effective mode.

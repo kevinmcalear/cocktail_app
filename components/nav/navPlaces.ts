@@ -24,8 +24,7 @@ const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
  *
  * ponytail: "Roles and access" (drawn in the Venue section and the venue
  * menu) has no page yet; the venue tools work adds one. Add it to `venue`
- * between Brand and Venue settings when its route lands. "This week" comes
- * with PR #491's /week page.
+ * between Brand and Venue settings when its route lands.
  */
 export function useNavPlaces() {
   const { mode } = useMode();
@@ -52,5 +51,7 @@ export function useNavPlaces() {
       : [];
   // History sits under Discover in the sidebar (decided on the canvas), in both modes.
   const history: Place = { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' };
-  return { home, venue, tabs, work, venuePlaces, history };
+  // This week: the venue's week, or at home the bars you love and your dated menus. The sidebar lists it itself (WeekNav).
+  const week: Place = { key: 'week', label: 'This week', icon: 'calendar', path: '/week' };
+  return { home, venue, tabs, work, venuePlaces, history, week };
 }
