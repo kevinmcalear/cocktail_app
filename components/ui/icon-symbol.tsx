@@ -107,6 +107,14 @@ const MAPPING = {
   'trophy': 'emoji-events',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
+  // Menus: the R&D tile, printing, and a builder row's ... menu.
+  'square.grid.2x2': 'grid-view',
+  'printer': 'print',
+  'clock': 'schedule',
+  'arrow.up.to.line': 'vertical-align-top',
+  'arrow.up.right.square': 'open-in-new',
+  'arrow.turn.down.right': 'subdirectory-arrow-right',
+  'square.on.square': 'library-add',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
   'rectangle.stack': 'style',
 } satisfies IconMapping;

@@ -72,13 +72,14 @@ function DrinkLine({ drink, centered, card = false, isNew = false }: { drink: Me
           </Headline>
         )}
         {isNew ? <NewMark /> : null}
-        {price ? <Spec>{price}</Spec> : null}
       </View>
       {drink.line ? (
         <Caption tone="muted" align={centered ? 'center' : undefined}>
           {drink.line}
         </Caption>
       ) : null}
+      {/* The guest card's price sits under the line. */}
+      {price ? <Spec align={centered ? 'center' : undefined}>{price}</Spec> : null}
     </View>
   );
 }

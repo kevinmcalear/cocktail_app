@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, LockedSection, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
@@ -14,7 +14,7 @@ import { useMode } from '@/hooks/useMode';
 import { groupMenus, plural } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
-import { MenuCard, MenuListRow } from './MenuRows';
+import { MenuCard, MenuListRow, MenuPastLine } from './MenuRows';
 import { NewMenuSheet } from './NewMenuSheet';
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -54,8 +54,9 @@ export function MenusScreen() {
 
   const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
   const mine = barId ? [] : menus.filter((m) => m.barId === null && m.createdBy === userId);
-  // Not the venue's name: the sidebar and the chip already say it.
+  // The venue leads: "Little Rye · 1 on now · 2 coming up".
   const summary = [
+    barId ? (active?.name ?? null) : null,
     venue.on.length ? `${venue.on.length} on now` : null,
     venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
   ]
@@ -70,6 +71,8 @@ export function MenusScreen() {
           subtitle={summary}
           onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
           backLabel={barId ? 'Back to Tonight' : 'Back'}
+          backText={barId ? 'Tonight' : 'Collection'}
+          actionOnTop
           action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
         />
 
@@ -113,9 +116,11 @@ export function MenusScreen() {
         ) : null}
         {venue.previous.length ? (
           <Group title="Previous">
-            {venue.previous.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} />
-            ))}
+            <View>
+              {venue.previous.map((m) => (
+                <MenuPastLine key={m.id} menu={m} />
+              ))}
+            </View>
           </Group>
         ) : null}
         {venue.rnd.length && barId && canBuild ? (
@@ -142,5 +147,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: space.lg },
   group: { gap: space.sm },
-  groupTitle: { letterSpacing: 1.5 },
+  groupTitle: { letterSpacing: 1.5, fontFamily: fontFamilies.mono },
 });

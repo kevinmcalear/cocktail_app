@@ -11,8 +11,8 @@ import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useMenu } from '@/hooks/useMenus';
-import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
+import { useMenu, useVenueMenus } from '@/hooks/useMenus';
+import { groupMenus, homeMenuLine, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
 import { HomeNightSheet } from './HomeNight';
@@ -62,6 +62,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const [sharing, setSharing] = useState(false);
   const userId = useUserId();
   const caps = useCapabilities(menu?.barId);
+  const { data: venueMenus } = useVenueMenus(menu?.barId ?? null);
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
   if (!menu) {
@@ -81,6 +82,11 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const hero = !!menu.coverUrl || pictures.length > 0;
   const go = (href: string) => router.push(href as Href);
   const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
+  // NEW: a venue's drinks no menu that has finished had.
+  const previous = menu.barId ? groupMenus((venueMenus ?? []).filter((m) => m.barId === menu.barId && m.id !== menu.id), now).previous : [];
+  const fresh = previous.length ? newDrinkIds(pictures.map((d) => d.id), previous) : undefined;
+  // A home menu, or a venue's one-night menu, shares as a link without going live (b15); other venue menus as the guest card.
+  const shareable = canEdit && (!menu.barId || isOneNightMenu(menu));
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -105,13 +111,12 @@ export function MenuScreen({ menuId }: { menuId: string }) {
           <View style={styles.actions}>
             {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
             {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
-            {/* Your home menu shares as a link or a card; a venue's menu as its guest card. */}
-            <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (canEdit && !menu.barId ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
+            <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
             {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
             {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
             {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
           </View>
-          {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" />}
+          {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" newIds={fresh} />}
         </View>
       </ScrollView>
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>

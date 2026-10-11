@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, radius, space } from '@/constants/tokens';
-import { homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
+import { STATUS } from '@/constants/palette';
+import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { readableAccent, withAlpha } from '@/lib/color';
+import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
 import { MenuVisual } from './MenuVisual';
@@ -71,10 +73,12 @@ export function MenuOnRow({ menu, now }: { menu: MenuSummary; now: number }) {
 }
 
 /**
- * A menu in a list: coming up (with its date), a draft (dashed, still being
- * built: a venue menu with no dates, or a home menu with no night), previous
- * (its dates), or an R&D collection (solid, never dated). `note` adds a line
- * of its own, like how many of the drinks you can make at home.
+ * A menu in a list: coming up (a date tile tinted in the accent, then the kind,
+ * drinks and date: "One night · 4 drinks · Fri 31 Oct"), a draft (dashed,
+ * with an amber "1 section short · edited yesterday"), or an R&D collection
+ * (an R&D tile, "R&D · 4 drinks · a control and three trials"). Names in the
+ * venue's display face; only drafts and R&D carry a chevron. `note` adds a
+ * line of its own, like how many of the drinks you can make at home.
  */
 export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
@@ -83,13 +87,16 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
   const startsAt = menu.event?.startsAt ?? menu.startsAt;
   // A home menu's night is a day (2026-10-04), not an instant: read it as local midnight.
   const start = status !== 'upcoming' ? null : startsAt ? new Date(startsAt) : menu.menuDate ? new Date(`${menu.menuDate}T00:00:00`) : null;
-  // With the date block showing, the caption doesn't repeat the date.
-  const meta = start ? [menu.guestCount ? plural(menu.guestCount, 'guest') : null, plural(menu.itemIds.length, 'drink')].filter(Boolean).join(' · ') : metaLine(menu, now);
-  const label = [menu.event?.name, meta, note].filter(Boolean).join(' · ');
+  const amber = readableAccent(STATUS.warning, ds.c.ground);
+  const drinks = plural(new Set(menu.itemIds).size, 'drink');
+  const meta =
+    status === 'upcoming' ? comingUpLine(menu) : status === 'draft' ? draftLine(menu, now) : status === 'rnd' ? ['R&D', drinks, menu.description].filter(Boolean).join(' · ') : metaLine(menu, now);
+  const label = [status === 'upcoming' ? null : menu.event?.name, meta, note].filter(Boolean).join(' · ');
+  const chevron = status === 'draft' || status === 'rnd';
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, menu.event?.name, metaLine(menu, now), note].filter(Boolean).join(', ')}
+      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, label].filter(Boolean).join(', ')}
       onPress={() => router.push(menuHref(menu.id))}
       style={[
         styles.row,
@@ -98,18 +105,43 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
       ]}
     >
       {start ? (
-        <View style={[styles.date, { backgroundColor: ds.c.raised }]}>
-          <Caption tone="muted">{start.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}</Caption>
-          <DsText variant="spec">{start.getDate()}</DsText>
+        <View style={[styles.date, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
+          <Caption color={ds.accentText}>{start.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}</Caption>
+          <DsText variant="spec" color={ds.accentText}>
+            {start.getDate()}
+          </DsText>
+        </View>
+      ) : status === 'rnd' ? (
+        <View style={[styles.tile, { backgroundColor: ds.c.raised }]} aria-hidden>
+          <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} />
         </View>
       ) : null}
       <View style={styles.flex}>
-        <Headline numberOfLines={1}>{menu.name}</Headline>
-        <Caption tone="muted" numberOfLines={1}>
+        <Headline numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+          {menu.name}
+        </Headline>
+        <Caption tone="muted" color={status === 'draft' ? amber : undefined} numberOfLines={1}>
           {label}
         </Caption>
       </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+      {chevron ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : null}
+    </PressableScale>
+  );
+}
+
+/** A previous menu: a plain divided line, its name in the display face and its dates and count in mono. */
+export function MenuPastLine({ menu }: { menu: MenuSummary }) {
+  const ds = useDs();
+  const router = useRouter();
+  const line = previousLine(menu);
+  return (
+    <PressableScale role="link" accessibilityLabel={`${menu.name}, ${line} drinks`} onPress={() => router.push(menuHref(menu.id))} style={[styles.past, { borderBottomColor: ds.c.line }]}>
+      <Headline numberOfLines={1} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+        {menu.name}
+      </Headline>
+      <Caption tone="muted" style={styles.mono}>
+        {line}
+      </Caption>
     </PressableScale>
   );
 }
@@ -130,5 +162,8 @@ const styles = StyleSheet.create({
   },
   onRow: { paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderWidth: StyleSheet.hairlineWidth },
   thumb: { width: 48, height: 48, borderRadius: radius.control, overflow: 'hidden' },
+  tile: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
+  past: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingHorizontal: 2, borderBottomWidth: StyleSheet.hairlineWidth },
+  mono: { fontFamily: fontFamilies.mono },
   date: { width: 52, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
 });

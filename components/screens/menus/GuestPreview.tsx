@@ -6,6 +6,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSeque
 import { BackbarTheme, Body, BrandProvider, TextLink, useDs } from '@/components/ds';
 import { radius, space, springs } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
+import { cardWhen } from '@/lib/menus';
 
 import { Eyebrow } from '../addDrink/WizardChrome';
 import { GuestCardContent } from './MenuCardScreen';
@@ -33,7 +34,7 @@ export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: V
         <BackbarTheme scheme="light">
           <BrandProvider accent={venue?.accent ?? undefined}>
             <Paper count={count}>
-              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} startsAt={editor.menu.startsAt} venue={venue} sections={sections} pictures="above" compact />
+              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} when={cardWhen(editor.menu)} venue={venue} sections={sections} pictures="above" compact />
             </Paper>
           </BrandProvider>
         </BackbarTheme>

@@ -63,8 +63,8 @@ type PictureItem = { id: string; name: string; item_images: ItemImageLink[] | It
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-4': summaries gained updatedAt, description and the plan, so a persisted older list isn't read back.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-4', barId, userId] as const,
+  // 'venue-5': summaries gained updatedAt, description, the plan and shortSections, so a persisted older list isn't read back.
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-5', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
@@ -88,7 +88,7 @@ export function useVenueMenus(barId: string | null | undefined) {
         // Every drink's id (Library's "on a menu" filter), but pictures for
         // only the first few: a cover-less menu's visual shows MENU_PICTURES.
         .select(
-          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at)`
+          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at), menu_sections(min_items, menu_drinks(count))`
         )
         .or(scope)
         .order('created_at', { ascending: false })
@@ -102,6 +102,10 @@ export function useVenueMenus(barId: string | null | undefined) {
         return {
           ...toSummaryBase(row as MenuRow),
           itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),
+          // Sections still short of their least: a draft's amber "1 section short".
+          shortSections: ((row.menu_sections ?? []) as { min_items: number | null; menu_drinks: { count: number }[] }[]).filter(
+            (sec) => (sec.min_items ?? 0) > (sec.menu_drinks?.[0]?.count ?? 0)
+          ).length,
           pictures: drinks.flatMap((d) => {
             const item = one(d.item);
             if (!item) return [];
