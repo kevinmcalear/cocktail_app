@@ -84,8 +84,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
-  // Opened from a search: the way back carries it ("martini", disc-search-bar).
-  const q = useLocalSearchParams<{ q?: string }>().q;
+  const q = useLocalSearchParams<{ q?: string }>().q; // opened from a search: the way back carries it
   const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
 
   const controls = (
@@ -199,22 +198,21 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
         <BarStats profile={profile} originals={originals.length} />
       )}
 
-      {profile.kind === 'bar' ? <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} /> : null}
-
-      {profile.kind === 'bar' ? <BarMatches barProfileId={profile.id} /> : null}
-
-      {/* The matches, then the menu it's pouring (b12); the rest of the page follows. */}
-      {profile.kind === 'bar' ? <OnTheMenu profileId={profile.id} /> : null}
-
-      {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
+      {profile.kind === 'bar' ? (
+        <>
+          <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
+          <BarMatches barProfileId={profile.id} />
+          <OnTheMenu profileId={profile.id} />
+          <BarClassics barId={profile.bar_id} />
+        </>
+      ) : null}
 
       <Awards profileId={profile.id} />
 
       {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 
       {person ? <Positions profile={profile} /> : null}
-
-      {profile.kind === 'person' ? <WorkedMenus profileId={profile.id} /> : null}
+      {person ? <WorkedMenus profileId={profile.id} /> : null}
 
       {showsMade ? <MenuCredits credits={credits} names={names} /> : null}
 
