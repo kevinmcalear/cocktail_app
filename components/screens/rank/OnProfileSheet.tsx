@@ -64,6 +64,7 @@ function OnProfileSheet({ visible, itemId, name, onClose }: { visible: boolean; 
       visible={visible}
       onClose={onClose}
       accessibilityLabel="On your profile"
+      style={styles.panel}
       header={
         <View style={styles.head}>
           <View style={styles.flex}>
@@ -138,6 +139,7 @@ function OnProfileSheet({ visible, itemId, name, onClose }: { visible: boolean; 
 }
 
 const styles = StyleSheet.create({
+  panel: { maxWidth: 520, padding: space.xl, paddingTop: space.sm },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   score: { alignItems: 'flex-end' },
