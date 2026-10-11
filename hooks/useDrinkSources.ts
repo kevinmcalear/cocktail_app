@@ -1,6 +1,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { chunk } from '@/lib/commandSearchGrid';
+import { ingredientLine } from '@/lib/menus';
+import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { supabase } from '@/lib/supabase';
 
 /** Where a drink comes from, for the line under its name in a short list: "Classic", "Morgenthaler", "Little Rye · Melbourne". */
@@ -54,6 +56,29 @@ export function useDrinkSources(itemIds: readonly string[]) {
           const classic = !!r.is_catalog || r.origin === 'Classic';
           return [r.id, { by: classic ? 'Classic' : (r.creator?.display_name ?? r.origin_bar?.display_name ?? null), city: r.origin_bar?.city ?? null, classic, riff: !classic && !!r.riff_of_id, versions: r.versions?.[0]?.count ?? 0 }];
         })
+      );
+    },
+  });
+}
+
+type LineRow = { id: string; recipes: { sort_order: number | null; created_at?: string; display_ingredient: { name: string } | { name: string }[] | null }[] | null };
+const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
+
+/** Each drink's ingredients in spec order ("Gin, Campari, Sweet Vermouth"), for a classic's search caption. */
+export function useDrinkLines(itemIds: readonly string[]) {
+  const ids = [...new Set(itemIds)].sort();
+  return useQuery({
+    queryKey: ['drink-lines', ids],
+    enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from('items')
+        .select('id, recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))')
+        .in('id', ids.slice(0, 100));
+      if (error) throw error;
+      return Object.fromEntries(
+        ((data ?? []) as unknown as LineRow[]).map((r) => [r.id, ingredientLine(sortRecipesByOrder(r.recipes ?? []).map((x) => one(x.display_ingredient)?.name))])
       );
     },
   });

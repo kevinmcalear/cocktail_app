@@ -537,7 +537,11 @@ export interface PublicPerson {
   is_claimed: boolean;
   /** Where they work now, when a job says so: "Bar Bianca". */
   current_bar: string | null;
+  /** Their current job, when they show it: "Head bartender, Little Rye". */
+  job: string | null;
 }
+
+type PersonRow = Omit<PublicPerson, 'job' | 'current_bar'> & { jobs: { title: string | null; is_current: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null };
 
 /** Public people by name, so someone can find a profile we already have. */
 export function usePublicPeople(search: string) {
@@ -548,15 +552,18 @@ export function usePublicPeople(search: string) {
     queryFn: async (): Promise<PublicPerson[]> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(is_current, bar:profiles!bar_profile_id(display_name))')
+        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
         .eq('kind', 'person')
         .eq('is_public', true)
         .ilike('display_name', `%${term}%`)
         .order('display_name')
         .limit(8);
       if (error) throw error;
-      type Row = Omit<PublicPerson, 'current_bar'> & { jobs: { is_current: boolean; bar: { display_name: string } | null }[] | null };
-      return ((data ?? []) as unknown as Row[]).map(({ jobs, ...p }) => ({ ...p, current_bar: jobs?.find((j) => j.is_current)?.bar?.display_name ?? null }));
+      return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
+        // A current job both sides confirmed, as the profile shows it.
+        const now = (jobs ?? []).find((j) => j.is_current && j.person_accepted && j.bar_accepted && j.bar);
+        return { ...p, current_bar: now?.bar?.display_name ?? null, job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null };
+      });
     },
   });
 }

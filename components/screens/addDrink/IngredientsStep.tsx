@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
-import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { Body, Button, IngredientThumb, Spec, useDs } from '@/components/ds';
+import { layout, radius, space } from '@/constants/tokens';
+import { amountLabel, COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import type { PrepDraft } from '@/lib/prepKinds';
+import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount } from '@/lib/specDefaults';
 import { capitalize } from '@/lib/stringUtils';
-import type { Technique } from '@/lib/techniques';
+import { techniqueById, type Technique } from '@/lib/techniques';
 import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
-import { BalanceCard, GoesWith } from './GoesWith';
+import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
@@ -24,7 +24,7 @@ import { WizardChip } from './WizardChrome';
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
-/** How long "Removed … Undo" stays. */
+/** How long "Removed … Undo", and "Shrub added", stay. */
 const UNDO_MS = 10000;
 
 interface IngredientsStepProps extends StepProps {
@@ -34,6 +34,8 @@ interface IngredientsStepProps extends StepProps {
   coreIds?: ReadonlySet<string>;
   /** Off for a house recipe (a syrup, a batch): no cocktail pours, pairings, classics or balance. */
   forDrink?: boolean;
+  /** At home: the bottles on your shelf, so search says "On your shelf". */
+  shelf?: ReadonlySet<string>;
 }
 
 /**
@@ -42,7 +44,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -62,12 +64,16 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
+  /** A prep just made in the builder: "Shrub added" for a moment. */
+  const [madePrep, setMadePrep] = useState<string | null>(null);
   // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
   const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
+  // Its generic's id (Mezcal's is Agave Spirit), for matching classics.
+  const genericOf = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
   // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
   const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
   const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
@@ -82,13 +88,21 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     const t = setTimeout(() => setRemoved(null), UNDO_MS);
     return () => clearTimeout(t);
   }, [removed]);
+  useEffect(() => {
+    if (!madePrep) return;
+    const t = setTimeout(() => setMadePrep(null), UNDO_MS);
+    return () => clearTimeout(t);
+  }, [madePrep]);
 
-  const add = (pick: WizardPick, prep?: PrepDraft) => {
+  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
     const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
-    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null) }] });
+    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null) }] });
     setRemoved(null);
   };
+  // What the prep is, for "Shrub added": its kind, its technique, else its name.
+  const prepWord = (prep: PrepDraft, name: string) =>
+    (prep.technique ? techniqueById(prep.technique)?.name : prep.kind !== 'other' ? PREP_KINDS.find((k) => k.id === prep.kind)?.name : null) ?? name;
   const change = (key: string, c: Partial<WizardLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (line: WizardLine) => {
     setRemoved({ line, at: draft.lines.indexOf(line) });
@@ -110,7 +124,16 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l) =>
-            l.key === swapKey ? (
+            // While searching, the lines fold to what they are and how much, so the results fit.
+            typing && l.key !== swapKey ? (
+              <View key={l.key} role="listitem" style={[styles.compact, { borderBottomColor: ds.c.line }]}>
+                <IngredientThumb id={l.id} name={l.name} size={32} />
+                <Body numberOfLines={1} style={styles.flex}>
+                  {l.name}
+                </Body>
+                <Spec tone="muted">{amountLabel(l)}</Spec>
+              </View>
+            ) : l.key === swapKey ? (
               <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
                 <IngredientSearch
                   {...search}
@@ -170,7 +193,21 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch {...search} label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'} onPick={add} onTyping={setTyping} onMake={forDrink ? (name) => make(name) : undefined} />
+      <IngredientSearch
+        {...search}
+        label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
+        onPick={add}
+        onTyping={setTyping}
+        onMake={forDrink ? (name) => make(name) : undefined}
+        onLater={forDrink ? (name) => add({ id: null, name: capitalize(name) }, undefined, true) : undefined}
+        captions={forDrink}
+        shelf={shelf}
+      />
+      {madePrep ? (
+        <View role="status" style={[styles.undo, { backgroundColor: ds.c.raised }]}>
+          <Body style={[styles.flex, styles.status]}>{madePrep}</Body>
+        </View>
+      ) : null}
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}
@@ -181,9 +218,16 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         aliases={aliases}
         onClose={() => setMaking(null)}
         onDone={(prep) => {
-          if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique });
-          else if (editingKey) change(editingKey, { prep, technique: prep.technique });
+          if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined });
+          else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
           else if (makingName) add({ id: null, name: makingName }, prep);
+          setMaking(null);
+          // ponytail: the prep is saved with the drink, not before, so this says so rather than "saved".
+          if (!editingKey || replacing) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} added. It’s saved to your preps with the drink.`);
+        }}
+        onLater={() => {
+          if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
+          else if (makingName) add({ id: null, name: makingName }, undefined, true);
           setMaking(null);
         }}
       />
@@ -195,6 +239,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onClose={() => setHouseKey(null)}
       />
 
+      {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
+      {forDrink && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith
@@ -207,11 +253,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 ))}
               </View>
             }
+            after={<CloseToClassic ingredients={draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
           />
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>
       )}
-      {forDrink ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
     </View>
   );
 }
@@ -223,5 +269,7 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
+  status: { paddingVertical: space.md },
+  compact: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

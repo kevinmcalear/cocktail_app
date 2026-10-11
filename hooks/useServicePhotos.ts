@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase';
 import type { ServiceAngle } from '@/lib/servicePhotos';
 
 export interface AddServicePhoto {
-  angle: ServiceAngle;
+  /** A service angle, or the hero (the shot list's first slot). */
+  angle: ServiceAngle | 'hero';
   /** A local file, or a blob: URL from a web drop. */
   uri: string;
   /** The angle's old photo links, removed once the new one is saved. */

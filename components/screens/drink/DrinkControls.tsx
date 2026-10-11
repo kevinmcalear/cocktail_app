@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
@@ -27,17 +27,25 @@ interface DrinkControlsProps {
   onEdit: () => void;
   /** What the edit button says to a screen reader; the ingredient page reuses these controls. */
   editLabel?: string;
-  /** Ingredients keep a favourites heart on the device; drinks go to To make. */
-  saveAs?: 'toMake' | 'favourite';
+  /** The ingredient page's More (three dots) holds edit and the rest. */
+  editIcon?: 'pencil' | 'ellipsis';
+  /** Ingredients save to your bar (My Bar); drinks go to To make. */
+  saveAs?: 'toMake' | 'bar';
+  /** The drink page: Share as its own button (left out while viewing as another role, when More holds it). */
+  onShare?: () => void;
+  /** The drink page's More button. On phones it holds Edit, so the pencil goes; wide screens show a labelled Edit beside it. */
+  more?: ReactNode;
+  /** Wide drink page: the rest sit on its hero card (DrinkHeroActions), so only back here. */
+  backOnly?: boolean;
 }
 
 /**
- * Close, To make and edit, pinned to the top of the drink page. Over the
+ * Close, To make, Share and More (or edit), pinned to the top of the drink page. Over the
  * hero they take the picture's colours: dark glass on a photo, light glass on
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', editIcon = 'pencil', saveAs = 'toMake', onShare, more, backOnly }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -73,18 +81,24 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           />
         )}
+        {backOnly ? null : (
         <View style={styles.right}>
           <GlassButton
-            accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
-            icon={`${saveAs === 'favourite' ? 'heart' : 'bookmark'}${saved ? '.fill' : ''}`}
+            accessibilityLabel={saveAs === 'bar' ? (saved ? 'Take off your bar' : 'Save to your bar') : saved ? 'Remove from To make' : 'Add to To make'}
+            icon={saved ? 'bookmark.fill' : 'bookmark'}
             scheme={right}
             onPress={onToggleSaved}
           />
           {FEATURES.study ? (
             <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} scheme={right} onPress={onToggleStudyPile} />
           ) : null}
-          {canEdit ? <GlassButton accessibilityLabel={editLabel} icon="pencil" scheme={right} onPress={onEdit} /> : null}
+          {onShare ? <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" scheme={right} onPress={onShare} /> : null}
+          {canEdit && (!more || wide) ? (
+            <GlassButton accessibilityLabel={editLabel} icon={more ? 'pencil' : editIcon} label={more ? 'Edit' : undefined} scheme={right} onPress={onEdit} />
+          ) : null}
+          {more}
         </View>
+        )}
       </View>
     </>
   );
@@ -92,6 +106,6 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
 
 const styles = StyleSheet.create({
   bar: { position: 'absolute', top: 0, left: 0, right: 0, borderBottomWidth: StyleSheet.hairlineWidth, pointerEvents: 'none' },
-  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
+  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
 });

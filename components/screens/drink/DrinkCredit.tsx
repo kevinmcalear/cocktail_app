@@ -5,7 +5,8 @@ import { Body, DsText, Tag } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useDrinkCredit } from '@/hooks/useLineage';
-import { creditHint, creditLabel, creditSentence, type CreditPart, type CreditStatus, type LineageDrink } from '@/lib/lineage';
+import { useSpecMatches } from '@/hooks/useSpecMatches';
+import { creditHint, creditLabel, nameCredit, type CreditStatus } from '@/lib/lineage';
 
 /** Credit status as a word, with what it means for screen readers. Colour is never the only signal. */
 export function CreditTag({ status }: { status: CreditStatus | null }) {
@@ -19,28 +20,23 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
 }
 
 /**
- * The credit sentence as it reads under a name: a classic comes "From the
- * Whiskey Cocktail" (it isn't a riff), and a bar credited on its own has its
- * neighbourhood after it ("at Temple Bar, NoHo").
- */
-function underName(parts: CreditPart[], drink: LineageDrink): CreditPart[] {
-  const place = !drink.creator && drink.origin_bar?.locality ? drink.origin_bar : null;
-  return parts.flatMap((p, i) => {
-    if (i === 0 && drink.is_catalog && p.text === 'Riff of ') return [{ text: 'From the ' }];
-    return place && p.profileId === place.id ? [p, { text: `, ${place.locality}` }] : [p];
-  });
-}
-
-/**
  * Under the drink's name: what it's a riff of, who made it, where and when,
- * with the maker's picture and how sure the credit is ("· Suggested"). Names link to drinks
- * and profiles. Nothing when the drink has no credit or parent.
+ * with the maker's picture and how sure the credit is ("· Suggested"). Names
+ * link to drinks and profiles. A bar's copy of a classic poured to the same
+ * spec keeps the classic's credit (board drink-phone-barcopy): Little Rye's
+ * Penicillin is still Sam Ross's. Nothing when the drink has no credit or parent.
  */
 export function DrinkCredit({ itemId }: { itemId: string }) {
   const router = useRouter();
-  const { data: drink } = useDrinkCredit(itemId);
+  const { data: own } = useDrinkCredit(itemId);
+  const classicId = own?.riff_of?.is_catalog ? own.riff_of.id : null;
+  // The same key and ids as ClassicNote, so the page asks once.
+  const { data: matches } = useSpecMatches(classicId ? itemId : undefined, classicId ? [itemId] : []);
+  const same = !!classicId && matches?.[itemId]?.spec_match === 'same';
+  const { data: classic } = useDrinkCredit(same ? classicId : null);
+  const drink = same && classic ? classic : own;
   if (!drink) return null;
-  const parts = underName(creditSentence(drink, drink.riff_of ?? drink.lineage_parent), drink);
+  const parts = nameCredit(drink, drink.riff_of ?? drink.lineage_parent);
   if (!parts.length) return null;
   const who = drink.creator ?? drink.origin_bar;
   const status = creditLabel(drink.credit_status);

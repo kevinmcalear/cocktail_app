@@ -1,0 +1,68 @@
+import { useRouter, type Href } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+
+import { Button, Caption, TextLink } from '@/components/ds';
+import { space } from '@/constants/tokens';
+import { useSaveBatchAsPrep } from '@/hooks/useBatchPrep';
+import type { PrepLine } from '@/lib/batchPrep';
+import { shareText } from '@/lib/shareLink';
+
+interface BatchActionsProps {
+  name: string;
+  /** A venue batch: Save as prep card and Make now; at home, Share and Make it, tick as I go. */
+  barId: string | null;
+  /** May make a house prep at the venue (house_made). */
+  canPrep: boolean;
+  making: boolean;
+  onMake: () => void;
+  onDilution: () => void;
+  /** For the prep card: the bottle's recipe, its yield and how long it keeps. */
+  prep: { lines: PrepLine[]; yieldMl: number; shelfHours: number | null };
+  /** The batch as text, to share. */
+  text: string;
+  onSaved: () => void;
+}
+
+/**
+ * The batch sheet's footer (boards drink-sheet-batch-venue and -home): a
+ * venue saves the bottle as a prep card or makes it now; at home you share it
+ * or make it, ticking each line off. Making turns the lines into a checklist.
+ */
+export function BatchActions({ name, barId, canPrep, making, onMake, onDilution, prep, text, onSaved }: BatchActionsProps) {
+  const router = useRouter();
+  const save = useSaveBatchAsPrep(barId);
+  const make = making ? 'Done making' : barId ? 'Make now' : 'Make it, tick as I go';
+  return (
+    <View style={styles.block}>
+      <TextLink label="Dilution calculator ›" onPress={onDilution} />
+      {save.error ? <Caption tone="accent">{save.error.message || "Couldn't save the prep card. Check your connection and try again."}</Caption> : null}
+      <View style={styles.row}>
+        {barId ? (
+          canPrep ? (
+            <Button
+              label={save.isPending ? 'Saving…' : 'Save as prep card'}
+              variant="secondary"
+              disabled={save.isPending}
+              onPress={() =>
+                save.mutateAsync({ name, ...prep }).then((id) => {
+                  onSaved();
+                  router.push(`/ingredient/${id}` as Href);
+                }, () => {})
+              }
+              style={styles.flex}
+            />
+          ) : null
+        ) : (
+          <Button label="Share" icon="square.and.arrow.up" variant="secondary" onPress={() => void shareText(text, `${name} batch`)} style={styles.flex} />
+        )}
+        <Button label={make} variant={making ? 'secondary' : 'primary'} onPress={onMake} style={styles.flex} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  block: { gap: space.md },
+  row: { flexDirection: 'row', gap: space.sm },
+  flex: { flex: 1 },
+});
