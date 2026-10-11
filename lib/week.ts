@@ -1,3 +1,4 @@
+import { isHexColor } from './color';
 import { toDay } from './collection';
 
 /**
@@ -30,6 +31,8 @@ export interface WeekItem {
   imageUrl: string | null;
   glassKey: string | null;
   guestCount: number | null;
+  /** The guest bar's brand colour, when the week's own rows carry it (see withGuestColors). */
+  guestColor: string | null;
 }
 
 export interface WeekRow {
@@ -78,7 +81,22 @@ export const toWeekItem = (r: WeekRow): WeekItem => ({
   imageUrl: r.image_url,
   glassKey: r.glass_key,
   guestCount: r.guest_count,
+  guestColor: null,
 });
+
+/**
+ * Gives takeovers and guest shifts the guest bar's colour when the guest is a
+ * bar profile whose colour the week already holds (a bar you love, at home).
+ *
+ * ponytail: bar_week doesn't return the guest bar's colour, and bars are
+ * members-only, so a venue's own week can't see it. The full version is a
+ * guest_color column on bar_week / my_week / week_event.
+ */
+export function withGuestColors(items: WeekItem[]): WeekItem[] {
+  const colors = new Map<string, string>();
+  for (const i of items) if (i.barProfileId && isHexColor(i.barColor)) colors.set(i.barProfileId, i.barColor);
+  return items.map((i) => (i.guestProfileId && colors.has(i.guestProfileId) ? { ...i, guestColor: colors.get(i.guestProfileId)! } : i));
+}
 
 /** How many days "this week" covers, today included. */
 export const WEEK_DAYS = 7;
@@ -116,10 +134,19 @@ export function upcoming(items: WeekItem[], from: Date): WeekItem[] {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 
-/** Drinks added (or published) lately, newest first. */
-export function newDrinks(items: WeekItem[]): WeekItem[] {
-  return items.filter((i) => i.kind === 'drink').sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+/** Monday of the week `from` is in, at midnight: "New at Little Rye since Monday". */
+export function weekMonday(from: Date): Date {
+  return new Date(from.getFullYear(), from.getMonth(), from.getDate() - ((from.getDay() + 6) % 7));
 }
+
+/** Drinks added (or published) lately, newest first; `since` keeps the ones from then on. */
+export function newDrinks(items: WeekItem[], since?: Date): WeekItem[] {
+  const after = since?.toISOString() ?? '';
+  return items.filter((i) => i.kind === 'drink' && i.startsAt >= after).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+}
+
+/** "5 things on", "1 thing on". */
+export const thingsOn = (n: number) => `${n} ${n === 1 ? 'thing' : 'things'} on`;
 
 /** Each day of the week with what's on that day. */
 export function byDay(items: WeekItem[], from: Date, days = WEEK_DAYS): { day: string; items: WeekItem[] }[] {
@@ -150,6 +177,8 @@ export function kindLabel(item: Pick<WeekItem, 'kind' | 'eventKind' | 'isPublic'
   if (item.kind === 'menu') return 'Menu goes on';
   if (item.kind === 'drink') return 'New drink';
   if (item.kind === 'home_menu') return 'Your home menu';
+  // A tasting only the team sees is the staff's own.
+  if (item.eventKind === 'tasting' && !item.isPublic) return 'Staff tasting, team only';
   const label = EVENT_LABELS[item.eventKind ?? 'other'];
   return item.isPublic || item.eventKind === 'private' ? label : `${label}, team only`;
 }
@@ -170,11 +199,9 @@ export function dotTone(item: Pick<WeekItem, 'kind' | 'eventKind'>): DotTone {
   return 'accent';
 }
 
-/** "Today", "Tomorrow", or "Sat", for the sidebar's right-hand column. */
+/** "Tonight", or the weekday ("Sat"), for the sidebar's right-hand column and the week's lines. */
 export function shortDay(day: string, from: Date, locale?: string): string {
-  const days = weekDays(from, 2);
-  if (day === days[0]) return 'Today';
-  if (day === days[1]) return 'Tomorrow';
+  if (day === toDay(from)) return 'Tonight';
   const [y, m, d] = day.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: 'short' });
 }
@@ -195,8 +222,20 @@ export function timeLine(item: Pick<WeekItem, 'kind' | 'startsAt' | 'endsAt'>, l
   return item.endsAt ? `${fmt(item.startsAt)} to ${fmt(item.endsAt)}` : `${fmt(item.startsAt)} to late`;
 }
 
-/** The detail line under an item's name. */
-export function detailLine(item: WeekItem, locale?: string): string {
+/** "Eventbrite" from https://www.eventbrite.com/e/...: the site a ticket link goes to. */
+export function ticketHost(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parts = new URL(url).hostname.replace(/^www\./, '').split('.');
+    const name = parts.length > 2 && parts[parts.length - 2].length <= 3 ? parts[parts.length - 3] : parts[parts.length - 2];
+    return name ? name[0].toUpperCase() + name.slice(1) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The detail line under an item's name. `tickets: false` leaves the ticket site out, for cards that show it on its own line. */
+export function detailLine(item: WeekItem, locale?: string, { tickets = true }: { tickets?: boolean } = {}): string {
   const parts: string[] = [];
   if (item.kind === 'event') {
     const time = timeLine(item, locale);
@@ -204,6 +243,8 @@ export function detailLine(item: WeekItem, locale?: string): string {
     if (item.guestName) parts.push(item.eventKind === 'guest_shift' ? `with ${item.guestName}` : item.guestName);
     if (item.drinkCount) parts.push(`${item.drinkCount} ${item.drinkCount === 1 ? 'drink' : 'drinks'}`);
     if (item.houseMenuOn === false) parts.push('house menu off');
+    const host = tickets ? ticketHost(item.ticketUrl) : null;
+    if (host) parts.push(`tickets on ${host}`);
   } else if (item.kind === 'menu') {
     if (item.drinkCount != null) parts.push(`${item.drinkCount} ${item.drinkCount === 1 ? 'drink' : 'drinks'}`);
   } else if (item.kind === 'home_menu') {
@@ -242,4 +283,29 @@ export function weekRange(from: Date, days = WEEK_DAYS, locale?: string): string
   const month = (d: Date) => d.toLocaleDateString(locale, { month: 'short' });
   const first = `${weekdayDate(from, locale)}${last.getMonth() === from.getMonth() ? '' : ` ${month(from)}`}`;
   return `${first} to ${weekdayDate(last, locale)} ${month(last)}`;
+}
+
+/** Where a bar is, from its public page. */
+export interface BarPlace {
+  display_name: string;
+  address_line: string | null;
+  locality: string | null;
+  postcode: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/**
+ * A maps link to the bar: Apple Maps on Apple devices, Google Maps elsewhere.
+ * A plain URL either app opens, no maps API. Null when the page has no place.
+ */
+export function directionsUrl(place: BarPlace | null | undefined, apple: boolean): string | null {
+  if (!place) return null;
+  const address = [place.address_line, place.locality, place.postcode, place.city].filter(Boolean).join(', ');
+  if (!address && place.latitude == null) return null;
+  const query = encodeURIComponent([place.display_name, address].filter(Boolean).join(', '));
+  const at = place.latitude != null && place.longitude != null ? `${place.latitude},${place.longitude}` : null;
+  if (apple) return `https://maps.apple.com/?q=${query}${at ? `&ll=${at}` : ''}`;
+  return `https://www.google.com/maps/search/?api=1&query=${at && !address ? at : query}`;
 }

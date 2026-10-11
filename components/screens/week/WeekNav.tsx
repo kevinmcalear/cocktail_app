@@ -45,7 +45,7 @@ function WeekNavList({ items, member }: { items: WeekItem[]; member: boolean }) 
         onPress={() => router.navigate('/week')}
         style={[styles.heading, current && { backgroundColor: withAlpha(ds.accentText, 0.16) }]}
       >
-        <DsText variant="caption" color={current ? ds.c.ink : ds.c.muted} style={styles.headingLabel}>
+        <DsText variant="caption" color={ds.c.ink} style={styles.headingLabel}>
           This week
         </DsText>
         {on.length ? (
@@ -75,7 +75,7 @@ function WeekNavList({ items, member }: { items: WeekItem[]; member: boolean }) 
             <DsText numberOfLines={1} style={styles.name}>
               {item.name}
             </DsText>
-            <DsText variant="caption" color={day === 'Today' ? ds.accentText : ds.c.muted}>
+            <DsText variant="caption" color={day === 'Tonight' ? ds.accentText : ds.c.muted}>
               {day}
             </DsText>
           </PressableScale>
