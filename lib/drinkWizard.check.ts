@@ -62,8 +62,8 @@ assert.equal(stepAmount('', 'spray', 1), '2');
 assert.equal(stepAmount('4', 'spray', 1), '5');
 
 // The finish: drops, a mist, a rinse, a float and the garnishes, each a recipe unit.
-assert.equal(STEP_COPY.garnish.title, 'Any garnish?');
-assert.equal(STEP_COPY.garnish.short, 'Garnish');
+assert.equal(STEP_COPY.garnish.title, 'How’s it finished?');
+assert.equal(STEP_COPY.garnish.short, 'Finish');
 for (const u of FINISH_UNITS) assert.ok(RECIPE_UNITS.some((r) => r.value === u), `${u} is a recipe unit`);
 for (const c of FINISH_CHIPS) assert.ok((FINISH_UNITS as readonly string[]).includes(c.unit), `${c.label}: ${c.unit} is a finish unit`);
 for (const c of FINISH_CHIPS) assert.ok(!!c.name !== !!c.ask, `${c.label} is either a whole line or asks of what`);

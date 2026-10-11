@@ -23,7 +23,7 @@ export const STEP_COPY: Record<WizardStep, { title: string; short: string; intro
   glass: { title: 'What glass?', short: 'Glass', optional: true },
   ice: { title: 'What ice?', short: 'Ice', optional: true },
   // The id stays 'garnish' so drafts kept on a device still open here.
-  garnish: { title: 'Any garnish?', short: 'Garnish', optional: true },
+  garnish: { title: 'How’s it finished?', short: 'Finish', optional: true },
   credits: { title: 'Who made it?', short: 'Credits', optional: true },
   notes: { title: 'Anything to add?', short: 'Notes', optional: true },
   publish: { title: 'Who can see it?', short: 'Who sees it', optional: true },
