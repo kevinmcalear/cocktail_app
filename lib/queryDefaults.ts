@@ -60,7 +60,7 @@ export const TIERS: Record<'static' | 'catalog' | 'public' | 'user' | 'live', { 
     options: { staleTime: 15 * MINUTE, refetchOnWindowFocus: true },
     keys: [
       ['bars'], ['viewAs'], ['capabilities'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'],
-      ['menus-v2'], ['menu'], [D, 'menus'], [D, 'current_menu_drinks'], ['collection'], ['home-bar'], ['bar'], ['bar-members'], ['staff-list'],
+      ['menus-v2'], ['menu'], ['week'], [D, 'menus'], [D, 'current_menu_drinks'], ['collection'], ['home-bar'], ['bar'], ['bar-members'], ['staff-list'],
     ],
   },
   // Shared and changing as you look: drafts, moderation, invites, claims.
