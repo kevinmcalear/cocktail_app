@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, SheetScrollView, Spec, Title, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSetDilution } from '@/hooks/useDrinkMath';
 import type { BatchMethod } from '@/lib/batch';
@@ -64,7 +64,7 @@ function StrengthBody({ itemId, name, strength, method, dilutionPct, canEdit, de
             : `${name.includes(' ') ? 'the venue' : 'the venue'}'s figure for a ${method} drink`;
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <Caption tone="muted">Strength</Caption>
       <Title>{name}</Title>
       <View>
@@ -108,7 +108,7 @@ function StrengthBody({ itemId, name, strength, method, dilutionPct, canEdit, de
           {set.isSuccess ? <Caption tone="muted">Saved. The figures update once the server has recalculated.</Caption> : null}
         </View>
       ) : null}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 

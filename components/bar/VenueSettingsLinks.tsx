@@ -58,6 +58,8 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
         onPress={go('publishing')}
       />
       <RowDivider />
+      <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
+      <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
       <RowDivider />
       <SettingsRow icon="dollarsign.circle.fill" label="Pricing" detail="Currency, tax and target GP" value={pricingValue(pricing)} onPress={go('pricing')} />
