@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { guessKind, looksInternal, readCalendar, repeats, unfold, zonedToUtc } from '../supabase/functions/_shared/icsRead';
+import { findDuplicate, guessKind, internalWord, looksInternal, readCalendar, repeats, sameName, unfold, zonedToUtc } from '../supabase/functions/_shared/icsRead';
 
 // sync-calendar reads a venue's .ics feed into events. Times must land on the
 // right instant whatever zone the feed uses, repeats must expand, and moved,
@@ -87,3 +87,21 @@ assert.equal(guessKind('Quiz night', null), 'other');
 assert.ok(looksInternal('Staff training: allergens'));
 assert.ok(looksInternal('Deep clean'));
 assert.ok(!looksInternal('Agave masterclass'));
+
+// --- a venue's own team-only words ---
+assert.equal(internalWord('Line check and prep', ['line check']), 'line check');
+assert.ok(!looksInternal('Staff party', ['line check']), "a venue's words replace the defaults");
+assert.ok(!looksInternal('Teamwork tasting'), 'whole words only');
+
+// --- duplicates of events the team already added ---
+assert.ok(sameName('Pale Moth x LR', 'Pale Moth × Little Rye'));
+assert.ok(sameName('PALE MOTH TAKEOVER', 'Pale Moth × Little Rye takeover'));
+assert.ok(sameName('Agave Masterclass (tickets)', 'Agave masterclass'));
+assert.ok(!sameName('Agave masterclass', 'Gin masterclass'));
+assert.ok(!sameName('Quiz', 'Pale Moth × Little Rye'));
+const team = [
+  { id: 'moth', name: 'Pale Moth × Little Rye', starts_at: '2026-10-10T19:00:00Z' },
+  { id: 'agave', name: 'Agave masterclass', starts_at: '2026-10-11T15:00:00Z' },
+];
+assert.equal(findDuplicate({ name: 'Pale Moth x LR', startsAt: '2026-10-10T18:00:00Z' }, team)?.id, 'moth');
+assert.equal(findDuplicate({ name: 'Pale Moth x LR', startsAt: '2026-10-17T19:00:00Z' }, team), null, 'a week later is another night');

@@ -25,3 +25,4 @@ export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
 export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProps } from './RowScore';
+export { SheetScrollView } from './useSheetDrag';

@@ -23,6 +23,7 @@ import { siteOrigin } from '@/lib/venueLink';
 import { byDay, filterWeek, itemDay, newDrinks, shortDay, thingsOn, upcoming, weekMonday, weekRange, type WeekFilter, type WeekItem } from '@/lib/week';
 
 import { EventSheet } from './EventSheet';
+import { ReviewBanner } from './ReviewImports';
 import { WeekAgenda, WeekColumns } from './WeekColumns';
 import { WeekRibbon } from './WeekParts';
 
@@ -88,6 +89,7 @@ export function WeekScreen() {
             ) : null
           }
         />
+        {canAdd && barId ? <ReviewBanner barId={barId} /> : null}
         {venue ? (
           <View role="radiogroup" accessibilityLabel="Show" style={styles.chips}>
             {FILTERS.map((f) => (
